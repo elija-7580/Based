@@ -100,6 +100,33 @@ export class EditorController {
     this.applyPending(id);
   }
 
+  /**
+   * ADR 0016 (E7): Ein anderer hat den Text eines Blocks geändert (Delta wie Y.Text). Steht die eigene Schreibmarke
+   * darin, wird sie mitverschoben und nach dem Neuzeichnen wieder gesetzt.
+   */
+  shiftCaret(id: string, delta: readonly { insert?: unknown; delete?: number | undefined; retain?: number | undefined }[]) {
+    const el = this.editables.get(id);
+    const focused = el && el.ownerDocument.activeElement === el;
+    const c = focused ? this.readCaret(id) : this.caret?.id === id ? this.caret : undefined;
+    if (!c) return;
+    const map = (pos: number) => {
+      let at = 0, out = pos;
+      for (const op of delta) {
+        if (op.retain !== undefined) at += op.retain;
+        else if (typeof op.insert === "string") {
+          if (at <= pos) out += op.insert.length;
+          at += op.insert.length;
+        } else if (op.delete !== undefined) {
+          if (at < pos) out -= Math.min(op.delete, pos - at);
+        }
+        if (at > out) break;
+      }
+      return Math.max(0, out);
+    };
+    this.caret = { id, from: map(c.from), to: map(c.to) };
+    if (focused) this.pending = true;
+  }
+
   /** Cursor aus der DOM-Auswahl lesen (vor jedem Befehl). */
   readCaret(id: string): Caret | undefined {
     const el = this.editables.get(id);

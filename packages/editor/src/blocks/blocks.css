@@ -1,4 +1,4 @@
-/* ADR 0016: Block-Editor. Jede Zeile hat feste Maße je Blocktyp (--pad oben, --line = Höhe der ersten Zeile);
+/* ADR 0016: Block-Editor. Jede Zeile hat feste Maße je Blocktyp (--pad oben, --row-line = Höhe der ersten Zeile);
    der Griff sitzt daraus berechnet mittig an der ersten Zeile und liegt außerhalb des Textflusses (kein Layout-
    Sprung beim Hover). Auswahl und Fokus neutral grau/weiß (Entscheidung 13.11.). */
 
@@ -14,20 +14,20 @@
 
 .bx2-block {
   --pad: 3px;
-  --line: 24px;
+  --row-line: 24px;
   --gutter-extra: 0px;
   position: relative;
   border-radius: var(--radius-xs);
 }
-.bx2-block[data-type="heading1"] { --pad: 30px; --line: 39px; }
-.bx2-block[data-type="heading2"] { --pad: 22px; --line: 31px; }
-.bx2-block[data-type="heading3"] { --pad: 16px; --line: 26px; }
-.bx2-block[data-type="heading4"] { --pad: 12px; --line: 24px; }
+.bx2-block[data-type="heading1"] { --pad: 30px; --row-line: 39px; }
+.bx2-block[data-type="heading2"] { --pad: 22px; --row-line: 31px; }
+.bx2-block[data-type="heading3"] { --pad: 16px; --row-line: 26px; }
+.bx2-block[data-type="heading4"] { --pad: 12px; --row-line: 24px; }
 .bx2-block[data-type="callout"] { --gutter-extra: 16px; }
-.bx2-block[data-type="code"] { --gutter-extra: 16px; --line: 21px; }
+.bx2-block[data-type="code"] { --gutter-extra: 16px; --row-line: 21px; }
 .bx2-block[data-type="quote"] { --gutter-extra: 0px; }
-.bx2-block[data-type="divider"] { --line: 24px; }
-.bx2-block[data-type="databaseInline"], .bx2-block[data-type="image"], .bx2-block[data-type="equation"], .bx2-block[data-type="unsupported"] { --line: 28px; }
+.bx2-block[data-type="divider"] { --row-line: 24px; }
+.bx2-block[data-type="databaseInline"], .bx2-block[data-type="image"], .bx2-block[data-type="equation"], .bx2-block[data-type="unsupported"] { --row-line: 28px; }
 
 .bx2-row {
   display: flex;
@@ -42,7 +42,7 @@
 .bx2-gutter {
   position: absolute;
   left: -50px;
-  top: calc(var(--pad) + var(--gutter-extra) + (var(--line) - 24px) / 2);
+  top: calc(var(--pad) + var(--gutter-extra) + (var(--row-line) - 24px) / 2);
   display: flex;
   gap: var(--space-half);
   height: 24px;
@@ -74,7 +74,7 @@
 .bx2-field {
   flex: 1 1 auto;
   min-width: 1px;
-  min-height: var(--line);
+  min-height: var(--row-line);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -151,7 +151,7 @@
   align-items: center;
   justify-content: center;
   min-width: 24px;
-  height: var(--line);
+  height: var(--row-line);
   margin-right: var(--space-half);
   color: var(--ink);
   user-select: none;
@@ -461,3 +461,86 @@
 .bx2-placeholder-btn:hover:not(:disabled) { background: var(--selected); color: var(--ink-2); }
 .bx2-equation { display: flex; flex-direction: column; gap: var(--space-2); cursor: pointer; }
 .bx2-eq-input { height: auto; min-height: 60px; padding: var(--space-2); font-family: var(--font-mono); resize: vertical; }
+
+/* ADR 0016 (E7): Präsenz – Schreibmarken und Auswahl der anderen, Farbe je Gerät */
+.bx2-presence { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.bx2-peer { --peer: var(--block-blue-text); }
+.bx2-peer-1 { --peer: var(--block-green-text); }
+.bx2-peer-2 { --peer: var(--block-orange-text); }
+.bx2-peer-3 { --peer: var(--block-purple-text); }
+.bx2-peer-4 { --peer: var(--block-pink-text); }
+.bx2-peer-5 { --peer: var(--block-red-text); }
+.bx2-peer-sel { position: absolute; background: var(--peer); opacity: 0.18; border-radius: var(--radius-xs); }
+.bx2-peer-caret { position: absolute; width: var(--space-half); margin-left: calc(var(--space-half) / -2); background: var(--peer); border-radius: var(--radius-xs); }
+.bx2-peer-name {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--peer);
+  color: var(--bg);
+  font-size: var(--type-meta-size);
+  line-height: var(--type-meta-leading);
+  white-space: nowrap;
+}
+
+/* E6: Callout-Icon, Code-Sprache, Farben im Blockmenü */
+.bx2-callout-icon { position: relative; }
+.bx2-icon-btn { padding: 0; border: 0; border-radius: var(--radius-xs); background: transparent; font: inherit; line-height: inherit; cursor: pointer; }
+.bx2-icon-btn:hover:not(:disabled) { background: var(--selected); }
+.bx2-code-lang-btn { padding: 0 var(--space-1); border: 0; border-radius: var(--radius-xs); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.bx2-code-lang-btn:hover:not(:disabled) { background: var(--selected); color: var(--ink-2); }
+.bx2-code-menu { position: absolute; top: 100%; right: 0; display: flex; flex-direction: column; gap: var(--space-half); min-width: 200px; }
+.bx2-swatch { display: inline-flex; align-items: center; justify-content: center; width: var(--space-5); height: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-xs); font-weight: 600; }
+
+/* E6: Bild – Rahmen mit Griff zum Breite-Ziehen, Bildunterschrift */
+.bx2-image-frame { position: relative; display: block; max-width: 100%; }
+.bx2-image-frame img { width: 100%; }
+.bx2-image-handle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  width: var(--space-1);
+  height: var(--space-8);
+  transform: translateY(-50%);
+  border-radius: var(--radius-pill);
+  background: var(--ink-2);
+  opacity: 0;
+  cursor: col-resize;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.bx2-image-frame:hover .bx2-image-handle { opacity: 0.6; }
+.bx2-caption {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--type-ui-size);
+  outline: none;
+}
+.bx2-caption:placeholder-shown { opacity: 0; }
+.bx2-image:hover .bx2-caption:placeholder-shown, .bx2-caption:focus { opacity: 1; }
+
+/* E6: Tabelle bearbeiten */
+.bx2-cell { display: block; min-height: 1.5em; outline: none; }
+.bx2-table-tools { display: flex; gap: var(--space-1); margin-top: var(--space-1); opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.bx2-table-wrap:hover .bx2-table-tools, .bx2-table-wrap:focus-within .bx2-table-tools { opacity: 1; }
+.bx2-table-add { padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-family: var(--font-ui); font-size: var(--type-meta-size); cursor: pointer; }
+.bx2-table-add:hover { background: var(--selected); color: var(--ink-2); }
+.bx2-url { display: flex; }
+.bx2-url .bx2-link-input { flex: 1 1 auto; }
+
+/* E6: Syntax-Hervorhebung (CSS Highlight API, nur Farben aus vorhandenen Tokens wie im alten Editor) */
+::highlight(bx2-syn-keyword) { color: var(--block-purple-text); }
+::highlight(bx2-syn-type) { color: var(--block-blue-text); }
+::highlight(bx2-syn-function) { color: var(--block-blue-text); }
+::highlight(bx2-syn-string) { color: var(--block-green-text); }
+::highlight(bx2-syn-number) { color: var(--block-orange-text); }
+::highlight(bx2-syn-comment) { color: var(--muted); }
+::highlight(bx2-syn-property) { color: var(--ink-2); }
+.bx2-color-menu { position: absolute; top: 100%; left: 0; margin-top: var(--space-1); }

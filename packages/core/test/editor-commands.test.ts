@@ -188,6 +188,13 @@ describe.each([false, true])("Block-Editor E1 (propertyRecords=%s)", (pr) => {
       expect(outline(s)).toEqual(["toggle[open]: open", "  toggle: ", "  text: kid", "toggle: closed", "  text: hidden", "toggle: "]);
     });
 
+    it("offene Toggle-Überschrift ohne Kinder: Enter am Ende legt das erste Kind an", () => {
+      const s = make(pr, [blk("h", "heading2", "b:P", "a0", { text: "Section", props: { toggleable: true, isOpen: true } })]);
+      const f = step(s, () => cmd.splitBlock(s, "h", 7)) as { blockId: string };
+      expect(outline(s)).toEqual(["heading2[open]: Section", "  text: "]);
+      expect(s.blocks.get(f.blockId)!.parent).toBe("b:h");
+    });
+
     it("leerer Textblock: neuer leerer Textblock darunter", () => {
       const s = make(pr, [blk("a", "text", "b:P", "a0"), blk("q", "quote", "b:P", "a1", { text: "q" })]);
       const f = step(s, () => cmd.splitBlock(s, "a", 0)) as { blockId: string };
@@ -595,6 +602,14 @@ describe.each([false, true])("Block-Editor E1 (propertyRecords=%s)", (pr) => {
       expect(outline(s)).toEqual(["text: A", "todo: ", "image: ", "divider: ", "text: ", "image: "]);
       expect(s.blocks.get((d as { blockId: string }).blockId)!.type).toBe("text");
       expect(cmd.convertEmptyBlock(s, "a", "image")).toBeUndefined();
+    });
+
+    it("Slash „3 columns“: Spaltenliste mit leeren Textblöcken; ein leerer Block wird ersetzt", () => {
+      const s = make(pr, [blk("a", "text", "b:P", "a0", { text: "A" }), blk("e", "text", "b:P", "a1")]);
+      const f = step(s, () => cmd.insertColumns(s, "e", 3, true)) as { blockId: string };
+      expect(outline(s)).toEqual(["text: A", "columnList: ", "  column: ", "    text: ", "  column: ", "    text: ", "  column: ", "    text: "]);
+      expect(s.blocks.get(f.blockId)!.parent).toBe("b:" + s.children("b:" + s.children("b:P")[1]!)[0]);
+      expect(cmd.insertColumns(s, "a", 6)).toBeUndefined();
     });
 
     it("Props setzen und entfernen; Spaltenbreite beim Ziehen ein Schritt", () => {

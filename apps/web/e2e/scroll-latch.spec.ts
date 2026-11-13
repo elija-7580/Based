@@ -36,7 +36,9 @@ test("Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste
   // … und läuft weiter, während das Feld unter den Zeiger kommt
   await page.mouse.move(innerBox.x + 40, innerBox.y + 40);
   for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, 40); await page.waitForTimeout(30); }
-  await page.waitForTimeout(100);
+  // Weiches Nachrollen (WebKit) abwarten: erst messen, wenn die Seite steht
+  let last = -1;
+  await expect.poll(async () => { const now = await scroller.evaluate((el) => el.scrollTop); const still = now === last; last = now; return still; }, { intervals: [150] }).toBe(true);
   expect(await inner.evaluate((el) => el.scrollTop)).toBe(0);
   const outerTop = await scroller.evaluate((el) => el.scrollTop);
   expect(outerTop).toBeGreaterThan(200);

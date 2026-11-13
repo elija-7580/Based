@@ -469,10 +469,14 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 @media print { .bx-image-viewer { display: none; } }
 /* BSD-290/367: Markiertes Bild/Video ohne das Blau von BlockNote – neutraler Rahmen (focus-ring), keine Tönung. */
 .bx-editor .bn-block-content.ProseMirror-selectednode > [data-file-block]::after,
-.bx-editor .bn-block-content.ProseMirror-selectednode > *::after,
-.bx-editor .ProseMirror-selectednode > .bn-block-content > *::after {
+.bx-editor .bn-block-content.ProseMirror-selectednode > *:not(.bx-database)::after,
+.bx-editor .ProseMirror-selectednode > .bn-block-content > *:not(.bx-database)::after {
   background-color: transparent; box-shadow: inset 0 0 0 2px var(--focus-ring); border-radius: var(--radius-xs);
 }
+/* BSD-375: Eine Inline-Datenbank, in der man arbeitet (Zelle bearbeiten), ist kein „markierter Block“ – weder Rahmen
+   noch die blaue Tönung von BlockNote. */
+.bx-editor .ProseMirror-selectednode .bx-database::after,
+.bx-editor .bn-block-content.ProseMirror-selectednode > .bx-database::after { background-color: transparent; box-shadow: none; }
 
 /* BSD-305: Links im Text und Häkchen der To-dos ohne das Blau des Browsers – Tinte mit gedämpfter Unterstreichung
    (wie Notion), Häkchen in der Tinte (wie die To-dos in der Seitenleiste). */

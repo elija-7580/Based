@@ -3,16 +3,19 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, CODE_LANGUAGES, dateMentionValue, dateSuggestions, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import type { PageRef } from "../ui/env.js";
-import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX } from "../mapping/bn.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
+import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
 import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
+import { PresenceLayer, useRealtime } from "./realtime.js";
+import { highlightCode } from "./highlight.js";
 import "./blocks.css";
 
 interface Ctx {
@@ -69,6 +72,34 @@ export function BlockEditor(props: PageEditorProps) {
     ctrl.root = rootRef.current;
     return () => { ctrl.root = null; };
   }, [ctrl]);
+
+  // Titel ↔ Text wie Notion (PageView): „bx:focus“ kommt vom Titel (Enter, ↓, Klick unter die Seite).
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ at: "start" | "end"; insert?: boolean; text?: string }>).detail;
+      e.preventDefault();
+      const order = ctrl.order();
+      if (d.at === "start") {
+        if (d.insert && editable) {
+          run(cmd.insertBlock(store, { inside: pageID, at: "start" }, "text", d.text ? { text: d.text } : {}));
+          const f = store.children("b:" + pageID)[0];
+          if (f) ctrl.setCaret({ id: f, from: 0, to: 0 });
+          return;
+        }
+        const first = order.find((x) => cmd.isTextBlock(store.blocks.get(x)));
+        if (first) ctrl.setCaret({ id: first, from: 0, to: 0 });
+        else if (editable) run(cmd.insertBlock(store, { inside: pageID, at: "start" }, "text"));
+        return;
+      }
+      onTailClick();
+    };
+    root.addEventListener("bx:focus", on);
+    return () => root.removeEventListener("bx:focus", on);
+  });
+  /** Am Anfang der Seite nach oben: in den Titel (PageView fängt „bx:leave-top“). */
+  const leaveTop = (): boolean => !(rootRef.current?.dispatchEvent(new CustomEvent("bx:leave-top", { bubbles: true, cancelable: true })) ?? true);
 
   // BSD-101: zu einem Block springen
   useEffect(() => {
@@ -205,6 +236,8 @@ export function BlockEditor(props: PageEditorProps) {
       } catch { based = undefined; }
       const text = data.getData("text/plain");
       const html = data.getData("text/html");
+      const image = !html && !based ? Array.from(data.files ?? []).find((f) => f.type.startsWith("image/")) : undefined;
+      if (image && props.uploadFile) { insertImage(anchor, image); return; }
       const content: cmd.PasteContent = { based, text: text || undefined, html: html || undefined };
       const opts = { pageExists: (x: string) => store.blocks.has(x) || props.pages?.get(x) !== undefined };
       const c = id ? ctrl.readCaret(id) : undefined;
@@ -213,6 +246,26 @@ export function BlockEditor(props: PageEditorProps) {
       if (c.from !== c.to && /^https?:\/\/\S+$/.test(text.trim())) { run(cmd.formatText(store, [R(c)], "link", text.trim())); return; }
       run(cmd.insertContent(store, R(c), content, opts));
     };
+
+    // Bild einfügen (Zwischenablage, Ablegen): Bildblock sofort, Hochladen danach
+    const insertImage = (anchor: string, file: File) => {
+      const a = store.blocks.get(anchor);
+      const empty = a?.type === "text" && plainText(a.text).length === 0;
+      const f = empty ? cmd.convertEmptyBlock(store, anchor, "image") : cmd.insertBlock(store, { after: anchor }, "image");
+      if (!f) return;
+      run(f);
+      void props.uploadFile?.(file, f.blockId).then((url) => cmd.setBlockProps(store, [f.blockId], { url }, "Add image")).catch(() => undefined);
+    };
+    const onDrop = (e: DragEvent) => {
+      const file = Array.from(e.dataTransfer?.files ?? []).find((f) => f.type.startsWith("image/"));
+      if (!file || !editable || !props.uploadFile || (e.target instanceof Element && e.target.closest(".bx2-image"))) return;
+      const at = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-block-id]")?.dataset.blockId : undefined;
+      const anchor = at ?? ctrl.order()[ctrl.order().length - 1];
+      if (!anchor) return;
+      e.preventDefault();
+      insertImage(anchor, file);
+    };
+    const onDragOver = (e: DragEvent) => { if (editable && props.uploadFile && e.dataTransfer?.types.includes("Files")) e.preventDefault(); };
 
     const onCopy = (e: ClipboardEvent) => {
       if (!ctrl.selected.length || !e.clipboardData) return;
@@ -231,6 +284,8 @@ export function BlockEditor(props: PageEditorProps) {
     root.addEventListener("paste", onPaste);
     root.addEventListener("copy", onCopy);
     root.addEventListener("cut", onCopy);
+    root.addEventListener("drop", onDrop);
+    root.addEventListener("dragover", onDragOver);
     return () => {
       root.removeEventListener("beforeinput", onBeforeInput);
       root.removeEventListener("compositionstart", onCompositionStart);
@@ -238,6 +293,8 @@ export function BlockEditor(props: PageEditorProps) {
       root.removeEventListener("paste", onPaste);
       root.removeEventListener("copy", onCopy);
       root.removeEventListener("cut", onCopy);
+      root.removeEventListener("drop", onDrop);
+      root.removeEventListener("dragover", onDragOver);
     };
   }, [ctrl, store, pageID, editable]);
 
@@ -285,6 +342,10 @@ export function BlockEditor(props: PageEditorProps) {
       if (created && props.onOpenPage) props.onOpenPage(created);
       return;
     }
+    if (item.columns) {
+      run(cmd.insertColumns(store, s.id, item.columns, empty));
+      return;
+    }
     if (item.create) {
       const created = item.create(store, s.id, empty);
       if (created) ctrl.select([created]);
@@ -306,8 +367,10 @@ export function BlockEditor(props: PageEditorProps) {
     void searchMention(st);
   };
   const searchMention = async (st: MentionState) => {
-    const items = await (props.pages?.search(st.query) ?? Promise.resolve([] as PageRef[])).catch(() => [] as PageRef[]);
-    setMention((cur) => (cur && cur.id === st.id && cur.at === st.at && cur.query === st.query ? { ...cur, items: items.slice(0, 8), index: 0 } : cur));
+    const pages = await (props.pages?.search(st.query) ?? Promise.resolve([] as PageRef[])).catch(() => [] as PageRef[]);
+    const dates = dateSuggestions(st.query, new Date()).slice(0, st.query ? 3 : 2);
+    const items: MentionItem[] = [...pages.slice(0, 8).map((ref) => ({ kind: "page" as const, ref })), ...dates.map((d) => ({ kind: "date" as const, label: d.label, date: d.date }))];
+    setMention((cur) => (cur && cur.id === st.id && cur.at === st.at && cur.query === st.query ? { ...cur, items, index: 0 } : cur));
   };
   const updateMention = (id: string) => {
     const s = mentionRef.current;
@@ -321,11 +384,13 @@ export function BlockEditor(props: PageEditorProps) {
     setMention(next);
     void searchMention(next);
   };
-  const chooseMention = (ref: PageRef) => {
+  const chooseMention = (item: MentionItem) => {
     const s = mentionRef.current;
     setMention(undefined);
     if (!s) return;
-    run(cmd.insertMention(store, { blockId: s.id, from: s.at, to: s.at + 1 + s.query.length }, { page: { _0: ref.id } }, ref.title || "Untitled"));
+    const range = { blockId: s.id, from: s.at, to: s.at + 1 + s.query.length };
+    if (item.kind === "page") run(cmd.insertMention(store, range, { page: { _0: item.ref.id } }, item.ref.title || "Untitled"));
+    else run(cmd.insertMention(store, range, { date: { _0: dateMentionValue(item.date) } }, "@" + item.label));
   };
 
   // MARK: Link (⌘K)
@@ -380,12 +445,38 @@ export function BlockEditor(props: PageEditorProps) {
       if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); chooseMention(m.items[m.index]!); return; }
     }
     if (m && e.key === "Escape") { e.preventDefault(); setMention(undefined); return; }
+    // ⌘⌥T gilt überall im Editor (auch nach einem Klick auf einen Pfeil)
+    if (e.code === "KeyT" && blockShortcut(e, [])) return;
     const target = e.target as HTMLElement;
     // Eingabefelder in Blöcken (Gleichung, Link, Datenbank-Zellen) behalten ihre Tasten
     if (target.matches("input, textarea, select") || (target.isContentEditable && !target.dataset.editableId)) return;
     const id = target.dataset.editableId;
     if (id) return onFieldKey(e, id, mod);
     if (ctrl.selected.length) return onSelectionKey(e, mod);
+  };
+
+  /** ⌘⌥0–9 (wie Notion): Text, H1–H3, To-do, Liste, Nummern, Toggle, Code, Seite. ⌘⌥T: alle Toggles auf/zu. */
+  const blockShortcut = (e: React.KeyboardEvent, ids: readonly string[]): boolean => {
+    if (!(e.metaKey || e.ctrlKey) || !e.altKey || !editable) return false;
+    if (e.code === "KeyT") {
+      e.preventDefault();
+      const toggles = ctrl.order().map((x) => store.blocks.get(x)!).filter((x) => cmd.isToggle(x));
+      const anyClosed = toggles.some((x) => x.props?.isOpen !== true);
+      const all = [...store.children("b:" + pageID)].flatMap(function walk(x: string): string[] { return [x, ...store.children("b:" + x).flatMap(walk)]; }).filter((x) => cmd.isToggle(store.blocks.get(x)!));
+      cmd.setBlockProps(store, all, { isOpen: anyClosed ? true : undefined }, anyClosed ? "Expand all" : "Collapse all");
+      return true;
+    }
+    const m = /^Digit([0-9])$/.exec(e.code);
+    if (!m) return false;
+    const types = ["text", "heading1", "heading2", "heading3", "todo", "bulletedList", "numberedList", "toggle", "code", "page"] as const;
+    const type = types[Number(m[1])]!;
+    e.preventDefault();
+    const targets = ids.filter((x) => cmd.isTextBlock(store.blocks.get(x)));
+    if (type === "page" || targets.length === 0) return true;
+    const c = ctrl.caret;
+    cmd.turnInto(store, targets, type);
+    if (c && targets.includes(c.id)) ctrl.setCaret(clampCaret(store, c));
+    return true;
   };
 
   const onFieldKey = (e: React.KeyboardEvent, id: string, mod: boolean) => {
@@ -395,9 +486,16 @@ export function BlockEditor(props: PageEditorProps) {
     if (!c) return;
     const len = textLen(store, id);
     const key = e.key;
+    if (blockShortcut(e, [id])) return;
     // WebKit schickt am Anfang/Ende eines Felds kein beforeinput (nichts zu löschen) – hier selbst behandeln
     if (key === "Backspace" && !mod && !e.altKey && c.from === 0 && c.to === 0) {
       e.preventDefault();
+      // Leere erste Zeile: in den Titel (der leere Block bleibt nicht stehen, wenn noch etwas folgt)
+      if (len === 0 && store.blocks.get(id)?.type === "text" && ctrl.order()[0] === id && leaveTop()) {
+        if (editable && ctrl.order().length > 1) cmd.deleteBlocks(store, [id]);
+        ctrl.caret = undefined;
+        return;
+      }
       if (editable) run(cmd.deleteBackward(store, R(c)));
       return;
     }
@@ -476,7 +574,10 @@ export function BlockEditor(props: PageEditorProps) {
       }
       if (e.altKey || mod) return;
       const next = ctrl.neighbourText(id, dir);
-      if (!next) return;
+      if (!next) {
+        if (dir < 0 && ctrl.order()[0] === id && leaveTop()) e.preventDefault();
+        return;
+      }
       e.preventDefault();
       const x = caretX(el) ?? el.getBoundingClientRect().left;
       ctrl.setCaret({ id: next, from: 0, to: 0 }, { x, edge: dir < 0 ? "last" : "first" });
@@ -496,6 +597,7 @@ export function BlockEditor(props: PageEditorProps) {
     const sel = ctrl.selected;
     const key = e.key;
     const order = ctrl.order();
+    if (blockShortcut(e, sel)) return;
     if (key === "Escape") { e.preventDefault(); ctrl.clearSelection(); return; }
     if ((key === "Backspace" || key === "Delete") && editable) {
       e.preventDefault();
@@ -804,20 +906,24 @@ export function BlockEditor(props: PageEditorProps) {
   };
 
   const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable }), [ctrl, store, props, editable]);
+  // ADR 0016 (E7): Echtzeit-Text und Präsenz über /collab (Dokument `text:<seite>`)
+  const presence = useRealtime(store, pageID, props.collab, ctrl, props.presenceName);
   const slashItems = slash ? filterSlash(SLASH_ITEMS, slash.query) : [];
 
   return (
     <EditorCtx.Provider value={ctx}>
-      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-theme={props.theme}
+      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-theme={props.theme} data-collab={presence ? "" : undefined}
         tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={onPointerDown} writingsuggestions="false">
         <BlockList parent={pageID} depth={0} />
         {editable ? <div className="bx2-tail" onClick={onTailClick} data-testid="block-editor-tail" /> : null}
+        {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} /> : null}
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
-      {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }} /> : null}
+      {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
+        onColor={(color) => { const c = ctrl.caret; if (c && c.from !== c.to) run(cmd.formatText(store, [R(c)], "color", color ?? false)); }} /> : null}
     </EditorCtx.Provider>
   );
 }
@@ -899,11 +1005,11 @@ const BlockView = memo(function BlockView({ id, depth, number }: { id: string; d
   const selected = useSelected(ctrl, id);
   if (!b || b.trashedAt !== undefined) return null;
   if (b.type === "columnList") return <Columns block={b} depth={depth} />;
-  const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock";
+  const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table";
   return (
     <div className="bx2-block" data-block-id={id} data-type={b.type} data-selected={selected ? "" : undefined} data-depth={depth}>
       <Gutter id={id} />
-      <div className="bx2-row">
+      <div className={"bx2-row" + (typeof b.props?.color === "string" && b.props.color !== "default" ? " bx2-color-" + b.props.color : "")}>
         <BlockContent block={b} depth={depth} number={number} />
       </div>
       {showKids ? <ChildList id={id} depth={depth + 1} /> : null}
@@ -1003,13 +1109,26 @@ function Column({ id, depth, next }: { id: string; depth: number; next: string |
 function BlockContent({ block: b, depth, number }: { block: Block; depth: number; number: number }) {
   const { store, props, editable } = useCtx();
   switch (b.type) {
-    case "text": case "heading1": case "heading2": case "heading3": case "heading4": case "quote":
+    case "heading1": case "heading2": case "heading3": case "heading4":
+      if (b.props?.toggleable) {
+        return (
+          <>
+            <button type="button" className="bx2-marker bx2-toggle" data-open={b.props?.isOpen ? "" : undefined} aria-label={b.props?.isOpen ? "Collapse" : "Expand"} aria-expanded={b.props?.isOpen === true}
+              onClick={() => cmd.setBlockProps(store, [b.id], { isOpen: b.props?.isOpen ? undefined : true }, "Toggle")}>
+              <ChevronIcon />
+            </button>
+            <TextField block={b} />
+          </>
+        );
+      }
+      return <TextField block={b} />;
+    case "text": case "quote":
       return <TextField block={b} />;
     case "code":
       return (
         <div className="bx2-codewrap">
           <TextField block={b} />
-          <span className="bx2-code-lang" contentEditable={false}>{b.props?.language || "Plain text"}</span>
+          <CodeLanguage block={b} />
           {b.props?.language === "mermaid" && plainText(b.text).length > 0 ? <MermaidPreview code={plainText(b.text)} /> : null}
         </div>
       );
@@ -1040,7 +1159,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
     case "callout":
       return (
         <div className="bx2-callout">
-          <span className="bx2-callout-icon" contentEditable={false}>{typeof b.props?.icon === "string" ? b.props.icon : "💡"}</span>
+          <CalloutIcon block={b} />
           <div className="bx2-callout-body">
             <TextField block={b} />
             <ChildList id={b.id} depth={depth + 1} />
@@ -1068,6 +1187,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <EquationBlock block={b} />;
     case "bookmark": case "embed": {
       const url = b.props?.url ?? "";
+      if (!url) return <UrlPrompt block={b} />;
       const meta = b.props?.bookmark;
       return (
         <a className="bx2-embed bx2-bookmark" data-embed="" contentEditable={false} href={url} target="_blank" rel="noopener noreferrer">
@@ -1085,13 +1205,16 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <TableOfContents />;
     case "button":
       return <div className="bx2-embed" data-embed="" contentEditable={false}><button type="button" className="bx2-button" disabled>{b.props?.buttonLabel || "Button"}</button></div>;
-    case "syncedBlock":
+    case "syncedBlock": {
+      // Kopie: zeigt (und bearbeitet) den Inhalt des Originals
+      const source = typeof b.props?.syncSource === "string" && store.blocks.has(b.props.syncSource) ? b.props.syncSource : b.id;
       return (
-        <div className="bx2-embed bx2-synced" data-embed="">
-          <ChildList id={b.id} depth={depth + 1} />
-          {!store.children("b:" + b.id).length ? <span className="bx2-muted">Synced block</span> : null}
+        <div className="bx2-embed bx2-synced" data-embed="" data-synced-copy={source !== b.id ? "" : undefined}>
+          <ChildList id={source} depth={depth + 1} />
+          {!store.children("b:" + source).length ? <span className="bx2-muted">Synced block</span> : null}
         </div>
       );
+    }
     default:
       return <div className="bx2-embed bx2-unsupported" data-embed="" contentEditable={false}>{labelOf(b)}<span className="bx2-muted"> · in the new editor soon</span></div>;
   }
@@ -1125,7 +1248,9 @@ function ImageBlock({ block: b }: { block: Block }) {
   const width = typeof b.props?.width === "number" ? b.props.width : undefined;
   const { store, props, editable } = useCtx();
   const input = useRef<HTMLInputElement>(null);
+  const fig = useRef<HTMLElement>(null);
   const [busy, setBusy] = useState(false);
+  const [live, setLive] = useState<number | undefined>();
   const upload = async (f: File | undefined) => {
     if (!f || !props.uploadFile) return;
     setBusy(true);
@@ -1134,15 +1259,48 @@ function ImageBlock({ block: b }: { block: Block }) {
       cmd.setBlockProps(store, [b.id], { url }, "Add image");
     } finally { setBusy(false); }
   };
+  // Breite am rechten Rand ziehen (wie Notion); gespeichert in Pixeln, ein Undo-Schritt beim Loslassen
+  const startResize = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const img = fig.current?.querySelector("img");
+    const host = fig.current?.parentElement;
+    if (!img || !host) return;
+    const x0 = e.clientX, w0 = img.getBoundingClientRect().width, max = host.getBoundingClientRect().width;
+    let w = w0;
+    const move = (ev: PointerEvent) => { w = Math.round(Math.max(80, Math.min(max, w0 + (ev.clientX - x0) * 2))); setLive(w); };
+    const up = () => {
+      doc.removeEventListener("pointermove", move);
+      doc.removeEventListener("pointerup", up);
+      setLive(undefined);
+      if (w !== w0) cmd.setBlockProps(store, [b.id], { width: w }, "Resize image");
+    };
+    const doc = img.ownerDocument;
+    doc.addEventListener("pointermove", move);
+    doc.addEventListener("pointerup", up);
+  };
+  const caption = b.props?.caption !== undefined ? plainText(b.props.caption) : undefined;
+  const shown = live ?? width;
   return (
-    <figure className="bx2-embed bx2-image" data-embed="" contentEditable={false}>
-      {src ? <img src={src} alt="" draggable={false} style={width ? { width } : undefined} /> : (
+    <figure ref={fig} className="bx2-embed bx2-image" data-embed="" contentEditable={false}
+      onDragOver={(e) => { if (editable && props.uploadFile && e.dataTransfer.types.includes("Files")) e.preventDefault(); }}
+      onDrop={(e) => { const f = e.dataTransfer.files[0]; if (editable && f?.type.startsWith("image/")) { e.preventDefault(); void upload(f); } }}>
+      {src ? (
+        <span className="bx2-image-frame" style={shown ? { width: shown } : undefined}>
+          <img src={src} alt={caption ?? ""} draggable={false} />
+          {editable ? <span className="bx2-image-handle" role="separator" aria-orientation="vertical" aria-label="Resize image" onPointerDown={startResize} /> : null}
+        </span>
+      ) : (
         <button type="button" className="bx2-placeholder-btn" disabled={!editable || !props.uploadFile || busy} onClick={() => input.current?.click()}>
           {busy ? "Uploading…" : "Add an image"}
           <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
         </button>
       )}
-      {b.props?.caption ? <figcaption>{plainText(b.props.caption)}</figcaption> : null}
+      {src && (caption !== undefined || editable) ? (
+        <input className="bx2-caption" aria-label="Caption" placeholder={editable ? "Add a caption" : ""} readOnly={!editable} defaultValue={caption ?? ""} key={caption ?? ""}
+          onBlur={(e) => { const v = e.target.value; if (v !== (caption ?? "")) cmd.setBlockProps(store, [b.id], { caption: v || undefined }, "Caption"); }}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }} />
+      ) : null}
     </figure>
   );
 }
@@ -1160,9 +1318,41 @@ function useFileURL(raw: string | undefined): string | undefined {
   return src;
 }
 
+function UrlPrompt({ block: b }: { block: Block }) {
+  const { store, editable } = useCtx();
+  const [v, setV] = useState("");
+  const save = () => { const u = v.trim(); if (u) cmd.setBlockProps(store, [b.id], { url: /^[a-z]+:/i.test(u) ? u : "https://" + u }, "Add link"); };
+  return (
+    <div className="bx2-embed bx2-url" data-embed="" contentEditable={false}>
+      <input autoFocus={editable} className="bx2-link-input" aria-label={b.type === "embed" ? "Embed link" : "Bookmark link"} placeholder={b.type === "embed" ? "Paste a link to embed…" : "Paste a link to create a bookmark…"}
+        readOnly={!editable} value={v} onChange={(e) => setV(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); save(); } }} />
+    </div>
+  );
+}
+
 function FileBlock({ block: b }: { block: Block }) {
   const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
   const src = useFileURL(raw);
+  const { store, props, editable } = useCtx();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  if (!raw) {
+    const accept = b.type === "video" ? "video/*" : b.type === "audio" ? "audio/*" : b.type === "pdf" ? "application/pdf" : undefined;
+    const upload = async (f: File | undefined) => {
+      if (!f || !props.uploadFile) return;
+      setBusy(true);
+      try { cmd.setBlockProps(store, [b.id], { url: await props.uploadFile(f, b.id) }, "Upload"); } finally { setBusy(false); }
+    };
+    return (
+      <div className="bx2-embed bx2-image" data-embed="" contentEditable={false}>
+        <button type="button" className="bx2-placeholder-btn" disabled={!editable || !props.uploadFile || busy} onClick={() => input.current?.click()}>
+          {busy ? "Uploading…" : "Upload " + labelOf(b).toLowerCase()}
+          <input ref={input} type="file" accept={accept} hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
+        </button>
+      </div>
+    );
+  }
   const name = b.props?.asset?.name ?? (b.props?.url ? b.props.url.split("/").pop() : undefined) ?? labelOf(b);
   if (b.type === "video" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><video className="bx2-media" src={src} controls preload="metadata" /></div>;
   if (b.type === "audio" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><audio className="bx2-media" src={src} controls preload="metadata" /></div>;
@@ -1174,20 +1364,47 @@ function FileBlock({ block: b }: { block: Block }) {
 }
 
 function TableBlock({ block: b }: { block: Block }) {
+  const { store, editable } = useCtx();
   const cols = Math.max(1, b.props?.tableColumns ?? 1);
   const cells = b.props?.cells ?? [];
   const rows: (typeof cells)[] = [];
   for (let i = 0; i < cells.length; i += cols) rows.push(cells.slice(i, i + cols));
   const head = b.props?.tableHeaderRow === true;
+  // Zelle bearbeiten: als Klartext (Formatierung einer unveränderten Zelle bleibt)
+  const setCell = (i: number, text: string) => {
+    if (plainText(cells[i]) === text) return;
+    const next = [...cells];
+    next[i] = text;
+    cmd.setBlockProps(store, [b.id], { cells: next }, "Edit table");
+  };
+  const addRow = () => cmd.setBlockProps(store, [b.id], { cells: [...cells, ...Array.from({ length: cols }, () => "")] }, "Add row");
+  const addColumn = () => {
+    const next: typeof cells = [];
+    for (let r = 0; r < Math.max(1, rows.length); r++) next.push(...(rows[r] ?? Array.from({ length: cols }, () => "")), "");
+    cmd.setBlockProps(store, [b.id], { cells: next, tableColumns: cols + 1 }, "Add column");
+  };
+  const cell = (c: (typeof cells)[number], i: number, j: number) => {
+    const idx = i * cols + j;
+    const content = editable ? (
+      <span className="bx2-cell" contentEditable="plaintext-only" suppressContentEditableWarning role="textbox" aria-label={`Row ${i + 1}, column ${j + 1}`}
+        onBlur={(e) => setCell(idx, e.currentTarget.textContent ?? "")}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); } }}>{plainText(c)}</span>
+    ) : plainText(c);
+    return head && i === 0 ? <th key={j}>{content}</th> : <td key={j}>{content}</td>;
+  };
   return (
     <div className="bx2-embed bx2-table-wrap" data-embed="" contentEditable={false}>
       <table className="bx2-table">
         <tbody>
-          {rows.map((r, i) => (
-            <tr key={i}>{r.map((c, j) => (head && i === 0 ? <th key={j}>{plainText(c)}</th> : <td key={j}>{plainText(c)}</td>))}</tr>
-          ))}
+          {rows.map((r, i) => <tr key={i}>{r.map((c, j) => cell(c, i, j))}</tr>)}
         </tbody>
       </table>
+      {editable ? (
+        <span className="bx2-table-tools">
+          <button type="button" className="bx2-table-add" onClick={addRow} aria-label="Add row">+ Row</button>
+          <button type="button" className="bx2-table-add" onClick={addColumn} aria-label="Add column">+ Column</button>
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -1227,6 +1444,50 @@ function EquationBlock({ block: b }: { block: Block }) {
   );
 }
 
+function CalloutIcon({ block: b }: { block: Block }) {
+  const { store, editable } = useCtx();
+  const [open, setOpen] = useState(false);
+  const icon = typeof b.props?.icon === "string" ? b.props.icon : "💡";
+  return (
+    <span className="bx2-callout-icon" contentEditable={false}>
+      <button type="button" className="bx2-icon-btn" aria-label="Change icon" disabled={!editable} onClick={() => setOpen(true)}>{icon}</button>
+      {open ? (
+        <EmojiPicker className="bx-callout-picker" current={icon} onClose={() => setOpen(false)}
+          onPick={(e) => { setOpen(false); cmd.setBlockProps(store, [b.id], { icon: e ?? undefined }, "Change icon"); }} />
+      ) : null}
+    </span>
+  );
+}
+
+function CodeLanguage({ block: b }: { block: Block }) {
+  const { store, editable } = useCtx();
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const cur = b.props?.language;
+  const name = CODE_LANGUAGES.find((l) => l.id === cur)?.name ?? (cur || "Plain text");
+  const list = CODE_LANGUAGES.filter((l) => !q || l.name.toLowerCase().includes(q.toLowerCase()) || l.aliases?.some((a) => a.startsWith(q.toLowerCase())));
+  const pick = (id: string | undefined) => {
+    setOpen(false);
+    setQ("");
+    cmd.setBlockProps(store, [b.id], { language: id }, "Code language");
+  };
+  return (
+    <span className="bx2-code-lang" contentEditable={false}>
+      <button type="button" className="bx2-code-lang-btn" disabled={!editable} aria-haspopup="listbox" onClick={() => setOpen((o) => !o)}>{name}</button>
+      {open ? (
+        <span className="bx2-menu bx2-code-menu" role="listbox" aria-label="Language">
+          <input autoFocus className="bx2-link-input" aria-label="Search languages" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setOpen(false); } else if (e.key === "Enter") { e.preventDefault(); pick(list[0]?.id); } }} onBlur={() => setTimeout(() => setOpen(false), 120)} />
+          <button type="button" role="option" aria-selected={!cur} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(undefined)}><span className="bx2-menu-text">Plain text</span></button>
+          {list.slice(0, 40).map((l) => (
+            <button key={l.id} type="button" role="option" aria-selected={cur === l.id} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(l.id)}><span className="bx2-menu-text">{l.name}</span></button>
+          ))}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 function MermaidPreview({ code }: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1262,7 +1523,9 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
     if (plainText(block.text).length === 0) el.setAttribute("data-empty", "");
     else el.removeAttribute("data-empty");
     ctrl.restore(block.id);
-  }, [block.text, ctrl, block.id, props]);
+    if (block.type === "code") highlightCode(block.id, el, plainText(block.text), block.props?.language);
+  }, [block.text, ctrl, block.id, props, block.type, block.props?.language]);
+  useEffect(() => () => highlightCode(block.id, null, "", undefined), [block.id]);
   const cls = "bx2-field bx2-t-" + block.type + (block.type === "todo" && block.props?.checked ? " bx2-done" : "");
   return (
     <div ref={ref} className={cls} data-editable-id={block.id} contentEditable={editable} suppressContentEditableWarning
@@ -1302,8 +1565,9 @@ function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; st
 }
 
 function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; onClose: () => void }) {
-  const { store, ctrl, editable } = useCtx();
+  const { store, ctrl, editable, props } = useCtx();
   const ref = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState<"main" | "color">("main");
   useEffect(() => {
     const doc = ref.current?.ownerDocument;
     const off = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) onClose(); };
@@ -1316,15 +1580,37 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
   const b = store.blocks.get(id);
   const act = (f: () => void) => () => { f(); onClose(); };
   const turnable = ids.every((x) => cmd.isTextBlock(store.blocks.get(x)));
+  const style = { left: x + 8, top: Math.min(y, window.innerHeight - 360) };
+  if (view === "color") {
+    const current = typeof b?.props?.color === "string" ? b.props.color : "default";
+    const item = (c: string, label: string) => (
+      <button key={c} type="button" role="menuitemradio" aria-checked={current === c} className="bx2-menu-item"
+        onClick={act(() => cmd.setBlockProps(store, ids, { color: c === "default" ? undefined : c }, "Color"))}>
+        <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c} aria-hidden="true">A</span><span className="bx2-menu-text">{label}</span>
+      </button>
+    );
+    return (
+      <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Color" data-testid="block-menu" style={style}>
+        <div className="bx2-menu-label">Text color</div>
+        {BLOCK_COLORS.map((c) => item(c, c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)))}
+        <div className="bx2-menu-sep" role="separator" />
+        <div className="bx2-menu-label">Background</div>
+        {BLOCK_COLORS.filter((c) => c !== "default").map((c) => item(c + "Background", c[0]!.toUpperCase() + c.slice(1) + " background"))}
+      </div>
+    );
+  }
+  const link = props.blockLink?.(id);
   return (
-    <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Block" data-testid="block-menu" style={{ left: x + 8, top: Math.min(y, window.innerHeight - 360) }}>
+    <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Block" data-testid="block-menu" style={style}>
       <div className="bx2-menu-label">{labelOf(b)}</div>
+      {link ? <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => void navigator.clipboard?.writeText(link).catch(() => undefined))}><span className="bx2-menu-text">Copy link to block</span><span className="bx2-menu-hint">⌥⇧L</span></button> : null}
       {editable ? (
         <>
           <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); })}><span className="bx2-menu-text">Delete</span><span className="bx2-menu-hint">Del</span></button>
           <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => ctrl.select(duplicate(store, ids)))}><span className="bx2-menu-text">Duplicate</span><span className="bx2-menu-hint">⌘D</span></button>
           <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); })}><span className="bx2-menu-text">Move up</span><span className="bx2-menu-hint">⌘⇧↑</span></button>
           <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); })}><span className="bx2-menu-text">Move down</span><span className="bx2-menu-hint">⌘⇧↓</span></button>
+          <button type="button" role="menuitem" aria-haspopup="menu" className="bx2-menu-item" onClick={() => setView("color")}><span className="bx2-menu-text">Color</span><span className="bx2-menu-hint">›</span></button>
           {turnable ? (
             <>
               <div className="bx2-menu-sep" role="separator" />
@@ -1342,7 +1628,10 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
   );
 }
 
-function FormatBar({ x, y, onMark }: { x: number; y: number; onMark: (m: "b" | "i" | "u" | "s" | "c") => void }) {
+const BLOCK_COLORS = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"] as const;
+
+function FormatBar({ x, y, onMark, onColor }: { x: number; y: number; onMark: (m: "b" | "i" | "u" | "s" | "c") => void; onColor: (color: string | undefined) => void }) {
+  const [colors, setColors] = useState(false);
   const items: { m: "b" | "i" | "u" | "s" | "c"; label: string; title: string }[] = [
     { m: "b", label: "B", title: "Bold (⌘B)" }, { m: "i", label: "I", title: "Italic (⌘I)" }, { m: "u", label: "U", title: "Underline (⌘U)" },
     { m: "s", label: "S", title: "Strikethrough (⌘⇧S)" }, { m: "c", label: "</>", title: "Code (⌘E)" },
@@ -1350,22 +1639,49 @@ function FormatBar({ x, y, onMark }: { x: number; y: number; onMark: (m: "b" | "
   return (
     <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 44) }} onPointerDown={(e) => e.preventDefault()}>
       {items.map((it) => <button key={it.m} type="button" className={"bx2-format-btn bx2-format-" + it.m} title={it.title} aria-label={it.title} onClick={() => onMark(it.m)}>{it.label}</button>)}
+      <button type="button" className="bx2-format-btn" title="Text color" aria-label="Text color" aria-expanded={colors} onClick={() => setColors((c) => !c)}>A</button>
+      {colors ? (
+        <span className="bx2-menu bx2-color-menu" role="menu" aria-label="Text color">
+          {BLOCK_COLORS.map((c) => (
+            <button key={c} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c === "default" ? undefined : c); }}>
+              <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c} aria-hidden="true">A</span><span className="bx2-menu-text">{c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)}</span>
+            </button>
+          ))}
+          {BLOCK_COLORS.filter((c) => c !== "default").map((c) => (
+            <button key={c + "Background"} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c + "Background"); }}>
+              <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c + "Background"} aria-hidden="true">A</span><span className="bx2-menu-text">{c[0]!.toUpperCase() + c.slice(1)} background</span>
+            </button>
+          ))}
+        </span>
+      ) : null}
     </div>
   );
 }
 
-interface MentionState { id: string; at: number; query: string; index: number; x: number; y: number; items: PageRef[] }
+type MentionItem = { kind: "page"; ref: PageRef } | { kind: "date"; label: string; date: Date };
+interface MentionState { id: string; at: number; query: string; index: number; x: number; y: number; items: MentionItem[] }
 
-function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoose: (r: PageRef) => void; onHover: (i: number) => void }) {
+function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoose: (r: MentionItem) => void; onHover: (i: number) => void }) {
+  const firstDate = state.items.findIndex((x) => x.kind === "date");
   return (
     <div className="bx2-menu bx2-slash" role="listbox" aria-label="Mention a page" data-testid="mention-menu" style={{ left: state.x, top: Math.min(state.y, window.innerHeight - 340) }} onPointerDown={(e) => e.preventDefault()}>
-      <div className="bx2-menu-label">Link to page</div>
-      {state.items.map((r, i) => (
-        <div key={r.id} role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(r)}>
-          <span className="bx2-menu-icon" aria-hidden="true">{r.icon && !/^[a-z]/i.test(r.icon) ? r.icon : "📄"}</span>
-          <span className="bx2-menu-text">{r.title || "Untitled"}</span>
-          {r.path ? <span className="bx2-menu-hint bx2-menu-path">{r.path}</span> : null}
-        </div>
+      {state.items.length && state.items[0]!.kind === "page" ? <div className="bx2-menu-label">Link to page</div> : null}
+      {state.items.map((it, i) => (
+        <Fragment key={it.kind === "page" ? it.ref.id : "d" + it.label}>
+          {i === firstDate ? <div className="bx2-menu-label">Date</div> : null}
+          {it.kind === "page" ? (
+            <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
+              <span className="bx2-menu-icon" aria-hidden="true">{it.ref.icon && !/^[a-z]/i.test(it.ref.icon) ? it.ref.icon : "📄"}</span>
+              <span className="bx2-menu-text">{it.ref.title || "Untitled"}</span>
+              {it.ref.path ? <span className="bx2-menu-hint bx2-menu-path">{it.ref.path}</span> : null}
+            </div>
+          ) : (
+            <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
+              <span className="bx2-menu-icon" aria-hidden="true">📅</span>
+              <span className="bx2-menu-text">{it.label}</span>
+            </div>
+          )}
+        </Fragment>
       ))}
     </div>
   );

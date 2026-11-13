@@ -1,5 +1,6 @@
 // BSD-155: Zellen-Editoren für alle bearbeitbaren Property-Typen. Jede Änderung geht über eine
 // Store-Transaktion (setValue/setRelation/addOption); Text wird beim Schließen übernommen (wie Notion).
+import { BasedField } from "@based/ui/astryx";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   addOption, pv, rowsOf, setRelation, setValue, titleOf, valueCase,
@@ -76,8 +77,12 @@ function TextEditor({ row, prop, anchor, onClose, onCommitNext, initialText }: C
   };
   return (
     <Popover anchor={anchor} onClose={() => { commit(); onClose(); }} cover matchWidth className="dbui-cell-editor" label={`Edit ${prop.name}`}>
-      {multiline ? <textarea rows={3} {...common} /> : <input type={prop.type === "number" ? "text" : prop.type === "email" ? "email" : "text"} inputMode={prop.type === "number" ? "decimal" : undefined} {...common} />}
-      {invalid && <p className="dbui-hint danger">Enter a number</p>}
+      {multiline
+        ? <><textarea rows={3} {...common} />{invalid && <p className="dbui-hint danger">Enter a number</p>}</>
+        // BSD-375: einzeilige Zellen bearbeiten in einem BasedField (gleiches Feld wie überall in Based), Label nur für Screenreader.
+        : <BasedField label={prop.name} labelHidden value={text} type={prop.type === "email" ? "email" : "text"} {...(prop.type === "number" ? { inputMode: "decimal" as const } : {})}
+            {...(invalid ? { error: "Enter a number" } : {})} onChange={(v) => { setText(v); setInvalid(false); }}
+            inputRef={(el) => { field.current = el; }} onKeyDown={common.onKeyDown} />}
     </Popover>
   );
 }

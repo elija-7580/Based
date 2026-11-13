@@ -2,7 +2,7 @@
 // Regeln (Abstammung, Rückfall ohne /collab) liegen in @based/editor (CollabBinder); hier nur die Verbindung.
 // Token aus dem verschlüsselten Speicher, als Hocuspocus-Auth-Nachricht – nie in der URL.
 import { HocuspocusProvider } from "@hocuspocus/provider";
-import { CollabBinder, type CollabConnection, type CollabSource, type YDocStore } from "@based/editor";
+import { CollabBinder, type CollabConnection, type CollabSource, type PresenceChannel, type YDocStore } from "@based/editor";
 import type * as Y from "yjs";
 import type { SyncConfig } from "./worker/protocol.js";
 
@@ -28,13 +28,15 @@ export function connectHocuspocus(cfg: SyncConfig, name: string, doc: Y.Doc): Co
     onSynced: () => settle?.ok(),
     onAuthenticationFailed: () => settle?.fail(new Error("collab: not authorised")),
   });
-  return { synced, destroy: () => provider.destroy() };
+  const presence = (provider.awareness ?? undefined) as PresenceChannel | undefined;
+  return { synced, destroy: () => provider.destroy(), presence };
 }
 
 /** Binder für die Shell: verbindet nur, wenn ein Server eingestellt und Echtzeit-Text an ist. */
-export function createCollab(docStore: YDocStore, config: () => SyncConfig | undefined, unsynced?: (rootID: string) => Promise<boolean>): CollabBinder {
+export function createCollab(docStore: YDocStore, config: () => SyncConfig | undefined, unsynced?: (rootID: string) => Promise<boolean>, docName?: (rootID: string) => string): CollabBinder {
   return new CollabBinder({
     docStore,
+    ...(docName ? { docName } : {}),
     ...(unsynced ? { unsynced } : {}),
     syncTimeoutMs: 2500,
     // Offline nicht erst auf einen Abgleich warten (der Editor öffnete sonst verzögert); ein gespeicherter Stand vom
@@ -54,4 +56,13 @@ export function createCollab(docStore: YDocStore, config: () => SyncConfig | und
  */
 export function pageCollab(binder: CollabSource, pageID: string, isSyncedOriginal: (rootID: string) => boolean = () => false): CollabSource {
   return { open: (rootID) => (rootID === pageID || isSyncedOriginal(rootID) ? binder.open(rootID) : Promise.resolve(undefined)) };
+}
+
+/** ADR 0016 (E7): Y-Zustände des neuen Editors (`text:<seite>`) in derselben Ablage, unter eigenem Schlüssel. */
+export function prefixedDocStore(docStore: YDocStore, prefix: string): YDocStore {
+  return {
+    load: (id) => docStore.load(prefix + id),
+    save: (id, state) => docStore.save(prefix + id, state),
+    ...(docStore.prepare ? { prepare: (id: string) => docStore.prepare!(prefix + id) } : {}),
+  };
 }

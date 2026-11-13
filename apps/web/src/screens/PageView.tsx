@@ -298,7 +298,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         const t = e.target as Element;
         const bodyEl = e.currentTarget.querySelector(".page-body");
         // Menüs des Editors sind Portale: ihre Klicks kommen in React hier an, liegen im DOM aber außerhalb der Seite.
-        if (!bodyEl || !e.currentTarget.contains(t) || t.closest(".bn-editor, button, input, textarea, select, a, [role=menu], [role=dialog], [role=listbox]")) return;
+        if (!bodyEl || !e.currentTarget.contains(t) || t.closest(".bn-editor, .bx2-editor, button, input, textarea, select, a, [role=menu], [role=dialog], [role=listbox]")) return;
         if (e.clientY > bodyEl.getBoundingClientRect().bottom && intoBody(e.currentTarget, { at: "end" })) e.preventDefault();
       }} data-font={format.font} data-small-text={format.smallText ? "" : undefined}
         data-full-width={format.fullWidth ? "" : undefined} data-locked={format.locked ? "" : undefined}>
@@ -537,7 +537,7 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
  */
 /** Fokus in den Text der Seite geben (Ereignis „bx:focus“ des Editors). `false`: kein Editor da oder nicht übernommen. */
 function intoBody(from: Element, detail: { at: "start" | "end"; insert?: boolean; text?: string }): boolean {
-  const host = from.closest(".page")?.querySelector(".page-body .bx-editor");
+  const host = from.closest(".page")?.querySelector(".page-body .bx-editor, .page-body .bx2-editor");
   return host ? !host.dispatchEvent(new CustomEvent("bx:focus", { cancelable: true, detail })) : false;
 }
 

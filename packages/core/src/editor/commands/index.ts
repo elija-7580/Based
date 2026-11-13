@@ -1,7 +1,7 @@
 // BSD-382 (ADR 0016, E1): Befehle des neuen Block-Editors. Die Ansicht ruft nur diese Befehle auf und ändert nie
 // selbst Records; jeder Befehl ist eine Transaktion (ein Undo-Schritt) und gibt den neuen Fokus zurück.
 export {
-  applyInlineMarkdown, applyMarkdownShortcut, convertEmptyBlock, deleteBackward, deleteBlocks, deleteForward, insertBlock, insertMention,
+  applyInlineMarkdown, applyMarkdownShortcut, convertEmptyBlock, deleteBackward, deleteBlocks, deleteForward, insertBlock, insertColumns, insertMention,
   setBlockProps, setColumnRatios, dissolveColumns, duplicateBlocks, formatText, indentBlocks, markdownShortcut, mergeBackward, mergeForward,
   moveBlocks, moveBlocksBy, newBlockID, outdentBlocks, replaceText, setBlockText, setChecked, splitBlock, turnInto,
 } from "./blocks.js";
