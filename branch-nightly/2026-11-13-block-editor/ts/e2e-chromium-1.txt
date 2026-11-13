@@ -1,28 +1,28 @@
-success 015d6f1316743140c6ccb683563129b703a39399
-  ✓  127 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (1.6s)
-  ✓  126 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.2s)
-  ✓  129 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (2.8s)
-  ✓  130 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (2.1s)
-  ✓  131 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.0s)
-  ✓  132 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (1.4s)
-  ✓  133 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.0s)
+success 7323bcb4f55510b5190d3cb2598f522dbb5f65d1
+  ✓  126 [chromium] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.6s)
+  ✓  128 [chromium] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.2s)
+  ✓  127 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.4s)
+  ✓  130 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (2.7s)
+  ✓  131 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.8s)
+  ✓  132 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (1.9s)
+  ✓  133 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.4s)
   -  134 [chromium] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
-  ✓  128 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (13.4s)
-  ✓  135 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.7s)
-  ✓  137 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.1s)
-  ✓  136 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.7s)
+  ✓  135 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.4s)
+  ✓  129 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.4s)
+  ✓  136 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.8s)
+  ✓  137 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.5s)
+  ✓  138 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.8s)
   ✓  139 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.2s)
-  ✓  138 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.5s)
-  ✓  140 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.2s)
-  ✓  141 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.1s)
-  ✓  143 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.1s)
+  ✓  141 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.8s)
+  ✓  140 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.7s)
+  ✓  143 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.5s)
   ✓  144 [chromium] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.4s)
-  ✓  145 [chromium] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (2.1s)
-  ✓  146 [chromium] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.5s)
-  ✓  142 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (9.5s)
-  ✓  147 [chromium] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.4s)
-  ✓  149 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.0s)
-  ✓  148 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (9.7s)
+  ✓  145 [chromium] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (2.2s)
+  ✓  146 [chromium] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.8s)
+  ✓  147 [chromium] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.8s)
+  ✓  142 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (14.3s)
+  ✓  148 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.4s)
+  ✓  149 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.3s)
 
 
   1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
@@ -58,4 +58,4 @@ success 015d6f1316743140c6ccb683563129b703a39399
   1 flaky
     [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
   8 skipped
-  139 passed (4.2m)
+  139 passed (5.3m)
