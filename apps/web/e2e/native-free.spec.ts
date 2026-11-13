@@ -197,3 +197,28 @@ test("Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie �
   await page.locator(".bn-side-menu [draggable=true]").last().click();
   expect(await look(".bn-drag-handle-menu")).toEqual(reference);
 });
+
+// BSD-366: keine macOS Writing Tools und keine Siri-/Inline-Vorschläge – weder im Editor noch in Feldern.
+// `writingsuggestions` vererbt sich; die Prüfung nimmt die Eigenschaft des Browsers (falls vorhanden) und sonst das
+// nächste Attribut darüber.
+test("Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfung bleibt", async ({ page }) => {
+  await fresh(page);
+  const state = (sel: string) => page.locator(sel).first().evaluate((el) => {
+    const prop = (el as HTMLElement & { writingSuggestions?: string }).writingSuggestions;
+    return { prop: typeof prop === "string" ? prop : "false", attr: el.closest("[writingsuggestions]")?.getAttribute("writingsuggestions") ?? null };
+  });
+  await expect.poll(() => page.evaluate(() => document.documentElement.getAttribute("writingsuggestions"))).toBe("false");
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await expect(page.locator(".bx-editor .bn-editor[contenteditable=true]").first()).toBeVisible();
+  for (const sel of [".bx-editor .bn-editor[contenteditable=true]", "[aria-label='Page title']"]) expect(await state(sel), sel).toEqual({ prop: "false", attr: "false" });
+  // Felder in Dialogen und Menüs (Quick Find)
+  await page.keyboard.press("ControlOrMeta+k");
+  const search = page.getByRole("dialog").locator("input").first();
+  await expect(search).toBeVisible();
+  expect(await search.evaluate((el) => el.closest("[writingsuggestions]")?.getAttribute("writingsuggestions"))).toBe("false");
+  // Wer es ausdrücklich einschaltet, wird zurückgestellt.
+  await page.evaluate(() => { const i = document.createElement("input"); i.id = "ws-probe"; i.setAttribute("writingsuggestions", "true"); document.body.append(i); });
+  await expect(page.locator("#ws-probe")).toHaveAttribute("writingsuggestions", "false");
+  // Rechtschreibprüfung ist eine eigene Einstellung und bleibt an
+  expect(await page.evaluate(() => document.body.spellcheck)).toBe(true);
+});
