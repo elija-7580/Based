@@ -2,6 +2,7 @@
 // Import-Worker vorbereiten – mit Fortschritt und Abbrechen –, dann im Store-Worker schreiben und berichten.
 // Export: Seite als Markdown, HTML (eigenständige Datei oder ZIP mit Unterseiten/assets) oder PDF (Druckansicht);
 // Workspace als ZIP (Markdown oder HTML mit assets/) oder Based-Archiv, als Download.
+import { useReturnFocus } from "@based/ui/native";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -28,6 +29,7 @@ export function download(file: ExportFile) {
 function Dialog({ title, onClose, busy, children }: { title: string; onClose: () => void; busy?: boolean; children: ReactNode }) {
   const id = useId();
   const box = useRef<HTMLDivElement>(null);
+  useReturnFocus(); // BSD-304
   useEffect(() => box.current?.focus(), []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

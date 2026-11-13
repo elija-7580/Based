@@ -1,6 +1,7 @@
 // „Move to…“: Ziel für eine oder mehrere Seiten wählen – Private, ein Teamspace oder eine andere Seite. Aus der
 // Seitenleiste (Seitenmenü) und der Library (Bulk-Aktion). Astryx-Dialog mit Suchfeld und Liste; die Ziele kommen aus
 // der Seitenleisten-Struktur, verschoben wird im Store-Worker (ein Undo-Schritt).
+import { useReturnFocus } from "@based/ui/native";
 import { Button } from "@astryxdesign/core/Button";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { HStack, Layout, LayoutContent, LayoutFooter, VStack } from "@astryxdesign/core/Layout";
@@ -60,6 +61,7 @@ export function moveTargets(outline: Outline, titles: ReadonlyMap<string, string
 export function MoveDialog({ client, state, ids, onClose, onMoved }: { client: StoreClient; state: ShellState; ids: readonly string[]; onClose: () => void; onMoved?: (target: MoveTarget) => void }) {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
+  useReturnFocus(); // BSD-304
   const [error, setError] = useState<string | undefined>();
   const outline = state.outline;
   const targets = useMemo(() => (outline ? moveTargets(outline, state.titles, ids, query) : { sections: [], pages: [], more: 0 }), [outline, state.titles, ids, query]);
