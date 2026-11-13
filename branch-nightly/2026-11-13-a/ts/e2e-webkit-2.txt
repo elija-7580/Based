@@ -1,61 +1,61 @@
-failure c89fddc64f745913d36b2eebb50f674b70b5e07a
-  ✓  130 [webkit] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (11.1s)
-  ✓  132 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (5.9s)
-  ✓  134 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (3.2s)
-  ✓  133 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (5.9s)
-  ✓  135 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (3.7s)
-  ✓  137 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.7s)
-  ✓  136 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (12.3s)
-  ✓  138 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (5.5s)
-  ✓  140 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (5.4s)
-  ✓  139 [webkit] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (6.0s)
-  ✓  142 [webkit] › e2e/scrollbars.spec.ts:41:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (2.2s)
-  ✓  141 [webkit] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (3.2s)
-  ✓  143 [webkit] › e2e/scrollbars.spec.ts:46:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (2.1s)
-  ✓  144 [webkit] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.0s)
-  -  146 [webkit] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
-  ✓  145 [webkit] › e2e/scrollbars.spec.ts:52:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.4s)
-  ✓  147 [webkit] › e2e/scrollbars.spec.ts:58:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.5s)
-
-
-  1) [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: 320
-    Received: 360
-
-      47 |   await page.mouse.wheel(0, 120);
-      48 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
-    > 49 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
-         |                                                         ^
-      50 | });
-      51 |
-        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:49:57
-
-    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: 320
-    Received: 360
-
-      47 |   await page.mouse.wheel(0, 120);
-      48 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
-    > 49 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
-         |                                                         ^
-      50 | });
-      51 |
-        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:49:57
-
-    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
-  18 skipped
-  127 passed (10.1m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+cancelled 192387221a5bdc80e311a425bb02585511e28fb6
+  ✓   29 [webkit] › e2e/overflow.spec.ts:199:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (11.2s)
+  ✓   31 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (5.8s)
+  -   33 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  -   34 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   32 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (11.7s)
+  ✓   35 [webkit] › e2e/peek-resize.spec.ts:28:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (11.5s)
+  ✓   36 [webkit] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (4.0s)
+  ✓   38 [webkit] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (6.1s)
+  ✓   37 [webkit] › e2e/peek-resize.spec.ts:67:1 › Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mit Fokus in der Tabelle (11.5s)
+  ✓   40 [webkit] › e2e/polish.spec.ts:13:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (7.9s)
+  ✓   39 [webkit] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (14.0s)
+  ✓   41 [webkit] › e2e/polish.spec.ts:27:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (4.7s)
+  ✓   43 [webkit] › e2e/polish.spec.ts:38:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek (7.3s)
+  ✓   44 [webkit] › e2e/polish.spec.ts:59:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (3.2s)
+  ✓   42 [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (16.8s)
+  -   46 [webkit] › e2e/replay/record-sample.spec.ts:13:1 › Beispielbündel: tippen, fett, Liste, Auswahl mit der Maus, Einfügen
+  -   47 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung
+  -   48 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung
+  ✓   45 [webkit] › e2e/polish.spec.ts:85:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (7.8s)
+  ✓   50 [webkit] › e2e/polish.spec.ts:120:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (9.8s)
+  ✓   49 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (input): gleicher Endzustand, keine Überdeckung (13.0s)
+  ✓   51 [webkit] › e2e/polish.spec.ts:190:1 › Fokusrahmen und Textauswahl neutral, unabhängig vom Marker (3.3s)
+  ✓   52 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (steps): gleicher Endzustand, keine Überdeckung (4.6s)
+(node:8933) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   53 [webkit] › e2e/report.spec.ts:24:1 › ⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext (11.4s)
+  ✓   54 [webkit] › e2e/schedules-server.spec.ts:39:1 › BSD-243: Hinweis unter Schedules – ohne Server nur bei offener App, mit Server mit Modellzugang auch geschlossen (9.1s)
+  ✓   55 [webkit] › e2e/report.spec.ts:65:1 › Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem (8.9s)
+  ✘   56 [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (6.7s)
+  ✓   57 [webkit] › e2e/report.spec.ts:87:1 › Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht (6.9s)
+  ✘   58 [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (retry #1) (7.1s)
+  ✓   59 [webkit] › e2e/report.spec.ts:122:1 › Entwickler-Ansicht zeigt die letzten Ereignisse live (5.7s)
+  ✓   61 [webkit] › e2e/report.spec.ts:135:1 › Aufzeichnung kostet beim Tippen messbar nichts (5.6s)
+  ✓   62 [webkit] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (4.1s)
+  ✓   60 [webkit] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (14.0s)
+  ✓   63 [webkit] › e2e/settings.spec.ts:34:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (3.6s)
+  ✓   64 [webkit] › e2e/settings-region.spec.ts:41:1 › Workspace-Name in Einstellungen → General (2.8s)
+  ✓   65 [webkit] › e2e/settings.spec.ts:63:1 › Sync-Formular prüft die Adresse, bevor es verbindet (5.7s)
+  ✓   66 [webkit] › e2e/settings-region.spec.ts:53:1 › Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205) (5.4s)
+(node:10142) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   67 [webkit] › e2e/settings.spec.ts:81:1 › General: Zahlen aus dem Workspace, Papierkorb leeren mit Rückfrage (4.9s)
+  ✓   69 [webkit] › e2e/settings.spec.ts:107:1 › Account und Diagnostics zeigen echten Gerätezustand (3.8s)
+  ✓   70 [webkit] › e2e/settings.spec.ts:116:1 › Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token (2.9s)
+  ✓   71 [webkit] › e2e/settings.spec.ts:143:1 › Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen (1.6s)
+  -   72 [webkit] › e2e/settings.spec.ts:163:3 › Screenshot Einstellungen (light)
+  -   73 [webkit] › e2e/settings.spec.ts:163:3 › Screenshot Einstellungen (dark)
+  ✓   68 [webkit] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 (13.7s)
+  ✓   74 [webkit] › e2e/shell-layout.spec.ts:11:1 › Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen (4.7s)
+  ✓   76 [webkit] › e2e/shell-layout.spec.ts:30:1 › Seitenleiste: Breite ziehen (gemerkt), ⌘\ blendet aus und ein (4.9s)
+  ✓   77 [webkit] › e2e/shell-layout.spec.ts:53:1 › „/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten nutzen die volle Breite (9.7s)
+  ✓   78 [webkit] › e2e/shell-layout.spec.ts:74:1 › Fokusrahmen per Tastatur neutral (Token focus-ring, nicht Marker – BSD-367) (1.3s)
+  ✓   75 [webkit] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis (17.8s)
+  ✓   79 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (5.1s)
+  ✓   81 [webkit] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) (9.4s)
+  ✓   80 [webkit] › e2e/shell-parity.spec.ts:70:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (13.9s)
+  ✓   82 [webkit] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (13.8s)
+  ✓   83 [webkit] › e2e/shell-parity.spec.ts:108:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (16.7s)
+  ✓   85 [webkit] › e2e/shell-parity.spec.ts:167:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (5.8s)
+  ✓   84 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (10.3s)
