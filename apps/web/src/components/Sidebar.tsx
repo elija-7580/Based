@@ -181,7 +181,15 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     const live = [...picked].filter((id) => outline.nodes[id] && !outline.trash.some((t) => t.id === id));
     if (live.length !== picked.size) setPicked(new Set(live));
   }, [outline, picked]);
-  const reveal = useMemo(() => rowIndexOf(rows, activeID), [rows, activeID]);
+  // BSD-398: Die aktive Seite wird nur beim Wechsel der Seite in Sicht gerollt (oder sobald ihre Zeile erstmals da
+  // ist) – nicht, wenn sich nur ihr Index verschiebt, weil man oberhalb etwas auf- oder zuklappt. Sonst sprang die
+  // Liste beim Aufklappen zur aktiven Seite.
+  const revealed = useRef<{ id: string | undefined; index: number }>({ id: undefined, index: -1 });
+  const reveal = useMemo(() => {
+    const r = revealed.current;
+    if (r.id !== activeID || r.index < 0) revealed.current = { id: activeID, index: rowIndexOf(rows, activeID) };
+    return revealed.current.index;
+  }, [rows, activeID]);
 
   const toggle = useCallback((id: string) => setExp((s) => (s.has(id) ? s.delete(id) : s.add(id))), [setExp]);
   const toggleSection = useCallback((id: string) => {
