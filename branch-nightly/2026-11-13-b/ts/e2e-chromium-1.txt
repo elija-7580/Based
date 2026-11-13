@@ -1,61 +1,61 @@
-success 75a2a8d08984b87fbd2c99f28eb943875c3354a0
+failure 83751afcb833ae6ddf560c7ce97f4b24a36d205a
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:191:71
 
-  1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
 
-    Error: expect(received).toEqual(expected) // deep equality
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
-    - Expected  - 8
-    + Received  + 1
+    Error: expect(locator).toBeFocused() failed
 
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
+    Timeout: 5000ms
+    Error: element(s) not found
 
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      233 |   // links vom Griff, unten in der Zeile
-      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      236 | });
-      237 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
-
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
-
-  2) [chromium] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) 
-
-    Test timeout of 120000ms exceeded.
-
-    Error: locator.hover: Target page, context or browser has been closed
     Call log:
-      - waiting for getByRole('menuitem', { name: 'Turn into' })
-        - locator resolved to <div id="_r_1a_" tabindex="-1" role="menuitem" aria-haspopup="menu" aria-expanded="false" class="bn-ak-menu-item bn-menu-item">…</div>
-      - attempting hover action
-        - waiting for element to be visible and stable
-      - element was detached from the DOM, retrying
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
 
 
-      555 |
-      556 |   await blockMenu(page, "Gamma becomes a page");
-    > 557 |   await page.getByRole("menuitem", { name: "Turn into" }).hover();
-          |                                                           ^
-      558 |   await page.getByRole("menuitem", { name: "Page", exact: true }).click();
-      559 |   await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
-      560 |   await expect(editor(page).getByText("Gamma becomes a page")).toHaveCount(1);
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:557:59
+      169 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      170 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 171 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      172 |   };
+      173 |   await openMenu();
+      174 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
 
-    Error Context: test-results/editor-parity-Blockmenü-Mo-3d38a-into-→-Page-BSD-207-Teil-2--chromium/error-context.md
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
 
-  2 flaky
+  3) [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ─────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('menuitem', { name: 'Copy link to block' })
+
+
+      27 |     await target.locator(".bn-block-content").hover();
+      28 |     await page.locator(".bn-side-menu [draggable=true]").first().click();
+    > 29 |     await page.getByRole("menuitem", { name: "Copy link to block" }).click();
+         |                                                                      ^
+      30 |     const copied = await page.evaluate(() => navigator.clipboard.readText());
+      31 |     expect(copied).toContain(`#page-${pageID}/${blockID}`);
+      32 |   }
+        at /home/runner/work/Based/Based/apps/web/e2e/block-link.spec.ts:29:70
+
+    Error Context: test-results/block-link-Link-zu-einem-Block-kopieren-und-öffnen-chromium/error-context.md
+
+  2 failed
     [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-    [chromium] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) 
+    [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+  1 flaky
+    [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ──────────────
   8 skipped
-  138 passed (5.8m)
+  137 passed (4.7m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
