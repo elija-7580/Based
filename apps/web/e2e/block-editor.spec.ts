@@ -223,7 +223,7 @@ test("Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Übers
   await page.keyboard.type("/heading");
   const menu = page.getByTestId("slash-menu");
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("option")).toHaveCount(7);
+  await expect(menu.getByRole("option")).toHaveCount(8); // Heading 1–3, Toggle heading 1–3, Section, Table of contents
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(menu).toHaveCount(0);

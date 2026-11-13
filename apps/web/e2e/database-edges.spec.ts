@@ -80,9 +80,9 @@ test("Inline-Datenbank: Tab und erste Spalte am Seitentext", async ({ page, brow
     r.selectNodeContents(el);
     return r.getBoundingClientRect().left;
   });
-  const tab = await textEdge(page, ".dbui-root.inline .dbui-tab");
+  // Nur eine Ansicht: inline kein einzelner Tab „Table“ (Entscheidung 14. 11., wie Notion).
+  await expect(page.locator(".dbui-root.inline .dbui-tab")).toHaveCount(0);
   const cell = await textEdge(page, ".dbui-root.inline .dbui-table .dbui-cell.title");
-  expect(Math.abs(tab - text), `Tab ${tab} / Text ${text}`).toBeLessThanOrEqual(1);
   expect(Math.abs(cell - text), `Zelle ${cell} / Text ${text}`).toBeLessThanOrEqual(1);
   if (browserName === "chromium") await shots(page, "inline");
 });

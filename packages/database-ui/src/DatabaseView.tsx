@@ -85,12 +85,14 @@ export interface DatabaseViewProps {
   peek?: PeekOptions | undefined;
 }
 
-function Tabs({ views, active, onSelect, blockID }: { views: View[]; active: View; onSelect: (id: string) => void; blockID: string }) {
+function Tabs({ views, active, onSelect, blockID, inline }: { views: View[]; active: View; onSelect: (id: string) => void; blockID: string; inline?: boolean | undefined }) {
   const { store, locked } = useDB();
   const [add, setAdd] = useState<Anchor | null>(null);
+  // Inline mit nur einer Ansicht: kein einzelner Tab („Table“) – wie Notion; „+“ bleibt beim Überfahren erreichbar.
+  const single = inline && views.length === 1;
   return (
-    <div className="dbui-tabs" role="tablist" aria-label="Views">
-      {views.map((v) => (
+    <div className={"dbui-tabs" + (single ? " single" : "")} role="tablist" aria-label="Views">
+      {!single && views.map((v) => (
         <button key={v.id} type="button" role="tab" className="dbui-tab" aria-selected={v.id === active.id} onClick={() => onSelect(v.id)} data-view-id={v.id}>
           <Icon name={VIEW_ICONS[v.type] ?? "table"} size={14} />{v.name}
         </button>
@@ -310,7 +312,7 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions, in
       <div className="dbui-head">
         {showTitle && <Title />}
         <div className="dbui-toolbar">
-          <Tabs views={views} active={active} onSelect={select} blockID={blockID} />
+          <Tabs views={views} active={active} onSelect={select} blockID={blockID} inline={inline} />
           <Toolbar view={active} search={search} setSearch={setSearch} onNew={onNew} />
           {inline && outerOpen ? (
             <button type="button" className="dbui-icon-btn dbui-open-full" aria-label="Open as full page" title="Open as full page" onClick={() => outerOpen(blockID)}>

@@ -1,6 +1,6 @@
 // @based/editor – Seiten-Editor auf BlockNote-Kern (MPL-2.0) + Yjs (BSD-154). Keine @blocknote/xl-* (ADR 0011).
 export { PageEditor, copyAndSync, insertInlineEquation, insertMeeting, insertLinkedView, insertSyncedCopy, lastCopiedSync } from "./ui/PageEditor.js";
-export { BlockEditor, dropTarget } from "./blocks/BlockEditor.js";
+export { BlockEditor, dropTarget, sectionColor } from "./blocks/BlockEditor.js";
 export { EditorController } from "./blocks/controller.js";
 export { SLASH_ITEMS, filterSlash } from "./blocks/slash.js";
 export type { MeetingHost, MeetingHostState, MeetingPlayback } from "./ui/meetingHost.js";

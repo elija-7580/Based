@@ -401,7 +401,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
    Kästchen-Spalte ein (48 + 8), die – wie der Block-Griff im Editor – links in den Rand hängt. */
 .page.page-database { padding-inline-start: calc(var(--space-7) + var(--space-7) + var(--space-2) + var(--space-2)); }
 .page.page-database .dbui-root:not(.inline) .dbui-head { padding-inline: 0; }
-.page.page-database .dbui-root:not(.inline) .dbui-tabs { margin-left: calc(-1 * var(--space-3)); }
+.page.page-database .dbui-root:not(.inline) .dbui-tabs { margin-left: calc(-1 * var(--space-2)); }
 .page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2) + var(--space-2))); }
 .page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin-left: 0; }
 .page.page-database .page-grid { max-width: none; grid-template-columns: minmax(0, 1fr); }

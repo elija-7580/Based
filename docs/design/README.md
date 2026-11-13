@@ -12,7 +12,8 @@ das teilbare Brand-Book liegt als Design-System-Artefakt „Based“ in Claude, 
    geschrieben oder geändert.* Nie Deko, nie Button-Farbe, nie Status ohne Agentenbezug.
 3. **Charakter auf Wunsch.** Stärke steckt im Theme, nicht im Standard: *Stil → Bold* schaltet Schibsted
    Grotesk + Literata und kräftige Überschriften ein. Der Calm-Modus macht das Signal grau.
-4. **Daten sehen aus wie Daten.** Monospace nur für IDs, Zeiten, Kürzel, Zahlen, Code und Formeln.
+4. **Daten sehen aus wie Daten.** Feste Ziffern (`tabular-nums`) für Zahlen, Daten und Zeiten in der UI-Schrift;
+   Monospace nur noch für IDs und Code (Entscheidung 14. 11. 2026).
 5. **Personalisierbar.** Theme (Hell/Dunkel), Stil (Default/Bold), Marker (Butter/Mint/Sky/Rose), Dichte
    (Comfortable/Compact), Calm-Modus und Agent-Details sind Einstellungen. Alle Werte kommen aus Tokens
    (ADR 0009).
@@ -95,7 +96,13 @@ Web-Ansicht — offene Architekturfrage.
   Plan ins Ziel fliegt. Agent-Details (Modell, Laufzeit) nur mit „Show agent details“. Agent- und Projekt-Detail
   als eigene Seiten (`#agent-<id>`, `#project-<id>`).
 - **Seite:** Breadcrumb, Titel, Metazeile, Randspalte für Agent-Notizen, Text max. 720 px.
-- **Datenbank:** Ansichten als Tabs (Table/Board/…), Filter-Chips, Tabelle mit Haarlinien, Mono für IDs/Zeiten.
+- **Datenbank (14. 11. 2026, Notion-Aufbau):** Ansichten als Pillen mit Icon (aktiv = `selected`-Fläche); inline mit nur
+  einer Ansicht kein einzelner Tab („Table“), leerer Titel unsichtbar. Werkzeugleiste inline gedimmt, beim Überfahren
+  oder mit Fokus voll. „New“ neutral in Tinte (keine Akzentfarbe). Tabelle mit Haarlinien, Spaltentyp-Icon im Kopf,
+  Fußzeile ohne Linie – Berechnungen erst beim Überfahren. Daten in der UI-Schrift, Mono nur für IDs.
+- **Abschnitt („Section“):** Toggle-Überschrift mit Hintergrundfarbe = Fläche (Radius 14) um Überschrift und Inhalt,
+  Farbe aus den Block-Tokens, Linien darin leiser; eingebettete Datenbanken liegen ohne eigene Fläche darin. Slash
+  „Section“ legt eine graue an, die Farbe kommt über Blockmenü → Color.
 - **Graph:** Projekte gefüllt in Tinte, Seiten als Ringe, Agent-Änderungen im Marker.
 - **Einstellungen → Darstellung:** Theme, Stil, Marker, Dichte, Calm, Agent-Details.
 - **Icons:** Linien auf 24-px-Raster, 2 px, runde Enden; gefüllt im aktiven Zustand. Kein Emoji, kein „Sparkle“ für KI.

@@ -43,6 +43,7 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "heading1", label: "Toggle heading 1", group: "Basic blocks", icon: "▸H1", keywords: "toggle collapse h1", props: { toggleable: true, isOpen: true } },
   { type: "heading2", label: "Toggle heading 2", group: "Basic blocks", icon: "▸H2", keywords: "toggle collapse h2", props: { toggleable: true, isOpen: true } },
   { type: "heading3", label: "Toggle heading 3", group: "Basic blocks", icon: "▸H3", keywords: "toggle collapse h3", props: { toggleable: true, isOpen: true } },
+  { type: "heading1", label: "Section", group: "Basic blocks", icon: "▣", keywords: "section colored toggle area group bereich abschnitt", props: { toggleable: true, isOpen: true, color: "grayBackground" } },
   { type: "callout", label: "Callout", group: "Basic blocks", icon: "💡", keywords: "note info tip" },
   { type: "code", label: "Code", group: "Basic blocks", icon: "</>", keywords: "snippet pre", hint: "```" },
   { type: "divider", label: "Divider", group: "Basic blocks", icon: "—", keywords: "hr line separator", hint: "---" },
