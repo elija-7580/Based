@@ -17,15 +17,30 @@ export const COLLAB_META_ORIGIN = "origin";
 /** Dokumentname auf dem Server. */
 export const collabDocName = (rootID: string) => `page:${rootID}`;
 
+/**
+ * ADR 0016 (E7): Präsenz über die Awareness des Providers (y-protocols): wer gerade wo in der Seite ist. Nur die
+ * Teile, die der Editor braucht, damit Tests ohne Provider auskommen.
+ */
+export interface PresenceChannel {
+  readonly clientID: number;
+  getStates(): Map<number, Record<string, unknown>>;
+  setLocalStateField(field: string, value: unknown): void;
+  on(event: "change", fn: () => void): void;
+  off(event: "change", fn: () => void): void;
+}
+
 /** Eine offene Verbindung eines Y.Doc mit dem Server. */
 export interface CollabConnection {
   /** Erfüllt nach dem ersten vollständigen Abgleich. */
   synced: Promise<void>;
   destroy(): void;
+  /** Präsenz (Awareness), wenn der Provider sie hat. */
+  presence?: PresenceChannel | undefined;
 }
 
 export interface CollabHandle {
   readonly doc: Y.Doc;
+  readonly presence?: PresenceChannel | undefined;
   release(): void;
 }
 
@@ -39,6 +54,8 @@ export interface CollabBinderOptions {
   connect: (name: string, doc: Y.Doc) => CollabConnection | undefined;
   /** Gespeicherte Y-Zustände (dieselbe Ablage wie der Editor). */
   docStore: YDocStore;
+  /** ADR 0016 (E7): Dokumentname je Wurzel (Standard `page:<id>`; der neue Editor nutzt `text:<id>`). */
+  docName?: (rootID: string) => string;
   /** Nur diese Wurzeln (der Server kennt nur Seiten). Standard: alle. */
   accepts?: (rootID: string) => boolean;
   /** So lange auf den ersten Abgleich warten, wenn es keinen Stand vom Server gibt (Standard 4000 ms). */
@@ -82,7 +99,7 @@ export class CollabBinder implements CollabSource {
       return this.handle(rootID, have);
     }
     if (this.opts.accepts && !this.opts.accepts(rootID)) return undefined;
-    const name = collabDocName(rootID);
+    const name = (this.opts.docName ?? collabDocName)(rootID);
     try {
       await this.opts.docStore.prepare?.(rootID);
     } catch {
@@ -142,6 +159,7 @@ export class CollabBinder implements CollabSource {
     let released = false;
     return {
       doc: entry.doc,
+      presence: entry.conn.presence,
       release: () => {
         if (released) return;
         released = true;

@@ -5,7 +5,7 @@
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { BlockEditor, PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { BlockEditor, PageEditor, textDocName, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { newEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
@@ -19,7 +19,7 @@ import { ShellPageDirectory } from "./shell/pageDirectory.js";
 import { slots, type PageEditorProps } from "./slots.js";
 import type { StoreClient } from "./worker/client.js";
 import { WorkerYDocStore } from "./worker/ydocStore.js";
-import { createCollab, pageCollab } from "./collab.js";
+import { createCollab, pageCollab, prefixedDocStore } from "./collab.js";
 import { syncConfig } from "./shell/storage.js";
 import type { CollabBinder } from "@based/editor";
 
@@ -33,6 +33,8 @@ export const meetingHost = (): WebMeetingHost | undefined => meeting;
 export const editorClient = (): StoreClient | undefined => shellClient;
 let docStore: WorkerYDocStore | undefined;
 let collab: CollabBinder | undefined;
+/** ADR 0016 (E7): Echtzeit-Text des neuen Editors (Dokumente `text:<seite>`, ein Y.Text je Block). */
+let textCollab: CollabBinder | undefined;
 
 /** Der Editor-Steckplatz braucht den Store-Client (Seitensuche, Backlinks). Einmal beim Start setzen (main.tsx). */
 export function connectEditor(client: StoreClient) {
@@ -42,6 +44,7 @@ export function connectEditor(client: StoreClient) {
   docStore = new WorkerYDocStore(client);
   // BSD-252: Seiten mit noch nicht gepushten Änderungen erst nach dem Push mit /collab öffnen (kein Verlust).
   collab = createCollab(docStore, () => syncConfig.get(), (rootID) => client.pendingLocal(rootID));
+  textCollab = createCollab(prefixedDocStore(docStore, "text:"), () => syncConfig.get(), (rootID) => client.pendingLocal(rootID), textDocName);
 }
 
 function useRootTheme(): "light" | "dark" {
@@ -81,7 +84,11 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   } : undefined), [client, pageID]);
   // BSD-220: Echtzeit-Text nur, wenn eingeschaltet (beim Öffnen der Seite entschieden).
   const collabOn = syncConfig.get()?.collab === true;
-  const pageCollabSource = useMemo(() => (collab && collabOn ? pageCollab(collab, pageID, () => true /* BSD-252: verschachtelte Wurzeln sind nur Synced-Block-Originale */) : undefined), [pageID, collabOn]);
+  const pageCollabSource = useMemo(() => {
+    // ADR 0016 (E7): der neue Editor hat sein eigenes Dokument je Seite (Synced Blocks laufen dort über Records).
+    if (newEditor) return textCollab && collabOn ? pageCollab(textCollab, pageID, () => false) : undefined;
+    return collab && collabOn ? pageCollab(collab, pageID, () => true /* BSD-252: verschachtelte Wurzeln sind nur Synced-Block-Originale */) : undefined;
+  }, [pageID, collabOn, newEditor]);
   // BSD-225: „Ask AI“ über die Chat-Engine (Modell aus Einstellungen → Agents & AI; in Tests die Skript-Engine).
   // AI-Schalter (shell/ai.ts): ohne AI kein „Ask AI“ (Slash, Leertaste, Formatleiste).
   const aiOn = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);

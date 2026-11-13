@@ -223,7 +223,7 @@ test("Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Übers
   await page.keyboard.type("/heading");
   const menu = page.getByTestId("slash-menu");
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("option")).toHaveCount(4);
+  await expect(menu.getByRole("option")).toHaveCount(7);
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(menu).toHaveCount(0);
@@ -315,6 +315,122 @@ test("@ erwähnt eine Seite", async ({ page }) => {
   await expect(fields(page).first()).toHaveText("see");
   await page.keyboard.type("!");
   await expect(fields(page).first()).toHaveText("see !");
+});
+
+test("Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel", async ({ page }) => {
+  await newPage(page);
+  const title = page.getByLabel("Page title");
+  await title.click();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await expect(fields(page).first()).toBeFocused();
+  await page.keyboard.type("First line");
+  await page.keyboard.press("ArrowUp");
+  await expect(title).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(fields(page).first()).toBeFocused();
+});
+
+test("Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per @", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("Colored");
+  await page.keyboard.press("Escape");
+  await editor(page).locator(".bx2-block").first().locator(".bx2-grip").click();
+  await page.getByTestId("block-menu").getByRole("menuitem", { name: "Color" }).click();
+  await page.getByTestId("block-menu").getByRole("menuitemradio", { name: "Red background" }).click();
+  await expect(editor(page).locator(".bx2-block").first().locator(".bx2-row")).toHaveClass(/bx2-color-redBackground/);
+
+  // Code-Sprache
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("```");
+  await page.keyboard.type("print(1)");
+  await editor(page).locator(".bx2-code-lang-btn").click();
+  await page.getByLabel("Search languages").fill("pyth");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).locator(".bx2-code-lang-btn")).toHaveText("Python");
+
+  // Callout-Icon
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/callout");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Note");
+  await editor(page).getByRole("button", { name: "Change icon" }).click();
+  await page.getByRole("dialog", { name: "Choose an icon" }).getByRole("textbox").fill("rocket");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).getByRole("button", { name: "Change icon" })).toHaveText("🚀");
+
+  // Tabelle
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/simple table");
+  await page.keyboard.press("Enter");
+  const cell = editor(page).getByRole("textbox", { name: "Row 1, column 1" });
+  await cell.click();
+  await page.keyboard.type("Name");
+  await page.keyboard.press("Enter");
+  await expect(cell).toHaveText("Name");
+  await editor(page).getByRole("button", { name: "Add row" }).click();
+  await expect(editor(page).locator(".bx2-table tr")).toHaveCount(3);
+  // Rahmen sichtbar (Farbtoken --line darf nicht von einer Block-Variable überdeckt sein)
+  expect(await editor(page).locator(".bx2-table td").first().evaluate((e) => getComputedStyle(e).borderTopWidth)).toBe("1px");
+
+  // Datum
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("Due @tod");
+  await expect(page.getByTestId("mention-menu").getByRole("option", { name: /Today/ })).toBeVisible();
+  await page.getByTestId("mention-menu").getByRole("option", { name: /Today/ }).click();
+  await expect(fields(page).last().locator(".bx2-mention")).toHaveText("@Today");
+  await page.keyboard.press("Escape");
+  await page.mouse.move(0, 0);
+  if (test.info().project.name === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-block-editor-embeds-1280x820-light.png" });
+});
+
+test("⌘⌥-Kürzel, Textfarbe, Spalten per Slash, Toggle-Überschrift, Syntax-Hervorhebung", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("Shortcut");
+  await page.keyboard.press("Meta+Alt+Digit2");
+  await expect(editor(page).locator(".bx2-block").first()).toHaveAttribute("data-type", "heading2");
+  await page.keyboard.press("Meta+Alt+Digit0");
+  await expect(editor(page).locator(".bx2-block").first()).toHaveAttribute("data-type", "text");
+
+  // Textfarbe über die Formatleiste
+  await page.keyboard.press("Shift+Home");
+  await expect(page.getByTestId("format-bar")).toBeVisible();
+  await page.getByTestId("format-bar").getByRole("button", { name: "Text color" }).click();
+  await page.getByTestId("format-bar").getByRole("menuitem", { name: "Blue", exact: true }).click();
+  await expect(fields(page).first().locator(".bx2-color-blue")).toHaveText("Shortcut");
+
+  // 3 Spalten
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/3 col");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).locator(".bx2-column")).toHaveCount(3);
+  await page.keyboard.type("left");
+  await expect(editor(page).locator(".bx2-column").first().locator("[data-editable-id]")).toHaveText("left");
+
+  // Toggle-Überschrift zu- und aufklappen
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/toggle heading 2");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Section");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Inside");
+  const head = editor(page).locator('.bx2-block[data-type="heading2"]').last();
+  await expect(head.locator(".bx2-children [data-editable-id]")).toHaveText("Inside");
+  await head.locator(":scope > .bx2-row .bx2-toggle").click();
+  await expect(head.locator(".bx2-children")).toHaveCount(0);
+  await page.keyboard.press("Meta+Alt+KeyT");
+  await expect(head.locator(".bx2-children [data-editable-id]")).toHaveText("Inside");
+
+  // Syntax-Hervorhebung
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("```");
+  await page.keyboard.type("const x = 1 // note");
+  await editor(page).locator(".bx2-code-lang-btn").last().click();
+  await page.getByLabel("Search languages").fill("javascript");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (CSS as unknown as { highlights: Map<string, unknown> }).highlights.has("bx2-syn-keyword"))).toBe(true);
 });
 
 test("Spaltenbreite ziehen", async ({ page }) => {
