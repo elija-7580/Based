@@ -227,9 +227,15 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
     if (el) setEditing({ rowID, col, anchor: el, ...(initialText !== undefined ? { initialText } : {}) });
   }, [store, props, locked, revealCol]);
 
+  // BSD-372: Ein Klick auf eine Zelle fokussiert die Tabelle selbst. Der Fokus-Handler darf dann nicht „erste Zelle“
+  // setzen – sein `active` ist noch der alte Stand (nach Escape leer), und die Auswahl sprang an den Anfang statt auf
+  // die Zeile unter der Maus.
+  const focusByPointer = useRef(false);
   const onCell = useCallback((row: Block, col: number, el: HTMLElement) => {
     setActive({ rowID: row.id, col });
+    focusByPointer.current = true;
     gridRef.current?.focus({ preventScroll: true });
+    focusByPointer.current = false;
     const p = props[col];
     if (p && p.type !== "checkbox" && isEditable(p.type) && !locked) setEditing({ rowID: row.id, col, anchor: el });
   }, [props, locked]);
@@ -363,7 +369,15 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
     <div className="dbui-scroll" ref={scrollRef} data-testid="table-scroll" onKeyDown={(e) => { if (e.key === "Escape" && selected.size && !editing) { setSelected(new Set()); } }}>
       {selected.size > 0 && <SelectionBar ids={[...selected]} onClear={() => setSelected(new Set())} />}
       <div className="dbui-table" role="grid" aria-label={view.name} aria-rowcount={result.rows.length + 1} aria-colcount={props.length}
-        tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} onFocus={(e) => { if (e.target === e.currentTarget && !active && !editing) setActive(firstCell()); }} style={{ width: total, height: virtualizer.getTotalSize() + ROW_HEIGHT }}>
+        tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} onFocus={(e) => { if (e.target === e.currentTarget && !focusByPointer.current && !editing) setActive((a) => a ?? firstCell()); }}
+        onMouseDown={(e) => {
+          // BSD-372: Nativer Fokus beim Drücken würde die (sehr hohe) Tabelle „in Sicht“ rollen – WebKit verschiebt
+          // dabei den Inhalt zwischen mousedown und click, der Klick traf die Zeile darüber. Fokus ohne Rollen.
+          const t = e.target as HTMLElement;
+          if (e.button !== 0 || t.closest("input, textarea, select, button, a, [contenteditable]")) return;
+          e.preventDefault();
+          if (document.activeElement !== e.currentTarget) { focusByPointer.current = true; e.currentTarget.focus({ preventScroll: true }); focusByPointer.current = false; }
+        }} style={{ width: total, height: virtualizer.getTotalSize() + ROW_HEIGHT }}>
         <div className="dbui-thead" role="row" style={{ width: total }}>
           <div className="dbui-gutter">
             {!locked && rowOrder.length > 0 && (

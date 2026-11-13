@@ -127,8 +127,12 @@ test("Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl", async ({ page 
   for (const name of ["Turn into", "Color", "Duplicate", "Move to", "Delete", "Copy as Markdown", "Copy and sync"]) {
     await expect(menu.getByRole("menuitem", { name })).toBeVisible();
   }
-  // jeder Eintrag hat ein Icon, das Menü bleibt im Fenster
-  expect(await menu.locator("[role=menuitem] .bx-menu-icon").count()).toBeGreaterThanOrEqual(7);
+  // jeder Eintrag hat genau ein Icon (aus dem Icon-Satz der App wie im Seitenmenü „…“), das Menü bleibt im Fenster
+  expect(await menu.locator("[role=menuitem] :is(.bx-menu-icon, .nf-glyph)").count()).toBeGreaterThanOrEqual(7);
+  for (const item of await menu.getByRole("menuitem").all()) expect(await item.locator(":is(.bx-menu-icon, .nf-glyph)").count()).toBe(1);
+  // Icons stehen in einer Spalte links, auch bei Einträgen ohne Kürzel (vorher rechtsbündig nach dem Merge)
+  const iconX = async (name: string) => (await menu.getByRole("menuitem", { name }).locator(":is(.bx-menu-icon, .nf-glyph)").boundingBox())!.x;
+  for (const name of ["Copy as Markdown", "Copy and sync", "Turn into"]) expect(Math.abs((await iconX(name)) - (await iconX("Duplicate"))), name).toBeLessThanOrEqual(1);
   const box = (await menu.boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.y + box.height).toBeLessThanOrEqual(820);
