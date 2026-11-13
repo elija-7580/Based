@@ -174,6 +174,11 @@ export class AssetSync {
     this.metaStore.setMeta(ASSET_QUEUE_KEY, this.queue.length > 0 ? JSON.stringify(this.queue) : undefined);
   }
 
+  /** BSD-368: Ist ein Server eingestellt? Ohne Server wartet die Warteschlange still (nichts „lädt hoch“). */
+  get configured(): boolean {
+    return this.server !== undefined;
+  }
+
   /** Hashes in der Warteschlange (Tests, Diagnose). */
   get queued(): readonly QueuedUpload[] {
     return this.queue;

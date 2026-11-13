@@ -23,7 +23,21 @@ export const diagnosticsLog = new DiagnosticsLog();
 
 // Start-Marken: Wo beim Start die Zeit bleibt. Ein Hänger nennt die letzte Marke, damit ein Bericht vom Mac zeigt,
 // in welchem Abschnitt der Hauptthread stand (Feedback 11. 11.: „main thread blocked for 26485 ms“ ohne Ort).
-let phase = "page load";
+let phase = "boot phase page load";
+
+/**
+ * BSD-368: Was gerade läuft (nach dem Start: die Ansicht, z. B. `route page`). Steht in Hänger-Meldungen und im
+ * Herzschlag, damit ein Bericht nach einem Hänger oder Absturz zeigt, wo. Nur feste Namen, keine Nutzerinhalte.
+ */
+export function noteActivity(name: string) {
+  phase = name;
+}
+
+/** JS-Speicher in MB, wo der Browser ihn nennt (Chromium, Tauri unter Windows); WebKit: undefined. */
+export function heapMB(perf: Performance | undefined = globalThis.performance): number | undefined {
+  const used = (perf as (Performance & { memory?: { usedJSHeapSize?: number } }) | undefined)?.memory?.usedJSHeapSize;
+  return typeof used === "number" && used > 0 ? Math.round(used / 1048576) : undefined;
+}
 const marked = new Set<string>();
 const sinceLoad = () => Math.round(globalThis.performance?.now?.() ?? 0);
 
@@ -31,7 +45,7 @@ const sinceLoad = () => Math.round(globalThis.performance?.now?.() ?? 0);
 export function bootMark(name: string, detail?: string) {
   if (marked.has(name)) return;
   marked.add(name);
-  phase = name;
+  phase = `boot phase ${name}`;
   diagnosticsLog.add("info", `boot: ${name} +${sinceLoad()} ms${detail ? ` (${detail})` : ""}`);
 }
 
@@ -74,14 +88,17 @@ export function installDiagnostics(win: Window & typeof globalThis = globalThis 
       onStall: (ms) => {
         stalls += 1;
         const doc = win.document;
-        diagnosticsLog.add("warning", `main thread blocked for ${Math.round(ms)} ms (after “${phase}”, window ${doc.hasFocus() ? "focused" : "not focused"})`);
+        diagnosticsLog.add("warning", `main thread blocked for ${Math.round(ms)} ms (during ${phase}, window ${doc.hasFocus() ? "focused" : "not focused"})`);
       },
     });
   };
   watch();
   win.document.addEventListener("visibilitychange", watch);
 
-  const beat = () => heartbeat(store, Date.now(), { stalls, log: diagnosticsLog.all.slice(-50) });
+  const beat = () => {
+    const heap = heapMB();
+    heartbeat(store, Date.now(), { stalls, log: diagnosticsLog.all.slice(-50), activity: phase, ...(heap !== undefined ? { heapMB: heap } : {}) });
+  };
   win.setInterval(beat, 10_000);
   win.addEventListener("pagehide", () => endSession(store, Date.now(), diagnosticsLog.all.slice(-50)));
   // WKWebView (Desktop-Hülle) meldet pagehide beim Beenden der App nicht zuverlässig; beforeunload zusätzlich.

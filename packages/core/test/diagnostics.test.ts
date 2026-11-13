@@ -51,6 +51,23 @@ describe("Diagnose (BSD-227)", () => {
     expect(beginSession(s, 4000)!.clean).toBe(false);
   });
 
+  it("BSD-368: Herzschlag merkt letzte Aktivität und Speicher; Hinweis und Bericht nennen sie", () => {
+    const s = memory();
+    beginSession(s, 1000);
+    heartbeat(s, 2000, { activity: "route page", heapMB: 900 });
+    heartbeat(s, 3000, { activity: "route database", heapMB: 640 });
+    const prev = beginSession(s, 9000)!;
+    expect(prev).toMatchObject({ activity: "route database", heapMB: 640, peakHeapMB: 900 });
+    expect(previousSessionNotice(prev)).toMatch(/last activity: route database, memory 640 MB \(peak 900 MB\)/);
+    expect(buildReport({}, prev, [], 9000)).toContain("last activity: route database, memory 640 MB (peak 900 MB)");
+    // Neue Sitzung beginnt ohne die alten Werte.
+    expect(beginSession(s, 10_000)!.activity).toBeUndefined();
+  });
+
+  it("BSD-368: Phasennamen ohne Anführungszeichen überleben das Schwärzen", () => {
+    expect(redact("main thread blocked for 12700 ms (after boot phase store answered, window focused)")).toContain("store answered");
+  });
+
   it("kaputte Marke im Speicher wird ignoriert", () => {
     const s = memory();
     s.data.set("based.diagnostics.session", "{kaputt");

@@ -146,7 +146,9 @@ describe("Dateien über den Store-Worker", () => {
     await a.client.init({});
     const info = await a.client.assetPut("lokal.png", png(300).buffer);
     expect((await a.client.assetGet(info.id)).ok).toBe(true);
-    expect(a.host.status().assets).toMatchObject({ uploads: 1 });
+    // BSD-368: ohne Server keine Anzeige „uploading“ – vorgemerkt bleibt die Datei trotzdem.
+    expect(a.host.status().assets).toBeUndefined();
+    expect(a.host.assets!.queued.map((q) => q.hash)).toEqual([info.id]);
     expect(server.state.puts).toBe(0);
     await a.client.setSync(sync);
     await expect.poll(() => server.blobs.has(info.id)).toBe(true);
