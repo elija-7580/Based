@@ -25,7 +25,7 @@ export function ShareButton({ pageID, title, onNavigate }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className="btn ghost" aria-haspopup="dialog" onClick={() => setOpen(true)}>Share</button>
+      <BasedButton label="Share" variant="ghost" size="sm" onClick={() => setOpen(true)} />
       {open ? <SharePanel pageID={pageID} title={title} onNavigate={onNavigate} onClose={() => setOpen(false)} /> : null}
     </>
   );

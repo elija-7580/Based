@@ -2,6 +2,7 @@
 // links die gewählte Version als Lese-Ansicht, rechts die Versionen nach Tagen, unten „Restore“. Wiederherstellen
 // verschiebt die aktuelle Fassung in eine Version (nichts geht verloren) und ist ein Undo-Schritt.
 import { canonicalStringify, MemoryPersistence, plainText, WorkspaceStore, type Block, type HistoryVersion } from "@based/core";
+import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons.js";
 import type { StoreClient } from "../worker/client.js";
@@ -136,7 +137,7 @@ export function VersionHistory({ client, pageID, current, onClose, onRestored }:
       <div role="dialog" aria-modal="true" aria-label="Version history" className="vh" data-testid="version-history">
         <section className="vh-main">
           <header className="vh-head">
-            <button type="button" className="icon-btn ghost" aria-label="Close" title="Close (Esc)" onClick={onClose}><Icon name="close" size={18} /></button>
+            <BasedIconButton label="Close" tooltip="Close (Esc)" icon={<Icon name="close" size={18} />} onClick={onClose} />
             <strong className="vh-when">{version ? `${dayLabel(when(version))}, ${time(when(version))}` : "Version history"}</strong>
             {isLatest ? <span className="t-desc">Latest</span> : null}
             <span className="spacer" />
@@ -190,15 +191,15 @@ export function VersionHistory({ client, pageID, current, onClose, onRestored }:
                 <strong>Restore this version?</strong>
                 <p className="t-desc">The page goes back to how it was. The current state is kept as a version, and Undo reverts the restore.</p>
                 <div className="vh-actions">
-                  <button type="button" className="btn ghost" onClick={() => setConfirm(false)}>Cancel</button>
-                  <button type="button" className="btn primary" disabled={busy} onClick={() => void restore()}>Restore</button>
+                  <BasedButton label="Cancel" variant="ghost" onClick={() => setConfirm(false)} />
+                  <BasedButton label="Restore" variant="primary" busy={busy} onClick={() => void restore()} />
                 </div>
               </div>
             ) : (
               <div className="vh-actions">
                 {list?.stats ? <span className="t-desc" title="All pages. Unchanged blocks are stored once and shared between versions.">{list.stats.versions} {list.stats.versions === 1 ? "version" : "versions"}</span> : null}
                 <span className="spacer" />
-                <button type="button" className="btn primary" disabled={!version || (isLatest && changed === 0) || Boolean(blocks?.missing.length)} onClick={() => setConfirm(true)}>Restore</button>
+                <BasedButton label="Restore" variant="primary" disabled={!version || (isLatest && changed === 0) || Boolean(blocks?.missing.length)} onClick={() => setConfirm(true)} />
               </div>
             )}
           </footer>

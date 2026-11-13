@@ -70,3 +70,25 @@ input::-webkit-contacts-auto-fill-button, input::-webkit-credentials-auto-fill-b
 .nf-field { font-variant-numeric: tabular-nums; }
 
 @media (prefers-reduced-motion: reduce) { .nf-layer, .nf-tip { animation: none; } }
+
+/* BSD-359: Kästchen und Optionsfelder in Based-Optik statt der Zeichnung von WebKit/Chromium – Rahmen control-border,
+   gewählt gefüllt in Tinte mit Häkchen bzw. Punkt in button-ink, Fokus im neutralen Fokusrahmen. Rolle, Tastatur
+   (Leertaste) und Formularverhalten bleiben die des echten <input>. :where() hält die Spezifität bei 0, damit
+   Bausteine (Größe, Sichtbarkeit) weiter gewinnen. */
+:where([data-native-free]) :where(input[type="checkbox"], input[type="radio"]) {
+  -webkit-appearance: none; appearance: none; box-sizing: border-box; flex: none; margin: 0; padding: 0;
+  width: var(--icon-sm); height: var(--icon-sm); border: 1px solid var(--control-border); border-radius: var(--radius-xs);
+  background: var(--bg); color: var(--button-ink); display: inline-grid; place-content: center; vertical-align: middle; cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+:where([data-native-free]) :where(input[type="radio"]) { border-radius: var(--radius-pill); }
+:where([data-native-free]) :where(input[type="checkbox"], input[type="radio"]):hover { border-color: var(--ink-2); }
+:where([data-native-free]) :where(input[type="checkbox"], input[type="radio"]):is(:checked, :indeterminate) { background: var(--button); border-color: var(--button); }
+:where([data-native-free]) :where(input[type="checkbox"]):checked::before {
+  content: ""; width: calc(var(--icon-sm) * 0.28); height: calc(var(--icon-sm) * 0.5); margin-top: calc(var(--icon-sm) * -0.08);
+  border: solid currentColor; border-width: 0 var(--space-half) var(--space-half) 0; transform: rotate(45deg);
+}
+:where([data-native-free]) :where(input[type="checkbox"]):indeterminate::before { content: ""; width: calc(var(--icon-sm) * 0.5); height: var(--space-half); background: currentColor; border-radius: var(--radius-pill); }
+:where([data-native-free]) :where(input[type="radio"]):checked::before { content: ""; width: calc(var(--icon-sm) * 0.38); height: calc(var(--icon-sm) * 0.38); border-radius: var(--radius-pill); background: currentColor; }
+:where([data-native-free]) :where(input[type="checkbox"], input[type="radio"]):focus-visible { outline: var(--space-half) solid var(--focus-ring); outline-offset: 1px; }
+:where([data-native-free]) :where(input[type="checkbox"], input[type="radio"]):disabled { opacity: 0.5; cursor: default; }

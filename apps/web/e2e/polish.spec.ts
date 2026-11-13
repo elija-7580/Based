@@ -216,3 +216,24 @@ test("Fokusrahmen und Textauswahl neutral, unabhängig vom Marker", async ({ pag
     expect(sel, theme).toBe(await tok("selection-bg"));
   }
 });
+
+// BSD-376: Die Icon-Auswahl rollt nur senkrecht – das Raster passt zur Breite, die erste Spalte ist ganz sichtbar.
+test("Icon-Auswahl: kein seitliches Rollen, Raster passt zur Breite", async ({ page }) => {
+  for (const [width, height] of [[1280, 820], [900, 600]] as const) {
+    await page.setViewportSize({ width, height });
+    await fresh(page);
+    await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+    await page.getByLabel("Page title").hover();
+    await page.getByRole("button", { name: "Add icon" }).click();
+    const grid = page.getByRole("listbox", { name: "Emoji" });
+    await expect(grid).toBeVisible();
+    // Breite Emoji-Glyphen wie auf dem Mac (Apple Color Emoji) nachstellen: Zellen dürfen trotzdem nicht breiter werden.
+    await page.addStyleTag({ content: ".bx-emoji-cell { font-size: 40px; }" });
+    const [sw, cw] = await grid.evaluate((el) => [el.scrollWidth, el.clientWidth]);
+    expect(sw - cw, `${width}×${height}`).toBeLessThanOrEqual(0);
+    const first = (await grid.getByRole("option").first().boundingBox())!;
+    const box = (await grid.boundingBox())!;
+    expect(first.x).toBeGreaterThanOrEqual(box.x - 0.5);
+    await page.keyboard.press("Escape");
+  }
+});
