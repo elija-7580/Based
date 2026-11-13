@@ -61,16 +61,37 @@ test("Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unt
   expect(selected).toHaveLength(4);
 });
 
-test("Inline in Spalten: Klick nach Escape bleibt auf der Zeile unter der Maus", async ({ page }) => {
+test("Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite", async ({ page }) => {
   await fresh(page);
-  await command(page, { op: "seedBlockFixture" });
-  await page.getByRole("treeitem", { name: "Block editor test page" }).click();
-  await expect(page.getByText("Tax return", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: "New page" }).first().click();
+  const editor = page.locator(".bn-editor[contenteditable='true']").first();
+  await expect(editor).toBeVisible();
+  await editor.click();
+  await page.keyboard.type("Notes before the table.");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/database");
+  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  const db = page.locator(".shell-database.inline");
+  await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+  // 20 benannte Zeilen direkt in die Seiten-Replik (wie database-inline.spec.ts)
+  await page.evaluate(async () => {
+    interface Tx { put(r: unknown): void }
+    interface Store { blocks: Map<string, { id: string; type: string; props?: { databaseID?: string } }>; transact(n: string, f: (tx: Tx) => void): void }
+    const b = (globalThis as unknown as { __based: { client: { openPage(id: string): Promise<{ store: Store }> } } }).__based;
+    const { store } = await b.client.openPage(location.hash.replace(/^#page-/, ""));
+    const dbID = [...store.blocks.values()].find((x) => x.type === "databaseInline")!.props!.databaseID!;
+    const now = (Date.now() - 978_307_200_000) / 1000;
+    store.transact("Seed", (tx) => {
+      for (let i = 0; i < 20; i++) tx.put({ kind: "block", data: { id: crypto.randomUUID().toUpperCase(), type: "page", parent: "d:" + dbID, sk: "t" + String(i).padStart(3, "0"), text: `Item ${i + 1}`, createdAt: now, updatedAt: now } });
+    });
+  });
+  await expect(db.getByText("Item 12", { exact: true })).toBeVisible();
   await page.mouse.move(700, 500);
-  await page.mouse.wheel(0, 250);
-  await page.waitForTimeout(300);
-  for (const name of ["Garden", "Tax return", "Trip to Lisbon", "Ideas for the shop"]) {
-    const box = (await page.getByText(name, { exact: true }).first().boundingBox())!;
+  await page.mouse.wheel(0, 200);
+  await page.waitForTimeout(400);
+  for (const name of ["Item 4", "Item 9", "Item 7", "Item 12"]) {
+    const box = (await db.getByText(name, { exact: true }).first().boundingBox())!;
     await clickAt(page, box.x + 5, box.y + box.height / 2);
   }
 });
