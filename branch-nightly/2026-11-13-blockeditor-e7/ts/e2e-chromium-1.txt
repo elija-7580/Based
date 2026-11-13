@@ -1,0 +1,61 @@
+failure ff52b99ab774c5ecaf14025c5c603e2fec658d11
+
+  1) [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
+
+
+      165 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      166 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 167 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      168 |   };
+      169 |   await openMenu();
+      170 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:167:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
+
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
+
+
+      165 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      166 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 167 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      168 |   };
+      169 |   await openMenu();
+      170 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:167:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
+
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
+
+  1 failed
+    [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+  8 skipped
+  143 passed (5.5m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
