@@ -1,0 +1,61 @@
+failure 96a70930580e305881d83732067218015f1496aa
+
+    Error: expect(locator).not.toHaveCount(expected) failed
+
+    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
+    Expected: not 0
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
+      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
+      172 |     // Gleiche Icons wie im Seitenmenü „…“
+    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
+          |                                                                      ^
+      174 |     await page.keyboard.press("Escape");
+      175 |     await expect(menu).toHaveCount(0);
+      176 |   }
+        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
+
+    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).not.toHaveCount(expected) failed
+
+    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
+    Expected: not 0
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
+      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
+      172 |     // Gleiche Icons wie im Seitenmenü „…“
+    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
+          |                                                                      ^
+      174 |     await page.keyboard.press("Escape");
+      175 |     await expect(menu).toHaveCount(0);
+      176 |   }
+        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
+
+    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
+  18 skipped
+  124 passed (7.7m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf

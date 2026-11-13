@@ -1,0 +1,61 @@
+failure 96a70930580e305881d83732067218015f1496aa
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
+
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
+
+
+      165 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      166 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 167 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      168 |   };
+      169 |   await openMenu();
+      170 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:167:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
+
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
+
+  3) [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ─────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('menuitem', { name: 'Copy link to block' })
+
+
+      27 |     await target.locator(".bn-block-content").hover();
+      28 |     await page.locator(".bn-side-menu [draggable=true]").first().click();
+    > 29 |     await page.getByRole("menuitem", { name: "Copy link to block" }).click();
+         |                                                                      ^
+      30 |     const copied = await page.evaluate(() => navigator.clipboard.readText());
+      31 |     expect(copied).toContain(`#page-${pageID}/${blockID}`);
+      32 |   }
+        at /home/runner/work/Based/Based/apps/web/e2e/block-link.spec.ts:29:70
+
+    Error Context: test-results/block-link-Link-zu-einem-Block-kopieren-und-öffnen-chromium/error-context.md
+
+  2 failed
+    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+    [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+  1 flaky
+    [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ──────────────
+  8 skipped
+  148 passed (4.8m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
