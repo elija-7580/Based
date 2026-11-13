@@ -47,6 +47,7 @@ abgehakt ist: in 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel, in a
 - Vor dem Commit `q detect_changes --base-branch origin/main`: betroffene Symbole → nur die passenden Tests/Specs
   zusätzlich zu `run-ts.sh --fast` laufen lassen.
 - Ganze Dateien lesen, wenn sie geändert werden. `legacy/` ist nicht im Index (`scripts/agent-graph.sh --with-legacy`).
+- Wöchentlicher Architektur-Blick (Review/Planung): `scripts/graph-report.sh` (Graphify, nur Code, ohne LLM) – God Nodes, Import-Zyklen.
 
 <!-- ASTRYX:START -->
 Astryx v0.7.11 · 174 components
