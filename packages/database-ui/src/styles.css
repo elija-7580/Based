@@ -47,6 +47,9 @@
   letter-spacing: var(--type-heading-tracking); border: 0; background: transparent; color: var(--ink); padding: 0; margin: 0; outline: none; width: 100%;
 }
 .dbui-title::placeholder { color: var(--muted); }
+/* BSD-375: Inline-Datenbank ohne Titel – kein graues „Untitled“ (wie Notion); beim Überfahren oder im Fokus erscheint
+   der Platzhalter, damit man ihr einen Namen geben kann. Platz bleibt, damit nichts springt. */
+.dbui-root.inline:not(:hover) .dbui-title:placeholder-shown:not(:focus)::placeholder { color: transparent; }
 .dbui-toolbar { display: flex; align-items: center; gap: var(--space-1); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .dbui-tabs { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
 .dbui-tab {

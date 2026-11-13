@@ -9,7 +9,7 @@ import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Popover } from "@astryxdesign/core/Popover";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode, Ref } from "react";
 import { buttonVariant, dialogPurpose, fieldStatus, menuItems, type BasedButtonVariant, type BasedMenuItem } from "./variants.js";
 
 export { buttonVariant, dialogPurpose, fieldStatus, menuItems } from "./variants.js";
@@ -139,10 +139,16 @@ export interface BasedFieldProps {
   required?: boolean;
   autoComplete?: string;
   onEnter?: () => void;
+  /** Label nur für Screenreader (z. B. Zelleneditor in einer Tabelle, BSD-375). */
+  labelHidden?: boolean;
+  /** Zugriff aufs Eingabefeld (Fokus, Cursor setzen). */
+  inputRef?: Ref<HTMLInputElement>;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+  inputMode?: "text" | "decimal" | "numeric" | "email" | "url" | "tel" | "search";
 }
 
 /** Einzeiliges Formularfeld mit sichtbarem Label; nimmt die volle Breite seines Containers. */
-export function BasedField({ label, value, onChange, type = "text", hint, placeholder, error, disabled = false, required = false, autoComplete, onEnter }: BasedFieldProps) {
+export function BasedField({ label, value, onChange, type = "text", hint, placeholder, error, disabled = false, required = false, autoComplete, onEnter, labelHidden, inputRef, onKeyDown, inputMode }: BasedFieldProps) {
   const status = fieldStatus(error);
   return (
     <TextInput
@@ -159,7 +165,11 @@ export function BasedField({ label, value, onChange, type = "text", hint, placeh
       {...(status ? { status } : {})}
       {...(autoComplete ? { autoComplete } : {})}
       {...(type === "url" ? { inputMode: "url" as const, hasSpellCheck: false } : {})}
+      {...(inputMode ? { inputMode } : {})}
       {...(onEnter ? { onEnter } : {})}
+      {...(labelHidden ? { isLabelHidden: true } : {})}
+      {...(inputRef ? { ref: inputRef } : {})}
+      {...(onKeyDown ? { onKeyDown } : {})}
     />
   );
 }
