@@ -17,7 +17,7 @@ import {
 } from "@blocknote/react";
 import { type BookmarkMeta, createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import type { ResolvedPos } from "prosemirror-model";
-import { createContext, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { createContext, createElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
 import { attachBlockDrop, type BlockDropHost, type Rect } from "./dragDrop.js";
@@ -1229,6 +1229,11 @@ const BLOCK_MENU_ICONS: Record<string, string> = {
   "Copy and sync": "sync", "Copy link to block": "link", Delete: "trash",
 };
 
+/** MenuIcon des Editors → gleiches Ziel im Icon-Satz der App (MenuGlyph). Blocktypen in „Turn into“ behalten ihr Icon. */
+const APP_GLYPH: Partial<Record<MenuIconName, string>> = {
+  turn: "turnInto", color: "palette", duplicate: "duplicate", move: "move", markdown: "export", sync: "sync", link: "link", trash: "trash",
+};
+
 function AnchoredMenus({ children }: { children: ReactNode }) {
   const components = useComponentsContext()!;
   const value = useMemo(() => {
@@ -1237,12 +1242,17 @@ function AnchoredMenus({ children }: { children: ReactNode }) {
     // Icons wie im Seitenmenü „…“ – auch für die Einträge, die BlockNote selbst zeichnet (Colors, Delete).
     const Item = components.Generic.Menu.Item;
     const WithIcon: typeof Item = (p) => {
-      // Einträge mit eigenem MenuIcon (Blockmenü der Tagschicht 12.11.) bringen ihr Icon im Text mit; „Delete“ bleibt rot.
-      const label = typeof p.children === "string" ? p.children : Array.isArray(p.children) ? p.children.find((c): c is string => typeof c === "string") : undefined;
+      // Einträge des Blockmenüs (Tagschicht 12.11.) bringen ein MenuIcon im Text mit. Wo die App dasselbe Ziel im
+      // Icon-Satz hat, zeigt die Zeile das App-Icon (wie im Seitenmenü „…“); „Delete“ bleibt rot.
+      const kids = Array.isArray(p.children) ? (p.children as ReactNode[]) : [p.children];
+      const label = kids.find((c): c is string => typeof c === "string");
       const danger = label === "Delete" ? " bx-menu-danger" : "";
-      const name = typeof p.children === "string" ? BLOCK_MENU_ICONS[p.children] : undefined;
+      const own = kids.find((c) => isValidElement(c) && c.type === MenuIcon) as ReactElement<{ name: MenuIconName }> | undefined;
+      const name = own ? APP_GLYPH[own.props.name] : label !== undefined && typeof p.children === "string" ? BLOCK_MENU_ICONS[label] : undefined;
       if (!name || p.icon) return <Item {...p} className={(p.className ?? "") + danger} />;
-      return <Item {...p} icon={<MenuGlyph name={name} />} className={(p.className ?? "") + danger} />;
+      const props = { ...p, icon: <MenuGlyph name={name} />, className: (p.className ?? "") + danger };
+      // Kinder einzeln übergeben (wie im JSX der Einträge), sonst verlangt React Schlüssel für das Array.
+      return own ? createElement(Item, props, ...kids.filter((c) => c !== own)) : <Item {...props} />;
     };
     return { ...components, Generic: { ...components.Generic, Menu: { ...components.Generic.Menu, Root: Anchored, Item: WithIcon } } };
   }, [components]);

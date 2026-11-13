@@ -12,6 +12,7 @@ import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareF
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
+import { installWheelLatch } from "./shell/wheelLatch.js";
 import { StoreClient } from "./worker/client.js";
 import { browserLinkOptions, StoreLink } from "./worker/leader.js";
 import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
@@ -42,6 +43,8 @@ registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
   const clipboard = desktopClipboard();
   installNativeFree({ icon: iconElement, ...(clipboard ? { clipboard } : {}), ...(import.meta.env.DEV ? { allowNative: (e: MouseEvent) => e.altKey && e.shiftKey } : {}) });
 }
+// BSD-374: Scroll-Gesten bleiben am Bereich, in dem sie begonnen haben (innere Felder fangen sie nicht ab).
+installWheelLatch();
 // BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
 installDiagnostics();
 // BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.

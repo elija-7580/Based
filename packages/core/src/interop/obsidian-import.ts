@@ -17,6 +17,7 @@ import { trimSpaces } from "./html.js";
 import { MarkdownImporter, type MarkdownBlock } from "./markdown.js";
 import { PLAIN, toRichText } from "./runs.js";
 import { ImportCancelled } from "./zip.js";
+import { bundleTitle, highlightToMark, isBearExport, isBundleDir, isNoteFile } from "./bear.js";
 import { isLogseqGraph, logseqBlockIDs, logseqSkip, logseqTitle, logseqToMarkdown } from "./logseq.js";
 
 export interface ObsidianImportOptions {
@@ -41,6 +42,8 @@ export function findObsidianVault(files: ImportFiles, path: string): string | un
   const root = normalizePath(path);
   // BSD-260 Teil 8: Logseq-Graph (pages/ + journals/ oder logseq/config.edn) – auch ohne [[Links]]
   if (isLogseqGraph(files, root)) return root;
+  // BSD-260 Teil 9: Bear-Export mit TextBundles – auch ohne [[Links]]
+  if (isBearExport(files, root)) return root;
   const graphs = files.walk(root).filter((f) => f.endsWith("/logseq/config.edn")).map((f) => f.slice(0, -"/logseq/config.edn".length)).sort((a, b) => a.length - b.length);
   if (graphs[0] !== undefined) return graphs[0];
   let best: string | undefined;
@@ -125,6 +128,8 @@ export class ObsidianImporter {
   private folderNotes = new Set<string>();
   /** BSD-260 Teil 8: Logseq-Graph (Eigenheiten werden vor dem Lesen übersetzt). */
   private readonly logseq: boolean;
+  /** BSD-260 Teil 9: Bear-Export (TextBundles, `::Hervorheben::`). */
+  private readonly bear: boolean;
   private logseqBlocks: Map<string, string> | undefined;
   private done = 0;
   private total = 1;
@@ -133,6 +138,7 @@ export class ObsidianImporter {
     this.now = opts.now ?? (() => (Date.now() - 978_307_200_000) / 1000);
     this.userID = opts.userID === undefined ? "me" : opts.userID;
     this.logseq = isLogseqGraph(files, vault);
+    this.bear = !this.logseq && isBearExport(files, vault);
   }
 
   /** Inhalt einer Notiz (Logseq: übersetzt). */
@@ -147,6 +153,7 @@ export class ObsidianImporter {
   }
 
   private title(p: string): string {
+    if (isBundleDir(dirname(p))) return bundleTitle(p);
     return this.logseq ? logseqTitle(this.rel(p)) : basename(stripExtension(p));
   }
 
@@ -163,11 +170,11 @@ export class ObsidianImporter {
     const all = this.files.walk(this.vault).filter((p) => !this.skipped(p));
     for (const p of all) {
       const ext = extname(p).toLowerCase();
-      if (ext === "md") {
+      if (ext === "md" || isNoteFile(p)) {
         const id = makeRecordID();
         this.ids.set(p, id);
-        this.byPath.set(stripExtension(this.rel(p)).toLowerCase(), p);
-        const name = basename(stripExtension(p)).toLowerCase();
+        this.byPath.set(stripExtension(this.rel(isBundleDir(dirname(p)) ? dirname(p) : p)).toLowerCase(), p);
+        const name = (isBundleDir(dirname(p)) ? bundleTitle(p) : basename(stripExtension(p))).toLowerCase();
         this.byName.set(name, [...(this.byName.get(name) ?? []), p]);
         const shown = this.title(p).toLowerCase();
         if (shown !== name) this.byName.set(shown, [...(this.byName.get(shown) ?? []), p]);
@@ -241,7 +248,7 @@ export class ObsidianImporter {
       }
       if (inComment && line.trim() === "") continue;
       line = line.replace(/\s+\^[A-Za-z0-9-]+\s*$/, "");
-      out.push(outsideCode(line, (s) => this.rewriteLinks(s, from)));
+      out.push(outsideCode(line, (s) => highlightToMark(this.rewriteLinks(s, from), this.bear)));
     }
     return out.join("\n");
   }
@@ -350,12 +357,14 @@ export class ObsidianImporter {
     const entries = this.files.list(dir).filter((p) => !this.skipped(p) && !(dir === this.vault && basename(p) === ".obsidian"));
     const folderNote = entries.find((p) => this.files.isFile(p) && extname(p).toLowerCase() === "md" && basename(stripExtension(p)) === basename(dir));
     const fill = (pageID: string, startAfter: string | undefined) => {
-      const dirs = entries.filter((p) => this.files.isDirectory(p) && !this.files.isFile(p)).sort((a, b) => comparePaths(basename(a), basename(b)));
-      const notes = entries.filter((p) => this.files.isFile(p) && extname(p).toLowerCase() === "md" && p !== folderNote).sort((a, b) => comparePaths(basename(a), basename(b)));
+      const dirs = entries.filter((p) => this.files.isDirectory(p) && !this.files.isFile(p) && !isBundleDir(p)).sort((a, b) => comparePaths(basename(a), basename(b)));
+      // BSD-260 Teil 9: ein TextBundle ist eine Notiz (ihr Text), kein Ordner
+      const bundles = entries.filter((p) => isBundleDir(p) && this.files.isDirectory(p)).map((d) => this.files.list(d).find((f) => isNoteFile(f) && dirname(f) === d)).filter((f): f is string => f !== undefined);
+      const notes = [...entries.filter((p) => this.files.isFile(p) && extname(p).toLowerCase() === "md" && p !== folderNote), ...bundles].sort((a, b) => comparePaths(this.title(a), this.title(b)));
       for (const c of entries) if (this.files.isFile(c) && extname(c).toLowerCase() === "canvas") this.warn(`Skipped ${this.rel(c)} (Obsidian Canvas isn't supported yet)`);
       let k = startAfter;
       for (const d of dirs) {
-        if (!this.files.walk(d).some((f) => !this.skipped(f) && extname(f).toLowerCase() === "md")) continue; // reine Anhang-Ordner
+        if (!this.files.walk(d).some((f) => !this.skipped(f) && isNoteFile(f))) continue; // reine Anhang-Ordner
         k = keyBetween(k, undefined);
         // Logseq: die Ordner pages/ und journals/ als „Pages“ und „Journals“
         const name = basename(d);
