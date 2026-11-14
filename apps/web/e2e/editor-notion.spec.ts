@@ -195,6 +195,28 @@ test("Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus", async 
   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
 });
 
+// BSD-408: Das Blockmenü bleibt offen, wenn der Editor neu zeichnet (z. B. weil sich die Seitenliste ändert). Vorher war
+// die Seitenleiste bei jedem Neuzeichnen eine neue Komponente und das gerade geöffnete Menü ging wieder zu (CI rot).
+test("Blockmenü bleibt offen, wenn der Editor neu zeichnet", async ({ page }) => {
+  await open(page, "Stable");
+  await editor(page).locator(".bn-block-content").first().click();
+  await paste(page, "## Heading two\n\nSome text here");
+  await expect.poll(async () => (await blocks(page)).length).toBeGreaterThan(1);
+  await editor(page).getByText("Heading two").first().hover();
+  await page.locator(".bn-side-menu [draggable=true]").last().click();
+  const search = page.getByRole("textbox", { name: "Search actions" });
+  await expect(search).toBeFocused();
+  await page.keyboard.type("dup");
+  for (let i = 0; i < 3; i++) {
+    await command(page, { op: "createPage", title: `Other ${i}` }); // neue Seite → Seitenliste → Editor zeichnet neu
+    await expect(page.getByRole("treeitem", { name: `Other ${i}`, exact: true })).toBeVisible();
+  }
+  await expect(search).toBeFocused();
+  await expect(search).toHaveValue("dup");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
+});
+
 test("Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen", async ({ page }) => {
   await open(page, "Wrap");
   await editor(page).locator(".bn-block-content").first().click();

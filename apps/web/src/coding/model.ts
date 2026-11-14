@@ -25,6 +25,12 @@ export class CodingModel {
   private eventsLoop: AbortController | undefined;
   private inboxLoop: AbortController | undefined;
   private started = false;
+  /**
+   * BSD-408: Jede ⇧Tab-Änderung zählt hoch. Eine Antwort (Long-Poll der Ereignisse oder ein älteres set_mode), die
+   * vor der letzten lokalen Änderung angefragt wurde, kennt den neuen Modus noch nicht und darf ihn nicht überschreiben.
+   */
+  private modeEpoch = 0;
+  private modePending = 0;
 
   constructor(opts: { url: string; token: string; fetch?: typeof fetch }, private readonly retryMs = 3000) {
     this.client = new CodingClient(opts);
@@ -120,8 +126,11 @@ export class CodingModel {
     const id = this.state.selected;
     if (!id) return;
     const prev = this.state.sessions.find((s) => s.id === id)?.agentMode;
+    const epoch = ++this.modeEpoch;
+    this.modePending++;
     this.patchSession(id, { agentMode: mode });
-    const s = await this.guard(() => this.client.setAgentMode(id, mode));
+    const s = await this.guard(() => this.client.setAgentMode(id, mode)).finally(() => { this.modePending--; });
+    if (epoch !== this.modeEpoch) return; // inzwischen erneut umgeschaltet: die neuere Anfrage entscheidet
     this.patchSession(id, s ?? { agentMode: prev });
   }
 
@@ -152,14 +161,17 @@ export class CodingModel {
     let since = 0;
     while (!ctl.signal.aborted) {
       try {
+        const epoch = this.modeEpoch;
         const r = await this.client.events(id, since, since === 0 ? 0 : LONG_POLL_MS, ctl.signal);
         if (ctl.signal.aborted) return;
         since = r.next;
         // BSD-313: Befehle und Modus des Agenten kommen mit jeder Antwort (auch ohne neue Ereignisse).
         if (r.session) {
           const cur = this.state.sessions.find((s) => s.id === id);
-          if (cur && (cur.agentMode !== r.session.agentMode || JSON.stringify(cur.commands) !== JSON.stringify(r.session.commands) || JSON.stringify(cur.modes) !== JSON.stringify(r.session.modes))) {
-            this.patchSession(id, { agentMode: r.session.agentMode, commands: r.session.commands, modes: r.session.modes });
+          // Während ⇧Tab unterwegs ist oder seit der Anfrage umgeschaltet wurde, gilt der lokale Modus.
+          const agentMode = epoch === this.modeEpoch && this.modePending === 0 ? r.session.agentMode : cur?.agentMode;
+          if (cur && (cur.agentMode !== agentMode || JSON.stringify(cur.commands) !== JSON.stringify(r.session.commands) || JSON.stringify(cur.modes) !== JSON.stringify(r.session.modes))) {
+            this.patchSession(id, { agentMode, commands: r.session.commands, modes: r.session.modes });
           }
         }
         if (r.events.length > 0) {
