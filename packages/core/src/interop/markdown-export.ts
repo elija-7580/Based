@@ -6,6 +6,7 @@ import type { WorkspaceStore } from "../store/store.js";
 import { encodeCSV, encodeInlineMarkdown } from "./markdown.js";
 import { plain, runsOf } from "./runs.js";
 import { graphemes } from "../graphemes.js";
+import { iconAsText } from "../editor/icon-ref.js";
 
 type AssetRef = NonNullable<BlockProps["asset"]>;
 export type PageLink = (id: string) => { title: string; url: string } | undefined;
@@ -90,8 +91,9 @@ export class MarkdownExporter {
     const page = this.store.blocks.get(id);
     if (!page) return "";
     const lines = ["---", `title: ${yamlScalar(titleOf(this.store, id))}`];
-    const icon = page.props?.icon;
-    if (typeof icon === "string" && icon !== "") lines.push(`icon: ${yamlScalar(icon)}`);
+    // BSD-409: Phosphor-Icons („phosphor:…“) sind kein Text – wie im HTML-Export weglassen.
+    const icon = typeof page.props?.icon === "string" ? iconAsText(page.props.icon) : undefined;
+    if (icon) lines.push(`icon: ${yamlScalar(icon)}`);
     lines.push(`created: ${isoDate(page.createdAt, true)}`, `updated: ${isoDate(page.updatedAt, true)}`);
     const db = page.parent.startsWith("d:") ? this.store.databases.get(page.parent.slice(2)) : undefined;
     for (const p of db ? db.properties : []) {
@@ -167,7 +169,8 @@ export class MarkdownExporter {
         }
         case "quote": line = "> " + text.replaceAll("<br>", "\n> "); break;
         case "callout": {
-          const icon = typeof p.icon === "string" ? p.icon + " " : "";
+          const emoji = typeof p.icon === "string" ? iconAsText(p.icon) : undefined;
+          const icon = emoji ? emoji + " " : "";
           const n = nested(0);
           out.push(pad + `<aside>\n${icon}${text}${n !== undefined ? "\n" + n : ""}\n</aside>`.replaceAll("\n", "\n" + pad));
           return;
