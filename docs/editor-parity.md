@@ -58,7 +58,7 @@ neuen Editor auf dem Mac abgenommen hat.
 | `[[`-Seitenlink | should | ja | `[[` öffnet die Seitensuche (nur Seiten), 14.11. |
 | Titel ↔ erste Zeile | must | ja | |
 | Platzhalter je Blocktyp | should | ja | |
-| Ask AI in der Formatleiste | — | nein | AI ist hinter dem Schalter, Standard aus |
+| Ask AI in der Formatleiste | — | ja | Teil 6.6: Leertaste auf leerer Zeile (mit Modell), Slash „Ask AI“, Formatleiste „Ask AI“ (Improve, Fix, Shorter, Summarize); Insert/Replace je ein Undo-Schritt; nur mit AI-Schalter an |
 | Echtzeit-Text, Präsenz | — | ja | E7, Dokument `text:<seite>` |
 
 ## Nächste Schritte bis E8
@@ -125,7 +125,6 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 | Funktion | Stand im Block-Editor |
 | --- | --- |
 | Meeting-Block (Aufnahme, Notizen, Zusammenfassung) | Seiten mit Meeting öffnen im alten Editor; kommt ein Meeting während der Bearbeitung dazu: Platzhalter, Inhalt darunter bearbeitbar |
-| „Ask AI“ (Leertaste, Formatleiste) | fehlt |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
 | Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor |
 | Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
@@ -137,7 +136,6 @@ Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEdit
 
 | Spec | Was gepinnt ist |
 | --- | --- |
-| `editor-ai.spec.ts` | ganz – „Ask AI“ |
 | `collab.spec.ts` | ganz – Echtzeit über `page:` (y-prosemirror); Block-Editor: `block-editor-collab.spec.ts` |
 | `meeting.spec.ts` | ganz – Meeting-Block |
 | `editor-drag.spec.ts` | ganz – Ziehen am BlockNote-Griff; Block-Editor: `block-editor.spec.ts` |

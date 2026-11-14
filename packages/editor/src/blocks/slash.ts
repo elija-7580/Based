@@ -17,6 +17,8 @@ export interface SlashItem {
   columns?: number;
   /** BSD-407 Teil 3: „Linked view of database“ – erst eine Datenbank wählen (Auswahl wie im alten Editor). */
   linkDatabase?: true;
+  /** BSD-407 Teil 6.6: kein Block – öffnet „Ask AI“ (nur mit eingeschaltetem AI-Schalter im Menü). */
+  ai?: true;
   /** Block, dessen Einrichtung gleich aufgehen soll (Button). */
   setup?: true;
   /** Sonderfall mit eigenen Records (Datenbank): legt an und gibt die Block-ID zurück. */
@@ -83,6 +85,9 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   // BSD-407 Teil 6.5: Button (Schritte wie im alten Editor); die Einrichtung geht nach dem Anlegen auf
   { type: "button", label: "Button", group: "Advanced", icon: "▭", keywords: "button action automation", setup: true },
 ];
+
+/** „Ask AI“ steht nur im Menü, wenn die Hülle AI anbietet (AI-Schalter an). */
+export const ASK_AI_ITEM: SlashItem = { type: "ai", label: "Ask AI", group: "AI", icon: "AI", keywords: "ai write assistant generate", ai: true };
 
 /** Einträge passend zur Eingabe nach „/“ (Anfang von Name oder Suchwort). */
 export function filterSlash(items: readonly SlashItem[], query: string): SlashItem[] {

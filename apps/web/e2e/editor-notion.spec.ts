@@ -383,3 +383,40 @@ test("Fotos: Codeblock-Leiste", async ({ page, browserName }) => {
     await expect(wrap.getByRole("button", { name: "Copy code" })).toBeVisible();
   });
 });
+
+test("Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI", async ({ page, browserName }) => {
+  test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium");
+  test.setTimeout(240_000);
+  await open(page, "Surfaces");
+  await focusEditorEnd(page);
+  await page.keyboard.type("Due @2026-12-24");
+  await expect(page.getByTestId("mention-menu").getByRole("option", { name: "Thu, Dec 24, 2026" })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/Button");
+  await page.keyboard.press("Enter");
+  await page.getByRole("group", { name: "Button settings" }).getByLabel("Button name").fill("Add checklist");
+  await page.getByRole("group", { name: "Button settings" }).getByRole("button", { name: "Done" }).click();
+  const field = () => editor(page).locator("[data-editable-id]").first();
+  await shots(page, "mention-menu", async () => {
+    await field().click();
+    await page.keyboard.press("End");
+    await page.keyboard.type(" @");
+    await expect(page.getByTestId("mention-menu")).toBeVisible();
+  });
+  await shots(page, "date-popover", async () => {
+    await field().locator(".bx2-mention[data-date]").first().click();
+    await expect(page.getByTestId("date-popover")).toBeVisible();
+  });
+  await shots(page, "button-setup", async () => {
+    await editor(page).getByRole("button", { name: "Edit button" }).click();
+    await expect(page.getByRole("group", { name: "Button settings" })).toBeVisible();
+  });
+  await shots(page, "ask-ai", async () => {
+    await editor(page).getByTestId("block-editor-tail").click();
+    await page.keyboard.type("/ask");
+    await expect(page.getByTestId("slash-menu").getByRole("option", { name: /Ask AI/ })).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("ai-box")).toBeVisible();
+  });
+});

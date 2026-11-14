@@ -23,7 +23,8 @@ import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
-import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
+import { ASK_AI_ITEM, SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
+import { SELECTION_ACTIONS, type EditorAI } from "../ui/ai.js";
 import { PresenceLayer, useRealtime } from "./realtime.js";
 import { highlightCode } from "./highlight.js";
 import "./blocks.css";
@@ -95,6 +96,18 @@ export function BlockEditor(props: PageEditorProps) {
     }, 0);
   }, [ctrl]);
   const [toolbar, setToolbar] = useState<{ x: number; y: number } | undefined>();
+  // BSD-407 Teil 6.6: „Ask AI“ (Leertaste auf leerer Zeile, Slash, Formatleiste) – nur mit `props.ai` (AI-Schalter an)
+  const [aiReq, setAIReq] = useState<AIState | undefined>();
+  const slashItems_ = useMemo(() => (props.ai ? [ASK_AI_ITEM, ...SLASH_ITEMS] : SLASH_ITEMS), [props.ai]);
+  const slashAll = useRef(slashItems_);
+  slashAll.current = slashItems_;
+  const openAI = (anchor: string, selection?: Caret) => {
+    const el = rootRef.current?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(anchor)}"] > .bx2-row`);
+    const r = el?.getBoundingClientRect();
+    const text = selection ? plainText(store.blocks.get(selection.id)?.text).slice(selection.from, selection.to) : undefined;
+    setToolbar(undefined);
+    setAIReq({ anchor, ...(selection && text ? { selection: { ...selection, text } } : {}), x: r?.left ?? 100, y: (r?.bottom ?? 100) + 6 });
+  };
   const slashRef = useRef(slash);
   slashRef.current = slash;
   const [mention, setMention] = useState<MentionState | undefined>();
@@ -201,6 +214,12 @@ export function BlockEditor(props: PageEditorProps) {
       switch (e.inputType) {
         case "insertText": {
           const data = e.data ?? "";
+          // BSD-407 Teil 6.6: Leertaste auf leerer Textzeile öffnet „Ask AI“ (wie im alten Editor, nur mit eingerichtetem Modell)
+          const ai = propsRef.current.ai;
+          if (data === " " && ai && ai.available?.() !== false && c.from === 0 && c.to === 0 && store.blocks.get(id)?.type === "text" && textLen(store, id) === 0) {
+            openAI(id);
+            break;
+          }
           // BSD-90 Teil 2 / BSD-407 Teil 3: „[[Titel]]“ fertig getippt → Seiten-Erwähnung (vorhandene oder neue Seite)
           const wiki = data === "]" && c.from === c.to && props.pages ? wikilinkBefore(plainText(store.blocks.get(id)?.text).slice(0, c.from)) : undefined;
           if (wiki) {
@@ -448,6 +467,11 @@ export function BlockEditor(props: PageEditorProps) {
     const end = s.at + 1 + s.query.length;
     cmd.replaceText(store, { blockId: s.id, from: s.at, to: end }, "");
     const empty = textLen(store, s.id) === 0;
+    if (item.ai) {
+      ctrl.setCaret({ id: s.id, from: s.at, to: s.at });
+      setTimeout(() => openAI(s.id), 0);
+      return;
+    }
     if (item.inline === "equation") {
       // erst nach dem Enter des Slash-Menüs öffnen, sonst nimmt das Textfeld den Fokus gleich wieder
       ctrl.setCaret({ id: s.id, from: s.at, to: s.at });
@@ -602,7 +626,7 @@ export function BlockEditor(props: PageEditorProps) {
     const mod = e.metaKey || e.ctrlKey;
     const s = slashRef.current;
     if (s) {
-      const items = filterSlash(SLASH_ITEMS, s.query);
+      const items = filterSlash(slashAll.current, s.query);
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
         const n = items.length || 1;
@@ -1128,7 +1152,7 @@ export function BlockEditor(props: PageEditorProps) {
   const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable }), [ctrl, store, props, editable]);
   // ADR 0016 (E7): Echtzeit-Text und Präsenz über /collab (Dokument `text:<seite>`)
   const presence = useRealtime(store, pageID, props.collab, ctrl, props.presenceName);
-  const slashItems = slash ? filterSlash(SLASH_ITEMS, slash.query) : [];
+  const slashItems = slash ? filterSlash(slashItems_, slash.query) : [];
 
   return (
     <EditorCtx.Provider value={ctx}>
@@ -1154,7 +1178,9 @@ export function BlockEditor(props: PageEditorProps) {
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
       {dateEdit ? <DatePopover key={dateEdit.id + ":" + dateEdit.from} state={dateEdit} onChange={(v) => changeDate(dateEdit, v)} onClose={() => setDateEdit(undefined)} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
+      {aiReq && props.ai ? <BlockAIBox ai={props.ai} req={aiReq} onClose={() => setAIReq(undefined)} /> : null}
       {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
+        onAI={props.ai ? () => { const c = ctrl.caret; if (c && c.from !== c.to) openAI(c.id, c); } : undefined}
         onColor={(color) => { const c = ctrl.caret; if (c && c.from !== c.to) run(cmd.formatText(store, [R(c)], "color", color ?? false)); }} /> : null}
     </EditorCtx.Provider>
   );
@@ -1802,6 +1828,88 @@ function TableOfContents() {
   );
 }
 
+// MARK: Ask AI (BSD-407 Teil 6.6, wie AIBox im alten Editor; Einfügen und Ersetzen sind je ein Befehl = ein Undo-Schritt)
+
+interface AIState { anchor: string; selection?: { id: string; from: number; to: number; text: string }; x: number; y: number }
+type AIPhase = { phase: "ask" } | { phase: "busy"; prompt: string } | { phase: "done"; prompt: string; text: string } | { phase: "failed"; prompt: string; message: string };
+
+function BlockAIBox({ ai, req, onClose }: { ai: EditorAI; req: AIState; onClose: () => void }) {
+  const { store, ctrl, props } = useCtx();
+  const [prompt, setPrompt] = useState("");
+  const [state, setState] = useState<AIPhase>({ phase: "ask" });
+  const abort = useRef<AbortController | undefined>(undefined);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => () => abort.current?.abort(), []);
+  // Fokus nach dem Wechsel der Phase auf das, was man jetzt braucht (Feld oder erster Knopf)
+  useEffect(() => { box.current?.querySelector<HTMLElement>("input, button")?.focus({ preventScroll: true }); }, [state.phase]);
+  const run = (p: string) => {
+    if (!p.trim()) return;
+    abort.current?.abort();
+    const ctl = (abort.current = new AbortController());
+    setState({ phase: "busy", prompt: p });
+    const page = blocksMarkdown(store, store.children("b:" + props.pageID));
+    ai.write({ prompt: p, selection: req.selection?.text, page }, ctl.signal).then(
+      (text) => { if (!ctl.signal.aborted) setState({ phase: "done", prompt: p, text }); },
+      (e: unknown) => { if (!ctl.signal.aborted) setState({ phase: "failed", prompt: p, message: e instanceof Error ? e.message : String(e) }); },
+    );
+  };
+  const finish = (mode: "replace" | "below") => {
+    if (state.phase !== "done") return;
+    const md = state.text.trim();
+    onClose();
+    if (!md) return;
+    const sel = req.selection;
+    if (mode === "replace" && sel) { ctrl.apply(cmd.insertContent(store, { blockId: sel.id, from: sel.from, to: sel.to }, { text: md })); return; }
+    const a = store.blocks.get(req.anchor);
+    const empty = a?.type === "text" && plainText(a.text).length === 0;
+    ctrl.apply(empty ? cmd.insertContent(store, { blockId: req.anchor, from: 0, to: 0 }, { text: md }) : cmd.insertContentAfter(store, req.anchor, { text: md }));
+  };
+  const discard = () => {
+    abort.current?.abort();
+    onClose();
+    if (cmd.isTextBlock(store.blocks.get(req.anchor))) ctrl.setCaret(req.selection ? { id: req.selection.id, from: req.selection.from, to: req.selection.to } : endCaret(store, req.anchor));
+  };
+  useEffect(() => {
+    const doc = box.current?.ownerDocument;
+    const off = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node) && state.phase === "ask" && !prompt) onClose(); };
+    doc?.addEventListener("pointerdown", off, true);
+    return () => doc?.removeEventListener("pointerdown", off, true);
+  }, [onClose, state.phase, prompt]);
+  return (
+    <div ref={box} className="bx2-menu bx2-ai" role="dialog" aria-label="Ask AI" data-testid="ai-box" style={{ left: req.x, top: Math.min(req.y, window.innerHeight - 220) }}
+      onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Escape") { e.preventDefault(); discard(); } }}>
+      {state.phase === "ask" ? (
+        <>
+          <input className="bx2-link-input bx2-ai-input" aria-label="Ask AI" placeholder={req.selection ? "Ask AI to edit…" : "Ask AI to write…"} value={prompt}
+            onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); run(prompt); } }} />
+          {req.selection ? (
+            <span className="bx2-ai-actions" role="group" aria-label="Edit selection">
+              {SELECTION_ACTIONS.map((a) => <BasedButton key={a.label} size="sm" variant="ghost" label={a.label} onClick={() => run(a.prompt)} />)}
+            </span>
+          ) : null}
+        </>
+      ) : state.phase === "busy" ? (
+        <span className="bx2-ai-status" role="status" aria-busy="true">Writing…<BasedButton size="sm" variant="ghost" label="Stop" onClick={discard} /></span>
+      ) : state.phase === "failed" ? (
+        <>
+          <span className="bx2-ai-status" role="alert">{state.message}</span>
+          <span className="bx2-ai-actions"><BasedButton size="sm" label="Try again" onClick={() => run(state.prompt)} /><BasedButton size="sm" variant="ghost" label="Discard" onClick={discard} /></span>
+        </>
+      ) : (
+        <>
+          <div className="bx2-ai-preview" data-testid="ai-preview">{state.text}</div>
+          <span className="bx2-ai-actions">
+            {req.selection ? <BasedButton size="sm" variant="primary" label="Replace selection" onClick={() => finish("replace")} /> : null}
+            <BasedButton size="sm" variant={req.selection ? "secondary" : "primary"} label={req.selection ? "Insert below" : "Insert"} onClick={() => finish("below")} />
+            <BasedButton size="sm" variant="ghost" label="Try again" onClick={() => run(state.prompt)} />
+            <BasedButton size="sm" variant="ghost" label="Discard" onClick={discard} />
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
 // MARK: Button-Block (BSD-407 Teil 6.5, wie der alte Editor und Swift: Schritte über runButton/setButton im Kern)
 
 /** Buttons, die gerade per Slash-Menü entstanden sind: die Einrichtung geht gleich auf. */
@@ -2435,7 +2543,7 @@ function BlockMenuFoot({ block: b }: { block: Block | undefined }) {
 
 const BLOCK_COLORS = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"] as const;
 
-function FormatBar({ x, y, onMark, onColor }: { x: number; y: number; onMark: (m: "b" | "i" | "u" | "s" | "c") => void; onColor: (color: string | undefined) => void }) {
+function FormatBar({ x, y, onMark, onColor, onAI }: { x: number; y: number; onMark: (m: "b" | "i" | "u" | "s" | "c") => void; onColor: (color: string | undefined) => void; onAI?: (() => void) | undefined }) {
   const [colors, setColors] = useState(false);
   const items: { m: "b" | "i" | "u" | "s" | "c"; label: string; title: string }[] = [
     { m: "b", label: "B", title: "Bold (⌘B)" }, { m: "i", label: "I", title: "Italic (⌘I)" }, { m: "u", label: "U", title: "Underline (⌘U)" },
@@ -2443,6 +2551,7 @@ function FormatBar({ x, y, onMark, onColor }: { x: number; y: number; onMark: (m
   ];
   return (
     <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 44) }} onPointerDown={(e) => e.preventDefault()}>
+      {onAI ? <BasedButton size="sm" variant="ghost" label="Ask AI" onClick={onAI} /> : null}
       {items.map((it) => <button key={it.m} type="button" className={"bx2-format-btn bx2-format-" + it.m} title={it.title} aria-label={it.title} onClick={() => onMark(it.m)}>{it.label}</button>)}
       <button type="button" className="bx2-format-btn" title="Text color" aria-label="Text color" aria-expanded={colors} onClick={() => setColors((c) => !c)}>A</button>
       {colors ? (

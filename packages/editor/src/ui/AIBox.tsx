@@ -5,14 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { TextSelection } from "prosemirror-state";
 import type { BasedEditor } from "../schema/schema.js";
 import { insertMarkdown } from "./paste.js";
+import { SELECTION_ACTIONS, type EditorAI } from "./ai.js";
 
-/** Was der Editor von der Shell für AI braucht. */
-export interface EditorAI {
-  /** Text (Markdown) zur Anweisung; `selection` = markierter Text, `page` = Text der Seite als Kontext. */
-  write(request: { prompt: string; selection?: string | undefined; page: string }, signal: AbortSignal): Promise<string>;
-  /** Ist ein Modell eingerichtet? Nur dann öffnet die Leertaste auf leerer Zeile das Feld (/AI und Formatleiste immer). */
-  available?: (() => boolean) | undefined;
-}
+export { SELECTION_ACTIONS, type EditorAI } from "./ai.js";
 
 export interface AIRequest {
   editor: BasedEditor;
@@ -27,12 +22,6 @@ export interface AIRequest {
   y: number;
 }
 
-export const SELECTION_ACTIONS = [
-  { label: "Improve writing", prompt: "Improve the writing of the selected text. Keep its meaning and language." },
-  { label: "Fix spelling & grammar", prompt: "Fix spelling and grammar in the selected text. Change nothing else." },
-  { label: "Make shorter", prompt: "Make the selected text shorter. Keep the key points." },
-  { label: "Summarize", prompt: "Summarize the selected text in a few sentences." },
-] as const;
 
 /** Ergebnis an der Stelle einfügen: ersetzt die Auswahl oder kommt unter den Block. Ein Undo-Schritt. */
 export function applyAIResult(req: AIRequest, text: string, mode: "replace" | "below"): boolean {

@@ -673,3 +673,10 @@
 .bx2-btn-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .bx2-btn-actions .bx2-link-input { width: auto; }
 .bx2-btn-template { display: grid; gap: var(--space-1); padding: var(--space-2); border-radius: var(--radius-md); background: var(--bg); }
+
+/* BSD-407 Teil 6.6: Ask AI – Feld, Vorschau, Aktionen auf der Menü-Fläche */
+.bx2-ai { display: grid; gap: var(--space-2); width: min(calc(var(--space-8) * 7), calc(100vw - var(--space-6))); max-width: none; padding: var(--space-2); }
+.bx2-ai-input { width: 100%; }
+.bx2-ai-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.bx2-ai-status { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); }
+.bx2-ai-preview { max-height: calc(var(--space-8) * 4); overflow: auto; white-space: pre-wrap; color: var(--ink); -webkit-user-select: text; user-select: text; }

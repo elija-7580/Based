@@ -90,3 +90,23 @@ for (const theme of ["light", "dark"] as const) {
     }
   });
 }
+
+// BSD-407 Teil 6.6: Ohne AI bietet der Block-Editor kein „Ask AI“ an (Leertaste, Slash-Menü, Formatleiste).
+test("ohne AI: kein Ask AI im Block-Editor", async ({ page }) => {
+  await ready(page);
+  const id = await page.evaluate(() => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command({ op: "createPage", title: "No AI" }));
+  await page.goto(`/#page-${id}`);
+  const editor = page.getByTestId("block-editor");
+  await editor.getByTestId("block-editor-tail").click();
+  await page.keyboard.press("Space");
+  await expect(page.getByTestId("ai-box")).toHaveCount(0);
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type("/ask");
+  await expect(page.getByTestId("slash-menu").getByRole("option", { name: /Ask AI/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Backspace");
+  await page.keyboard.type("Some text to select");
+  await page.keyboard.press("Shift+Home");
+  await expect(page.getByTestId("format-bar")).toBeVisible();
+  await expect(page.getByTestId("format-bar").getByRole("button", { name: "Ask AI" })).toHaveCount(0);
+});
