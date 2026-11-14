@@ -1,7 +1,7 @@
 // BSD-155: Einstieg – eine Datenbank mit ihren Ansichten als Tabs, Filter-Chips, Sortierung, Suche,
 // Ansichts-Einstellungen und „New“. Eingehängt in Seiten (inline) oder als ganze Seite.
 import type { AutofillWriter } from "./logic/autofill.js";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   deleteView, duplicateView, renameView,
   addRow, addRowOnDay, addTemplate, addView, calendarDateProperty, calendarEndProperty, dbops, plainText, today, setDatabaseTitle, viewsForBlock,
@@ -249,10 +249,22 @@ function Title() {
   const { store, db, locked } = useDB();
   const [text, setText] = useState(plainText(db.title));
   useEffect(() => setText(plainText(db.title)), [db.title]);
+  // Ein langer Titel bricht um (in schmalen Spalten wurde er sonst abgeschnitten): einzeiliges Textfeld, das mitwächst.
+  const field = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    const fit = () => { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; };
+    fit();
+    const ro = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(fit);
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, [text]);
   return locked
     ? <h2 className="dbui-title">{text || "Untitled"}</h2>
-    : <input className="dbui-title" aria-label="Database title" placeholder="Untitled" value={text}
-        onChange={(e) => { setText(e.target.value); setDatabaseTitle(store, db.id, e.target.value); }} />;
+    : <textarea ref={field} className="dbui-title" aria-label="Database title" placeholder="Untitled" value={text} rows={1} spellCheck={false}
+        onChange={(e) => { const t = e.target.value.replace(/[\r\n]+/g, " "); setText(t); setDatabaseTitle(store, db.id, t); }}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }} />;
 }
 
 /** Offener Peek: Reihenfolge laut seiner Ansicht (nur gerechnet, solange er offen ist), Vor/Zurück, Kürzel. */

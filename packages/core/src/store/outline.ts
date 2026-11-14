@@ -5,7 +5,7 @@
 import { richPlain, titleOf } from "../query/engine.js";
 import type { Block } from "../model/records.js";
 import type { WorkspaceStore } from "./store.js";
-import { isPageLike, sectionOf } from "./pages.js";
+import { hasPageTitle, isPageLike, sectionOf } from "./pages.js";
 
 export const PRIVATE_SECTION = "private";
 /** BSD-235: Sektion für geteilte Seiten ohne bekannte Eltern (Gast-Modus). */
@@ -166,7 +166,7 @@ function parentTitle(store: WorkspaceStore, b: Block): string | undefined {
 /** Titel aller Seiten (auch Zeilen und Papierkorb), für Seitenleiste, Breadcrumb und Papierkorb. */
 export function pageTitles(store: WorkspaceStore): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const b of store.blocks.values()) if (isPageLike(b)) out[b.id] = titleOf(store, b.id);
+  for (const b of store.blocks.values()) if (hasPageTitle(b)) out[b.id] = titleOf(store, b.id);
   return out;
 }
 

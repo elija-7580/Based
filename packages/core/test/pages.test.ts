@@ -54,6 +54,17 @@ describe("Seiten", () => {
     expect(s.blocks.get("p")?.text).toBe("p");
   });
 
+  it("Inline-Datenbank trägt den Titel ihrer Datenbank (Seitenleiste, Breadcrumb, als ganze Seite)", () => {
+    const { s } = make([
+      blk("p", "w", "a0"),
+      blk("inl", "b:p", "a0", "databaseInline", { text: undefined, props: { databaseID: "db" } }),
+      { kind: "database", data: { id: "db", blockID: "inl", title: "Daily Pages", properties: [], createdAt: 0, updatedAt: 0, stamp: { millis: 1, counter: 0, node: "x" } } },
+    ]);
+    expect(pageTitles(s)).toEqual({ p: "p", inl: "Daily Pages" });
+    renamePage(s, "inl", "Daily");
+    expect(pageTitles(s).inl).toBe("Daily");
+  });
+
   it("Papierkorb: verstecken, wiederherstellen, verwaiste nach oben, endgültig löschen", () => {
     const { s, p, tick } = make([blk("a", "w", "a0"), blk("b", "b:a", "a0"), blk("t", "b:b", "a0", "text")]);
     setFavorite(s, ["b"], true);
