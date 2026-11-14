@@ -1,0 +1,13 @@
+/* Legal pages (imprint, privacy): long-form text on the Based site tokens. */
+.bsd .legal{flex:1 1 auto;max-width:760px;padding-top:88px;padding-bottom:110px;display:flex;flex-direction:column;gap:18px;font-size:16px;line-height:1.65;color:var(--ink-2)}
+.bsd .legal h1{margin:0 0 6px;font-family:var(--display);font-weight:800;letter-spacing:-0.035em;line-height:1.02;font-size:clamp(40px,6vw,64px);color:var(--ink)}
+.bsd .legal h2{margin:26px 0 0;font-family:var(--display);font-weight:800;letter-spacing:-0.02em;font-size:24px;line-height:1.2;color:var(--ink)}
+.bsd .legal p,.bsd .legal ul,.bsd .legal dl{margin:0}
+.bsd .legal ul{padding-left:22px}
+.bsd .legal li+li{margin-top:6px}
+.bsd .legal dl{display:grid;grid-template-columns:minmax(140px,220px) minmax(0,1fr);gap:10px 24px;padding:22px;border-radius:22px;background:var(--surface-raised)}
+.bsd .legal dt{font-weight:600;color:var(--ink)}
+.bsd .legal dd{margin:0}
+.bsd .legal .note{padding:16px 18px;border-radius:18px;background:var(--bg);box-shadow:var(--shadow-panel);font-size:15px}
+.bsd .legal .meta{font-size:13px;color:var(--muted)}
+@media (max-width:760px){.bsd .legal{padding-top:48px;padding-bottom:64px}.bsd .legal dl{grid-template-columns:1fr;gap:4px}.bsd .legal dd{margin-bottom:10px}}

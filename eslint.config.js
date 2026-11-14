@@ -5,10 +5,11 @@ import tseslint from "typescript-eslint";
 import globals from "globals";
 
 export default tseslint.config(
-  { ignores: ["**/node_modules/**", "**/dist/**", "**/dist-sidecar/**", "**/target/**", "**/.build/**", "legacy/**", "spikes/**", "**/playwright-report/**", "**/test-results/**"] },
+  { ignores: ["**/node_modules/**", "**/dist/**", "**/dist-sidecar/**", "**/target/**", "**/.build/**", "legacy/**", "spikes/**", "**/playwright-report/**", "**/test-results/**", "apps/website/public/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { files: ["**/*.{js,mjs,cjs}"], languageOptions: { globals: globals.node } },
+  { files: ["apps/website/src/static/**/*.js"], languageOptions: { globals: globals.browser, sourceType: "script" } },
   { rules: { "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }] } },
   {
     files: ["packages/**/*.{ts,tsx}"],

@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Based Workspace · Big databases, zero waiting</title>
+<meta name="description" content="Databases with every view, relations, rollups and pages in every row. Local speed, offline by default, three copies of your data, EU servers.">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+.bsd{--bg:#FFFFFF;--canvas:#F1F1EE;--surface-raised:#F2F2EF;--surface-soft:#F5F5F2;--selected:#EBEBE7;--line:#EAEAE6;--control-border:#8E8D88;--ink:#1F1F1D;--ink-2:#37362F;--muted:#6B6A65;--button:#1F1F1D;--button-ink:#FFFFFF;--marker:#F1DE8A;--marker-strong:#E0C24A;--status-ready:#DCE6F8;--status-review:#F5DCE5;--status-blocked:#F7DED3;--synced:#3F8A5C;--shadow-panel:0 1px 3px rgba(26,26,24,0.08),0 0 0 1px rgba(26,26,24,0.04);--shadow-float:0 10px 30px rgba(26,26,24,0.14),0 0 0 1px rgba(26,26,24,0.05);--shadow-big:0 40px 80px -20px rgba(26,26,24,0.25),0 0 0 1px rgba(26,26,24,0.05);--glass:rgba(241,241,238,0.72);--display:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-optical-sizing:auto;color:var(--ink);background:var(--canvas);overflow-x:hidden}
+.bsd[data-theme="dark"]{--bg:#191919;--canvas:#141414;--surface-raised:#262626;--surface-soft:#232323;--selected:#2E2E2E;--line:#2F2F2F;--control-border:#6E6E6A;--ink:#E9E9E6;--ink-2:#D0D0CB;--muted:#A3A29D;--button:#E9E9E6;--button-ink:#191919;--marker:#5A4E22;--marker-strong:#C9A93A;--status-ready:#26344D;--status-review:#47283A;--status-blocked:#4A2C20;--synced:#5DB07E;--shadow-panel:0 0 0 1px #2A2A2A;--shadow-float:0 10px 30px rgba(0,0,0,0.6),0 0 0 1px #333333;--shadow-big:0 40px 80px -20px rgba(0,0,0,0.8),0 0 0 1px #333333;--glass:rgba(20,20,20,0.72)}
+.bsd a{color:var(--ink)}.bsd a:hover{color:var(--muted)}
+.bsd input:focus-visible,.bsd button:focus-visible,.bsd a:focus-visible,.bsd summary:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
+.bsd .disp{font-family:var(--display);font-weight:800;letter-spacing:-0.04em;line-height:0.98}
+.bsd .h2{font-family:var(--display);font-weight:800;letter-spacing:-0.035em;line-height:1.02;font-size:clamp(34px,5vw,64px);margin:0}
+.bsd .eyebrow{margin:0;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.bsd .lead{margin:0;font-size:clamp(17px,1.6vw,20px);line-height:1.55;color:var(--ink-2)}
+.bsd .mnav{display:none}
+.bsd .wrap{max-width:1200px;margin:0 auto;padding-left:24px;padding-right:24px}
+.bsd .nav{backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px)}
+.bsd .navlink{text-decoration:none;color:var(--muted);font-weight:500}
+.bsd .navlink:hover,.bsd .navlink.on{color:var(--ink)}
+.bsd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--button);color:var(--button-ink);font:inherit;font-size:15px;font-weight:600;text-decoration:none;cursor:pointer;transition:transform 180ms cubic-bezier(.2,0,0,1),box-shadow 180ms cubic-bezier(.2,0,0,1)}
+.bsd .btn:hover{color:var(--button-ink);transform:translateY(-2px);box-shadow:var(--shadow-float)}
+.bsd .btn2{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;background:var(--surface-raised);color:var(--ink);font-size:15px;font-weight:600;text-decoration:none;border:0;font-family:inherit;cursor:pointer}
+.bsd .btn2:hover{color:var(--ink);background:var(--selected)}
+.bsd .card{border-radius:22px;background:var(--surface-raised)}
+.bsd .lift{transition:transform 220ms cubic-bezier(.2,0,0,1),box-shadow 220ms cubic-bezier(.2,0,0,1)}
+.bsd .lift:hover{transform:translateY(-4px);box-shadow:var(--shadow-float)}
+.bsd .hl{background-image:linear-gradient(var(--marker),var(--marker));background-repeat:no-repeat;background-position:0 86%;background-size:100% 34%}
+.bsd .bar{display:block;width:3px;border-radius:2px;background:var(--marker-strong)}
+.bsd .tag{display:inline-block;padding:1px 6px;border-radius:3px;background:var(--marker);color:var(--ink);font-size:12px;font-weight:600}
+.bsd .mono{font-family:var(--mono)}
+.bsd .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bsd .caret{display:inline-block;width:2px;height:1.05em;margin-left:1px;vertical-align:-0.15em;background:var(--ink)}
+.bsd .faq-item+.faq-item{border-top:1px solid var(--line)}
+.bsd .skel{background:linear-gradient(90deg,var(--selected) 0%,var(--surface-soft) 50%,var(--selected) 100%);background-size:200% 100%;border-radius:6px}
+.bsd .dark-sec{--bg:#191919;--canvas:#101010;--surface-raised:#232323;--surface-soft:#1E1E1E;--selected:#2E2E2E;--line:#2C2C2C;--ink:#EDEDEA;--ink-2:#CFCFCA;--muted:#A3A29D;--button:#EDEDEA;--button-ink:#141414;--marker:#5A4E22;--marker-strong:#D8B740;--shadow-panel:0 0 0 1px #2A2A2A;--shadow-float:0 10px 30px rgba(0,0,0,0.6),0 0 0 1px #333;background:#101010;color:var(--ink)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .rise{animation:bsdRise 700ms cubic-bezier(.2,0,0,1) both}
+.bsd .d1{animation-delay:60ms}.bsd .d2{animation-delay:160ms}.bsd .d3{animation-delay:300ms}.bsd .d4{animation-delay:440ms}.bsd .d5{animation-delay:600ms}.bsd .d6{animation-delay:780ms}
+.bsd .hl{animation:bsdSweep 900ms cubic-bezier(.2,0,0,1) 800ms both}
+.bsd .pop{animation:bsdPop 520ms cubic-bezier(.2,1.4,.4,1) both}
+.bsd .fadein{animation:bsdFade 220ms ease-out both}
+.bsd .caret{animation:bsdBlink 1s steps(1) infinite}
+.bsd .skel{animation:bsdShimmer 1.2s linear infinite}
+.bsd .spin{animation:bsdSpin 0.9s linear infinite}
+.bsd .float{animation:bsdFloat 6s ease-in-out infinite}
+.bsd .float2{animation:bsdFloat 7s ease-in-out 1s infinite}
+.bsd .marquee{animation:bsdMarquee 40s linear infinite}
+.bsd .dots span{display:inline-block;width:6px;height:6px;margin-right:4px;border-radius:50%;background:var(--muted);animation:bsdDot 1s ease-in-out infinite}
+.bsd .dots span:nth-child(2){animation-delay:150ms}.bsd .dots span:nth-child(3){animation-delay:300ms}
+.bsd .draw{stroke-dasharray:400;stroke-dashoffset:400;animation:bsdDraw 900ms cubic-bezier(.2,0,0,1) both}
+.bsd .grow{transform-origin:left center;animation:bsdGrow 2.4s cubic-bezier(.2,0,0,1) both}
+.bsd .loopgrow{transform-origin:left center;animation:bsdLoopGrow 6s cubic-bezier(.2,0,0,1) infinite}
+.bsd .pulse{animation:bsdPulse 1.6s ease-in-out infinite}
+@supports (animation-timeline: view()){
+.bsd .reveal{animation:bsdRise linear both;animation-timeline:view();animation-range:entry 0% entry 45%}
+.bsd .reveal-l{animation:bsdLeft linear both;animation-timeline:view();animation-range:entry 0% entry 50%}
+.bsd .reveal-r{animation:bsdRight linear both;animation-timeline:view();animation-range:entry 0% entry 50%}
+.bsd .zoomin{animation:bsdZoom linear both;animation-timeline:view();animation-range:entry 0% entry 80%}
+.bsd .parallax{animation:bsdPar linear both;animation-timeline:view();animation-range:cover 0% cover 100%}
+}
+}
+@keyframes bsdRise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes bsdLeft{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:none}}
+@keyframes bsdRight{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+@keyframes bsdZoom{from{transform:scale(.9) translateY(40px)}to{transform:none}}
+@keyframes bsdPar{from{transform:translateY(60px)}to{transform:translateY(-60px)}}
+@keyframes bsdSweep{from{background-size:0% 34%}to{background-size:100% 34%}}
+@keyframes bsdPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes bsdFade{from{opacity:0}to{opacity:1}}
+@keyframes bsdBlink{50%{opacity:0}}
+@keyframes bsdShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes bsdSpin{to{transform:rotate(360deg)}}
+@keyframes bsdFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes bsdMarquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes bsdDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+@keyframes bsdDraw{to{stroke-dashoffset:0}}
+@keyframes bsdGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes bsdLoopGrow{0%{transform:scaleX(0.04)}70%,100%{transform:scaleX(1)}}
+@keyframes bsdPulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+.bsd .ch{display:inline-block;white-space:pre}
+.bsd .w{display:inline-block;white-space:pre}
+.bsd .dark-sec .hl,.bsd .ink-panel .hl{background-image:linear-gradient(rgba(224,194,74,.6),rgba(224,194,74,.6))}
+.bsd .ink-panel{--ink:#F4F4F1;--ink-2:#DADAD5;--muted:#B5B4AE;--button:#F4F4F1;--button-ink:#1F1F1D;--surface-raised:#2A2A28;--line:#33332F;background:#1F1F1D;color:#F4F4F1}
+.bsd .flap{display:inline-flex;gap:4px;vertical-align:middle}
+.bsd .tile{position:relative;display:inline-flex;align-items:center;justify-content:center;width:.78em;height:1.18em;border-radius:.12em;background:var(--button);color:var(--button-ink);font-family:var(--mono);font-weight:700;font-size:.82em;overflow:hidden;box-shadow:inset 0 -1px 0 rgba(255,255,255,.08)}
+.bsd .tile::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.35)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .snap .ch{animation:bsdSnap 300ms cubic-bezier(.2,1.5,.4,1) both}
+.bsd .flipin .ch{animation:bsdFlipIn 650ms cubic-bezier(.2,.8,.2,1) both;transform-origin:50% 60%}
+.bsd .packw .w{animation:bsdPack 750ms cubic-bezier(.2,1.25,.4,1) both}
+.bsd .blurw .w{display:inline-block;animation:bsdBlur 600ms cubic-bezier(.2,0,0,1) both}
+.bsd .tile.fa{animation:bsdTileA 520ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .tile.fb{animation:bsdTileB 520ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .travel{animation:bsdTravel 1.2s cubic-bezier(.6,0,.4,1) both}
+}
+@keyframes bsdSnap{from{opacity:0;transform:translateY(-.55em) scale(1.25)}to{opacity:1;transform:none}}
+@keyframes bsdFlipIn{from{opacity:0;transform:perspective(600px) rotateX(-95deg)}to{opacity:1;transform:none}}
+@keyframes bsdPack{from{opacity:0;transform:translateX(90px) rotate(9deg)}to{opacity:1;transform:none}}
+@keyframes bsdBlur{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes bsdTileA{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
+@keyframes bsdTileB{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
+@keyframes bsdTravel{from{offset-distance:0%}to{offset-distance:100%}}
+
+.bsd .sentflip{display:inline-block;transform-origin:50% 55%}
+.bsd .sun{position:absolute;left:50%;top:-180px;width:420px;height:420px;margin-left:-210px;border-radius:50%;background:radial-gradient(circle,rgba(255,206,120,.95) 0%,rgba(250,180,100,.55) 35%,rgba(248,196,150,.18) 60%,rgba(248,196,150,0) 72%);pointer-events:none}
+.bsd .ring{position:absolute;left:50%;top:50%;border-radius:50%;border:2px solid var(--marker-strong);transform:translate(-50%,-50%)}
+.bsd .track-dot{position:absolute;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:var(--marker-strong);box-shadow:0 0 0 6px rgba(224,194,74,.25);transition:left 1.2s cubic-bezier(.6,0,.3,1)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .sentflip.fa{animation:bsdSentA 700ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .sentflip.fb{animation:bsdSentB 700ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .sun{animation:bsdSunrise 2.4s cubic-bezier(.2,0,0,1) 300ms both}
+.bsd .ring{animation:bsdRing 3s ease-out infinite}
+.bsd .nowline{animation:bsdPulse 2s ease-in-out infinite}
+}
+@keyframes bsdSentA{0%{opacity:0;transform:perspective(800px) rotateX(-90deg)}100%{opacity:1;transform:none}}
+@keyframes bsdSentB{0%{opacity:0;transform:perspective(800px) rotateX(-90deg)}100%{opacity:1;transform:none}}
+@keyframes bsdSunrise{from{transform:translateY(140px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes bsdRing{0%{width:60px;height:60px;opacity:.9}100%{width:340px;height:340px;opacity:0}}
+
+.bsd .logo-svg .lg-stem,.bsd .logo-svg .lg-bowl{transform-box:fill-box;transform-origin:50% 100%}
+.bsd .chars-w{display:inline-block;white-space:nowrap}
+@media (prefers-reduced-motion: no-preference){
+.bsd .logo-svg .lg-stem{animation:bsdStem 700ms cubic-bezier(.2,1.5,.4,1) 150ms both}
+.bsd .logo-svg .lg-bowl{animation:bsdBowl 700ms cubic-bezier(.2,1.5,.4,1) 380ms both}
+.bsd .logo-link:hover .lg-stem{animation:bsdStem 600ms cubic-bezier(.2,1.5,.4,1) both}
+.bsd .logo-link:hover .lg-bowl{animation:bsdBowl2 600ms cubic-bezier(.2,1.5,.4,1) 120ms both}
+.bsd .dropin{animation:bsdDrop 700ms cubic-bezier(.2,1.4,.4,1) both}
+.bsd .menu-in{animation:bsdMenu 260ms cubic-bezier(.2,0,0,1) both}
+}
+@keyframes bsdStem{0%{transform:translateY(-120%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes bsdBowl{0%{transform:translateY(-160%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes bsdBowl2{0%{transform:translateY(-160%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes bsdDrop{from{opacity:0;transform:translateY(-24px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes bsdMenu{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+@media (max-width: 760px){
+.bsd nav[aria-label="Main"]{flex-wrap:nowrap!important;gap:10px!important}
+.bsd nav[aria-label="Main"] .btn{min-height:38px!important;padding:0 14px}
+.bsd footer .wrap{padding-top:32px!important;gap:24px!important}
+.bsd footer .wrap>div:first-child>div:not(:first-child){display:none!important}
+
+.bsd .mnav{display:block}
+.bsd .mnav summary{list-style:none;width:40px;height:40px;border-radius:50%;background:var(--surface-raised);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.bsd .mnav summary::-webkit-details-marker{display:none}
+.bsd .mnav[open] summary{background:var(--button);color:var(--button-ink)}
+.bsd .mnav-sheet{position:absolute;left:0;right:0;top:100%;padding:6px 20px 14px;background:var(--bg);border-bottom:1px solid var(--line);box-shadow:var(--shadow-float);display:flex;flex-direction:column;animation:bsdFade 160ms ease both}
+.bsd .mnav-sheet a{min-height:50px;display:flex;align-items:center;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:17px;font-weight:600}
+.bsd .mnav-sheet a:last-child{border-bottom:0}
+.bsd [style*="padding-top: 120px"]{padding-top:56px!important}
+.bsd [style*="padding-bottom: 120px"]{padding-bottom:56px!important}
+.bsd [style*="padding-bottom: 110px"]{padding-bottom:48px!important}
+.bsd [style*="padding-top: 140px"]{padding-top:64px!important}
+.bsd [style*="padding-bottom: 140px"]{padding-bottom:64px!important}
+
+.mcol{min-height:0!important}
+.orch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:16px!important}
+.orch-svg{min-width:640px}
+.evn{width:54px!important;height:54px!important;font-size:15px!important}
+.evl{font-size:11px!important;white-space:normal!important;text-align:center;max-width:64px;line-height:1.25}
+.pill-hero{text-align:left}
+footer a{display:inline-block;padding:6px 0}
+
+.bsd .navlinks{display:none !important}
+.bsd .hide-sm{display:none !important}
+}
+.bsd .risew .wm{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em}
+.bsd .risew .w{display:inline-block}
+@media (prefers-reduced-motion: no-preference){
+.bsd .risew .w{animation:bsdRiseW 800ms cubic-bezier(.2,0,0,1) both}
+}
+@keyframes bsdRiseW{from{transform:translateY(105%)}to{transform:none}}
+
+.bsd .cycler{display:inline-block;height:1.1em;overflow:hidden;vertical-align:bottom}
+.bsd .cycler>span{display:flex;flex-direction:column}
+.bsd .cycler>span>span{display:block;height:1.1em;line-height:1.1em}
+.bsd .flip{perspective:1200px}
+.bsd .flip-in{position:relative;width:100%;height:100%;transition:transform 600ms cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.bsd .flip-in.on{transform:rotateY(180deg)}
+.bsd .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:22px;box-sizing:border-box;padding:26px;display:flex;flex-direction:column;gap:12px}
+.bsd .back{transform:rotateY(180deg)}
+.bsd .wave span{display:block;width:5px;border-radius:3px;background:var(--ink);height:100%;transform-origin:center}
+.bsd .v1,.bsd .v2,.bsd .v3{position:absolute;inset:0}
+.bsd .switch{position:relative;width:64px;height:36px;border-radius:999px;border:0;cursor:pointer;transition:background-color 220ms ease}
+.bsd .knob{position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform 260ms cubic-bezier(.2,1.2,.4,1)}
+.bsd .knob.on{transform:translateX(28px)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .cycler>span{animation:bsdCycle 12s cubic-bezier(.7,0,.3,1) infinite}
+.bsd .wave span{animation:bsdWave 1.1s ease-in-out infinite}
+.bsd .v1{animation:bsdV1 12s infinite}.bsd .v2{animation:bsdV2 12s infinite}.bsd .v3{animation:bsdV3 12s infinite}
+.bsd .slashpop{animation:bsdSlash 5s cubic-bezier(.2,0,0,1) infinite}
+.bsd .typeq{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;animation:bsdTypeQ 6s steps(18) infinite}
+.bsd .res{animation:bsdRes 6s ease-out infinite}
+.bsd .playhead{animation:bsdPlay 8s linear infinite}
+.bsd .node{animation:bsdFloat 5s ease-in-out infinite}
+}
+@keyframes bsdCycle{0%,16%{transform:translateY(0)}20%,36%{transform:translateY(-1.1em)}40%,56%{transform:translateY(-2.2em)}60%,76%{transform:translateY(-3.3em)}80%,96%{transform:translateY(-4.4em)}100%{transform:translateY(-5.5em)}}
+@keyframes bsdWave{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+@keyframes bsdV1{0%,30%{opacity:1;transform:none}33%,97%{opacity:0;transform:translateY(8px)}100%{opacity:1}}
+@keyframes bsdV2{0%,30%{opacity:0;transform:translateY(8px)}33%,63%{opacity:1;transform:none}66%,100%{opacity:0}}
+@keyframes bsdV3{0%,63%{opacity:0;transform:translateY(8px)}66%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes bsdSlash{0%,15%{opacity:0;transform:translateY(6px) scale(.96)}22%,80%{opacity:1;transform:none}90%,100%{opacity:0}}
+@keyframes bsdTypeQ{0%{width:0}35%,100%{width:18ch}}
+@keyframes bsdRes{0%,40%{opacity:0;transform:translateY(6px)}50%,92%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes bsdPlay{from{left:0%}to{left:100%}}
+
+.bsd .prompt-box{min-height:54px}
+.bsd .tl{--tl-name:190px;--tl-chip:84px;--tl-chipgap:96px}
+.bsd .tl-name{flex:0 0 var(--tl-name);min-width:0}
+.bsd .tl-chip{flex:0 0 var(--tl-chip);box-sizing:border-box;white-space:nowrap}
+@media (max-width:760px){.bsd .hr-m{display:none}.bsd .prompt-box{min-height:78px}.bsd .tl{--tl-name:108px;--tl-chip:0px;--tl-chipgap:0px}.bsd .tl .tl-chip{display:none}}
+
+.bsd .flowline{stroke-dasharray:6 10}
+@media (prefers-reduced-motion: no-preference){
+.bsd .flowline{animation:bsdFlow 1.2s linear infinite}
+}
+@keyframes bsdFlow{to{stroke-dashoffset:-32}}
+
+.bsd .mb{max-width:520px;margin:0 auto;width:100%;box-sizing:border-box}
+.bsd .mb-hero{padding:28px 20px 12px;display:flex;flex-direction:column;gap:16px}
+.bsd .mb-pill{align-self:flex-start;margin:0;padding:7px 14px;border-radius:999px;background:var(--marker);color:#1F1F1D;font-family:var(--display);font-size:19px;font-weight:800;letter-spacing:-0.02em}
+.bsd .mb-full{width:100%;box-sizing:border-box;justify-content:center;min-height:48px}
+.bsd .mb-trust{margin:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.bsd .mb-sec{padding:32px 20px 8px}
+.bsd .mb-card{border-radius:22px;background:var(--bg);box-shadow:var(--shadow-panel)}
+.bsd .mb-scroll{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.bsd .mb-scroll::-webkit-scrollbar{display:none}
+.bsd .mb-snap{scroll-snap-type:x mandatory;scroll-padding:0 20px}
+.bsd .mb-slide{flex:0 0 82%;scroll-snap-align:start;box-sizing:border-box;padding:20px;border-radius:22px;display:flex;flex-direction:column;gap:10px;min-height:230px}
+.bsd .mb-h2{margin:6px 0 16px;font-family:var(--display);font-size:30px;font-weight:800;line-height:1.08;letter-spacing:-0.03em}
+.bsd .mb-h3{margin:0;font-family:var(--display);font-size:21px;font-weight:800;line-height:1.15;letter-spacing:-0.02em}
+.bsd .mb-p{margin:0;font-size:15px;line-height:1.5;color:var(--ink-2)}
+.bsd .mb-more{margin-top:auto;font-size:14px;font-weight:600}
+.bsd .mb-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:0;border-radius:999px;background:var(--surface-raised);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.bsd .mb-chip[aria-pressed="true"]{background:var(--button);color:var(--button-ink)}
+.bsd .mb-row{display:grid;grid-template-columns:84px 1fr 1fr;align-items:center;gap:8px;padding:14px 0;border-bottom:1px solid var(--line);font-size:15px}
+.bsd .mb-yes,.bsd .mb-no{justify-self:start;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.bsd .mb-yes{background:#DCEFE3;color:#2F6B47}
+.bsd .mb-no{background:var(--surface-raised);color:var(--muted)}
+.bsd .mb-strong{background:var(--marker);color:#1F1F1D}
+.bsd .mb-input{min-height:50px;padding:0 16px;border:0;border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;box-sizing:border-box;width:100%}
+.bsd .mb-link{display:flex;justify-content:space-between;align-items:center;min-height:52px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:16px;font-weight:600}
+.bsd .mb-sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;justify-content:flex-end}
+.bsd .mb-backdrop{position:absolute;inset:0;border:0;background:rgba(20,20,18,.35);animation:bsdFade 200ms ease both}
+.bsd .mb-sheet{position:relative;max-height:80vh;overflow:auto;padding:10px 14px calc(16px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:var(--bg);box-shadow:var(--shadow-big);animation:bsdSheet 280ms cubic-bezier(.2,0,0,1) both}
+.bsd .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@keyframes bsdSheet{from{transform:translateY(100%)}to{transform:none}}
+@media (prefers-reduced-motion: reduce){.bsd .mb-sheet,.bsd .mb-backdrop{animation:none}}
+
+</style>
+</helmet>
+<div class="bsd" data-theme="{{theme}}" style="min-height: 100vh; display: flex; flex-direction: column;">
+<header class="nav" style="position: sticky; top: 0; z-index: 20; background: var(--glass); border-bottom: 1px solid var(--line);">
+<nav aria-label="Main" class="wrap" style="padding-top: 12px; padding-bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px;">
+<a href="Main.dc.html" class="logo-link" aria-label="Based home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink);"><svg class="logo-svg" aria-hidden="true" width="34" height="34" viewBox="0 0 100 100"><rect x="10" y="80" width="80" height="9" rx="4.5" fill="#E7CE6A"></rect><rect class="lg-stem" x="20" y="7" width="16" height="68" rx="8" fill="var(--ink)"></rect><rect class="lg-bowl" x="40" y="37" width="38" height="38" rx="14" fill="var(--ink)"></rect></svg><span style="font-size: 24px; font-weight: 700; letter-spacing: -0.035em;">based</span></a>
+<div class="navlinks" style="display: flex; flex-wrap: wrap; gap: 4px 22px; flex: 1 1 auto; font-size: 14px;">
+<a href="Workspace.dc.html" class="navlink on">Workspace</a>
+<a href="Agents.dc.html" class="navlink ">Agents</a>
+<a href="Switch.dc.html" class="navlink ">Leaving Notion?</a>
+<a href="Roadmap.dc.html" class="navlink ">Roadmap</a>
+<a href="Manifesto.dc.html" class="navlink ">Manifesto</a>
+<a href="https://github.com/elija-7580/Based" class="navlink">GitHub</a>
+</div>
+<a href="Main.dc.html#waitlist" class="btn" style="min-height: 40px; font-size: 14px; margin-left: auto;">Join the beta</a>
+<details class="mnav"><summary aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg></summary><div class="mnav-sheet">
+<a href="Main.dc.html">Home</a>
+<a href="Workspace.dc.html">Workspace</a>
+<a href="Agents.dc.html">Agents</a>
+<a href="Switch.dc.html">Leaving Notion?</a>
+<a href="Roadmap.dc.html">Roadmap</a>
+<a href="Manifesto.dc.html">Manifesto</a>
+<a href="https://github.com/elija-7580/Based">GitHub</a>
+</div></details>
+</nav>
+</header>
+
+<main style="flex: 1 1 auto;">
+
+<section aria-labelledby="ws-title" class="wrap" style="padding-top: 96px; padding-bottom: 60px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;">
+<p class="eyebrow rise d1">The workspace</p>
+<h1 id="ws-title" class="disp snap" aria-label="{{heroLabel}}" style="margin: 0; max-width: 1080px; font-size: clamp(44px, 8vw, 108px);"><span aria-hidden="true"><sc-for list="{{hero1}}" as="w" hint-placeholder-count="2"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="8"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for><br><span class="hl"><sc-for list="{{hero2}}" as="w" hint-placeholder-count="2"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="8"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for></span></span></h1>
+<p class="lead rise d3" style="max-width: 700px;">Pages, docs and databases with every view you know from Notion, running on your own machine. Your data, kept forever, synced to your other devices, backed up without you thinking about it.</p>
+<div class="rise d4" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"><a href="Main.dc.html#waitlist" class="btn">Join the beta</a><a href="#databases" class="btn2">Try the database</a></div>
+</section>
+
+<section id="speed" aria-labelledby="race-title" class="wrap" style="padding-top: 40px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 28px;">
+<div class="reveal" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px;">
+<div style="display: flex; flex-direction: column; gap: 14px; max-width: 720px;"><p class="eyebrow">Speed</p><h2 id="race-title" class="h2">Click a page. It's open.</h2></div>
+<div role="radiogroup" aria-label="Playback speed" style="display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; background: var(--selected);">
+<span style="padding: 0 8px 0 10px; font-size: 13px; font-weight: 600; color: var(--muted);">Slow motion</span>
+<sc-for list="{{speeds}}" as="sp" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{sp.on}}" onClick="{{sp.pick}}" style="min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: {{sp.bg}}; color: var(--ink); box-shadow: {{sp.sh}};">{{sp.label}}</button></sc-for>
+</div>
+</div>
+<div class="zoomin" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px;">
+<figure style="margin: 0; padding: 10px; border-radius: 26px; background: var(--surface-raised);">
+<figcaption style="padding: 6px 10px 12px; display: flex; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600;"><span>A cloud workspace with 3 inline databases</span><span class="mono" style="color: var(--muted);">{{leftTime}}</span></figcaption>
+<div style="height: 340px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
+<sc-if value="{{leftLoading}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px;"><svg class="spin" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"></path></svg><span>{{leftMsg}}</span></div>
+<div class="skel" style="height: 30px; width: 62%;"></div><div class="skel" style="height: 14px; width: 92%;"></div><div class="skel" style="height: 14px; width: 80%;"></div><div class="skel" style="height: 100px; width: 100%; margin-top: 8px;"></div>
+</sc-if>
+<sc-if value="{{leftDone}}" hint-placeholder-val="{{ false }}">
+<div class="fadein" style="display: flex; flex-direction: column; gap: 10px;"><p style="margin: 0; font-size: 24px; font-weight: 650;">Q4 Planning</p><p style="margin: 0; font-size: 14px; color: var(--muted);">Finally. Where were we?</p><div style="height: 100px; border-radius: 10px; background: var(--surface-soft);"></div></div>
+</sc-if>
+</div>
+</figure>
+<figure style="margin: 0; padding: 10px; border-radius: 26px; background: var(--surface-raised); box-shadow: 0 0 0 2px var(--marker-strong);">
+<figcaption style="padding: 6px 10px 12px; display: flex; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600;"><span style="display: flex; align-items: center; gap: 6px;"><img src="{{markSrc}}" alt="" width="16" height="16">Based, same page, from disk</span><span class="mono" style="color: var(--synced);">{{rightTime}}</span></figcaption>
+<div style="height: 340px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+<p style="margin: 0; font-size: 24px; font-weight: 650; letter-spacing: -0.015em; opacity: {{r1}}; transform: translateY({{r1y}}); transition: opacity 120ms ease-out, transform 160ms ease-out;">Q4 Planning</p>
+<p class="mono" style="margin: 0; font-size: 11.5px; color: var(--muted); opacity: {{r2}}; transition: opacity 120ms ease-out;">3 databases, 2,418 rows, read from disk</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 4px;">
+<sc-for list="{{raceCols}}" as="c" hint-placeholder-count="3">
+<div style="padding: 10px; border-radius: 12px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 6px; opacity: {{c.o}}; transform: translateY({{c.y}}); transition: opacity 140ms ease-out, transform 180ms ease-out; min-width: 0;"><p style="margin: 0; font-size: 12px; font-weight: 600;">{{c.t}}</p><sc-for list="{{c.items}}" as="i" hint-placeholder-count="2"><p style="margin: 0; padding: 6px 8px; border-radius: 8px; background: var(--bg); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{i}}</p></sc-for></div>
+</sc-for>
+</div>
+<p class="mono" style="margin: auto 0 0; font-size: 11.5px; color: var(--muted);">{{rightNote}}</p>
+</div>
+</figure>
+</div>
+<p class="reveal" style="margin: 0; text-align: center; font-size: 13px; color: var(--muted);">Dramatised, but you know the feeling. Turn on slow motion to watch Based actually draw the page.</p>
+</section>
+
+<section id="databases" aria-labelledby="db-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); scroll-margin-top: 80px;">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Databases</p>
+<h2 id="db-title" class="h2">Not a Markdown folder. A database engine with pages in it.</h2>
+<p class="lead">There are plenty of Markdown apps. Based is about what Notion got right: structured data you can see in any shape. Filter it, relate it, roll it up, open any row as a full page. Go ahead, it's live.</p>
+</div>
+<div class="zoomin" style="border-radius: 28px; background: var(--surface-raised); padding: 12px;">
+<div style="border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-panel); padding: 20px; display: flex; flex-direction: column; gap: 14px; min-height: 520px; box-sizing: border-box;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+<p style="margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.015em;">Projects</p>
+<div role="tablist" aria-label="Views" style="display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--selected);">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{v.on}}" onClick="{{v.pick}}" style="min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: {{v.bg}}; color: var(--ink); box-shadow: {{v.sh}};">{{v.label}}</button></sc-for>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+<label for="db-q" class="sr">Search projects</label>
+<input id="db-q" type="search" placeholder="Search" value="{{q}}" onChange="{{setQ}}" style="min-height: 34px; padding: 0 12px; border: 1px solid var(--control-border); border-radius: 999px; background: var(--bg); color: var(--ink); font: inherit; font-size: 13px; width: 160px;">
+<sc-for list="{{chips}}" as="ch" hint-placeholder-count="4"><button type="button" aria-pressed="{{ch.on}}" onClick="{{ch.pick}}" style="min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; background: {{ch.bg}}; color: {{ch.fg}};">{{ch.label}}</button></sc-for>
+<span class="mono" style="margin-left: auto; font-size: 11.5px; color: var(--muted);">{{countTxt}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 14px; flex: 1 1 auto;">
+<div style="flex: 999 1 420px; min-width: 0;">
+<sc-if value="{{isTable}}" hint-placeholder-val="{{ true }}">
+<div style="overflow-x: auto;">
+<div style="min-width: 520px;">
+<div class="mono" style="display: grid; grid-template-columns: minmax(0, 1.6fr) 110px 90px 80px 70px; gap: 10px; padding: 8px 10px; font-size: 11px; color: var(--muted);"><span>Name</span><span>Status</span><span>Client</span><span>Due</span><span>Tasks</span></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6"><button type="button" onClick="{{r.open}}" class="fadein" style="width: 100%; display: grid; grid-template-columns: minmax(0, 1.6fr) 110px 90px 80px 70px; gap: 10px; padding: 10px; border: 0; border-top: 1px solid var(--line); background: {{r.bg}}; color: var(--ink); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; align-items: center; border-radius: 8px;"><span style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span class="bar" style="height: 16px; flex: 0 0 3px; opacity: {{r.agent}};"></span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.t}}</span></span><span style="justify-self: start; padding: 1px 8px; border-radius: 3px; font-size: 12px; background: {{r.sbg}};">{{r.s}}</span><span style="color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.c}}</span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{r.due}}</span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{r.roll}}</span></button></sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isBoard}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 10px;">
+<sc-for list="{{board}}" as="col" hint-placeholder-count="4"><div style="padding: 10px; border-radius: 14px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px; min-height: 260px;"><p style="margin: 0; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;"><span>{{col.t}}</span><span class="mono" style="color: var(--muted);">{{col.n}}</span></p><sc-for list="{{col.cards}}" as="r" hint-placeholder-count="2"><button type="button" onClick="{{r.open}}" class="pop" style="padding: 10px; border: 0; border-radius: 10px; background: var(--bg); box-shadow: var(--shadow-panel); text-align: left; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 4px;"><span>{{r.t}}</span><span class="mono" style="font-size: 11px; color: var(--muted);">{{r.c}}, {{r.due}}</span></button></sc-for></div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isTimeline}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; padding-top: 24px; display: flex; flex-direction: column; gap: 8px;">
+<div class="mono" style="position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 11px; color: var(--muted);"><span>Nov 3</span><span>Nov 17</span><span>Dec 1</span><span>Dec 15</span></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6"><button type="button" onClick="{{r.open}}" class="grow" style="margin-left: {{r.left}}; width: {{r.width}}; min-height: 30px; padding: 0 10px; border: 0; border-radius: 8px; background: {{r.sbg}}; color: var(--ink); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.t}}</button></sc-for>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{peekOpen}}" hint-placeholder-val="{{ false }}">
+<aside class="fadein" aria-label="Page preview" style="flex: 1 1 280px; min-width: 0; padding: 18px; border-radius: 16px; background: var(--surface-soft); display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;"><p style="margin: 0; font-size: 18px; font-weight: 650;">{{peek.t}}</p><button type="button" onClick="{{closePeek}}" aria-label="Close preview" class="btn2" style="min-height: 30px; padding: 0 10px; font-size: 12px; background: var(--bg);">Close</button></div>
+<p class="mono" style="margin: 0; font-size: 11.5px; color: var(--muted);">{{peek.s}}, {{peek.c}}, due {{peek.due}}</p>
+<p style="margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-2);">{{peek.body}}</p>
+<p style="margin: 6px 0 0; font-size: 12px; font-weight: 600; color: var(--muted);">Relations</p>
+<sc-for list="{{peek.links}}" as="l" hint-placeholder-count="3"><p style="margin: 0; padding: 7px 10px; border-radius: 10px; background: var(--bg); font-size: 13px;">↗ {{l}}</p></sc-for>
+<sc-if value="{{peek.agentOn}}" hint-placeholder-val="{{ false }}"><p style="margin: 6px 0 0; display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted);"><span class="tag">Based</span>Status updated by the main agent, 07:30</p></sc-if>
+</aside>
+</sc-if>
+</div>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px;">
+<sc-for list="{{dbFeatures}}" as="f" hint-placeholder-count="8"><div class="card lift reveal" style="padding: 22px; display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; justify-content: space-between; gap: 8px; align-items: center;"><p style="margin: 0; font-size: 16px; font-weight: 650;">{{f.t}}</p><sc-if value="{{f.planned}}" hint-placeholder-val="{{ false }}"><span style="padding: 2px 8px; border-radius: 3px; background: var(--selected); font-size: 12px; color: var(--muted);">Planned</span></sc-if></div><p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted);">{{f.d}}</p></div></sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="log-title" class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center;">
+<div class="reveal-l" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow">Logs, too</p>
+<h2 id="log-title" class="h2">Your logs are a database now.</h2>
+<p class="lead">Runs, deploys, experiments, workouts, invoices. Anything that arrives line by line lands in a database you can filter, chart and link to the page it belongs to. Agents write to it through the CLI or MCP.</p>
+</div>
+<div class="reveal-r" style="flex: 1 1 520px; min-width: 0; padding: 12px; border-radius: 28px; background: var(--surface-raised);">
+<div style="padding: 18px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-panel); min-height: 320px;">
+<p style="margin: 0 0 10px; display: flex; justify-content: space-between; font-size: 15px; font-weight: 650;"><span>Agent runs</span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{logCount}} rows, live</span></p>
+<div style="overflow-x: auto;"><div style="min-width: 460px;">
+<sc-for list="{{logRows}}" as="l" hint-placeholder-count="7"><div class="fadein" style="display: grid; grid-template-columns: 72px 110px minmax(0, 1fr) 64px; gap: 10px; padding: 8px 4px; border-top: 1px solid var(--line); font-size: 13px; align-items: center;"><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{l.time}}</span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{l.agent}}</span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2);">{{l.what}}</span><span style="justify-self: end; padding: 1px 8px; border-radius: 3px; font-size: 12px; background: {{l.bg}};">{{l.s}}</span></div></sc-for>
+</div></div>
+</div>
+</div>
+</section>
+
+<section id="backups" aria-labelledby="bk-title" class="ink-panel" style="scroll-margin-top: 80px;">
+<div class="wrap" style="padding-top: 130px; padding-bottom: 130px; display: flex; flex-direction: column; gap: 48px;">
+<div class="reveal" style="max-width: 880px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow" style="color: var(--marker-strong);">Backups</p>
+<h2 id="bk-title" class="h2">Three copies. Zero panic.</h2>
+<p class="lead">Data loss is the thread that never leaves r/Notion. Notion's own export can't recreate a workspace, and paid backup services say a complete restore isn't possible through Notion's API. With Based you own your data: it lives in three places, nothing gets deleted behind your back, and restoring is a click.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px;">
+<sc-for list="{{copies}}" as="c" hint-placeholder-count="3"><div class="reveal lift" style="padding: 26px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 10px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Copy {{c.n}}</p><p style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">{{c.t}}</p><p style="margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink-2);">{{c.d}}</p><p class="mono" style="margin: auto 0 0; font-size: 11.5px; color: var(--synced);">● {{c.status}}</p></div></sc-for>
+</div>
+<div class="reveal" style="padding: 24px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;"><p style="margin: 0; font-size: 16px; font-weight: 650;">Version history of Clients</p><p class="mono" style="margin: 0; font-size: 11.5px; color: var(--muted);">every version since day one, no plan limit</p></div>
+<div style="position: relative; height: 56px;">
+<div style="position: absolute; left: 0; right: 0; top: 27px; height: 2px; background: var(--line);"></div>
+<sc-for list="{{ticks}}" as="t" hint-placeholder-count="40"><span style="position: absolute; top: {{t.top}}; left: {{t.left}}; width: 2px; height: {{t.h}}; border-radius: 1px; background: {{t.c}};"></span></sc-for>
+<span class="playhead" aria-hidden="true" style="position: absolute; top: 4px; width: 2px; height: 48px; background: var(--ink);"></span>
+</div>
+<p style="margin: 0; font-size: 13px; color: var(--muted);">Yellow ticks are agent edits. Each one can be undone on its own.</p>
+</div>
+</div>
+</section>
+
+<section id="sync" aria-labelledby="sync-title" class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center; scroll-margin-top: 80px;">
+<div class="reveal-l" style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow">Sync and cloud</p>
+<h2 id="sync-title" class="h2">Your phone gets everything. The server gets gibberish.</h2>
+<p class="lead">The beta syncs your Apple devices through iCloud. At release, Based Cloud takes over: servers in the EU, and everything encrypted on your device before it leaves, so the server only ever stores scrambled bytes. Prefer your own hardware? Run the server yourself.</p>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.5;">
+<li style="display: flex; gap: 14px;"><span class="bar" style="flex: 0 0 3px;"></span><span><b>EU servers, end-to-end encrypted</b> by release. iCloud in the beta.</span></li>
+<li style="display: flex; gap: 14px;"><span class="bar" style="flex: 0 0 3px;"></span><span><b>Cloud agents are opt-in.</b> They only see pages you hand them, while they work.</span></li>
+<li style="display: flex; gap: 14px;"><span class="bar" style="flex: 0 0 3px;"></span><span><b>Self-host</b> with one command, same apps.</span></li>
+<li style="display: flex; gap: 14px;"><span class="bar" style="flex: 0 0 3px;"></span><span><b>Offline is the default.</b> Every row, every formula. Sync catches up later.</span></li>
+</ul>
+</div>
+<div class="reveal-r" style="flex: 1 1 480px; min-width: 0; padding: 12px; border-radius: 28px; background: var(--surface-raised);">
+<div style="padding: 24px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-panel); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr); gap: 10px; align-items: center; min-height: 300px;">
+<div style="padding: 14px; border-radius: 16px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 6px; min-width: 0;"><p class="mono" style="margin: 0; font-size: 11px; color: var(--muted);">Mac</p><p style="margin: 0; font-size: 13px; overflow-wrap: anywhere;">{{syncPlain}}</p></div>
+<div style="padding: 14px; border-radius: 16px; background: var(--ink); color: var(--bg); display: flex; flex-direction: column; gap: 6px; min-width: 0;"><p class="mono" style="margin: 0; font-size: 11px; opacity: .7;">Based Cloud sees</p><p class="mono" style="margin: 0; font-size: 12px; overflow-wrap: anywhere;">{{syncCipher}}</p></div>
+<div style="padding: 14px; border-radius: 16px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 6px; min-width: 0;"><p class="mono" style="margin: 0; font-size: 11px; color: var(--muted);">iPhone</p><p style="margin: 0; font-size: 13px; overflow-wrap: anywhere;">{{syncPlain}}</p></div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="ws-cta" class="wrap" style="padding-top: 20px; padding-bottom: 120px;">
+<div class="zoomin ink-panel" style="padding: 80px 32px; border-radius: 36px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
+<h2 id="ws-cta" class="disp" style="margin: 0; font-size: clamp(40px, 6vw, 84px);">Your data, <span class="hl">without the wait.</span></h2>
+<p class="lead" style="max-width: 560px;">Join the beta. Bring your Notion export on day one.</p>
+<a href="Main.dc.html#waitlist" class="btn" style="min-height: 52px; padding: 0 28px; font-size: 16px;">Join the beta</a>
+</div>
+</section>
+
+</main>
+
+<footer style="border-top: 1px solid var(--line); background: var(--canvas);">
+<div class="wrap" style="padding-top: 56px; padding-bottom: 40px; display: flex; flex-direction: column; gap: 40px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 32px;">
+<div style="display: flex; flex-direction: column; gap: 12px; grid-column: span 2; min-width: 0;">
+<div style="display: flex; align-items: center; gap: 8px;"><img src="{{markSrc}}" alt="" width="24" height="24" style="width: 24px; height: 24px;"><span style="font-size: 18px; font-weight: 650; letter-spacing: -0.03em;">based</span></div>
+<p style="margin: 0; max-width: 320px; font-size: 14px; line-height: 1.55; color: var(--muted);">Databases, docs and agents. Instant, private, everywhere. Built in Vienna.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+<p style="margin: 0 0 4px; font-size: 13px; font-weight: 600;">Product</p>
+<a href="Workspace.dc.html" class="navlink">Workspace</a>
+<a href="Workspace.dc.html#databases" class="navlink">Databases</a>
+<a href="Workspace.dc.html#sync" class="navlink">Sync and cloud</a>
+<a href="Agents.dc.html" class="navlink">Agents</a>
+<a href="Workspace.dc.html#backups" class="navlink">Backups</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+<p style="margin: 0 0 4px; font-size: 13px; font-weight: 600;">Switch</p>
+<a href="Switch.dc.html" class="navlink">Leaving Notion?</a>
+<a href="Switch.dc.html#import" class="navlink">Import your workspace</a>
+<a href="Switch.dc.html#compare" class="navlink">Notion, Based, Obsidian</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+<p style="margin: 0 0 4px; font-size: 13px; font-weight: 600;">Open</p>
+<a href="Manifesto.dc.html" class="navlink">Manifesto</a>
+<a href="Roadmap.dc.html" class="navlink">Roadmap and ideas</a>
+<a href="https://github.com/elija-7580/Based" class="navlink">GitHub</a>
+<a href="https://github.com/elija-7580/Based/blob/main/replica/build-log.md" class="navlink">Build log</a>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 24px;">
+<span style="flex: 1 1 100%; font-family: var(--display); font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink);">All your base are belong to you. Stay Based.</span>
+<span>© 2026 Based. Made in Vienna by <a href="https://friedrich-ulrich.com" style="color: var(--muted);">Elija Friedrich-Ulrich</a> and a night shift of agents.</span>
+<span style="display: flex; gap: 20px;"><a href="#" class="navlink">Privacy [LINK]</a><a href="#" class="navlink">Imprint [LINK]</a><span>Notion is a trademark of Notion Labs, Inc. Based is not affiliated with it.</span></span>
+</div>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}, "$preview": {"width": 1440, "height": 7600}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 0, factor: 1, view: 'table', q: '', status: 'all', peek: -1, logN: 6, cipherSeed: 1 };
+    this.projects = [
+      { t: 'Website relaunch', s: 'In progress', c: 'Northwind', due: 'Nov 21', start: 4, len: 30, roll: '7/12', agent: 1, links: ['Northwind, Clients', 'Kickoff call, Meetings', 'Brand guide, Docs'], body: 'New site on the shared design system. The main agent drafts copy from the brand guide; design reviews every Thursday.' },
+      { t: 'Q4 investor update', s: 'Review', c: 'Internal', due: 'Nov 14', start: 0, len: 22, roll: '4/5', agent: 1, links: ['Board, People', 'Metrics Q3, Reports'], body: 'Numbers pulled from the metrics database, narrative by you. Waiting for the final revenue figure.' },
+      { t: 'Acme onboarding', s: 'Ready', c: 'Acme GmbH', due: 'Dec 2', start: 30, len: 26, roll: '0/9', agent: 0, links: ['Acme GmbH, Clients', 'Onboarding template, Docs'], body: 'Standard onboarding from the template. Starts after the contract is signed.' },
+      { t: 'Thesis chapter 2', s: 'In progress', c: 'University', due: 'Nov 28', start: 10, len: 40, roll: '3/8', agent: 1, links: ['Literature, Sources', 'Lecture 4, Notes', 'Supervisor, People'], body: 'Interval estimation. The researcher agent collected 14 sources; the writer drafts 2.3 from your lecture notes.' },
+      { t: 'Hiring: designer', s: 'Blocked', c: 'Internal', due: 'Dec 10', start: 46, len: 34, roll: '1/6', agent: 0, links: ['Candidates, People', 'Job post, Docs'], body: 'Waiting for budget approval before the post goes live.' },
+      { t: 'Lumen API integration', s: 'In progress', c: 'Lumen Labs', due: 'Nov 30', start: 22, len: 36, roll: '5/11', agent: 0, links: ['Lumen Labs, Clients', 'API notes, Docs', 'Runs, Logs'], body: 'Webhook handler done, auth flow in review. Runs land in the Logs database.' },
+      { t: 'Offsite planning', s: 'Done', c: 'Internal', due: 'Nov 7', start: 0, len: 14, roll: '6/6', agent: 0, links: ['Agenda, Docs', 'Budget 2026, Finance'], body: 'Booked, budgeted, agenda shared.' },
+      { t: 'Polar Studio proposal', s: 'Review', c: 'Polar Studio', due: 'Nov 19', start: 14, len: 18, roll: '2/3', agent: 1, links: ['Polar Studio, Clients', 'Pricing, Docs'], body: 'Draft by the writer agent, marked. Needs your pricing decision on page 2.' }
+    ];
+    this.statusBg = { 'In progress': 'var(--marker)', 'Review': 'var(--status-review)', 'Ready': 'var(--status-ready)', 'Blocked': 'var(--status-blocked)', 'Done': 'var(--status-neutral, var(--selected))' };
+    this.logPool = [
+      ['Main agent', 'Morning briefing written', 'ok'], ['Researcher', '14 sources linked to Thesis ch. 2', 'ok'], ['Night shift', '7 voice notes filed', 'ok'],
+      ['Coder', 'Budget formula fixed', 'ok'], ['Writer', 'Proposal draft for Polar Studio', 'review'], ['Main agent', 'Asked for approval: Acme pricing', 'waiting'],
+      ['Reviewer', '2 citations corrected', 'ok'], ['Sync', 'Deploy webhook received', 'ok'], ['Researcher', 'Competitor table refreshed', 'ok']
+    ];
+  }
+  static split(text, start, step) {
+    let i = 0;
+    return text.split(' ').map((w, wi, arr) => ({ sp: wi < arr.length - 1 ? ' ' : '', chars: w.split('').map((c) => ({ c, d: (start + (i++) * step) + 'ms' })) }));
+  }
+  componentDidMount() {
+    this.tick = setInterval(() => {
+      const cycle = this.cycleLen();
+      const t = this.state.t + 50 >= cycle ? 0 : this.state.t + 50;
+      this.setState({ t });
+    }, 50);
+    this.slow = setInterval(() => this.setState({ logN: this.state.logN + 1, cipherSeed: this.state.cipherSeed + 1 }), 1800);
+  }
+  componentWillUnmount() { clearInterval(this.tick); clearInterval(this.slow); }
+  cycleLen() { return Math.max(6000, 40 * this.state.factor + 3000); }
+  cipher(seed) {
+    const a = 'abcdef0123456789';
+    let s = '', x = seed * 9301 + 49297;
+    for (let i = 0; i < 44; i++) { x = (x * 9301 + 49297) % 233280; s += a[x % 16]; if (i % 4 === 3) s += ' '; }
+    return s.trim();
+  }
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const dark = theme === 'dark';
+    const s = this.state;
+    const f = s.factor;
+    const basedMs = 40 * f;
+    const elapsed = Math.min(s.t, basedMs);
+    const prog = Math.min(1, s.t / basedMs);
+    const at = (p) => (prog >= p ? 1 : 0);
+    const leftDoneAt = 4200;
+    const leftLoading = f === 1 ? s.t < leftDoneAt : true;
+    const leftMsgs = ['Loading…', 'Still loading…', 'Loading 3 databases…', 'Almost…', 'Any second now…'];
+    let leftMsg = leftMsgs[Math.min(4, Math.floor(s.t / 900))];
+    if (f > 1) leftMsg = f === 10 ? 'At 10× this would take 42 seconds. We spared you.' : 'At 100× this would take 7 minutes. Go get a coffee. Or don’t.';
+    const leftSec = f === 1 ? Math.min(s.t, leftDoneAt) / 1000 : (s.t / 1000);
+    const cols = [
+      { t: 'To do', items: ['Budget review', 'Hiring plan'], p: 0.45 },
+      { t: 'Doing', items: ['Q4 OKRs', 'Launch page'], p: 0.65 },
+      { t: 'Done', items: ['Offsite', 'Retro notes'], p: 0.85 }
+    ];
+    const q = s.q.trim().toLowerCase();
+    const filtered = this.projects.map((p, i) => Object.assign({ i }, p)).filter((p) => (s.status === 'all' || p.s === s.status) && (!q || (p.t + ' ' + p.c).toLowerCase().includes(q)));
+    const mk = (p) => ({
+      t: p.t, s: p.s, c: p.c, due: p.due, roll: p.roll, agent: p.agent,
+      sbg: this.statusBg[p.s], bg: s.peek === p.i ? 'var(--surface-raised)' : 'transparent',
+      left: (p.start * 1.1) + '%', width: (p.len * 1.1) + '%',
+      open: () => this.setState({ peek: p.i })
+    });
+    const rows = filtered.map(mk);
+    const boardOrder = ['Ready', 'In progress', 'Review', 'Blocked'];
+    const board = boardOrder.map((st) => { const cards = filtered.filter((p) => p.s === st).map(mk); return { t: st, n: String(cards.length), cards }; });
+    const pk = s.peek >= 0 ? this.projects[s.peek] : null;
+    const logRows = [];
+    for (let k = 0; k < 7; k++) {
+      const n = s.logN - k;
+      const L = this.logPool[((n % this.logPool.length) + this.logPool.length) % this.logPool.length];
+      const mins = (n * 7) % 60;
+      logRows.push({ time: String(8 + Math.floor(n / 9) % 12).padStart(2, '0') + ':' + String(mins).padStart(2, '0'), agent: L[0], what: L[1], s: L[2], bg: L[2] === 'ok' ? 'var(--status-ready)' : L[2] === 'review' ? 'var(--status-review)' : 'var(--marker)' });
+    }
+    const ticks = [];
+    for (let i = 0; i < 40; i++) { const big = i % 7 === 0; const ag = i % 5 === 3; ticks.push({ left: (i * 2.5) + '%', top: big ? '12px' : '18px', h: big ? '32px' : '20px', c: ag ? 'var(--marker-strong)' : 'var(--control-border)' }); }
+    const notes = ['Acme: send proposal Friday', 'Thesis: 14 sources linked', 'Budget: approve Q1 hiring'];
+    return {
+      theme,
+      heroLabel: 'Big databases. Zero waiting.',
+      hero1: Component.split('Big databases.', 0, 26),
+      hero2: Component.split('Zero waiting.', 420, 26),
+      markSrc: dark ? '/_blob/60426240b69c9dab9372c2741257d898' : '/_blob/c3ccc021887376abcf7fe08d0002d913',
+      speeds: [1, 10, 100].map((x) => ({ label: x === 1 ? 'Real time' : x + '×', on: f === x ? 'true' : 'false', bg: f === x ? 'var(--bg)' : 'transparent', sh: f === x ? '0 1px 2px rgba(0,0,0,.1)' : 'none', pick: () => this.setState({ factor: x, t: 0 }) })),
+      leftLoading, leftDone: !leftLoading, leftMsg,
+      leftTime: leftSec.toFixed(1) + ' s',
+      rightTime: (elapsed / f).toFixed(f === 1 ? 2 : 3) + ' s' + (f > 1 ? ' (shown ' + f + '× slower)' : ''),
+      r1: at(0.15), r1y: at(0.15) ? '0' : '6px', r2: at(0.3),
+      raceCols: cols.map((c) => ({ t: c.t, items: c.items, o: at(c.p), y: at(c.p) ? '0' : '10px' })),
+      rightNote: prog >= 1 ? 'Done. Nothing was downloaded.' : 'Reading from disk…',
+      views: [['table', 'Table'], ['board', 'Board'], ['timeline', 'Timeline']].map(([id, label]) => ({ label, on: s.view === id ? 'true' : 'false', bg: s.view === id ? 'var(--bg)' : 'transparent', sh: s.view === id ? '0 1px 2px rgba(0,0,0,.1)' : 'none', pick: () => this.setState({ view: id }) })),
+      isTable: s.view === 'table', isBoard: s.view === 'board', isTimeline: s.view === 'timeline',
+      q: s.q, setQ: (e) => this.setState({ q: e.target.value }),
+      chips: [['all', 'All'], ['In progress', 'In progress'], ['Review', 'Review'], ['Blocked', 'Blocked']].map(([id, label]) => ({ label, on: s.status === id ? 'true' : 'false', bg: s.status === id ? 'var(--button)' : 'var(--surface-raised)', fg: s.status === id ? 'var(--button-ink)' : 'var(--ink)', pick: () => this.setState({ status: id }) })),
+      countTxt: filtered.length + ' of ' + this.projects.length + ', filtered locally in <1 ms',
+      rows, board,
+      peekOpen: !!pk,
+      peek: pk ? { t: pk.t, s: pk.s, c: pk.c, due: pk.due, body: pk.body, links: pk.links, agentOn: !!pk.agent } : { t: '', s: '', c: '', due: '', body: '', links: [], agentOn: false },
+      closePeek: () => this.setState({ peek: -1 }),
+      dbFeatures: [
+        { t: 'Six views, one source', d: 'Table, board, list, gallery, calendar, timeline. Same rows, any shape.', planned: false },
+        { t: 'Relations and rollups', d: 'Link clients to projects to invoices and roll numbers up the chain.', planned: false },
+        { t: 'Formulas', d: 'The formula language you know, evaluated locally and offline.', planned: false },
+        { t: 'Linked views', d: 'Show a filtered slice of any database inside any page.', planned: false },
+        { t: 'Pages in every row', d: 'Every row opens as a full page with blocks, sub-pages and comments.', planned: false },
+        { t: 'Templates', d: 'Row templates for meetings, clients, lectures, bug reports.', planned: false },
+        { t: 'Sub-items and dependencies', d: 'Nested tasks and blocked-by relations.', planned: true },
+        { t: 'Automations', d: 'When a property changes, do something. Or ask an agent to.', planned: true }
+      ],
+      logCount: (2400 + s.logN).toLocaleString('en-US'),
+      logRows,
+      copies: [
+        { n: '1', t: 'On your device', d: 'Your workspace is a local database. Works offline, survives any outage.', status: 'current' },
+        { n: '2', t: 'In your cloud', d: 'iCloud in the beta. At release, Based Cloud on EU servers, end-to-end encrypted. Lose your laptop, keep your work.', status: 'synced 2 s ago' },
+        { n: '3', t: 'In your backup folder', d: 'Automatic snapshots to a drive or folder you choose, as a readable archive.', status: 'last snapshot 4 min ago' }
+      ],
+      ticks,
+      syncPlain: notes[s.cipherSeed % notes.length],
+      syncCipher: this.cipher(s.cipherSeed)
+    };
+  }
+}
+
+</script>
+</body>
+</html>
