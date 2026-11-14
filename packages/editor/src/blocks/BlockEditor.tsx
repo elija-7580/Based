@@ -6,7 +6,7 @@
 import { blockCommands as cmd, CODE_LANGUAGES, dateMentionValue, dateSuggestions, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import type { PageRef } from "../ui/env.js";
-import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX } from "../mapping/bn.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
@@ -61,6 +61,15 @@ export function BlockEditor(props: PageEditorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [slash, setSlash] = useState<SlashState | undefined>();
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | undefined>();
+  // Nach dem Schließen des Blockmenüs (Fokus lag im Suchfeld): Fokus zurück auf den Rahmen, solange Blöcke gewählt sind.
+  const closeMenu = useCallback(() => {
+    setMenu(undefined);
+    setTimeout(() => {
+      const root = rootRef.current;
+      const active = root?.ownerDocument.activeElement;
+      if (root && ctrl.selected.length && (!active || active === root.ownerDocument.body)) root.focus({ preventScroll: true });
+    }, 0);
+  }, [ctrl]);
   const [toolbar, setToolbar] = useState<{ x: number; y: number } | undefined>();
   const slashRef = useRef(slash);
   slashRef.current = slash;
@@ -920,7 +929,7 @@ export function BlockEditor(props: PageEditorProps) {
         {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
-      {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} /> : null}
+      {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={closeMenu} /> : null}
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
       {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
@@ -1578,10 +1587,20 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
   const { store, ctrl, editable, props } = useCtx();
   const ref = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<"main" | "color">("main");
+  // BSD-407: Suchfeld wie im alten Blockmenü – Tippen filtert, Enter führt den ersten Treffer aus, ↓ geht in die
+  // Liste, Escape leert erst das Feld und schließt dann.
+  const [query, setQuery] = useState("");
+  const queryRef = useRef(query);
+  queryRef.current = query;
   useEffect(() => {
     const doc = ref.current?.ownerDocument;
     const off = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) onClose(); };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); onClose(); } };
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      if (queryRef.current !== "") { e.preventDefault(); setQuery(""); ref.current?.querySelector<HTMLInputElement>(".bx2-menu-search")?.focus(); }
+      else onClose();
+    };
     doc?.addEventListener("pointerdown", off, true);
     doc?.addEventListener("keydown", key, true);
     return () => { doc?.removeEventListener("pointerdown", off, true); doc?.removeEventListener("keydown", key, true); };
@@ -1610,33 +1629,69 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
     );
   }
   const link = props.blockLink?.(id);
+  type Action = { label: string; hint?: string; run: () => void; keepOpen?: boolean; group: "open" | "edit" | "copy" };
+  const actions: Action[] = [];
+  if (b?.type === "databaseInline" && ids.length === 1 && props.onOpenPage) actions.push({ group: "open", label: "Open as full page", run: () => props.onOpenPage?.(id) });
+  if (link) actions.push({ group: "copy", label: "Copy link to block", hint: "⌥⇧L", run: () => void navigator.clipboard?.writeText(link).catch(() => undefined) });
+  actions.push({ group: "copy", label: "Copy as Markdown", run: () => void navigator.clipboard?.writeText(blocksMarkdown(store, ids)).catch(() => undefined) });
+  if (editable) {
+    actions.push(
+      { group: "edit", label: "Delete", hint: "Del", run: () => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); } },
+      { group: "edit", label: "Duplicate", hint: "⌘D", run: () => ctrl.select(duplicate(store, ids)) },
+      { group: "edit", label: "Move up", hint: "⌘⇧↑", run: () => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); } },
+      { group: "edit", label: "Move down", hint: "⌘⇧↓", run: () => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); } },
+      { group: "edit", label: "Color", hint: "›", keepOpen: true, run: () => setView("color") },
+    );
+  }
+  const q = query.trim().toLowerCase();
+  const hit = (label: string) => q === "" || label.toLowerCase().includes(q);
+  const shown = actions.filter((a) => hit(a.label));
+  const turns = editable && turnable ? SLASH_ITEMS.filter((s) => cmd.TEXT_TYPES.has(s.type) && !s.page && (hit(s.label) || hit("Turn into"))) : [];
+  const runTurn = (s: (typeof SLASH_ITEMS)[number]) => cmd.turnInto(store, ids, s.type, s.props ?? {});
+  const items = () => [...(ref.current?.querySelectorAll<HTMLElement>("[role^=menuitem]") ?? [])];
+  const onKey = (e: ReactKeyboardEvent) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const all = items();
+      const i = all.indexOf(e.target as HTMLElement);
+      const next = e.target instanceof HTMLInputElement ? (e.key === "ArrowDown" ? 0 : all.length - 1) : i + (e.key === "ArrowDown" ? 1 : -1);
+      if (next < 0) ref.current?.querySelector<HTMLInputElement>(".bx2-menu-search")?.focus();
+      else all[Math.min(next, all.length - 1)]?.focus();
+    } else if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+      e.preventDefault();
+      if (q !== "") items()[0]?.click();
+    }
+  };
+  const row = (a: Action) => (
+    <button key={a.label} type="button" role="menuitem" aria-haspopup={a.keepOpen ? "menu" : undefined} className="bx2-menu-item"
+      onClick={a.keepOpen ? a.run : act(a.run)}>
+      <span className="bx2-menu-text">{a.label}</span>{a.hint ? <span className="bx2-menu-hint">{a.hint}</span> : null}
+    </button>
+  );
+  const groups = (["open", "edit", "copy"] as const).map((g) => shown.filter((a) => a.group === g)).filter((g) => g.length > 0);
   return (
-    <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Block" data-testid="block-menu" style={style}>
-      <div className="bx2-menu-label">{labelOf(b)}</div>
-      {b?.type === "databaseInline" && ids.length === 1 && props.onOpenPage ? (
-        <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => props.onOpenPage?.(id))}><span className="bx2-menu-text">Open as full page</span></button>
-      ) : null}
-      {link ? <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => void navigator.clipboard?.writeText(link).catch(() => undefined))}><span className="bx2-menu-text">Copy link to block</span><span className="bx2-menu-hint">⌥⇧L</span></button> : null}
-      {editable ? (
+    <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Block" data-testid="block-menu" style={style} onKeyDown={onKey}>
+      <input className="bx2-menu-search" type="text" placeholder="Search actions…" aria-label="Search actions" value={query} autoFocus
+        autoComplete="off" spellCheck={false} onChange={(e) => setQuery(e.target.value)} />
+      {q === "" ? <div className="bx2-menu-label">{labelOf(b)}</div> : null}
+      {groups.map((g, i) => (
+        <Fragment key={g[0]!.group}>
+          {i > 0 && q === "" ? <div className="bx2-menu-sep" role="separator" /> : null}
+          {g.map(row)}
+        </Fragment>
+      ))}
+      {turns.length > 0 ? (
         <>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); })}><span className="bx2-menu-text">Delete</span><span className="bx2-menu-hint">Del</span></button>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => ctrl.select(duplicate(store, ids)))}><span className="bx2-menu-text">Duplicate</span><span className="bx2-menu-hint">⌘D</span></button>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); })}><span className="bx2-menu-text">Move up</span><span className="bx2-menu-hint">⌘⇧↑</span></button>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); })}><span className="bx2-menu-text">Move down</span><span className="bx2-menu-hint">⌘⇧↓</span></button>
-          <button type="button" role="menuitem" aria-haspopup="menu" className="bx2-menu-item" onClick={() => setView("color")}><span className="bx2-menu-text">Color</span><span className="bx2-menu-hint">›</span></button>
-          {turnable ? (
-            <>
-              <div className="bx2-menu-sep" role="separator" />
-              <div className="bx2-menu-label">Turn into</div>
-              {SLASH_ITEMS.filter((s) => cmd.TEXT_TYPES.has(s.type) && !s.page).map((s) => (
-                <button key={s.type + s.label} type="button" role="menuitemradio" aria-checked={b?.type === s.type} className="bx2-menu-item" onClick={act(() => cmd.turnInto(store, ids, s.type, s.props ?? {}))}>
-                  <span className="bx2-menu-icon" aria-hidden="true">{s.icon}</span><span className="bx2-menu-text">{s.label}</span>
-                </button>
-              ))}
-            </>
-          ) : null}
+          {q === "" ? <div className="bx2-menu-sep" role="separator" /> : null}
+          <div className="bx2-menu-label">Turn into</div>
+          {turns.map((s) => (
+            <button key={s.type + s.label} type="button" role="menuitemradio" aria-checked={b?.type === s.type} className="bx2-menu-item" onClick={act(() => runTurn(s))}>
+              <span className="bx2-menu-icon" aria-hidden="true">{s.icon}</span><span className="bx2-menu-text">{s.label}</span>
+            </button>
+          ))}
         </>
       ) : null}
+      {groups.length === 0 && turns.length === 0 ? <div className="bx2-menu-empty" role="status">No actions</div> : null}
     </div>
   );
 }
@@ -1769,8 +1824,8 @@ function markdownLine(b: Block, depth: number): string {
   }
 }
 
-/** Blockauswahl kopieren: Based-intern (Records mit allem darin) und Markdown als Klartext. */
-function writeBlocksClipboard(store: WorkspaceStore, ids: readonly string[], data: DataTransfer) {
+/** Blöcke (mit Kindern) als Markdown – für ⌘C bei Blockauswahl und „Copy as Markdown“ im Blockmenü. */
+function blocksMarkdown(store: WorkspaceStore, ids: readonly string[]): string {
   const lines: string[] = [];
   const walk = (id: string, depth: number) => {
     const b = store.blocks.get(id);
@@ -1778,9 +1833,14 @@ function writeBlocksClipboard(store: WorkspaceStore, ids: readonly string[], dat
     if (b.type !== "columnList" && b.type !== "column") lines.push(markdownLine(b, depth));
     for (const k of store.children("b:" + id)) walk(k, b.type === "columnList" || b.type === "column" ? depth : depth + 1);
   };
+  for (const id of cmd.topLevel(store, ids)) walk(id, 0);
+  return lines.join("\n");
+}
+
+/** Blockauswahl kopieren: Based-intern (Records mit allem darin) und Markdown als Klartext. */
+function writeBlocksClipboard(store: WorkspaceStore, ids: readonly string[], data: DataTransfer) {
   const roots = cmd.topLevel(store, ids);
-  for (const id of roots) walk(id, 0);
-  data.setData("text/plain", lines.join("\n"));
+  data.setData("text/plain", blocksMarkdown(store, ids));
   data.setData(cmd.BASED_CLIPBOARD_MIME, JSON.stringify(cmd.copyBlocks(store, roots)));
 }
 

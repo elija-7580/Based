@@ -557,3 +557,13 @@
 .bx2-block.bx2-section.bx2-color-grayBackground { background: var(--surface-raised); }
 .bx2-block.bx2-section > .bx2-row { border-radius: var(--radius-md); }
 .bx2-block.bx2-section > .bx2-children { padding-bottom: var(--space-1); }
+
+/* BSD-407: Suchfeld im Blockmenü (wie im alten Editor) */
+.bx2-menu-search {
+  width: 100%; min-height: var(--space-6); margin-bottom: var(--space-1); padding: 0 var(--space-3); border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: inherit;
+}
+.bx2-menu-search::placeholder { color: var(--muted); }
+.bx2-menu-search:focus-visible { outline: 1px solid var(--focus-ring); border-color: var(--focus-ring); }
+.bx2-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }
+.bx2-menu-item:focus-visible { outline: none; background: var(--selected); }

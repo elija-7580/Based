@@ -44,7 +44,7 @@ neuen Editor auf dem Mac abgenommen hat.
 | Blockfarbe | should | ja | Blockmenü „Color“ |
 | Turn into | must | ja | Blockmenü, ⌘⌥0–8 |
 | Turn into page (⌘⌥9) | should | nein | |
-| Blockmenü (Löschen, Duplizieren, Verschieben, Farbe, Link) | must | ja | Suchfeld im Blockmenü fehlt |
+| Blockmenü (Löschen, Duplizieren, Verschieben, Farbe, Link) | must | teils | Suchfeld seit 14.11. (BSD-407); „Move to“ (in andere Seite) fehlt |
 | Griff ziehen, Verschachteln, Spalten | must | ja | |
 | Blockauswahl (Esc, ⇧↑/↓, Rechteck) | should | ja | |
 | ⌘⇧↑/↓, ⌘D | should | ja | |
@@ -52,9 +52,10 @@ neuen Editor auf dem Mac abgenommen hat.
 | Undo/Redo | must | ja | ein Schritt je Befehl, Tippen zusammengefasst |
 | Einfügen (Markdown, HTML, Notion, Based-intern) | must | ja | |
 | URL einfügen als Bookmark/Erwähnung | could | teils | URL über Auswahl → Link; nackte URL → Bookmark fehlt |
-| Blöcke als Markdown kopieren | should | teils | ⌘C bei Blockauswahl schreibt Markdown; Menüeintrag fehlt |
+| Blöcke als Markdown kopieren | should | ja | ⌘C bei Blockauswahl und Blockmenü „Copy as Markdown“ (14.11.) |
 | Suchen in der Seite (⌘F) | could | ja | FindBar arbeitet auf dem DOM |
 | @-Erwähnung (Seite, Datum) | must | ja | Personen fehlen (ein Nutzer) |
+| `[[`-Seitenlink | should | nein | alter Editor: `[[` öffnet die Seitensuche |
 | Titel ↔ erste Zeile | must | ja | |
 | Platzhalter je Blocktyp | should | ja | |
 | Ask AI in der Formatleiste | — | nein | AI ist hinter dem Schalter, Standard aus |
@@ -69,3 +70,24 @@ neuen Editor auf dem Mac abgenommen hat.
    umschreiben (Selektoren `.bx2-*` statt `.bn-*`).
 4. Mac-Abnahme durch Elija → Schalter-Standard auf „neu“ → BlockNote, `mapping/bn.ts`, y-prosemirror und das
    Seiten-Dokument `page:` entfernen (Server-DocSession bleibt, bis keine alten Clients mehr schreiben).
+
+## Lückenliste BSD-407 (BlockNote entfernen), Stand 14.11.2026
+
+Entscheidung Elija 14.11.: BlockNote wird gelöscht, gebaut wird nur noch der Block-Editor. Damit fällt die
+Mac-Abnahme vor E8 weg; Bedingung bleibt „must/should = ja“ und alle Editor-E2E grün gegen den neuen Editor.
+Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
+
+| Teil | Inhalt | Stand |
+| --- | --- | --- |
+| 1 | Diese Liste | erledigt 14.11. |
+| 2a | Blockmenü: Suchfeld, „Copy as Markdown“ | erledigt 14.11. |
+| 2b | Blockmenü „Move to“ (MovePicker wiederverwenden), Turn into page (⌘⌥9) | offen |
+| 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | offen |
+| 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | offen |
+| 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | offen |
+| 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | offen |
+| 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | offen |
+| 3 | `based.newEditor` standardmäßig an; 50 Specs mit `.bn-*` auf `getByTestId("block-editor")`/`.bx2-*` umstellen | offen |
+| 4 | BlockNote-Code (`ui/PageEditor.tsx`, `schema/`, `mapping/bn.ts`, y-prosemirror) und `@blocknote/*` löschen; Rundreise-Test Notion-Import | offen |
+
+BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird gelöscht.

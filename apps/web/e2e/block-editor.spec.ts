@@ -486,3 +486,90 @@ for (const theme of ["light", "dark"] as const) {
     await page.screenshot({ path: `../../docs/design/screens/web-block-editor-handle-${theme}.png` });
   });
 }
+
+// BSD-407 (Parität mit dem alten Editor): Suchfeld im Blockmenü – filtert, Enter führt den ersten Treffer aus,
+// Escape leert erst und schließt dann, ↓ geht in die Liste; „Copy as Markdown“ kopiert die Blöcke.
+test("Blockmenü: Suchfeld filtert, Enter führt aus, Copy as Markdown", async ({ page, browserName }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("## Heading two");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Some text here");
+  await expect.poll(() => texts(page)).toEqual(["Heading two", "Some text here"]);
+  const menu = page.getByTestId("block-menu");
+  const search = menu.getByRole("textbox", { name: "Search actions" });
+  const openMenu = async () => {
+    const first = editor(page).locator(".bx2-block").first();
+    await first.locator(".bx2-row").hover();
+    await first.locator(":scope > .bx2-gutter [data-handle]").click();
+    await expect(search).toBeFocused();
+  };
+  await openMenu();
+  await page.keyboard.type("cop");
+  await expect(menu.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/]);
+  expect(await texts(page)).toEqual(["Heading two", "Some text here"]); // getippt wurde ins Feld
+  await page.keyboard.press("Escape"); // erst das Feld leeren …
+  await expect(search).toHaveValue("");
+  await expect(menu.getByRole("menuitem", { name: "Duplicate" })).toBeVisible();
+  await page.keyboard.type("zzz");
+  await expect(menu.getByRole("menuitem")).toHaveCount(0);
+  await expect(menu.getByText("No actions")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.type("dup");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => texts(page)).toEqual(["Heading two", "Heading two", "Some text here"]);
+  await expect(menu).toHaveCount(0);
+  // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
+  await openMenu();
+  await expect(search).toHaveValue("");
+  await page.keyboard.press("ArrowDown");
+  await expect(menu.getByRole("menuitem").first()).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  // Copy as Markdown (Zwischenablage nur in Chromium lesbar)
+  if (browserName === "chromium") await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await openMenu();
+  await page.keyboard.type("markdown");
+  await page.keyboard.press("Enter");
+  await expect(menu).toHaveCount(0);
+  if (browserName === "chromium") await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("## Heading two");
+});
+
+// BSD-407 Checkliste: Blockmenü mit Suchfeld in drei Größen, hell und dunkel; nichts läuft aus dem Fenster.
+test("Blockmenü-Fotos: Suchfeld, gefiltert, leer", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Fotos nur einmal (die Bedienung prüft der Test oben in beiden Browsern)");
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("A heading to open the block menu on");
+  await expect(page.getByTestId("save-status").or(page.getByText("Edited just now").first())).toBeVisible();
+  for (const theme of ["light", "dark"] as const) {
+    await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.reload();
+    await expect(editor(page)).toBeVisible();
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      const menu = page.getByTestId("block-menu");
+      const first = editor(page).locator(".bx2-block").first();
+      await first.locator(".bx2-row").hover();
+      await first.locator(":scope > .bx2-gutter [data-handle]").click();
+      await expect(menu.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+      const box = (await menu.boundingBox())!;
+      expect(box.y + box.height).toBeLessThanOrEqual(h + 1);
+      expect(box.x + box.width).toBeLessThanOrEqual(w + 1);
+      const shot = async (name: string) => {
+        await page.waitForTimeout(200);
+        if (browserName === "chromium" && process.env.BASED_SCREENSHOTS === "1") await page.screenshot({ path: `../../docs/design/screens/web-block-editor-menu-${name}-${theme}-${w}x${h}.png` });
+      };
+      await shot("open");
+      await page.keyboard.type("co");
+      await shot("filtered");
+      await page.keyboard.type("zzz");
+      await expect(menu.getByText("No actions")).toBeVisible();
+      await shot("empty");
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("Escape");
+      await expect(menu).toHaveCount(0);
+    }
+  }
+  await page.evaluate(() => localStorage.removeItem("based.appearance"));
+});
