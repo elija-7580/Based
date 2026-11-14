@@ -1,0 +1,61 @@
+success f1f341c5ccffe3b6c6c839c4eeca1484e3b6512f
+  ✓  144 [webkit] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (14.7s)
+  ✓  148 [webkit] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (12.9s)
+  ✓  147 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (14.8s)
+  ✓  149 [webkit] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (13.2s)
+  ✓  150 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (13.9s)
+  ✓  152 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (6.2s)
+  ✓  153 [webkit] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (7.5s)
+  ✓  151 [webkit] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (21.4s)
+  ✓  154 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (6.3s)
+  ✓  156 [webkit] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (7.3s)
+  ✓  155 [webkit] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (12.6s)
+  ✓  157 [webkit] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (4.6s)
+  ✓  159 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (11.0s)
+  ✓  158 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (11.4s)
+(node:19614) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  161 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (7.6s)
+  ✓  160 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (7.1s)
+  ✓  163 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (7.7s)
+  ✓  164 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.9s)
+  ✓  162 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (16.9s)
+  ✓  165 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.4s)
+  ✓  167 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.6s)
+  ✓  166 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (15.7s)
+  ✓  168 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (13.5s)
+  ✓  170 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (11.3s)
+  ✓  169 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (22.8s)
+  ✓  171 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.6s)
+  ✓  172 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.7s)
+  ✓  173 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.0s)
+  -  174 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  175 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+
+
+  1) [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Row 151"
+    Received: "Row 152"
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      25 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
+      26 |   await page.mouse.click(x, y);
+    > 27 |   await expect.poll(() => activeRow(page)).toBe(under);
+         |                                            ^
+      28 |   await page.keyboard.press("Escape"); // Zelleneditor zu
+      29 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
+      30 | }
+        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:27:44)
+        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:46:40
+
+    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+  16 skipped
+  157 passed (15.5m)
