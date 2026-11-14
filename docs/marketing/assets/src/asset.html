@@ -95,6 +95,15 @@ if (k === 'avatar') {
       <h1 class="disp" style="font-size:${30 * u}px">${H1}</h1>
       <p class="sub" style="font-size:${9.5 * u}px">${SUB} <span class="url">basednotes.app</span></p>
     </div>`;
+} else if (k === 'center') {
+  // Reddit: mobile crops from the left and right, so everything sits in the middle.
+  const u = H / 100;
+  a.innerHTML = `
+    <div class="sun" style="width:${150 * u}px;height:${150 * u}px;left:${W / 2 - 75 * u}px;top:${-95 * u}px"></div>
+    <div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${6 * u}px;text-align:center">
+      <h1 class="disp" style="font-size:${(W / H > 4 ? 26 : 20) * u}px">${H1}</h1>
+      <p class="sub" style="font-size:${(W / H > 4 ? 8 : 6) * u}px">${SUB} <span class="url">basednotes.app</span></p>
+    </div>`;
 } else if (k === 'square' || k === 'tall') {
   const u = W / 100;
   const tall = k === 'tall';
