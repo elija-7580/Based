@@ -1,4 +1,4 @@
-failure bf9ea98c475749a59920b9cc36ec3412fe5f0dfe
+failure 7a1fb67fd83b9a85593fe926431b1148295d6e11
     - Array [
     -   Array [
     -     "Alpha",
@@ -55,7 +55,7 @@ failure bf9ea98c475749a59920b9cc36ec3412fe5f0dfe
   1 failed
     [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
   8 skipped
-  159 passed (5.0m)
+  162 passed (5.3m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
