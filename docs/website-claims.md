@@ -9,9 +9,9 @@ Website-Branch wurde nichts geändert.
 **teilweise** = Kern da, Aussage geht weiter · **Release** = nach der Beta, auf der Seite schon so gekennzeichnet ·
 **Beta** = mit Beleg da.
 
-**Nicht erfasst (Teil 2):** Inhalte, die die Seiten aus Daten im Skript zeichnen – die sechs r/Notion-Karten mit
-„what we did about it“, die Vergleichstabelle „Notion, Based, Obsidian“ (neun Punkte), „What you'll miss. For
-now.“, die Roadmap-Spalten, die Manifest-Prinzipien und -Phasen. Dort stehen weitere Versprechen.
+**Teil 2 (ebenfalls hier):** Inhalte, die die Seiten aus Daten im Skript zeichnen – r/Notion-Karten (Start),
+Vergleichstabelle und „The list everyone has“ (Leaving Notion), Funktionskacheln (Workspace), Steuerung, Fähigkeiten
+und Modelle (Agents), Phasen (Manifest). Nicht bewertet: Aussagen über Notion und Obsidian (Quellen stehen auf der Seite).
 
 ## 1. Ohne Grundlage (je ein Vorschlag)
 
@@ -56,3 +56,38 @@ now.“, die Roadmap-Spalten, die Manifest-Prinzipien und -Phasen. Dort stehen w
 | „Same slash menu, same ⌘K“ | Block-Editor + Quick Find (beta, yes). |
 | „Schedule agents to run while you sleep“ | features.csv „Custom agents on schedule“: labs, partial (Server legt fällige Läufe an). Als „labs“ kennzeichnen. |
 | „Open source“ | LICENSE: MIT. „every line is in the public repo“ (Manifest) setzt voraus, dass das Repo öffentlich ist – vor dem Start prüfen. |
+
+## 5. Teil 2 – Aussagen aus Skriptdaten
+
+### Ohne Grundlage (je ein Vorschlag)
+
+| # | Aussage (Seite) | Befund | Vorschlag |
+|---|---|---|---|
+| 13 | „Every row opens as a full page with blocks, sub-pages and comments.“ (Workspace, Kachel) | Kommentare gibt es im TS-Stack nicht (kein Record-Typ; features.csv „Comments and discussions“: after, ts = no). | „… with blocks and sub-pages.“ |
+| 14 | „When a property changes, do something. Or ask an agent to.“ (Workspace, Kachel Automationen) | Keine Datenbank-Automationen; im Manifest selbst als spätere Phase („automations“) genannt. | Kachel als „after beta“ kennzeichnen. |
+| 15 | „Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.“ (Start, r/Notion-Karte) | wie #1 – keine Transkription. | „Meeting notes with recording and timestamps; on-device transcription after beta.“ |
+| 16 | „Connect ChatGPT, Claude, an API key or a local model“ / „Run a model on your own machine for anything sensitive. Nothing leaves the device.“ (Start-Karte, Leaving Notion, Agents) | wie #3 – keine Laufzeit für lokale Modelle. | „local models after beta“. |
+| 17 | „Three copies: your device, your encrypted cloud and automatic snapshots to a folder you choose. Restore is one click.“ / „Every version kept, three copies, restore in one click.“ (Leaving Notion, Vergleich) | wie #6. | wie #6. |
+| 18 | „Beta is Mac only with iCloud.“ (Leaving Notion, Vergleich) | wie #2 – iCloud-Ordner-Sync ist ein Spike hinter einem Schalter. | „Beta is Mac only; iCloud sync as a preview.“ |
+
+### Teilweise
+
+| # | Aussage (Seite) | Befund | Vorschlag |
+|---|---|---|---|
+| 19 | „Agent edits can be undone one by one.“ (Leaving Notion), „Every edit is marked and can be undone in one step.“ (Agents, Stufe „Work freely“) | Markierung da; Rückgängig über Undo/Versionsverlauf, kein eigenes „diese Agenten-Änderung zurücknehmen“. | wie #11. |
+| 20 | „Agents never delete or share anything without asking.“ (Start) | Seit BSD-403 fragen endgültiges Löschen, Inbox-Antworten, Senden über externe Werkzeuge und Shell ohne Sandbox auch in „Work freely“ – außer eine allow-Regel erlaubt es ausdrücklich. In den Papierkorb legen fragt in „Work freely“ nicht. | „… never delete for good or send anything out without asking, unless you allow it.“ |
+| 21 | „Talk to your workspace from the CLI. Works offline against your local copy.“ (Agents) | CLI `based`: labs, partial (über MCP; ask/runs/inbox erst mit dem TS-Server). | als „labs“ kennzeichnen. |
+| 22 | „Opt-in and planned: … a local check flags names, numbers and other private details.“ (Agents, Start) | als „planned“ gekennzeichnet – passt (Redact Stufe 2 hängt an BSD-231). | lassen. |
+| 23 | „A hundred thousand rows feel like ten.“ (Leaving Notion, zweimal) | wie #7 (gemessen 50 000). | wie #7. |
+
+### Beta – mit Beleg
+
+| Aussage | Beleg |
+|---|---|
+| „Table, board, list, gallery, calendar, timeline. Same rows, any shape.“, „The formula language you know, evaluated locally and offline.“ | features.csv List/Gallery view, Formeln (beta, yes). |
+| „Row templates for meetings, clients, lectures, bug reports.“ | „Database templates“: beta, yes. |
+| „Markdown with real file names and a lossless archive. Leaving takes one click.“ | „Export Markdown …“, „Lossless workspace archive export/import“: beta, yes. |
+| „Teach an agent a routine once …“, „What agents learn … kept as pages“, „Ask your whole workspace. Every answer links to the pages it came from.“ | Skills, AI memories (beta, yes), Zitate (`packages/brain/src/cite`). |
+| „Deadlines, approvals and what changed overnight, saved as a row in your briefings database.“ | Daily Brief / Needs-you (beta). |
+| „No AI buttons … Based is a complete workspace without a single model connected.“ | AI-Schalter (e2e ai-switch.spec). |
+| Manifest-Phasen („Monorepo, types, golden fixtures, CI“ … „Tabs, supertags, whiteboard, PDF notes, automations“) | Plan, keine Beta-Aussage. |
