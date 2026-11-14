@@ -48,9 +48,24 @@ function runElement(doc: Document, r: Run, atoms: AtomRenderer): Node {
       const m = r.mention as Record<string, unknown>;
       el.className = "bx2-mention";
       const page = mentionValue(m, "page");
+      const date = mentionValue(m, "date");
       if (typeof page === "string") {
         el.dataset.page = page;
         fillMention(el, atoms, r.t);
+      } else if (date && typeof date === "object" && typeof (date as { start?: unknown }).start === "number") {
+        // BSD-407 Teil 6.4: Datum immer aus dem Wert (Bereich, Uhrzeit), Erinnerung als Glocke
+        const v = date as { start: number; end?: number; includeTime?: boolean; remind?: boolean };
+        el.dataset.date = "";
+        el.textContent = "@" + formatDateValue(v);
+        if (v.remind) {
+          el.dataset.remind = "true";
+          const bell = doc.createElement("span");
+          bell.className = "bx2-mention-remind";
+          bell.setAttribute("role", "img");
+          bell.setAttribute("aria-label", "Reminder set");
+          bell.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15.5V11a6 6 0 0 0-12 0v4.5L4.5 18h15zM10 20.5a2 2 0 0 0 4 0"/></svg>';
+          el.append(bell);
+        }
       } else el.textContent = r.t || "•";
     }
     return el;
@@ -68,6 +83,16 @@ function runElement(doc: Document, r: Run, atoms: AtomRenderer): Node {
   if (classes.length) el.className = classes.join(" ");
   el.textContent = t;
   return el;
+}
+
+const SWIFT_EPOCH_MS = 978307200 * 1000;
+/** Anzeige einer Datums-Erwähnung („Nov 14, 2026“, mit Uhrzeit, Bereich mit „→“) wie im alten Editor. */
+export function formatDateValue(v: { start: number; end?: number; includeTime?: boolean }): string {
+  const opts: Intl.DateTimeFormatOptions = v.includeTime
+    ? { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
+    : { year: "numeric", month: "short", day: "numeric" };
+  const f = (s: number) => new Date(SWIFT_EPOCH_MS + s * 1000).toLocaleString("en-US", opts);
+  return v.end !== undefined ? `${f(v.start)} → ${f(v.end)}` : f(v.start);
 }
 
 /** Inneres einer Seiten-Erwähnung zeichnen (auch nachträglich, wenn sich Titel, Icon oder Papierkorb ändern). */

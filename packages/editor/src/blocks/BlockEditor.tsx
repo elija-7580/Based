@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, textStats, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, textStats, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -13,7 +13,7 @@ import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
 import { MenuIcon, type MenuIconName } from "../ui/menuIcons.js";
-import { MenuGlyph } from "@based/ui/native";
+import { DateField, MenuGlyph, TimeField } from "@based/ui/native";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
 import { PageOutline } from "../ui/Outline.js";
@@ -509,9 +509,13 @@ export function BlockEditor(props: PageEditorProps) {
     void searchMention(st);
   };
   const searchMention = async (st: MentionState) => {
-    const pages = await (props.pages?.search(st.query) ?? Promise.resolve([] as PageRef[])).catch(() => [] as PageRef[]);
-    const dates = st.trigger === "[[" ? [] : dateSuggestions(st.query, new Date()).slice(0, st.query ? 3 : 2);
-    const items: MentionItem[] = [...pages.slice(0, 8).map((ref) => ({ kind: "page" as const, ref })), ...dates.map((d) => ({ kind: "date" as const, label: d.label, date: d.date }))];
+    const found = await (props.pages?.search(st.query) ?? Promise.resolve([] as PageRef[])).catch(() => [] as PageRef[]);
+    // wie im alten Editor: die eigene Seite, Papierkorb und gelöschte Seiten werden nicht vorgeschlagen
+    const pages = found.filter((p) => p.id !== pageID && !p.trashed && !p.missing).slice(0, 8);
+    const items: MentionItem[] = [...pages.map((ref) => ({ kind: "page" as const, ref })), ...(st.trigger === "[[" ? [] : mentionDates(st.query, new Date()))];
+    // BSD-407 Teil 6.4: „New page“ legt eine Unterseite dieser Seite an und erwähnt sie (wie im alten Editor)
+    const title = st.query.trim();
+    if (editable && title && !/^remind\b/i.test(title)) items.push({ kind: "new", title });
     setMention((cur) => (cur && cur.id === st.id && cur.at === st.at && cur.query === st.query ? { ...cur, items, index: 0 } : cur));
   };
   const updateMention = (id: string) => {
@@ -556,7 +560,20 @@ export function BlockEditor(props: PageEditorProps) {
     if (s.trigger === "[[" && text.slice(to, to + 2) === "]]") to += 2; // automatisch geschlossene Klammern mitnehmen
     const range = { blockId: s.id, from: s.at, to };
     if (item.kind === "page") run(cmd.insertMention(store, range, { page: { _0: item.ref.id } }, item.ref.title || "Untitled"));
-    else run(cmd.insertMention(store, range, { date: { _0: dateMentionValue(item.date) } }, "@" + item.label));
+    else if (item.kind === "new") {
+      let id: string | undefined;
+      store.transact("New page", (tx) => { id = insertPage(store, tx, { parent: pageID, title: item.title }); });
+      if (id) run(cmd.insertMention(store, range, { page: { _0: id } }, item.title));
+    } else run(cmd.insertMention(store, range, { date: { _0: dateMentionValue(item.date, item.remind === true) } }, "@" + item.label));
+  };
+
+  // MARK: Datums-Erwähnung bearbeiten (BSD-407 Teil 6.4: Tag, Ende, Uhrzeit, Erinnerung – wie im alten Editor)
+
+  const [dateEdit, setDateEdit] = useState<{ id: string; from: number; to: number; x: number; y: number } | undefined>();
+  const changeDate = (d: { id: string; from: number; to: number }, value: DateMentionValue) => {
+    const b = store.blocks.get(d.id);
+    const label = plainText(b?.text).slice(d.from, d.to) || "@date";
+    run(cmd.replaceText(store, { blockId: d.id, from: d.from, to: d.to }, [{ t: label, m: {}, mention: { date: { _0: value } } }], { coalesce: "date:" + d.id + ":" + d.from }));
   };
 
   // MARK: Link (⌘K)
@@ -870,6 +887,14 @@ export function BlockEditor(props: PageEditorProps) {
       if (mention.dataset.missing !== "true") props.onOpenPage(mention.dataset.page!);
       return;
     }
+    const dateAtom = t.closest<HTMLElement>(".bx2-mention[data-date]");
+    if (field && dateAtom && editable && !e.shiftKey) {
+      e.preventDefault();
+      const from = offsetOf(field, dateAtom, 0);
+      const r = dateAtom.getBoundingClientRect();
+      setDateEdit({ id: field.dataset.editableId!, from, to: from + Number(dateAtom.dataset.len ?? 0), x: r.left, y: r.bottom + 6 });
+      return;
+    }
     const eq = t.closest<HTMLElement>(".bx2-eq");
     if (field && eq && editable) {
       // Inline-Gleichung bearbeiten: Klick öffnet das TeX-Feld
@@ -1126,6 +1151,7 @@ export function BlockEditor(props: PageEditorProps) {
       ) : null}
       {linking ? <DatabasePicker source={databases} onClose={() => { const l = linking; setLinking(undefined); ctrl.setCaret({ id: l.after, from: textLen(store, l.after), to: textLen(store, l.after) }); }} onPick={(d) => void pickDatabase(linking, d)} /> : null}
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
+      {dateEdit ? <DatePopover key={dateEdit.id + ":" + dateEdit.from} state={dateEdit} onChange={(v) => changeDate(dateEdit, v)} onClose={() => setDateEdit(undefined)} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
       {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
         onColor={(color) => { const c = ctrl.caret; if (c && c.from !== c.to) run(cmd.formatText(store, [R(c)], "color", color ?? false)); }} /> : null}
@@ -2269,7 +2295,76 @@ function FormatBar({ x, y, onMark, onColor }: { x: number; y: number; onMark: (m
   );
 }
 
-type MentionItem = { kind: "page"; ref: PageRef } | { kind: "date"; label: string; date: Date };
+type MentionItem = { kind: "page"; ref: PageRef } | { kind: "date"; label: string; date: Date; remind?: boolean } | { kind: "new"; title: string };
+
+/**
+ * Datumsvorschläge hinter „@“ (BSD-407 Teil 6.4, wie im alten Editor): Today/Tomorrow, Wochentage, getippte Daten; „remind
+ * …“ (z. B. „@remind fri“) setzt die Erinnerungs-Flagge. Ohne Eingabe kommt dazu „Remind me tomorrow“.
+ */
+export function mentionDates(query: string, now: Date): Extract<MentionItem, { kind: "date" }>[] {
+  const q = query.trim();
+  const remind = /^remind(?:\s+me)?(?:\s+(.*))?$/i.exec(q);
+  if (remind) return dateSuggestions(remind[1] ?? "tomorrow", now).slice(0, 4).map((d) => ({ kind: "date", label: "Remind me · " + d.label, date: d.date, remind: true }));
+  const out: Extract<MentionItem, { kind: "date" }>[] = dateSuggestions(q, now).slice(0, q ? 4 : 2).map((d) => ({ kind: "date", label: d.label, date: d.date }));
+  if (q === "") {
+    const t = dateSuggestions("tomorrow", now)[0];
+    if (t) out.push({ kind: "date", label: "Remind me · Tomorrow", date: t.date, remind: true });
+  }
+  return out;
+}
+
+interface DateMentionValue { start: number; end?: number; includeTime?: boolean; remind?: boolean }
+
+/** Wähler einer Datums-Erwähnung: Tag, Ende (Bereich), Uhrzeit und „Remind me“; Änderungen gelten sofort (ein Undo-Schritt je Feld). */
+function DatePopover({ state, onChange, onClose }: { state: { id: string; from: number; to: number; x: number; y: number }; onChange: (v: DateMentionValue) => void; onClose: () => void }) {
+  const { store } = useCtx();
+  const ref = useRef<HTMLDivElement>(null);
+  const b = useBlock(store, state.id);
+  const run = cmd.runsOf(b?.text);
+  let pos = 0, value: DateMentionValue | undefined;
+  for (const r of run) {
+    if (pos === state.from && r.mention) { value = (r.mention as { date?: { _0?: DateMentionValue } }).date?._0; break; }
+    pos += r.t.length;
+  }
+  useEffect(() => {
+    const doc = ref.current?.ownerDocument;
+    const off = (e: PointerEvent) => {
+      const t = e.target as Element;
+      if (!ref.current?.contains(t) && !t.closest?.(".nf-layer")) onClose();
+    };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape" && !doc?.querySelector(".nf-layer")) { e.stopPropagation(); onClose(); } };
+    doc?.addEventListener("pointerdown", off, true);
+    doc?.addEventListener("keydown", key, true);
+    return () => { doc?.removeEventListener("pointerdown", off, true); doc?.removeEventListener("keydown", key, true); };
+  }, [onClose]);
+  if (!value || typeof value.start !== "number") return null;
+  const v = value;
+  const parts = dateParts(v);
+  const set = (patch: Partial<DateParts>) => onChange(withDateParts(v, { ...parts, ...patch }));
+  const hasEnd = parts.endDay !== undefined;
+  const remind = v.remind === true;
+  const check = (label: string, on: boolean, change: (on: boolean) => void) => (
+    <label className="bx2-date-check"><input type="checkbox" checked={on} onChange={(e) => change(e.target.checked)} /><span>{label}</span></label>
+  );
+  return (
+    <div ref={ref} className="bx2-menu bx2-date-pop" role="dialog" aria-label="Date options" data-testid="date-popover" style={{ left: state.x, top: Math.min(state.y, window.innerHeight - 240) }}>
+      <span className="bx2-date-row">
+        <DateField className="bx2-link-input" aria-label="Start day" value={parts.startDay} onChange={(startDay) => set({ startDay })} />
+        {parts.includeTime ? <TimeField className="bx2-link-input" aria-label="Start time" value={parts.startTime} onChange={(startTime) => set({ startTime })} /> : null}
+      </span>
+      {hasEnd ? (
+        <span className="bx2-date-row">
+          <DateField className="bx2-link-input" aria-label="End day" value={parts.endDay ?? ""} onChange={(endDay) => set({ endDay })} />
+          {parts.includeTime ? <TimeField className="bx2-link-input" aria-label="End time" value={parts.endTime ?? parts.startTime} onChange={(endTime) => set({ endTime })} /> : null}
+        </span>
+      ) : null}
+      {check("End date", hasEnd, (on) => set(on ? { endDay: parts.startDay, endTime: parts.startTime } : { endDay: undefined, endTime: undefined }))}
+      {check("Include time", parts.includeTime, (on) => set({ includeTime: on, startTime: on && parts.startTime === "00:00" ? "09:00" : parts.startTime }))}
+      {check("Remind me", remind, (on) => { const next: DateMentionValue = { ...v }; if (on) next.remind = true; else delete next.remind; onChange(next); })}
+      <span className="bx2-muted bx2-date-note">Saved with the date. Notifications come later.</span>
+    </div>
+  );
+}
 // `trigger`: „@“ (Seiten und Daten) oder „[[“ (nur Seiten, wie im alten Editor).
 interface MentionState { id: string; at: number; trigger: "@" | "[["; query: string; index: number; x: number; y: number; items: MentionItem[] }
 
@@ -2279,9 +2374,16 @@ function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoo
     <div className="bx2-menu bx2-slash" role="listbox" aria-label="Mention a page" data-testid="mention-menu" style={{ left: state.x, top: Math.min(state.y, window.innerHeight - 340) }} onPointerDown={(e) => e.preventDefault()}>
       {state.items.length && state.items[0]!.kind === "page" ? <div className="bx2-menu-label">Link to page</div> : null}
       {state.items.map((it, i) => (
-        <Fragment key={it.kind === "page" ? it.ref.id : "d" + it.label}>
+        <Fragment key={it.kind === "page" ? it.ref.id : it.kind === "new" ? "new" : "d" + it.label}>
           {i === firstDate ? <div className="bx2-menu-label">Date</div> : null}
-          {it.kind === "page" ? (
+          {it.kind === "new" ? <div className="bx2-menu-label">New</div> : null}
+          {it.kind === "new" ? (
+            <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
+              <span className="bx2-menu-icon" aria-hidden="true"><PlusIcon /></span>
+              <span className="bx2-menu-text">New page “{it.title}”</span>
+              <span className="bx2-menu-hint">Subpage</span>
+            </div>
+          ) : it.kind === "page" ? (
             <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
               <span className="bx2-menu-icon" aria-hidden="true"><IconView icon={it.ref.icon} fallback="📄" /></span>
               <span className="bx2-menu-text">{it.ref.title || "Untitled"}</span>
@@ -2289,13 +2391,21 @@ function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoo
             </div>
           ) : (
             <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
-              <span className="bx2-menu-icon" aria-hidden="true">📅</span>
+              <span className="bx2-menu-icon" aria-hidden="true"><DateIcon remind={it.remind === true} /></span>
               <span className="bx2-menu-text">{it.label}</span>
             </div>
           )}
         </Fragment>
       ))}
     </div>
+  );
+}
+
+function DateIcon({ remind }: { remind: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d={remind ? "M18 15.5V11a6 6 0 0 0-12 0v4.5L4.5 18h15zM10 20.5a2 2 0 0 0 4 0" : "M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5zM4 10h16M8 3v4M16 3v4"} />
+    </svg>
   );
 }
 

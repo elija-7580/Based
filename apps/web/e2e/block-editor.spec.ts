@@ -380,7 +380,7 @@ test("Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per
   await page.keyboard.type("Due @tod");
   await expect(page.getByTestId("mention-menu").getByRole("option", { name: /Today/ })).toBeVisible();
   await page.getByTestId("mention-menu").getByRole("option", { name: /Today/ }).click();
-  await expect(fields(page).last().locator(".bx2-mention")).toHaveText("@Today");
+  await expect(fields(page).last().locator(".bx2-mention[data-date]")).toHaveText(/^@[A-Z][a-z]{2} \d{1,2}, \d{4}$/); // Datum aus dem Wert (BSD-407 Teil 6.4)
   await page.keyboard.press("Escape");
   await page.mouse.move(0, 0);
   if (test.info().project.name === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-block-editor-embeds-1280x820-light.png" });
@@ -829,4 +829,77 @@ test("HTML-Codeblock mit Vorschau", async ({ page }) => {
   const frame = editor(page).locator("iframe.bx-html-preview");
   await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
   await expect(page.frameLocator("iframe.bx-html-preview").locator("b")).toHaveText("Hi preview");
+});
+
+// BSD-407 Teil 6.4: @-Menü wie im alten Editor – „New page“ legt eine Unterseite an und erwähnt sie; Datumsoptionen
+// (Today/Tomorrow, Wochentag, getipptes Datum, „remind …“) und der Wähler an der Erwähnung (Ende, Uhrzeit, Erinnerung).
+test("@-Menü: New page legt eine Unterseite an und erwähnt sie", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("Plan @Roadmap 2027");
+  const menu = page.getByTestId("mention-menu");
+  const create = menu.getByRole("option", { name: /New page “Roadmap 2027”/ });
+  await expect(create).toBeVisible();
+  // die eigene Seite wird nicht vorgeschlagen
+  await expect(menu.getByRole("option", { name: /^Editor test/ })).toHaveCount(0);
+  await create.click();
+  const mention = fields(page).first().locator(".bx2-mention[data-page]");
+  await expect(mention.locator(".bx2-mention-title")).toHaveText("Roadmap 2027");
+  const childID = await mention.getAttribute("data-page");
+  // Unterseite dieser Seite (Seitenleiste: unter „Editor test“), als Block am Ende der Seite
+  await expect(editor(page).locator(`.bx2-block[data-type="page"][data-block-id="${childID}"]`)).toHaveCount(1);
+  // Klick öffnet die neue Seite
+  await mention.click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Roadmap 2027");
+});
+
+test("@-Menü: Datum, Wochentag, getipptes Datum, Erinnerung; Wähler mit Ende und Uhrzeit", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  const menu = page.getByTestId("mention-menu");
+  // ohne Eingabe: Today, Tomorrow, Remind me
+  await page.keyboard.type("A @");
+  await expect(menu.getByRole("option", { name: "Today", exact: true })).toBeVisible();
+  await expect(menu.getByRole("option", { name: "Tomorrow", exact: true })).toBeVisible();
+  await expect(menu.getByRole("option", { name: /Remind me · Tomorrow/ })).toBeVisible();
+  // Wochentag
+  await page.keyboard.type("fri");
+  await expect(menu.getByRole("option", { name: /^Friday · / })).toBeVisible();
+  await page.keyboard.press("Escape");
+  // getipptes Datum
+  await page.keyboard.press("End");
+  await page.keyboard.type(" @2026-12-24");
+  await expect(menu.getByRole("option", { name: "Thu, Dec 24, 2026" })).toBeVisible();
+  await page.keyboard.press("Enter");
+  const date = fields(page).first().locator(".bx2-mention[data-date]").first();
+  await expect(date).toHaveCount(1);
+  await expect(date).toHaveText("@Dec 24, 2026");
+  // Erinnerung per „remind“
+  await page.keyboard.type("and @remind tomorrow");
+  await expect(menu.getByRole("option", { name: /^Remind me · Tomorrow/ })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(fields(page).first().locator(".bx2-mention[data-date][data-remind=true]")).toHaveCount(1);
+  await expect(fields(page).first().getByRole("img", { name: "Reminder set" })).toHaveCount(1);
+
+  // Wähler: Klick auf das Datum, Ende und Uhrzeit, Erinnerung an; Undo nimmt einen Schritt zurück
+  await date.click();
+  const pop = page.getByTestId("date-popover");
+  await expect(pop).toBeVisible();
+  await expect(pop.getByLabel("Start day")).toHaveValue("2026-12-24");
+  await pop.getByRole("checkbox", { name: "End date" }).check();
+  await expect(pop.getByLabel("End day")).toBeVisible();
+  await pop.getByLabel("End day").fill("2026-12-26");
+  await pop.getByLabel("End day").press("Enter");
+  await expect(date).toHaveText("@Dec 24, 2026 → Dec 26, 2026");
+  await pop.getByRole("checkbox", { name: "Remind me" }).check();
+  await expect(fields(page).first().locator(".bx2-mention[data-date][data-remind=true]")).toHaveCount(2);
+  await page.keyboard.press("Escape");
+  await expect(pop).toHaveCount(0);
+  // Neuladen nur in Chromium: WebKit speichert im Standard-Kontext nur im Speicher („Not saved“)
+  if (test.info().project.name !== "chromium") return;
+  await page.waitForTimeout(800);
+  await page.reload();
+  await expect(editor(page)).toBeVisible();
+  await expect(fields(page).first().locator(".bx2-mention[data-date]").first()).toHaveText("@Dec 24, 2026 → Dec 26, 2026");
+  await expect(fields(page).first().locator(".bx2-mention[data-date][data-remind=true]")).toHaveCount(2);
 });

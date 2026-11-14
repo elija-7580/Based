@@ -649,3 +649,13 @@
 .bx2-pdf { display: flex; flex-direction: column; gap: var(--space-1); }
 .bx2-pdf-frame { width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: var(--radius-sm); }
 .bx2-blockmenu { max-height: calc(100vh - var(--space-4)); }
+
+/* BSD-407 Teil 6.4: Datums-Erwähnung (Klick öffnet den Wähler), Erinnerung als Glocke */
+.bx2-mention[data-date] { cursor: pointer; color: var(--muted); }
+.bx2-mention-remind { display: inline-flex; margin-left: var(--space-half); vertical-align: -0.1em; }
+.bx2-mention-remind svg { width: 0.9em; height: 0.9em; }
+.bx2-date-pop { display: grid; gap: var(--space-2); padding: var(--space-3); min-width: calc(var(--space-8) * 4); }
+.bx2-date-row { display: flex; gap: var(--space-2); }
+.bx2-date-row .bx2-link-input { flex: 1 1 auto; min-width: 0; }
+.bx2-date-check { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
+.bx2-date-note { font-size: var(--type-meta-size); }

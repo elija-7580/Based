@@ -54,7 +54,7 @@ neuen Editor auf dem Mac abgenommen hat.
 | URL einfügen als Bookmark/Erwähnung | could | ja | URL über Auswahl → Link; nackte URL in leerer Zeile → Bookmark (14.11.) |
 | Blöcke als Markdown kopieren | should | ja | ⌘C bei Blockauswahl und Blockmenü „Copy as Markdown“ (14.11.) |
 | Suchen in der Seite (⌘F) | could | ja | FindBar arbeitet auf dem DOM |
-| @-Erwähnung (Seite, Datum) | must | ja | Personen fehlen (ein Nutzer) |
+| @-Erwähnung (Seite, Datum) | must | ja | Personen fehlen (ein Nutzer); seit Teil 6.4: „New page“ (Unterseite, erwähnt), Datum aus dem Wert, Wochentage, getippte Daten, „remind …“, Wähler an der Erwähnung (Ende, Uhrzeit, Remind me) |
 | `[[`-Seitenlink | should | ja | `[[` öffnet die Seitensuche (nur Seiten), 14.11. |
 | Titel ↔ erste Zeile | must | ja | |
 | Platzhalter je Blocktyp | should | ja | |
@@ -127,7 +127,6 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 | Meeting-Block (Aufnahme, Notizen, Zusammenfassung) | Seiten mit Meeting öffnen im alten Editor; kommt ein Meeting während der Bearbeitung dazu: Platzhalter, Inhalt darunter bearbeitbar |
 | Button-Block | Beschriftung sichtbar, Aktionen fehlen |
 | „Ask AI“ (Leertaste, Formatleiste) | fehlt |
-| @-Menü: „New page“, Datumsoptionen (Erinnerung, Bereich, Uhrzeit) | fehlt (Datum einfügen geht) |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
 | Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor |
 | Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
