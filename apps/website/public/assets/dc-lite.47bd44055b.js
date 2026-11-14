@@ -199,20 +199,11 @@
     return props;
   }
 
-  var darkQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-  function currentTheme() {
-    try {
-      var forced = new URLSearchParams(location.search).get("theme");
-      if (forced === "dark" || forced === "light") return forced;
-    } catch { /* old browsers */ }
-    return darkQuery && darkQuery.matches ? "dark" : "light";
-  }
-
   function mount(meta, root) {
     var tpl = document.getElementById(meta.template);
     var Component = meta.make(DCLogic);
     var props = readProps(meta);
-    props.theme = currentTheme();
+    props.theme = "light"; // the site is light only (no dark mode)
     var inst = new Component(props);
     inst.props = props;
     var queued = false;
@@ -233,9 +224,6 @@
     };
     render();
     dispatch(root);
-    if (darkQuery && darkQuery.addEventListener) {
-      darkQuery.addEventListener("change", function () { props.theme = currentTheme(); inst.__schedule(); });
-    }
     if (!window.__DC_PRERENDER && typeof inst.componentDidMount === "function") inst.componentDidMount();
     return inst;
   }
