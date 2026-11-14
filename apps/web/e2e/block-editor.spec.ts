@@ -573,3 +573,88 @@ test("Blockmenü-Fotos: Suchfeld, gefiltert, leer", async ({ page, browserName }
   }
   await page.evaluate(() => localStorage.removeItem("based.appearance"));
 });
+
+// BSD-407 Teil 2b: „Move to“ (Blockmenü, ⌘⇧P) in eine andere Seite, „Turn into page“ (Blockmenü, ⌘⌥9).
+test("Blockmenü: Move to in eine andere Seite, Turn into page", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await newPage(page);
+  await page.evaluate(() => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command({ op: "createPage", title: "Target page" }));
+  await expect(page.getByRole("treeitem", { name: "Target page", exact: true })).toBeVisible();
+  await startTyping(page);
+  await page.keyboard.type("Stays here");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Moves away");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Sub idea");
+  await expect.poll(() => texts(page)).toEqual(["Stays here", "Moves away", "Sub idea"]);
+  const menu = page.getByTestId("block-menu");
+  const openMenu = async (i: number) => {
+    const b = editor(page).locator(".bx2-block").nth(i);
+    await b.locator(".bx2-row").hover();
+    await b.locator(":scope > .bx2-gutter [data-handle]").click();
+    await expect(menu.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+  };
+  // Move to
+  await openMenu(1);
+  await page.keyboard.type("move to");
+  await page.keyboard.press("Enter");
+  const picker = page.getByTestId("block-move");
+  await expect(picker).toBeVisible();
+  await page.keyboard.type("Target");
+  await expect(picker.getByRole("option").first()).toContainText("Target page");
+  await page.keyboard.press("Enter");
+  await expect(picker).toHaveCount(0);
+  await expect.poll(() => texts(page)).toEqual(["Stays here", "Sub idea"]);
+  // Turn into page
+  await openMenu(1);
+  await page.keyboard.type("page");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => blockTypes(page)).toEqual(["text", "page"]);
+  await expect(editor(page).locator(".bx2-block").nth(1)).toContainText("Sub idea");
+  // ⌘⌥9 im Text
+  await editor(page).locator("[data-editable-id]").first().click();
+  await page.keyboard.press("ControlOrMeta+Alt+Digit9");
+  await expect.poll(() => blockTypes(page)).toEqual(["page", "page"]);
+  // Die verschobene Zeile steht auf der Zielseite
+  await page.getByRole("treeitem", { name: "Target page", exact: true }).click();
+  await expect(editor(page)).toContainText("Moves away");
+  expect(errors).toEqual([]);
+});
+
+// BSD-407 Teil 2c: „[[“ öffnet die Seitensuche (nur Seiten, keine Daten) und setzt einen Seitenlink.
+test("[[ verlinkt eine Seite", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("see [[Welc");
+  const menu = page.getByTestId("mention-menu");
+  await expect(menu.getByRole("option", { name: /Welcome to Based/ })).toBeVisible();
+  await expect(menu.getByRole("option", { name: /Today/ })).toHaveCount(0);
+  await page.keyboard.press("Enter");
+  await expect(fields(page).first().locator(".bx2-mention")).toHaveText("Welcome to Based");
+  await page.keyboard.type(" ok");
+  await expect(fields(page).first()).toHaveText("see Welcome to Based ok");
+  // einzelne Klammer bleibt Text
+  await page.keyboard.type(" [x]");
+  await expect(menu).toHaveCount(0);
+  await expect(fields(page).first()).toHaveText("see Welcome to Based ok [x]");
+});
+
+// BSD-407 Teil 2c: nackte URL in eine leere Zeile wird ein Web-Bookmark; in Text bleibt sie Text.
+test("URL einfügen: leere Zeile → Bookmark", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  const pasteText = (t: string) => page.evaluate((text) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", text);
+    document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, t);
+  await page.keyboard.type("Read ");
+  await pasteText("https://example.com/a");
+  await expect(fields(page).first()).toHaveText("Read https://example.com/a");
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await pasteText("https://example.com/b");
+  await expect.poll(() => blockTypes(page)).toEqual(["text", "bookmark"]);
+  await expect(editor(page).locator(".bx2-block").nth(1)).toContainText("example.com");
+});

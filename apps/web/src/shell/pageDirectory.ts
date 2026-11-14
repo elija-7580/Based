@@ -12,6 +12,8 @@ const same = (a: PageRef | undefined, b: PageRef) =>
 
 export class ShellPageDirectory implements PageDirectory {
   private cache = new Map<string, PageRef>();
+  /** Vorläufige Einträge aus der Titel-Tabelle: gleiche Werte → dasselbe Objekt (useSyncExternalStore verlangt das). */
+  private interim = new Map<string, PageRef>();
   private wanted = new Set<string>();
   private listeners = new Set<() => void>();
   private queued = false;
@@ -29,7 +31,13 @@ export class ShellPageDirectory implements PageDirectory {
     const state = this.client.getState();
     const title = state.titles.get(id);
     if (title === undefined) return undefined;
-    return { id, title, icon: state.outline?.nodes[id]?.icon };
+    const next: PageRef = { id, title, icon: state.outline?.nodes[id]?.icon };
+    const prev = this.interim.get(id);
+    // BSD-407: Ein neues Objekt bei jedem Aufruf ließ PageLink (useSyncExternalStore) endlos neu zeichnen
+    // (React-Fehler 185), sobald eine Seite angezeigt wurde, die der Worker noch nicht gemeldet hatte.
+    if (prev && prev.title === next.title && prev.icon === next.icon) return prev;
+    this.interim.set(id, next);
+    return next;
   };
 
   subscribe = (onChange: () => void): (() => void) => {

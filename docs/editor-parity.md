@@ -43,19 +43,19 @@ neuen Editor auf dem Mac abgenommen hat.
 | Text- und Hintergrundfarbe im Text | must | ja | Formatleiste „A“ |
 | Blockfarbe | should | ja | Blockmenü „Color“ |
 | Turn into | must | ja | Blockmenü, ⌘⌥0–8 |
-| Turn into page (⌘⌥9) | should | nein | |
-| Blockmenü (Löschen, Duplizieren, Verschieben, Farbe, Link) | must | teils | Suchfeld seit 14.11. (BSD-407); „Move to“ (in andere Seite) fehlt |
+| Turn into page (⌘⌥9) | should | ja | Blockmenü „Page“ und ⌘⌥9, gleiche ID (14.11.) |
+| Blockmenü (Löschen, Duplizieren, Verschieben, Farbe, Link) | must | ja | Suchfeld, „Move to“ (⌘⇧P) in andere Seite seit 14.11. (BSD-407) |
 | Griff ziehen, Verschachteln, Spalten | must | ja | |
 | Blockauswahl (Esc, ⇧↑/↓, Rechteck) | should | ja | |
 | ⌘⇧↑/↓, ⌘D | should | ja | |
 | Alle Toggles auf/zu (⌘⌥T) | could | ja | |
 | Undo/Redo | must | ja | ein Schritt je Befehl, Tippen zusammengefasst |
 | Einfügen (Markdown, HTML, Notion, Based-intern) | must | ja | |
-| URL einfügen als Bookmark/Erwähnung | could | teils | URL über Auswahl → Link; nackte URL → Bookmark fehlt |
+| URL einfügen als Bookmark/Erwähnung | could | ja | URL über Auswahl → Link; nackte URL in leerer Zeile → Bookmark (14.11.) |
 | Blöcke als Markdown kopieren | should | ja | ⌘C bei Blockauswahl und Blockmenü „Copy as Markdown“ (14.11.) |
 | Suchen in der Seite (⌘F) | could | ja | FindBar arbeitet auf dem DOM |
 | @-Erwähnung (Seite, Datum) | must | ja | Personen fehlen (ein Nutzer) |
-| `[[`-Seitenlink | should | nein | alter Editor: `[[` öffnet die Seitensuche |
+| `[[`-Seitenlink | should | ja | `[[` öffnet die Seitensuche (nur Seiten), 14.11. |
 | Titel ↔ erste Zeile | must | ja | |
 | Platzhalter je Blocktyp | should | ja | |
 | Ask AI in der Formatleiste | — | nein | AI ist hinter dem Schalter, Standard aus |
@@ -81,8 +81,8 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | --- | --- | --- |
 | 1 | Diese Liste | erledigt 14.11. |
 | 2a | Blockmenü: Suchfeld, „Copy as Markdown“ | erledigt 14.11. |
-| 2b | Blockmenü „Move to“ (MovePicker wiederverwenden), Turn into page (⌘⌥9) | offen |
-| 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | offen |
+| 2b | Blockmenü „Move to“ (MovePicker wiederverwenden), Turn into page (⌘⌥9) | erledigt 14.11. |
+| 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | `[[` und URL erledigt 14.11.; Inline-Gleichung offen |
 | 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | offen |
 | 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | offen |
 | 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | offen |
