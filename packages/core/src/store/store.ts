@@ -96,6 +96,8 @@ export interface StoreChange {
    * Ihr eigener Record wurde nicht geschrieben; wer Records weiterreicht (Replik, Sync), überspringt sie.
    */
   notified?: RecordKeyString[];
+  /** Name der Transaktion (z. B. „New block“, beim Undo der des rückgängig gemachten Schritts) – für die Diagnose. */
+  name?: string;
 }
 
 export interface RemoteMergeResult {
@@ -693,7 +695,7 @@ export class WorkspaceStore {
           }
         }
       }
-      const change: StoreChange = notified.length > 0 ? { keys, origin, notified } : { keys, origin };
+      const change: StoreChange = notified.length > 0 ? { keys, origin, notified, name } : { keys, origin, name };
       for (const fn of this.observers) fn(change);
     }
     return true;

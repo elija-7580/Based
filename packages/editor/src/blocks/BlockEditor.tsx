@@ -28,6 +28,7 @@ import { SELECTION_ACTIONS, type EditorAI } from "../ui/ai.js";
 import { PresenceLayer, useRealtime } from "./realtime.js";
 import { highlightCode } from "./highlight.js";
 import { MeetingBlock } from "./meeting.js";
+import { attachBlockEditorProbe } from "../ui/probe.js";
 import "./blocks.css";
 
 interface Ctx {
@@ -120,6 +121,34 @@ export function BlockEditor(props: PageEditorProps) {
     ctrl.root = rootRef.current;
     return () => { ctrl.root = null; };
   }, [ctrl]);
+
+  // BSD-319: „Report a problem“ – die Shell zeichnet Transaktionen der Seite und die Schreibmarke auf (ohne Sonde: nichts).
+  useEffect(() => attachBlockEditorProbe({
+    rootID: pageID,
+    store,
+    selection: () => {
+      if (ctrl.selected.length) return { type: "blocks", anchor: 0, head: 0, blocks: [...ctrl.selected] };
+      const root = rootRef.current;
+      const active = root?.ownerDocument.activeElement;
+      const field = active && root?.contains(active) ? active.closest<HTMLElement>("[data-editable-id]") : null;
+      const id = field?.dataset.editableId;
+      const s = field && id ? selectionIn(field) : undefined;
+      if (id && s) return { type: "text", block: id, anchor: s.backward ? s.to : s.from, head: s.backward ? s.from : s.to };
+      if (ctrl.caret) return { type: "text", block: ctrl.caret.id, anchor: ctrl.caret.from, head: ctrl.caret.to };
+      return { type: "none", anchor: 0, head: 0 };
+    },
+    setSelection: (sel) => {
+      if (sel.type === "blocks") {
+        const ids = (sel.blocks ?? []).filter((id) => store.blocks.has(id));
+        if (ids.length) ctrl.select(ids);
+        return ids.length > 0;
+      }
+      if (!sel.block || !store.blocks.has(sel.block)) return false;
+      ctrl.setCaret({ id: sel.block, from: Math.min(sel.anchor, sel.head), to: Math.max(sel.anchor, sel.head) });
+      return true;
+    },
+    selectedBlocks: () => ctrl.selected,
+  }), [ctrl, store, pageID]);
 
   // Titel ↔ Text wie Notion (PageView): „bx:focus“ kommt vom Titel (Enter, ↓, Klick unter die Seite).
   useEffect(() => {
@@ -1171,7 +1200,7 @@ export function BlockEditor(props: PageEditorProps) {
 
   return (
     <EditorCtx.Provider value={ctx}>
-      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-theme={props.theme} data-collab={presence ? "" : undefined}
+      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-root={pageID} data-theme={props.theme} data-collab={presence ? "" : undefined}
         tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={onPointerDown} writingsuggestions="false">
         <BlockList parent={pageID} depth={0} />
         {editable ? <div className="bx2-tail" onClick={onTailClick} data-testid="block-editor-tail" /> : null}

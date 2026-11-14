@@ -1,7 +1,7 @@
 // BSD-319: „Problem melden“ (⇧⌘B, ⌘K, Settings → Diagnostics): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout,
 // standardmäßig ohne Nutzertext; Liste der Berichte, Log-Filter, Entwickler-Ansicht; Aufzeichnung kostet beim Tippen nichts.
 import { expect, type Page } from "@playwright/test";
-import { editor, legacyTest, openNewPage, ready, test } from "./replay/fixture.js";
+import { editor, legacyTest, openNewLegacyPage, openNewPage, ready, test } from "./replay/fixture.js";
 
 const SECRET = "Quarterly salary Ada Lovelace 4711";
 
@@ -20,12 +20,16 @@ const savedReports = (page: Page) => page.evaluate(() => new Promise<(Row & { sh
 }));
 
 test.describe.configure({ timeout: 90_000 });
-// BSD-407 Teil 3: Aufzeichnung (ProseMirror „tr“, Seiten-Y.Doc „yjs“, BlockNote-Blockbaum) gibt es nur im alten Editor:
-// diese Tests laufen mit `legacyTest` (gepinnt, docs/editor-parity.md „noch BlockNote“); Diagnostics-Einstellungen nicht.
+// Aufzeichnung in beiden Editoren: Block-Editor (ADR 0016) mit Block-Transaktionen „change“ und Blockbaum, der alte
+// (BlockNote, gepinnt bis zum Löschen) mit ProseMirror „tr“ und Seiten-Y.Doc „yjs“.
+const EDITORS = [
+  { name: "Block-Editor", t: test, open: openNewPage, kinds: ["checkpoint", "key", "input", "change", "select"], list: "bulletedList" },
+  { name: "alter Editor", t: legacyTest, open: openNewLegacyPage, kinds: ["checkpoint", "key", "input", "tr", "yjs"], list: "bulletListItem" },
+];
 
-legacyTest("⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext", async ({ page }) => {
+for (const { name, t, open, kinds: expectedKinds, list } of EDITORS) t(`⇧⌘B (${name}): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext`, async ({ page }) => {
   await ready(page);
-  await openNewPage(page, "Report");
+  await open(page, "Report");
   await page.keyboard.type(SECRET);
   await page.keyboard.press("Enter");
   await page.keyboard.type("- second line");
@@ -46,8 +50,8 @@ legacyTest("⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – oh
   const b = r!.bundle;
   expect(b.note).toBe("Typed two lines, the list jumped");
   const kinds = new Set(b.recording.events.map((e) => e.kind));
-  for (const k of ["checkpoint", "key", "input", "tr", "yjs"]) expect(kinds.has(k), k).toBe(true);
-  expect(JSON.stringify(b.state.blocks)).toContain("bulletListItem");
+  for (const k of expectedKinds) expect(kinds.has(k), k).toBe(true);
+  expect(JSON.stringify(b.state.blocks)).toContain(list);
   expect(b.layout.items.some((i) => i.kind === "block")).toBe(true);
   expect(b.screenshot).toBe("screenshot.png");
   expect(r!.shotSize).toBeGreaterThan(1000);
@@ -64,7 +68,7 @@ legacyTest("⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – oh
   expect(await savedReports(page)).toHaveLength(0);
 });
 
-legacyTest("Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem", async ({ page }) => {
+test("Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem", async ({ page }) => {
   await ready(page);
   await openNewPage(page, "Real text");
   await page.keyboard.type(SECRET);
@@ -121,26 +125,48 @@ test("Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ans
   await expect(page.getByTestId("dev-overlay")).toHaveCount(0);
 });
 
-legacyTest("Entwickler-Ansicht zeigt die letzten Ereignisse live", async ({ page }) => {
+test("Entwickler-Ansicht zeigt die letzten Ereignisse live", async ({ page }) => {
   await ready(page);
   await page.evaluate(() => localStorage.setItem("based.devView", "true"));
   await ready(page);
   await openNewPage(page, "Dev");
   await page.keyboard.type("ab");
   await expect(page.getByTestId("dev-events")).toContainText("key x");
-  await expect(page.getByTestId("dev-events")).toContainText("tr change");
+  await expect(page.getByTestId("dev-events")).toContainText("change Typing · 1 block");
   // fängt keine Klicks ab
   expect(await page.getByTestId("dev-overlay").evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
-  await editor(page).locator(".bn-block-content").first().click();
+  await editor(page).locator("[data-editable-id]").first().click();
+  await expect(page.getByTestId("dev-events")).toContainText("(pointer)");
 });
 
-legacyTest("Aufzeichnung kostet beim Tippen messbar nichts", async ({ page }) => {
+test("Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen", async ({ page }) => {
+  await ready(page);
+  const id = await openNewPage(page, "Hooks");
+  await page.keyboard.type("One");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Two");
+  type H = { bundle(n: string, real?: boolean): { state: { doc: { blocks: { id: string; text?: unknown }[] }; sel: { block?: string; path?: number[] } } }; load(r: string, d: unknown, s: unknown, rr?: string): boolean; docJSON(r: string): unknown; setSelection(r: string, s: unknown): boolean };
+  const b = await page.evaluate(() => (globalThis as unknown as { __basedReport: H }).__basedReport.bundle("hooks", true));
+  expect(b.state.doc.blocks.map((x) => x.text)).toEqual(["One", "Two"]);
+  expect(b.state.sel).toMatchObject({ block: b.state.doc.blocks[1]!.id, path: [1] });
+  // auf eine andere Seite laden: neue IDs, gleicher Inhalt, Schreibmarke im zweiten Block
+  const other = (await page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string> } } }).__based.client.command({ op: "createPage", title: "Target" })));
+  await page.goto(`/#page-${other}`);
+  await expect(editor(page)).toBeVisible();
+  expect(await page.evaluate(([r, d, s, rr]) => (globalThis as unknown as { __basedReport: H }).__basedReport.load(r as string, d, s, rr as string), [other, b.state.doc, { type: "text", anchor: 1, head: 1, block: b.state.doc.blocks[1]!.id }, id] as const)).toBe(true);
+  await expect(editor(page).locator("[data-editable-id]")).toHaveText(["One", "Two"]);
+  await expect(editor(page).locator("[data-editable-id]").nth(1)).toBeFocused();
+  await page.keyboard.type("!");
+  await expect(editor(page).locator("[data-editable-id]").nth(1)).toHaveText("T!wo");
+});
+
+test("Aufzeichnung kostet beim Tippen messbar nichts", async ({ page }) => {
   await ready(page);
   await openNewPage(page, "Perf");
   // Dieselben Ereignisse mit und ohne Aufzeichnung an den Editor schicken; Unterschied je Taste (Median aus 5 Runden).
   const extra = await page.evaluate(() => {
     const hooks = (globalThis as unknown as { __basedReport: { recording(on: boolean): void } }).__basedReport;
-    const target = document.querySelector(".ProseMirror")!;
+    const target = document.querySelector("[data-editable-id]")!;
     const run = () => {
       const t0 = performance.now();
       for (let i = 0; i < 1000; i++) {

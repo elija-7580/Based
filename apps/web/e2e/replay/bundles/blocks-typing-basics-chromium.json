@@ -1,0 +1,3262 @@
+{
+ "format": "based-bug-report",
+ "version": 1,
+ "id": "20261114-133817-a260",
+ "createdAt": "2026-11-14T13:38:17.282Z",
+ "note": "Sample: typing, bold, list, heading, paste, click and backspace",
+ "realText": false,
+ "app": {
+  "shell": "web",
+  "commit": "4ceffa0",
+  "platform": "Windows",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36"
+ },
+ "env": {
+  "width": 1280,
+  "height": 820,
+  "dpr": 1,
+  "zoom": 1,
+  "theme": "light",
+  "route": "page-"
+ },
+ "state": {
+  "menus": [],
+  "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+  "doc": {
+   "editor": "blocks",
+   "blocks": [
+    {
+     "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+     "type": "text",
+     "sk": "a0",
+     "children": [],
+     "text": [
+      {
+       "t": "Xxxxx xxxxx",
+       "m": {
+        "b": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+     "type": "bulletedList",
+     "sk": "a1",
+     "children": [],
+     "text": "Xxxxx xxxx"
+    },
+    {
+     "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+     "type": "bulletedList",
+     "sk": "a2",
+     "children": [],
+     "text": "Xxxxxx xx!"
+    },
+    {
+     "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+     "type": "heading1",
+     "sk": "a3",
+     "children": [],
+     "text": "Xxxxxxx"
+    },
+    {
+     "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+     "type": "text",
+     "sk": "a4",
+     "children": [],
+     "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+    }
+   ]
+  },
+  "blocks": [
+   {
+    "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+    "type": "text",
+    "sk": "a0",
+    "children": [],
+    "text": [
+     {
+      "t": "Xxxxx xxxxx",
+      "m": {
+       "b": true
+      }
+     }
+    ]
+   },
+   {
+    "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+    "type": "bulletedList",
+    "sk": "a1",
+    "children": [],
+    "text": "Xxxxx xxxx"
+   },
+   {
+    "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+    "type": "bulletedList",
+    "sk": "a2",
+    "children": [],
+    "text": "Xxxxxx xx!"
+   },
+   {
+    "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+    "type": "heading1",
+    "sk": "a3",
+    "children": [],
+    "text": "Xxxxxxx"
+   },
+   {
+    "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+    "type": "text",
+    "sk": "a4",
+    "children": [],
+    "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+   }
+  ],
+  "sel": {
+   "type": "text",
+   "block": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+   "anchor": 10,
+   "head": 10,
+   "path": [
+    2
+   ]
+  },
+  "focus": "div.bx2-field.bx2-t-bulletedList[role=textbox]"
+ },
+ "layout": {
+  "items": [
+   {
+    "kind": "block",
+    "label": "text #3DCC0692-6B49-4609-937B-675DCF88FED6",
+    "rect": {
+     "x": 460,
+     "y": 231,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletedList #68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+    "rect": {
+     "x": 460,
+     "y": 261,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletedList #D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+    "rect": {
+     "x": 460,
+     "y": 291,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "heading1 #68650CE6-4F27-4CB8-B76A-EE298096F109",
+    "rect": {
+     "x": 460,
+     "y": 321,
+     "w": 724,
+     "h": 72
+    }
+   },
+   {
+    "kind": "block",
+    "label": "text #1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+    "rect": {
+     "x": 460,
+     "y": 393,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "floating",
+    "label": "div.sidebar-resize[role=separator]#sidebar-resize",
+    "rect": {
+     "x": 224,
+     "y": 0,
+     "w": 8,
+     "h": 820
+    },
+    "z": "2",
+    "position": "absolute"
+   },
+   {
+    "kind": "floating",
+    "label": "header.topbar.t-desc",
+    "rect": {
+     "x": 232,
+     "y": 12,
+     "w": 1036,
+     "h": 56
+    },
+    "z": "5",
+    "position": "sticky",
+    "opaque": true
+   },
+   {
+    "kind": "floating",
+    "label": "nav.bx-outline#page-outline",
+    "rect": {
+     "x": 1214,
+     "y": 389,
+     "w": 50,
+     "h": 42
+    },
+    "z": "15",
+    "position": "fixed"
+   },
+   {
+    "kind": "floating",
+    "label": "div.swipe-hint",
+    "rect": {
+     "x": 232,
+     "y": 0,
+     "w": 1048,
+     "h": 820
+    },
+    "z": "8",
+    "position": "absolute"
+   },
+   {
+    "kind": "focus",
+    "label": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "rect": {
+     "x": 488,
+     "y": 294,
+     "w": 694,
+     "h": 24
+    }
+   }
+  ],
+  "issues": []
+ },
+ "recording": {
+  "events": [
+   {
+    "kind": "checkpoint",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "doc": {
+     "editor": "blocks",
+     "blocks": []
+    },
+    "sel": {
+     "type": "none",
+     "anchor": 0,
+     "head": 0
+    },
+    "t": 1794663495958
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 822,
+    "y": 291,
+    "button": 0,
+    "detail": 0,
+    "target": "div.bx2-tail#block-editor-tail",
+    "t": 1794663496015
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-editor#block-editor",
+    "t": 1794663496016
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 822,
+    "y": 291,
+    "button": 0,
+    "detail": 0,
+    "target": "div.bx2-tail#block-editor-tail",
+    "t": 1794663496017
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "New block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.019,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496019,
+        "counter": 0,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496019
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663496026
+   },
+   {
+    "kind": "select",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "sel": {
+     "type": "text",
+     "block": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+     "anchor": 0,
+     "head": 0,
+     "path": [
+      0
+     ]
+    },
+    "cause": "pointer",
+    "t": 1794663496032
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "X",
+    "mods": {},
+    "t": 1794663496046
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663496047
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.048,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496048,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663496048
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496054
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496055
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.055,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496055,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663496055
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496059
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496060
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.06,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496060,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663496060
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496069
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496069
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.07,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496070,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663496070
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496074
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496074
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.075,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496075,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663496075
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": " ",
+    "mods": {},
+    "t": 1794663496084
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663496084
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.084,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496084,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx "
+      }
+     }
+    ],
+    "t": 1794663496084
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496097
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496097
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.098,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496098,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx x"
+      }
+     }
+    ],
+    "t": 1794663496098
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496109
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496109
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.11,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496110,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663496110
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496119
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496120
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.12,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496120,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663496120
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496126
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496126
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.126,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496126,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx xxxx"
+      }
+     }
+    ],
+    "t": 1794663496126
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496132
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496132
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.132,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496132,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx xxxxx"
+      }
+     }
+    ],
+    "t": 1794663496133
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Shift",
+    "code": "ShiftLeft",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794663496137
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Home",
+    "code": "Home",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794663496137
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Control",
+    "code": "ControlLeft",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794663496180
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "b",
+    "code": "KeyB",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794663496180
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Format",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+      "block": {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a0",
+       "createdAt": 816356296.018,
+       "updatedAt": 816356296.181,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496181,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "t": 1794663496181
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794663496213
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663496247
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertParagraph",
+    "t": 1794663496247
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.248,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496248,
+        "counter": 0,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496248
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663496251
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "-",
+    "mods": {},
+    "t": 1794663496279
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "-",
+    "t": 1794663496279
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.279,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496279,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "-"
+      }
+     }
+    ],
+    "t": 1794663496279
+   },
+   {
+    "kind": "checkpoint",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "doc": {
+     "editor": "blocks",
+     "blocks": [
+      {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "sk": "a0",
+       "children": [],
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      },
+      {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "text",
+       "sk": "a1",
+       "children": [],
+       "text": "-"
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "block": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+     "anchor": 1,
+     "head": 1,
+     "path": [
+      1
+     ]
+    },
+    "t": 1794663496283
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": " ",
+    "mods": {},
+    "t": 1794663496283
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663496283
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.283,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496284,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "- "
+      }
+     }
+    ],
+    "t": 1794663496284
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Turn into",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.284,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496284,
+        "counter": 1,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496284
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663496287
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "X",
+    "mods": {},
+    "t": 1794663496290
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663496290
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.29,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496290,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663496290
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496293
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496293
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.293,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496293,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663496294
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496305
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496305
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.305,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496305,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663496305
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496313
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496313
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.314,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496314,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663496314
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496318
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496318
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.318,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496318,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663496318
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": " ",
+    "mods": {},
+    "t": 1794663496322
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663496322
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.322,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496322,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx "
+      }
+     }
+    ],
+    "t": 1794663496323
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496326
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496327
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.327,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496327,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx x"
+      }
+     }
+    ],
+    "t": 1794663496327
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496332
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496332
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.332,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496332,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663496332
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496336
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496336
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.336,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496336,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663496336
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496343
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496343
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+      "block": {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a1",
+       "createdAt": 816356296.248,
+       "updatedAt": 816356296.343,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496343,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx xxxx"
+      }
+     }
+    ],
+    "t": 1794663496343
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663496349
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertParagraph",
+    "t": 1794663496349
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.349,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496349,
+        "counter": 0,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496349
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663496354
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "X",
+    "mods": {},
+    "t": 1794663496379
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663496380
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.38,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496380,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663496380
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496384
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496384
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.384,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496384,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663496384
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496387
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496387
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.387,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496387,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663496387
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496390
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496391
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.391,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496391,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663496391
+   },
+   {
+    "kind": "checkpoint",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "doc": {
+     "editor": "blocks",
+     "blocks": [
+      {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "sk": "a0",
+       "children": [],
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      },
+      {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "sk": "a1",
+       "children": [],
+       "text": "Xxxxx xxxx"
+      },
+      {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "sk": "a2",
+       "children": [],
+       "text": "Xxxx"
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "block": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+     "anchor": 4,
+     "head": 4,
+     "path": [
+      2
+     ]
+    },
+    "t": 1794663496397
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496397
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496397
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.397,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496397,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663496397
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496401
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496401
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.401,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496401,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx"
+      }
+     }
+    ],
+    "t": 1794663496401
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": " ",
+    "mods": {},
+    "t": 1794663496406
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663496407
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.407,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496407,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx "
+      }
+     }
+    ],
+    "t": 1794663496407
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496412
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496412
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.413,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496413,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx x"
+      }
+     }
+    ],
+    "t": 1794663496413
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496417
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496417
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.418,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496418,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663496418
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496422
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496422
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.422,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496422,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663496422
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496430
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496430
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.43,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496430,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx xxxx"
+      }
+     }
+    ],
+    "t": 1794663496430
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663496434
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertParagraph",
+    "t": 1794663496434
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.434,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496434,
+        "counter": 0,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496434
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663496439
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663496462
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertParagraph",
+    "t": 1794663496462
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Turn into",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.463,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496463,
+        "counter": 0,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496463
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663496467
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "#",
+    "mods": {},
+    "t": 1794663496497
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "#",
+    "t": 1794663496497
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.497,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496497,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "#"
+      }
+     }
+    ],
+    "t": 1794663496497
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": " ",
+    "mods": {},
+    "t": 1794663496503
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663496503
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.503,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496503,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "# "
+      }
+     }
+    ],
+    "t": 1794663496504
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Turn into",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.504,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496504,
+        "counter": 0,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496504
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-heading1[role=textbox]",
+    "t": 1794663496512
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "X",
+    "mods": {},
+    "t": 1794663496519
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663496520
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.52,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496520,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663496523
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496531
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496531
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.531,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496531,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663496532
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496540
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496540
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.541,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496541,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663496541
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496550
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496550
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.55,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496550,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663496550
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496556
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496556
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.556,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496556,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663496556
+   },
+   {
+    "kind": "checkpoint",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "doc": {
+     "editor": "blocks",
+     "blocks": [
+      {
+       "id": "3DCC0692-6B49-4609-937B-675DCF88FED6",
+       "type": "text",
+       "sk": "a0",
+       "children": [],
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      },
+      {
+       "id": "68A7B18F-5F25-4605-8DB0-10171E3C8C0C",
+       "type": "bulletedList",
+       "sk": "a1",
+       "children": [],
+       "text": "Xxxxx xxxx"
+      },
+      {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "sk": "a2",
+       "children": [],
+       "text": "Xxxxxx xxxx"
+      },
+      {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "sk": "a3",
+       "children": [],
+       "text": "Xxxxx"
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "block": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+     "anchor": 5,
+     "head": 5,
+     "path": [
+      3
+     ]
+    },
+    "t": 1794663496563
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496563
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496563
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.563,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496564,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx"
+      }
+     }
+    ],
+    "t": 1794663496564
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496571
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496572
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+      "block": {
+       "id": "68650CE6-4F27-4CB8-B76A-EE298096F109",
+       "type": "heading1",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a3",
+       "createdAt": 816356296.434,
+       "updatedAt": 816356296.572,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496572,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxxx"
+      }
+     }
+    ],
+    "t": 1794663496573
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663496582
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertParagraph",
+    "t": 1794663496582
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.582,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496583,
+        "counter": 0,
+        "node": "95E8F69F"
+       }
+      }
+     }
+    ],
+    "t": 1794663496583
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663496589
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "X",
+    "mods": {},
+    "t": 1794663496630
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663496630
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.63,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496630,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663496630
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496636
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496636
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.636,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496636,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663496636
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496640
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496640
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.64,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496640,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663496640
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496644
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496644
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.644,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496644,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663496644
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496651
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496651
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.651,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496651,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663496651
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "x",
+    "mods": {},
+    "t": 1794663496658
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663496658
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.658,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496658,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx"
+      }
+     }
+    ],
+    "t": 1794663496658
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": ":",
+    "mods": {},
+    "t": 1794663496668
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": ":",
+    "t": 1794663496668
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.668,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496668,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx:"
+      }
+     }
+    ],
+    "t": 1794663496668
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": " ",
+    "mods": {},
+    "t": 1794663496681
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663496681
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.681,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496681,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx: "
+      }
+     }
+    ],
+    "t": 1794663496681
+   },
+   {
+    "kind": "paste",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "plain": "xxxx xxx xxxxxxxxx",
+    "files": 0,
+    "t": 1794663496689
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+      "block": {
+       "id": "1F0C212A-02FE-42FF-8A67-7BC72E6E7E7B",
+       "type": "text",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a4",
+       "createdAt": 816356296.582,
+       "updatedAt": 816356296.691,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496691,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+      }
+     }
+    ],
+    "t": 1794663496691
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 835,
+    "y": 306,
+    "button": 0,
+    "detail": 0,
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663496733
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663496734
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 835,
+    "y": 306,
+    "button": 0,
+    "detail": 0,
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663496735
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794663496738
+   },
+   {
+    "kind": "select",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "sel": {
+     "type": "text",
+     "block": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+     "anchor": 11,
+     "head": 11,
+     "path": [
+      2
+     ]
+    },
+    "cause": "pointer",
+    "t": 1794663496745
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794663496779
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "deleteContentBackward",
+    "t": 1794663496780
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.78,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496780,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663496780
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794663496812
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "deleteContentBackward",
+    "t": 1794663496812
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.813,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496813,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663496813
+   },
+   {
+    "kind": "key",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "key": "!",
+    "mods": {},
+    "t": 1794663496863
+   },
+   {
+    "kind": "input",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "inputType": "insertText",
+    "data": "!",
+    "t": 1794663496863
+   },
+   {
+    "kind": "change",
+    "root": "FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+      "block": {
+       "id": "D48C95FB-7144-4C8F-BE80-FB7BC61DCE69",
+       "type": "bulletedList",
+       "parent": "b:FFC2A64A-6838-42CA-AE7D-2E3933E96769",
+       "sk": "a2",
+       "createdAt": 816356296.349,
+       "updatedAt": 816356296.863,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663496863,
+        "counter": 0,
+        "node": "95E8F69F"
+       },
+       "text": "Xxxxxx xx!"
+      }
+     }
+    ],
+    "t": 1794663496863
+   }
+  ]
+ },
+ "log": [
+  {
+   "at": 1794663495370,
+   "level": "info",
+   "message": "start · Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36"
+  },
+  {
+   "at": 1794663495373,
+   "level": "info",
+   "message": "boot: scripts loaded +593 ms"
+  },
+  {
+   "at": 1794663495380,
+   "level": "info",
+   "message": "boot: shell started +601 ms"
+  },
+  {
+   "at": 1794663495458,
+   "level": "info",
+   "message": "boot: settings read +679 ms"
+  },
+  {
+   "at": 1794663495589,
+   "level": "info",
+   "message": "boot: first render +809 ms"
+  },
+  {
+   "at": 1794663495828,
+   "level": "info",
+   "message": "boot: store answered +1049 ms"
+  },
+  {
+   "at": 1794663495828,
+   "level": "info",
+   "message": "status: starting"
+  },
+  {
+   "at": 1794663495841,
+   "level": "info",
+   "message": "status: local"
+  },
+  {
+   "at": 1794663495848,
+   "level": "info",
+   "message": "boot: store ready +1068 ms (1 pages)"
+  }
+ ],
+ "hangs": {
+  "stats": {
+   "count": 0,
+   "main": 0,
+   "input": 0,
+   "worker": 0,
+   "blockedMs": 0,
+   "p50": 0,
+   "p95": 0,
+   "max": 0,
+   "freezes": 0
+  },
+  "hangs": [],
+  "previous": []
+ }
+}

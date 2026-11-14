@@ -19,8 +19,8 @@ export const test = base.extend<{ page: Page }>({
 });
 
 /**
- * BSD-407 Teil 3: Aufzeichnung (ProseMirror-Schritte „tr“, Seiten-Y.Doc „yjs“) und Wiedergabe der Fehlerberichte gibt es
- * nur im alten Editor (BlockNote). Tests dafür pinnen ihn (docs/editor-parity.md, „noch BlockNote“).
+ * Alter Editor (BlockNote) für die Specs, die ihn noch prüfen (docs/editor-parity.md, „noch BlockNote“): die
+ * mitgelieferten ProseMirror-Bündel der Wiedergabe. Aufzeichnung und Wiedergabe gibt es in beiden Editoren.
  */
 export const legacyTest = test.extend<{ page: Page }>({
   page: async ({ page }, use) => {
@@ -36,13 +36,30 @@ export async function ready(page: Page, hash = "") {
 
 type W = { __based: { client: { command(c: unknown): Promise<unknown> } } };
 export const command = (page: Page, c: Record<string, unknown>) => page.evaluate((cmd) => (globalThis as unknown as W).__based.client.command(cmd), c);
-export const editor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
+/** Alter Editor (BlockNote). */
+export const legacyEditor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
+/** Block-Editor (ADR 0016, Standard). */
+export const editor = (page: Page) => page.getByTestId("block-editor");
 
-/** Neue Seite anlegen und öffnen, Schreibmarke in den ersten Block. */
-export async function openNewPage(page: Page, title: string): Promise<string> {
+async function createAndOpen(page: Page, title: string): Promise<string> {
   const id = (await command(page, { op: "createPage", title })) as string;
   await page.goto(`/#page-${id}`);
-  await expect(editor(page)).toHaveAttribute("contenteditable", "true");
-  await editor(page).locator(".bn-block-content").first().click();
+  return id;
+}
+
+/** Neue Seite im Block-Editor anlegen und öffnen, Schreibmarke in den ersten Block. */
+export async function openNewPage(page: Page, title: string): Promise<string> {
+  const id = await createAndOpen(page, title);
+  await expect(editor(page)).toBeVisible();
+  await editor(page).getByTestId("block-editor-tail").click();
+  await expect(editor(page).locator("[data-editable-id]").first()).toBeFocused();
+  return id;
+}
+
+/** Wie `openNewPage`, im alten Editor (mit `legacyTest`). */
+export async function openNewLegacyPage(page: Page, title: string): Promise<string> {
+  const id = await createAndOpen(page, title);
+  await expect(legacyEditor(page)).toHaveAttribute("contenteditable", "true");
+  await legacyEditor(page).locator(".bn-block-content").first().click();
   return id;
 }

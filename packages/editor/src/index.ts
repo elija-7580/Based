@@ -39,5 +39,5 @@ export { syncChildren } from "./yjs/xmldiff.js";
 export { basedSchema, createConverter, sharedConverter } from "./schema/schema.js";
 export type { BasedEditor, BasedSchema } from "./schema/schema.js";
 // BSD-319: Diagnose-Sonde
-export { applyStepsJSON, loadDocJSON, setEditorProbe, setSelectionJSON } from "./ui/probe.js";
-export type { EditorProbe, EditorProbeTarget, ProbeSelection } from "./ui/probe.js";
+export { applyStepsJSON, loadDocJSON, setBlockEditorProbe, setEditorProbe, setSelectionJSON } from "./ui/probe.js";
+export type { BlockEditorProbe, BlockEditorProbeTarget, BlockProbeSelection, EditorProbe, EditorProbeTarget, ProbeSelection } from "./ui/probe.js";

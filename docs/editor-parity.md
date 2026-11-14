@@ -126,7 +126,6 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 | Funktion | Stand im Block-Editor |
 | --- | --- |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
-| Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor; Hänger-Schritte (BSD-418) für Slash-Befehle („slash <Eintrag>“) und Blockmenü-Aktionen („block menu <Aktion>“) seit Teil 6.7 |
 | Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
 
 ## Teil 5 (14.11.2026): Meeting-Block im Block-Editor
@@ -148,6 +147,24 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
   Playwright kein Fake-Mikrofon), darin Rundreise Block-Editor ↔ alter Editor (Records unverändert beim Öffnen, Notizen
   aus beiden Editoren bleiben) und ⌘N/Tastatur; `editor-passthrough.spec.ts`; `packages/core/test/editor-meeting.test.ts`.
 
+## 14.11.2026: Aufzeichnung für „Report a problem“ im Block-Editor
+
+- **Aufzeichnung** (`apps/web/src/shell/bugReport.ts`, Sonde `attachBlockEditorProbe` in `packages/editor/src/ui/probe.ts`):
+  Tasten, Eingaben, IME, Einfügen, Zeiger und Fokus wie bisher; dazu je Seite die Transaktionen als `change` (Befehlsname
+  wie „Typing“/„Split block“, Herkunft local/undo/redo/remote, je Block der Record danach oder „gelöscht“), Mausauswahl
+  als `select` (Block + Offsets, Blockauswahl, `path` = Stelle im Baum) und Zwischenstände als Blockbaum
+  `{ editor: "blocks", blocks }`. Records im Store sind unveränderlich – beim Tippen nur Verweise, der Baum entsteht
+  erst beim Bündeln. Zwei Editoren derselben Seite melden jede Transaktion einmal. Hänger-Schritte (BSD-418) für
+  Slash-Befehle („slash <Eintrag>“) und Blockmenü-Aktionen („block menu <Aktion>“) seit Teil 6.7.
+- **Bündel:** `state.doc`/`state.blocks` = Blockbaum, `state.sel` = Schreibmarke bzw. Blockauswahl, Layout mit
+  `.bx2-block` (Typ, ID, markiert), `.bx2-menu`, `.bx2-handle`. Text wird wie bisher ersetzt; Typen, IDs, `parent`,
+  `sk`, Stempel, Farben und Record-Verweise bleiben (`STRUCTURAL_KEYS`).
+- **Wiedergabe** (`apps/web/e2e/replay/`, Kern `packages/core/src/editor/recording.ts`): Baum mit neuen IDs laden,
+  Modus „steps“ wendet die Records an; Modus „input“ spielt Tasten nach und wendet nur per Klick ausgelöste oder
+  fremde Transaktionen als Records an. Blöcke, die die Wiedergabe selbst anlegt, findet die Auswahl über `path`.
+- Tests: `packages/core/test/bug-report-blocks.test.ts`, `apps/web/e2e/report.spec.ts`, `apps/web/e2e/replay/replay.spec.ts`
+  (Bündel `blocks-typing-basics-chromium|webkit`, erzeugt mit `record-sample.spec.ts`).
+
 ### noch BlockNote (gepinnte Specs, Liste für Teil 4)
 
 Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEditor`) bzw. `legacyTest` aus
@@ -159,7 +176,7 @@ Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEdit
 | `editor-drag.spec.ts` | ganz – Ziehen am BlockNote-Griff; Block-Editor: `block-editor.spec.ts` |
 | `editor-select.spec.ts` | ganz – Maus-Auswahl in ProseMirror; Block-Editor: `block-editor.spec.ts` |
 | `editor-callout-select.spec.ts` | ganz – nachgestellter BlockNote-Fehler (BSD-318) |
-| `replay/replay.spec.ts`, `replay/record-sample.spec.ts` | ganz – Wiedergabe von ProseMirror-Schritten |
-| `report.spec.ts` | 4 von 5 Tests – Aufzeichnung „tr“/„yjs“, Blockbaum, Entwickler-Ereignisse |
+| `replay/replay.spec.ts`, `replay/record-sample.spec.ts` | die Bündel `typing-basics-*` (ProseMirror-Schritte); Block-Editor: `blocks-typing-basics-*` |
+| `report.spec.ts` | 1 von 7 Tests – ⇧⌘B im alten Editor („tr“/„yjs“); dieselbe Prüfung läuft für den Block-Editor |
 | `editor-parity.spec.ts` | 15 von 19 Tests (Erwähnungs-Menü, Gliederung, Synced Block, Blockmenü-Abläufe, Spalten, Uploads, Seiten-Optionen …) |
 | `editor-notion.spec.ts` | 1 von 14 Tests (Formatleiste) |

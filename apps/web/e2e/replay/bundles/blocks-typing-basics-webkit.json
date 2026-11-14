@@ -1,0 +1,4176 @@
+{
+ "format": "based-bug-report",
+ "version": 1,
+ "id": "20261114-133825-9a22",
+ "createdAt": "2026-11-14T13:38:25.999Z",
+ "note": "Sample: typing, bold, list, heading, paste, click and backspace",
+ "realText": false,
+ "app": {
+  "shell": "web",
+  "commit": "4ceffa0",
+  "platform": "Linux x86_64",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
+ },
+ "env": {
+  "width": 1280,
+  "height": 820,
+  "dpr": 2,
+  "zoom": 1,
+  "theme": "light",
+  "route": "page-"
+ },
+ "state": {
+  "menus": [],
+  "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+  "doc": {
+   "editor": "blocks",
+   "blocks": [
+    {
+     "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+     "type": "text",
+     "sk": "a0",
+     "children": [],
+     "text": [
+      {
+       "t": "Xxxxx xxxxx",
+       "m": {
+        "b": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+     "type": "bulletedList",
+     "sk": "a1",
+     "children": [],
+     "text": "Xxxxx xxxx"
+    },
+    {
+     "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+     "type": "bulletedList",
+     "sk": "a2",
+     "children": [],
+     "text": "Xxxxxx xx!"
+    },
+    {
+     "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+     "type": "heading1",
+     "sk": "a3",
+     "children": [],
+     "text": "Xxxxxxx"
+    },
+    {
+     "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+     "type": "text",
+     "sk": "a4",
+     "children": [],
+     "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+    }
+   ]
+  },
+  "blocks": [
+   {
+    "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+    "type": "text",
+    "sk": "a0",
+    "children": [],
+    "text": [
+     {
+      "t": "Xxxxx xxxxx",
+      "m": {
+       "b": true
+      }
+     }
+    ]
+   },
+   {
+    "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+    "type": "bulletedList",
+    "sk": "a1",
+    "children": [],
+    "text": "Xxxxx xxxx"
+   },
+   {
+    "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+    "type": "bulletedList",
+    "sk": "a2",
+    "children": [],
+    "text": "Xxxxxx xx!"
+   },
+   {
+    "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+    "type": "heading1",
+    "sk": "a3",
+    "children": [],
+    "text": "Xxxxxxx"
+   },
+   {
+    "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+    "type": "text",
+    "sk": "a4",
+    "children": [],
+    "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+   }
+  ],
+  "sel": {
+   "type": "text",
+   "block": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+   "anchor": 10,
+   "head": 10,
+   "path": [
+    2
+   ]
+  },
+  "focus": "div.bx2-field.bx2-t-bulletedList[role=textbox]"
+ },
+ "layout": {
+  "items": [
+   {
+    "kind": "block",
+    "label": "text #25BFA76D-53CA-402C-912D-49EF7361AE17",
+    "rect": {
+     "x": 460,
+     "y": 231,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletedList #E4C84F50-584A-473C-BF78-7D58CC389EB0",
+    "rect": {
+     "x": 460,
+     "y": 261,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletedList #51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+    "rect": {
+     "x": 460,
+     "y": 291,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "heading1 #8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+    "rect": {
+     "x": 460,
+     "y": 321,
+     "w": 724,
+     "h": 72
+    }
+   },
+   {
+    "kind": "block",
+    "label": "text #A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+    "rect": {
+     "x": 460,
+     "y": 393,
+     "w": 724,
+     "h": 30
+    }
+   },
+   {
+    "kind": "floating",
+    "label": "div.sidebar-resize[role=separator]#sidebar-resize",
+    "rect": {
+     "x": 224,
+     "y": 0,
+     "w": 8,
+     "h": 820
+    },
+    "z": "2",
+    "position": "absolute"
+   },
+   {
+    "kind": "floating",
+    "label": "header.topbar.t-desc",
+    "rect": {
+     "x": 232,
+     "y": 12,
+     "w": 1036,
+     "h": 56
+    },
+    "z": "5",
+    "position": "sticky",
+    "opaque": true
+   },
+   {
+    "kind": "floating",
+    "label": "nav.bx-outline#page-outline",
+    "rect": {
+     "x": 1214,
+     "y": 389,
+     "w": 50,
+     "h": 42
+    },
+    "z": "15",
+    "position": "fixed"
+   },
+   {
+    "kind": "floating",
+    "label": "div.swipe-hint",
+    "rect": {
+     "x": 232,
+     "y": 0,
+     "w": 1048,
+     "h": 820
+    },
+    "z": "8",
+    "position": "absolute"
+   },
+   {
+    "kind": "focus",
+    "label": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "rect": {
+     "x": 488,
+     "y": 294,
+     "w": 694,
+     "h": 24
+    }
+   }
+  ],
+  "issues": []
+ },
+ "recording": {
+  "events": [
+   {
+    "kind": "checkpoint",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "doc": {
+     "editor": "blocks",
+     "blocks": []
+    },
+    "sel": {
+     "type": "none",
+     "anchor": 0,
+     "head": 0
+    },
+    "t": 1794663500002
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 822,
+    "y": 291,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bx2-tail#block-editor-tail",
+    "t": 1794663500522
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-editor#block-editor",
+    "t": 1794663500530
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 822,
+    "y": 291,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bx2-tail#block-editor-tail",
+    "t": 1794663500531
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "New block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.534,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500534,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663500535
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663500567
+   },
+   {
+    "kind": "select",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "sel": {
+     "type": "text",
+     "block": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+     "anchor": 0,
+     "head": 0,
+     "path": [
+      0
+     ]
+    },
+    "cause": "pointer",
+    "t": 1794663500583
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "X",
+    "mods": {},
+    "t": 1794663500645
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663500647
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.648,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500648,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663500648
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500657
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500658
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.658,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500658,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663500659
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500665
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500665
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.665,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500666,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663500666
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500672
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500672
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.673,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500673,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663500673
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500679
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500679
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.679,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500679,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663500680
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": " ",
+    "mods": {},
+    "t": 1794663500692
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663500692
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.692,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500692,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx "
+      }
+     }
+    ],
+    "t": 1794663500693
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500698
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500699
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.699,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500699,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx x"
+      }
+     }
+    ],
+    "t": 1794663500699
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500704
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500705
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.705,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500705,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663500706
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500710
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500711
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.711,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500711,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663500711
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500715
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500715
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.715,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500715,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx xxxx"
+      }
+     }
+    ],
+    "t": 1794663500716
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663500719
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663500719
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356300.72,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663500720,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx xxxxx"
+      }
+     }
+    ],
+    "t": 1794663500720
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Shift",
+    "code": "ShiftLeft",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794663500725
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Home",
+    "code": "Home",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794663500726
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Control",
+    "code": "ControlLeft",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794663501183
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "b",
+    "code": "KeyB",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794663501183
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Format",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+      "block": {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a0",
+       "createdAt": 816356300.534,
+       "updatedAt": 816356301.185,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663501185,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "t": 1794663501185
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794663501588
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663501902
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertParagraph",
+    "t": 1794663501903
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356301.904,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663501904,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663501905
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663501910
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "-",
+    "mods": {},
+    "t": 1794663502530
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "-",
+    "t": 1794663502531
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.531,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502531,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "-"
+      }
+     }
+    ],
+    "t": 1794663502533
+   },
+   {
+    "kind": "checkpoint",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "doc": {
+     "editor": "blocks",
+     "blocks": [
+      {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "sk": "a0",
+       "children": [],
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      },
+      {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "text",
+       "sk": "a1",
+       "children": [],
+       "text": "-"
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "block": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+     "anchor": 1,
+     "head": 1,
+     "path": [
+      1
+     ]
+    },
+    "t": 1794663502552
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": " ",
+    "mods": {},
+    "t": 1794663502552
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663502553
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.553,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502553,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "- "
+      }
+     }
+    ],
+    "t": 1794663502555
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Turn into",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.555,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502556,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663502556
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663502562
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "X",
+    "mods": {},
+    "t": 1794663502569
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663502569
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.57,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502570,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663502571
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502578
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502579
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.579,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502579,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663502579
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502586
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502586
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.586,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502586,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663502586
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502593
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502593
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.593,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502593,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663502594
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502608
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502609
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.609,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502609,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663502609
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": " ",
+    "mods": {},
+    "t": 1794663502617
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663502617
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.617,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502617,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx "
+      }
+     }
+    ],
+    "t": 1794663502617
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502632
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502633
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.633,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502633,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx x"
+      }
+     }
+    ],
+    "t": 1794663502633
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502644
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502644
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.644,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502644,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663502645
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502650
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502651
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.651,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502651,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663502651
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663502674
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663502675
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+      "block": {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a1",
+       "createdAt": 816356301.904,
+       "updatedAt": 816356302.675,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502675,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx xxxx"
+      }
+     }
+    ],
+    "t": 1794663502676
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663502694
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertParagraph",
+    "t": 1794663502694
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356302.695,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663502695,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663502695
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663502704
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "X",
+    "mods": {},
+    "t": 1794663503202
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663503203
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.203,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503203,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663503204
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503217
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503217
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.217,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503217,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663503218
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503226
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503228
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.228,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503228,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663503229
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503237
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503237
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.237,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503237,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663503238
+   },
+   {
+    "kind": "checkpoint",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "doc": {
+     "editor": "blocks",
+     "blocks": [
+      {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "sk": "a0",
+       "children": [],
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      },
+      {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "sk": "a1",
+       "children": [],
+       "text": "Xxxxx xxxx"
+      },
+      {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "sk": "a2",
+       "children": [],
+       "text": "Xxxx"
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "block": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+     "anchor": 4,
+     "head": 4,
+     "path": [
+      2
+     ]
+    },
+    "t": 1794663503256
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503256
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503257
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.257,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503257,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663503257
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503268
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503268
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.269,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503269,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx"
+      }
+     }
+    ],
+    "t": 1794663503269
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": " ",
+    "mods": {},
+    "t": 1794663503282
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663503283
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.283,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503283,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx "
+      }
+     }
+    ],
+    "t": 1794663503283
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503287
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503287
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.287,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503287,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx x"
+      }
+     }
+    ],
+    "t": 1794663503287
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503297
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503300
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.3,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503300,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663503301
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503320
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503320
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.321,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503321,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663503321
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503331
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503331
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356303.331,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503331,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx xxxx"
+      }
+     }
+    ],
+    "t": 1794663503332
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663503340
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertParagraph",
+    "t": 1794663503341
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.344,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503344,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663503344
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663503348
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663503613
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertParagraph",
+    "t": 1794663503614
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Turn into",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.614,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503614,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663503615
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663503623
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "#",
+    "mods": {},
+    "t": 1794663503787
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "#",
+    "t": 1794663503788
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.788,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503788,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "#"
+      }
+     }
+    ],
+    "t": 1794663503788
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": " ",
+    "mods": {},
+    "t": 1794663503794
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663503794
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.794,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503794,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "# "
+      }
+     }
+    ],
+    "t": 1794663503794
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Turn into",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.795,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503795,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663503795
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-heading1[role=textbox]",
+    "t": 1794663503798
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "X",
+    "mods": {},
+    "t": 1794663503808
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663503808
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.809,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503809,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663503809
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503820
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503820
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.82,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503820,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663503820
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503828
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503828
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.829,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503829,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663503829
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503841
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503841
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.841,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503841,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663503841
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503846
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503846
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.847,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503847,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663503847
+   },
+   {
+    "kind": "checkpoint",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "doc": {
+     "editor": "blocks",
+     "blocks": [
+      {
+       "id": "25BFA76D-53CA-402C-912D-49EF7361AE17",
+       "type": "text",
+       "sk": "a0",
+       "children": [],
+       "text": [
+        {
+         "t": "Xxxxx xxxxx",
+         "m": {
+          "b": true
+         }
+        }
+       ]
+      },
+      {
+       "id": "E4C84F50-584A-473C-BF78-7D58CC389EB0",
+       "type": "bulletedList",
+       "sk": "a1",
+       "children": [],
+       "text": "Xxxxx xxxx"
+      },
+      {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "sk": "a2",
+       "children": [],
+       "text": "Xxxxxx xxxx"
+      },
+      {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "sk": "a3",
+       "children": [],
+       "text": "Xxxxx"
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "block": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+     "anchor": 5,
+     "head": 5,
+     "path": [
+      3
+     ]
+    },
+    "t": 1794663503856
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503856
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503857
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.857,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503857,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx"
+      }
+     }
+    ],
+    "t": 1794663503857
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663503865
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663503865
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+      "block": {
+       "id": "8A0FA199-86EF-4F07-90AF-AAE6C5DB82D1",
+       "type": "heading1",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a3",
+       "createdAt": 816356303.344,
+       "updatedAt": 816356303.865,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503865,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxxx"
+      }
+     }
+    ],
+    "t": 1794663503865
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794663503874
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertParagraph",
+    "t": 1794663503874
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Split block",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356303.874,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663503874,
+        "counter": 0,
+        "node": "B4AB8161"
+       }
+      }
+     }
+    ],
+    "t": 1794663503874
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-text[role=textbox]",
+    "t": 1794663503877
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "X",
+    "mods": {},
+    "t": 1794663504280
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794663504281
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.281,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504281,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "X"
+      }
+     }
+    ],
+    "t": 1794663504282
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663504304
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663504304
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.305,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504305,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xx"
+      }
+     }
+    ],
+    "t": 1794663504305
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663504313
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663504314
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.314,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504314,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxx"
+      }
+     }
+    ],
+    "t": 1794663504315
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663504325
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663504325
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.325,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504325,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxx"
+      }
+     }
+    ],
+    "t": 1794663504326
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663504344
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663504344
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.345,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504345,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxx"
+      }
+     }
+    ],
+    "t": 1794663504345
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "x",
+    "mods": {},
+    "t": 1794663504357
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794663504357
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.357,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504357,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx"
+      }
+     }
+    ],
+    "t": 1794663504358
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": ":",
+    "mods": {},
+    "t": 1794663504370
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": ":",
+    "t": 1794663504370
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.371,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504371,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx:"
+      }
+     }
+    ],
+    "t": 1794663504371
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": " ",
+    "mods": {},
+    "t": 1794663504377
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794663504378
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.378,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504378,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx: "
+      }
+     }
+    ],
+    "t": 1794663504378
+   },
+   {
+    "kind": "paste",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "plain": "xxxx xxx xxxxxxxxx",
+    "files": 0,
+    "t": 1794663504398
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+      "block": {
+       "id": "A2BB19A7-D54E-4CB2-A9D5-D11D152E23D9",
+       "type": "text",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a4",
+       "createdAt": 816356303.874,
+       "updatedAt": 816356304.4,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663504400,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+      }
+     }
+    ],
+    "t": 1794663504400
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 835,
+    "y": 306,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663504628
+   },
+   {
+    "kind": "focus",
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663504642
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 835,
+    "y": 306,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bx2-field.bx2-t-bulletedList[role=textbox]",
+    "t": 1794663504644
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794663504685
+   },
+   {
+    "kind": "select",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "sel": {
+     "type": "text",
+     "block": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+     "anchor": 11,
+     "head": 11,
+     "path": [
+      2
+     ]
+    },
+    "cause": "pointer",
+    "t": 1794663505062
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794663505359
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "deleteContentBackward",
+    "t": 1794663505363
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356305.363,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663505363,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx xxx"
+      }
+     }
+    ],
+    "t": 1794663505364
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794663505486
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "deleteContentBackward",
+    "t": 1794663505486
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356305.487,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663505487,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx xx"
+      }
+     }
+    ],
+    "t": 1794663505487
+   },
+   {
+    "kind": "key",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "key": "!",
+    "mods": {},
+    "t": 1794663505586
+   },
+   {
+    "kind": "input",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "inputType": "insertText",
+    "data": "!",
+    "t": 1794663505586
+   },
+   {
+    "kind": "change",
+    "root": "6353EE9B-CD85-4459-B410-E4A1F08CED81",
+    "name": "Typing",
+    "origin": "local",
+    "changes": [
+     {
+      "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+      "block": {
+       "id": "51553071-72DC-4AD2-92C1-5C6824E2EEB1",
+       "type": "bulletedList",
+       "parent": "b:6353EE9B-CD85-4459-B410-E4A1F08CED81",
+       "sk": "a2",
+       "createdAt": 816356302.695,
+       "updatedAt": 816356305.586,
+       "createdBy": "xx",
+       "updatedBy": "xx",
+       "stamp": {
+        "millis": 1794663505586,
+        "counter": 0,
+        "node": "B4AB8161"
+       },
+       "text": "Xxxxxx xx!"
+      }
+     }
+    ],
+    "t": 1794663505587
+   }
+  ]
+ },
+ "log": [
+  {
+   "at": 1794663499078,
+   "level": "info",
+   "message": "start · Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
+  },
+  {
+   "at": 1794663499089,
+   "level": "info",
+   "message": "boot: scripts loaded +539 ms"
+  },
+  {
+   "at": 1794663499114,
+   "level": "info",
+   "message": "boot: shell started +564 ms"
+  },
+  {
+   "at": 1794663499266,
+   "level": "info",
+   "message": "boot: settings read +715 ms"
+  },
+  {
+   "at": 1794663499408,
+   "level": "info",
+   "message": "boot: first render +858 ms"
+  },
+  {
+   "at": 1794663499694,
+   "level": "info",
+   "message": "boot: store answered +1144 ms"
+  },
+  {
+   "at": 1794663499694,
+   "level": "info",
+   "message": "status: starting"
+  },
+  {
+   "at": 1794663499726,
+   "level": "info",
+   "message": "status: local"
+  },
+  {
+   "at": 1794663499749,
+   "level": "info",
+   "message": "boot: store ready +1199 ms (1 pages)"
+  },
+  {
+   "at": 1794663501203,
+   "level": "info",
+   "message": "slow input 224 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663501203,
+   "level": "info",
+   "message": "slow input 216 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663501203,
+   "level": "info",
+   "message": "slow input 208 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663501203,
+   "level": "info",
+   "message": "slow input 208 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663501203,
+   "level": "info",
+   "message": "slow input 200 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663501203,
+   "level": "info",
+   "message": "slow input 200 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663501852,
+   "level": "info",
+   "message": "slow input 344 ms (during route page, in keyup in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663501852,
+   "level": "info",
+   "message": "slow input 344 ms (during route page, in keyup in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663502496,
+   "level": "info",
+   "message": "slow input 272 ms (during route page, in keyup in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 392 ms (during route page, in keydown in page) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 384 ms (during route page, in beforeinput on page) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 368 ms (during route page, in keydown in page) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 368 ms (during route page, in beforeinput on page) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 352 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 352 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 344 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 344 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 336 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 336 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 328 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 328 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 312 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 312 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503225,
+   "level": "info",
+   "message": "slow input 304 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503234,
+   "level": "info",
+   "message": "slow input 304 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 288 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 288 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 280 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 272 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 272 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 272 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 248 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 248 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 224 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503235,
+   "level": "info",
+   "message": "slow input 224 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503764,
+   "level": "info",
+   "message": "slow input 232 ms (during route page, in keyup in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503764,
+   "level": "info",
+   "message": "slow input 232 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503764,
+   "level": "info",
+   "message": "slow input 232 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503764,
+   "level": "info",
+   "message": "slow input 224 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503764,
+   "level": "info",
+   "message": "slow input 216 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503764,
+   "level": "info",
+   "message": "slow input 200 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663503764,
+   "level": "info",
+   "message": "slow input 200 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 312 ms (during route page, in keyup in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 312 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 312 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 296 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 296 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 288 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 288 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 280 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 280 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 272 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 272 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 264 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504444,
+   "level": "info",
+   "message": "slow input 264 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504445,
+   "level": "info",
+   "message": "slow input 256 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504445,
+   "level": "info",
+   "message": "slow input 256 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504445,
+   "level": "info",
+   "message": "slow input 248 ms (during route page, in beforeinput on block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663504445,
+   "level": "info",
+   "message": "slow input 248 ms (during route page, in keydown in block-editor (textbox)) after route home › route page › click block-editor-tail"
+  },
+  {
+   "at": 1794663505369,
+   "level": "info",
+   "message": "slow input 432 ms (during route page, in pointerup on block-editor (textbox)) after route page › click block-editor-tail › click block-editor (textbox)"
+  },
+  {
+   "at": 1794663505369,
+   "level": "info",
+   "message": "slow input 432 ms (during route page, in mouseup on block-editor (textbox)) after route page › click block-editor-tail › click block-editor (textbox)"
+  },
+  {
+   "at": 1794663505369,
+   "level": "info",
+   "message": "slow input 376 ms (during route page, in keydown in block-editor (textbox)) after route page › click block-editor-tail › click block-editor (textbox)"
+  }
+ ],
+ "hangs": {
+  "stats": {
+   "count": 62,
+   "main": 0,
+   "input": 62,
+   "worker": 0,
+   "blockedMs": 17816,
+   "p50": 280,
+   "p95": 384,
+   "max": 432,
+   "freezes": 0
+  },
+  "hangs": [
+   {
+    "at": 1794663502557,
+    "ms": 368,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on page"
+   },
+   {
+    "at": 1794663502573,
+    "ms": 352,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502573,
+    "ms": 352,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502581,
+    "ms": 344,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502581,
+    "ms": 344,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502589,
+    "ms": 336,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502589,
+    "ms": 336,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502597,
+    "ms": 328,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502597,
+    "ms": 328,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502613,
+    "ms": 312,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502613,
+    "ms": 312,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502621,
+    "ms": 304,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502621,
+    "ms": 304,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502637,
+    "ms": 288,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502637,
+    "ms": 288,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502645,
+    "ms": 280,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502653,
+    "ms": 272,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502653,
+    "ms": 272,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502653,
+    "ms": 272,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502677,
+    "ms": 248,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502677,
+    "ms": 248,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663502701,
+    "ms": 224,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663502701,
+    "ms": 224,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503232,
+    "ms": 232,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keyup in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503232,
+    "ms": 232,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503232,
+    "ms": 232,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503240,
+    "ms": 224,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503248,
+    "ms": 216,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503264,
+    "ms": 200,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503264,
+    "ms": 200,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503808,
+    "ms": 312,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keyup in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503808,
+    "ms": 312,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503808,
+    "ms": 312,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503824,
+    "ms": 296,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503824,
+    "ms": 296,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503832,
+    "ms": 288,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503832,
+    "ms": 288,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503844,
+    "ms": 280,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503844,
+    "ms": 280,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503852,
+    "ms": 272,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503852,
+    "ms": 272,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503860,
+    "ms": 264,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503860,
+    "ms": 264,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503868,
+    "ms": 256,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503868,
+    "ms": 256,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663503876,
+    "ms": 248,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "beforeinput on block-editor (textbox)"
+   },
+   {
+    "at": 1794663503876,
+    "ms": 248,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   },
+   {
+    "at": 1794663504636,
+    "ms": 432,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail",
+     "click block-editor (textbox)"
+    ],
+    "source": "input",
+    "culprit": "pointerup on block-editor (textbox)"
+   },
+   {
+    "at": 1794663504636,
+    "ms": 432,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail",
+     "click block-editor (textbox)"
+    ],
+    "source": "input",
+    "culprit": "mouseup on block-editor (textbox)"
+   },
+   {
+    "at": 1794663504692,
+    "ms": 376,
+    "activity": "route page",
+    "breadcrumbs": [
+     "route home",
+     "route page",
+     "click block-editor-tail",
+     "click block-editor (textbox)"
+    ],
+    "source": "input",
+    "culprit": "keydown in block-editor (textbox)"
+   }
+  ],
+  "previous": []
+ }
+}

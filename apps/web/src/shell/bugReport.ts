@@ -2,10 +2,13 @@
 // Layout-Schnappschuss und Bildschirmfoto beim Melden. Entscheidungen und Datenschutz stehen im Kern
 // (packages/core/src/bugReport.ts); hier nur, was der Browser liefert.
 import {
+  applyBlockChanges, blockDoc, blockDocOf, blockPath, isBlockDoc, loadBlockDoc, observePageChanges, pageBlocks, resolveReplaySelection, type ReplayIDs,
   buildBugBundle, bundleID, InputRecorder, type BugApp, type BugBundle, type BugEnv, type BugState, type LayoutItem, type Mods, type RecordedEvent,
   type HangReport, type RecordedInput, type SelectionInfo,
 } from "@based/core";
-import { applyStepsJSON, loadDocJSON, setEditorProbe, setSelectionJSON, type EditorProbeTarget } from "@based/editor";
+import {
+  applyStepsJSON, loadDocJSON, setBlockEditorProbe, setEditorProbe, setSelectionJSON, type BlockEditorProbeTarget, type EditorProbeTarget,
+} from "@based/editor";
 import { isTauri } from "../desktop.js";
 import { diagnosticsLog } from "./diagnostics.js";
 import { hangBundle } from "./hangs.js";
@@ -36,12 +39,45 @@ const checkpointOf = (t: EditorProbeTarget) => {
 
 const current = (root: string) => editors.get(root)?.at(-1);
 
+// Block-Editor (ADR 0016): je Seite die offenen Editoren; Transaktionen der Seite hört die Shell einmal je Seite ab.
+const blockEditors = new Map<string, BlockEditorProbeTarget[]>();
+const currentBlock = (root: string) => blockEditors.get(root)?.at(-1);
+
+/**
+ * Transaktionen einer Seite: einmal je Seite abhören (zwei Fenster derselben Seite melden jede Transaktion einmal),
+ * am Store des zuletzt geöffneten Editors; nach dem Schließen des letzten Editors nicht mehr.
+ */
+const pageListeners = new Map<string, { store: BlockEditorProbeTarget["store"]; off: () => void }>();
+function listenToPage(root: string) {
+  const t = currentBlock(root);
+  const cur = pageListeners.get(root);
+  if (cur && cur.store === t?.store) return;
+  cur?.off();
+  pageListeners.delete(root);
+  if (t) pageListeners.set(root, { store: t.store, off: observePageChanges(t.store, root, (c) => record({ kind: "change", root, ...c })) });
+}
+
+/** Auswahl im Block-Editor samt Stelle des Blocks im Baum (für die Wiedergabe). */
+const blockSel = (t: BlockEditorProbeTarget): SelectionInfo => {
+  const sel: SelectionInfo = t.selection();
+  const path = sel.block ? blockPath(t.store, t.rootID, sel.block) : undefined;
+  return path ? { ...sel, path } : sel;
+};
+
+const blockCheckpointOf = (t: BlockEditorProbeTarget) => {
+  const refs = pageBlocks(t.store, t.rootID); // Verweise auf unveränderliche Records – der Baum erst beim Bündeln
+  return { kind: "checkpoint" as const, root: t.rootID, doc: () => blockDoc(refs, t.rootID) as unknown, sel: blockSel(t) };
+};
+
 // MARK: Aufzeichnung
 
 const live = new Set<(e: RecordedEvent) => void>();
 
 export const recorder = new InputRecorder({
-  checkpoints: () => [...editors.values()].flatMap((list) => (list.length ? [checkpointOf(list.at(-1)!)] : [])),
+  checkpoints: () => [
+    ...[...editors.values()].flatMap((list) => (list.length ? [checkpointOf(list.at(-1)!)] : [])),
+    ...[...blockEditors.values()].flatMap((list) => (list.length ? [blockCheckpointOf(list.at(-1)!)] : [])),
+  ],
 });
 
 function record(e: RecordedInput) {
@@ -67,7 +103,7 @@ export function describeElement(el: Element | null | undefined): string {
   return `${el.tagName.toLowerCase()}${cls}${role ? `[role=${role}]` : ""}${type ? `[${type}]` : ""}${test ? `#${test}` : ""}`;
 }
 
-/** Dokument-Wurzel des Editors um ein Element (BlockNoteView trägt `data-root`, der Rahmen `data-page`). */
+/** Dokument-Wurzel des Editors um ein Element (BlockNoteView und Block-Editor tragen `data-root`, der Rahmen `data-page`). */
 function rootOf(target: EventTarget | null): string | undefined {
   const el = target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
   if (!el) return undefined;
@@ -129,6 +165,20 @@ export function installBugRecorder(win: Window & typeof globalThis = globalThis 
     };
   });
 
+  setBlockEditorProbe((t) => {
+    const list = blockEditors.get(t.rootID) ?? [];
+    list.push(t);
+    blockEditors.set(t.rootID, list);
+    record(blockCheckpointOf(t));
+    listenToPage(t.rootID);
+    return () => {
+      const l = blockEditors.get(t.rootID)?.filter((x) => x !== t) ?? [];
+      if (l.length) blockEditors.set(t.rootID, l);
+      else blockEditors.delete(t.rootID);
+      listenToPage(t.rootID);
+    };
+  });
+
   const doc = win.document;
   const opts = { capture: true, passive: true } as const;
   doc.addEventListener("keydown", (e) => {
@@ -158,6 +208,13 @@ export function installBugRecorder(win: Window & typeof globalThis = globalThis 
     record({ kind: "pointer", phase, x: Math.round(e.clientX), y: Math.round(e.clientY), button: e.button, detail: e.detail, target: describeElement(e.target as Element) });
     const root = rootOf(e.target);
     if (root) lastRoot = root;
+    // Block-Editor: Auswahl per Maus (Klick, Ziehen, Blockauswahl) nach dem Loslassen – wird als „select“ wiedergegeben.
+    if (phase === "up" && root && blockEditors.has(root)) {
+      win.requestAnimationFrame(() => {
+        const t = currentBlock(root);
+        if (t) record({ kind: "select", root, sel: blockSel(t), cause: "pointer" });
+      });
+    }
   };
   doc.addEventListener("pointerdown", pointer("down"), opts);
   doc.addEventListener("pointerup", pointer("up"), opts);
@@ -177,8 +234,8 @@ interface TransactionLike {
 
 // MARK: Zustand und Layout beim Melden
 
-const FLOATING_HINT = "[role=menu],[role=listbox],[role=dialog],[role=tooltip],.bn-side-menu,.bn-formatting-toolbar,.bn-suggestion-menu,.bx-notice";
-const MENU_SELECTOR = "[role=menu],[role=listbox],[role=dialog],.bn-suggestion-menu,.bn-formatting-toolbar";
+const FLOATING_HINT = "[role=menu],[role=listbox],[role=dialog],[role=tooltip],.bn-side-menu,.bn-formatting-toolbar,.bn-suggestion-menu,.bx-notice,.bx2-menu,.bx2-handle";
+const MENU_SELECTOR = "[role=menu],[role=listbox],[role=dialog],.bn-suggestion-menu,.bn-formatting-toolbar,.bx2-menu";
 /** Elemente, die nie in Bericht, Layout oder Foto gehören (der Melde-Dialog selbst). */
 export const REPORT_EXCLUDE = "data-report-exclude";
 
@@ -210,6 +267,14 @@ export function layoutSnapshot(win: Window = globalThis as unknown as Window): L
     items.push({ kind: "block", label: `${type} #${id}`, rect: rect(r), ...(selected.has(id) ? { selected: true } : {}) });
     if (items.length > 400) break;
   }
+  // Block-Editor (ADR 0016): `.bx2-block` mit Typ und ID; markiert = Blockauswahl
+  for (const el of doc.querySelectorAll<HTMLElement>(".bx2-block[data-block-id]")) {
+    if (items.length > 400) break;
+    if (excluded(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (!visible(r, win)) continue;
+    items.push({ kind: "block", label: `${el.dataset.type ?? "block"} #${el.dataset.blockId!}`, rect: rect(r), ...(el.hasAttribute("data-selected") ? { selected: true } : {}) });
+  }
   const seen = new Set<Element>();
   const floating = (el: Element, kind: "floating" | "handle") => {
     if (seen.has(el) || excluded(el)) return;
@@ -220,7 +285,7 @@ export function layoutSnapshot(win: Window = globalThis as unknown as Window): L
     if (cs.visibility === "hidden" || cs.display === "none") return;
     items.push({ kind, label: describeElement(el), rect: rect(r), z: cs.zIndex, position: cs.position, ...(opaque(cs) ? { opaque: true } : {}) });
   };
-  for (const el of doc.querySelectorAll(FLOATING_HINT)) floating(el, el.classList.contains("bn-side-menu") ? "handle" : "floating");
+  for (const el of doc.querySelectorAll(FLOATING_HINT)) floating(el, el.classList.contains("bn-side-menu") || el.classList.contains("bx2-handle") ? "handle" : "floating");
   // Alles andere, was mit eigener Ebene schwebt (fixed/absolute mit z-index) – begrenzt, nur beim Melden.
   let scanned = 0;
   for (const el of doc.body.querySelectorAll("*")) {
@@ -264,10 +329,19 @@ export interface FrozenReport {
 export function freezeReport(win: Window = globalThis as unknown as Window): FrozenReport {
   const doc = win.document;
   const activeRoot = rootOf(doc.activeElement);
-  const root = activeRoot ?? lastRoot ?? [...editors.keys()].at(-1);
+  const root = activeRoot ?? lastRoot ?? [...blockEditors.keys()].at(-1) ?? [...editors.keys()].at(-1);
   const t = root ? current(root) : undefined;
+  const bt = root ? currentBlock(root) : undefined;
   const state: BugState = { menus: [...doc.querySelectorAll(MENU_SELECTOR)].filter((m) => !excluded(m) && m.getBoundingClientRect().width > 0).map((m) => describeElement(m)) };
-  if (t) {
+  if (bt) {
+    state.root = bt.rootID;
+    try {
+      const tree = blockDocOf(bt.store, bt.rootID);
+      state.doc = tree;
+      state.blocks = tree.blocks;
+    } catch { /* Seite gerade weg */ }
+    state.sel = blockSel(bt);
+  } else if (t) {
     state.root = t.rootID;
     try {
       state.doc = t.view.state.doc.toJSON();
@@ -317,8 +391,11 @@ export function makeBundle(f: FrozenReport, note: string, opts: { realText: bool
 // MARK: Haken für Tests und Wiedergabe
 
 export interface ReplayHooks {
-  /** Editor der Wurzel: Dokument (JSON) und Auswahl setzen bzw. lesen. */
-  load(root: string, doc: unknown, sel: SelectionInfo): boolean;
+  /**
+   * Editor der Wurzel: Dokument (JSON) und Auswahl setzen bzw. lesen. Block-Editor: `recordedRoot` ist die Seite beim
+   * Aufzeichnen (Eltern in den Records zeigen auf sie).
+   */
+  load(root: string, doc: unknown, sel: SelectionInfo, recordedRoot?: string): boolean;
   setSelection(root: string, sel: SelectionInfo): boolean;
   applySteps(root: string, steps: unknown[]): boolean;
   docJSON(root: string): unknown;
@@ -338,12 +415,38 @@ export function exposeReplayHooks() {
     fn(v);
     return true;
   };
+  // Block-Editor: aufgezeichnete Block-IDs → IDs auf der Wiedergabe-Seite
+  const replayIDs = new Map<string, ReplayIDs>();
+  const idsOf = (root: string): ReplayIDs => replayIDs.get(root) ?? { recordedRoot: root, root, ids: new Map() };
   const hooks: ReplayHooks = {
-    load: (root, json, sel) => run(root, (v) => loadDocJSON(v, json, sel)),
-    setSelection: (root, sel) => run(root, (v) => setSelectionJSON(v, sel)),
-    applySteps: (root, steps) => run(root, (v) => applyStepsJSON(v, steps)),
-    docJSON: (root) => view(root)?.state.doc.toJSON(),
-    roots: () => [...editors.keys()],
+    load: (root, json, sel, recordedRoot) => {
+      const bt = currentBlock(root);
+      if (bt && isBlockDoc(json)) {
+        const ids = loadBlockDoc(bt.store, root, recordedRoot ?? root, json);
+        replayIDs.set(root, ids);
+        bt.setSelection(resolveReplaySelection(bt.store, ids, sel));
+        return true;
+      }
+      return run(root, (v) => loadDocJSON(v, json, sel));
+    },
+    setSelection: (root, sel) => {
+      const bt = currentBlock(root);
+      if (bt) return bt.setSelection(resolveReplaySelection(bt.store, idsOf(root), sel));
+      return run(root, (v) => setSelectionJSON(v, sel));
+    },
+    applySteps: (root, steps) => {
+      const bt = currentBlock(root);
+      if (bt) {
+        applyBlockChanges(bt.store, idsOf(root), steps as never);
+        return true;
+      }
+      return run(root, (v) => applyStepsJSON(v, steps));
+    },
+    docJSON: (root) => {
+      const bt = currentBlock(root);
+      return bt ? blockDocOf(bt.store, root) : view(root)?.state.doc.toJSON();
+    },
+    roots: () => [...new Set([...blockEditors.keys(), ...editors.keys()])],
     freeze: () => freezeReport(),
     bundle: (note, realText = false) => makeBundle(freezeReport(), note, { realText, screenshot: false }),
     recording: (on) => { recorder.on = on; },

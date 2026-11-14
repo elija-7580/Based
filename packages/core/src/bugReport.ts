@@ -30,12 +30,16 @@ export function scrambleText(text: string): string {
  */
 export const STRUCTURAL_KEYS: ReadonlySet<string> = new Set([
   "type", "stepType", "id", "level", "textColor", "backgroundColor", "textAlignment", "language", "listType", "variant",
+  // Block-Records des Block-Editors (ADR 0016): Elternverweis, Sortierschlüssel, Stempel, Farben, Verweise auf Records
+  "parent", "sk", "node", "color", "meetingSection", "databaseID", "viewIDs", "linkTarget", "syncSource", "teamspace",
+  "tableColumnColors", "cellColors", "root", "block", "blocks", "editor",
 ]);
 
 /** Tiefe Kopie, in der jede Zeichenkette außerhalb von STRUCTURAL_KEYS durch `map` läuft (ProseMirror-JSON, Schritte). */
 export function mapStrings(value: unknown, map: (s: string) => string, keep: ReadonlySet<string> = STRUCTURAL_KEYS, key?: string): unknown {
   if (typeof value === "string") return key !== undefined && keep.has(key) ? value : map(value);
-  if (Array.isArray(value)) return value.map((v) => mapStrings(v, map, keep));
+  // Listen erben den Schlüssel (`viewIDs: ["…"]` bleibt, `content: ["…"]` wird ersetzt).
+  if (Array.isArray(value)) return value.map((v) => mapStrings(v, map, keep, key));
   if (value && typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = mapStrings(v, map, keep, k);
@@ -63,8 +67,12 @@ export function scrambleHTML(html: string): string {
 // MARK: Aufzeichnung
 
 export interface Mods { meta?: boolean; ctrl?: boolean; alt?: boolean; shift?: boolean }
-/** Auswahl im Editor (ProseMirror-Positionen); `type`: text, node, all, cell. */
-export interface SelectionInfo { type: string; anchor: number; head: number }
+/**
+ * Auswahl im Editor. Alter Editor: ProseMirror-Positionen, `type` text, node, all, cell. Block-Editor (ADR 0016):
+ * `type` „text“ mit `block` und Offsets im Block (UTF-16, wie der Kern), „blocks“ mit `blocks` (Blockauswahl) oder
+ * „none“ (kein Cursor). `path`: Stelle des Blocks im Baum (für die Wiedergabe, wenn die ID dort anders heißt).
+ */
+export interface SelectionInfo { type: string; anchor: number; head: number; block?: string; blocks?: string[]; path?: number[] }
 /** Wert oder Funktion, die ihn erst beim Bündeln liefert (ProseMirror-Dokumente und Schritte sind unveränderlich). */
 export type Lazy<T = unknown> = T | (() => T);
 
@@ -81,7 +89,15 @@ export type RecordedEvent =
   /** Editor-Transaktion: Schritte (JSON), danach die Auswahl, `meta`: Herkunft (z. B. y-sync, paste, uiEvent). */
   | { t: number; kind: "tr"; root: string; steps: Lazy<unknown[]>; docChanged: boolean; sel: SelectionInfo; meta?: string[] }
   | { t: number; kind: "yjs"; root: string; bytes: number; origin: string; update?: Lazy<Uint8Array> }
+  /**
+   * Block-Editor (ADR 0016): eine gespeicherte Transaktion an Blöcken der Seite – Name des Befehls (lokal), Herkunft
+   * und je Block der Record danach (`block` fehlt: gelöscht). Records im Store sind unveränderlich, also nur Verweise.
+   */
+  | { t: number; kind: "change"; root: string; name?: string; origin: string; changes: Lazy<readonly BlockChangeRecord[]> }
   | { t: number; kind: "focus"; target: string };
+
+/** Ein Block nach einer Transaktion (Block-Editor). `block` fehlt, wenn er gelöscht wurde. */
+export interface BlockChangeRecord { id: string; block?: unknown }
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 export type RecordedInput = DistributiveOmit<RecordedEvent, "t">;
@@ -207,7 +223,7 @@ export interface BugApp { version?: string; commit?: string; shell: string; plat
 export interface BugState {
   /** Wurzel des fokussierten Editors (Seite). */
   root?: string;
-  /** ProseMirror-Dokument (JSON) beim Melden. */
+  /** Dokument beim Melden: ProseMirror-JSON (alter Editor) bzw. Blockbaum `{ editor: "blocks", blocks }` (Block-Editor). */
   doc?: unknown;
   /** Blockbaum (Typen, Verschachtelung, Attribute). */
   blocks?: unknown;
@@ -273,6 +289,7 @@ export function exportEvent(e: RecordedEvent, realText: boolean): Record<string,
   switch (e.kind) {
     case "checkpoint": return { ...e, doc: deep(resolve(e.doc)) };
     case "tr": return { ...e, steps: deep(resolve(e.steps)) };
+    case "change": return { ...e, changes: deep(resolve(e.changes)) };
     case "yjs": {
       const { update, ...rest } = e;
       return realText && update !== undefined ? { ...rest, update: toBase64(resolve(update)) } : rest;
@@ -342,7 +359,7 @@ export type ReplayAction =
   | { kind: "insertText"; text: string }
   | { kind: "select"; sel: SelectionInfo }
   | { kind: "paste"; plain?: string; html?: string }
-  /** Nur im Modus „steps“: Editor-Schritte direkt anwenden. */
+  /** Nur im Modus „steps“: Editor-Schritte (alter Editor) bzw. Block-Records (Block-Editor) direkt anwenden. */
   | { kind: "steps"; steps: unknown[] };
 
 export interface ReplayPlan {
@@ -372,6 +389,8 @@ type Ev = Record<string, unknown> & { kind: string; root?: string };
 /**
  * Plan für die Wiedergabe ab dem ersten Zwischenstand der Wurzel: Modus „input“ spielt Tasten, Eingaben, Einfügen und
  * Mausauswahl nach (findet Fehler in der Eingabeverarbeitung), Modus „steps“ wendet die aufgezeichneten Schritte an.
+ * Block-Editor im Modus „input“: Transaktionen, die ein Klick ausgelöst hat (Klick unter die Seite, Menüpunkt, Griff)
+ * oder die von anderen kamen (Echtzeit, Sync), werden als Records angewandt – Klicks selbst spielt die Wiedergabe nicht.
  */
 export function replayPlan(bundle: BugBundle, opts: { root?: string; mode?: "input" | "steps" } = {}): ReplayPlan {
   const events = bundle.recording.events as Ev[];
@@ -388,13 +407,26 @@ export function replayPlan(bundle: BugBundle, opts: { root?: string; mode?: "inp
   };
   const mine = (e: Ev) => e.root === undefined || e.root === root;
   let pendingKeyInput = false;
+  /** Woher die nächste Transaktion kommt: Klick oder Eingabe (Tasten, Einfügen, IME). */
+  let source: "pointer" | "input" | undefined;
   for (const e of events.slice(startAt + 1)) {
     if (opts.mode === "steps") {
       if (e.kind === "tr" && e.root === root && e.docChanged) actions.push({ kind: "steps", steps: e.steps as unknown[] });
+      else if (e.kind === "change" && e.root === root && Array.isArray(e.changes) && e.changes.length) actions.push({ kind: "steps", steps: e.changes as unknown[] });
+      continue;
+    }
+    if (e.kind === "pointer") {
+      if (e.phase === "down") source = "pointer";
       continue;
     }
     if (!mine(e)) continue;
+    if (e.kind === "key" || e.kind === "input" || e.kind === "paste" || e.kind === "composition") source = "input";
     switch (e.kind) {
+      case "change": {
+        const own = e.origin === "local" || e.origin === "undo" || e.origin === "redo";
+        if (e.root === root && Array.isArray(e.changes) && e.changes.length && (!own || source === "pointer")) actions.push({ kind: "steps", steps: e.changes as unknown[] });
+        break;
+      }
       case "key": {
         const key = String(e.key), mods = (e.mods ?? {}) as Mods;
         pendingKeyInput = false;
@@ -430,12 +462,12 @@ export function replayPlan(bundle: BugBundle, opts: { root?: string; mode?: "inp
   return { root, start: { doc: start.doc, sel: start.sel as SelectionInfo }, actions, ...(bundle.state.doc !== undefined && bundle.state.root === root ? { expected: bundle.state.doc } : {}) };
 }
 
-/** Dokument zum Vergleichen: ohne Block-IDs (die Wiedergabe-Seite vergibt eigene). */
+/** Dokument zum Vergleichen: ohne Block-IDs und Sortierschlüssel (die Wiedergabe-Seite vergibt eigene IDs). */
 export function normalizeDoc(doc: unknown): unknown {
   if (Array.isArray(doc)) return doc.map(normalizeDoc);
   if (doc && typeof doc === "object") {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(doc as Record<string, unknown>)) if (k !== "id") out[k] = normalizeDoc(v);
+    for (const [k, v] of Object.entries(doc as Record<string, unknown>)) if (k !== "id" && k !== "sk") out[k] = normalizeDoc(v);
     return out;
   }
   return doc;
