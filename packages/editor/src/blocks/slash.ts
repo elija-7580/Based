@@ -11,6 +11,8 @@ export interface SlashItem {
   props?: Block["props"];
   /** Sonderfall Unterseite: legt sie an (an Stelle des leeren Blocks oder dahinter) und gibt ihre ID zurück. */
   page?: (store: WorkspaceStore, replace: string | undefined, after: string) => string | undefined;
+  /** BSD-407: kein Block, sondern ein Element im Text (Inline-Gleichung). */
+  inline?: "equation";
   /** Spaltenliste mit so vielen Spalten. */
   columns?: number;
   /** Sonderfall mit eigenen Records (Datenbank): legt an und gibt die Block-ID zurück. */
@@ -64,6 +66,7 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "bookmark", label: "Web bookmark", group: "Media", icon: "🔖", keywords: "link url preview" },
   { type: "embed", label: "Embed", group: "Media", icon: "⧉", keywords: "iframe link url" },
   { type: "equation", label: "Block equation", group: "Advanced", icon: "∑", keywords: "math latex tex formula", props: { expression: "" } },
+  { type: "inlineEquation", label: "Inline equation", group: "Advanced", icon: "√x", keywords: "math latex tex formula inline", inline: "equation" },
   { type: "tableOfContents", label: "Table of contents", group: "Advanced", icon: "≡", keywords: "toc outline headings" },
 ];
 

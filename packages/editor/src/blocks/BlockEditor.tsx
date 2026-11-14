@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, CODE_LANGUAGES, dateMentionValue, dateSuggestions, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, CODE_LANGUAGES, dateMentionValue, dateSuggestions, embedTarget, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import type { PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
@@ -12,6 +12,8 @@ import { ASSET_URL_PREFIX } from "../mapping/bn.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { MovePicker } from "../ui/MovePicker.js";
+import { fetchBookmarkPreview } from "../ui/linkPreview.js";
+import { BasedButton } from "@based/ui/astryx";
 import { IconView } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
@@ -357,6 +359,12 @@ export function BlockEditor(props: PageEditorProps) {
     const end = s.at + 1 + s.query.length;
     cmd.replaceText(store, { blockId: s.id, from: s.at, to: end }, "");
     const empty = textLen(store, s.id) === 0;
+    if (item.inline === "equation") {
+      // erst nach dem Enter des Slash-Menüs öffnen, sonst nimmt das Textfeld den Fokus gleich wieder
+      ctrl.setCaret({ id: s.id, from: s.at, to: s.at });
+      setTimeout(() => openEquation(s.id, s.at, s.at, ""), 0);
+      return;
+    }
     if (item.page) {
       const created = item.page(store, empty ? s.id : undefined, s.id);
       if (created && props.onOpenPage) props.onOpenPage(created);
@@ -373,6 +381,27 @@ export function BlockEditor(props: PageEditorProps) {
     }
     if (empty) run(cmd.convertEmptyBlock(store, s.id, item.type, item.props ?? {}));
     else run(cmd.insertBlock(store, { after: s.id }, item.type, item.props ? { props: item.props } : {}));
+  };
+
+  // MARK: Inline-Gleichung (BSD-407)
+
+  const [eqEdit, setEqEdit] = useState<{ id: string; from: number; to: number; value: string; x: number; y: number } | undefined>();
+  const openEquation = (id: string, from: number, to: number, value: string) => {
+    const el = ctrl.editable(id);
+    const atom = el && to > from ? [...el.querySelectorAll<HTMLElement>(".bx2-eq")].find((a) => offsetOf(el, a, 0) === from) : undefined;
+    const r = (atom ?? el)?.getBoundingClientRect();
+    const sel = !atom ? el?.ownerDocument.getSelection() : null;
+    const caret = sel?.rangeCount ? sel.getRangeAt(0).getBoundingClientRect() : undefined;
+    const box = caret && (caret.width || caret.height) ? caret : r;
+    setEqEdit({ id, from, to, value, x: box?.left ?? 100, y: (box?.bottom ?? 100) + 6 });
+  };
+  const commitEquation = (value: string | undefined) => {
+    const e = eqEdit;
+    setEqEdit(undefined);
+    if (!e) return;
+    const v = value?.trim();
+    if (v === undefined || (v === "" && e.from === e.to)) { ctrl.setCaret({ id: e.id, from: e.to, to: e.to }); return; }
+    run(cmd.replaceText(store, { blockId: e.id, from: e.from, to: e.to }, v ? [{ t: v, m: {}, eq: v }] : "", { coalesce: null }));
   };
 
   // MARK: @-Erwähnungen
@@ -719,6 +748,14 @@ export function BlockEditor(props: PageEditorProps) {
     const handle = t.closest<HTMLElement>("[data-handle]");
     if (handle) return startHandle(e, handle.dataset.handle!);
     const field = t.closest<HTMLElement>("[data-editable-id]");
+    const eq = t.closest<HTMLElement>(".bx2-eq");
+    if (field && eq && editable) {
+      // Inline-Gleichung bearbeiten: Klick öffnet das TeX-Feld
+      e.preventDefault();
+      const from = offsetOf(field, eq, 0);
+      openEquation(field.dataset.editableId!, from, from + Number(eq.dataset.len ?? 0), eq.textContent ?? "");
+      return;
+    }
     if (field) {
       ctrl.clearSelection();
       return startTextDrag(e, field.dataset.editableId!);
@@ -949,6 +986,7 @@ export function BlockEditor(props: PageEditorProps) {
         {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
+      {eqEdit ? <EquationPopover x={eqEdit.x} y={eqEdit.y} initial={eqEdit.value} onDone={commitEquation} /> : null}
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={closeMenu} onMove={props.pages ? setMoving : undefined} /> : null}
       {moving && props.pages ? (
         <MovePicker pages={props.pages} selfID={pageID} moving={moving} onClose={() => setMoving(undefined)}
@@ -1235,14 +1273,19 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
     case "bookmark": case "embed": {
       const url = b.props?.url ?? "";
       if (!url) return <UrlPrompt block={b} />;
-      const meta = b.props?.bookmark;
-      return (
-        <a className="bx2-embed bx2-bookmark" data-embed="" contentEditable={false} href={url} target="_blank" rel="noopener noreferrer">
-          <span className="bx2-bookmark-title">{meta?.title || url || labelOf(b)}</span>
-          {meta?.summary ? <span className="bx2-bookmark-summary">{meta.summary}</span> : null}
-          <span className="bx2-bookmark-url">{url}</span>
-        </a>
-      );
+      // BSD-407: bekannte Anbieter (YouTube, Vimeo, Loom, Figma, …) als iframe, alles andere als Karte
+      const frame = b.type === "embed" ? embedTarget(url) : undefined;
+      if (frame) {
+        return (
+          <figure className="bx2-embed bx2-embed-frame-wrap" data-embed="" data-provider={frame.provider} contentEditable={false}>
+            <iframe className="bx2-embed-frame" src={frame.src} title={`${frame.provider} embed`} style={{ aspectRatio: String(frame.aspect) }}
+              sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" allow="fullscreen; picture-in-picture; encrypted-media"
+              referrerPolicy="strict-origin-when-cross-origin" loading="lazy" />
+            <figcaption className="bx2-muted"><a href={url} target="_blank" rel="noopener noreferrer">{frame.provider} · {url}</a></figcaption>
+          </figure>
+        );
+      }
+      return <BookmarkCard block={b} url={url} />;
     }
     case "video": case "audio": case "file": case "pdf":
       return <FileBlock block={b} />;
@@ -1286,6 +1329,51 @@ function PageLink({ target }: { target: string | undefined }) {
       <span className="bx2-pagelink-icon" aria-hidden="true"><IconView icon={icon} fallback="📄" /></span>
       <span className="bx2-pagelink-title">{title || "Untitled"}</span>
     </button>
+  );
+}
+
+/**
+ * Web-Bookmark als Karte. BSD-407 (wie BSD-209 im alten Editor): „Fetch preview“ holt Titel und Beschreibung nur auf
+ * ausdrücklichen Klick und nur, wo die Hülle das kann (Desktop, Test-Haken); Fehler stehen als Satz unter der Karte.
+ */
+function BookmarkCard({ block: b, url }: { block: Block; url: string }) {
+  const { store, editable, props } = useCtx();
+  const meta = b.props?.bookmark;
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | undefined>();
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const fetchLink = props.fetchLinkPreview;
+  const fetchPreview = async () => {
+    if (busy || !fetchLink) return;
+    setBusy(true);
+    setNote(undefined);
+    await fetchBookmarkPreview(url, {
+      fetch: fetchLink,
+      exists: () => mounted.current && store.blocks.get(b.id)?.trashedAt === undefined && store.blocks.has(b.id),
+      apply: (m) => cmd.setBlockProps(store, [b.id], { bookmark: m }, "Fetch preview"),
+      notify: (m) => { if (mounted.current) setNote(m); },
+    });
+    if (mounted.current) setBusy(false);
+  };
+  const card = (
+    <a className="bx2-bookmark" href={url} target="_blank" rel="noopener noreferrer">
+      <span className="bx2-bookmark-title">{meta?.title || url || labelOf(b)}</span>
+      {meta?.summary ? <span className="bx2-bookmark-summary">{meta.summary}</span> : null}
+      <span className="bx2-bookmark-url">{url}</span>
+    </a>
+  );
+  return (
+    <div className="bx2-embed bx2-bookmark-block" data-embed="" contentEditable={false}>
+      {card}
+      {editable && fetchLink ? (
+        <span className="bx2-bookmark-actions">
+          <BasedButton size="sm" variant="ghost" busy={busy} onClick={() => void fetchPreview()}
+            label={busy ? "Fetching preview…" : meta?.title ? "Refresh preview" : "Fetch preview"} />
+          {note ? <span className="bx2-muted" role="status">{note}</span> : null}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -1338,10 +1426,21 @@ function ImageBlock({ block: b }: { block: Block }) {
           {editable ? <span className="bx2-image-handle" role="separator" aria-orientation="vertical" aria-label="Resize image" onPointerDown={startResize} /> : null}
         </span>
       ) : (
-        <button type="button" className="bx2-placeholder-btn" disabled={!editable || !props.uploadFile || busy} onClick={() => input.current?.click()}>
-          {busy ? "Uploading…" : "Add an image"}
-          <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
-        </button>
+        <span className="bx2-image-empty">
+          <button type="button" className="bx2-placeholder-btn" disabled={!editable || !props.uploadFile || busy} onClick={() => input.current?.click()}>
+            {busy ? "Uploading…" : "Add an image"}
+            <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
+          </button>
+          {editable ? (
+            // BSD-407: Bild per Link (wie „Embed link“ im alten Editor) – Enter übernimmt die Adresse
+            <input className="bx2-link-input" aria-label="Image link" placeholder="…or paste an image link" onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              const u = e.currentTarget.value.trim();
+              if (u) cmd.setBlockProps(store, [b.id], { url: /^[a-z]+:/i.test(u) ? u : "https://" + u }, "Add image link");
+            }} />
+          ) : null}
+        </span>
       )}
       {src && (caption !== undefined || editable) ? (
         <input className="bx2-caption" aria-label="Caption" placeholder={editable ? "Add a caption" : ""} readOnly={!editable} defaultValue={caption ?? ""} key={caption ?? ""}
@@ -1403,6 +1502,15 @@ function FileBlock({ block: b }: { block: Block }) {
   const name = b.props?.asset?.name ?? (b.props?.url ? b.props.url.split("/").pop() : undefined) ?? labelOf(b);
   if (b.type === "video" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><video className="bx2-media" src={src} controls preload="metadata" /></div>;
   if (b.type === "audio" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><audio className="bx2-media" src={src} controls preload="metadata" /></div>;
+  // BSD-407: PDF mit Vorschau (wie der alte Editor); der Link darunter öffnet es ganz
+  if (b.type === "pdf" && src) {
+    return (
+      <div className="bx2-embed bx2-pdf" data-embed="" contentEditable={false}>
+        <object className="bx2-pdf-frame" data={src} type="application/pdf" aria-label="PDF preview"><a href={src} target="_blank" rel="noopener noreferrer">Open PDF</a></object>
+        <a className="bx2-file" href={src} target="_blank" rel="noopener noreferrer"><span className="bx2-file-name">{name}</span></a>
+      </div>
+    );
+  }
   return (
     <a className="bx2-embed bx2-file" data-embed="" contentEditable={false} href={src} target="_blank" rel="noopener noreferrer" download={b.type === "file" ? name : undefined}>
       <span aria-hidden="true">{b.type === "pdf" ? "📕" : "📎"}</span><span className="bx2-file-name">{name}</span>
@@ -1430,11 +1538,23 @@ function TableBlock({ block: b }: { block: Block }) {
     for (let r = 0; r < Math.max(1, rows.length); r++) next.push(...(rows[r] ?? Array.from({ length: cols }, () => "")), "");
     cmd.setBlockProps(store, [b.id], { cells: next, tableColumns: cols + 1 }, "Add column");
   };
+  // BSD-407: Zeile/Spalte der zuletzt bearbeiteten Zelle löschen (die letzte bleibt)
+  const [at, setAt] = useState<{ i: number; j: number } | undefined>();
+  const deleteRow = () => {
+    if (!at || rows.length <= 1) return;
+    cmd.setBlockProps(store, [b.id], { cells: rows.filter((_, i) => i !== at.i).flat() }, "Delete row");
+    setAt(undefined);
+  };
+  const deleteColumn = () => {
+    if (!at || cols <= 1) return;
+    cmd.setBlockProps(store, [b.id], { cells: rows.flatMap((r) => r.filter((_, j) => j !== at.j)), tableColumns: cols - 1 }, "Delete column");
+    setAt(undefined);
+  };
   const cell = (c: (typeof cells)[number], i: number, j: number) => {
     const idx = i * cols + j;
     const content = editable ? (
       <span className="bx2-cell" contentEditable="plaintext-only" suppressContentEditableWarning role="textbox" aria-label={`Row ${i + 1}, column ${j + 1}`}
-        onBlur={(e) => setCell(idx, e.currentTarget.textContent ?? "")}
+        onFocus={() => setAt({ i, j })} onBlur={(e) => setCell(idx, e.currentTarget.textContent ?? "")}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); } }}>{plainText(c)}</span>
     ) : plainText(c);
     return head && i === 0 ? <th key={j}>{content}</th> : <td key={j}>{content}</td>;
@@ -1450,6 +1570,12 @@ function TableBlock({ block: b }: { block: Block }) {
         <span className="bx2-table-tools">
           <button type="button" className="bx2-table-add" onClick={addRow} aria-label="Add row">+ Row</button>
           <button type="button" className="bx2-table-add" onClick={addColumn} aria-label="Add column">+ Column</button>
+          {at ? (
+            <>
+              <BasedButton size="sm" variant="ghost" label="Delete row" disabled={rows.length <= 1} onClick={deleteRow} />
+              <BasedButton size="sm" variant="ghost" label="Delete column" disabled={cols <= 1} onClick={deleteColumn} />
+            </>
+          ) : null}
         </span>
       ) : null}
     </div>
@@ -1468,6 +1594,24 @@ function TableOfContents() {
         </button>
       )) : <span className="bx2-muted">Add headings to build a table of contents.</span>}
     </nav>
+  );
+}
+
+// Feld für eine Inline-Gleichung: Enter übernimmt, Escape bricht ab, leer + Enter entfernt sie.
+function EquationPopover({ x, y, initial, onDone }: { x: number; y: number; initial: string; onDone: (value: string | undefined) => void }) {
+  const [v, setV] = useState(initial);
+  const done = useRef(false);
+  const finish = (value: string | undefined) => { if (!done.current) { done.current = true; onDone(value); } };
+  return (
+    <div className="bx2-menu bx2-eq-popover" role="dialog" aria-label="Inline equation" data-testid="inline-equation" style={{ left: x, top: Math.min(y, window.innerHeight - 120) }}>
+      <input autoFocus className="bx2-link-input" aria-label="TeX" placeholder="E = mc^2" value={v} onChange={(e) => setV(e.target.value)}
+        onBlur={() => finish(v)}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") { e.preventDefault(); finish(v); }
+          else if (e.key === "Escape") { e.preventDefault(); finish(undefined); }
+        }} />
+    </div>
   );
 }
 
