@@ -1,61 +1,61 @@
-cancelled 62e53352287609622ff4fe1fdebc5f9e8ec4ce2b
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+success c9662331018e3b995d33abdbeadf831a4e0fc367
+(node:7648) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  142 [chromium] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (3.1s)
+  ✓  144 [chromium] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (1.9s)
+  ✓  143 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.3s)
+  ✓  146 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (1.4s)
+  ✓  147 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (1.4s)
+  ✓  148 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (1.4s)
+  ✓  149 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (798ms)
+  ✓  145 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (7.7s)
+  ✓  150 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.3s)
+  ✓  152 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (903ms)
+  ✓  151 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (2.5s)
+  ✓  153 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.4s)
+  ✓  155 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.4s)
+  ✓  154 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (2.3s)
+  ✓  156 [chromium] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (2.4s)
+  ✓  157 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (2.0s)
+  ✓  158 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (1.4s)
+  ✓  159 [chromium] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (2.6s)
+  ✓  160 [chromium] › e2e/scrollbars.spec.ts:41:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.5s)
+  ✓  162 [chromium] › e2e/scrollbars.spec.ts:46:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (762ms)
+  ✓  161 [chromium] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (1.6s)
+  ✓  163 [chromium] › e2e/scrollbars.spec.ts:52:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (933ms)
+  ✓  164 [chromium] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (1.1s)
+  ✓  166 [chromium] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (1.2s)
+  -  167 [chromium] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
+  ✓  165 [chromium] › e2e/scrollbars.spec.ts:58:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (2.0s)
+
+
+  1) [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('treeitem', { name: 'Untitled', exact: true })
+    Expected: 2
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('treeitem', { name: 'Untitled', exact: true }) with timeout 5000ms
+      - waiting for getByRole('treeitem', { name: 'Untitled', exact: true })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      108 |   await page.keyboard.press("Enter");
+      109 |   await expect(menu).toBeHidden();
+    > 110 |   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
+          |                                                                               ^
+      111 | });
+      112 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:110:79
+
+    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+  9 skipped
+  156 passed (3.7m)
