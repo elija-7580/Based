@@ -1,6 +1,6 @@
 # Parität alter Editor (BlockNote) ↔ neuer Block-Editor (ADR 0016, E8)
 
-Stand 13.11.2026. Grundlage: `replica/features.csv`, Bereiche `blocks` und `editor`. „ja“ = im neuen Editor gebaut
+Stand 14.11.2026 (BSD-407 Teil 6). Grundlage: `replica/features.csv`, Bereiche `blocks` und `editor`. „ja“ = im neuen Editor gebaut
 und mit E2E (Chromium + WebKit) geprüft, „teils“ = Grundfunktion da, Lücke in der Notiz, „nein“ = fehlt.
 E8 (Standard umschalten, BlockNote entfernen) erst, wenn alle `must`/`should` hier „ja“ sind **und** Elija den
 neuen Editor auf dem Mac abgenommen hat.
@@ -126,7 +126,7 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 | --- | --- |
 | Meeting-Block (Aufnahme, Notizen, Zusammenfassung) | Seiten mit Meeting öffnen im alten Editor; kommt ein Meeting während der Bearbeitung dazu: Platzhalter, Inhalt darunter bearbeitbar |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
-| Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor |
+| Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor; Hänger-Schritte (BSD-418) für Slash-Befehle („slash <Eintrag>“) und Blockmenü-Aktionen („block menu <Aktion>“) seit Teil 6.7 |
 | Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
 
 ### noch BlockNote (gepinnte Specs, Liste für Teil 4)

@@ -184,3 +184,25 @@ test("Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenst
     await page.setViewportSize({ width: 1280, height: 820 });
   }
 });
+
+// BSD-407 Teil 6.7: Block-Editor hinterlässt feste Schritte für Slash-Befehle und Blockmenü-Aktionen (nie Inhalte).
+test("Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger", async ({ page }) => {
+  await ready(page);
+  const id = await page.evaluate(() => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command({ op: "createPage", title: "Crumbs" }));
+  await page.goto(`/#page-${id}`);
+  const editor = page.getByTestId("block-editor");
+  await editor.getByTestId("block-editor-tail").click();
+  await page.keyboard.type("Secret words");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/heading 2");
+  await page.keyboard.press("Enter");
+  const first = editor.locator(".bx2-block").first();
+  await first.locator(".bx2-row").hover();
+  await first.locator(":scope > .bx2-gutter [data-handle]").click();
+  await page.getByTestId("block-menu").getByRole("menuitem", { name: "Duplicate" }).click();
+  await hang(page, 300);
+  const h = await testHang(page, 300);
+  expect(h.breadcrumbs).toContain("slash Heading 2");
+  expect(h.breadcrumbs).toContain("block menu Duplicate");
+  expect(h.breadcrumbs.join(" ")).not.toContain("Secret");
+});

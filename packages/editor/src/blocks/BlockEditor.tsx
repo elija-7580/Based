@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -462,6 +462,7 @@ export function BlockEditor(props: PageEditorProps) {
     const s = slashRef.current;
     setSlash(undefined);
     if (!s) return;
+    noteBreadcrumb("slash " + item.label); // BSD-418: fester Name, kein Inhalt
     const b = store.blocks.get(s.id);
     if (!b) return;
     const end = s.at + 1 + s.query.length;
@@ -2381,7 +2382,8 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
   }, [onClose]);
   const ids = ctrl.isSelected(id) ? [...ctrl.selected] : [id];
   const b = store.blocks.get(id);
-  const act = (f: () => void) => () => { f(); onClose(); };
+  // BSD-407 Teil 6.7 (BSD-418): feste Namen als Schritt vor einem Hänger, nie Inhalte
+  const act = (f: () => void, name = "action") => () => { noteBreadcrumb("block menu " + name); f(); onClose(); };
   const turnable = ids.every((x) => cmd.isTextBlock(store.blocks.get(x)));
   const style = { left: x + 8, top: Math.min(y, window.innerHeight - 360) };
   // Feinschliff: das Menü liegt links neben dem Griff (wie Notion) und verdeckt den eigenen Block nicht; ist links kein
@@ -2438,7 +2440,7 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
     const item = (c: string, label: string) => (
       <MenuRow key={c} role="menuitemradio" checked={current === c} label={label}
         icon={<span className={"bx2-swatch bx2-color-" + c}>A</span>}
-        onSelect={act(() => cmd.setBlockProps(store, ids, { color: c === "default" ? undefined : c }, "Color"))} />
+        onSelect={act(() => cmd.setBlockProps(store, ids, { color: c === "default" ? undefined : c }, "Color"), "Color")} />
     );
     return shell("Color", (
       <>
@@ -2459,7 +2461,7 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
   };
   const isCurrent = (s: (typeof SLASH_ITEMS)[number]) => b?.type === s.type && (b.props?.toggleable === true) === (s.props?.toggleable === true);
   const turnRow = (s: (typeof SLASH_ITEMS)[number]) => (
-    <MenuRow key={s.type + s.label} role="menuitemradio" checked={isCurrent(s)} label={s.label} icon={<MenuIcon name={TURN_ICON[s.type] ?? "text"} />} onSelect={act(() => runTurn(s))} />
+    <MenuRow key={s.type + s.label} role="menuitemradio" checked={isCurrent(s)} label={s.label} icon={<MenuIcon name={TURN_ICON[s.type] ?? "text"} />} onSelect={act(() => runTurn(s), "Turn into " + s.label)} />
   );
   if (view === "turn") return shell("Turn into", <><div className="bx2-menu-label">Turn into</div>{targets.map(turnRow)}</>);
 
@@ -2497,7 +2499,7 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
   // Mit Suchtext stehen passende Ziele von „Turn into“ direkt in der Liste (z. B. „page“ → Turn into Page).
   const turns = q !== "" ? targets.filter((s) => hit(s.label)) : [];
   const row = (a: Action) => (
-    <MenuRow key={a.label} label={a.label} hint={a.hint} danger={a.danger} sub={a.sub} icon={<MenuGlyph name={a.icon} />} onSelect={a.sub ? a.run : act(a.run)} />
+    <MenuRow key={a.label} label={a.label} hint={a.hint} danger={a.danger} sub={a.sub} icon={<MenuGlyph name={a.icon} />} onSelect={a.sub ? a.run : act(a.run, a.label)} />
   );
   const groups = (["turn", "edit", "copy"] as const).map((g) => shown.filter((a) => a.group === g)).filter((g) => g.length > 0);
   return shell("Block", (
