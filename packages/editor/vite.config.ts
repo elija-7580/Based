@@ -8,5 +8,6 @@ export default defineConfig({
   build: { outDir: "../dist", emptyOutDir: true },
   server: { port: 4183, strictPort: true },
   preview: { port: 4183, strictPort: true },
-  test: { root: ".", include: ["test/**/*.test.{ts,tsx}"] },
+  // testTimeout 20 s (BSD-404 Nachtrag): unter voller Last (load > 20) riss jsdom-Start + erster Test das 5-s-Timeout.
+  test: { root: ".", include: ["test/**/*.test.{ts,tsx}"], testTimeout: 20_000 },
 } as Parameters<typeof defineConfig>[0]);
