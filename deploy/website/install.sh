@@ -11,11 +11,15 @@ SUDO=""; [ "$(id -u)" -eq 0 ] || SUDO="sudo"
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 
 say "Prüfe Ports 80 und 443"
-if command -v ss >/dev/null; then
-  busy=$($SUDO ss -ltnpH '( sport = :80 or sport = :443 )' | grep -v -E 'docker-proxy|caddy' || true)
-  if [ -n "$busy" ]; then
-    echo "Ports 80/443 sind schon belegt, ich breche ab, damit nichts kaputtgeht:"; echo "$busy"; exit 1
-  fi
+busy=""
+if command -v docker >/dev/null; then
+  busy=$($SUDO docker ps --format '{{.Names}} {{.Ports}}' | grep -E ':(80|443)->' | grep -v '^website-caddy-' || true)
+fi
+if [ -z "$busy" ] && command -v ss >/dev/null; then
+  busy=$($SUDO ss -ltnpH '( sport = :80 or sport = :443 )' | grep -v docker-proxy || true)
+fi
+if [ -n "$busy" ]; then
+  echo "Ports 80/443 sind schon belegt, ich breche ab, damit nichts kaputtgeht:"; echo "$busy"; exit 1
 fi
 
 if ! command -v docker >/dev/null; then
