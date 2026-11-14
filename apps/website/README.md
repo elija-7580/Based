@@ -1,7 +1,9 @@
 # @based/website – basednotes.app
 
 Die Marketing-Website von Based. Quelle sind die Artboards aus dem Design-Canvas „Based – Website“ (v7), unverändert in
-`src/pages/*.dc.html`. `scripts/build.mjs` macht daraus die statische Seite in `public/`:
+`src/pages/*.dc.html`. Sie sind identisch mit `website/canvas/` auf dem Branch `website` (dort erzeugt `website/src/build.py`
+sie aus den Seitenquellen). Nach einer Änderung dort die Dateien hierher kopieren und neu bauen. Dieser Build ersetzt den
+älteren GitHub-Pages-Export (`website/export`, Branch `gh-pages`), weil die Seite jetzt auf dem eigenen Server mit Warteliste läuft. `scripts/build.mjs` macht daraus die statische Seite in `public/`:
 
 - `src/static/dc-lite.js`: eigene kleine Laufzeit (≈ 250 Zeilen, ohne Framework) für `{{…}}`, `<sc-for>`, `<sc-if>`,
   `onClick="{{fn}}"` und `class Component extends DCLogic`. Rendert bei jeder Zustandsänderung neu und gleicht das DOM ab,
