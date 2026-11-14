@@ -1,13 +1,1 @@
-success 960ffe069840de88a50a719d85ea63406545ff20 (nicht blockierend)
-perf 5000: {"mapOpen":[],"idleBeforePan":[193],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3828,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":8.15,"peekLong":[],"formSubmitMs":61,"formLong":[]}
-BSD-215 chromium: 50 000 Zeilen öffnen 855 ms, ans Ende scrollen 71 ms, Zelle ändern 196 ms
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 3.6, 12.7, 12.9, 13.2, 14.5
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.5s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1448 ms, ans Ende scrollen 437 ms, Zelle ändern 849 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 2, 6, 14, 15, 39
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (5.1s)
-  ✘  15 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (18.5s)
-    Error: expect(received).toBeLessThan(expected)
-    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
-  1 flaky
-  14 passed (2.0m)
+cancelled 62e53352287609622ff4fe1fdebc5f9e8ec4ce2b (nicht blockierend)
