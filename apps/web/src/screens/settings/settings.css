@@ -1,5 +1,12 @@
 /* Einstellungen: nur Maße und Flächen, die Astryx-Props nicht hergeben. Farben über Tokens. */
 .settings-screen { flex: 1; min-height: 0; }
+/* Einstellungen sind Bedienung, kein Text: Titel, Beschriftungen, Hinweise und die Liste „Not available yet“ lassen sich
+   nicht markieren oder kopieren (vorher zog eine Auswahl dort über die ganze Fläche darunter). Markierbar bleiben,
+   was man abschreiben will: Eingaben, Werte in Mono (Geräte-ID, Pfade, Zeiten, `data-selectable`) und das Log. */
+.settings-screen { -webkit-user-select: none; user-select: none; }
+.settings-screen :is(input, textarea, [contenteditable]:not([contenteditable="false"]), [data-selectable], .diagnostics-log) {
+  -webkit-user-select: text; user-select: text;
+}
 .settings-nav { background: var(--sidebar); }
 .settings-nav-head { padding-inline: var(--space-3); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--type-meta-size); }
 /* Seitentitel und Abschnitte in der Kopfschrift (Charakter wie Seitentitel). */

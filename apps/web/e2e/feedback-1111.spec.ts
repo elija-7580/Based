@@ -145,6 +145,11 @@ test("Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-
   // Einstellungen: Navigation nicht, Eingabefelder schon
   await nav(page).getByRole("group", { name: "Workspace tools" }).getByRole("button", { name: "Settings" }).click();
   expect(await select(".settings-nav")).toBe("none");
+  // … auch die Einstellungsseite selbst (Titel, Hinweise, „Not available yet“): Dreifachklick markiert nichts
+  await expect(page.getByTestId("settings-page")).toBeVisible();
+  expect(await select("[data-testid=settings-page]")).toBe("none");
+  await page.getByTestId("settings-page").locator("h1").click({ clickCount: 3 });
+  expect(await selected()).toBe("");
 
   // Seite: Inhalt bleibt markierbar; das Suchfeld (liegt in einem Bedienelement) auch
   await page.goto(`/#page-${id}`);

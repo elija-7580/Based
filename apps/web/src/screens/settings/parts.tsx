@@ -30,7 +30,7 @@ export function Row({ label, hint, labelID, children }: { label: string; hint?: 
 
 /** Nur-Lese-Wert in einer Zeile (Daten in Mono). */
 export function Value({ children, mono = false, testID }: { children: ReactNode; mono?: boolean; testID?: string }) {
-  return <Text type={mono ? "code" : "body"} color="secondary" {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
+  return <Text type={mono ? "code" : "body"} color="secondary" {...(mono ? { "data-selectable": "" } : {})} {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
 }
 
 /** Untereinander (Listen in einer Gruppe), optional mit Test-ID. */
@@ -40,5 +40,5 @@ export function Lines({ children, gap = 2, testID }: { children: ReactNode; gap?
 
 /** Kleine Zusatzzeile unter einer Zeile (z. B. aufgeklappte Schritte); `mono` für Zeiten und Namen. */
 export function Note({ children, mono = false, testID }: { children: ReactNode; mono?: boolean; testID?: string }) {
-  return <Text type={mono ? "code" : "supporting"} color="secondary" display="block" {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
+  return <Text type={mono ? "code" : "supporting"} color="secondary" display="block" {...(mono ? { "data-selectable": "" } : {})} {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
 }
