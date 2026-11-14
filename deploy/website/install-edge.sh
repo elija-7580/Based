@@ -6,13 +6,15 @@
 set -euo pipefail
 DIR=/opt/based
 EDGE=/opt/edge-caddy
+BRANCH="${BRANCH:-main}"
 STAMP=$(date +%Y%m%d-%H%M%S)
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 
 [ -f "$EDGE/Caddyfile" ] && [ -f "$EDGE/docker-compose.yml" ] || { echo "$EDGE fehlt, nimm install.sh"; exit 1; }
 
 say "Code nach $DIR"
-if [ -d "$DIR/.git" ]; then git -C "$DIR" pull -q --ff-only; else git clone -q --depth 1 https://github.com/elija-7580/Based "$DIR"; fi
+[ -d "$DIR/.git" ] || git clone -q --depth 1 https://github.com/elija-7580/Based "$DIR"
+git -C "$DIR" fetch -q --depth 1 origin "$BRANCH" && git -C "$DIR" reset -q --hard FETCH_HEAD
 
 say "Alten eigenen Caddy-Versuch aufräumen (falls vorhanden)"
 if [ -f "$DIR/deploy/website/docker-compose.yml" ]; then
@@ -56,7 +58,7 @@ sleep 4
 docker ps --filter name=edge-caddy --format '{{.Names}}: {{.Status}}' | grep -q Up || restore
 
 say "Automatische Updates aus main alle 10 Minuten"
-echo "*/10 * * * * root cd $DIR && git pull -q --ff-only && (cd deploy/website/edge && docker compose up -d) >/dev/null 2>&1" > /etc/cron.d/based-site
+echo "*/10 * * * * root cd $DIR && git fetch -q --depth 1 origin main && git reset -q --hard FETCH_HEAD && [ -d deploy/website/edge ] && (cd deploy/website/edge && docker compose up -d) >/dev/null 2>&1" > /etc/cron.d/based-site
 
 say "Status"
 docker ps --filter name=basednotes-waitlist --filter name=edge-caddy --format '{{.Names}}: {{.Status}}'
