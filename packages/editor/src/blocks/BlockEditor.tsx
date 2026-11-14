@@ -2383,6 +2383,7 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
     const el = ref.current;
     if (!el) return;
     const pad = 8;
+    el.style.maxHeight = "";
     const m = el.getBoundingClientRect();
     const row = el.ownerDocument.querySelector(`[data-block-id="${CSS.escape(id)}"] > .bx2-row`)?.getBoundingClientRect();
     // oben bündig mit dem Griff (er sitzt an der ersten Zeile, bei Überschriften also unter dem Rand der Zeile)
@@ -2395,7 +2396,10 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
       left = Math.min(Math.max(pad, x - pad), vw - m.width - pad);
       top = row ? row.bottom + 4 : y + pad;
     }
-    top = Math.max(pad, Math.min(top, vh - m.height - pad));
+    // reicht der Platz unter dem Griff, bleibt das Menü oben bündig und rollt in sich (statt nach oben zu springen)
+    const room = vh - pad - top;
+    if (m.height > room && room >= 240) el.style.maxHeight = `${room}px`;
+    else top = Math.max(pad, Math.min(top, vh - m.height - pad));
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
   }, [id, x, y, view]);
