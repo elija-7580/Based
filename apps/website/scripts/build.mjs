@@ -127,7 +127,12 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:url" content="${url}">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="${SITE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Your data. Based. Databases, docs and agents. Join the beta at basednotes.app">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${cssHref}">
@@ -169,7 +174,7 @@ function main() {
   mkdirSync(join(OUT, "assets"), { recursive: true });
   cpSync(join(SRC, "static", "fonts"), join(OUT, "fonts"), { recursive: true });
   cpSync(join(SRC, "static", "mail"), join(OUT, "mail"), { recursive: true });
-  for (const f of ["mark.svg", "mark-dark.svg", "favicon.svg"]) cpSync(join(SRC, "static", f), join(OUT, f));
+  for (const f of ["mark.svg", "mark-dark.svg", "favicon.svg", "og.png"]) cpSync(join(SRC, "static", f), join(OUT, f));
 
   const runtime = read(join(SRC, "static", "dc-lite.js"));
   const site = read(join(SRC, "static", "site.js"));
