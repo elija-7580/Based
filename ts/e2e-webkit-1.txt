@@ -1,61 +1,61 @@
-success 25565897bc6b59cdcc47aef58f16480d1c5633e3
-  ✓  143 [webkit] › e2e/editor-notion.spec.ts:218:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus, Tastatur im Untermenü (9.3s)
-  ✓  145 [webkit] › e2e/editor-notion.spec.ts:255:1 › Blockmenü bleibt offen, wenn der Editor neu zeichnet (6.8s)
-  ✓  144 [webkit] › e2e/editor-parity.spec.ts:335:3 › alter Editor (BlockNote) › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (15.2s)
-  ✓  146 [webkit] › e2e/editor-notion.spec.ts:274:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (8.6s)
-  ✓  148 [webkit] › e2e/editor-notion.spec.ts:296:1 › Codeblock: Standard ohne Umbruch, „Wrap code“ bricht um und bleibt nach dem Neuladen (8.2s)
-  ✓  147 [webkit] › e2e/editor-parity.spec.ts:428:3 › alter Editor (BlockNote) › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (16.4s)
-  ✓  149 [webkit] › e2e/editor-notion.spec.ts:324:1 › Codeblock: Sprache wählen mit Suche (wie im alten Editor) (5.4s)
-  ✓  151 [webkit] › e2e/editor-notion.spec.ts:340:3 › alter Editor (BlockNote) › Formatleiste: kompaktes Feld, ganz im Fenster (7.1s)
-  -  152 [webkit] › e2e/editor-notion.spec.ts:375:1 › Fotos: Codeblock-Leiste
-  -  153 [webkit] › e2e/editor-notion.spec.ts:387:1 › Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI
-  ✓  150 [webkit] › e2e/editor-parity.spec.ts:492:3 › alter Editor (BlockNote) › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (24.5s)
-  ✓  154 [webkit] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert (10.8s)
-  ✓  155 [webkit] › e2e/editor-parity.spec.ts:587:3 › alter Editor (BlockNote) › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (11.6s)
-  ✓  156 [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records (14.1s)
-  ✓  157 [webkit] › e2e/editor-parity.spec.ts:615:3 › alter Editor (BlockNote) › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (10.7s)
-  ✓  159 [webkit] › e2e/editor-parity.spec.ts:634:3 › alter Editor (BlockNote) › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (12.8s)
-  ✓  160 [webkit] › e2e/editor-parity.spec.ts:677:3 › alter Editor (BlockNote) › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (8.2s)
-  ✓  158 [webkit] › e2e/editor-polish.spec.ts:55:1 › Editor in Ruhe und in seinen Zuständen (36.3s)
-  ✓  161 [webkit] › e2e/editor-parity.spec.ts:701:3 › alter Editor (BlockNote) › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (11.1s)
-  ✓  162 [webkit] › e2e/editor-polish.spec.ts:142:1 › Links und Häkchen im Editor ohne Browser-Blau (4.6s)
-  ✓  164 [webkit] › e2e/editor-polish.spec.ts:164:1 › Blockfarben im Dunkelmodus aus den Tokens (4.8s)
-  ✓  165 [webkit] › e2e/editor-select.spec.ts:81:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (6.4s)
-  ✓  163 [webkit] › e2e/editor-parity.spec.ts:751:3 › alter Editor (BlockNote) › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (13.4s)
-  -  166 [webkit] › e2e/editor-select.spec.ts:117:1 › Blockauswahl reicht bis unter schwebende Leisten
-  ✓  168 [webkit] › e2e/editor-select.spec.ts:147:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (7.9s)
-  ✓  167 [webkit] › e2e/editor-parity.spec.ts:780:3 › alter Editor (BlockNote) › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (12.2s)
-  ✓  169 [webkit] › e2e/editor-select.spec.ts:167:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (7.4s)
-  ✓  171 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (3.3s)
-  ✓  170 [webkit] › e2e/editor-parity.spec.ts:831:3 › alter Editor (BlockNote) › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (12.1s)
-  ✓  172 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (5.5s)
-  ✓  173 [webkit] › e2e/editor-parity.spec.ts:864:3 › alter Editor (BlockNote) › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (11.4s)
-  ✓  174 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (11.2s)
-  ✓  176 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (9.6s)
-  ✓  175 [webkit] › e2e/editor-parity.spec.ts:899:3 › alter Editor (BlockNote) › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (10.6s)
-  ✓  177 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (4.7s)
-  ✓  179 [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (5.5s)
-  ✓  178 [webkit] › e2e/editor-parity.spec.ts:941:3 › alter Editor (BlockNote) › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (15.8s)
-  ✓  180 [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (6.1s)
-  ✓  182 [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (5.7s)
-  ✓  183 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (4.1s)
-  ✓  181 [webkit] › e2e/editor-parity.spec.ts:975:3 › alter Editor (BlockNote) › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (13.0s)
-(node:22012) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+success 3c7094b41bb843244a740ab702b002b8a8e86ef0
+  ✓  176 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (7.5s)
+  ✓  177 [webkit] › e2e/editor-parity.spec.ts:864:3 › alter Editor (BlockNote) › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (7.9s)
+  ✓  178 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (6.9s)
+  ✓  180 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (3.4s)
+  ✓  179 [webkit] › e2e/editor-parity.spec.ts:899:3 › alter Editor (BlockNote) › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (7.6s)
+  ✓  181 [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (3.6s)
+  ✓  183 [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (3.5s)
+  ✓  184 [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (3.7s)
+  ✓  185 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (2.7s)
+  ✓  182 [webkit] › e2e/editor-parity.spec.ts:941:3 › alter Editor (BlockNote) › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (11.6s)
+  ✓  186 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (5.6s)
+(node:21731) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  184 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (7.7s)
-  ✓  185 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (6.0s)
-  ✓  186 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (6.1s)
-  ✓  187 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (4.8s)
-  ✓  189 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (3.6s)
-  ✓  190 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (2.8s)
-  ✓  191 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.4s)
-  ✓  188 [webkit] › e2e/hangs.spec.ts:94:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (13.0s)
-  ✓  192 [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (8.6s)
-  ✓  193 [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (4.6s)
-hang monitor idle: 96 ticks in 5003 ms, 0.00 ms busy (0.000 %)
-  ✓  194 [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (7.0s)
-  ✓  195 [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (6.8s)
-  ✓  196 [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (5.0s)
+  ✓  187 [webkit] › e2e/editor-parity.spec.ts:975:3 › alter Editor (BlockNote) › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (8.6s)
+  ✓  188 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (4.2s)
+  ✓  190 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (2.7s)
+  ✓  189 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (5.0s)
+  ✓  191 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (2.2s)
+  ✓  193 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.5s)
+  ✓  194 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.7s)
+  ✓  192 [webkit] › e2e/hangs.spec.ts:94:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (8.1s)
+  ✓  195 [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (8.3s)
+  ✓  196 [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (4.2s)
+hang monitor idle: 96 ticks in 5004 ms, 0.00 ms busy (0.000 %)
+  ✓  197 [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (6.6s)
+  ✓  198 [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (5.4s)
+  ✓  199 [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (3.5s)
 
+
+  1) [webkit] › e2e/block-editor.spec.ts:856:1 › @-Menü: Datum, Wochentag, getipptes Datum, Erinnerung; Wähler mit Ende und Uhrzeit 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('block-editor').locator('[data-editable-id]').first().locator('.bx2-mention[data-date][data-remind=true]')
+    Expected: 1
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').locator('[data-editable-id]').first().locator('.bx2-mention[data-date][data-remind=true]') with timeout 5000ms
+      - waiting for getByTestId('block-editor').locator('[data-editable-id]').first().locator('.bx2-mention[data-date][data-remind=true]')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      879 |   await expect(menu.getByRole("option", { name: /^Remind me · Tomorrow/ })).toBeVisible();
+      880 |   await page.keyboard.press("Enter");
+    > 881 |   await expect(fields(page).first().locator(".bx2-mention[data-date][data-remind=true]")).toHaveCount(1);
+          |                                                                                           ^
+      882 |   await expect(fields(page).first().getByRole("img", { name: "Reminder set" })).toHaveCount(1);
+      883 |
+      884 |   // Wähler: Klick auf das Datum, Ende und Uhrzeit, Erinnerung an; Undo nimmt einen Schritt zurück
+        at /home/runner/work/Based/Based/apps/web/e2e/block-editor.spec.ts:881:91
+
+    Error Context: test-results/block-editor---Menü-Datum--bc7d5-Wähler-mit-Ende-und-Uhrzeit-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/block-editor.spec.ts:856:1 › @-Menü: Datum, Wochentag, getipptes Datum, Erinnerung; Wähler mit Ende und Uhrzeit 
   16 skipped
-  180 passed (13.6m)
+  181 passed (10.0m)
