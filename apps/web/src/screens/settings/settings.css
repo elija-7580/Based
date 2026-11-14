@@ -11,6 +11,8 @@
    die Beschriftungen der Diagnose-Gruppen sind Bedienung und nicht markierbar. */
 [data-testid^="settings-section-diagnostics"] { -webkit-user-select: none; user-select: none; }
 [data-testid^="settings-section-diagnostics"] :is(input, textarea, .diagnostics-log) { -webkit-user-select: text; user-select: text; }
+/* Hänger sind Daten wie das Log: Zeilen, Ursachen und Schritte lassen sich markieren (Knöpfe bleiben Bedienung). */
+[data-testid^="settings-section-diagnostics"] :is([data-testid="hangs-list"], [data-testid="hangs-previous"]) :not(button, button *) { -webkit-user-select: text; user-select: text; }
 .diagnostics-log {
   max-height: calc(var(--space-8) * 7); overflow: auto; overscroll-behavior: contain; padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md); background: var(--surface-soft); color: var(--ink-2);

@@ -68,7 +68,27 @@ test("Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache un
     const text = await page.evaluate(() => navigator.clipboard.readText());
     expect(text).toMatch(/hangs this session: \d+ hangs?/);
     expect(text).toContain("click settings-section-diagnostics-status (group) › test hang 300 › test hang 1000");
+    // 14. 11.: alle Hänger auf einmal kopieren
+    await section.getByRole("button", { name: "Copy hangs" }).click();
+    await expect(section.getByRole("button", { name: "Copied" })).toBeVisible();
+    const hangText = await page.evaluate(() => navigator.clipboard.readText());
+    expect(hangText).toMatch(/^hangs this session: \d+ hangs?/);
+    expect(hangText).toContain("test hang 300");
+    expect(hangText).toContain("test hang 1000");
+    // … und das ganze Log (gezeigte Zeilen) auf einmal
+    await page.getByRole("button", { name: /^Copy log \(\d+\)$/ }).click();
+    const logText = await page.evaluate(() => navigator.clipboard.readText());
+    expect(logText).toContain("main thread blocked for");
+    expect(logText.split("\n").length).toBeGreaterThan(1);
   }
+  // Hänger-Zeilen lassen sich markieren (Daten, keine Bedienung)
+  expect(await first.evaluate((el) => getComputedStyle(el.querySelector("[data-testid='hang-steps']") ?? el).userSelect)).toBe("text");
+  // ⌘A im Log markiert nur das Log
+  await page.getByTestId("diagnostics-log").focus();
+  await page.keyboard.press("ControlOrMeta+a");
+  const sel = await page.evaluate(() => globalThis.getSelection()?.toString() ?? "");
+  expect(sel).toContain("main thread blocked for");
+  expect(sel).not.toContain("Copy diagnostics");
 });
 
 test("3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten", async ({ page }) => {
