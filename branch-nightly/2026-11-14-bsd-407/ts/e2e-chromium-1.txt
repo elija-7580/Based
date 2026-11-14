@@ -1,0 +1,61 @@
+success 68fa5b3b100d13afbb1dc26cf18d2430ab79ae31
+  ✓  158 [chromium] › e2e/editor-parity.spec.ts:767:3 › alter Editor (BlockNote) › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (3.9s)
+  ✓  161 [chromium] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (2.7s)
+  ✓  163 [chromium] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (1.6s)
+  ✓  162 [chromium] › e2e/editor-parity.spec.ts:800:3 › alter Editor (BlockNote) › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (4.0s)
+  ✓  165 [chromium] › e2e/editor-parity.spec.ts:858:3 › alter Editor (BlockNote) › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (3.5s)
+  ✓  164 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (4.3s)
+(node:10015) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  166 [chromium] › e2e/editor-parity.spec.ts:893:3 › alter Editor (BlockNote) › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (3.5s)
+  ✓  167 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.1s)
+  ✓  169 [chromium] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (1.4s)
+  ✓  168 [chromium] › e2e/editor-parity.spec.ts:935:3 › alter Editor (BlockNote) › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (4.4s)
+  ✓  170 [chromium] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (1.7s)
+  ✓  172 [chromium] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (913ms)
+  ✓  173 [chromium] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.9s)
+  ✓  171 [chromium] › e2e/editor-parity.spec.ts:969:3 › alter Editor (BlockNote) › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (3.8s)
+  ✓  174 [chromium] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.0s)
+  ✓  176 [chromium] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (1.7s)
+  ✓  175 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (13.9s)
+  ✓  177 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.7s)
+  ✓  178 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.2s)
+  ✓  179 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.1s)
+  ✓  180 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (10.3s)
+  ✓  181 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (9.7s)
+
+
+  1) [chromium] › e2e/editor-drag.spec.ts:230:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 8
+    + Received  + 1
+
+    - Array [
+    -   Array [
+    -     "Alpha",
+    -   ],
+    -   Array [
+    -     "Omega",
+    -   ],
+    - ]
+    + Array []
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      244 |   // links vom Griff, unten in der Zeile
+      245 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
+    > 246 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
+          |                                              ^
+      247 | });
+      248 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:246:46
+
+    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/editor-drag.spec.ts:230:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+  7 skipped
+  172 passed (5.8m)
