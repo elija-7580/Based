@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { useLegacyEditor } from "./legacy-editor.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -58,6 +59,10 @@ async function setTheme(page: Page, theme: "light" | "dark") {
 
 const settled = (page: Page) => page.waitForTimeout(600);
 test.describe.configure({ timeout: 120_000 });
+
+// BSD-407 Teil 3: Ziehen am Griff des alten Editors (Seitenmenü von BlockNote, Einfügelinien, Auto-Scroll); der Block-Editor zieht in block-editor.spec.ts.
+// Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
+useLegacyEditor(test);
 test.beforeEach(async ({ page }) => fresh(page));
 
 const block = (page: Page, text: string) => editor(page).locator(".bn-block-outer", { has: page.locator(".bn-inline-content", { hasText: new RegExp(`^${text}$`) }) }).last();

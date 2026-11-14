@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-261: Rollbalken im Based-Design – in Chromium und WebKit über ::-webkit-scrollbar (schmal, rund, ohne Spur und
 // Eckkasten). Die Standard-Eigenschaften scrollbar-width/-color dürfen dort nicht greifen, sonst zeichnet der Browser
@@ -24,11 +25,11 @@ const gutter = (page: Page, style = "") =>
 async function openLongPageWithInlineDatabase(page: Page) {
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   for (let i = 0; i < 40; i++) await page.keyboard.press("Enter");
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   await expect(page.locator(".shell-database.inline")).toBeVisible();
 }
 

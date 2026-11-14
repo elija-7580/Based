@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -164,9 +165,8 @@ async function peekScenario(page: Page, browserName: string) {
   await expect(peek.getByTestId("row-properties")).toContainText("from the peek");
 
   // Inhalt der Zeile im Editor schreiben.
-  const editor = peek.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(peek);
+  await focusEditorEnd(peek);
   await page.keyboard.type("Notes inside the row");
   await expect(peek.getByText("Notes inside the row")).toBeVisible();
   await page.waitForTimeout(500);

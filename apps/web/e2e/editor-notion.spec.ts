@@ -1,4 +1,6 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
+import { useLegacyEditor } from "./legacy-editor.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -23,10 +25,15 @@ const test = base.extend<{ page: Page }>({
 type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
-const editor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
+const editor = (page: Page) => blockEditor(page);
+/** Alter Editor (gepinnte Tests unten). */
+const bnEditor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
 const titleField = (page: Page) => page.getByRole("textbox", { name: "Page title" });
-/** Blöcke der Seite als „typ:text“. */
-const blocks = (page: Page) => page.evaluate(() => [...document.querySelectorAll(".bx-editor > .bx-doc .bn-editor .bn-block-content")]
+/** Blöcke der Seite als „typ:text“ (Block-Editor; Text heißt wie im alten Editor „paragraph“). */
+const blocks = (page: Page) => page.evaluate(() => [...document.querySelectorAll("[data-testid=block-editor] .bx2-block")]
+  .map((e) => `${(e as HTMLElement).dataset.type === "text" ? "paragraph" : (e as HTMLElement).dataset.type}:${e.querySelector("[data-editable-id]")?.textContent ?? ""}`));
+/** Dasselbe im alten Editor. */
+const bnBlocks = (page: Page) => page.evaluate(() => [...document.querySelectorAll(".bx-editor > .bx-doc .bn-editor .bn-block-content")]
   .map((e) => `${e.getAttribute("data-content-type")}${e.getAttribute("data-level") ?? ""}:${e.querySelector(".bn-inline-content")?.textContent ?? ""}`));
 
 async function open(page: Page, title: string, parent?: string): Promise<string> {
@@ -34,7 +41,7 @@ async function open(page: Page, title: string, parent?: string): Promise<string>
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   const id = (await command(page, { op: "createPage", title, ...(parent ? { parent } : {}) })) as string;
   await page.getByRole("treeitem", { name: title, exact: true }).click();
-  await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+  await expect(page.locator("[data-testid=block-editor] [data-testid=block-editor-tail], .bx-editor > .bx-doc .bn-editor[contenteditable=true]").first()).toBeVisible();
   return id;
 }
 
@@ -77,7 +84,7 @@ test("Enter im Titel nimmt die leere erste Zeile, statt eine weitere anzulegen",
 
 test("Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text", async ({ page }) => {
   await open(page, "Backspace");
-  await editor(page).locator(".bn-block-content").first().click();
+  await focusEditorEnd(page);
   await page.keyboard.type("intro");
   await page.keyboard.press("Enter");
   await page.keyboard.type("## Head");
@@ -97,7 +104,7 @@ test("Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text", as
 
 test("Klick unter den Inhalt setzt die Schreibmarke ans Ende", async ({ page }) => {
   await open(page, "Below");
-  await editor(page).locator(".bn-block-content").first().click();
+  await focusEditorEnd(page);
   await page.keyboard.type("only line");
   const body = (await page.getByTestId("page-content").boundingBox())!;
   await page.mouse.click(body.x + 200, body.y + body.height + 160);
@@ -110,149 +117,6 @@ test("Klick unter den Inhalt setzt die Schreibmarke ans Ende", async ({ page }) 
   await page.mouse.click(body.x + 200, body.y + body.height + 200);
   await page.keyboard.type("Z");
   await expect.poll(() => blocks(page)).toEqual(["paragraph:only line", "paragraph:Z"]);
-});
-
-test("Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl", async ({ page }) => {
-  await open(page, "Menu");
-  await editor(page).locator(".bn-block-content").first().click();
-  await paste(page, "## Heading two\n\nSome text here");
-  await expect.poll(async () => (await blocks(page)).length).toBeGreaterThan(1);
-  await page.waitForTimeout(500); // Einfügen fertig gezeichnet, bevor der Griff gesucht wird
-  await editor(page).getByText("Heading two").hover();
-  await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-  await page.locator(".bn-side-menu [draggable=true]").last().click();
-  const menu = page.getByRole("menu").first();
-  await expect(page.getByTestId("block-menu-head")).toHaveText("Heading 2");
-  await expect(page.getByTestId("block-menu-foot")).toContainText("2 words · 11 characters");
-  for (const name of ["Turn into", "Color", "Duplicate", "Move to", "Delete", "Copy as Markdown", "Copy and sync"]) {
-    await expect(menu.getByRole("menuitem", { name })).toBeVisible();
-  }
-  // jeder Eintrag hat genau ein Icon (aus dem Icon-Satz der App wie im Seitenmenü „…“), das Menü bleibt im Fenster
-  expect(await menu.locator("[role=menuitem] :is(.bx-menu-icon, .nf-glyph)").count()).toBeGreaterThanOrEqual(7);
-  for (const item of await menu.getByRole("menuitem").all()) expect(await item.locator(":is(.bx-menu-icon, .nf-glyph)").count()).toBe(1);
-  // Icons stehen in einer Spalte links, auch bei Einträgen ohne Kürzel (vorher rechtsbündig nach dem Merge)
-  const iconX = async (name: string) => (await menu.getByRole("menuitem", { name }).locator(":is(.bx-menu-icon, .nf-glyph)").boundingBox())!.x;
-  for (const name of ["Copy as Markdown", "Copy and sync", "Turn into"]) expect(Math.abs((await iconX(name)) - (await iconX("Duplicate"))), name).toBeLessThanOrEqual(1);
-  const box = (await menu.boundingBox())!;
-  expect(box.x).toBeGreaterThanOrEqual(0);
-  expect(box.y + box.height).toBeLessThanOrEqual(820);
-  await menu.getByRole("menuitem", { name: "Delete" }).click();
-  await expect.poll(() => blocks(page)).toEqual(["paragraph:Some text here"]);
-});
-
-test("Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts", async ({ page }) => {
-  await open(page, "Code");
-  await editor(page).locator(".bn-block-content").first().click();
-  await paste(page, "```javascript\nconst answer = 42;\n```\n\nafter");
-  const code = editor(page).locator("[data-content-type=codeBlock]").first();
-  await expect(code).toBeVisible();
-  const before = (await code.boundingBox())!;
-  await code.hover();
-  const copy = code.getByRole("button", { name: "Copy code" });
-  await expect(copy).toBeVisible();
-  const during = (await code.boundingBox())!;
-  expect(during.height).toBe(before.height);
-  await copy.click();
-  await expect(code.getByRole("button", { name: /Copied|Couldn’t copy/ })).toBeVisible();
-  // der Knopf gehört nicht zum Text
-  await expect.poll(() => page.evaluate(() => document.querySelector("[data-content-type=codeBlock] code")?.textContent)).toBe("const answer = 42;");
-});
-
-test("Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus", async ({ page }) => {
-  await open(page, "Search");
-  await editor(page).locator(".bn-block-content").first().click();
-  await paste(page, "## Heading two\n\nSome text here");
-  await expect.poll(async () => (await blocks(page)).length).toBeGreaterThan(1);
-  await page.waitForTimeout(500);
-  const openMenu = async () => {
-    await editor(page).getByText("Heading two").first().hover();
-    await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-    await page.locator(".bn-side-menu [draggable=true]").last().click();
-    await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
-  };
-  await openMenu();
-  await page.keyboard.type("cop");
-  await expect(page.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/, /Copy and sync/]);
-  // getippt wurde ins Feld, nicht in den Text der Seite
-  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
-  await page.keyboard.press("Escape"); // erst das Feld leeren …
-  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
-  await expect(page.getByRole("menuitem", { name: "Turn into" })).toBeVisible();
-  await page.keyboard.type("zzz");
-  await expect(page.getByRole("menuitem")).toHaveCount(0);
-  await expect(page.getByText("No actions")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await page.keyboard.type("dup");
-  await page.keyboard.press("Enter");
-  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
-  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
-  // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
-  await openMenu();
-  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
-  await page.keyboard.press("ArrowDown");
-  await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
-});
-
-// BSD-408: Das Blockmenü bleibt offen, wenn der Editor neu zeichnet (z. B. weil sich die Seitenliste ändert). Vorher war
-// die Seitenleiste bei jedem Neuzeichnen eine neue Komponente und das gerade geöffnete Menü ging wieder zu (CI rot).
-test("Blockmenü bleibt offen, wenn der Editor neu zeichnet", async ({ page }) => {
-  await open(page, "Stable");
-  await editor(page).locator(".bn-block-content").first().click();
-  await paste(page, "## Heading two\n\nSome text here");
-  await expect.poll(async () => (await blocks(page)).length).toBeGreaterThan(1);
-  await editor(page).getByText("Heading two").first().hover();
-  await page.locator(".bn-side-menu [draggable=true]").last().click();
-  const search = page.getByRole("textbox", { name: "Search actions" });
-  await expect(search).toBeFocused();
-  await page.keyboard.type("dup");
-  for (let i = 0; i < 3; i++) {
-    await command(page, { op: "createPage", title: `Other ${i}` }); // neue Seite → Seitenliste → Editor zeichnet neu
-    await expect(page.getByRole("treeitem", { name: `Other ${i}`, exact: true })).toBeVisible();
-  }
-  await expect(search).toBeFocused();
-  await expect(search).toHaveValue("dup");
-  await page.keyboard.press("Enter");
-  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
-});
-
-test("Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen", async ({ page }) => {
-  await open(page, "Wrap");
-  await editor(page).locator(".bn-block-content").first().click();
-  await paste(page, "```javascript\nconst long = '" + "on and ".repeat(40) + "';\n```\n\nafter");
-  const code = editor(page).locator("[data-content-type=codeBlock]").first();
-  await expect(code).toBeVisible();
-  const pre = code.locator("pre");
-  expect(await pre.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true); // Standard: umbrochen
-  await code.hover();
-  const wrap = code.getByRole("button", { name: "Wrap code" });
-  await expect(wrap).toHaveAttribute("aria-pressed", "true");
-  await wrap.click();
-  await expect(code).toHaveAttribute("data-wrap", "false");
-  await expect(code.getByRole("button", { name: "Wrap code" })).toHaveAttribute("aria-pressed", "false");
-  expect(await pre.evaluate((e) => e.scrollWidth > e.clientWidth + 50)).toBe(true);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); // die Seite rollt nicht
-  await page.waitForTimeout(1200); // gespeichert
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await expect(editor(page).locator("[data-content-type=codeBlock]").first()).toHaveAttribute("data-wrap", "false");
-});
-
-test("Formatleiste: kompaktes Feld, ganz im Fenster", async ({ page }) => {
-  await open(page, "Format");
-  await editor(page).locator(".bn-block-content").first().click();
-  await page.keyboard.type("x ".repeat(60) + "tail");
-  await editor(page).getByText("tail").dblclick({ position: { x: 5, y: 8 } });
-  const bar = page.locator(".bn-formatting-toolbar");
-  await expect(bar).toBeVisible();
-  for (const name of ["Bold", "Italic", "Underline", "Strike"]) await expect(bar.getByRole("button", { name, exact: true })).toBeVisible();
-  const box = (await bar.boundingBox())!;
-  expect(box.x).toBeGreaterThanOrEqual(0);
-  expect(box.x + box.width).toBeLessThanOrEqual(1280);
-  expect(box.width).toBeLessThan(220);
-  await bar.getByRole("button", { name: "Bold", exact: true }).click();
-  await expect(bar.getByRole("button", { name: "Bold", exact: true })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf", async ({ page }) => {
@@ -292,7 +156,7 @@ test("Beim Öffnen einer Seite springt der Titel nicht", async ({ page, browserN
   for (const name of ["Two", "One", "Two"]) {
     await page.getByRole("treeitem", { name, exact: true }).click();
     await expect(titleField(page)).toHaveValue(name);
-    await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+    await expectEditable(page);
     await page.waitForTimeout(300);
   }
   expect(await page.evaluate(() => (globalThis as unknown as { __shifts: string[] }).__shifts)).toEqual([]);
@@ -301,12 +165,162 @@ test("Beim Öffnen einer Seite springt der Titel nicht", async ({ page, browserN
 // BSD-343: Kurznamen wie „js“, „ts“, „py“ aus Markdown/Notion zeigen die Sprache in der Auswahl (vorher leer).
 test("Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl", async ({ page }) => {
   await open(page, "Langs");
-  await editor(page).locator(".bn-block-content").first().click();
+  await focusEditorEnd(page);
   await paste(page, "```js\nconst a = 1;\n```\n\n```TS\nlet b: number = 2;\n```\n\n```py\nx = 3\n```\n\n```cobol\nDISPLAY 'X'.\n```");
-  const selects = editor(page).locator("[data-content-type=codeBlock] select");
-  await expect(selects).toHaveCount(4);
-  await expect(selects.nth(0)).toHaveValue("javascript");
-  await expect(selects.nth(1)).toHaveValue("typescript");
-  await expect(selects.nth(2)).toHaveValue("python");
-  await expect(editor(page).locator("[data-content-type=codeBlock]").first().locator(".bx-tok-keyword")).toHaveText(["const"]);
+  const langs = editor(page).locator('.bx2-block[data-type="code"] .bx2-code-lang-btn');
+  await expect(langs).toHaveCount(4);
+  await expect(langs.nth(0)).toHaveText("JavaScript");
+  await expect(langs.nth(1)).toHaveText("TypeScript");
+  await expect(langs.nth(2)).toHaveText("Python");
+  // Hervorhebung über die CSS Highlight API (kein DOM im Text): das Schlüsselwort ist markiert
+  await expect.poll(() => page.evaluate(() => [...((CSS as unknown as { highlights: Map<string, Iterable<Range>> }).highlights.get("bx2-syn-keyword") ?? [])].map((r) => r.toString()))).toContain("const");
+});
+
+// BSD-407 Teil 3: Blockmenü mit Kopf, Fuß und Icons, Suche mit Pfeilen, Kopier- und Umbruch-Knopf im Codeblock und die kompakte Formatleiste gibt es bisher nur im alten Editor (Block-Editor: Teil 2g).
+// Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
+test.describe("alter Editor (BlockNote)", () => {
+  useLegacyEditor(test);
+
+  test("Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl", async ({ page }) => {
+    await open(page, "Menu");
+    await bnEditor(page).locator(".bn-block-content").first().click();
+    await paste(page, "## Heading two\n\nSome text here");
+    await expect.poll(async () => (await bnBlocks(page)).length).toBeGreaterThan(1);
+    await page.waitForTimeout(500); // Einfügen fertig gezeichnet, bevor der Griff gesucht wird
+    await bnEditor(page).getByText("Heading two").hover();
+    await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+    await page.locator(".bn-side-menu [draggable=true]").last().click();
+    const menu = page.getByRole("menu").first();
+    await expect(page.getByTestId("block-menu-head")).toHaveText("Heading 2");
+    await expect(page.getByTestId("block-menu-foot")).toContainText("2 words · 11 characters");
+    for (const name of ["Turn into", "Color", "Duplicate", "Move to", "Delete", "Copy as Markdown", "Copy and sync"]) {
+      await expect(menu.getByRole("menuitem", { name })).toBeVisible();
+    }
+    // jeder Eintrag hat genau ein Icon (aus dem Icon-Satz der App wie im Seitenmenü „…“), das Menü bleibt im Fenster
+    expect(await menu.locator("[role=menuitem] :is(.bx-menu-icon, .nf-glyph)").count()).toBeGreaterThanOrEqual(7);
+    for (const item of await menu.getByRole("menuitem").all()) expect(await item.locator(":is(.bx-menu-icon, .nf-glyph)").count()).toBe(1);
+    // Icons stehen in einer Spalte links, auch bei Einträgen ohne Kürzel (vorher rechtsbündig nach dem Merge)
+    const iconX = async (name: string) => (await menu.getByRole("menuitem", { name }).locator(":is(.bx-menu-icon, .nf-glyph)").boundingBox())!.x;
+    for (const name of ["Copy as Markdown", "Copy and sync", "Turn into"]) expect(Math.abs((await iconX(name)) - (await iconX("Duplicate"))), name).toBeLessThanOrEqual(1);
+    const box = (await menu.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(820);
+    await menu.getByRole("menuitem", { name: "Delete" }).click();
+    await expect.poll(() => bnBlocks(page)).toEqual(["paragraph:Some text here"]);
+  });
+
+  test("Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts", async ({ page }) => {
+    await open(page, "Code");
+    await bnEditor(page).locator(".bn-block-content").first().click();
+    await paste(page, "```javascript\nconst answer = 42;\n```\n\nafter");
+    const code = bnEditor(page).locator("[data-content-type=codeBlock]").first();
+    await expect(code).toBeVisible();
+    const before = (await code.boundingBox())!;
+    await code.hover();
+    const copy = code.getByRole("button", { name: "Copy code" });
+    await expect(copy).toBeVisible();
+    const during = (await code.boundingBox())!;
+    expect(during.height).toBe(before.height);
+    await copy.click();
+    await expect(code.getByRole("button", { name: /Copied|Couldn’t copy/ })).toBeVisible();
+    // der Knopf gehört nicht zum Text
+    await expect.poll(() => page.evaluate(() => document.querySelector("[data-content-type=codeBlock] code")?.textContent)).toBe("const answer = 42;");
+  });
+
+  test("Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus", async ({ page }) => {
+    await open(page, "Search");
+    await bnEditor(page).locator(".bn-block-content").first().click();
+    await paste(page, "## Heading two\n\nSome text here");
+    await expect.poll(async () => (await bnBlocks(page)).length).toBeGreaterThan(1);
+    await page.waitForTimeout(500);
+    const openMenu = async () => {
+      await bnEditor(page).getByText("Heading two").first().hover();
+      await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      await page.locator(".bn-side-menu [draggable=true]").last().click();
+      await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+    };
+    await openMenu();
+    await page.keyboard.type("cop");
+    await expect(page.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/, /Copy and sync/]);
+    // getippt wurde ins Feld, nicht in den Text der Seite
+    await expect.poll(() => bnBlocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
+    await page.keyboard.press("Escape"); // erst das Feld leeren …
+    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
+    await expect(page.getByRole("menuitem", { name: "Turn into" })).toBeVisible();
+    await page.keyboard.type("zzz");
+    await expect(page.getByRole("menuitem")).toHaveCount(0);
+    await expect(page.getByText("No actions")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.keyboard.type("dup");
+    await page.keyboard.press("Enter");
+    await expect.poll(() => bnBlocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
+    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
+    // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
+    await openMenu();
+    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
+  });
+
+  // BSD-408: Das Blockmenü bleibt offen, wenn der Editor neu zeichnet (z. B. weil sich die Seitenliste ändert). Vorher war
+  // die Seitenleiste bei jedem Neuzeichnen eine neue Komponente und das gerade geöffnete Menü ging wieder zu (CI rot).
+  test("Blockmenü bleibt offen, wenn der Editor neu zeichnet", async ({ page }) => {
+    await open(page, "Stable");
+    await bnEditor(page).locator(".bn-block-content").first().click();
+    await paste(page, "## Heading two\n\nSome text here");
+    await expect.poll(async () => (await bnBlocks(page)).length).toBeGreaterThan(1);
+    await bnEditor(page).getByText("Heading two").first().hover();
+    await page.locator(".bn-side-menu [draggable=true]").last().click();
+    const search = page.getByRole("textbox", { name: "Search actions" });
+    await expect(search).toBeFocused();
+    await page.keyboard.type("dup");
+    for (let i = 0; i < 3; i++) {
+      await command(page, { op: "createPage", title: `Other ${i}` }); // neue Seite → Seitenliste → Editor zeichnet neu
+      await expect(page.getByRole("treeitem", { name: `Other ${i}`, exact: true })).toBeVisible();
+    }
+    await expect(search).toBeFocused();
+    await expect(search).toHaveValue("dup");
+    await page.keyboard.press("Enter");
+    await expect.poll(() => bnBlocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
+  });
+
+  test("Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen", async ({ page }) => {
+    await open(page, "Wrap");
+    await bnEditor(page).locator(".bn-block-content").first().click();
+    await paste(page, "```javascript\nconst long = '" + "on and ".repeat(40) + "';\n```\n\nafter");
+    const code = bnEditor(page).locator("[data-content-type=codeBlock]").first();
+    await expect(code).toBeVisible();
+    const pre = code.locator("pre");
+    expect(await pre.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true); // Standard: umbrochen
+    await code.hover();
+    const wrap = code.getByRole("button", { name: "Wrap code" });
+    await expect(wrap).toHaveAttribute("aria-pressed", "true");
+    await wrap.click();
+    await expect(code).toHaveAttribute("data-wrap", "false");
+    await expect(code.getByRole("button", { name: "Wrap code" })).toHaveAttribute("aria-pressed", "false");
+    expect(await pre.evaluate((e) => e.scrollWidth > e.clientWidth + 50)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); // die Seite rollt nicht
+    await page.waitForTimeout(1200); // gespeichert
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(bnEditor(page).locator("[data-content-type=codeBlock]").first()).toHaveAttribute("data-wrap", "false");
+  });
+
+  test("Formatleiste: kompaktes Feld, ganz im Fenster", async ({ page }) => {
+    await open(page, "Format");
+    await bnEditor(page).locator(".bn-block-content").first().click();
+    await page.keyboard.type("x ".repeat(60) + "tail");
+    await bnEditor(page).getByText("tail").dblclick({ position: { x: 5, y: 8 } });
+    const bar = page.locator(".bn-formatting-toolbar");
+    await expect(bar).toBeVisible();
+    for (const name of ["Bold", "Italic", "Underline", "Strike"]) await expect(bar.getByRole("button", { name, exact: true })).toBeVisible();
+    const box = (await bar.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(1280);
+    expect(box.width).toBeLessThan(220);
+    await bar.getByRole("button", { name: "Bold", exact: true }).click();
+    await expect(bar.getByRole("button", { name: "Bold", exact: true })).toHaveAttribute("aria-pressed", "true");
+  });
 });

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-90: unverlinkte Erwähnungen unter den Backlinks – Stelle mit dem Seitentitel als Text, „Link“ macht sie zur
 // Erwähnung (dann zählt sie als Backlink und der Text in der anderen Seite ist ein Link).
@@ -13,9 +14,8 @@ test("unverlinkte Erwähnung finden und verlinken", async ({ page }) => {
   await command(page, { op: "createPage", title: "Launch plan" });
   await command(page, { op: "createPage", title: "Weekly notes" });
   await page.getByRole("treeitem", { name: "Weekly notes" }).click();
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await expect(editor).toBeVisible();
-  await editor.locator(".bn-block-content").first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("We reviewed the launch plan today.");
   await page.waitForTimeout(800);
 
@@ -33,8 +33,8 @@ test("unverlinkte Erwähnung finden und verlinken", async ({ page }) => {
 
   // in der anderen Seite ist der Text jetzt eine Erwähnung
   await page.getByRole("treeitem", { name: "Weekly notes" }).click();
-  await expect(page.locator(".bn-editor").first().getByText("launch plan", { exact: false }).first()).toBeVisible();
-  await expect(page.locator(".bn-editor").first().locator("[data-inline-content-type], .bx-mention").first()).toBeVisible();
+  await expect(blockEditor(page).getByText("launch plan", { exact: false }).first()).toBeVisible();
+  await expect(blockEditor(page).locator(".bx2-mention").first()).toBeVisible();
 });
 
 test("[[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2)", async ({ page }) => {
@@ -44,11 +44,11 @@ test("[[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu
   await command(page, { op: "createPage", title: "Launch plan" });
   await command(page, { op: "createPage", title: "Diary" });
   await page.getByRole("treeitem", { name: "Diary" }).click();
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await expect(editor).toBeVisible();
-  await editor.locator(".bn-block-content").first().click();
+  const editor = blockEditor(page);
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("Today: [[Launch plan]] and [[Brand new idea]] done");
-  const mentions = editor.locator("[data-inline-content-type='mention']");
+  const mentions = editor.locator(".bx2-mention");
   await expect(mentions).toHaveCount(2);
   await expect(mentions.first()).toContainText("Launch plan");
   await expect(mentions.nth(1)).toContainText("Brand new idea");

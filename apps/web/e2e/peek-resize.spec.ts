@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-373: Side Peek – Breite am linken Rand ziehen (Grenzen, pro Gerät gemerkt, Doppelklick = Standard) und Esc
 // schließt ihn in der Reihenfolge Menü/Popover → Blockauswahl → Peek, auch mit dem Fokus in der Ansicht dahinter.
@@ -74,20 +75,20 @@ test("Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mi
   await expect(peek).toHaveCount(0);
   // Editor: erstes Esc = Blockauswahl, zweites schließt
   await openPeek(page, "Row 2");
-  await peek.locator(".bn-editor").first().click();
+  await focusEditorEnd(peek);
   await page.keyboard.type("Hello");
   await page.keyboard.press("Escape");
-  await expect(peek.locator(".bx-doc[data-block-selection]")).toHaveCount(1);
+  await expect(blockEditor(peek).locator(".bx2-block[data-selected]")).toHaveCount(1);
   await expect(peek).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(peek).toHaveCount(0);
   // Slash-Menü offen: Esc schließt erst das Menü
   await openPeek(page, "Row 3");
-  await peek.locator(".bn-editor").first().click();
+  await focusEditorEnd(peek);
   await page.keyboard.type("/");
-  await expect(page.locator(".bn-suggestion-menu")).toBeVisible();
+  await expect(page.getByTestId("slash-menu")).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.locator(".bn-suggestion-menu")).toHaveCount(0);
+  await expect(page.getByTestId("slash-menu")).toHaveCount(0);
   await expect(peek).toBeVisible();
   // Fokus in der Tabelle dahinter
   await page.getByRole("gridcell", { name: /^Row 1/ }).click();

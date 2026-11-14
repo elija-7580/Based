@@ -81,6 +81,24 @@ export function replaceRuns(runs: readonly Run[], from: number, to: number, inse
   return normalize([...slice(runs as Run[], 0, a), ...ins, ...slice(runs as Run[], b, len)]);
 }
 
+/**
+ * BSD-407 Teil 3: Klartext-Bearbeitung auf formatierten Text übertragen (Tabellenzellen des Block-Editors bearbeiten
+ * nur Klartext). Nur der geänderte Mittelteil wird ersetzt; Marks, Erwähnungen und Formeln davor und dahinter bleiben,
+ * neu getippter Text übernimmt die Marks an der Stelle. Liegt die Änderung in einem atomaren Lauf, wird dieser ersetzt.
+ */
+export function editPlainText(runs: readonly Run[], next: string): Run[] {
+  const old = runs.map((r) => r.t).join("");
+  if (old === next) return runs.map((r) => ({ ...r }));
+  let p = 0;
+  while (p < old.length && p < next.length && old.charCodeAt(p) === next.charCodeAt(p)) p++;
+  let s = 0;
+  while (s < old.length - p && s < next.length - p && old.charCodeAt(old.length - 1 - s) === next.charCodeAt(next.length - 1 - s)) s++;
+  const a = snapOffset(runs, p, "start");
+  const b = snapOffset(runs, old.length - s, "end");
+  const insert = next.slice(a, next.length - (old.length - b));
+  return replaceRuns(runs, a, b, insert);
+}
+
 /** Hat jedes Zeichen in `[from, to)` den Mark? (Formatleiste: Knopf aktiv; Umschalten nimmt ihn dann weg.) */
 export function hasMark(runs: readonly Run[], from: number, to: number, key: MarkKey, value?: string | boolean): boolean {
   if (from >= to) return false;

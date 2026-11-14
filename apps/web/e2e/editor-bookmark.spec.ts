@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -23,7 +24,7 @@ const test = base.extend<{ page: Page }>({
 type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
-const editor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
+const editor = (page: Page) => blockEditor(page);
 
 const HTML = `<html><head><title>Fallback</title><meta property="og:title" content="Based — the calm workspace">
 <meta property="og:description" content="Pages, databases and agents that stay on your Mac. Sync when you want it, offline when you need it.">
@@ -44,19 +45,19 @@ async function ready(page: Page, hook: boolean) {
 async function openPage(page: Page, title: string) {
   await page.getByRole("treeitem", { name: title }).click();
   await expect(page.getByLabel("Page title")).toHaveValue(title);
-  await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+  await expectEditable(page);
 }
 
 async function bookmark(page: Page, url: string) {
-  await editor(page).locator(".bn-block-content").first().click();
+  await focusEditorEnd(page);
   await page.keyboard.type("/Web bookmark");
   await expect(page.getByRole("option", { name: /Web bookmark/ })).toBeVisible();
   await page.keyboard.press("Enter");
-  const field = editor(page).getByPlaceholder("Paste a link (bookmark)…");
+  const field = editor(page).getByRole("textbox", { name: "Bookmark link" });
   await expect(field).toBeVisible();
   await field.fill(url);
   await field.press("Enter");
-  await expect(editor(page).locator(".bx-embed-card")).toContainText(url);
+  await expect(editor(page).locator(".bx2-bookmark-block")).toContainText(url);
 }
 
 const calls = (page: Page) => page.evaluate(() => (globalThis as unknown as { __based: { previewCalls?: string[] } }).__based.previewCalls ?? []);
@@ -73,14 +74,14 @@ test("Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; b
   const fetchBtn = editor(page).getByRole("button", { name: "Fetch preview" });
   await expect(fetchBtn).toBeVisible();
   await fetchBtn.click();
-  const card = editor(page).locator(".bx-embed-card");
-  await expect(card.locator(".bx-embed-title")).toHaveText("Based — the calm workspace");
-  await expect(card.locator(".bx-embed-summary")).toContainText("Pages, databases and agents");
-  await expect(card.locator(".bx-embed-url")).toHaveText("https://example.com/based");
+  const card = editor(page).locator(".bx2-bookmark");
+  await expect(card.locator(".bx2-bookmark-title")).toHaveText("Based — the calm workspace");
+  await expect(card.locator(".bx2-bookmark-summary")).toContainText("Pages, databases and agents");
+  await expect(card.locator(".bx2-bookmark-url")).toHaveText("https://example.com/based");
   expect(await calls(page)).toEqual(["https://example.com/based"]);
   await expect(editor(page).getByRole("button", { name: "Refresh preview" })).toBeVisible();
   // Feinschliff: die Karte bleibt mit Knopf so breit wie die Spalte (wie ohne Knopf)
-  const widths = await card.evaluate((el) => ({ card: el.getBoundingClientRect().width, block: el.closest(".bn-block-content")!.getBoundingClientRect().width }));
+  const widths = await card.evaluate((el) => ({ card: el.getBoundingClientRect().width, block: el.closest(".bx2-bookmark-block")!.getBoundingClientRect().width }));
   expect(Math.abs(widths.card - widths.block)).toBeLessThan(4);
   // Keine fremden Bilder geladen (das Vorschaubild bleibt nur im Record)
   await expect(card.locator("img")).toHaveCount(0);
@@ -89,7 +90,7 @@ test("Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; b
   await page.reload();
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await openPage(page, "Links");
-  await expect(editor(page).locator(".bx-embed-card .bx-embed-title")).toHaveText("Based — the calm workspace");
+  await expect(editor(page).locator(".bx2-bookmark .bx2-bookmark-title")).toHaveText("Based — the calm workspace");
 });
 
 test("Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App)", async ({ page }) => {
@@ -108,7 +109,7 @@ test("Bildschirmfotos: Bookmark mit Vorschau", async ({ page, browserName }) => 
   await openPage(page, "Reading list");
   await bookmark(page, "https://example.com/based");
   await editor(page).getByRole("button", { name: "Fetch preview" }).click();
-  await expect(editor(page).locator(".bx-embed-title")).toHaveText("Based — the calm workspace");
+  await expect(editor(page).locator(".bx2-bookmark-title")).toHaveText("Based — the calm workspace");
   await page.waitForTimeout(800);
   for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
     await page.setViewportSize({ width: w, height: h });
@@ -121,7 +122,7 @@ test("Bildschirmfotos: Bookmark mit Vorschau", async ({ page, browserName }) => 
       await page.evaluate(() => { (globalThis as unknown as { __based: { linkPreviewHTML?: unknown } }).__based.linkPreviewHTML = async () => ""; });
       await openPage(page, "Other");
       await openPage(page, "Reading list");
-      await expect(editor(page).locator(".bx-embed-title")).toHaveText("Based — the calm workspace");
+      await expect(editor(page).locator(".bx2-bookmark-title")).toHaveText("Based — the calm workspace");
       await expect(editor(page).getByRole("button", { name: "Refresh preview" })).toBeVisible();
       await page.waitForTimeout(300);
       await page.screenshot({ path: `../../docs/design/screens/web-editor-bookmark-${w}x${h}-${theme}.png` });

@@ -130,6 +130,7 @@ export type { HeadingSource, OutlineHeading } from "./editor/headings.js";
 export { countWords, findInText, foldWithMap, pageTextStats, textStats } from "./editor/text-stats.js";
 export type { TextMatch, TextStats } from "./editor/text-stats.js";
 export { EMOJI_CATALOG, RANDOM_ICONS, randomIcon, searchEmoji } from "./editor/emoji.js";
+export { wikilinkBefore } from "./editor/wikilink.js";
 export type { EmojiEntry } from "./editor/emoji.js";
 export { ICON_COLORS, iconAsText, parsePhosphorIcon, phosphorIcon } from "./editor/icon-ref.js";
 export type { IconColor, PhosphorIconRef } from "./editor/icon-ref.js";
@@ -154,7 +155,7 @@ export type {
 } from "./model/meeting.js";
 export {
   addMeetingContext, addMeetingTrack, appendTranscript, applyMeetingSummary, applySpeakerTurns, createMeeting, editTranscript, findMeetingSection,
-  meetingContaining, meetingContextText, meetingInfo, meetingNotesText, meetingSection, meetingSummaryTexts, meetingTitleFor, meetingTranscript,
+  meetingContaining, meetingContextText, meetingInfo, pageHasMeeting, meetingNotesText, meetingSection, meetingSummaryTexts, meetingTitleFor, meetingTranscript,
   meetingVocabulary, mergeSpeakers, mergedSpeakers, removeMeetingContext, renameSpeaker, replaceTranscript, setMeetingStatus, setMeetingTitle,
   setSegmentSpeaker, stampNote, stampedNotes, transcriptChunks, unstampedNotes, updateMeeting,
 } from "./store/meeting-ops.js";

@@ -1,4 +1,6 @@
 import { expect, test as base, type Locator, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
+import { useLegacyEditor } from "./legacy-editor.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -66,6 +68,15 @@ async function caretInLastLine(page: Page) {
   await page.keyboard.press("End");
   if (((await content.innerText()).trim() !== "") || (await content.getAttribute("data-content-type")) !== "paragraph") await page.keyboard.press("Enter");
 }
+
+/** Block-Editor (Standard seit BSD-407 Teil 3): Seite öffnen, Schreibmarke in eine leere Zeile am Ende. */
+async function openBlockPage(page: Page, title: string) {
+  await page.getByRole("treeitem", { name: title }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue(title);
+  await expectEditable(page);
+}
+const bxType = (page: Page, type: string) => blockEditor(page).locator(`.bx2-block[data-type="${type}"]`);
+const bxField = (page: Page, type: string, text: string) => bxType(page, type).locator("[data-editable-id]", { hasText: text }).first();
 
 /** Einfügen wie aus der Zwischenablage (auch in WebKit, wo Tests die echte nicht lesen dürfen). */
 async function paste(page: Page, data: Record<string, string>, opts: { plain?: boolean } = {}) {
@@ -138,387 +149,88 @@ test("Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach d
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await createPage(page, "Paste target");
-  await openPage(page, "Paste target");
-  await caretInLastLine(page);
+  await openBlockPage(page, "Paste target");
+  await focusEditorEnd(page);
   await page.keyboard.type("Intro line");
   await settled(page);
   await page.keyboard.press("Enter");
   await paste(page, { "text/plain": MARKDOWN });
 
-  const ed = editor(page);
+  const ed = blockEditor(page);
   const check = async () => {
-    await expect(ed.locator("[data-content-type=heading] h1")).toHaveText("Launch plan");
-    const para = ed.locator("[data-content-type=paragraph]", { hasText: "Ship with" });
-    await expect(para.locator("strong")).toHaveText("bold");
-    await expect(para.locator("em")).toHaveText("care");
-    await expect(para.locator("code")).toHaveText("code");
+    await expect(bxType(page, "heading1").locator("[data-editable-id]")).toHaveText("Launch plan");
+    const para = bxField(page, "text", "Ship with");
+    await expect(para.locator(".bx2-b")).toHaveText("bold");
+    await expect(para.locator(".bx2-i")).toHaveText("care");
+    await expect(para.locator(".bx2-c")).toHaveText("code");
     await expect(para.locator("a")).toHaveAttribute("href", "https://example.com/docs");
     // Verschachtelung: Research › Interviews › Synthesis
-    const research = ed.locator(".bn-block-outer", { has: page.locator(":scope > .bn-block > [data-content-type=bulletListItem]", { hasText: "Research" }) }).first();
-    const interviews = research.locator(".bn-block-group .bn-block-outer", { has: page.locator(":scope > .bn-block > [data-content-type=bulletListItem]", { hasText: "Interviews" }) }).first();
+    const research = bxType(page, "bulletedList").filter({ has: page.locator(":scope > .bx2-row [data-editable-id]", { hasText: "Research" }) }).first();
+    const interviews = research.locator('.bx2-block[data-type="bulletedList"]').filter({ has: page.locator(":scope > .bx2-row [data-editable-id]", { hasText: "Interviews" }) }).first();
     await expect(interviews).toBeVisible();
-    await expect(interviews.locator(".bn-block-group [data-content-type=bulletListItem]", { hasText: "Synthesis" })).toBeVisible();
-    await expect(ed.locator("[data-content-type=numberedListItem]")).toHaveCount(2);
-    await expect(ed.locator("[data-content-type=checkListItem]", { hasText: "Kickoff done" }).locator("input[type=checkbox]")).toBeChecked();
-    await expect(ed.locator("[data-content-type=checkListItem]", { hasText: "Launch pending" }).locator("input[type=checkbox]")).not.toBeChecked();
-    await expect(ed.locator("[data-content-type=quote]")).toHaveText("Stay calm and ship.");
-    const code = ed.locator("[data-content-type=codeBlock]");
-    await expect(code).toContainText("const answer = 42;");
-    await expect(code).toHaveAttribute("data-language", "typescript"); // BSD-343: „ts“ wird als TypeScript angezeigt
-    const table = ed.locator("[data-content-type=table]");
+    await expect(interviews.locator('.bx2-block[data-type="bulletedList"] [data-editable-id]', { hasText: "Synthesis" })).toBeVisible();
+    await expect(bxType(page, "numberedList")).toHaveCount(2);
+    await expect(bxType(page, "todo").filter({ hasText: "Kickoff done" }).locator("input[type=checkbox]")).toBeChecked();
+    await expect(bxType(page, "todo").filter({ hasText: "Launch pending" }).locator("input[type=checkbox]")).not.toBeChecked();
+    await expect(bxType(page, "quote").locator("[data-editable-id]")).toHaveText("Stay calm and ship.");
+    const code = bxType(page, "code");
+    await expect(code.locator("[data-editable-id]")).toContainText("const answer = 42;");
+    await expect(code.locator(".bx2-code-lang-btn")).toHaveText("TypeScript"); // BSD-343: „ts“ wird als TypeScript angezeigt
+    const table = bxType(page, "table");
     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
-    await expect(ed.locator("[data-content-type=divider]")).toHaveCount(1);
-    await expect(ed.locator("[data-content-type=image]")).toHaveAttribute("data-url", "https://example.com/roadmap.png");
+    await expect(bxType(page, "divider")).toHaveCount(1);
+    await expect(bxType(page, "image").locator("figure")).toHaveAttribute("data-url", "https://example.com/roadmap.png");
   };
   await check();
 
   // Ein Undo-Schritt nimmt alles Eingefügte zurück, der Text davor bleibt; Redo bringt es wieder.
-  await ed.locator("[data-content-type=quote]").click();
+  await bxType(page, "quote").locator("[data-editable-id]").click();
   await page.keyboard.press("ControlOrMeta+z");
-  await expect(ed.locator("[data-content-type=heading]")).toHaveCount(0);
-  await expect(ed.locator("[data-content-type=table]")).toHaveCount(0);
-  await expect(ed.locator("[data-content-type=codeBlock]")).toHaveCount(0);
+  await expect(bxType(page, "heading1")).toHaveCount(0);
+  await expect(bxType(page, "table")).toHaveCount(0);
+  await expect(bxType(page, "code")).toHaveCount(0);
   await expect(ed.getByText("Intro line")).toBeVisible();
   await page.keyboard.press("ControlOrMeta+Shift+z");
   await check();
 
   await settled(page);
   await page.reload();
-  await openPage(page, "Paste target");
+  await openBlockPage(page, "Paste target");
   await check();
   expect(errors).toEqual([]);
 });
 
 test("Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz", async ({ page }) => {
   await createPage(page, "Paste rules");
-  await openPage(page, "Paste rules");
-  const ed = editor(page);
-  await caretInLastLine(page);
+  await openBlockPage(page, "Paste rules");
+  const ed = blockEditor(page);
+  await focusEditorEnd(page);
   // HTML und Markdown-Text zugleich: HTML gewinnt.
   await paste(page, { "text/html": "<h2>From HTML</h2><p>Body</p>", "text/plain": "# From Markdown" });
-  await expect(ed.locator("[data-content-type=heading] h2")).toHaveText("From HTML");
+  await expect(bxType(page, "heading2").locator("[data-editable-id]")).toHaveText("From HTML");
   await expect(ed.getByText("From Markdown")).toHaveCount(0);
 
   // Als Klartext einfügen: Markdown-Zeichen bleiben stehen, keine Überschrift, keine Liste.
-  await caretInLastLine(page);
+  await focusEditorEnd(page);
   await paste(page, { "text/plain": "# Not a heading\n- not a list" }, { plain: true });
   await expect(ed.getByText("# Not a heading")).toBeVisible();
   await expect(ed.getByText("- not a list")).toBeVisible();
-  await expect(ed.locator("[data-content-type=heading]")).toHaveCount(1);
-  await expect(ed.locator("[data-content-type=bulletListItem]")).toHaveCount(0);
+  await expect(ed.locator('.bx2-block[data-type^="heading"]')).toHaveCount(1);
+  await expect(bxType(page, "bulletedList")).toHaveCount(0);
 
   // Eine Zeile mit Inline-Markdown mitten im Text: bleibt im selben Absatz.
-  await caretInLastLine(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("Before ");
   await paste(page, { "text/plain": "**strong** words" });
-  const para = ed.locator("[data-content-type=paragraph]", { hasText: "Before" });
+  const para = bxField(page, "text", "Before");
   await expect(para).toHaveText("Before strong words");
-  await expect(para.locator("strong")).toHaveText("strong");
+  await expect(para.locator(".bx2-b")).toHaveText("strong");
 
   // Mehrzeiliger Klartext ohne Markdown: ein Absatz je Zeile.
-  await caretInLastLine(page);
+  await focusEditorEnd(page);
   await paste(page, { "text/plain": "alpha line\nbeta line\ngamma line" });
-  for (const t of ["alpha line", "beta line", "gamma line"]) await expect(ed.locator("[data-content-type=paragraph]", { hasText: t })).toHaveText(t);
-});
-
-test("@ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert", async ({ page, browserName }) => {
-  const zeppelin = await createPage(page, "Project Zeppelin");
-  await createPage(page, "Notes");
-  await openPage(page, "Notes");
-  const ed = editor(page);
-  await caretInLastLine(page);
-  await page.keyboard.type("See @Zepp");
-  const item = page.locator(".bn-suggestion-menu-item", { hasText: "Project Zeppelin" }).first();
-  await expect(item).toBeVisible();
-  if (SHOTS && browserName === "chromium") await shots(page, browserName, "mention-menu");
-  await page.keyboard.press("Enter");
-  const mention = ed.locator(".bx-mention[data-kind=page]").first();
-  await expect(mention).toContainText("Project Zeppelin");
-  await expect(mention).toHaveAttribute("data-page", zeppelin);
-
-  // Datum mit Erinnerungs-Flagge
-  await page.keyboard.type("due @tomor");
-  // Warten, bis das Menü zur ganzen Eingabe passt (vorher stehen Today und Tomorrow beide da).
-  await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Today" })).toHaveCount(0);
-  await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Tomorrow" }).first()).toBeVisible();
-  await page.keyboard.press("Enter");
-  const date = ed.locator(".bx-mention[data-kind=date]").first();
-  const tomorrow = await page.evaluate(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric" });
-  });
-  await expect(date).toHaveText("@" + tomorrow);
-  await date.click();
-  await page.getByRole("dialog", { name: "Date options" }).getByLabel("Remind me").check();
-  await expect(date).toHaveAttribute("data-remind", "true");
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "Date options" })).toHaveCount(0);
-  // BSD-210: Datumswähler – Tag, Bereich, Uhrzeit (die Erinnerung bleibt)
-  const dateDialog = page.getByRole("dialog", { name: "Date options" });
-  const options = async () => {
-    if (!(await dateDialog.isVisible())) await date.click();
-    await expect(dateDialog).toBeVisible();
-    return dateDialog;
-  };
-  await (await options()).getByLabel("Start day").fill("2026-12-24");
-  await expect(date).toContainText("2026");
-  await expect(date).toContainText("24");
-  await (await options()).getByLabel("End date").check();
-  await (await options()).getByLabel("End day").fill("2026-12-26");
-  await expect(date).toContainText("→");
-  await (await options()).getByLabel("Include time").check();
-  await expect((await options()).getByLabel("Start time")).toBeVisible();
-  await expect(date).toHaveAttribute("data-remind", "true");
-  await page.keyboard.press("Escape");
-
-  // [[ sucht nur Seiten; „New page“ legt eine an und erwähnt sie
-  await caretAtEnd(page, ed, "See");
-  await page.keyboard.type(" [[Brand new idea");
-  const create = page.locator(".bn-suggestion-menu-item", { hasText: "New page “Brand new idea”" });
-  await expect(create).toBeVisible();
-  await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Tomorrow" })).toHaveCount(0);
-  await create.click();
-  await expect(ed.locator(".bx-mention[data-kind=page]", { hasText: "Brand new idea" })).toBeVisible();
-  await expect(page.getByRole("treeitem", { name: "Brand new idea" })).toBeVisible();
-  await expect(ed.getByText("[[")).toHaveCount(0);
-
-  // Titel live: Umbenennen der Zielseite ändert die Erwähnung
-  await command(page, { op: "rename", id: zeppelin, title: "Project Airship" });
-  await expect(mention).toContainText("Project Airship");
-  await shots(page, browserName, "mention");
-
-  // Nach dem Neuladen ist alles noch da
-  await settled(page);
-  await page.reload();
-  await openPage(page, "Notes");
-  await expect(ed.locator(".bx-mention[data-kind=page]", { hasText: "Project Airship" })).toBeVisible();
-  await expect(ed.locator(".bx-mention[data-kind=page]", { hasText: "Brand new idea" })).toBeVisible();
-  await expect(ed.locator(".bx-mention[data-kind=date]")).toHaveAttribute("data-remind", "true");
-
-  // Klick navigiert zur Seite; dort steht der Backlink
-  await ed.locator(".bx-mention[data-kind=page]", { hasText: "Project Airship" }).click();
-  await expect(page.getByLabel("Page title")).toHaveValue("Project Airship");
-  const backlinks = page.getByTestId("backlinks");
-  await expect(backlinks).toContainText("1 backlink");
-  await expect(backlinks.getByRole("button", { name: "Notes" })).toBeVisible();
-  await backlinks.getByRole("button", { name: "Notes" }).click();
-  await expect(page.getByLabel("Page title")).toHaveValue("Notes");
-
-  // Papierkorb: die Erwähnung ist markiert; nach dem Wiederherstellen nicht mehr
-  await command(page, { op: "trash", ids: [zeppelin] });
-  const trashed = editor(page).locator(".bx-mention[data-kind=page]", { hasText: "Project Airship" });
-  await expect(trashed).toHaveAttribute("data-trashed", "true");
-  await expect(trashed).toContainText("in Trash");
-  await command(page, { op: "restore", ids: [zeppelin] });
-  await expect(trashed).not.toHaveAttribute("data-trashed", "true");
-});
-
-test("Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar", async ({ page, browserName }) => {
-  await createPage(page, "Long read");
-  await openPage(page, "Long read");
-  await caretInLastLine(page);
-  const filler = (n: number) => Array.from({ length: 14 }, (_, i) => `Paragraph ${n}.${i + 1} of the long read.`).join("\n\n");
-  const md = ["# Opening", filler(1), "## Background", filler(2), "### Details", filler(3), "## Results", filler(4), "# Closing", filler(5)].join("\n\n");
-  await paste(page, { "text/plain": md });
-  const ed = editor(page);
-  await expect(ed.locator("[data-content-type=heading]")).toHaveCount(5);
-
-  const outline = page.getByTestId("page-outline");
-  await expect(outline).toBeVisible();
-  const items = outline.getByRole("button");
-  await expect(items).toHaveCount(5);
-  expect(await outline.locator("li").evaluateAll((els) => els.map((e) => e.getAttribute("data-depth")))).toEqual(["0", "1", "2", "1", "0"]);
-
-  // Eingeklappt: nur Balken; bei Hover die Titel
-  await page.mouse.move(10, 10);
-  await expect(outline.locator(".bx-outline-label").first()).toBeHidden();
-  await outline.hover();
-  await expect(outline.locator(".bx-outline-label")).toHaveText(["Opening", "Background", "Details", "Results", "Closing"]);
-  await shots(page, browserName, "outline");
-
-  // Klick scrollt zur Überschrift und markiert sie
-  const results = ed.locator("[data-content-type=heading]", { hasText: "Results" });
-  await expect(results).not.toBeInViewport();
-  await items.nth(3).click();
-  await expect(results).toBeInViewport();
-  await expect(items.nth(3)).toHaveAttribute("aria-current", "location");
-  // Scrollen von Hand ändert die Markierung
-  await page.mouse.move(400, 300);
-  await ed.locator("[data-content-type=heading]", { hasText: "Opening" }).scrollIntoViewIfNeeded();
-  await expect(items.nth(0)).toHaveAttribute("aria-current", "location");
-  await ed.getByText("Paragraph 5.14 of the long read.").scrollIntoViewIfNeeded();
-  await expect(items.nth(4)).toHaveAttribute("aria-current", "location");
-
-  // Inhaltsverzeichnis-Block zeigt dieselben Überschriften
-  await caretAtEnd(page, ed, "Paragraph 5.14 of the long read.");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("/table of cont");
-  // Mit der Tastatur wählen: am Seitenende kann das Menü teils außerhalb des Sichtbereichs liegen.
-  await expect(page.locator(".bn-suggestion-menu-item[aria-selected=true]")).toContainText("Table of contents");
-  await page.keyboard.press("Enter");
-  await expect(ed.locator(".bx-toc a")).toHaveText(["Opening", "Background", "Details", "Results", "Closing"]);
-  await ed.locator(".bx-toc a", { hasText: "Background" }).click();
-  await expect(ed.locator("[data-content-type=heading]", { hasText: "Background" })).toBeInViewport();
-
-  // Pro Seite abschalten (Seitenmenü), bleibt nach dem Neuladen; andere Seiten sind nicht betroffen
-  await page.getByRole("button", { name: "Page menu" }).click();
-  await page.getByRole("menuitem", { name: "Hide outline" }).click();
-  await expect(outline).toHaveCount(0);
-  await settled(page);
-  await page.reload();
-  await openPage(page, "Long read");
-  await expect(editor(page).locator("[data-content-type=heading]")).toHaveCount(5);
-  await expect(page.getByTestId("page-outline")).toHaveCount(0);
-  await openPage(page, "Welcome to Based");
-  await expect(page.getByTestId("page-outline")).toBeVisible();
-  await openPage(page, "Long read");
-  await page.getByRole("button", { name: "Page menu" }).click();
-  await page.getByRole("menuitem", { name: "Show outline" }).click();
-  await expect(page.getByTestId("page-outline").getByRole("button")).toHaveCount(5);
-});
-
-test("Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb", async ({ page, browserName }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  const source = await createPage(page, "Source page");
-  await createPage(page, "Mirror page");
-  await createPage(page, "Third page");
-  await openPage(page, "Source page");
-  await caretInLastLine(page);
-  await page.keyboard.type("Shared launch checklist");
-  await settled(page);
-
-  // Blockmenü → Copy and sync
-  const block = editor(page).locator(".bn-block-content", { hasText: "Shared launch checklist" }).first();
-  await block.hover();
-  await page.locator(".bn-side-menu [draggable=true]").first().click();
-  await page.getByRole("menuitem", { name: "Copy and sync" }).click();
-  const original = editor(page).locator(".bx-synced[data-copy=false]");
-  await expect(original).toBeVisible();
-  await expect(original).toContainText("Shared launch checklist");
-  const originalID = await original.evaluate((el) => el.closest(".bn-block-outer")!.getAttribute("data-id")!);
-  await settled(page);
-
-  // Auf der zweiten Seite einfügen (Zwischenablage-Text `based-sync:<id>`)
-  await openPage(page, "Mirror page");
-  await caretInLastLine(page);
-  await page.keyboard.type("Above the copy");
-  await paste(page, { "text/plain": "based-sync:" + originalID });
-  const copy = editor(page).locator(".bx-synced[data-copy=true]");
-  await expect(copy).toBeVisible();
-  await expect(copy).toContainText("Shared launch checklist");
-  await expect(copy.getByRole("button", { name: "Original in Source page" })).toBeAttached();
-
-  // Derselbe Block ein zweites Mal auf derselben Seite: abgelehnt, mit Hinweis
-  await caretAtEnd(page, editor(page), "Above the copy");
-  await paste(page, { "text/plain": "based-sync:" + originalID });
-  await expect(page.getByTestId("editor-notice")).toContainText("already on this page");
-  await expect(editor(page).locator(".bx-synced")).toHaveCount(1);
-
-  // In der Kopie schreiben …
-  await caretAtEnd(page, copy, "Shared launch checklist");
-  await page.keyboard.type(" – edited in the mirror");
-  await expect(copy).toContainText("Shared launch checklist – edited in the mirror");
-  await settled(page);
-  await shots(page, browserName, "synced");
-
-  // … erscheint im Original, und umgekehrt
-  await openPage(page, "Source page");
-  const orig = editor(page).locator(".bx-synced[data-copy=false]");
-  await expect(orig).toContainText("Shared launch checklist – edited in the mirror");
-  await caretAtEnd(page, orig, "edited in the mirror");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("Second line from the source");
-  await settled(page);
-  await openPage(page, "Mirror page");
-  await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Second line from the source");
-
-  // Dritte Seite: über „Paste synced block“ im Slash-Menü (ohne Zwischenablage)
-  await openPage(page, "Third page");
-  await caretInLastLine(page);
-  await page.keyboard.type("/paste synced");
-  await page.locator(".bn-suggestion-menu-item", { hasText: "Paste synced block" }).first().click();
-  const third = editor(page).locator(".bx-synced[data-copy=true]");
-  await expect(third).toContainText("Second line from the source");
-
-  // Nach dem Neuladen ist alles noch da
-  await settled(page);
-  await page.reload();
-  await openPage(page, "Third page");
-  await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Shared launch checklist – edited in the mirror");
-  await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Second line from the source");
-
-  // Unsync: der Inhalt bleibt als eigene Kopie und folgt dem Original nicht mehr
-  const unsynced = editor(page).locator(".bx-synced");
-  await unsynced.hover();
-  await unsynced.getByRole("button", { name: "Unsync" }).click();
-  await expect(editor(page).locator(".bx-synced[data-copy=false]")).toContainText("Second line from the source");
-  await expect(editor(page).locator(".bx-synced[data-copy=true]")).toHaveCount(0);
-  await caretAtEnd(page, editor(page).locator(".bx-synced"), "Second line from the source");
-  await page.keyboard.type(" (independent)");
-  await settled(page);
-  await openPage(page, "Mirror page");
-  await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Second line from the source");
-  await expect(editor(page).locator(".bx-synced[data-copy=true]")).not.toContainText("(independent)");
-
-  // Original im Papierkorb: die Kopie zeigt einen Hinweis; nach dem Wiederherstellen ist er weg
-  await command(page, { op: "trash", ids: [source] });
-  const mirror = editor(page).locator(".bx-synced[data-copy=true]");
-  await expect(mirror).toHaveAttribute("data-trashed", "true");
-  await expect(mirror.getByRole("status")).toContainText("is in the Trash");
-  if (SHOTS && browserName === "chromium") await shots(page, browserName, "synced-trashed");
-  await command(page, { op: "restore", ids: [source] });
-  await expect(mirror).not.toHaveAttribute("data-trashed", "true");
-  expect(errors).toEqual([]);
-});
-
-test("Blockmenü: Turn into, Duplicate und ⌘D (BSD-207)", async ({ page }) => {
-  await createPage(page, "Block actions");
-  await openPage(page, "Block actions");
-  await caretInLastLine(page);
-  await page.keyboard.type("Launch plan");
-  await settled(page);
-
-  const block = editor(page).locator(".bn-block-content", { hasText: "Launch plan" }).first();
-  await block.hover();
-  await page.locator(".bn-side-menu [draggable=true]").first().click();
-  await page.getByRole("menuitem", { name: "Turn into" }).hover();
-  await page.getByRole("menuitem", { name: "Heading 2" }).click();
-  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toBeVisible();
-
-  await block.hover();
-  await page.locator(".bn-side-menu [draggable=true]").first().click();
-  await page.getByRole("menuitem", { name: /Duplicate/ }).click();
-  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(2);
-
-  // ⌘D in der Kopie dupliziert noch einmal
-  await editor(page).locator("h2", { hasText: "Launch plan" }).nth(1).click();
-  await page.keyboard.press("ControlOrMeta+d");
-  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
-  await settled(page);
-  await page.reload();
-  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
-});
-
-test("Blockmenü: Turn into → Block equation (BSD-249 Teil 2)", async ({ page }) => {
-  await createPage(page, "Equation turn");
-  await openPage(page, "Equation turn");
-  await caretInLastLine(page);
-  await page.keyboard.type("a^2 + b^2 = c^2");
-  await settled(page);
-  const block = editor(page).locator(".bn-block-content", { hasText: "a^2 + b^2 = c^2" }).first();
-  await block.hover();
-  await page.locator(".bn-side-menu [draggable=true]").first().click();
-  await page.getByRole("menuitem", { name: "Turn into" }).hover();
-  await page.getByRole("menuitem", { name: "Block equation" }).click();
-  const eq = editor(page).locator(".bx-equation").first();
-  await expect(eq).toBeVisible();
-  await expect(eq.locator(".katex").first()).toBeVisible();
-  await settled(page);
-  await page.reload();
-  await expect(editor(page).locator(".bx-equation .katex").first()).toBeVisible();
+  for (const t of ["alpha line", "beta line", "gamma line"]) await expect(bxField(page, "text", t)).toHaveText(t);
 });
 
 /** Blockmenü am Block mit diesem Text öffnen. */
@@ -528,464 +240,769 @@ async function blockMenu(page: Page, text: string) {
   await page.locator(".bn-side-menu [draggable=true]").first().click();
 }
 
-test("Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2)", async ({ page }) => {
-  await createPage(page, "Move target");
-  await createPage(page, "Move source");
-  await openPage(page, "Move source");
-  await caretInLastLine(page);
-  await page.keyboard.type("Alpha stays");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("Beta moves");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("Gamma becomes a page");
-  await settled(page);
-
-  await blockMenu(page, "Beta moves");
-  await page.getByRole("menuitem", { name: "Move to" }).click();
-  const picker = page.getByTestId("block-move");
-  await expect(picker).toBeVisible();
-  await picker.getByLabel("Find a page").fill("Move target");
-  await expect(picker.getByRole("option", { name: /Move target/ })).toBeVisible();
-  await expect(picker.getByRole("option", { name: /Move source/ })).toHaveCount(0);
-  await page.keyboard.press("Enter");
-  await expect(picker).toHaveCount(0);
-  await expect(page.getByTestId("editor-notice")).toContainText("Moved to Move target");
-  await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
-  await expect(editor(page).getByText("Alpha stays")).toBeVisible();
-
-  await blockMenu(page, "Gamma becomes a page");
-  await page.getByRole("menuitem", { name: "Turn into" }).hover();
-  await page.getByRole("menuitem", { name: "Page", exact: true }).click();
-  await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
-  await expect(editor(page).getByText("Gamma becomes a page")).toHaveCount(1);
-  await settled(page);
-
-  await openPage(page, "Move target");
-  await expect(editor(page).getByText("Beta moves")).toBeVisible();
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Move source");
-  await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
-  await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
-  await openPage(page, "Move target");
-  await expect(editor(page).getByText("Beta moves")).toBeVisible();
-});
-
-test("⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2)", async ({ page }) => {
-  await createPage(page, "Toggles");
-  await openPage(page, "Toggles");
-  await caretInLastLine(page);
-  for (const t of ["First toggle", "Second toggle"]) {
-    await page.keyboard.type("/Toggle list");
-    await expect(page.getByRole("option", { name: /Toggle List/i }).first()).toBeVisible();
-    await page.keyboard.press("Enter");
-    await page.keyboard.type(t);
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("Enter");
-  }
-  const buttons = editor(page).locator(".bn-toggle-button");
-  await expect(buttons).toHaveCount(2);
-  const expanded = () => buttons.evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-expanded")));
-  await buttons.first().click();
-  expect(await expanded()).toEqual(["true", "false"]);
-  await editor(page).getByText("Second toggle").click();
-  await page.keyboard.press("ControlOrMeta+Alt+KeyT");
-  await expect.poll(expanded).toEqual(["true", "true"]);
-  await page.keyboard.press("ControlOrMeta+Alt+KeyT");
-  await expect.poll(expanded).toEqual(["false", "false"]);
-});
-
-test("Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3)", async ({ page }) => {
-  await createPage(page, "Block selection");
-  await openPage(page, "Block selection");
-  await caretInLastLine(page);
-  for (const t of ["Row one", "Row two", "Row three"]) {
-    await page.keyboard.type(t);
-    await page.keyboard.press("Enter");
-  }
-  await page.keyboard.type("Row four");
-  await settled(page);
-  const doc = page.locator(".bx-editor > .bx-doc").first();
-  // Ausgewählte Blöcke (IDs am Rahmen) als Text; markiert sind sie über eine Regel mit --selected.
-  const marked = () => doc.evaluate((d) => (d.getAttribute("data-block-selection") ?? "").split(" ").filter(Boolean)
-    .map((id) => (d.querySelector(`[data-id="${id}"] > .bn-block .bn-inline-content`) as HTMLElement | null)?.innerText.trim() ?? "?"));
-  const shade = async (text: string) => editor(page).locator(".bn-block", { hasText: text }).first().evaluate((b) => getComputedStyle(b).backgroundColor);
-
-  await editor(page).getByText("Row two").click();
-  await page.keyboard.press("Escape");
-  await expect(doc).toHaveAttribute("data-block-selection", /.+/);
-  await expect(doc).toBeFocused();
-  expect(await marked()).toEqual(["Row two"]);
-  expect(await shade("Row two")).not.toBe(await shade("Row three"));
-  await page.keyboard.press("ArrowUp");
-  expect(await marked()).toEqual(["Row one"]);
-  await page.keyboard.press("Shift+ArrowDown");
-  expect(await marked()).toEqual(["Row one", "Row two"]);
-
-  await page.keyboard.press("ControlOrMeta+d");
-  await expect(editor(page).getByText("Row one")).toHaveCount(2);
-  await expect(editor(page).getByText("Row two")).toHaveCount(2);
-  expect(await marked()).toEqual(["Row one", "Row two"]); // die Kopien sind ausgewählt
-
-  await page.keyboard.press("Backspace");
-  await expect(editor(page).getByText("Row one")).toHaveCount(1);
-  await expect(doc).not.toHaveAttribute("data-block-selection");
-
-  await editor(page).getByText("Row four").click();
-  await page.keyboard.press("Escape");
-  await page.keyboard.press("Enter");
-  await expect(doc).not.toHaveAttribute("data-block-selection");
-  await page.keyboard.type(" done");
-  await expect(editor(page).getByText("Row four done")).toBeVisible();
-  await settled(page);
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Block selection");
-  await expect(editor(page).getByText("Row one")).toHaveCount(1);
-  await expect(editor(page).getByText("Row four done")).toBeVisible();
-});
-
-test("Duplicate kopiert Unterseiten tief (BSD-207, Teil 3)", async ({ page }) => {
-  await createPage(page, "Deep copy");
-  await openPage(page, "Deep copy");
-  await caretInLastLine(page);
-  await page.keyboard.type("Nested plan");
-  await settled(page);
-  await blockMenu(page, "Nested plan");
-  await page.getByRole("menuitem", { name: "Turn into" }).hover();
-  await page.getByRole("menuitem", { name: "Page", exact: true }).click();
-  const links = editor(page).locator(".bx-pagelink-title");
-  await expect(links).toHaveText(["Nested plan"]);
-  await settled(page);
-
-  // Inhalt in die Unterseite schreiben, dann zurück und duplizieren
-  await links.first().click();
-  await expect(page.getByLabel("Page title")).toHaveValue("Nested plan");
-  await caretInLastLine(page);
-  await page.keyboard.type("Inside the sub-page");
-  await settled(page);
-  await page.goBack();
-  await expect(page.getByLabel("Page title")).toHaveValue("Deep copy");
-  await blockMenu(page, "Nested plan");
-  await page.getByRole("menuitem", { name: /Duplicate/ }).click();
-  await expect(links).toHaveText(["Nested plan", "Nested plan (1)"]);
-  await links.nth(1).click();
-  await expect(page.getByLabel("Page title")).toHaveValue("Nested plan (1)");
-  await expect(editor(page).getByText("Inside the sub-page")).toBeVisible();
-});
-
-test("Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210)", async ({ page, browserName }) => {
-  await createPage(page, "Fine tuning");
-  await openPage(page, "Fine tuning");
-  await caretInLastLine(page);
-  await page.keyboard.type("/4 columns");
-  await expect(page.getByRole("option", { name: /4 columns/ })).toBeVisible();
-  await page.keyboard.press("Enter");
-  const cols = editor(page).locator(".bn-block-outer:has(> .bn-block > .react-renderer > .bn-block-content[data-content-type=column])");
-  await expect(cols).toHaveCount(4);
-  const widths = () => cols.evaluateAll((os) => os.map((o) => Math.round(o.getBoundingClientRect().width)));
-  const before = await widths();
-  expect(Math.max(...before) - Math.min(...before)).toBeLessThan(3);
-
-  const handle = editor(page).getByRole("separator", { name: "Resize column" }).first();
-  await cols.nth(1).hover();
-  const box = (await handle.boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + 10);
-  await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 + 60, box.y + 10, { steps: 5 });
-  await page.mouse.up();
-  await expect.poll(async () => (await widths())[0]! - (await widths())[1]!).toBeGreaterThan(80);
-  const after = await widths();
-  // Tastatur: Griff fokussieren, ← schiebt zurück
-  await handle.focus();
-  await page.keyboard.press("ArrowLeft");
-  await expect.poll(async () => (await widths())[0]!).toBeLessThan(after[0]!);
-  const kept = await widths();
-
-  await caretInLastLine(page);
-  await page.keyboard.type("1. Top");
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("Tab");
-  await page.keyboard.type("Sub");
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("Tab");
-  await page.keyboard.type("Deep");
-  const marker = (text: string) => editor(page).locator(".bn-block-content[data-content-type=numberedListItem]", { hasText: text }).last()
-    .evaluate((el) => getComputedStyle(el, "::before").content);
-  expect(await marker("Top")).not.toContain("counter(");
-  expect(await marker("Sub")).toContain("lower-alpha");
-  expect(await marker("Deep")).toContain("lower-roman");
-  await page.screenshot({ path: test.info().outputPath(`numbering-${browserName}.png`) });
-
-  await settled(page);
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Fine tuning");
-  await expect(cols).toHaveCount(4);
-  await expect.poll(async () => Math.abs((await widths())[0]! - kept[0]!)).toBeLessThan(4);
-});
-
-test("Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210)", async ({ page }) => {
-  await createPage(page, "Callout icons");
-  await openPage(page, "Callout icons");
-  await caretInLastLine(page);
-  await page.keyboard.type("/Callout");
-  await expect(page.getByRole("option", { name: /Callout/ }).first()).toBeVisible();
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("Remember the milk");
-  const icon = editor(page).getByRole("button", { name: "Icon" });
-  await expect(icon).toHaveText("💡");
-  await icon.click();
-  const picker = page.getByRole("dialog", { name: "Choose an icon" });
-  await expect(picker).toBeVisible();
-  await picker.getByLabel("Filter emoji").fill("rocket");
-  await expect(picker.getByRole("option").first()).toHaveText("🚀");
-  await page.keyboard.press("Enter");
-  await expect(picker).toHaveCount(0);
-  await expect(icon).toHaveText("🚀");
-  // Remove setzt das Standard-Icon zurück; Esc schließt ohne Änderung
-  await icon.click();
-  await page.keyboard.press("Escape");
-  await expect(picker).toHaveCount(0);
-  await expect(icon).toHaveText("🚀");
-  await settled(page);
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Callout icons");
-  await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("🚀");
-  await editor(page).getByRole("button", { name: "Icon" }).click();
-  await page.getByRole("dialog", { name: "Choose an icon" }).getByRole("button", { name: "Remove" }).click();
-  await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("💡");
-});
-
-test("Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210)", async ({ page, browserName }) => {
-  await command(page, { op: "createDatabase", title: "Tasks" });
-  await createPage(page, "Buttons");
-  await openPage(page, "Buttons");
-  // Button 1: Insert blocks mit Vorlage
-  await caretInLastLine(page);
-  await page.keyboard.type("/Button");
-  await expect(page.getByRole("option", { name: /^Button/ }).first()).toBeVisible();
-  await page.keyboard.press("Enter");
-  const setup = page.getByRole("group", { name: "Button settings" });
-  await expect(setup).toBeVisible();
-  await setup.getByLabel("Button name").fill("Add checklist");
-  await expect(setup.getByLabel("Step 1", { exact: true })).toHaveValue("insertBlocks");
-  const template = setup.locator(".bx-btn-template .bn-editor").first();
-  await template.locator(".bn-block-content").first().click();
-  await page.keyboard.type("Template item");
-  await setup.getByRole("button", { name: "Done" }).click();
-  await expect(setup).toHaveCount(0);
-  await editor(page).getByRole("button", { name: "Add checklist" }).click();
-  await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(1);
-  await editor(page).getByRole("button", { name: "Add checklist" }).click();
-  await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(2);
-
-  // Button 2: Add page to Tasks → Rückfrage → öffnen
-  await caretInLastLine(page);
-  await page.keyboard.type("/Button");
-  await expect(page.getByRole("option", { name: /^Button/ }).first()).toBeVisible();
-  await page.keyboard.press("Enter");
-  await expect(setup).toBeVisible();
-  await setup.getByLabel("Button name").fill("New task");
-  await setup.getByLabel("Step 1", { exact: true }).selectOption("addPage");
-  await setup.getByRole("button", { name: "Choose a database…" }).click();
-  const dbPicker = page.getByTestId("database-link-picker");
-  await dbPicker.getByLabel("Find a database").fill("Tasks");
-  await dbPicker.getByRole("option", { name: /Tasks/ }).first().click();
-  await expect(setup.getByRole("button", { name: "Tasks" })).toBeVisible();
-  await setup.getByLabel("Page name").fill("From button");
-  await setup.getByLabel("Page name").blur();
-  await setup.getByLabel("Add step").selectOption("confirm");
-  await setup.getByLabel("Message").fill("Open it?");
-  await setup.getByLabel("Message").blur();
-  await setup.getByLabel("Add step").selectOption("openAdded");
-  await expect(setup.getByLabel("Step 3", { exact: true })).toHaveValue("openAdded");
-  if (SHOTS && browserName === "chromium") await shots(page, browserName, "button-setup");
-  await setup.getByRole("button", { name: "Done" }).click();
-  await settled(page);
-
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Buttons");
-  await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(2);
-  await editor(page).getByRole("button", { name: "New task" }).click();
-  const confirm = page.getByRole("alertdialog", { name: "Confirm" });
-  await expect(confirm).toContainText("Open it?");
-  await confirm.getByRole("button", { name: "Continue" }).click();
-  await expect(page.getByLabel("Page title")).toHaveValue("From button");
-});
-
-test("Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209)", async ({ page }) => {
-  await createPage(page, "Code page");
-  await openPage(page, "Code page");
-  await caretInLastLine(page);
-  await page.keyboard.type("/Code block");
-  await expect(page.getByRole("option", { name: /Code Block/i }).first()).toBeVisible();
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("const answer = 42; // truth");
-  const code = editor(page).locator("[data-content-type=codeBlock]").first();
-  await code.locator("select").selectOption("javascript");
-  await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
-  await expect(code.locator(".bx-tok-number")).toHaveText(["42"]);
-  await expect(code.locator(".bx-tok-comment")).toHaveText(["// truth"]);
-  await settled(page);
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Code page");
-  await expect(code.locator("select")).toHaveValue("javascript");
-  await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
-
-  // HTML: Vorschau im iframe ohne gleiche Origin
-  await createPage(page, "HTML page");
-  await openPage(page, "HTML page");
-  await caretInLastLine(page);
-  await page.keyboard.type("/Code block");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("<p id=\"x\">Hello preview</p>");
-  const html = editor(page).locator("[data-content-type=codeBlock]").first();
-  await html.locator("select").selectOption("html");
-  const frame = html.locator("iframe.bx-html-preview");
-  await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
-  await expect(page.frameLocator("iframe.bx-html-preview").locator("#x")).toHaveText("Hello preview");
-  expect(await frame.evaluate((f) => (f as HTMLIFrameElement).contentDocument)).toBeNull();
-});
-
-test("URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211)", async ({ page, browserName }) => {
-  await createPage(page, "Paste URL");
-  await openPage(page, "Paste URL");
-  await caretInLastLine(page);
-  await paste(page, { "text/plain": "https://example.com/guide" });
-  const menu = page.getByRole("menu", { name: "Paste as" });
-  await expect(menu).toBeVisible();
-  await expect(editor(page).locator("a[href='https://example.com/guide']")).toBeVisible();
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("Enter");
-  await expect(menu).toHaveCount(0);
-  await expect(editor(page).locator("[data-bx=embed]")).toContainText("example.com");
-  await expect(editor(page).locator(".bn-inline-content a[href='https://example.com/guide']")).toHaveCount(0);
-
-  // Esc behält den Link, Weitertippen schließt das Menü ebenfalls
-  await caretInLastLine(page);
-  await paste(page, { "text/plain": "https://example.org" });
-  await expect(menu).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(menu).toHaveCount(0);
-  await expect(editor(page).locator("a[href='https://example.org']")).toBeVisible();
-
-  // Copy as Markdown aus dem Blockmenü
-  await caretInLastLine(page);
-  await page.keyboard.type("Plain **words**");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("- item");
-  await settled(page);
-  if (browserName === "chromium") await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  await blockMenu(page, "Plain words");
-  await page.getByRole("menuitem", { name: "Copy as Markdown" }).click();
-  const copied = await page.evaluate(async () => {
-    try {
-      return await navigator.clipboard.readText();
-    } catch {
-      return "";
-    }
-  });
-  // WebKit lässt Tests die Zwischenablage nicht lesen; Chromium mit Berechtigung schon.
-  if (browserName === "chromium") expect(copied).toBe("Plain **words**");
-});
-
 test("Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211)", async ({ page }) => {
   await createPage(page, "Paste Notion");
-  await openPage(page, "Paste Notion");
-  await caretInLastLine(page);
+  await openBlockPage(page, "Paste Notion");
+  await focusEditorEnd(page);
   const html = "<meta charset=\"utf-8\"><h2>Plan</h2><p>Some <span class=\"highlight-red\">red</span> text</p>"
     + "<ul class=\"to-do-list\"><li><div class=\"checkbox checkbox-on\"></div><span>Done thing</span></li></ul>"
     + "<aside><span class=\"icon\">🚀</span><div>Callout text</div></aside><pre><code class=\"language-swift\">let x = 1</code></pre>";
   await paste(page, { "text/html": html, "text/plain": "Plan\nSome red text" });
-  await expect(editor(page).locator("h2", { hasText: "Plan" })).toBeVisible();
-  await expect(editor(page).locator("[data-content-type=checkListItem] input[type=checkbox]")).toBeChecked();
-  await expect(editor(page).locator("[data-content-type=callout]")).toContainText("Callout text");
-  await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("🚀");
-  await expect(editor(page).locator("[data-content-type=codeBlock] select")).toHaveValue("swift");
-  await expect(editor(page).locator("[data-content-type=codeBlock] .bx-tok-keyword")).toHaveText(["let"]);
+  await expect(bxType(page, "heading2").locator("[data-editable-id]", { hasText: "Plan" })).toBeVisible();
+  await expect(bxType(page, "todo").locator("input[type=checkbox]")).toBeChecked();
+  await expect(bxType(page, "callout")).toContainText("Callout text");
+  await expect(bxType(page, "callout").getByRole("button", { name: "Change icon" })).toHaveText("🚀");
+  await expect(bxType(page, "code").locator(".bx2-code-lang-btn")).toHaveText("Swift");
+  await expect.poll(() => page.evaluate(() => [...((CSS as unknown as { highlights: Map<string, Iterable<Range>> }).highlights.get("bx2-syn-keyword") ?? [])].map((r) => r.toString()))).toEqual(["let"]);
   await settled(page);
   await page.reload();
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Paste Notion");
-  await expect(editor(page).locator("[data-content-type=callout]")).toContainText("Callout text");
+  await openBlockPage(page, "Paste Notion");
+  await expect(bxType(page, "callout")).toContainText("Callout text");
 });
 
 const PDF = Buffer.from("%PDF-1.1\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n");
 
-test("Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208)", async ({ page }) => {
-  await createPage(page, "Uploads");
-  await openPage(page, "Uploads");
-  await caretInLastLine(page);
-  await page.keyboard.type("/PDF");
-  await expect(page.getByRole("option", { name: /PDF/ }).first()).toBeVisible();
-  await page.keyboard.press("Enter");
-  await editor(page).locator("input[type=file][aria-label='Upload PDF']").setInputFiles({ name: "plan.pdf", mimeType: "application/pdf", buffer: PDF });
-  const pdf = editor(page).locator("object.bx-pdf-frame");
-  await expect(pdf).toHaveAttribute("data", /^blob:/);
+// BSD-407 Teil 3: Erwähnungs-Menü mit „New page“ und Datumsoptionen (Erinnerung, Bereich, Uhrzeit), Gliederung, Synced Block mit Unsync, Blockmenü- und Auswahl-Abläufe, Spalten 4–5, Callout-Icon, Button-Block, Codeblock-Leiste, URL-Menü, Datei-Uploads und Seiten-Optionen prüfen hier die Oberfläche des alten Editors; der Block-Editor hat dafür block-editor.spec.ts (Teil 4 schreibt sie um).
+// Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
+test.describe("alter Editor (BlockNote)", () => {
+  useLegacyEditor(test);
 
-  for (const [cmd, file, mime, tag] of [
-    ["/Video", "clip.mp4", "video/mp4", "video"],
-    ["/Audio", "sound.mp3", "audio/mpeg", "audio"],
-    ["/File", "notes.txt", "text/plain", ".bn-file-name-with-icon"],
-  ] as const) {
+  test("@ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert", async ({ page, browserName }) => {
+    const zeppelin = await createPage(page, "Project Zeppelin");
+    await createPage(page, "Notes");
+    await openPage(page, "Notes");
+    const ed = editor(page);
     await caretInLastLine(page);
-    await page.keyboard.type(cmd);
-    await expect(page.getByRole("option").first()).toBeVisible();
+    await page.keyboard.type("See @Zepp");
+    const item = page.locator(".bn-suggestion-menu-item", { hasText: "Project Zeppelin" }).first();
+    await expect(item).toBeVisible();
+    if (SHOTS && browserName === "chromium") await shots(page, browserName, "mention-menu");
     await page.keyboard.press("Enter");
-    await page.locator("input[type='file']").last().setInputFiles({ name: file, mimeType: mime, buffer: Buffer.from("based-test-" + file) });
-    if (tag.startsWith(".")) await expect(editor(page).locator(tag, { hasText: file })).toBeVisible();
-    else await expect(editor(page).locator(tag).last()).toHaveAttribute("src", /^blob:/);
-  }
-  await settled(page);
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await openPage(page, "Uploads");
-  await expect(pdf).toHaveAttribute("data", /^blob:/);
-  await expect(editor(page).locator("video").last()).toHaveAttribute("src", /^blob:/);
-  await expect(editor(page).locator("audio").last()).toHaveAttribute("src", /^blob:/);
-  await expect(editor(page).locator(".bn-file-name-with-icon", { hasText: "notes.txt" })).toBeVisible();
-});
+    const mention = ed.locator(".bx-mention[data-kind=page]").first();
+    await expect(mention).toContainText("Project Zeppelin");
+    await expect(mention).toHaveAttribute("data-page", zeppelin);
 
-test("Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201)", async ({ page }) => {
-  await createPage(page, "Options page");
-  await openPage(page, "Options page");
-  await page.locator(".page-head").hover();
-  await page.getByRole("button", { name: "Add icon" }).click();
-  const picker = page.getByRole("dialog", { name: "Choose an icon" });
-  await picker.getByLabel("Filter emoji").fill("rocket");
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("button", { name: "Page icon" })).toHaveText("🚀");
+    // Datum mit Erinnerungs-Flagge
+    await page.keyboard.type("due @tomor");
+    // Warten, bis das Menü zur ganzen Eingabe passt (vorher stehen Today und Tomorrow beide da).
+    await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Today" })).toHaveCount(0);
+    await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Tomorrow" }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    const date = ed.locator(".bx-mention[data-kind=date]").first();
+    const tomorrow = await page.evaluate(() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    });
+    await expect(date).toHaveText("@" + tomorrow);
+    await date.click();
+    await page.getByRole("dialog", { name: "Date options" }).getByLabel("Remind me").check();
+    await expect(date).toHaveAttribute("data-remind", "true");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Date options" })).toHaveCount(0);
+    // BSD-210: Datumswähler – Tag, Bereich, Uhrzeit (die Erinnerung bleibt)
+    const dateDialog = page.getByRole("dialog", { name: "Date options" });
+    const options = async () => {
+      if (!(await dateDialog.isVisible())) await date.click();
+      await expect(dateDialog).toBeVisible();
+      return dateDialog;
+    };
+    await (await options()).getByLabel("Start day").fill("2026-12-24");
+    await expect(date).toContainText("2026");
+    await expect(date).toContainText("24");
+    await (await options()).getByLabel("End date").check();
+    await (await options()).getByLabel("End day").fill("2026-12-26");
+    await expect(date).toContainText("→");
+    await (await options()).getByLabel("Include time").check();
+    await expect((await options()).getByLabel("Start time")).toBeVisible();
+    await expect(date).toHaveAttribute("data-remind", "true");
+    await page.keyboard.press("Escape");
 
-  const article = page.locator("article.page");
-  const menu = async () => page.getByRole("button", { name: "Page menu" }).click();
-  await menu();
-  await page.getByRole("menuitemradio", { name: /Serif/ }).click();
-  await expect(article).toHaveAttribute("data-font", "serif");
-  await page.getByRole("menuitemcheckbox", { name: /Small text/ }).click();
-  await page.getByRole("menuitemcheckbox", { name: /Full width/ }).click();
-  await expect(article).toHaveAttribute("data-small-text", "");
-  await expect(article).toHaveAttribute("data-full-width", "");
-  const before = await page.locator(".page-grid").evaluate((g) => g.getBoundingClientRect().width);
-  expect(before).toBeGreaterThan(900);
-  await page.keyboard.press("Escape");
+    // [[ sucht nur Seiten; „New page“ legt eine an und erwähnt sie
+    await caretAtEnd(page, ed, "See");
+    await page.keyboard.type(" [[Brand new idea");
+    const create = page.locator(".bn-suggestion-menu-item", { hasText: "New page “Brand new idea”" });
+    await expect(create).toBeVisible();
+    await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Tomorrow" })).toHaveCount(0);
+    await create.click();
+    await expect(ed.locator(".bx-mention[data-kind=page]", { hasText: "Brand new idea" })).toBeVisible();
+    await expect(page.getByRole("treeitem", { name: "Brand new idea" })).toBeVisible();
+    await expect(ed.getByText("[[")).toHaveCount(0);
 
-  await menu();
-  await page.getByRole("menuitemcheckbox", { name: /Lock page/ }).click();
-  await expect(article).toHaveAttribute("data-locked", "");
-  await expect(editor(page)).toHaveAttribute("contenteditable", "false");
-  await expect(page.getByLabel("Page title")).toHaveJSProperty("readOnly", true);
-  await settled(page);
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await page.getByRole("treeitem", { name: /Options page/ }).click();
-  await expect(page.getByRole("button", { name: "Page icon" })).toHaveText("🚀");
-  await expect(article).toHaveAttribute("data-font", "serif");
-  await expect(article).toHaveAttribute("data-locked", "");
-  await page.getByRole("button", { name: "Unlock" }).click();
-  await expect(article).not.toHaveAttribute("data-locked", "");
-  await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+    // Titel live: Umbenennen der Zielseite ändert die Erwähnung
+    await command(page, { op: "rename", id: zeppelin, title: "Project Airship" });
+    await expect(mention).toContainText("Project Airship");
+    await shots(page, browserName, "mention");
+
+    // Nach dem Neuladen ist alles noch da
+    await settled(page);
+    await page.reload();
+    await openPage(page, "Notes");
+    await expect(ed.locator(".bx-mention[data-kind=page]", { hasText: "Project Airship" })).toBeVisible();
+    await expect(ed.locator(".bx-mention[data-kind=page]", { hasText: "Brand new idea" })).toBeVisible();
+    await expect(ed.locator(".bx-mention[data-kind=date]")).toHaveAttribute("data-remind", "true");
+
+    // Klick navigiert zur Seite; dort steht der Backlink
+    await ed.locator(".bx-mention[data-kind=page]", { hasText: "Project Airship" }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Project Airship");
+    const backlinks = page.getByTestId("backlinks");
+    await expect(backlinks).toContainText("1 backlink");
+    await expect(backlinks.getByRole("button", { name: "Notes" })).toBeVisible();
+    await backlinks.getByRole("button", { name: "Notes" }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Notes");
+
+    // Papierkorb: die Erwähnung ist markiert; nach dem Wiederherstellen nicht mehr
+    await command(page, { op: "trash", ids: [zeppelin] });
+    const trashed = editor(page).locator(".bx-mention[data-kind=page]", { hasText: "Project Airship" });
+    await expect(trashed).toHaveAttribute("data-trashed", "true");
+    await expect(trashed).toContainText("in Trash");
+    await command(page, { op: "restore", ids: [zeppelin] });
+    await expect(trashed).not.toHaveAttribute("data-trashed", "true");
+  });
+
+  test("Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar", async ({ page, browserName }) => {
+    await createPage(page, "Long read");
+    await openPage(page, "Long read");
+    await caretInLastLine(page);
+    const filler = (n: number) => Array.from({ length: 14 }, (_, i) => `Paragraph ${n}.${i + 1} of the long read.`).join("\n\n");
+    const md = ["# Opening", filler(1), "## Background", filler(2), "### Details", filler(3), "## Results", filler(4), "# Closing", filler(5)].join("\n\n");
+    await paste(page, { "text/plain": md });
+    const ed = editor(page);
+    await expect(ed.locator("[data-content-type=heading]")).toHaveCount(5);
+
+    const outline = page.getByTestId("page-outline");
+    await expect(outline).toBeVisible();
+    const items = outline.getByRole("button");
+    await expect(items).toHaveCount(5);
+    expect(await outline.locator("li").evaluateAll((els) => els.map((e) => e.getAttribute("data-depth")))).toEqual(["0", "1", "2", "1", "0"]);
+
+    // Eingeklappt: nur Balken; bei Hover die Titel
+    await page.mouse.move(10, 10);
+    await expect(outline.locator(".bx-outline-label").first()).toBeHidden();
+    await outline.hover();
+    await expect(outline.locator(".bx-outline-label")).toHaveText(["Opening", "Background", "Details", "Results", "Closing"]);
+    await shots(page, browserName, "outline");
+
+    // Klick scrollt zur Überschrift und markiert sie
+    const results = ed.locator("[data-content-type=heading]", { hasText: "Results" });
+    await expect(results).not.toBeInViewport();
+    await items.nth(3).click();
+    await expect(results).toBeInViewport();
+    await expect(items.nth(3)).toHaveAttribute("aria-current", "location");
+    // Scrollen von Hand ändert die Markierung
+    await page.mouse.move(400, 300);
+    await ed.locator("[data-content-type=heading]", { hasText: "Opening" }).scrollIntoViewIfNeeded();
+    await expect(items.nth(0)).toHaveAttribute("aria-current", "location");
+    await ed.getByText("Paragraph 5.14 of the long read.").scrollIntoViewIfNeeded();
+    await expect(items.nth(4)).toHaveAttribute("aria-current", "location");
+
+    // Inhaltsverzeichnis-Block zeigt dieselben Überschriften
+    await caretAtEnd(page, ed, "Paragraph 5.14 of the long read.");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("/table of cont");
+    // Mit der Tastatur wählen: am Seitenende kann das Menü teils außerhalb des Sichtbereichs liegen.
+    await expect(page.locator(".bn-suggestion-menu-item[aria-selected=true]")).toContainText("Table of contents");
+    await page.keyboard.press("Enter");
+    await expect(ed.locator(".bx-toc a")).toHaveText(["Opening", "Background", "Details", "Results", "Closing"]);
+    await ed.locator(".bx-toc a", { hasText: "Background" }).click();
+    await expect(ed.locator("[data-content-type=heading]", { hasText: "Background" })).toBeInViewport();
+
+    // Pro Seite abschalten (Seitenmenü), bleibt nach dem Neuladen; andere Seiten sind nicht betroffen
+    await page.getByRole("button", { name: "Page menu" }).click();
+    await page.getByRole("menuitem", { name: "Hide outline" }).click();
+    await expect(outline).toHaveCount(0);
+    await settled(page);
+    await page.reload();
+    await openPage(page, "Long read");
+    await expect(editor(page).locator("[data-content-type=heading]")).toHaveCount(5);
+    await expect(page.getByTestId("page-outline")).toHaveCount(0);
+    await openPage(page, "Welcome to Based");
+    await expect(page.getByTestId("page-outline")).toBeVisible();
+    await openPage(page, "Long read");
+    await page.getByRole("button", { name: "Page menu" }).click();
+    await page.getByRole("menuitem", { name: "Show outline" }).click();
+    await expect(page.getByTestId("page-outline").getByRole("button")).toHaveCount(5);
+  });
+
+  test("Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb", async ({ page, browserName }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    const source = await createPage(page, "Source page");
+    await createPage(page, "Mirror page");
+    await createPage(page, "Third page");
+    await openPage(page, "Source page");
+    await caretInLastLine(page);
+    await page.keyboard.type("Shared launch checklist");
+    await settled(page);
+
+    // Blockmenü → Copy and sync
+    const block = editor(page).locator(".bn-block-content", { hasText: "Shared launch checklist" }).first();
+    await block.hover();
+    await page.locator(".bn-side-menu [draggable=true]").first().click();
+    await page.getByRole("menuitem", { name: "Copy and sync" }).click();
+    const original = editor(page).locator(".bx-synced[data-copy=false]");
+    await expect(original).toBeVisible();
+    await expect(original).toContainText("Shared launch checklist");
+    const originalID = await original.evaluate((el) => el.closest(".bn-block-outer")!.getAttribute("data-id")!);
+    await settled(page);
+
+    // Auf der zweiten Seite einfügen (Zwischenablage-Text `based-sync:<id>`)
+    await openPage(page, "Mirror page");
+    await caretInLastLine(page);
+    await page.keyboard.type("Above the copy");
+    await paste(page, { "text/plain": "based-sync:" + originalID });
+    const copy = editor(page).locator(".bx-synced[data-copy=true]");
+    await expect(copy).toBeVisible();
+    await expect(copy).toContainText("Shared launch checklist");
+    await expect(copy.getByRole("button", { name: "Original in Source page" })).toBeAttached();
+
+    // Derselbe Block ein zweites Mal auf derselben Seite: abgelehnt, mit Hinweis
+    await caretAtEnd(page, editor(page), "Above the copy");
+    await paste(page, { "text/plain": "based-sync:" + originalID });
+    await expect(page.getByTestId("editor-notice")).toContainText("already on this page");
+    await expect(editor(page).locator(".bx-synced")).toHaveCount(1);
+
+    // In der Kopie schreiben …
+    await caretAtEnd(page, copy, "Shared launch checklist");
+    await page.keyboard.type(" – edited in the mirror");
+    await expect(copy).toContainText("Shared launch checklist – edited in the mirror");
+    await settled(page);
+    await shots(page, browserName, "synced");
+
+    // … erscheint im Original, und umgekehrt
+    await openPage(page, "Source page");
+    const orig = editor(page).locator(".bx-synced[data-copy=false]");
+    await expect(orig).toContainText("Shared launch checklist – edited in the mirror");
+    await caretAtEnd(page, orig, "edited in the mirror");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("Second line from the source");
+    await settled(page);
+    await openPage(page, "Mirror page");
+    await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Second line from the source");
+
+    // Dritte Seite: über „Paste synced block“ im Slash-Menü (ohne Zwischenablage)
+    await openPage(page, "Third page");
+    await caretInLastLine(page);
+    await page.keyboard.type("/paste synced");
+    await page.locator(".bn-suggestion-menu-item", { hasText: "Paste synced block" }).first().click();
+    const third = editor(page).locator(".bx-synced[data-copy=true]");
+    await expect(third).toContainText("Second line from the source");
+
+    // Nach dem Neuladen ist alles noch da
+    await settled(page);
+    await page.reload();
+    await openPage(page, "Third page");
+    await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Shared launch checklist – edited in the mirror");
+    await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Second line from the source");
+
+    // Unsync: der Inhalt bleibt als eigene Kopie und folgt dem Original nicht mehr
+    const unsynced = editor(page).locator(".bx-synced");
+    await unsynced.hover();
+    await unsynced.getByRole("button", { name: "Unsync" }).click();
+    await expect(editor(page).locator(".bx-synced[data-copy=false]")).toContainText("Second line from the source");
+    await expect(editor(page).locator(".bx-synced[data-copy=true]")).toHaveCount(0);
+    await caretAtEnd(page, editor(page).locator(".bx-synced"), "Second line from the source");
+    await page.keyboard.type(" (independent)");
+    await settled(page);
+    await openPage(page, "Mirror page");
+    await expect(editor(page).locator(".bx-synced[data-copy=true]")).toContainText("Second line from the source");
+    await expect(editor(page).locator(".bx-synced[data-copy=true]")).not.toContainText("(independent)");
+
+    // Original im Papierkorb: die Kopie zeigt einen Hinweis; nach dem Wiederherstellen ist er weg
+    await command(page, { op: "trash", ids: [source] });
+    const mirror = editor(page).locator(".bx-synced[data-copy=true]");
+    await expect(mirror).toHaveAttribute("data-trashed", "true");
+    await expect(mirror.getByRole("status")).toContainText("is in the Trash");
+    if (SHOTS && browserName === "chromium") await shots(page, browserName, "synced-trashed");
+    await command(page, { op: "restore", ids: [source] });
+    await expect(mirror).not.toHaveAttribute("data-trashed", "true");
+    expect(errors).toEqual([]);
+  });
+
+  test("Blockmenü: Turn into, Duplicate und ⌘D (BSD-207)", async ({ page }) => {
+    await createPage(page, "Block actions");
+    await openPage(page, "Block actions");
+    await caretInLastLine(page);
+    await page.keyboard.type("Launch plan");
+    await settled(page);
+
+    const block = editor(page).locator(".bn-block-content", { hasText: "Launch plan" }).first();
+    await block.hover();
+    await page.locator(".bn-side-menu [draggable=true]").first().click();
+    await page.getByRole("menuitem", { name: "Turn into" }).hover();
+    await page.getByRole("menuitem", { name: "Heading 2" }).click();
+    await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toBeVisible();
+
+    await block.hover();
+    await page.locator(".bn-side-menu [draggable=true]").first().click();
+    await page.getByRole("menuitem", { name: /Duplicate/ }).click();
+    await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(2);
+
+    // ⌘D in der Kopie dupliziert noch einmal
+    await editor(page).locator("h2", { hasText: "Launch plan" }).nth(1).click();
+    await page.keyboard.press("ControlOrMeta+d");
+    await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
+    await settled(page);
+    await page.reload();
+    await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
+  });
+
+  test("Blockmenü: Turn into → Block equation (BSD-249 Teil 2)", async ({ page }) => {
+    await createPage(page, "Equation turn");
+    await openPage(page, "Equation turn");
+    await caretInLastLine(page);
+    await page.keyboard.type("a^2 + b^2 = c^2");
+    await settled(page);
+    const block = editor(page).locator(".bn-block-content", { hasText: "a^2 + b^2 = c^2" }).first();
+    await block.hover();
+    await page.locator(".bn-side-menu [draggable=true]").first().click();
+    await page.getByRole("menuitem", { name: "Turn into" }).hover();
+    await page.getByRole("menuitem", { name: "Block equation" }).click();
+    const eq = editor(page).locator(".bx-equation").first();
+    await expect(eq).toBeVisible();
+    await expect(eq.locator(".katex").first()).toBeVisible();
+    await settled(page);
+    await page.reload();
+    await expect(editor(page).locator(".bx-equation .katex").first()).toBeVisible();
+  });
+
+  test("Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2)", async ({ page }) => {
+    await createPage(page, "Move target");
+    await createPage(page, "Move source");
+    await openPage(page, "Move source");
+    await caretInLastLine(page);
+    await page.keyboard.type("Alpha stays");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("Beta moves");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("Gamma becomes a page");
+    await settled(page);
+
+    await blockMenu(page, "Beta moves");
+    await page.getByRole("menuitem", { name: "Move to" }).click();
+    const picker = page.getByTestId("block-move");
+    await expect(picker).toBeVisible();
+    await picker.getByLabel("Find a page").fill("Move target");
+    await expect(picker.getByRole("option", { name: /Move target/ })).toBeVisible();
+    await expect(picker.getByRole("option", { name: /Move source/ })).toHaveCount(0);
+    await page.keyboard.press("Enter");
+    await expect(picker).toHaveCount(0);
+    await expect(page.getByTestId("editor-notice")).toContainText("Moved to Move target");
+    await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
+    await expect(editor(page).getByText("Alpha stays")).toBeVisible();
+
+    await blockMenu(page, "Gamma becomes a page");
+    await page.getByRole("menuitem", { name: "Turn into" }).hover();
+    await page.getByRole("menuitem", { name: "Page", exact: true }).click();
+    await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
+    await expect(editor(page).getByText("Gamma becomes a page")).toHaveCount(1);
+    await settled(page);
+
+    await openPage(page, "Move target");
+    await expect(editor(page).getByText("Beta moves")).toBeVisible();
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openPage(page, "Move source");
+    await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
+    await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
+    await openPage(page, "Move target");
+    await expect(editor(page).getByText("Beta moves")).toBeVisible();
+  });
+
+  test("⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2)", async ({ page }) => {
+    await createPage(page, "Toggles");
+    await openPage(page, "Toggles");
+    await caretInLastLine(page);
+    for (const t of ["First toggle", "Second toggle"]) {
+      await page.keyboard.type("/Toggle list");
+      await expect(page.getByRole("option", { name: /Toggle List/i }).first()).toBeVisible();
+      await page.keyboard.press("Enter");
+      await page.keyboard.type(t);
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("Enter");
+    }
+    const buttons = editor(page).locator(".bn-toggle-button");
+    await expect(buttons).toHaveCount(2);
+    const expanded = () => buttons.evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-expanded")));
+    await buttons.first().click();
+    expect(await expanded()).toEqual(["true", "false"]);
+    await editor(page).getByText("Second toggle").click();
+    await page.keyboard.press("ControlOrMeta+Alt+KeyT");
+    await expect.poll(expanded).toEqual(["true", "true"]);
+    await page.keyboard.press("ControlOrMeta+Alt+KeyT");
+    await expect.poll(expanded).toEqual(["false", "false"]);
+  });
+
+  test("Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3)", async ({ page }) => {
+    await createPage(page, "Block selection");
+    await openPage(page, "Block selection");
+    await caretInLastLine(page);
+    for (const t of ["Row one", "Row two", "Row three"]) {
+      await page.keyboard.type(t);
+      await page.keyboard.press("Enter");
+    }
+    await page.keyboard.type("Row four");
+    await settled(page);
+    const doc = page.locator(".bx-editor > .bx-doc").first();
+    // Ausgewählte Blöcke (IDs am Rahmen) als Text; markiert sind sie über eine Regel mit --selected.
+    const marked = () => doc.evaluate((d) => (d.getAttribute("data-block-selection") ?? "").split(" ").filter(Boolean)
+      .map((id) => (d.querySelector(`[data-id="${id}"] > .bn-block .bn-inline-content`) as HTMLElement | null)?.innerText.trim() ?? "?"));
+    const shade = async (text: string) => editor(page).locator(".bn-block", { hasText: text }).first().evaluate((b) => getComputedStyle(b).backgroundColor);
+
+    await editor(page).getByText("Row two").click();
+    await page.keyboard.press("Escape");
+    await expect(doc).toHaveAttribute("data-block-selection", /.+/);
+    await expect(doc).toBeFocused();
+    expect(await marked()).toEqual(["Row two"]);
+    expect(await shade("Row two")).not.toBe(await shade("Row three"));
+    await page.keyboard.press("ArrowUp");
+    expect(await marked()).toEqual(["Row one"]);
+    await page.keyboard.press("Shift+ArrowDown");
+    expect(await marked()).toEqual(["Row one", "Row two"]);
+
+    await page.keyboard.press("ControlOrMeta+d");
+    await expect(editor(page).getByText("Row one")).toHaveCount(2);
+    await expect(editor(page).getByText("Row two")).toHaveCount(2);
+    expect(await marked()).toEqual(["Row one", "Row two"]); // die Kopien sind ausgewählt
+
+    await page.keyboard.press("Backspace");
+    await expect(editor(page).getByText("Row one")).toHaveCount(1);
+    await expect(doc).not.toHaveAttribute("data-block-selection");
+
+    await editor(page).getByText("Row four").click();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Enter");
+    await expect(doc).not.toHaveAttribute("data-block-selection");
+    await page.keyboard.type(" done");
+    await expect(editor(page).getByText("Row four done")).toBeVisible();
+    await settled(page);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openPage(page, "Block selection");
+    await expect(editor(page).getByText("Row one")).toHaveCount(1);
+    await expect(editor(page).getByText("Row four done")).toBeVisible();
+  });
+
+  test("Duplicate kopiert Unterseiten tief (BSD-207, Teil 3)", async ({ page }) => {
+    await createPage(page, "Deep copy");
+    await openPage(page, "Deep copy");
+    await caretInLastLine(page);
+    await page.keyboard.type("Nested plan");
+    await settled(page);
+    await blockMenu(page, "Nested plan");
+    await page.getByRole("menuitem", { name: "Turn into" }).hover();
+    await page.getByRole("menuitem", { name: "Page", exact: true }).click();
+    const links = editor(page).locator(".bx-pagelink-title");
+    await expect(links).toHaveText(["Nested plan"]);
+    await settled(page);
+
+    // Inhalt in die Unterseite schreiben, dann zurück und duplizieren
+    await links.first().click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Nested plan");
+    await caretInLastLine(page);
+    await page.keyboard.type("Inside the sub-page");
+    await settled(page);
+    await page.goBack();
+    await expect(page.getByLabel("Page title")).toHaveValue("Deep copy");
+    await blockMenu(page, "Nested plan");
+    await page.getByRole("menuitem", { name: /Duplicate/ }).click();
+    await expect(links).toHaveText(["Nested plan", "Nested plan (1)"]);
+    await links.nth(1).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Nested plan (1)");
+    await expect(editor(page).getByText("Inside the sub-page")).toBeVisible();
+  });
+
+  test("Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210)", async ({ page, browserName }) => {
+    await createPage(page, "Fine tuning");
+    await openPage(page, "Fine tuning");
+    await caretInLastLine(page);
+    await page.keyboard.type("/4 columns");
+    await expect(page.getByRole("option", { name: /4 columns/ })).toBeVisible();
+    await page.keyboard.press("Enter");
+    const cols = editor(page).locator(".bn-block-outer:has(> .bn-block > .react-renderer > .bn-block-content[data-content-type=column])");
+    await expect(cols).toHaveCount(4);
+    const widths = () => cols.evaluateAll((os) => os.map((o) => Math.round(o.getBoundingClientRect().width)));
+    const before = await widths();
+    expect(Math.max(...before) - Math.min(...before)).toBeLessThan(3);
+
+    const handle = editor(page).getByRole("separator", { name: "Resize column" }).first();
+    await cols.nth(1).hover();
+    const box = (await handle.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + 10);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 60, box.y + 10, { steps: 5 });
+    await page.mouse.up();
+    await expect.poll(async () => (await widths())[0]! - (await widths())[1]!).toBeGreaterThan(80);
+    const after = await widths();
+    // Tastatur: Griff fokussieren, ← schiebt zurück
+    await handle.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect.poll(async () => (await widths())[0]!).toBeLessThan(after[0]!);
+    const kept = await widths();
+
+    await caretInLastLine(page);
+    await page.keyboard.type("1. Top");
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Tab");
+    await page.keyboard.type("Sub");
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Tab");
+    await page.keyboard.type("Deep");
+    const marker = (text: string) => editor(page).locator(".bn-block-content[data-content-type=numberedListItem]", { hasText: text }).last()
+      .evaluate((el) => getComputedStyle(el, "::before").content);
+    expect(await marker("Top")).not.toContain("counter(");
+    expect(await marker("Sub")).toContain("lower-alpha");
+    expect(await marker("Deep")).toContain("lower-roman");
+    await page.screenshot({ path: test.info().outputPath(`numbering-${browserName}.png`) });
+
+    await settled(page);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openPage(page, "Fine tuning");
+    await expect(cols).toHaveCount(4);
+    await expect.poll(async () => Math.abs((await widths())[0]! - kept[0]!)).toBeLessThan(4);
+  });
+
+  test("Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210)", async ({ page }) => {
+    await createPage(page, "Callout icons");
+    await openPage(page, "Callout icons");
+    await caretInLastLine(page);
+    await page.keyboard.type("/Callout");
+    await expect(page.getByRole("option", { name: /Callout/ }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("Remember the milk");
+    const icon = editor(page).getByRole("button", { name: "Icon" });
+    await expect(icon).toHaveText("💡");
+    await icon.click();
+    const picker = page.getByRole("dialog", { name: "Choose an icon" });
+    await expect(picker).toBeVisible();
+    await picker.getByLabel("Filter emoji").fill("rocket");
+    await expect(picker.getByRole("option").first()).toHaveText("🚀");
+    await page.keyboard.press("Enter");
+    await expect(picker).toHaveCount(0);
+    await expect(icon).toHaveText("🚀");
+    // Remove setzt das Standard-Icon zurück; Esc schließt ohne Änderung
+    await icon.click();
+    await page.keyboard.press("Escape");
+    await expect(picker).toHaveCount(0);
+    await expect(icon).toHaveText("🚀");
+    await settled(page);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openPage(page, "Callout icons");
+    await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("🚀");
+    await editor(page).getByRole("button", { name: "Icon" }).click();
+    await page.getByRole("dialog", { name: "Choose an icon" }).getByRole("button", { name: "Remove" }).click();
+    await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("💡");
+  });
+
+  test("Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210)", async ({ page, browserName }) => {
+    await command(page, { op: "createDatabase", title: "Tasks" });
+    await createPage(page, "Buttons");
+    await openPage(page, "Buttons");
+    // Button 1: Insert blocks mit Vorlage
+    await caretInLastLine(page);
+    await page.keyboard.type("/Button");
+    await expect(page.getByRole("option", { name: /^Button/ }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    const setup = page.getByRole("group", { name: "Button settings" });
+    await expect(setup).toBeVisible();
+    await setup.getByLabel("Button name").fill("Add checklist");
+    await expect(setup.getByLabel("Step 1", { exact: true })).toHaveValue("insertBlocks");
+    const template = setup.locator(".bx-btn-template .bn-editor").first();
+    await template.locator(".bn-block-content").first().click();
+    await page.keyboard.type("Template item");
+    await setup.getByRole("button", { name: "Done" }).click();
+    await expect(setup).toHaveCount(0);
+    await editor(page).getByRole("button", { name: "Add checklist" }).click();
+    await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(1);
+    await editor(page).getByRole("button", { name: "Add checklist" }).click();
+    await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(2);
+
+    // Button 2: Add page to Tasks → Rückfrage → öffnen
+    await caretInLastLine(page);
+    await page.keyboard.type("/Button");
+    await expect(page.getByRole("option", { name: /^Button/ }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(setup).toBeVisible();
+    await setup.getByLabel("Button name").fill("New task");
+    await setup.getByLabel("Step 1", { exact: true }).selectOption("addPage");
+    await setup.getByRole("button", { name: "Choose a database…" }).click();
+    const dbPicker = page.getByTestId("database-link-picker");
+    await dbPicker.getByLabel("Find a database").fill("Tasks");
+    await dbPicker.getByRole("option", { name: /Tasks/ }).first().click();
+    await expect(setup.getByRole("button", { name: "Tasks" })).toBeVisible();
+    await setup.getByLabel("Page name").fill("From button");
+    await setup.getByLabel("Page name").blur();
+    await setup.getByLabel("Add step").selectOption("confirm");
+    await setup.getByLabel("Message").fill("Open it?");
+    await setup.getByLabel("Message").blur();
+    await setup.getByLabel("Add step").selectOption("openAdded");
+    await expect(setup.getByLabel("Step 3", { exact: true })).toHaveValue("openAdded");
+    if (SHOTS && browserName === "chromium") await shots(page, browserName, "button-setup");
+    await setup.getByRole("button", { name: "Done" }).click();
+    await settled(page);
+
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openPage(page, "Buttons");
+    await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(2);
+    await editor(page).getByRole("button", { name: "New task" }).click();
+    const confirm = page.getByRole("alertdialog", { name: "Confirm" });
+    await expect(confirm).toContainText("Open it?");
+    await confirm.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("From button");
+  });
+
+  test("Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209)", async ({ page }) => {
+    await createPage(page, "Code page");
+    await openPage(page, "Code page");
+    await caretInLastLine(page);
+    await page.keyboard.type("/Code block");
+    await expect(page.getByRole("option", { name: /Code Block/i }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("const answer = 42; // truth");
+    const code = editor(page).locator("[data-content-type=codeBlock]").first();
+    await code.locator("select").selectOption("javascript");
+    await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
+    await expect(code.locator(".bx-tok-number")).toHaveText(["42"]);
+    await expect(code.locator(".bx-tok-comment")).toHaveText(["// truth"]);
+    await settled(page);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openPage(page, "Code page");
+    await expect(code.locator("select")).toHaveValue("javascript");
+    await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
+
+    // HTML: Vorschau im iframe ohne gleiche Origin
+    await createPage(page, "HTML page");
+    await openPage(page, "HTML page");
+    await caretInLastLine(page);
+    await page.keyboard.type("/Code block");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("<p id=\"x\">Hello preview</p>");
+    const html = editor(page).locator("[data-content-type=codeBlock]").first();
+    await html.locator("select").selectOption("html");
+    const frame = html.locator("iframe.bx-html-preview");
+    await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+    await expect(page.frameLocator("iframe.bx-html-preview").locator("#x")).toHaveText("Hello preview");
+    expect(await frame.evaluate((f) => (f as HTMLIFrameElement).contentDocument)).toBeNull();
+  });
+
+  test("URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211)", async ({ page, browserName }) => {
+    await createPage(page, "Paste URL");
+    await openPage(page, "Paste URL");
+    await caretInLastLine(page);
+    await paste(page, { "text/plain": "https://example.com/guide" });
+    const menu = page.getByRole("menu", { name: "Paste as" });
+    await expect(menu).toBeVisible();
+    await expect(editor(page).locator("a[href='https://example.com/guide']")).toBeVisible();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(menu).toHaveCount(0);
+    await expect(editor(page).locator("[data-bx=embed]")).toContainText("example.com");
+    await expect(editor(page).locator(".bn-inline-content a[href='https://example.com/guide']")).toHaveCount(0);
+
+    // Esc behält den Link, Weitertippen schließt das Menü ebenfalls
+    await caretInLastLine(page);
+    await paste(page, { "text/plain": "https://example.org" });
+    await expect(menu).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+    await expect(editor(page).locator("a[href='https://example.org']")).toBeVisible();
+
+    // Copy as Markdown aus dem Blockmenü
+    await caretInLastLine(page);
+    await page.keyboard.type("Plain **words**");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("- item");
+    await settled(page);
+    if (browserName === "chromium") await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await blockMenu(page, "Plain words");
+    await page.getByRole("menuitem", { name: "Copy as Markdown" }).click();
+    const copied = await page.evaluate(async () => {
+      try {
+        return await navigator.clipboard.readText();
+      } catch {
+        return "";
+      }
+    });
+    // WebKit lässt Tests die Zwischenablage nicht lesen; Chromium mit Berechtigung schon.
+    if (browserName === "chromium") expect(copied).toBe("Plain **words**");
+  });
+
+  test("Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208)", async ({ page }) => {
+    await createPage(page, "Uploads");
+    await openPage(page, "Uploads");
+    await caretInLastLine(page);
+    await page.keyboard.type("/PDF");
+    await expect(page.getByRole("option", { name: /PDF/ }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await editor(page).locator("input[type=file][aria-label='Upload PDF']").setInputFiles({ name: "plan.pdf", mimeType: "application/pdf", buffer: PDF });
+    const pdf = editor(page).locator("object.bx-pdf-frame");
+    await expect(pdf).toHaveAttribute("data", /^blob:/);
+
+    for (const [cmd, file, mime, tag] of [
+      ["/Video", "clip.mp4", "video/mp4", "video"],
+      ["/Audio", "sound.mp3", "audio/mpeg", "audio"],
+      ["/File", "notes.txt", "text/plain", ".bn-file-name-with-icon"],
+    ] as const) {
+      await caretInLastLine(page);
+      await page.keyboard.type(cmd);
+      await expect(page.getByRole("option").first()).toBeVisible();
+      await page.keyboard.press("Enter");
+      await page.locator("input[type='file']").last().setInputFiles({ name: file, mimeType: mime, buffer: Buffer.from("based-test-" + file) });
+      if (tag.startsWith(".")) await expect(editor(page).locator(tag, { hasText: file })).toBeVisible();
+      else await expect(editor(page).locator(tag).last()).toHaveAttribute("src", /^blob:/);
+    }
+    await settled(page);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openPage(page, "Uploads");
+    await expect(pdf).toHaveAttribute("data", /^blob:/);
+    await expect(editor(page).locator("video").last()).toHaveAttribute("src", /^blob:/);
+    await expect(editor(page).locator("audio").last()).toHaveAttribute("src", /^blob:/);
+    await expect(editor(page).locator(".bn-file-name-with-icon", { hasText: "notes.txt" })).toBeVisible();
+  });
+
+  test("Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201)", async ({ page }) => {
+    await createPage(page, "Options page");
+    await openPage(page, "Options page");
+    await page.locator(".page-head").hover();
+    await page.getByRole("button", { name: "Add icon" }).click();
+    const picker = page.getByRole("dialog", { name: "Choose an icon" });
+    await picker.getByLabel("Filter emoji").fill("rocket");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "Page icon" })).toHaveText("🚀");
+
+    const article = page.locator("article.page");
+    const menu = async () => page.getByRole("button", { name: "Page menu" }).click();
+    await menu();
+    await page.getByRole("menuitemradio", { name: /Serif/ }).click();
+    await expect(article).toHaveAttribute("data-font", "serif");
+    await page.getByRole("menuitemcheckbox", { name: /Small text/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /Full width/ }).click();
+    await expect(article).toHaveAttribute("data-small-text", "");
+    await expect(article).toHaveAttribute("data-full-width", "");
+    const before = await page.locator(".page-grid").evaluate((g) => g.getBoundingClientRect().width);
+    expect(before).toBeGreaterThan(900);
+    await page.keyboard.press("Escape");
+
+    await menu();
+    await page.getByRole("menuitemcheckbox", { name: /Lock page/ }).click();
+    await expect(article).toHaveAttribute("data-locked", "");
+    await expect(editor(page)).toHaveAttribute("contenteditable", "false");
+    await expect(page.getByLabel("Page title")).toHaveJSProperty("readOnly", true);
+    await settled(page);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByRole("treeitem", { name: /Options page/ }).click();
+    await expect(page.getByRole("button", { name: "Page icon" })).toHaveText("🚀");
+    await expect(article).toHaveAttribute("data-font", "serif");
+    await expect(article).toHaveAttribute("data-locked", "");
+    await page.getByRole("button", { name: "Unlock" }).click();
+    await expect(article).not.toHaveAttribute("data-locked", "");
+    await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+  });
 });

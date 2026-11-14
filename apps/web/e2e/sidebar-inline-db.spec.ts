@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-377: Eine Seite, die Inline-Datenbanken enthält, zeigt sie in der Seitenleiste darunter (wie Notion) –
 // vorher stand dort „No pages inside“. Screenshots (3 Größen, hell/dunkel) nur mit BASED_SCREENSHOTS=1 in Chromium.
@@ -14,10 +15,10 @@ test("Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich al
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
   await page.getByLabel("Page title").fill("Second Brain");
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   await expect(page.locator(".shell-database.inline")).toBeVisible();
 
   const parent = page.getByRole("treeitem", { name: "Second Brain" });

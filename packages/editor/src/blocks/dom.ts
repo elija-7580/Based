@@ -6,9 +6,20 @@ import { blockCommands as cmd, plainText, type RichText } from "@based/core";
 
 type Run = cmd.Run;
 
+/** BSD-407 Teil 3: was eine Seiten-Erwähnung zeigt (wie im alten Editor: Icon, Titel, „in Trash“/„deleted“). */
+export interface MentionInfo {
+  title?: string | undefined;
+  /** Fertiges Zeichen: Emoji, ▦/📄 – oder SVG-Markup eines Phosphor-Icons (`svg: true`). */
+  icon?: { text: string; svg?: boolean } | undefined;
+  trashed?: boolean | undefined;
+  missing?: boolean | undefined;
+}
+
 export interface AtomRenderer {
   /** Text einer Seiten-Erwähnung (Titel); ohne: „Untitled“. */
   pageTitle?: (id: string) => string | undefined;
+  /** Icon, Titel und Zustand einer Seiten-Erwähnung; hat Vorrang vor `pageTitle`. */
+  page?: (id: string) => MentionInfo | undefined;
   /** BSD-407: Inline-Gleichung als HTML (KaTeX der Hülle); ohne oder solange nicht geladen: der TeX-Text. */
   equationHTML?: (tex: string) => string | undefined;
 }
@@ -39,7 +50,7 @@ function runElement(doc: Document, r: Run, atoms: AtomRenderer): Node {
       const page = mentionValue(m, "page");
       if (typeof page === "string") {
         el.dataset.page = page;
-        el.textContent = atoms.pageTitle?.(page) || r.t || "Untitled";
+        fillMention(el, atoms, r.t);
       } else el.textContent = r.t || "•";
     }
     return el;
@@ -57,6 +68,38 @@ function runElement(doc: Document, r: Run, atoms: AtomRenderer): Node {
   if (classes.length) el.className = classes.join(" ");
   el.textContent = t;
   return el;
+}
+
+/** Inneres einer Seiten-Erwähnung zeichnen (auch nachträglich, wenn sich Titel, Icon oder Papierkorb ändern). */
+export function fillMention(el: HTMLElement, atoms: AtomRenderer, text = el.dataset.text ?? ""): void {
+  const id = el.dataset.page;
+  if (!id) return;
+  el.dataset.text = text;
+  const info = atoms.page?.(id);
+  const title = info?.title || atoms.pageTitle?.(id) || text || "Untitled";
+  const doc = el.ownerDocument;
+  const icon = doc.createElement("span");
+  icon.className = "bx2-mention-icon";
+  icon.setAttribute("aria-hidden", "true");
+  if (info?.icon?.svg) icon.innerHTML = info.icon.text;
+  else icon.textContent = info?.icon?.text ?? "📄";
+  const name = doc.createElement("span");
+  name.className = "bx2-mention-title";
+  name.textContent = title;
+  const parts: Node[] = [icon, name];
+  if (info?.missing || info?.trashed) {
+    const flag = doc.createElement("span");
+    flag.className = "bx2-mention-flag";
+    flag.textContent = info.missing ? "deleted" : "in Trash";
+    parts.push(flag);
+  }
+  if (info?.trashed) el.dataset.trashed = "true";
+  else delete el.dataset.trashed;
+  if (info?.missing) el.dataset.missing = "true";
+  else delete el.dataset.missing;
+  el.title = info?.missing ? "This page no longer exists" : info?.trashed ? "This page is in the Trash" : "";
+  if (!el.title) el.removeAttribute("title");
+  el.replaceChildren(...parts);
 }
 
 /** Inhalt eines Textfelds aus dem Modell setzen. Leerer Text bekommt ein <br>, damit die Zeile Höhe hat. */

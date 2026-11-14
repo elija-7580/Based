@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-372: Klick und Auswahl treffen die Zeile unter der Maus – als Vollseite mit vielen Zeilen nach dem Scrollen und
 // inline in einer Seite (in Spalten), auch nach Escape (vorher sprang die Auswahl dann auf die erste Zeile).
@@ -65,13 +66,12 @@ test("Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Ma
   await fresh(page);
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("Notes before the table.");
   await page.keyboard.press("Enter");
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   const db = page.locator(".shell-database.inline");
   await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
   // 20 benannte Zeilen direkt in die Seiten-Replik (wie database-inline.spec.ts)

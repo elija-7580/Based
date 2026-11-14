@@ -3,22 +3,24 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, CODE_LANGUAGES, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
-import type { PageRef } from "../ui/env.js";
+import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
-import { MovePicker } from "../ui/MovePicker.js";
+import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
+import { PageOutline } from "../ui/Outline.js";
+import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
 import { BasedButton } from "@based/ui/astryx";
-import { IconView } from "../ui/phosphor.js";
+import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
-import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
+import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
 import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
 import { PresenceLayer, useRealtime } from "./realtime.js";
 import { highlightCode } from "./highlight.js";
@@ -68,6 +70,19 @@ export function BlockEditor(props: PageEditorProps) {
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | undefined>();
   // BSD-407: Blockmenü „Move to“ – Zielseite wählen (MovePicker wie im alten Editor).
   const [moving, setMoving] = useState<string[] | undefined>();
+  // BSD-407 Teil 3: Slash „Linked view of database“ – Datenbank wählen, Ansicht hinter (oder an Stelle von) Block `after`.
+  const [linking, setLinking] = useState<{ after: string; replace: boolean } | undefined>();
+  const databases = useMemo(() => props.databases ?? storeDatabases(store), [props.databases, store]);
+  const pickDatabase = async (req: { after: string; replace: boolean }, db: DatabaseRef) => {
+    setLinking(undefined);
+    let ok = store.databases.has(db.id);
+    if (!ok && databases.include) ok = await databases.include(db.id).catch(() => false);
+    const a = store.blocks.get(req.after);
+    const made = ok && a ? createLinkedView(store, db.id, a.parent, "table", { position: { after: req.after } }) : undefined;
+    if (!made) return;
+    if (req.replace && store.blocks.get(req.after)?.trashedAt === undefined) store.transact("Remove empty block", (tx) => tx.remove(`block:${req.after}`));
+    ctrl.select([made.blockID]);
+  };
   // Nach dem Schließen des Blockmenüs (Fokus lag im Suchfeld): Fokus zurück auf den Rahmen, solange Blöcke gewählt sind.
   const closeMenu = useCallback(() => {
     setMenu(undefined);
@@ -118,6 +133,35 @@ export function BlockEditor(props: PageEditorProps) {
   /** Am Anfang der Seite nach oben: in den Titel (PageView fängt „bx:leave-top“). */
   const leaveTop = (): boolean => !(rootRef.current?.dispatchEvent(new CustomEvent("bx:leave-top", { bubbles: true, cancelable: true })) ?? true);
 
+  // BSD-407 Teil 3: Fokus in einer Einbettung (Zelle einer Inline-Datenbank, Bildunterschrift …) beendet die Blockauswahl
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target instanceof Element ? e.target : null;
+      if (t?.closest("[data-embed]") && !t.closest(".bx2-menu")) ctrl.clearSelection();
+    };
+    root.addEventListener("focusin", onFocusIn);
+    return () => root.removeEventListener("focusin", onFocusIn);
+  }, [ctrl]);
+
+  // BSD-407 Teil 3: schwebende Gliederung am rechten Rand wie im alten Editor (PageOutline misst die Blöcke im Rahmen)
+  const [rootEl, setRootEl] = useState<HTMLDivElement | null>(null);
+  useEffect(() => setRootEl(rootRef.current), []);
+
+  // BSD-407 Teil 3: Erwähnungen zeigen Titel, Icon und Papierkorb live (Seitenverzeichnis der Hülle, Phosphor-Icons)
+  const propsRef = useRef(props);
+  propsRef.current = props;
+  useEffect(() => {
+    let frame = 0;
+    const refresh = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => { frame = 0; refreshMentions(rootRef.current, propsRef.current); });
+    };
+    const offs = [onPhosphorLoaded(refresh), props.pages?.subscribe(refresh)];
+    return () => { cancelAnimationFrame(frame); for (const off of offs) off?.(); };
+  }, [props.pages]);
+
   // BSD-101: zu einem Block springen
   useEffect(() => {
     if (!props.focusBlock) return;
@@ -155,6 +199,14 @@ export function BlockEditor(props: PageEditorProps) {
       switch (e.inputType) {
         case "insertText": {
           const data = e.data ?? "";
+          // BSD-90 Teil 2 / BSD-407 Teil 3: „[[Titel]]“ fertig getippt → Seiten-Erwähnung (vorhandene oder neue Seite)
+          const wiki = data === "]" && c.from === c.to && props.pages ? wikilinkBefore(plainText(store.blocks.get(id)?.text).slice(0, c.from)) : undefined;
+          if (wiki) {
+            setMention(undefined);
+            run(cmd.replaceText(store, { blockId: id, from: wiki.start, to: c.from }, "", { coalesce: null }));
+            void resolveWikilink(id, wiki.start, wiki.title);
+            break;
+          }
           const st = ctrl.stored && ctrl.stored.id === c.id && ctrl.stored.at === c.from && c.from === c.to ? ctrl.stored.marks : undefined;
           const f = cmd.replaceText(store, R(c), data, st !== undefined ? { marks: (st ?? {}) as cmd.Marks } : {});
           const pos = f && "offset" in f ? f.offset : undefined;
@@ -239,9 +291,17 @@ export function BlockEditor(props: PageEditorProps) {
       }
     };
 
+    // BSD-407 Teil 3: ⇧⌘V fügt als Klartext ein (wie im alten Editor): die Taste merkt sich die Zeit, das folgende
+    // „paste“ gilt dann als Klartext (`plainOnly`: keine Überschrift, keine Liste aus Markdown-Zeichen, kein HTML).
+    let plainPasteAt = 0;
+    const onPlainKey = (e: KeyboardEvent) => {
+      if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") plainPasteAt = Date.now();
+    };
     const onPaste = (e: ClipboardEvent) => {
       const id = idOf(e.target);
       const data = e.clipboardData;
+      const plainOnly = Date.now() - plainPasteAt < 1000;
+      plainPasteAt = 0;
       if (!data || !editable) return;
       const anchor = id ?? ctrl.selected[ctrl.selected.length - 1];
       if (!anchor) return;
@@ -259,7 +319,7 @@ export function BlockEditor(props: PageEditorProps) {
       if (syncSrc) { void pasteSynced(anchor, syncSrc); return; }
       const image = !html && !based ? Array.from(data.files ?? []).find((f) => f.type.startsWith("image/")) : undefined;
       if (image && props.uploadFile) { insertImage(anchor, image); return; }
-      const content: cmd.PasteContent = { based, text: text || undefined, html: html || undefined };
+      const content: cmd.PasteContent = plainOnly ? { text: text || undefined, plainOnly: true } : { based, text: text || undefined, html: html || undefined };
       const opts = { pageExists: (x: string) => store.blocks.has(x) || props.pages?.get(x) !== undefined };
       const c = id ? ctrl.readCaret(id) : undefined;
       if (!c) { run(cmd.insertContentAfter(store, anchor, content, opts)); return; }
@@ -319,6 +379,7 @@ export function BlockEditor(props: PageEditorProps) {
     root.addEventListener("compositionstart", onCompositionStart);
     root.addEventListener("compositionend", onCompositionEnd);
     root.addEventListener("paste", onPaste);
+    root.addEventListener("keydown", onPlainKey, true);
     root.addEventListener("copy", onCopy);
     root.addEventListener("cut", onCopy);
     root.addEventListener("drop", onDrop);
@@ -328,6 +389,7 @@ export function BlockEditor(props: PageEditorProps) {
       root.removeEventListener("compositionstart", onCompositionStart);
       root.removeEventListener("compositionend", onCompositionEnd);
       root.removeEventListener("paste", onPaste);
+      root.removeEventListener("keydown", onPlainKey, true);
       root.removeEventListener("copy", onCopy);
       root.removeEventListener("cut", onCopy);
       root.removeEventListener("drop", onDrop);
@@ -335,15 +397,25 @@ export function BlockEditor(props: PageEditorProps) {
     };
   }, [ctrl, store, pageID, editable]);
 
+  // Nach Undo/Redo bleibt die Schreibmarke, wo sie war; ist ihr Block weg (z. B. Einfügen zurückgenommen), kommt sie
+  // ans Ende des letzten Textblocks – der Fokus bleibt im Editor, das nächste ⌘⇧Z/⌘Z kommt an (BSD-407 Teil 3)
+  const restoreCaret = (keep: Caret | undefined) => {
+    if (keep && store.blocks.get(keep.id)?.trashedAt === undefined && store.blocks.has(keep.id)) { ctrl.setCaret(clampCaret(store, keep)); return; }
+    if (!keep) return;
+    const texts = ctrl.order().filter((x) => cmd.isTextBlock(store.blocks.get(x)));
+    const last = texts[texts.length - 1];
+    if (last) ctrl.setCaret(endCaret(store, last));
+    else rootRef.current?.focus({ preventScroll: true });
+  };
   const undo = () => {
     const keep = ctrl.caret;
     store.undo();
-    if (keep && store.blocks.has(keep.id)) ctrl.setCaret(clampCaret(store, keep));
+    restoreCaret(keep);
   };
   const redo = () => {
     const keep = ctrl.caret;
     store.redo();
-    if (keep && store.blocks.has(keep.id)) ctrl.setCaret(clampCaret(store, keep));
+    restoreCaret(keep);
   };
 
   // MARK: Slash-Menü
@@ -387,6 +459,10 @@ export function BlockEditor(props: PageEditorProps) {
     }
     if (item.columns) {
       run(cmd.insertColumns(store, s.id, item.columns, empty));
+      return;
+    }
+    if (item.linkDatabase) {
+      setLinking({ after: s.id, replace: empty });
       return;
     }
     if (item.create) {
@@ -447,6 +523,27 @@ export function BlockEditor(props: PageEditorProps) {
     const next = { ...s, query };
     setMention(next);
     void searchMention(next);
+  };
+  // „[[Titel]]“: Seite mit genau diesem Titel erwähnen, sonst anlegen. Suche und Anlegen sind asynchron; die Erwähnung
+  // kommt an die Stelle von „[[Titel]]“ (nicht an die Schreibmarke), die eigene Schreibmarke rückt mit.
+  const resolveWikilink = async (id: string, at: number, title: string) => {
+    const pages = props.pages;
+    if (!pages) return;
+    let found: PageRef[] = [];
+    try { found = await pages.search(title); } catch { /* Suche nicht erreichbar */ }
+    const lower = title.toLowerCase();
+    const hit = found.find((p) => !p.trashed && !p.missing && (p.title || "").trim().toLowerCase() === lower);
+    const target = hit?.id ?? (pages.create ? await pages.create(title).catch(() => undefined) : undefined);
+    const b = store.blocks.get(id);
+    if (!b || b.trashedAt !== undefined) return;
+    const text = plainText(b.text);
+    const pos = Math.min(at, text.length);
+    const runs: cmd.Run[] = target
+      ? [{ t: hit?.title || title, m: {}, mention: { page: { _0: target } } }, ...(/^\s/.test(text.slice(pos)) ? [] : [{ t: " ", m: {} }])]
+      : [{ t: `[[${title}]]`, m: {} }];
+    const len = runs.reduce((n, r) => n + r.t.length, 0);
+    ctrl.shiftCaret(id, [{ retain: pos }, { insert: "x".repeat(len) }]);
+    cmd.replaceText(store, { blockId: id, from: pos, to: pos }, runs, { coalesce: null });
   };
   const chooseMention = (item: MentionItem) => {
     const s = mentionRef.current;
@@ -763,6 +860,14 @@ export function BlockEditor(props: PageEditorProps) {
     const handle = t.closest<HTMLElement>("[data-handle]");
     if (handle) return startHandle(e, handle.dataset.handle!);
     const field = t.closest<HTMLElement>("[data-editable-id]");
+    // BSD-407 Teil 3: Klick auf eine Seiten-Erwähnung öffnet die Seite (wie im alten Editor und in Notion);
+    // mit ⇧ bleibt es eine Textauswahl
+    const mention = t.closest<HTMLElement>(".bx2-mention[data-page]");
+    if (field && mention && !e.shiftKey && props.onOpenPage) {
+      e.preventDefault();
+      if (mention.dataset.missing !== "true") props.onOpenPage(mention.dataset.page!);
+      return;
+    }
     const eq = t.closest<HTMLElement>(".bx2-eq");
     if (field && eq && editable) {
       // Inline-Gleichung bearbeiten: Klick öffnet das TeX-Feld
@@ -775,7 +880,12 @@ export function BlockEditor(props: PageEditorProps) {
       ctrl.clearSelection();
       return startTextDrag(e, field.dataset.editableId!);
     }
-    if (t.closest("button, a, input, select, textarea, [data-embed], .bx2-menu")) return;
+    if (t.closest("button, a, input, select, textarea, [data-embed], .bx2-menu")) {
+      // BSD-407 Teil 3: Klick in eine Einbettung (Datenbank, Tabelle, Bild …) beendet eine Blockauswahl – sonst bliebe
+      // der Block beim Bearbeiten darin getönt (Feinschliff Inline-Datenbank)
+      if (t.closest("[data-embed]") && !t.closest(".bx2-menu") && ctrl.selected.length) ctrl.clearSelection();
+      return;
+    }
     // Klick rechts neben dem Text einer Zeile: Cursor ans Ende
     const row = t.closest<HTMLElement>(".bx2-row");
     const rowField = row?.querySelector<HTMLElement>(":scope > [data-editable-id], :scope > .bx2-field-wrap > [data-editable-id]");
@@ -1000,6 +1110,7 @@ export function BlockEditor(props: PageEditorProps) {
         {editable ? <div className="bx2-tail" onClick={onTailClick} data-testid="block-editor-tail" /> : null}
         {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
+      {props.outline === false ? null : <PageOutline store={store} pageID={pageID} container={rootEl} />}
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
       {eqEdit ? <EquationPopover x={eqEdit.x} y={eqEdit.y} initial={eqEdit.value} onDone={commitEquation} /> : null}
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={closeMenu} onMove={props.pages ? setMoving : undefined} /> : null}
@@ -1011,6 +1122,7 @@ export function BlockEditor(props: PageEditorProps) {
             if (cmd.moveBlocksToPage(store, moving, page.id, last)) ctrl.clearSelection();
           })()} />
       ) : null}
+      {linking ? <DatabasePicker source={databases} onClose={() => { const l = linking; setLinking(undefined); ctrl.setCaret({ id: l.after, from: textLen(store, l.after), to: textLen(store, l.after) }); }} onPick={(d) => void pickDatabase(linking, d)} /> : null}
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
       {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
@@ -1217,11 +1329,11 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
               onClick={() => cmd.setBlockProps(store, [b.id], { isOpen: b.props?.isOpen ? undefined : true }, "Toggle")}>
               <ChevronIcon />
             </button>
-            <TextField block={b} />
+            <HeadingField block={b} />
           </>
         );
       }
-      return <TextField block={b} />;
+      return <HeadingField block={b} />;
     case "text": case "quote":
       return <TextField block={b} />;
     case "code":
@@ -1326,6 +1438,11 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
   }
 }
 
+/** BSD-407 Teil 3: Überschriften sind für Hilfstechnik Überschriften (Rolle `heading`, Ebene), das Feld bleibt Textfeld. */
+function HeadingField({ block: b }: { block: Block }) {
+  return <div className="bx2-field-wrap" role="heading" aria-level={Number(b.type.slice(-1)) || 1}><TextField block={b} /></div>;
+}
+
 function numberLabel(n: number, depth: number): string {
   const k = Math.max(1, n);
   if (depth % 3 === 1) return String.fromCharCode(96 + (((k - 1) % 26) + 1));
@@ -1402,6 +1519,9 @@ function ImageBlock({ block: b }: { block: Block }) {
   const fig = useRef<HTMLElement>(null);
   const [busy, setBusy] = useState(false);
   const [live, setLive] = useState<number | undefined>();
+  // BSD-407 Teil 3: Doppelklick zeigt das Bild groß (wie im alten Editor, BSD-168/290)
+  const [viewing, setViewing] = useState<ImageView | undefined>();
+  const closeViewer = useCallback(() => setViewing(undefined), []);
   const upload = async (f: File | undefined) => {
     if (!f || !props.uploadFile) return;
     setBusy(true);
@@ -1433,14 +1553,18 @@ function ImageBlock({ block: b }: { block: Block }) {
   const caption = b.props?.caption !== undefined ? plainText(b.props.caption) : undefined;
   const shown = live ?? width;
   return (
-    <figure ref={fig} className="bx2-embed bx2-image" data-embed="" contentEditable={false}
+    <figure ref={fig} className="bx2-embed bx2-image" data-embed="" contentEditable={false} data-url={raw}
       onDragOver={(e) => { if (editable && props.uploadFile && e.dataTransfer.types.includes("Files")) e.preventDefault(); }}
       onDrop={(e) => { const f = e.dataTransfer.files[0]; if (editable && f?.type.startsWith("image/")) { e.preventDefault(); void upload(f); } }}>
       {src ? (
         <span className="bx2-image-frame" style={shown ? { width: shown } : undefined}>
-          <img src={src} alt={caption ?? ""} draggable={false} />
+          <img src={src} alt={caption ?? ""} draggable={false} onDoubleClick={(e) => { const v = imageAt(e.target); if (v) { e.preventDefault(); setViewing(v); } }} />
           {editable ? <span className="bx2-image-handle" role="separator" aria-orientation="vertical" aria-label="Resize image" onPointerDown={startResize} /> : null}
         </span>
+      ) : raw ? (
+        // BSD-407 Teil 3: Bild mit Datei, die (noch) nicht auf diesem Gerät ist – kein „Add an image“, sondern der
+        // Platzhalter der Hülle (assetBridge: Zustand am <img>, Hinweis am Block mit `data-url`, assets.css)
+        <span className="bx2-image-frame" style={shown ? { width: shown } : undefined}><img alt={caption ?? ""} draggable={false} /></span>
       ) : (
         <span className="bx2-image-empty">
           <button type="button" className="bx2-placeholder-btn" disabled={!editable || !props.uploadFile || busy} onClick={() => input.current?.click()}>
@@ -1463,6 +1587,7 @@ function ImageBlock({ block: b }: { block: Block }) {
           onBlur={(e) => { const v = e.target.value; if (v !== (caption ?? "")) cmd.setBlockProps(store, [b.id], { caption: v || undefined }, "Caption"); }}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }} />
       ) : null}
+      {viewing ? <ImageViewer view={viewing} onClose={closeViewer} /> : null}
     </figure>
   );
 }
@@ -1528,7 +1653,7 @@ function FileBlock({ block: b }: { block: Block }) {
     );
   }
   return (
-    <a className="bx2-embed bx2-file" data-embed="" contentEditable={false} href={src} target="_blank" rel="noopener noreferrer" download={b.type === "file" ? name : undefined}>
+    <a className="bx2-embed bx2-file" data-embed="" contentEditable={false} data-url={raw} href={src} target="_blank" rel="noopener noreferrer" download={b.type === "file" ? name : undefined}>
       <span aria-hidden="true">{b.type === "pdf" ? "📕" : "📎"}</span><span className="bx2-file-name">{name}</span>
     </a>
   );
@@ -1536,60 +1661,43 @@ function FileBlock({ block: b }: { block: Block }) {
 
 function TableBlock({ block: b }: { block: Block }) {
   const { store, editable } = useCtx();
-  const cols = Math.max(1, b.props?.tableColumns ?? 1);
-  const cells = b.props?.cells ?? [];
-  const rows: (typeof cells)[] = [];
-  for (let i = 0; i < cells.length; i += cols) rows.push(cells.slice(i, i + cols));
-  const head = b.props?.tableHeaderRow === true;
-  // Zelle bearbeiten: als Klartext (Formatierung einer unveränderten Zelle bleibt)
-  const setCell = (i: number, text: string) => {
-    if (plainText(cells[i]) === text) return;
-    const next = [...cells];
-    next[i] = text;
-    cmd.setBlockProps(store, [b.id], { cells: next }, "Edit table");
-  };
-  const addRow = () => cmd.setBlockProps(store, [b.id], { cells: [...cells, ...Array.from({ length: cols }, () => "")] }, "Add row");
-  const addColumn = () => {
-    const next: typeof cells = [];
-    for (let r = 0; r < Math.max(1, rows.length); r++) next.push(...(rows[r] ?? Array.from({ length: cols }, () => "")), "");
-    cmd.setBlockProps(store, [b.id], { cells: next, tableColumns: cols + 1 }, "Add column");
+  // BSD-407 Teil 3: gemeinsames Format – Zeilen sind Kind-Blöcke `tableRow` mit `cells` (Kern `tableModel`); neu zeichnen,
+  // wenn sich eine Zeile ändert
+  useSyncExternalStore(storeSubscribe(store), () => store.revision);
+  const m = cmd.tableModel(store, b.id) ?? { cols: 1, rows: [], header: false };
+  const rows = m.rows.length ? m.rows : [{ cells: Array.from({ length: m.cols }, () => "" as RichText) }];
+  // Zelle bearbeiten: als Klartext; Formatierung außerhalb der geänderten Stelle bleibt (Kern setTableCell)
+  const setCell = (i: number, j: number, text: string) => {
+    if (m.rows.length === 0) { if (text) { cmd.addTableRow(store, b.id); cmd.setTableCell(store, b.id, 0, j, text); } return; }
+    cmd.setTableCell(store, b.id, i, j, text);
   };
   // BSD-407: Zeile/Spalte der zuletzt bearbeiteten Zelle löschen (die letzte bleibt)
   const [at, setAt] = useState<{ i: number; j: number } | undefined>();
-  const deleteRow = () => {
-    if (!at || rows.length <= 1) return;
-    cmd.setBlockProps(store, [b.id], { cells: rows.filter((_, i) => i !== at.i).flat() }, "Delete row");
-    setAt(undefined);
-  };
-  const deleteColumn = () => {
-    if (!at || cols <= 1) return;
-    cmd.setBlockProps(store, [b.id], { cells: rows.flatMap((r) => r.filter((_, j) => j !== at.j)), tableColumns: cols - 1 }, "Delete column");
-    setAt(undefined);
-  };
-  const cell = (c: (typeof cells)[number], i: number, j: number) => {
-    const idx = i * cols + j;
+  const deleteRow = () => { if (at) cmd.deleteTableRow(store, b.id, at.i); setAt(undefined); };
+  const deleteColumn = () => { if (at) cmd.deleteTableColumn(store, b.id, at.j); setAt(undefined); };
+  const cell = (c: RichText | undefined, i: number, j: number) => {
     const content = editable ? (
       <span className="bx2-cell" contentEditable="plaintext-only" suppressContentEditableWarning role="textbox" aria-label={`Row ${i + 1}, column ${j + 1}`}
-        onFocus={() => setAt({ i, j })} onBlur={(e) => setCell(idx, e.currentTarget.textContent ?? "")}
+        onFocus={() => setAt({ i, j })} onBlur={(e) => setCell(i, j, e.currentTarget.textContent ?? "")}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); } }}>{plainText(c)}</span>
     ) : plainText(c);
-    return head && i === 0 ? <th key={j}>{content}</th> : <td key={j}>{content}</td>;
+    return m.header && i === 0 ? <th key={j}>{content}</th> : <td key={j}>{content}</td>;
   };
   return (
     <div className="bx2-embed bx2-table-wrap" data-embed="" contentEditable={false}>
       <table className="bx2-table">
         <tbody>
-          {rows.map((r, i) => <tr key={i}>{r.map((c, j) => cell(c, i, j))}</tr>)}
+          {rows.map((r, i) => <tr key={"id" in r && r.id ? r.id : i}>{r.cells.map((c, j) => cell(c, i, j))}</tr>)}
         </tbody>
       </table>
       {editable ? (
         <span className="bx2-table-tools">
-          <button type="button" className="bx2-table-add" onClick={addRow} aria-label="Add row">+ Row</button>
-          <button type="button" className="bx2-table-add" onClick={addColumn} aria-label="Add column">+ Column</button>
+          <button type="button" className="bx2-table-add" onClick={() => cmd.addTableRow(store, b.id)} aria-label="Add row">+ Row</button>
+          <button type="button" className="bx2-table-add" onClick={() => cmd.addTableColumn(store, b.id)} aria-label="Add column">+ Column</button>
           {at ? (
             <>
               <BasedButton size="sm" variant="ghost" label="Delete row" disabled={rows.length <= 1} onClick={deleteRow} />
-              <BasedButton size="sm" variant="ghost" label="Delete column" disabled={cols <= 1} onClick={deleteColumn} />
+              <BasedButton size="sm" variant="ghost" label="Delete column" disabled={m.cols <= 1} onClick={deleteColumn} />
             </>
           ) : null}
         </span>
@@ -1640,9 +1748,11 @@ function EquationBlock({ block: b }: { block: Block }) {
     setEditing(false);
     if (draft !== expr) cmd.setBlockProps(store, [b.id], { expression: draft }, "Edit equation");
   };
+  const shown = editing ? draft : expr;
   return (
     <div className="bx2-embed bx2-equation" data-embed="" contentEditable={false} onClick={() => editable && !editing && (setDraft(expr), setEditing(true))}>
-      {expr ? (props.renderEquation ? props.renderEquation({ expression: expr, displayMode: true }) : <code>{expr}</code>) : <span className="bx2-muted">Add a TeX equation</span>}
+      {/* BSD-407 Teil 3: beim Bearbeiten zeigt die Formel den Entwurf (Vorschau beim Tippen, wie im alten Editor) */}
+      {shown ? (props.renderEquation ? props.renderEquation({ expression: shown, displayMode: true }) : <code>{shown}</code>) : <span className="bx2-muted">Add a TeX equation</span>}
       {editing ? (
         <textarea autoFocus className="bx2-link-input bx2-eq-input" aria-label="TeX" value={draft} placeholder="E = mc^2" onChange={(e) => setDraft(e.target.value)} onBlur={save}
           onKeyDown={(e) => { if ((e.key === "Enter" && (e.metaKey || e.ctrlKey)) || e.key === "Escape") { e.preventDefault(); e.stopPropagation(); save(); } }} />
@@ -1670,7 +1780,8 @@ function CodeLanguage({ block: b }: { block: Block }) {
   const { store, editable } = useCtx();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const cur = b.props?.language;
+  // BSD-343 / BSD-407 Teil 3: Kurznamen aus Markdown/Notion („ts“, „js“, „py“) zeigen die Sprache (gespeichert bleibt der Wert)
+  const cur = codeLanguageID(b.props?.language) ?? b.props?.language;
   const name = CODE_LANGUAGES.find((l) => l.id === cur)?.name ?? (cur || "Plain text");
   const list = CODE_LANGUAGES.filter((l) => !q || l.name.toLowerCase().includes(q.toLowerCase()) || l.aliases?.some((a) => a.startsWith(q.toLowerCase())));
   const pick = (id: string | undefined) => {
@@ -1727,8 +1838,34 @@ function labelOf(b: Block | undefined): string {
 
 const atomRenderer = (props: PageEditorProps) => ({
   pageTitle: (id: string) => props.pages?.get(id)?.title,
+  page: (id: string): MentionInfo | undefined => mentionInfo(props, id),
   ...(props.renderEquationHTML ? { equationHTML: (tex: string) => props.renderEquationHTML!(tex, () => refreshEquations(props)) } : {}),
 });
+
+/** BSD-407 Teil 3: Icon, Titel und Papierkorb einer erwähnten Seite (Seitenverzeichnis der Hülle, sonst der eigene Store). */
+function mentionInfo(props: PageEditorProps, id: string): MentionInfo | undefined {
+  const ref = props.pages?.get(id);
+  const local = props.store.blocks.get(id);
+  if (!ref && !local) return undefined;
+  const live = ref && !ref.missing ? ref : undefined;
+  const raw = live ? live.icon : local ? (typeof local.props?.icon === "string" ? local.props.icon : undefined) : undefined;
+  const svg = phosphorMarkup(raw);
+  const fallback = (live?.kind ?? (local?.type === "databasePage" ? "database" : "page")) === "database" ? "▦" : "📄";
+  const icon = svg ? { text: svg, svg: true } : { text: isEmojiIcon(raw) ? raw : fallback };
+  const title = live?.title || (local ? plainText(local.text).trim() || "Untitled" : undefined);
+  return {
+    title, icon,
+    missing: ref ? ref.missing === true && !local : false,
+    trashed: ref?.trashed === true || (local ? local.trashedAt !== undefined : false),
+  };
+}
+
+/** Seitenverzeichnis oder Phosphor-Icons geändert: Erwähnungen dieses Editors neu zeichnen (nur ihr Inneres). */
+function refreshMentions(root: HTMLElement | null, props: PageEditorProps) {
+  if (!root) return;
+  const atoms = atomRenderer(props);
+  for (const el of root.querySelectorAll<HTMLElement>(".bx2-mention[data-page]")) fillMention(el, atoms);
+}
 
 // KaTeX kam nach: alle Inline-Gleichungen der Editoren neu zeichnen (nur das Innere der Atome, die Länge bleibt).
 function refreshEquations(props: PageEditorProps) {
@@ -1759,7 +1896,7 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
   const cls = "bx2-field bx2-t-" + block.type + (block.type === "todo" && block.props?.checked ? " bx2-done" : "");
   return (
     <div ref={ref} className={cls} data-editable-id={block.id} contentEditable={editable} suppressContentEditableWarning
-      spellCheck={block.type !== "code"} role="textbox" aria-multiline="true" aria-label={PLACEHOLDER[block.type] ?? "Text"}
+      spellCheck={block.type === "code" ? false : undefined /* BSD-407 Teil 3: sonst gilt die Einstellung (body) */} role="textbox" aria-multiline="true" aria-label={PLACEHOLDER[block.type] ?? "Text"}
       data-placeholder={PLACEHOLDER[block.type] ?? "Type '/' for commands"} writingsuggestions="false" />
   );
 });
@@ -2094,3 +2231,13 @@ function writeBlocksClipboard(store: WorkspaceStore, ids: readonly string[], dat
 }
 
 export type { ReactNode };
+
+/** Ohne Quelle der Hülle: Datenbanken, die der Store des Editors kennt (wie der alte Editor). */
+function storeDatabases(store: WorkspaceStore): DatabaseSource {
+  return {
+    list: (q) => Promise.resolve([...store.databases.values()]
+      .map((db) => ({ id: db.id, title: plainText(db.title) || "Untitled" }))
+      .filter((db) => db.title.toLowerCase().includes(q.trim().toLowerCase()))
+      .sort((a, b) => a.title.localeCompare(b.title))),
+  };
+}

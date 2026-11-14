@@ -1,7 +1,9 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { useLegacyEditor } from "./legacy-editor.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
 
 // BSD-226: Meeting-Notizen (/meet). Chromium nimmt mit Playwrights Fake-Mikrofon auf
 // (--use-fake-device-for-media-stream); transkribiert wird mit dem festen Test-Transcriber, zusammengefasst mit einer
@@ -31,6 +33,9 @@ const test = base.extend<{ page: Page }>({
     }
   },
 });
+
+// BSD-407 Teil 3: Der Meeting-Block (Aufnahme, Notizen, Zusammenfassung) ist im Block-Editor noch ein Platzhalter (Teil 2f). Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“).
+useLegacyEditor(test);
 
 type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>

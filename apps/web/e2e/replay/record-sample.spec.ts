@@ -2,7 +2,7 @@
 //   BASED_RECORD_SAMPLE=1 pnpm --filter @based/web exec playwright test e2e/replay/record-sample.spec.ts
 // Schreibt e2e/replay/bundles/typing-basics-<engine>.json – so, wie ⇧⌘B es am Mac speichert (Text ersetzt).
 import { writeFileSync } from "node:fs";
-import { openNewPage, ready, test } from "./fixture.js";
+import { legacyTest as test, openNewPage, ready } from "./fixture.js";
 import { settle } from "./replay.js";
 
 test.skip(!process.env.BASED_RECORD_SAMPLE, "nur zum Erzeugen des Beispielbündels");

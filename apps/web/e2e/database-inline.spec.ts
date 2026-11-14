@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-255: Inline-Datenbanken ruhig wie in Notion – kein eigener senkrechter Scroller in der Tabelle, „Load more“,
 // Werkzeuge erst beim Überfahren, „Open as full page“. Screenshots (hell/dunkel) nur mit BASED_SCREENSHOTS=1 in Chromium.
@@ -15,13 +16,12 @@ async function ready(page: Page) {
 async function setup(page: Page) {
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("Notes before the table.");
   await page.keyboard.press("Enter");
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   const db = page.locator(".shell-database.inline");
   await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
   return { db };

@@ -1,4 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
+import { useLegacyEditor } from "./legacy-editor.js";
+
+// BSD-407 Teil 3: „Ask AI“ (Leertaste, Formatleiste) gibt es nur im alten Editor. Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“).
+useLegacyEditor();
 
 // BSD-225: „Ask AI“ im Editor mit der Skript-Engine (kein Netz): Leertaste auf leerer Zeile → schreiben → Insert
 // (ein Undo-Schritt); Auswahl → Formatleiste „Ask AI“ → Make shorter → Replace selection.

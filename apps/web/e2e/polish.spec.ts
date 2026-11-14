@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor, focusEditorEnd } from "./editor-helpers.js";
 
 // Feinschliff (docs/quality/checklist.md): Mängel aus dem Durchgang vom 11. 11., jeweils mit einem Test, der den
 // Rückfall verhindert.
@@ -39,9 +40,9 @@ test("Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht m
   await page.setViewportSize({ width: 1280, height: 820 });
   await fresh(page);
   await page.getByRole("button", { name: "New page" }).first().click();
-  await page.locator(".bn-editor[contenteditable='true']").first().click();
+  await focusEditorEnd(page);
   await page.keyboard.type("/");
-  const item = page.locator(".bn-suggestion-menu-item").nth(4);
+  const item = page.getByTestId("slash-menu").getByRole("option").nth(4);
   await item.hover();
   const [bg, selected, ink, color] = await item.evaluate((el) => {
     const probe = document.createElement("i");
@@ -121,8 +122,7 @@ test("Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letz
   await page.setViewportSize({ width: 1280, height: 820 });
   await fresh(page);
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await editor.click();
+  await focusEditorEnd(page);
   // Die Gliederung hängt sich ein, solange die Seite noch nicht scrollt – genau der Fall, in dem sie früher stehen blieb.
   for (const h of ["One", "Two", "Three", "Four"]) {
     await page.keyboard.type(`## ${h}`);
@@ -134,7 +134,7 @@ test("Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letz
   const panel = page.locator(".panel");
   await panel.evaluate((el) => el.scrollTo(0, 0));
   await expect.poll(current).toBe("One");
-  await page.locator(".bn-block-outer", { hasText: /^Two$/ }).last().evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await blockEditor(page).locator(".bx2-block", { hasText: /^Two$/ }).last().evaluate((el) => el.scrollIntoView({ block: "start" }));
   await expect.poll(current).toBe("Two");
   await panel.evaluate((el) => el.scrollTo(0, el.scrollHeight));
   await expect.poll(current).toBe("Four");

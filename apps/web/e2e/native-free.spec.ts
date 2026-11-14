@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor, expectEditable } from "./editor-helpers.js";
+import { useLegacyEditor } from "./legacy-editor.js";
 
 // „Nichts vom System“ (@based/ui/native): Jeder Klick öffnet Based-Oberfläche – eigenes Kontextmenü an jeder Stelle,
 // eigene Auswahlliste für <select>, eigene Tooltips statt der title-Blase, keine Systemauswahl für Datum/Uhrzeit.
@@ -155,6 +157,11 @@ test("Keine Systemauswahl für Datum und Uhrzeit in der App", async ({ page }) =
   }
 });
 
+// BSD-407 Teil 3: Blockmenü mit Icons und Glas wie das Seitenmenü hat bisher nur der alte Editor (im Block-Editor:
+// Teil 2g, Menüs aus @based/ui/astryx). Diese zwei Tests pinnen ihn (docs/editor-parity.md, „noch BlockNote“).
+test.describe("Blockmenü des alten Editors", () => {
+useLegacyEditor();
+
 test("Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben", async ({ page }) => {
   await fresh(page);
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
@@ -197,6 +204,7 @@ test("Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie �
   await page.locator(".bn-side-menu [draggable=true]").last().click();
   expect(await look(".bn-drag-handle-menu")).toEqual(reference);
 });
+});
 
 // BSD-366: keine macOS Writing Tools und keine Siri-/Inline-Vorschläge – weder im Editor noch in Feldern.
 // `writingsuggestions` vererbt sich; die Prüfung nimmt die Eigenschaft des Browsers (falls vorhanden) und sonst das
@@ -209,8 +217,8 @@ test("Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfu
   });
   await expect.poll(() => page.evaluate(() => document.documentElement.getAttribute("writingsuggestions"))).toBe("false");
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await expect(page.locator(".bx-editor .bn-editor[contenteditable=true]").first()).toBeVisible();
-  for (const sel of [".bx-editor .bn-editor[contenteditable=true]", "[aria-label='Page title']"]) expect(await state(sel), sel).toEqual({ prop: "false", attr: "false" });
+  await expectEditable(page);
+  for (const sel of ["[data-testid=block-editor] [data-editable-id]", "[aria-label='Page title']"]) expect(await state(sel), sel).toEqual({ prop: "false", attr: "false" });
   // Felder in Dialogen und Menüs (Quick Find)
   await page.keyboard.press("ControlOrMeta+k");
   const search = page.getByRole("dialog").locator("input").first();
@@ -227,7 +235,7 @@ test("Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfu
 test("Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unverändert", async ({ page }) => {
   await fresh(page);
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  const box = page.locator(".bx-editor input[type=checkbox]").first();
+  const box = blockEditor(page).locator("input[type=checkbox]").first();
   await expect(box).toBeVisible();
   const look = () => box.evaluate((el) => { const s = getComputedStyle(el); return { appearance: s.appearance || s.getPropertyValue("-webkit-appearance"), bg: s.backgroundColor, border: s.borderTopColor, w: Math.round(el.getBoundingClientRect().width) }; });
   const tok = (name: string) => page.evaluate((n) => { const p = document.createElement("i"); p.style.color = `var(--${n})`; document.body.append(p); const c = getComputedStyle(p).color; p.remove(); return c; }, name);
@@ -240,7 +248,8 @@ test("Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unveränd
   await box.focus();
   await page.keyboard.press("Space");
   await expect(box).toBeChecked();
-  expect((await look()).bg).toBe(await tok("button"));
+  const button = await tok("button");
+  await expect.poll(async () => (await look()).bg).toBe(button); // Farbübergang (--duration-fast) abwarten
   await box.click(); // (der Editor zeichnet das Kästchen nach dem Umschalten neu, der Fokus bleibt nicht darauf)
   await expect(box).not.toBeChecked();
 });

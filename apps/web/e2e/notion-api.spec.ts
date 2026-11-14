@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { blockEditor } from "./editor-helpers.js";
 import { readFileSync } from "node:fs";
 
 // BSD-217 Teil 2: Import direkt aus Notion über die API – Dialog, Token prüfen, Fortschritt, Bericht; gegen die
@@ -81,11 +82,10 @@ test("Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur un
 
   // Struktur: Seite mit Spalten (30/70), Unterseite, Datenbank mit ihren Ansichten
   await expect(page.getByLabel("Page title")).toHaveValue("Project Hub");
-  // Die Seite hat einen Synced Block: dessen Original bekommt einen eigenen (verschachtelten) Editor, sobald es
-  // geladen ist – je nach Zeitpunkt 1 bis 3 Editoren (BSD-294). Geprüft wird der Editor der Seite selbst.
-  const editor = page.locator(".bn-editor").first();
+  // Die Seite hat einen Synced Block (im Block-Editor Teil derselben Seite); geprüft wird der Editor der Seite.
+  const editor = blockEditor(page);
   await expect(editor).toBeVisible();
-  await expect(editor.locator("[data-content-type=column], .bn-block-column, [data-node-type=column]").first()).toBeVisible();
+  await expect(editor.locator('.bx2-block[data-type="columnList"] .bx2-column').first()).toBeVisible();
   await expect(page.getByRole("treeitem", { name: "Project Hub", exact: true })).toBeVisible();
   for (const name of ["All tasks", "Board"]) await expect(page.getByRole("tab", { name, exact: true }).first()).toBeVisible();
   expect(seen.count).toBeGreaterThan(25);

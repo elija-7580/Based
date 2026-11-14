@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -111,13 +112,12 @@ test("Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter,
   await a.getByRole("button", { name: "New page in Private" }).click();
   await a.getByLabel("Page title").fill("Photos");
   await expect(a.getByRole("treeitem", { name: "Photos" })).toBeVisible();
-  const editor = a.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(a);
+  await focusEditorEnd(a);
   await a.keyboard.type("/image");
   await a.keyboard.press("Enter");
-  await a.locator("input[type='file']").setInputFiles({ name: "gradient.png", mimeType: "image/png", buffer: image });
-  const imgA = a.locator(".shell-editor img.bn-visual-media");
+  await blockEditor(a).locator(".bx2-image input[type='file']").setInputFiles({ name: "gradient.png", mimeType: "image/png", buffer: image });
+  const imgA = blockEditor(a).locator(".bx2-image img");
   await expect(imgA).toHaveAttribute("src", /^blob:/);
 
   // Der Server hat die Datei unter ihrem Hash; ohne Token gibt es sie nicht.
@@ -131,7 +131,7 @@ test("Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter,
   const b = await deviceOn(browser, baseURL!);
   await connect(b);
   await b.getByRole("treeitem", { name: "Photos" }).click();
-  const imgB = b.locator(".shell-editor img.bn-visual-media");
+  const imgB = blockEditor(b).locator(".bx2-image img");
   await expect(imgB).toHaveAttribute("src", /^blob:/, { timeout: 20_000 });
   await expect.poll(() => imgB.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(320);
   const hashB = await imgB.evaluate(async (el: HTMLImageElement) => {
@@ -147,7 +147,7 @@ test("Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter,
   await c.route("**/sync/v2/asset/**", (route) => route.abort());
   await connect(c, { dark: true });
   await c.getByRole("treeitem", { name: "Photos" }).click();
-  const imgC = c.locator(".shell-editor img.bn-visual-media");
+  const imgC = blockEditor(c).locator(".bx2-image img");
   await expect(imgC).toHaveAttribute("data-asset-state", "offline", { timeout: 20_000 });
   await expect(imgC).toHaveAttribute("alt", /loads when the sync server is reachable/);
   await expect(c.locator(`.shell-editor [data-url="based-asset:${hash}"]`)).toHaveAttribute("data-asset-notice", /loads when the sync server is reachable/);

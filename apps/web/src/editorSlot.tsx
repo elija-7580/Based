@@ -5,8 +5,9 @@
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { pageHasMeeting } from "@based/core";
 import { BlockEditor, PageEditor, textDocName, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
-import { newEditorPref } from "./shell/storage.js";
+import { legacyEditorPref, migrateEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
@@ -38,6 +39,8 @@ let textCollab: CollabBinder | undefined;
 
 /** Der Editor-Steckplatz braucht den Store-Client (Seitensuche, Backlinks). Einmal beim Start setzen (main.tsx). */
 export function connectEditor(client: StoreClient) {
+  // BSD-407 Teil 3: Block-Editor für alle; der alte Schalter „New editor“ (Standard aus) wird einmalig entfernt.
+  migrateEditorPref();
   shellClient = client;
   directory = new ShellPageDirectory(client);
   meeting = createMeetingHost(client);
@@ -68,8 +71,12 @@ const blockLink = (pageID: string) => (blockID: string) => {
 export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock }: PageEditorProps) {
   const theme = useRootTheme();
   const client = shellClient;
-  // ADR 0016: neuer Block-Editor hinter einem Schalter (Settings → Diagnostics → For developers)
-  const newEditor = useSyncExternalStore(newEditorPref.subscribe, newEditorPref.get);
+  // BSD-407 Teil 3: Block-Editor (ADR 0016) ist Standard; BlockNote nur noch als Notausgang (Settings → Diagnostics).
+  // Seiten mit Meeting-Block öffnen bis Teil 2f im alten Editor (Aufnahme, Notizen, Zusammenfassung gibt es nur dort);
+  // entschieden beim Öffnen der Seite, damit der Editor nicht mitten im Schreiben wechselt.
+  const legacy = useSyncExternalStore(legacyEditorPref.subscribe, legacyEditorPref.get);
+  const meetingPage = useMemo(() => pageHasMeeting(store, pageID), [store, pageID]);
+  const newEditor = !legacy && !meetingPage;
   const Editor = newEditor ? BlockEditor : PageEditor;
   const renderDatabase = (p: DatabaseRenderProps) => {
     const View = slots.DatabaseView;

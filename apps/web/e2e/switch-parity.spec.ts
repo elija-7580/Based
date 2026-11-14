@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -22,7 +23,7 @@ const test = base.extend<{ page: Page }>({
 type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
-const editor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
+const editor = (page: Page) => blockEditor(page);
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAoCAIAAADmAupWAAAAS0lEQVR4nO3PAQkAIBDAQOMY0YjGMoawP1iA3drnjmp9PwAGBgYGBgYeE3A94HrA9YDrAdcDrgdcD7gecD3gesD1gOsB1wOuB1zvAUrGlQAWzRHLAAAAAElFTkSuQmCC";
 
 async function fresh(page: Page) {
@@ -79,7 +80,7 @@ test("Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U s
   const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(crumbs).toContainText("Projects");
   await expect(crumbs).toContainText("Tasks");
-  await page.locator(".bn-editor .bn-block-content").first().click();
+  await focusEditorEnd(page);
   await page.keyboard.press("ControlOrMeta+Shift+U");
   await expect(page.getByLabel("Page title")).toHaveValue("Tasks");
   await page.keyboard.press("ControlOrMeta+Shift+U");
@@ -97,6 +98,9 @@ test("Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechts
   const article = page.locator("article.page");
   await expect(article).toHaveAttribute("data-font", "serif");
   await expect(article).toHaveAttribute("data-full-width", "");
+  // BSD-407 Teil 3: das Textfeld des Block-Editors folgt der Einstellung (kein eigenes spellcheck=true)
+  await focusEditorEnd(page);
+  expect(await blockEditor(page).locator("[data-editable-id]").first().evaluate((el) => (el as HTMLElement).spellcheck)).toBe(false);
   await page.reload();
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await expect(page.locator("body")).toHaveAttribute("spellcheck", "false");
@@ -106,14 +110,14 @@ test("Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Ne
   await command(page, { op: "createPage", title: "Pictures" });
   await openPage(page, "Pictures");
   const ed = editor(page);
-  await expect(ed).toHaveAttribute("contenteditable", "true");
-  await ed.locator(".bn-block-content").first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.evaluate((src) => {
     const dt = new DataTransfer();
     dt.setData("text/plain", `![Chart](${src})`);
     document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
   }, PNG);
-  const img = ed.locator("[data-content-type=image] img").first();
+  const img = ed.locator('.bx2-block[data-type="image"] img').first();
   await expect(img).toBeVisible();
   await img.dblclick();
   await expect(page.getByTestId("image-viewer")).toBeVisible();
@@ -121,9 +125,9 @@ test("Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Ne
   await expect(page.getByTestId("image-viewer")).toHaveCount(0);
 
   // Breite per Griff
-  const wrapper = ed.locator("[data-content-type=image] .bn-visual-media-wrapper").first();
+  const wrapper = ed.locator('.bx2-block[data-type="image"] .bx2-image-frame').first();
   await wrapper.hover();
-  const handle = wrapper.locator(".bn-resize-handle").last();
+  const handle = wrapper.getByRole("separator", { name: "Resize image" });
   await expect(handle).toBeVisible();
   const before = (await wrapper.boundingBox())!.width;
   const h = (await handle.boundingBox())!;
@@ -137,7 +141,7 @@ test("Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Ne
   await page.reload();
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await openPage(page, "Pictures");
-  const again = editor(page).locator("[data-content-type=image] .bn-visual-media-wrapper").first();
+  const again = editor(page).locator('.bx2-block[data-type="image"] .bx2-image-frame').first();
   await expect.poll(async () => Math.round((await again.boundingBox())!.width)).toBe(after);
 });
 
@@ -158,13 +162,13 @@ test("Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansich
   };
   const id = (await command(page, { op: "createPage", title: "Roadmap" })) as string;
   await openPage(page, "Roadmap");
-  await editor(page).locator(".bn-block-content").first().click();
+  await focusEditorEnd(page);
   await page.evaluate((src) => {
     const dt = new DataTransfer();
     dt.setData("text/plain", `![Chart](${src})`);
     document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
   }, PNG);
-  await expect(editor(page).locator("[data-content-type=image] img").first()).toBeVisible();
+  await expect(editor(page).locator('.bx2-block[data-type="image"] img').first()).toBeVisible();
   await page.waitForTimeout(800);
   const pageHash = "#page-" + id;
   await shot("topbar-ai", pageHash, async () => {
@@ -172,7 +176,7 @@ test("Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansich
   });
   await shot("image-viewer", pageHash, async () => {
     if ((await page.getByTestId("topbar-ai").getAttribute("aria-pressed")) === "true") await page.getByTestId("topbar-ai").click();
-    await editor(page).locator("[data-content-type=image] img").first().dblclick();
+    await editor(page).locator('.bx2-block[data-type="image"] img').first().dblclick();
     await expect(page.getByTestId("image-viewer")).toBeVisible();
   });
   await shot("settings-writing", "#prefs-my-settings", async () => { await page.getByText("Spell-check").scrollIntoViewIfNeeded(); });

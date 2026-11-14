@@ -68,7 +68,7 @@ function propsFor(type: string, props: BlockProps | undefined, keep: BlockProps 
   return Object.keys(p).length ? p : undefined;
 }
 
-function create(store: WorkspaceStore, tx: Tx, type: string, parent: string, sk: string, runs: readonly Run[] = [], props?: BlockProps): string {
+export function create(store: WorkspaceStore, tx: Tx, type: string, parent: string, sk: string, runs: readonly Run[] = [], props?: BlockProps): string {
   const id = newBlockID();
   tx.put({ kind: "block", data: makeBlock({ id, type, parent, sk, text: blockText(type === "code" ? plainRuns(runs) : runs), props, createdBy: store.userID }, store.now()) });
   return id;

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -89,7 +90,7 @@ test("Seitenwechsel und Tippen auf großen Seiten bleiben flüssig", { tag: "@pe
     switches.push(Math.round((await page.evaluate(() => performance.now())) - t0));
   }
   // Tippen: Zeit von keydown bis zum nächsten gemalten Frame, 40 Tasten am Ende der Seite.
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
+  const editor = blockEditor(page);
   await editor.getByText("Big page B line 299", { exact: false }).click();
   await page.keyboard.press("End");
   await page.evaluate(() => {

@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -23,7 +24,7 @@ const test = base.extend<{ page: Page }>({
 type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
-const editor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
+const editor = (page: Page) => blockEditor(page);
 
 async function fresh(page: Page) {
   await page.goto("/");
@@ -33,17 +34,18 @@ async function fresh(page: Page) {
 async function openPage(page: Page, title: string) {
   await page.getByRole("treeitem", { name: title }).click();
   await expect(page.getByLabel("Page title")).toHaveValue(title);
-  await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+  await expectEditable(page);
 }
 
 /** Mermaid-Block per Slash-Menü anlegen und Code schreiben (Enter im Codeblock = neue Zeile). */
 async function mermaidBlock(page: Page, lines: string[]) {
-  await editor(page).locator(".bn-block-content").first().click();
+  await focusEditorEnd(page);
   await page.keyboard.type("/Mermaid");
   await expect(page.getByRole("option", { name: /Mermaid diagram/ })).toBeVisible();
   await page.keyboard.press("Enter");
-  const code = editor(page).locator("[data-content-type=codeBlock]").first();
-  await expect(code.locator("select")).toHaveValue("mermaid");
+  const code = editor(page).locator('.bx2-block[data-type="code"]').first();
+  await expect(code.locator(".bx2-code-lang-btn")).toHaveText("Mermaid");
+  await expect(code.locator("[data-editable-id]")).toBeFocused();
   // als Text einfügen (Tippen von Zeilenumbrüchen im Codeblock ist in WebKit unter Last unzuverlässig)
   await page.evaluate((text) => {
     const dt = new DataTransfer();

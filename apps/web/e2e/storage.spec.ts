@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { blockEditor, expectEditable } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -27,7 +28,7 @@ async function ready(page: Page, path = "/") {
 
 async function versions(page: Page) {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+  await expectEditable(page);
   await page.getByRole("button", { name: "Page menu" }).click();
   await page.getByRole("menuitem", { name: "Version history" }).click();
   const dialog = page.getByRole("dialog", { name: "Version history" });
@@ -37,13 +38,13 @@ async function versions(page: Page) {
 
 async function addParagraph(page: Page, text: string) {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  const last = page.locator(".bn-editor").getByText("Pages you delete wait in the Trash");
+  const last = blockEditor(page).getByText("Pages you delete wait in the Trash");
   const box = (await last.boundingBox())!;
   await last.click({ position: { x: box.width - 2, y: box.height / 2 } });
   await page.keyboard.press("End");
   await page.keyboard.press("Enter");
   await page.keyboard.type(text);
-  await expect(page.locator(".bn-editor").getByText(text)).toBeVisible();
+  await expect(blockEditor(page).getByText(text)).toBeVisible();
   await page.waitForTimeout(500); // Editor schreibt gesammelt in den Store
 }
 

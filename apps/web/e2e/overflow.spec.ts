@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -153,9 +154,8 @@ test("Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung", async 
   let parent = long;
   for (let i = 1; i <= 10; i++) parent = (await command(page, { op: "createPage", title: `Level ${i} ${LONG_TITLE}`, parent })) as string;
   await page.getByRole("treeitem", { name: TITLE_150 }).click();
-  const ed = page.locator(".bx-editor > .bx-doc .bn-editor").first();
-  await expect(ed).toHaveAttribute("contenteditable", "true");
-  await ed.locator(".bn-block-content").first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type(`Word: ${LONG_WORD} end.`);
   await page.waitForTimeout(600);
   const found = await check(page, [
@@ -171,9 +171,8 @@ test("Gliederung überdeckt nie den Text", async ({ page }) => {
   await ready(page);
   await command(page, { op: "createPage", title: "Outline room" });
   await page.getByRole("treeitem", { name: "Outline room" }).click();
-  const ed = page.locator(".bx-editor > .bx-doc .bn-editor").first();
-  await expect(ed).toHaveAttribute("contenteditable", "true");
-  await ed.locator(".bn-block-content").first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.evaluate((md) => {
     const dt = new DataTransfer();
     dt.setData("text/plain", md);
@@ -183,7 +182,10 @@ test("Gliederung überdeckt nie den Text", async ({ page }) => {
   await expect(outline).toBeVisible();
   const state = () => page.evaluate(() => {
     const o = document.querySelector<HTMLElement>("[data-testid=page-outline]")!;
-    const text = document.querySelector(".bx-editor > .bx-doc .bn-editor > .bn-block-group")!.getBoundingClientRect();
+    // Textspalte des Block-Editors: sein Rahmen ohne den Innenabstand für Griff und Rand
+    const ed = document.querySelector<HTMLElement>("[data-testid=block-editor]")!;
+    const box = ed.getBoundingClientRect();
+    const text = { right: box.right - (parseFloat(getComputedStyle(ed).paddingRight) || 0) };
     const shown = getComputedStyle(o).visibility !== "hidden" && getComputedStyle(o).display !== "none";
     return { shown, clear: !shown || o.getBoundingClientRect().left >= text.right };
   });
@@ -252,10 +254,10 @@ test("Inline-Datenbank: Werkzeugleiste in 900 × 600 einzeilig", async ({ page }
   await ready(page);
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']").first();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   const db = page.locator(".shell-database.inline");
   await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
   await db.hover();

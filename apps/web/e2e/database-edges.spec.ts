@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -67,13 +68,13 @@ test("Inline-Datenbank: Tab und erste Spalte am Seitentext", async ({ page, brow
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await command(page, { op: "createPage", title: "Inline edges" });
   await page.getByRole("treeitem", { name: "Inline edges" }).click();
-  const editor = page.locator(".bx-editor > .bx-doc .bn-editor").first();
-  await expect(editor).toHaveAttribute("contenteditable", "true");
-  await editor.locator(".bn-block-content").first().click();
+  const editor = blockEditor(page);
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("Text above");
   await page.keyboard.press("Enter");
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   await expect(page.locator(".dbui-root.inline .dbui-table .dbui-cell.title").first()).toBeVisible();
   const text = await editor.getByText("Text above").evaluate((el) => {
     const r = document.createRange();

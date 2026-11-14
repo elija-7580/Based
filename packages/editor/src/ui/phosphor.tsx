@@ -51,6 +51,22 @@ export function searchPhosphor(all: readonly PhosphorEntry[], query: string): Ph
 
 export const iconColorVar = (color: IconColor) => (color === "gray" ? "var(--muted)" : `var(--block-${color}-text)`);
 
+/** BSD-407 Teil 3: SVG-Markup eines Phosphor-Icons für DOM ohne React (Erwähnungen im Block-Editor); stößt das Laden an. */
+export function phosphorMarkup(icon: string | undefined): string | undefined {
+  const ref = parsePhosphorIcon(icon);
+  if (!ref) return undefined;
+  void loadPhosphor();
+  const entry = byName?.get(ref.name);
+  if (!entry) return undefined;
+  return `<span class="bx-phosphor-wrap" style="color: ${iconColorVar(ref.color)}"><svg class="bx-phosphor" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" data-phosphor="${ref.name}">${entry.svg}</svg></span>`;
+}
+
+/** Laden der Phosphor-Daten abwarten (danach neu zeichnen). */
+export function onPhosphorLoaded(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => void listeners.delete(fn);
+}
+
 /** Rohes Phosphor-SVG (Pfaddaten aus dem gebündelten Satz). */
 export function PhosphorSvg({ svg, name }: { svg: string | undefined; name: string }) {
   return <svg className="bx-phosphor" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" data-phosphor={name} {...(svg ? { dangerouslySetInnerHTML: { __html: svg } } : {})} />;

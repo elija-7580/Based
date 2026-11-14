@@ -3,6 +3,7 @@ import { expect, test as base, type Page } from "@playwright/test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pinLegacyEditor } from "../legacy-editor.js";
 
 export const test = base.extend<{ page: Page }>({
   page: async ({ playwright, browserName, baseURL }, use) => {
@@ -14,6 +15,17 @@ export const test = base.extend<{ page: Page }>({
       await ctx.close();
       rmSync(dir, { recursive: true, force: true });
     }
+  },
+});
+
+/**
+ * BSD-407 Teil 3: Aufzeichnung (ProseMirror-Schritte „tr“, Seiten-Y.Doc „yjs“) und Wiedergabe der Fehlerberichte gibt es
+ * nur im alten Editor (BlockNote). Tests dafür pinnen ihn (docs/editor-parity.md, „noch BlockNote“).
+ */
+export const legacyTest = test.extend<{ page: Page }>({
+  page: async ({ page }, use) => {
+    await pinLegacyEditor(page);
+    await use(page);
   },
 });
 

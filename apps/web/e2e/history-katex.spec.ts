@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor, expectEditable } from "./editor-helpers.js";
 
 // BSD-73 Versionsverlauf und BSD-10 Gleichungen (KaTeX offline) in der Shell, auf Chromium und WebKit.
 
@@ -6,12 +7,12 @@ async function openWelcome(page: Page) {
   await page.goto("/");
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+  await expectEditable(page);
 }
 
 /** Schreibmarke ans Ende der letzten To-do-Zeile der Willkommensseite, dann neue Zeile. */
 async function newLineAtEnd(page: Page) {
-  const last = page.locator(".bn-editor").getByText("Pages you delete wait in the Trash");
+  const last = blockEditor(page).getByText("Pages you delete wait in the Trash");
   const box = (await last.boundingBox())!;
   await last.click({ position: { x: box.width - 2, y: box.height / 2 } });
   await page.keyboard.press("End");
@@ -30,7 +31,7 @@ test("Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, 
   await openWelcome(page);
   await newLineAtEnd(page);
   await page.keyboard.type("Neuer Absatz für den Verlauf");
-  const editor = page.locator(".bn-editor");
+  const editor = blockEditor(page);
   await expect(editor.getByText("Neuer Absatz für den Verlauf")).toBeVisible();
   await page.waitForTimeout(500); // Editor schreibt gesammelt in den Store
 
@@ -81,18 +82,19 @@ test("Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten", async (
     return route.abort("internetdisconnected");
   });
   await openWelcome(page);
-  const editor = page.locator(".bn-editor");
+  const editor = blockEditor(page);
 
   // Block-Gleichung über das Slash-Menü
   await newLineAtEnd(page);
   await page.keyboard.type("/equation");
   await page.getByRole("option", { name: /Block equation/ }).click();
-  const field = editor.locator("textarea.bx-field");
+  const eqBlock = editor.locator('.bx2-block[data-type="equation"]').last();
+  const field = eqBlock.getByRole("textbox", { name: "TeX", exact: true });
   await expect(field).toBeFocused();
   await field.fill("\\frac{a}{b} = \\sqrt{x^2}");
-  await expect(editor.locator(".bx-equation-preview .katex-display")).toBeVisible(); // Vorschau beim Tippen
+  const block = eqBlock.locator(".bx2-equation");
+  await expect(block.locator(".katex-display")).toBeVisible(); // Vorschau beim Tippen
   await field.press(process.platform === "darwin" ? "Meta+Enter" : "Control+Enter");
-  const block = editor.locator(".bx-equation-view");
   await expect(block.locator(".katex-display")).toBeVisible();
   await expect(block.locator(".katex-mathml")).toContainText("a");
 
@@ -107,7 +109,7 @@ test("Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten", async (
   await block.click();
   await expect(field).toHaveValue("\\frac{a}{b} = \\sqrt{x^2}");
   await field.fill("\\frac{a}{");
-  await expect(editor.locator(".bx-equation-preview [data-testid='equation-error']")).toBeVisible();
+  await expect(block.getByTestId("equation-error")).toBeVisible(); // Vorschau zeigt den Fehler beim Tippen
   await field.press(process.platform === "darwin" ? "Meta+Enter" : "Control+Enter");
   await expect(block.getByTestId("equation-error")).toBeVisible();
   await block.click();
@@ -121,18 +123,18 @@ test("Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten", async (
   await page.keyboard.type("Fläche ");
   await page.keyboard.type("/inline");
   await page.getByRole("option", { name: /Inline equation/ }).click();
-  const inlineField = editor.getByRole("textbox", { name: "Inline equation" });
+  const inlineField = page.getByTestId("inline-equation").getByRole("textbox", { name: "TeX", exact: true });
   await expect(inlineField).toBeFocused();
   await inlineField.fill("\\pi r^2");
   await inlineField.press("Enter");
-  const inline = editor.locator(".bx-inline-eq .katex").last();
+  const inline = editor.locator(".bx2-eq .katex").last();
   await expect(inline).toBeVisible();
   await expect(inline.locator(".katex-mathml")).toContainText("π");
-  await editor.getByRole("button", { name: "Edit inline equation" }).last().locator(".katex-html").click(); // auf die Formel
+  await editor.locator(".bx2-eq").last().click(); // auf die Formel (das ganze Atom ist Klickfläche)
   await expect(inlineField).toHaveValue("\\pi r^2");
   await inlineField.fill("\\pi r^2 h");
   await inlineField.press("Enter");
-  await expect(editor.locator(".bx-inline-eq .katex .katex-mathml").last()).toContainText("h");
+  await expect(editor.locator(".bx2-eq .katex .katex-mathml").last()).toContainText("h");
 
   expect(outside).toEqual([]);
 });
