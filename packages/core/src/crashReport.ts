@@ -3,6 +3,7 @@
 // (dafür gibt es „Problem melden“, BSD-319, mit eigenem Häkchen); Log-Zeilen werden noch einmal geschwärzt.
 // Senden aus der App gibt es noch nicht (kein Ziel-Endpunkt, kein Datenschutztext): Datei sichern oder kopieren.
 import { redact, type DiagnosticsEntry, type SessionRecord } from "./diagnostics.js";
+import { hangLine, type HangMarker, type HangSessionData, type HangStats } from "./hangs.js";
 
 export const CRASH_REPORT_FORMAT = "based-crash-report";
 export const CRASH_REPORT_VERSION = 1;
@@ -13,7 +14,8 @@ export const CRASH_HANDLED_KEY = "based.feedback.handledSession";
 /** So viele Log-Zeilen der abgestürzten Sitzung kommen höchstens mit. */
 export const CRASH_LOG_LIMIT = 50;
 
-export type CrashKind = "crash" | "freeze";
+/** BSD-418: „hang“ = die Sitzung endete mitten in einem Hänger (Marker des Watchdog-Workers). */
+export type CrashKind = "crash" | "freeze" | "hang";
 
 export interface CrashReport {
   format: typeof CRASH_REPORT_FORMAT;
@@ -24,18 +26,23 @@ export interface CrashReport {
   app: { shell: "desktop" | "web"; version?: string; commit?: string; platform: string };
   session: { startedAt: string; lastSignOfLife: string; durationSeconds: number; freezes: number; endedNormally: boolean };
   log: { at: string; level: DiagnosticsEntry["level"]; message: string }[];
+  /** BSD-418: der Hänger, in dem die Sitzung endete (fehlt in älteren Berichten). */
+  hang?: { startedAt: string; ms: number; activity: string; breadcrumbs: string[] };
+  /** BSD-418: Hänger der Sitzung (Kennzahlen und die letzten Einträge als Zeilen; fehlt in älteren Berichten). */
+  hangs?: { stats: HangStats; lines: string[] };
 }
 
 /** Was nach der vorigen Sitzung anzubieten ist: Absturz (nicht sauber beendet), Hänger (sauber, aber eingefroren) oder nichts. */
-export function crashKind(prev: SessionRecord | undefined): CrashKind | undefined {
+export function crashKind(prev: SessionRecord | undefined, ongoing?: HangMarker): CrashKind | undefined {
   if (!prev) return undefined;
+  if (ongoing) return "hang";
   if (!prev.clean) return "crash";
   return prev.stalls > 0 ? "freeze" : undefined;
 }
 
 /** Hinweis beim Start nur mit Einwilligung, nur nach Absturz/Hänger und nur einmal je Sitzung. */
-export function shouldOfferCrashReport(prev: SessionRecord | undefined, consent: boolean, handledStartedAt: number | undefined): boolean {
-  return consent && crashKind(prev) !== undefined && prev!.startedAt !== handledStartedAt;
+export function shouldOfferCrashReport(prev: SessionRecord | undefined, consent: boolean, handledStartedAt: number | undefined, ongoing?: HangMarker): boolean {
+  return consent && crashKind(prev, ongoing) !== undefined && prev!.startedAt !== handledStartedAt;
 }
 
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -44,9 +51,9 @@ const iso = (ms: number) => new Date(ms).toISOString();
  * Das Bündel: Art, App (ohne User-Agent), Zeiten der Sitzung, letzte Log-Zeilen (geschwärzt). Keine Nutzerinhalte.
  * `prev` muss eine Sitzung mit Absturz oder Hänger sein (sonst undefined).
  */
-export function buildCrashReport(input: { prev: SessionRecord | undefined; app: CrashReport["app"]; now: number }): CrashReport | undefined {
-  const { prev, app, now } = input;
-  const kind = crashKind(prev);
+export function buildCrashReport(input: { prev: SessionRecord | undefined; app: CrashReport["app"]; now: number; ongoing?: HangMarker | undefined; hangs?: HangSessionData | undefined }): CrashReport | undefined {
+  const { prev, app, now, ongoing, hangs } = input;
+  const kind = crashKind(prev, ongoing);
   if (!prev || !kind) return undefined;
   const log = (prev.log ?? []).flatMap((e) =>
     typeof e?.at === "number" && (e.level === "info" || e.level === "warning" || e.level === "error") && typeof e.message === "string"
@@ -66,6 +73,8 @@ export function buildCrashReport(input: { prev: SessionRecord | undefined; app: 
       freezes: prev.stalls, endedNormally: prev.clean,
     },
     log,
+    ...(ongoing ? { hang: { startedAt: iso(ongoing.startedAt), ms: Math.round(ongoing.ms), activity: redact(ongoing.activity), breadcrumbs: ongoing.breadcrumbs.map((c) => redact(c)) } } : {}),
+    ...(hangs && hangs.stats.count ? { hangs: { stats: hangs.stats, lines: hangs.hangs.slice(-20).map(hangLine) } } : {}),
   };
 }
 
@@ -77,5 +86,6 @@ export function crashReportSummary(r: CrashReport): string {
   const start = r.session.startedAt.replace("T", " ").slice(0, 16), end = r.session.lastSignOfLife.replace("T", " ").slice(0, 16);
   const until = end.slice(0, 10) === start.slice(0, 10) ? end.slice(11) : end;
   const n = r.session.freezes;
-  return `Session ${start}–${until} UTC${n ? ` · ${n} freeze${n === 1 ? "" : "s"}` : ""}`;
+  const hang = r.hang ? ` · hung ${Math.max(2, Math.floor(r.hang.ms / 1000))} s+${r.hang.activity ? ` during ${r.hang.activity}` : ""}` : "";
+  return `Session ${start}–${until} UTC${n ? ` · ${n} freeze${n === 1 ? "" : "s"}` : ""}${hang}`;
 }
