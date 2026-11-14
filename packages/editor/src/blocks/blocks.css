@@ -659,3 +659,17 @@
 .bx2-date-row .bx2-link-input { flex: 1 1 auto; min-width: 0; }
 .bx2-date-check { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
 .bx2-date-note { font-size: var(--type-meta-size); }
+
+/* BSD-407 Teil 6.5: Button-Block – Knopf, Rückfrage, Einrichtung als Fläche (surface-raised, Radius 18) */
+.bx2-btn { display: grid; gap: var(--space-2); }
+.bx2-btn-row, .bx2-btn-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.bx2-btn-confirm { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--surface-raised); }
+.bx2-btn-setup { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-lg); background: var(--surface-raised); font-family: var(--font-ui); font-size: var(--type-ui-size); }
+.bx2-btn-field { display: grid; gap: var(--space-1); }
+.bx2-btn-caption { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); user-select: none; -webkit-user-select: none; }
+.bx2-btn-steps { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-5); }
+.bx2-btn-step { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.bx2-btn-step .bx2-link-input { width: auto; flex: 1 1 calc(var(--space-8) * 2); min-width: 0; }
+.bx2-btn-actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.bx2-btn-actions .bx2-link-input { width: auto; }
+.bx2-btn-template { display: grid; gap: var(--space-1); padding: var(--space-2); border-radius: var(--radius-md); background: var(--bg); }

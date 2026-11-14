@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, textStats, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -17,7 +17,7 @@ import { DateField, MenuGlyph, TimeField } from "@based/ui/native";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
 import { PageOutline } from "../ui/Outline.js";
-import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
+import { DatabasePicker, MovePicker, PageTargetPicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
@@ -472,8 +472,9 @@ export function BlockEditor(props: PageEditorProps) {
       if (created) ctrl.select([created]);
       return;
     }
-    if (empty) run(cmd.convertEmptyBlock(store, s.id, item.type, item.props ?? {}));
-    else run(cmd.insertBlock(store, { after: s.id }, item.type, item.props ? { props: item.props } : {}));
+    const f = empty ? cmd.convertEmptyBlock(store, s.id, item.type, item.props ?? {}) : cmd.insertBlock(store, { after: s.id }, item.type, item.props ? { props: item.props } : {});
+    if (item.setup && f && "blockId" in f) freshButtons.add(f.blockId);
+    run(f);
   };
 
   // MARK: Inline-Gleichung (BSD-407)
@@ -1236,7 +1237,8 @@ const BlockView = memo(function BlockView({ id, depth, number }: { id: string; d
   const selected = useSelected(ctrl, id);
   if (!b || b.trashedAt !== undefined) return null;
   if (b.type === "columnList") return <Columns block={b} depth={depth} />;
-  const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table";
+  // Kinder eines Buttons sind seine Vorlage („Insert blocks“) – sie stehen in der Einrichtung, nicht unter dem Button
+  const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table" && b.type !== "button";
   const color = typeof b.props?.color === "string" && b.props.color !== "default" ? b.props.color : undefined;
   // Abschnitt (Entscheidung 14. 11.): Toggle-Überschrift mit Hintergrundfarbe färbt den ganzen Block samt Inhalt als Fläche.
   const section = sectionColor(b);
@@ -1451,7 +1453,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
     case "tableOfContents":
       return <TableOfContents />;
     case "button":
-      return <div className="bx2-embed" data-embed="" contentEditable={false}><button type="button" className="bx2-button" disabled>{b.props?.buttonLabel || "Button"}</button></div>;
+      return <ButtonBlock block={b} depth={depth} />;
     case "syncedBlock": {
       // Kopie: zeigt (und bearbeitet) den Inhalt des Originals
       const source = typeof b.props?.syncSource === "string" && store.blocks.has(b.props.syncSource) ? b.props.syncSource : b.id;
@@ -1797,6 +1799,172 @@ function TableOfContents() {
         </button>
       )) : <span className="bx2-muted">Add headings to build a table of contents.</span>}
     </nav>
+  );
+}
+
+// MARK: Button-Block (BSD-407 Teil 6.5, wie der alte Editor und Swift: Schritte über runButton/setButton im Kern)
+
+/** Buttons, die gerade per Slash-Menü entstanden sind: die Einrichtung geht gleich auf. */
+const freshButtons = new Set<string>();
+
+function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
+  const { store, props, editable, ctrl } = useCtx();
+  const [editing, setEditing] = useState(() => editable && freshButtons.delete(b.id));
+  const [pause, setPause] = useState<ButtonPause | undefined>();
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | undefined>();
+  const pageExists = (id: string) => {
+    if (store.blocks.has(id)) return store.blocks.get(id)?.trashedAt === undefined;
+    const ref = props.pages?.get(id);
+    return !(ref?.missing || ref?.trashed);
+  };
+  const apply = (effects: ButtonEffect[]) => {
+    for (const e of effects) {
+      switch (e.kind) {
+        case "needsSetup":
+          if (editable) setEditing(true);
+          setNote("This button needs setting up.");
+          break;
+        case "open":
+          props.onOpenPage?.(e.id);
+          break;
+        case "openURL":
+          globalThis.open?.(/^[a-z][a-z0-9+.-]*:/i.test(e.url) ? e.url : "https://" + e.url, "_blank", "noopener,noreferrer");
+          break;
+        case "focusEnd":
+          // die eingefügten Blöcke sind schon im Store; nach dem Zeichnen die Schreibmarke ans Ende des letzten
+          setTimeout(() => { if (cmd.isTextBlock(store.blocks.get(e.id))) ctrl.setCaret(endCaret(store, e.id)); }, 0);
+          break;
+      }
+    }
+  };
+  const run = async (from = 0, added: Record<number, string> = {}) => {
+    setPause(undefined);
+    setNote(undefined);
+    setBusy(true);
+    try {
+      // Seiten-Repliken kennen fremde Datenbanken nicht: Ziele von „Add page to“ erst holen
+      for (const a of effectiveButtonActions(store.blocks.get(b.id)?.props).slice(from)) {
+        if (a.kind === "addPage" && a.targetID && !store.databases.has(a.targetID)) await props.databases?.include?.(a.targetID).catch(() => false);
+      }
+      const r = runButton(store, b.id, { from, added, pageExists });
+      apply(r.effects);
+      if (r.pause) setPause(r.pause);
+    } finally { setBusy(false); }
+  };
+  return (
+    <div className="bx2-embed bx2-btn" data-embed="" contentEditable={false} data-editing={editing ? "" : undefined}>
+      <span className="bx2-btn-row">
+        <BasedButton label={buttonLabel(b)} size="sm" busy={busy} disabled={!editable} onClick={() => void run()} />
+        {editable ? <BasedButton label={editing ? "Done" : "Edit"} variant="ghost" size="sm" ariaLabel={editing ? "Close button settings" : "Edit button"} onClick={() => setEditing((o) => !o)} /> : null}
+        {note ? <span className="bx2-muted" role="status">{note}</span> : null}
+      </span>
+      {pause ? (
+        <span className="bx2-btn-confirm" role="alertdialog" aria-label="Confirm">
+          <span>{pause.message}</span>
+          <BasedButton label="Cancel" variant="ghost" size="sm" onClick={() => setPause(undefined)} />
+          <BasedButton label="Continue" variant="primary" size="sm" onClick={() => void run(pause.next, pause.added)} />
+        </span>
+      ) : null}
+      {editing ? <ButtonSetup block={b} depth={depth} onDone={() => setEditing(false)} /> : null}
+    </div>
+  );
+}
+
+function ButtonSetup({ block: b, depth, onDone }: { block: Block; depth: number; onDone: () => void }) {
+  const { store, props, ctrl } = useCtx();
+  const [label, setLabel] = useState(b.props?.buttonLabel ?? "");
+  const steps = effectiveButtonActions(b.props);
+  const [picking, setPicking] = useState<{ step: number; kind: "database" | "page" } | undefined>();
+  const [dbTitles, setDbTitles] = useState<Record<string, string>>({});
+  const kids = useKids(store, b.id);
+  const databases = props.databases ?? storeDatabases(store);
+  const save = (actions: ButtonAction[]) => setButton(store, b.id, { actions });
+  const change = (i: number, patch: Partial<ButtonAction>) => {
+    save(steps.map((st, n) => {
+      if (n !== i) return st;
+      const out = { ...st, ...patch } as ButtonAction;
+      for (const [k, v] of Object.entries(patch)) if (v === undefined || v === "") delete (out as Record<string, unknown>)[k];
+      return out;
+    }));
+  };
+  const addSteps = steps.flatMap((st, n) => (st.kind === "addPage" ? [n] : []));
+  const hasTemplate = steps.some((st) => st.kind === "insertBlocks");
+  const dbTitle = (id: string) => { const db = store.databases.get(id); return db ? plainText(db.title) || "Untitled" : dbTitles[id] ?? "Database"; };
+  const pageTitle = (id: string) => { const ref = props.pages?.get(id); if (ref?.missing) return "Page not found"; return ref?.title || plainText(store.blocks.get(id)?.text) || "Untitled"; };
+  return (
+    <div className="bx2-btn-setup" role="group" aria-label="Button settings" onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation(); }}>
+      <label className="bx2-btn-field">
+        <span className="bx2-btn-caption">Button name</span>
+        <input className="bx2-link-input" value={label} placeholder="Button" aria-label="Button name" autoFocus
+          onChange={(e) => { setLabel(e.target.value); setButton(store, b.id, { label: e.target.value }, "button-label:" + b.id); }}
+          onKeyDown={(e) => { if (e.key === "Enter") onDone(); }} />
+      </label>
+      <span className="bx2-btn-caption">When clicked</span>
+      <ol className="bx2-btn-steps">
+        {steps.map((st, i) => (
+          <li key={i} className="bx2-btn-step" data-kind={st.kind}>
+            {isKnownButtonAction(st.kind) ? (
+              <select className="bx2-link-input bx2-btn-kind" aria-label={`Step ${i + 1}`} value={st.kind} onChange={(e) => save(steps.map((x, n) => (n === i ? ({ kind: e.target.value } as ButtonAction) : x)))}>
+                {BUTTON_ACTION_KINDS.map((k) => <option key={k} value={k}>{buttonActionName(k)}</option>)}
+              </select>
+            ) : <span className="bx2-muted">{buttonActionName(st.kind)} ({st.kind})</span>}
+            {st.kind === "addPage" ? (
+              <>
+                <BasedButton size="sm" label={st.targetID ? dbTitle(st.targetID) : "Choose a database…"} onClick={() => setPicking({ step: i, kind: "database" })} />
+                <input className="bx2-link-input" aria-label="Page name" placeholder="Page name" defaultValue={st.title ?? ""}
+                  onBlur={(e) => { if ((st.title ?? "") !== e.target.value) change(i, { title: e.target.value }); }} />
+              </>
+            ) : null}
+            {st.kind === "openPage" ? <BasedButton size="sm" label={st.targetID ? pageTitle(st.targetID) : "Choose a page…"} onClick={() => setPicking({ step: i, kind: "page" })} /> : null}
+            {st.kind === "openAdded" ? (
+              <select className="bx2-link-input" aria-label="Which page" value={st.step === undefined ? "" : String(st.step)}
+                onChange={(e) => change(i, { step: e.target.value === "" ? undefined : Number(e.target.value) })}>
+                <option value="">Last added page</option>
+                {addSteps.filter((n) => n < i).map((n) => <option key={n} value={String(n)}>Page from step {n + 1}</option>)}
+              </select>
+            ) : null}
+            {st.kind === "openURL" ? (
+              <input className="bx2-link-input" aria-label="Link" placeholder="https://…" defaultValue={st.url ?? ""}
+                onBlur={(e) => { if ((st.url ?? "") !== e.target.value.trim()) change(i, { url: e.target.value.trim() }); }} />
+            ) : null}
+            {st.kind === "confirm" ? (
+              <input className="bx2-link-input" aria-label="Message" placeholder="Are you sure?" defaultValue={st.message ?? ""}
+                onBlur={(e) => { if ((st.message ?? "") !== e.target.value) change(i, { message: e.target.value }); }} />
+            ) : null}
+            {st.kind === "insertBlocks" ? <span className="bx2-muted">Inserts the blocks below after the button.</span> : null}
+            <BasedIconButton label={`Remove step ${i + 1}`} icon={<span aria-hidden="true">×</span>} onClick={() => save(steps.filter((_, n) => n !== i))} />
+          </li>
+        ))}
+      </ol>
+      <span className="bx2-btn-actions">
+        <select className="bx2-link-input bx2-btn-add" aria-label="Add step" value="" onChange={(e) => { if (e.target.value) save([...steps, { kind: e.target.value } as ButtonAction]); }}>
+          <option value="">+ Add step</option>
+          {BUTTON_ACTION_KINDS.map((k) => <option key={k} value={k}>{buttonActionName(k)}</option>)}
+        </select>
+        <BasedButton label="Done" variant="primary" size="sm" onClick={onDone} />
+      </span>
+      {hasTemplate ? (
+        <div className="bx2-btn-template" aria-label="Blocks to insert" data-testid="button-template">
+          <span className="bx2-btn-caption">Blocks to insert</span>
+          {kids.length ? <BlockList parent={b.id} depth={depth + 1} /> : (
+            <BasedButton size="sm" variant="ghost" label="Add a block" onClick={() => {
+              ctrl.apply(cmd.insertBlock(store, { inside: b.id }, "text"));
+            }} />
+          )}
+        </div>
+      ) : null}
+      {picking?.kind === "database" ? (
+        <DatabasePicker source={databases} onClose={() => setPicking(undefined)} onPick={(db) => {
+          setDbTitles((t) => ({ ...t, [db.id]: db.title }));
+          change(picking.step, { targetID: db.id });
+          setPicking(undefined);
+        }} />
+      ) : null}
+      {picking?.kind === "page" && props.pages ? (
+        <PageTargetPicker pages={props.pages} onClose={() => setPicking(undefined)} onPick={(pg) => { change(picking.step, { targetID: pg.id }); setPicking(undefined); }} />
+      ) : null}
+    </div>
   );
 }
 

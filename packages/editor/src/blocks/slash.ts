@@ -17,6 +17,8 @@ export interface SlashItem {
   columns?: number;
   /** BSD-407 Teil 3: „Linked view of database“ – erst eine Datenbank wählen (Auswahl wie im alten Editor). */
   linkDatabase?: true;
+  /** Block, dessen Einrichtung gleich aufgehen soll (Button). */
+  setup?: true;
   /** Sonderfall mit eigenen Records (Datenbank): legt an und gibt die Block-ID zurück. */
   create?: (store: WorkspaceStore, after: string, replace: boolean) => string | undefined;
 }
@@ -78,6 +80,8 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "code", label: "Mermaid diagram", group: "Advanced", icon: "⇄", keywords: "diagram flowchart chart graph", props: { language: "mermaid" } },
   { type: "code", label: "HTML", group: "Advanced", icon: "</>", keywords: "html web preview markup", props: { language: "html" } },
   { type: "tableOfContents", label: "Table of contents", group: "Advanced", icon: "≡", keywords: "toc outline headings" },
+  // BSD-407 Teil 6.5: Button (Schritte wie im alten Editor); die Einrichtung geht nach dem Anlegen auf
+  { type: "button", label: "Button", group: "Advanced", icon: "▭", keywords: "button action automation", setup: true },
 ];
 
 /** Einträge passend zur Eingabe nach „/“ (Anfang von Name oder Suchwort). */

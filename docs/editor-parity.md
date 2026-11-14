@@ -26,7 +26,7 @@ neuen Editor auf dem Mac abgenommen hat.
 | Spalten 2–5 | should | ja | Slash „2–5 columns“, Ziehen, Breite ziehen |
 | Einfache Tabelle | should | teils | Zellen (Klartext), Zeile/Spalte anfügen und löschen (14.11.); Formatierung in Zellen fehlt |
 | Synced Block | could | ja | Original und Kopie zeigen und bearbeiten; „Copy and sync“ im Blockmenü und Einfügen von `based-sync:` (14.11.) |
-| Button-Block | could | nein | wird angezeigt, Aktionen fehlen |
+| Button-Block | could | ja | Teil 6.5: Klick führt die Schritte aus (Insert blocks, Add page to, Open page, Open added page, Open link, Show confirmation; `runButton` im Kern), „Edit“ mit Schritten und Vorlage, Slash „Button“ |
 | Unterseite im Inhalt | must | ja | |
 | HTML-/Mermaid-Vorschau | should | ja | Mermaid; HTML-Vorschau im abgeschotteten Rahmen seit 14.11. |
 | Inline-Datenbank | must | ja | über `renderDatabase` |
@@ -85,7 +85,7 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | erledigt 14.11. |
 | 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | erledigt 14.11. |
 | 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | Zeile/Spalte löschen und HTML-Vorschau erledigt 14.11.; Formatierung in Zellen offen |
-| 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Meeting, Whiteboard, Button offen |
+| 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Button erledigt (Teil 6.5); Meeting, Whiteboard offen |
 | 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | Blockmenü erledigt (Teil 6.1: Icons aus dem Satz der App, Glas, Fläche/Zeilen wie `.menu`; alle `.bx2-menu` haben jetzt diese Fläche); Formatleiste offen |
 | 3 | Block-Editor ist Standard (neuer Schlüssel `based.legacyEditor`, alter Schalter `based.newEditor` wird einmalig entfernt); Specs auf `getByTestId("block-editor")`/`.bx2-*` umgestellt, Rest gepinnt (unten) | erledigt 14.11. |
 | 4 | BlockNote-Code (`ui/PageEditor.tsx`, `schema/`, `mapping/bn.ts`, y-prosemirror) und `@blocknote/*` löschen; Rundreise-Test Notion-Import | offen |
@@ -125,7 +125,6 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 | Funktion | Stand im Block-Editor |
 | --- | --- |
 | Meeting-Block (Aufnahme, Notizen, Zusammenfassung) | Seiten mit Meeting öffnen im alten Editor; kommt ein Meeting während der Bearbeitung dazu: Platzhalter, Inhalt darunter bearbeitbar |
-| Button-Block | Beschriftung sichtbar, Aktionen fehlen |
 | „Ask AI“ (Leertaste, Formatleiste) | fehlt |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
 | Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor |
@@ -146,5 +145,5 @@ Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEdit
 | `editor-callout-select.spec.ts` | ganz – nachgestellter BlockNote-Fehler (BSD-318) |
 | `replay/replay.spec.ts`, `replay/record-sample.spec.ts` | ganz – Wiedergabe von ProseMirror-Schritten |
 | `report.spec.ts` | 4 von 5 Tests – Aufzeichnung „tr“/„yjs“, Blockbaum, Entwickler-Ereignisse |
-| `editor-parity.spec.ts` | 16 von 19 Tests (Erwähnungs-Menü, Gliederung, Synced Block, Blockmenü-Abläufe, Spalten, Button, Uploads, Seiten-Optionen …) |
+| `editor-parity.spec.ts` | 15 von 19 Tests (Erwähnungs-Menü, Gliederung, Synced Block, Blockmenü-Abläufe, Spalten, Uploads, Seiten-Optionen …) |
 | `editor-notion.spec.ts` | 1 von 14 Tests (Formatleiste) |
