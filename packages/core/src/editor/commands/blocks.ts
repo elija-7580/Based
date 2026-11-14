@@ -552,6 +552,30 @@ export function turnIntoPage(store: WorkspaceStore, blockId: string): string | u
   return blockId;
 }
 
+/**
+ * „Copy and sync“ (BSD-407): Geschwister-Blöcke in einen neuen Synced Block (Original) packen, an der Stelle des
+ * ersten. Ein einzelner Synced Block bleibt, wie er ist. Gibt die ID des Originals zurück (für die Zwischenablage).
+ */
+export function wrapInSyncedBlock(store: WorkspaceStore, ids: readonly string[]): string | undefined {
+  const roots = topLevel(store, ids);
+  const first = roots[0] ? store.blocks.get(roots[0]) : undefined;
+  if (!first) return undefined;
+  if (roots.length === 1 && first.type === "syncedBlock") {
+    const src = first.props?.syncSource;
+    return typeof src === "string" && src ? src : first.id;
+  }
+  if (roots.some((id) => store.blocks.get(id)?.parent !== first.parent)) return undefined; // nur Geschwister
+  const ordered = siblings(store, first).filter((id) => roots.includes(id));
+  const lists = ordered.map((id) => columnListOf(store, id)).filter((x): x is string => !!x);
+  return store.transact("Copy and sync", (tx) => {
+    const sk = sortKeys(store, first.parent, { kind: "before", id: ordered[0]! }, 1)[0]!;
+    const synced = create(store, tx, "syncedBlock", first.parent, sk);
+    place(store, tx, ordered, "b:" + synced, { kind: "end" });
+    tidyColumns(store, tx, lists);
+    return synced;
+  });
+}
+
 /** Spaltenliste auflösen: Spalten nacheinander an ihre Stelle (Blockmenü „Unwrap columns“). */
 export function dissolveColumns(store: WorkspaceStore, columnListId: string): Focus | undefined {
   const list = store.blocks.get(columnListId);

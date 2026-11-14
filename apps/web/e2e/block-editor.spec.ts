@@ -506,7 +506,7 @@ test("Blockmenü: Suchfeld filtert, Enter führt aus, Copy as Markdown", async (
   };
   await openMenu();
   await page.keyboard.type("cop");
-  await expect(menu.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/]);
+  await expect(menu.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/, /Copy and sync/]);
   expect(await texts(page)).toEqual(["Heading two", "Some text here"]); // getippt wurde ins Feld
   await page.keyboard.press("Escape"); // erst das Feld leeren …
   await expect(search).toHaveValue("");
@@ -770,4 +770,56 @@ test("Tabelle: Zeile und Spalte löschen", async ({ page }) => {
   await editor(page).getByRole("textbox", { name: "Row 2, column 1" }).click();
   await editor(page).getByRole("button", { name: "Delete row" }).click();
   await expect(table.locator("tr")).toHaveCount(rows - 1);
+});
+
+// BSD-407 Teil 2f: „Copy and sync“ macht den Block zum Original; „based-sync:<id>“ einfügen legt eine Kopie an,
+// die denselben Inhalt zeigt und bearbeitet.
+test("Copy and sync: Original und synchronisierte Kopie", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("Shared line");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("After");
+  const first = editor(page).locator(".bx2-block").first();
+  await first.locator(".bx2-row").hover();
+  await first.locator(":scope > .bx2-gutter [data-handle]").click();
+  await page.keyboard.type("copy and sync");
+  await page.keyboard.press("Enter");
+  const synced = editor(page).locator('.bx2-block[data-type="syncedBlock"]');
+  await expect(synced).toHaveCount(1);
+  await expect(synced).toContainText("Shared line");
+  const id = await synced.getAttribute("data-block-id");
+  // Auf derselben Seite gibt es keine zweite Kopie (wie Swift): Kopie auf einer anderen Seite
+  await page.evaluate(() => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command({ op: "createPage", title: "Other page" }));
+  await page.getByRole("treeitem", { name: "Other page", exact: true }).click();
+  await expect(editor(page)).toBeVisible();
+  await startTyping(page);
+  await page.evaluate((text) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", text);
+    document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, "based-sync:" + id);
+  await expect(synced).toHaveCount(1);
+  await expect(synced).toContainText("Shared line");
+  await synced.locator("[data-editable-id]").first().click();
+  await page.keyboard.press("End");
+  await page.keyboard.type("!");
+  await expect(synced.locator("[data-editable-id]").first()).toHaveText("Shared line!");
+  // zurück: das Original zeigt die Änderung
+  await page.getByRole("treeitem", { name: "Editor test", exact: true }).click();
+  await expect(editor(page).locator('.bx2-block[data-type="syncedBlock"] [data-editable-id]').first()).toHaveText("Shared line!");
+});
+
+// BSD-407 Teil 2e: HTML-Codeblock zeigt eine Vorschau im abgeschotteten Rahmen (sandbox ohne same-origin, CSP).
+test("HTML-Codeblock mit Vorschau", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("```");
+  await page.keyboard.type("<b>Hi preview</b>");
+  await editor(page).locator(".bx2-code-lang-btn").click();
+  await page.getByLabel("Search languages").fill("html");
+  await page.keyboard.press("Enter");
+  const frame = editor(page).locator("iframe.bx-html-preview");
+  await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+  await expect(page.frameLocator("iframe.bx-html-preview").locator("b")).toHaveText("Hi preview");
 });
