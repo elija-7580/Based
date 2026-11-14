@@ -66,7 +66,7 @@ export const isBlockIcon = (name: string): name is BlockIconName => Object.hasOw
 /** Ein Editor-Icon in Schriftgröße (1em), Strichfarbe = Textfarbe. */
 export function BlockIcon({ name }: { name: BlockIconName }) {
   return (
-    <svg className="bx2-glyph" aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <svg className="bx-menu-icon bx2-glyph" aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" data-icon={name}>
       <path d={BLOCK_ICON_PATHS[name]} />
     </svg>
