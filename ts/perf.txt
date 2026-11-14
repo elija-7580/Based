@@ -1,17 +1,9 @@
-failure 37bd9f97a574b431702b6263870dc46a5ef3d78b (nicht blockierend)
-perf 5000: {"mapOpen":[],"idleBeforePan":[179],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3868,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":10.4,"peekLong":[],"formSubmitMs":83,"formLong":[]}
-BSD-215 chromium: 50 000 Zeilen öffnen 969 ms, ans Ende scrollen 81 ms, Zelle ändern 199 ms
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 4.1, 4.9, 5.9, 8, 15.5
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.0s)
-  ✘   9 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (6.1s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1664 ms, ans Ende scrollen 466 ms, Zelle ändern 353 ms
-  ✘  10 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (retry #1) (8.2s)
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 8, 13, 15, 17, 35
-  ✓  14 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (5.9s)
-    Error: expect(received).toBeLessThan(expected)
-    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium/error-context.md
-    Error: expect(received).toBeLessThan(expected)
-    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium-retry1/error-context.md
-  1 failed
-  14 passed (2.0m)
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --grep @perf
+success 4633e488b43059ab4bea7870a7e0c773a52c1e94 (nicht blockierend)
+BSD-215 chromium: 50 000 Zeilen öffnen 640 ms, ans Ende scrollen 34 ms, Zelle ändern 122 ms
+perf 5000: {"mapOpen":[],"idleBeforePan":[104],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3913,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":10.55,"peekLong":[],"formSubmitMs":54,"formLong":[]}
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 2, 3.9, 4.4, 7.8, 7.9
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.7s)
+BSD-215 webkit: 50 000 Zeilen öffnen 1326 ms, ans Ende scrollen 62 ms, Zelle ändern 238 ms
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 4, 8, 9, 11, 12
+  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.2s)
+  15 passed (1.3m)
