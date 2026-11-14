@@ -1,61 +1,61 @@
-success f3ef12f96bb176b52a523b105a4efbd24d2dfefc
-  ✓  152 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (3.7s)
-  ✓  153 [webkit] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (3.8s)
-  ✓  151 [webkit] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (8.6s)
-  ✓  154 [webkit] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (2.6s)
-  ✓  155 [webkit] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (8.1s)
-  ✓  156 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (6.6s)
-(node:18815) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+success 1c5de27c493e8e7883642bbe5456749301990838
+  ✓  149 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (13.4s)
+  ✓  150 [webkit] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (12.7s)
+  ✓  151 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (5.2s)
+  ✓  153 [webkit] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (6.0s)
+  ✓  154 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (6.3s)
+  ✓  152 [webkit] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (20.9s)
+  ✓  155 [webkit] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (6.3s)
+  ✓  157 [webkit] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (4.0s)
+  ✓  156 [webkit] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (12.1s)
+  ✓  158 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (9.1s)
+(node:19857) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  158 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (5.4s)
-  ✓  157 [webkit] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (11.5s)
-  ✓  159 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (4.6s)
-  ✓  161 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (3.0s)
-  ✓  162 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (2.2s)
-  ✓  160 [webkit] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (7.2s)
-  ✓  163 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.6s)
-  ✓  164 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (7.0s)
-  ✓  165 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (7.7s)
-  ✓  166 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (5.7s)
-  ✓  167 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (8.7s)
-  ✓  168 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (10.5s)
-  ✓  170 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (5.8s)
-  ✓  169 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (18.0s)
-  ✓  171 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.9s)
-  ✓  172 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.6s)
-  ✓  173 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.3s)
+  ✓  159 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (9.5s)
+  ✓  160 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (7.2s)
+  ✓  161 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (7.2s)
+  ✓  162 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (6.9s)
+  ✓  164 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.7s)
+  ✓  165 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.2s)
+  ✓  166 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.4s)
+  ✓  163 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (17.4s)
+  ✓  167 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (12.6s)
+  ✓  168 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (13.9s)
+  ✓  169 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (11.4s)
+  ✓  170 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (21.4s)
+  ✓  171 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.8s)
+  ✓  172 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.6s)
+  ✓  173 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.9s)
   -  174 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
   -  175 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
 
 
-  1) [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
+  1) [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
 
-    Error: expect(locator).toHaveCount(expected) failed
+    Error: tote Knöpfe
 
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=heading]')
-    Expected: 0
-    Received: 1
-    Timeout:  5000ms
+    expect(received).toEqual(expected) // deep equality
 
-    Call log:
-      - Expect "toHaveCount" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=heading]') with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=heading]')
-        14 × locator resolved to 1 element
-           - unexpected value "1"
+    - Expected  - 1
+    + Received  + 3
 
+    - Array []
+    + Array [
+    +   "Home: „New page“ #0",
+    + ]
 
-      177 |   await ed.locator("[data-content-type=quote]").click();
-      178 |   await page.keyboard.press("ControlOrMeta+z");
-    > 179 |   await expect(ed.locator("[data-content-type=heading]")).toHaveCount(0);
-          |                                                           ^
-      180 |   await expect(ed.locator("[data-content-type=table]")).toHaveCount(0);
-      181 |   await expect(ed.locator("[data-content-type=codeBlock]")).toHaveCount(0);
-      182 |   await expect(ed.getByText("Intro line")).toBeVisible();
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:179:59
+      228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
+      229 |   expect(total).toBeGreaterThan(60);
+    > 230 |   expect(dead, "tote Knöpfe").toEqual([]);
+          |                               ^
+      231 |   expect(errors, "Konsolenfehler").toEqual([]);
+      232 | });
+      233 |
+        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:230:31
 
-    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-webkit/error-context.md
+    Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
 
   1 flaky
-    [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
+    [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
   16 skipped
-  157 passed (9.9m)
+  157 passed (16.0m)
