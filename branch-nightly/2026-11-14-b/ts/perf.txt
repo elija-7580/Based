@@ -1,8 +1,13 @@
-cancelled 4d388eae7fdfdb30c8136fbf6df86b0bf55e9670 (nicht blockierend)
-BSD-215 chromium: 50 000 Zeilen öffnen 603 ms, ans Ende scrollen 33 ms, Zelle ändern 128 ms
-perf 5000: {"mapOpen":[],"idleBeforePan":[143],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3803,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":10.3,"peekLong":[],"formSubmitMs":66,"formLong":[]}
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 3.1, 5.9, 7.9, 8.1, 12.6
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.4s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1399 ms, ans Ende scrollen 425 ms, Zelle ändern 323 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 4, 5, 8, 9, 13
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.3s)
+success f3ef12f96bb176b52a523b105a4efbd24d2dfefc (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[203],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3840,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":8.15,"peekLong":[],"formSubmitMs":66,"formLong":[]}
+BSD-215 chromium: 50 000 Zeilen öffnen 751 ms, ans Ende scrollen 41 ms, Zelle ändern 178 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 4.3, 6.2, 11.2, 13.8, 18.7
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.6s)
+BSD-215 webkit: 50 000 Zeilen öffnen 1746 ms, ans Ende scrollen 235 ms, Zelle ändern 386 ms
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 6, 8, 10, 11, 17
+  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.6s)
+  ✘  14 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (19.4s)
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
+  1 flaky
+  14 passed (2.0m)
