@@ -375,6 +375,7 @@
   font-family: var(--font-ui);
 }
 .bx2-bookmark:hover { background: var(--surface-soft); }
+.bx2-bookmark-actions { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-1); color: var(--muted); font-family: var(--font-ui); font-size: var(--type-meta-size); user-select: none; -webkit-user-select: none; }
 .bx2-bookmark-title { font-weight: 600; }
 .bx2-bookmark-summary { color: var(--ink-2); font-size: var(--type-description-size); }
 .bx2-bookmark-url { color: var(--muted); font-size: var(--type-meta-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -567,3 +568,10 @@
 .bx2-menu-search:focus-visible { outline: 1px solid var(--focus-ring); border-color: var(--focus-ring); }
 .bx2-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }
 .bx2-menu-item:focus-visible { outline: none; background: var(--selected); }
+.bx2-image-empty { display: flex; flex-direction: column; gap: var(--space-2); }
+.bx2-embed-frame-wrap { margin: 0; }
+.bx2-embed-frame { display: block; width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-soft); }
+.bx2-embed-frame-wrap figcaption { margin-top: var(--space-1); font-family: var(--font-ui); font-size: var(--type-meta-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx2-embed-frame-wrap figcaption a { color: inherit; }
+.bx2-pdf { display: flex; flex-direction: column; gap: var(--space-1); }
+.bx2-pdf-frame { width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: var(--radius-sm); }

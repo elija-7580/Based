@@ -658,3 +658,116 @@ test("URL einfügen: leere Zeile → Bookmark", async ({ page }) => {
   await expect.poll(() => blockTypes(page)).toEqual(["text", "bookmark"]);
   await expect(editor(page).locator(".bx2-block").nth(1)).toContainText("example.com");
 });
+
+// BSD-407 Teil 2d: Web-Bookmark – „Fetch preview“ nur auf Klick und nur mit Abruf der Hülle (hier: Test-Haken).
+test("Bookmark: Fetch preview holt Titel und Beschreibung", async ({ page }) => {
+  await newPage(page);
+  await page.evaluate(() => {
+    const g = globalThis as unknown as { __based: { linkPreviewHTML?: (u: string) => Promise<string> } };
+    g.__based.linkPreviewHTML = async () => `<html><head><meta property="og:title" content="Calm workspace"><meta property="og:description" content="Pages that stay on your Mac."></head></html>`;
+  });
+  // der Abruf wird beim Öffnen des Editors festgelegt: Seite einmal wechseln
+  await page.getByRole("treeitem", { name: "Welcome to Based", exact: true }).click();
+  await page.getByRole("treeitem", { name: "Editor test", exact: true }).click();
+  await expect(editor(page)).toBeVisible();
+  await startTyping(page);
+  await page.evaluate((text) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", text);
+    document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, "https://example.com/calm");
+  const card = editor(page).locator(".bx2-bookmark-block");
+  await expect(card).toContainText("https://example.com/calm");
+  await card.getByRole("button", { name: "Fetch preview" }).click();
+  await expect(card.locator(".bx2-bookmark-title")).toHaveText("Calm workspace");
+  await expect(card).toContainText("Pages that stay on your Mac.");
+  await expect(card.getByRole("button", { name: "Refresh preview" })).toBeVisible();
+});
+
+// BSD-407 Teil 2d: Bild per Link – leerer Bildblock nimmt eine Adresse an.
+test("Bild per Link", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("/image");
+  await page.keyboard.press("Enter");
+  const link = editor(page).getByLabel("Image link");
+  await expect(link).toBeVisible();
+  const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  await link.fill(png);
+  await link.press("Enter");
+  await expect(editor(page).locator(".bx2-image img")).toHaveAttribute("src", png);
+  await expect(link).toHaveCount(0);
+});
+
+// BSD-407 Teil 2c: Inline-Gleichung über „/Inline equation“ anlegen, per Klick bearbeiten, leer entfernen.
+test("Inline-Gleichung anlegen und bearbeiten", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("Area ");
+  await page.keyboard.type("/inline eq");
+  await page.keyboard.press("Enter");
+  const pop = page.getByTestId("inline-equation");
+  await expect(pop.getByRole("textbox", { name: "TeX" })).toBeFocused();
+  await page.keyboard.type("\\pi r^2");
+  await page.keyboard.press("Enter");
+  await expect(pop).toHaveCount(0);
+  const eq = fields(page).first().locator(".bx2-eq");
+  await expect(eq).toHaveText("\\pi r^2");
+  await expect(fields(page).first()).toHaveText("Area \\pi r^2");
+  // Klick: bearbeiten
+  await eq.click();
+  await expect(pop.getByRole("textbox", { name: "TeX" })).toHaveValue("\\pi r^2");
+  await pop.getByRole("textbox", { name: "TeX" }).fill("2\\pi r");
+  await page.keyboard.press("Enter");
+  await expect(eq).toHaveText("2\\pi r");
+  // Undo stellt die vorige Fassung her
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(fields(page).first().locator(".bx2-eq")).toHaveText("\\pi r^2");
+  // leer + Enter entfernt sie
+  await fields(page).first().locator(".bx2-eq").click();
+  await pop.getByRole("textbox", { name: "TeX" }).fill("");
+  await page.keyboard.press("Enter");
+  await expect(fields(page).first().locator(".bx2-eq")).toHaveCount(0);
+  await expect(fields(page).first()).toHaveText("Area ");
+});
+
+// BSD-407 Teil 2d: Embed bekannter Anbieter als iframe, unbekannte Adresse als Karte.
+test("Embed: YouTube als iframe, sonst Karte", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("/embed");
+  await page.keyboard.press("Enter");
+  const field = editor(page).getByLabel("Embed link");
+  await field.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await field.press("Enter");
+  const frame = editor(page).locator("iframe.bx2-embed-frame");
+  await expect(frame).toHaveAttribute("src", /dQw4w9WgXcQ/);
+  await expect(frame).toHaveAttribute("sandbox", /allow-scripts/);
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/embed");
+  await page.keyboard.press("Enter");
+  await editor(page).getByLabel("Embed link").fill("https://example.com/x");
+  await editor(page).getByLabel("Embed link").press("Enter");
+  await expect(editor(page).locator(".bx2-bookmark")).toContainText("https://example.com/x");
+  await expect(editor(page).locator("iframe")).toHaveCount(1);
+});
+
+// BSD-407 Teil 2e: Zeile und Spalte der bearbeiteten Zelle löschen.
+test("Tabelle: Zeile und Spalte löschen", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("/simple table");
+  await page.keyboard.press("Enter");
+  const table = editor(page).locator(".bx2-table");
+  const rows = await table.locator("tr").count();
+  const cols = await table.locator("tr").first().locator("td, th").count();
+  expect(cols).toBeGreaterThan(1);
+  await editor(page).getByRole("textbox", { name: "Row 1, column 2" }).click();
+  await page.keyboard.type("gone");
+  await editor(page).getByRole("button", { name: "Delete column" }).click();
+  await expect(table.locator("tr").first().locator("td, th")).toHaveCount(cols - 1);
+  await expect(table).not.toContainText("gone");
+  await editor(page).getByRole("textbox", { name: "Row 2, column 1" }).click();
+  await editor(page).getByRole("button", { name: "Delete row" }).click();
+  await expect(table.locator("tr")).toHaveCount(rows - 1);
+});
