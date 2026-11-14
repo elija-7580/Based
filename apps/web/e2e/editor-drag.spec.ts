@@ -68,11 +68,17 @@ async function dragBlock(page: Page, text: string, onto: string, at: (b: { x: nu
   await content(page, text).hover();
   const handle = page.locator(".bn-side-menu [draggable=true]").first();
   await expect(handle).toBeVisible();
-  let h = await handle.boundingBox();
-  for (let i = 0; !h && i < 20; i++) {
+  // BSD-408: Der Griff wandert mit Verzögerung (BlockNotes Hover-Absicht, 350 ms) zum neuen Block. Unter Last griff
+  // der Test sonst den Griff des vorigen Blocks und zog den falschen. Erst ziehen, wenn der Griff neben dem Block steht.
+  const aligned = async () => {
+    const [hb, bb] = [await handle.boundingBox(), await content(page, text).boundingBox()];
+    return hb && bb && hb.y + hb.height / 2 >= bb.y - 4 && hb.y + hb.height / 2 <= bb.y + bb.height + 4 ? hb : null;
+  };
+  let h = await aligned();
+  for (let i = 0; !h && i < 40; i++) {
     await page.waitForTimeout(50);
     await content(page, text).hover();
-    h = await handle.boundingBox();
+    h = await aligned();
   }
   if (!h) throw new Error("no drag handle for " + text);
   await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);

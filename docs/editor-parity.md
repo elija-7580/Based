@@ -16,15 +16,15 @@ neuen Editor auf dem Mac abgenommen hat.
 | Trenner | must | ja | |
 | Code mit Sprache und Hervorhebung | must | ja | Sprachwahl mit Suche, Hervorhebung über CSS Highlight API; kein Kopierknopf, kein Umbruch-Schalter |
 | Block-Gleichung | should | ja | |
-| Inline-Gleichung | should | teils | wird angezeigt, Anlegen/Bearbeiten fehlt |
-| Bild (Upload, Link, Unterschrift) | must | teils | Upload, Einfügen, Ablegen, Breite, Unterschrift; Bild per Link fehlt |
-| Video, Audio, Datei, PDF | should | teils | Hochladen und Anzeige; PDF ohne Vorschau |
-| Web-Bookmark mit Vorschau | should | teils | Link-Feld und Karte; Vorschau holen (`fetchLinkPreview`) fehlt |
-| Embed | could | teils | wird wie ein Bookmark gezeigt, kein iframe |
+| Inline-Gleichung | should | teils | Anlegen („/Inline equation“), Bearbeiten per Klick, leer entfernt (14.11.); Anzeige noch als TeX statt KaTeX |
+| Bild (Upload, Link, Unterschrift) | must | ja | Upload, Einfügen, Ablegen, Breite, Unterschrift; Bild per Link seit 14.11. |
+| Video, Audio, Datei, PDF | should | ja | Hochladen und Anzeige; PDF mit Vorschau seit 14.11. |
+| Web-Bookmark mit Vorschau | should | ja | Link-Feld und Karte; „Fetch preview“ (`fetchLinkPreview`, nur auf Klick) seit 14.11. |
+| Embed | could | ja | bekannte Anbieter (YouTube, Vimeo, Loom, Figma, …) als iframe, sonst Karte (14.11.) |
 | Inhaltsverzeichnis | should | ja | |
 | Breadcrumb-Block | could | nein | |
 | Spalten 2–5 | should | ja | Slash „2–5 columns“, Ziehen, Breite ziehen |
-| Einfache Tabelle | should | teils | Zellen (Klartext), Zeile/Spalte anfügen; Formatierung in Zellen, Löschen von Zeilen fehlt |
+| Einfache Tabelle | should | teils | Zellen (Klartext), Zeile/Spalte anfügen und löschen (14.11.); Formatierung in Zellen fehlt |
 | Synced Block | could | teils | Original und Kopie zeigen und bearbeiten (über Records); „Copy and sync“ fehlt |
 | Button-Block | could | nein | wird angezeigt, Aktionen fehlen |
 | Unterseite im Inhalt | must | ja | |
@@ -82,9 +82,9 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 1 | Diese Liste | erledigt 14.11. |
 | 2a | Blockmenü: Suchfeld, „Copy as Markdown“ | erledigt 14.11. |
 | 2b | Blockmenü „Move to“ (MovePicker wiederverwenden), Turn into page (⌘⌥9) | erledigt 14.11. |
-| 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | `[[` und URL erledigt 14.11.; Inline-Gleichung offen |
-| 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | offen |
-| 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | offen |
+| 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | `[[`, URL und Inline-Gleichung anlegen/bearbeiten erledigt 14.11.; KaTeX-Anzeige im Text offen |
+| 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | erledigt 14.11. |
+| 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | Zeile/Spalte löschen erledigt 14.11.; Formatierung in Zellen, HTML-Vorschau offen |
 | 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | offen |
 | 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | offen |
 | 3 | `based.newEditor` standardmäßig an; 50 Specs mit `.bn-*` auf `getByTestId("block-editor")`/`.bx2-*` umstellen | offen |
