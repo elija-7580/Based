@@ -146,6 +146,11 @@ input::placeholder { color: var(--muted); }
   flex: 1; min-width: 0; min-height: 0; background: var(--bg); border-radius: var(--radius-xl); box-shadow: var(--shadow-panel);
   overflow-x: hidden; overflow-y: auto; overscroll-behavior: none; display: flex; flex-direction: column;
 }
+/* Die Fläche darf sich nie seitlich verschieben (Elija 14.11.: Trackpad schob den ganzen Bereich). Der Editor ragt mit
+   seinem Griffrand über das Innenmaß der Seite hinaus; `clip` an der Seite schneidet das ab, ohne Scrollbereich zu
+   erzeugen – so hat die Fläche nichts, wohin sie seitlich rollen könnte. Nur die Seite: andere Bildschirme (Library)
+   haben eigene Leisten, die nicht abgeschnitten werden dürfen. */
+.panel > .page { overflow-x: clip; }
 .content { padding: var(--space-8) var(--space-7); }
 [data-density="compact"] .content { padding: var(--space-6) var(--space-6); }
 .column { max-width: calc(var(--page-measure) + var(--space-7)); margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6); }

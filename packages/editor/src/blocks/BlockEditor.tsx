@@ -12,7 +12,7 @@ import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
-import { MenuIcon, type MenuIconName } from "../ui/menuIcons.js";
+import { MenuIcon } from "../ui/menuIcons.js";
 import { DateField, MenuGlyph, TimeField } from "@based/ui/native";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
@@ -24,6 +24,7 @@ import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
 import { ASK_AI_ITEM, SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
+import { BlockIcon } from "./icons.js";
 import { SELECTION_ACTIONS, type EditorAI } from "../ui/ai.js";
 import { PresenceLayer, useRealtime } from "./realtime.js";
 import { highlightCode } from "./highlight.js";
@@ -2361,22 +2362,34 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
 
 interface SlashState { id: string; at: number; query: string; index: number; x: number; y: number }
 
+/** Hält ein Menü am Cursor ganz im Fenster (gemessen, nicht geschätzt): rückt nach oben/links, wenn unten/rechts kein Platz ist. */
+function useFitInWindow(ref: { current: HTMLElement | null }, x: number, y: number, count: number) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const pad = 8;
+    const r = el.getBoundingClientRect();
+    el.style.left = `${Math.max(pad, Math.min(x, window.innerWidth - r.width - pad))}px`;
+    el.style.top = `${Math.max(pad, Math.min(y, window.innerHeight - r.height - pad))}px`;
+  }, [ref, x, y, count]);
+}
+
 function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; state: SlashState; onChoose: (i: SlashItem) => void; onHover: (i: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     ref.current?.querySelector(`[data-index="${state.index}"]`)?.scrollIntoView({ block: "nearest" });
   }, [state.index]);
-  const top = Math.min(state.y, window.innerHeight - 340);
+  useFitInWindow(ref, state.x, state.y, items.length);
   let group = "";
   return (
-    <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Blocks" data-testid="slash-menu" style={{ left: state.x, top }} onPointerDown={(e) => e.preventDefault()}>
+    <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Blocks" data-testid="slash-menu" style={{ left: state.x, top: state.y }} onPointerDown={(e) => e.preventDefault()}>
       {items.map((it, i) => {
         const head = it.group !== group ? (group = it.group) : undefined;
         return (
           <div key={it.type + it.label}>
             {head ? <div className="bx2-menu-label">{head}</div> : null}
             <div role="option" aria-selected={i === state.index} data-index={i} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
-              <span className="bx2-menu-icon" aria-hidden="true">{it.icon}</span>
+              <span className="bx2-menu-icon" aria-hidden="true"><BlockIcon name={it.icon} /></span>
               <span className="bx2-menu-text">{it.label}</span>
               {it.hint ? <span className="bx2-menu-hint">{it.hint}</span> : null}
             </div>
@@ -2388,12 +2401,6 @@ function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; st
 }
 
 // MARK: Blockmenü (BSD-407 Teil 6.1: Icons, Kopf/Fuß und Glas wie das Seitenmenü „…“ und der alte Editor)
-
-/** Icon je Ziel in „Turn into“ (Satz des Editors, 24er-Raster wie die App). */
-const TURN_ICON: Readonly<Record<string, MenuIconName>> = {
-  text: "text", heading1: "h1", heading2: "h2", heading3: "h3", heading4: "h3", bulletedList: "bullet", numberedList: "numbered",
-  todo: "todo", toggle: "toggle", quote: "quote", callout: "callout", code: "code", page: "page", equation: "equation",
-};
 
 /** Name des Blocktyps für den Kopf des Blockmenüs („Heading 2“, „To-do list“, „Toggle heading 1“ …). */
 export function blockTypeLabel(b: Pick<Block, "type" | "props"> | undefined): string {
@@ -2529,7 +2536,7 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
   };
   const isCurrent = (s: (typeof SLASH_ITEMS)[number]) => b?.type === s.type && (b.props?.toggleable === true) === (s.props?.toggleable === true);
   const turnRow = (s: (typeof SLASH_ITEMS)[number]) => (
-    <MenuRow key={s.type + s.label} role="menuitemradio" checked={isCurrent(s)} label={s.label} icon={<MenuIcon name={TURN_ICON[s.type] ?? "text"} />} onSelect={act(() => runTurn(s), "Turn into " + s.label)} />
+    <MenuRow key={s.type + s.label} role="menuitemradio" checked={isCurrent(s)} label={s.label} icon={<BlockIcon name={s.icon} />} onSelect={act(() => runTurn(s), "Turn into " + s.label)} />
   );
   if (view === "turn") return shell("Turn into", <><div className="bx2-menu-label">Turn into</div>{targets.map(turnRow)}</>);
 
@@ -2628,12 +2635,12 @@ function FormatBar({ x, y, onMark, onColor, onAI }: { x: number; y: number; onMa
         <span className="bx2-menu bx2-color-menu" role="menu" aria-label="Text color">
           {BLOCK_COLORS.map((c) => (
             <button key={c} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c === "default" ? undefined : c); }}>
-              <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c} aria-hidden="true">A</span><span className="bx2-menu-text">{c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)}</span>
+              <span className={"bx2-swatch bx2-color-" + c} aria-hidden="true">A</span><span className="bx2-menu-text">{c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)}</span>
             </button>
           ))}
           {BLOCK_COLORS.filter((c) => c !== "default").map((c) => (
             <button key={c + "Background"} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c + "Background"); }}>
-              <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c + "Background"} aria-hidden="true">A</span><span className="bx2-menu-text">{c[0]!.toUpperCase() + c.slice(1)} background</span>
+              <span className={"bx2-swatch bx2-color-" + c + "Background"} aria-hidden="true">A</span><span className="bx2-menu-text">{c[0]!.toUpperCase() + c.slice(1)} background</span>
             </button>
           ))}
         </span>
@@ -2717,8 +2724,10 @@ interface MentionState { id: string; at: number; trigger: "@" | "[["; query: str
 
 function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoose: (r: MentionItem) => void; onHover: (i: number) => void }) {
   const firstDate = state.items.findIndex((x) => x.kind === "date");
+  const ref = useRef<HTMLDivElement>(null);
+  useFitInWindow(ref, state.x, state.y, state.items.length);
   return (
-    <div className="bx2-menu bx2-slash" role="listbox" aria-label="Mention a page" data-testid="mention-menu" style={{ left: state.x, top: Math.min(state.y, window.innerHeight - 340) }} onPointerDown={(e) => e.preventDefault()}>
+    <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Mention a page" data-testid="mention-menu" style={{ left: state.x, top: state.y }} onPointerDown={(e) => e.preventDefault()}>
       {state.items.length && state.items[0]!.kind === "page" ? <div className="bx2-menu-label">Link to page</div> : null}
       {state.items.map((it, i) => (
         <Fragment key={it.kind === "page" ? it.ref.id : it.kind === "new" ? "new" : "d" + it.label}>
@@ -2732,7 +2741,7 @@ function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoo
             </div>
           ) : it.kind === "page" ? (
             <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
-              <span className="bx2-menu-icon" aria-hidden="true"><IconView icon={it.ref.icon} fallback="📄" /></span>
+              <span className="bx2-menu-icon" aria-hidden="true"><IconView icon={it.ref.icon} fallback={<BlockIcon name="page" />} /></span>
               <span className="bx2-menu-text">{it.ref.title || "Untitled"}</span>
               {it.ref.path ? <span className="bx2-menu-hint bx2-menu-path">{it.ref.path}</span> : null}
             </div>

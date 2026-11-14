@@ -40,6 +40,13 @@ export function scrollerFor(from: Element | null, dx: number, dy: number): Eleme
   return root;
 }
 
+/** In welchen Richtungen darf der Nutzer `el` rollen? Das Dokument folgt seinem Wurzelelement. */
+export function scrollAxes(el: Element): { x: boolean; y: boolean } {
+  const root = document.scrollingElement ?? document.documentElement;
+  const s = getComputedStyle(el === root ? document.documentElement : el);
+  return { x: scrollable(s.overflowX), y: scrollable(s.overflowY) };
+}
+
 /** Hängt das Verhalten ans Fenster; Rückgabe räumt auf. */
 export function installWheelLatch(win: Window = window): () => void {
   let state: LatchState<Element> = { target: null, last: -Infinity };
@@ -53,7 +60,10 @@ export function installWheelLatch(win: Window = window): () => void {
     if (!r.redirect) return;
     e.preventDefault();
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? r.redirect.clientHeight : 1;
-    r.redirect.scrollBy({ left: e.deltaX * unit, top: e.deltaY * unit, behavior: "instant" as ScrollBehavior });
+    // Nur in Richtungen rollen, die der Bereich selbst zulässt: scrollBy würde sonst auch eine Achse mit
+    // `overflow: hidden` verschieben (so wanderte die Inhaltsfläche beim schrägen Wischen seitlich, 14.11.).
+    const { x, y } = scrollAxes(r.redirect);
+    r.redirect.scrollBy({ left: x ? e.deltaX * unit : 0, top: y ? e.deltaY * unit : 0, behavior: "instant" as ScrollBehavior });
   };
   win.addEventListener("wheel", onWheel, { capture: true, passive: false });
   return () => win.removeEventListener("wheel", onWheel, { capture: true });

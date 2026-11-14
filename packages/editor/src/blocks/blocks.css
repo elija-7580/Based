@@ -333,20 +333,22 @@
 .bx2-menu-sub { display: inline-flex; margin-left: auto; color: var(--muted); }
 .bx2-menu-item[aria-checked="true"] .bx2-menu-text { font-weight: 600; }
 .bx2-menu-foot { display: grid; gap: var(--space-1); margin-top: var(--space-1); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--line); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); font-variant-numeric: tabular-nums; }
+/* Icon-Kachel im Slash-/@-Menü: Fläche statt Haarlinie, Glyphe aus dem Based-Satz (blocks/icons.tsx) */
 .bx2-menu-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-xs);
-  border: 1px solid var(--line);
-  background: var(--bg);
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-control);
   color: var(--ink-2);
-  font-size: var(--type-data-size);
-  font-weight: 600;
+  font-size: var(--icon-sm);
+  line-height: 1;
 }
+.bx2-menu-item:hover .bx2-menu-icon, .bx2-menu-item[aria-selected="true"] .bx2-menu-icon { background: var(--bg); color: var(--ink); }
 .bx2-menu-text { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bx2-menu-hint { margin-left: auto; padding-left: var(--space-4); color: var(--muted); font-size: var(--type-meta-size); }
 .bx2-menu-sep { height: 1px; margin: var(--space-1) 0; background: var(--line); }
@@ -538,7 +540,7 @@
 .bx2-code-lang-btn { padding: 0 var(--space-1); border: 0; border-radius: var(--radius-xs); background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .bx2-code-lang-btn:hover:not(:disabled) { background: var(--selected); color: var(--ink-2); }
 .bx2-code-menu { position: absolute; top: 100%; right: 0; display: flex; flex-direction: column; gap: var(--space-half); min-width: 200px; }
-.bx2-swatch { display: inline-flex; align-items: center; justify-content: center; width: var(--space-5); height: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-xs); font-weight: 600; }
+.bx2-swatch { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: var(--space-5); height: var(--space-5); border: 0; border-radius: var(--radius-sm); box-shadow: var(--shadow-control); font-size: var(--type-data-size); font-weight: 600; }
 
 /* E6: Bild – Rahmen mit Griff zum Breite-Ziehen, Bildunterschrift */
 /* BSD-407 Teil 3: ohne gespeicherte Breite in natürlicher Größe (höchstens Spaltenbreite), nicht hochgezogen */
