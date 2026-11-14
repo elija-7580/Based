@@ -9,12 +9,13 @@
 //
 // Modus „input“ (Standard) spielt Tasten, Eingaben, IME, Einfügen und Mausauswahl nach – damit fallen Fehler in der
 // Eingabeverarbeitung auf. Modus „steps“ wendet die aufgezeichneten Editor-Schritte an (reproduziert den Endzustand
-// auch, wenn Klicks auf Menüs dazwischen lagen).
+// auch, wenn Klicks auf Menüs dazwischen lagen). Beide Editoren: der alte (ProseMirror-Schritte) und der Block-Editor
+// (ADR 0016: Blockbaum als Zwischenstand, Block-Records als Schritte, Schreibmarke als Block + Offset).
 import { expect, type Page } from "@playwright/test";
-import { normalizeDoc, parseBugBundle, replayPlan, type BugBundle, type LayoutIssue, type ReplayPlan } from "@based/core";
+import { isBlockDoc, normalizeDoc, parseBugBundle, replayPlan, type BugBundle, type LayoutIssue, type ReplayPlan } from "@based/core";
 
 type Hooks = {
-  load(root: string, doc: unknown, sel: unknown): boolean;
+  load(root: string, doc: unknown, sel: unknown, recordedRoot?: string): boolean;
   setSelection(root: string, sel: unknown): boolean;
   applySteps(root: string, steps: unknown[]): boolean;
   docJSON(root: string): unknown;
@@ -55,10 +56,15 @@ export async function replayReport(page: Page, json: unknown, opts: { mode?: "in
   const id = (await page.evaluate(() => (globalThis as unknown as W).__based.client.command({ op: "createPage", title: "Replay" }))) as string;
   await page.goto(`/#page-${id}`);
   await expect.poll(() => page.evaluate((root) => (globalThis as unknown as W).__basedReport.roots().includes(root), id), { timeout: 15_000 }).toBe(true);
-  expect(await page.evaluate(([root, doc, sel]) => (globalThis as unknown as W).__basedReport.load(root as string, doc, sel), [id, plan.start.doc, plan.start.sel] as const)).toBe(true);
+  expect(await page.evaluate(([root, doc, sel, recorded]) => (globalThis as unknown as W).__basedReport.load(root as string, doc, sel, recorded as string), [id, plan.start.doc, plan.start.sel, plan.root] as const)).toBe(true);
   // Schreibmarke an die Startstelle; die Seite ist frisch geladen, erst wenn der Editor den Fokus hält, geht es los.
   await page.evaluate(([root, sel]) => (globalThis as unknown as W).__basedReport.setSelection(root as string, sel), [id, plan.start.sel] as const);
-  await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest(".ProseMirror"))).toBe(true);
+  // Block-Editor: bei Blockauswahl hält der Rahmen den Fokus, ohne Schreibmarke („none“) wartet nichts
+  const blocks = isBlockDoc(plan.start.doc);
+  if (!blocks || plan.start.sel.type !== "none") {
+    const focusable = blocks && plan.start.sel.type === "blocks" ? ".bx2-editor" : ".ProseMirror, [data-editable-id]";
+    await expect.poll(() => page.evaluate((sel) => !!document.activeElement?.closest(sel), focusable)).toBe(true);
+  }
   for (const a of plan.actions) {
     switch (a.kind) {
       case "type": await page.keyboard.type(a.text); break;

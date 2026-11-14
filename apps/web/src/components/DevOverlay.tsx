@@ -18,10 +18,14 @@ const summary = (e: RecordedEvent): string => {
     case "input": return `input ${e.inputType}`;
     case "composition": return `ime ${e.phase}`;
     case "paste": return `paste${e.html ? " html" : ""}${e.files ? ` ${e.files} files` : ""}`;
-    case "select": return `select ${e.sel.anchor}–${e.sel.head} (${e.cause})`;
+    case "select": return `select ${e.sel.block ? `${e.sel.block.slice(0, 6)} ` : ""}${e.sel.blocks ? `${e.sel.blocks.length} blocks` : `${e.sel.anchor}–${e.sel.head}`} (${e.cause})`;
     case "pointer": return `pointer ${e.phase} ${e.target}`;
     case "tr": return `tr ${e.docChanged ? "change" : "selection"} → ${e.sel.anchor}${e.sel.head !== e.sel.anchor ? `–${e.sel.head}` : ""}${e.meta ? ` [${e.meta.join(", ")}]` : ""}`;
     case "yjs": return `yjs ${e.bytes} B (${e.origin})`;
+    case "change": {
+      const n = Array.isArray(e.changes) ? e.changes.length : 0;
+      return `change ${e.name ?? e.origin}${e.name && e.origin !== "local" ? ` (${e.origin})` : ""} · ${n} block${n === 1 ? "" : "s"}`;
+    }
     case "focus": return `focus ${e.target}`;
     case "checkpoint": return `checkpoint ${e.root.slice(0, 8)}`;
   }

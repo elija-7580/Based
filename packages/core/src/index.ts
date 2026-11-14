@@ -194,8 +194,13 @@ export {
   BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
   buildBugBundle, bundleID, comboFor, exportEvent, layoutIssues, mapStrings, normalizeDoc, parseBugBundle, replayPlan, scrambleDeep, scrambleHTML, scrambleText, summarizeBundle,
   type BugApp, type BugBundle, type BugBundleInput, type BugBundleSummary, type BugEnv, type BugState, type InputRecorderOptions, type LayoutIssue, type LayoutItem,
-  type Lazy, type Mods, type RecordedEvent, type RecordedInput, type Rect, type ReplayAction, type ReplayPlan, type SelectionInfo,
+  type BlockChangeRecord, type Lazy, type Mods, type RecordedEvent, type RecordedInput, type Rect, type ReplayAction, type ReplayPlan, type SelectionInfo,
 } from "./bugReport.js";
+export {
+  applyBlockChanges, blockAtPath, blockDoc, blockDocOf, blockPath, isBlockDoc, loadBlockDoc, mapReplaySelection, observePageChanges, pageBlocks,
+  resolveReplaySelection,
+  type BlockDoc, type BlockNode, type ReplayIDs,
+} from "./editor/recording.js";
 // BSD-382 (ADR 0016, E1): Befehle des neuen Block-Editors (Namensraum, damit nichts mit Seiten-/Store-Funktionen kollidiert).
 export * as blockCommands from "./editor/commands/index.js";
 export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
