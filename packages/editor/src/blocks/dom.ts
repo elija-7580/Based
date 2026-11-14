@@ -9,6 +9,8 @@ type Run = cmd.Run;
 export interface AtomRenderer {
   /** Text einer Seiten-Erwähnung (Titel); ohne: „Untitled“. */
   pageTitle?: (id: string) => string | undefined;
+  /** BSD-407: Inline-Gleichung als HTML (KaTeX der Hülle); ohne oder solange nicht geladen: der TeX-Text. */
+  equationHTML?: (tex: string) => string | undefined;
 }
 
 const MARK_CLASSES: Record<string, string> = { b: "bx2-b", i: "bx2-i", u: "bx2-u", s: "bx2-s", c: "bx2-c" };
@@ -27,7 +29,10 @@ function runElement(doc: Document, r: Run, atoms: AtomRenderer): Node {
     el.dataset.len = String(r.t.length);
     if (r.eq !== undefined) {
       el.className = "bx2-eq";
-      el.textContent = r.eq;
+      el.dataset.tex = r.eq;
+      const html = atoms.equationHTML?.(r.eq);
+      if (html) el.innerHTML = html;
+      else el.textContent = r.eq;
     } else {
       const m = r.mention as Record<string, unknown>;
       el.className = "bx2-mention";

@@ -10,7 +10,7 @@ import { newEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
-import { Equation } from "./equation.js";
+import { Equation, loadTeX, renderTeX, texReady } from "./equation.js";
 import { createMeetingHost, type WebMeetingHost } from "./meeting/host.js";
 import { chatController } from "./chat/runtime.js";
 import { editorAI } from "./editorAI.js";
@@ -76,6 +76,12 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
   };
   const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
+  // BSD-407: Inline-Gleichungen im neuen Editor als KaTeX-HTML (KaTeX lädt erst bei der ersten Gleichung)
+  const renderEquationHTML = (tex: string, onReady: () => void): string | undefined => {
+    if (!texReady()) { void loadTeX().then(onReady, () => undefined); return undefined; }
+    const r = renderTeX(tex, false);
+    return "html" in r ? r.html : undefined;
+  };
   const files = assets();
   const loadSynced = useMemo(() => (client ? (source: string) => client.includeSynced(pageID, source) : undefined), [client, pageID]);
   const databases = useMemo(() => (client ? {
@@ -98,7 +104,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   const fetchLinkPreview = useMemo(() => linkPreviewFetcher(), []);
   return (
     <div className="shell-editor">
-      <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
+      <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} renderEquationHTML={renderEquationHTML}
         {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}

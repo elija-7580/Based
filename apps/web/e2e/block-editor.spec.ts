@@ -712,17 +712,18 @@ test("Inline-Gleichung anlegen und bearbeiten", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(pop).toHaveCount(0);
   const eq = fields(page).first().locator(".bx2-eq");
-  await expect(eq).toHaveText("\\pi r^2");
-  await expect(fields(page).first()).toHaveText("Area \\pi r^2");
+  await expect(eq).toHaveAttribute("data-tex", "\\pi r^2");
+  await expect(eq.locator(".katex")).toBeVisible(); // KaTeX statt TeX-Text
+  await expect(fields(page).first()).toContainText("Area ");
   // Klick: bearbeiten
   await eq.click();
   await expect(pop.getByRole("textbox", { name: "TeX" })).toHaveValue("\\pi r^2");
   await pop.getByRole("textbox", { name: "TeX" }).fill("2\\pi r");
   await page.keyboard.press("Enter");
-  await expect(eq).toHaveText("2\\pi r");
+  await expect(eq).toHaveAttribute("data-tex", "2\\pi r");
   // Undo stellt die vorige Fassung her
   await page.keyboard.press("ControlOrMeta+z");
-  await expect(fields(page).first().locator(".bx2-eq")).toHaveText("\\pi r^2");
+  await expect(fields(page).first().locator(".bx2-eq")).toHaveAttribute("data-tex", "\\pi r^2");
   // leer + Enter entfernt sie
   await fields(page).first().locator(".bx2-eq").click();
   await pop.getByRole("textbox", { name: "TeX" }).fill("");
