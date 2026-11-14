@@ -1,61 +1,61 @@
-success 6bd79a0294aafe38fbed2a7c4660eea0aec751f2
-      228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
-      229 |   expect(total).toBeGreaterThan(60);
-    > 230 |   expect(dead, "tote Knöpfe").toEqual([]);
-          |                               ^
-      231 |   expect(errors, "Konsolenfehler").toEqual([]);
-      232 | });
-      233 |
-        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:230:31
-
-    Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
-
-  2) [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ────────────────
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "dead"
-    Received: "ok"
-
-      260 |     document.querySelector("main.main")!.prepend(live);
-      261 |   });
-    > 262 |   expect(await probe(page, "main.main", { name: "Crawl dead probe", nth: 0 })).toBe("dead");
-          |                                                                                ^
-      263 |   expect(await probe(page, "main.main", { name: "Crawl live probe", nth: 0 })).toBe("ok");
-      264 | });
-      265 |
-        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:262:80
-
-    Error Context: test-results/crawl-Ein-eingeschleuster-toter-Knopf-fällt-auf-webkit/error-context.md
-
-  3) [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
-
-    Error: expect(locator).toContainText(expected) failed
-
-    Locator: locator('.bx-editor > .bx-doc .bn-editor').first().locator('.bx-mention[data-kind=page]').first()
-    Expected substring: "Project Zeppelin"
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toContainText" locator('.bx-editor > .bx-doc .bn-editor').first().locator('.bx-mention[data-kind=page]').first() with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('.bx-mention[data-kind=page]').first()
-
-
-      235 |   await page.keyboard.press("Enter");
-      236 |   const mention = ed.locator(".bx-mention[data-kind=page]").first();
-    > 237 |   await expect(mention).toContainText("Project Zeppelin");
-          |                         ^
-      238 |   await expect(mention).toHaveAttribute("data-page", zeppelin);
-      239 |
-      240 |   // Datum mit Erinnerungs-Flagge
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:237:25
-
-    Error Context: test-results/editor-parity--und-erwähne-8255a-ichtbar-Papierkorb-markiert-webkit/error-context.md
-
-  3 flaky
-    [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
-    [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ─────────────────
-    [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
-  17 skipped
-  151 passed (16.2m)
+cancelled 23823231713d751c55252fcc7caa5f55134e2e96
+(node:8142) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   47 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.3s)
+  ✓   48 [webkit] › e2e/block-editor.spec.ts:644:1 › URL einfügen: leere Zeile → Bookmark (2.3s)
+(node:8367) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   49 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (10.3s)
+  ✓   51 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (9.3s)
+  ✓   50 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (19.1s)
+  ✓   53 [webkit] › e2e/crash-report.spec.ts:23:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (4.3s)
+  ✓   52 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (9.4s)
+  ✓   54 [webkit] › e2e/crash-report.spec.ts:45:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (5.4s)
+  ✓   55 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (9.1s)
+  ✓   56 [webkit] › e2e/crash-report.spec.ts:81:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (11.4s)
+  ✓   57 [webkit] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (6.2s)
+  ✓   59 [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus (7.9s)
+  ✓   60 [webkit] › e2e/database-click.spec.ts:64:1 › Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite (6.6s)
+  ✓   61 [webkit] › e2e/database-click.spec.ts:100:1 › Kästchen der ausgewählten Zeile ist gesetzt (3.7s)
+  ✓   62 [webkit] › e2e/database-columns.spec.ts:45:1 › Inline-Datenbanken in Spalten: nichts ragt in die Nachbarspalte, lange Titel brechen um (5.4s)
+  ✓   63 [webkit] › e2e/database-columns.spec.ts:90:1 › Inline-Datenbank als ganze Seite: Knopf und Blockmenü, Titel der Datenbank überall (8.3s)
+  ✓   64 [webkit] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (8.1s)
+  ✓   65 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (7.2s)
+  ✓   66 [webkit] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (3.4s)
+  ✓   67 [webkit] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (4.6s)
+  ✓   68 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (8.5s)
+  ✓   69 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (6.6s)
+  ✓   70 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (7.7s)
+  ✓   71 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (6.9s)
+  ✓   72 [webkit] › e2e/database-look.spec.ts:23:1 › Section mit Inline-Datenbank: Fläche, kein Einzel-Tab, Daten in UI-Schrift (3.3s)
+  ✓   73 [webkit] › e2e/database-look.spec.ts:65:1 › Daten in UI-Schrift, IDs in Monospace (1.8s)
+  ✓   74 [webkit] › e2e/database-look.spec.ts:76:1 › Ansichts-Tab: Klick auf den aktiven Tab öffnet das Menü – umbenennen, duplizieren, löschen (5.3s)
+  ✓   75 [webkit] › e2e/database-polish.spec.ts:6:1 › Inline-Tabelle: leere Titel bleiben leer, Zelleneditor ist ein BasedField, kein Rahmen um den Block (5.6s)
+  ✓   76 [webkit] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (4.3s)
+  ✓   77 [webkit] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (15.3s)
+  ✓   78 [webkit] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (10.4s)
+  ✓   79 [webkit] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (2.7s)
+[webkit] Klick-Durchlauf: 108 Klicks, 4 ausgelassen
+  ✓   58 [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (2.4m)
+  ✓   80 [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (5.8s)
+  ✓   81 [webkit] › e2e/crawl.spec.ts:234:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (4.7s)
+  ✓   82 [webkit] › e2e/database-views.spec.ts:460:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (4.9s)
+  ✓   83 [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf (4.7s)
+  -   85 [webkit] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
+  ✓   86 [webkit] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (3.3s)
+  ✓   84 [webkit] › e2e/database-views.spec.ts:490:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (8.7s)
+  ✓   88 [webkit] › e2e/database-views.spec.ts:534:1 › BSD-216 Teil 2: Diagramm – Farben und Höhe (5.6s)
+  ✓   87 [webkit] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (8.4s)
+  ✓   89 [webkit] › e2e/database-views.spec.ts:558:1 › BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen) (5.0s)
+  ✓   91 [webkit] › e2e/database-views.spec.ts:576:1 › BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank (4.4s)
+  ✓   90 [webkit] › e2e/editor-bookmark.spec.ts:66:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (9.3s)
+  ✓   92 [webkit] › e2e/database-views.spec.ts:607:1 › BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken (4.9s)
+  ✓   93 [webkit] › e2e/editor-bookmark.spec.ts:95:1 › Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App) (5.7s)
+  -   95 [webkit] › e2e/editor-bookmark.spec.ts:103:1 › Bildschirmfotos: Bookmark mit Vorschau
+  ✓   94 [webkit] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (4.6s)
+  ✓   96 [webkit] › e2e/editor-callout-select.spec.ts:67:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (9.1s)
+  ✓   97 [webkit] › e2e/editor-drag.spec.ts:119:1 › Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach dem Neuladen gleich (10.9s)
+  ✓   98 [webkit] › e2e/editor-embed.spec.ts:6:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (4.5s)
+  ✓   99 [webkit] › e2e/editor-drag.spec.ts:147:1 › Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt (6.5s)
+  ✓  100 [webkit] › e2e/editor-mermaid.spec.ts:60:1 › Mermaid: Diagramm als Bild ohne Netz, Fehler in einem Satz, nach dem Neuladen wieder da (11.3s)
+  ✓  101 [webkit] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter (8.2s)
