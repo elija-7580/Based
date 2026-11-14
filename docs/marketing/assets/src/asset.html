@@ -1,0 +1,111 @@
+<!doctype html>
+<!--
+  One template for all marketing images. Rendered by render.sh with headless Chrome:
+  asset.html?k=<kind>&w=<width>&h=<height>[&t=dark]
+  kinds: avatar, wide (headers/banners), og (link previews), square (posts), tall (stories, short covers), strip (very wide, LinkedIn)
+-->
+<html lang="en"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:SG;src:url(sg.woff2) format("woff2");font-weight:400 900}
+:root{--canvas:#F1F1EE;--bg:#FFFFFF;--raised:#F2F2EF;--line:#EAEAE6;--ink:#1F1F1D;--ink2:#37362F;--muted:#6B6A65;--marker:#F1DE8A;--marker-s:#E0C24A;--ready:#DCE6F8;--review:#F5DCE5;--done:#DCEFE3}
+.dark{--canvas:#141414;--bg:#191919;--raised:#262626;--line:#2F2F2F;--ink:#E9E9E6;--ink2:#D0D0CB;--muted:#A3A29D;--marker:#5A4E22;--marker-s:#C9A93A;--ready:#26344D;--review:#47283A;--done:#23402F}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--canvas);overflow:hidden}
+.a{position:relative;overflow:hidden;background:var(--canvas)}
+.sun{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle closest-side,rgba(255,206,120,.85) 0%,rgba(250,180,100,.45) 40%,rgba(248,196,150,.12) 70%,rgba(248,196,150,0) 100%)}
+.dark .sun{background:radial-gradient(circle closest-side,rgba(255,206,120,.35) 0%,rgba(250,180,100,.14) 45%,rgba(248,196,150,0) 100%)}
+.disp{font-family:SG;font-weight:800;letter-spacing:-.04em;line-height:.98;margin:0}
+.hl{background:linear-gradient(var(--marker),var(--marker)) no-repeat 0 88%/100% 36%}
+.sub{margin:0;color:var(--muted);line-height:1.4}
+.url{font-weight:650;color:var(--ink)}
+.pill{display:inline-flex;align-items:center;gap:.5em;border-radius:999px;background:var(--ink);color:var(--canvas);font-weight:650;white-space:nowrap}
+.logo{display:flex;align-items:center;gap:.35em;font-weight:700;letter-spacing:-.035em}
+.logo img{display:block}
+/* product mockup */
+.win{background:var(--bg);border-radius:18px;box-shadow:0 40px 80px -20px rgba(26,26,24,.28),0 0 0 1px rgba(26,26,24,.06);display:flex;overflow:hidden;font-size:13px}
+.dark .win{box-shadow:0 40px 80px -20px rgba(0,0,0,.8),0 0 0 1px #333}
+.side{width:150px;background:var(--canvas);padding:14px 10px;display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
+.side .it{padding:5px 8px;border-radius:7px;color:var(--ink2)}
+.side .it.on{background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:600;color:var(--ink)}
+.side .lab{font-size:11px;color:var(--muted);margin:8px 8px 0}
+.main{flex:1 1 auto;padding:18px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.main h3{margin:0;font-family:SG;font-size:22px;font-weight:800;letter-spacing:-.03em}
+.tabs{display:flex;gap:6px}.tabs span{padding:3px 9px;border-radius:999px;background:var(--raised);font-size:11.5px;color:var(--muted)}.tabs span.on{background:var(--ink);color:var(--canvas)}
+table{border-collapse:collapse;width:100%}
+th{font-weight:500;color:var(--muted);text-align:left;font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.st{padding:2px 8px;border-radius:4px;font-size:11.5px}
+.agent{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:var(--raised);font-size:12px;color:var(--ink2)}
+.agent i{display:block;width:3px;align-self:stretch;border-radius:2px;background:var(--marker-s)}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted)}
+</style></head>
+<body><div id="a" class="a"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const k = q.get('k'), W = +q.get('w'), H = +q.get('h'), dark = q.get('t') === 'dark';
+const a = document.getElementById('a');
+if (dark) document.body.classList.add('dark');
+a.style.width = W + 'px'; a.style.height = H + 'px';
+const mark = dark ? 'mark-dark.svg' : 'mark.svg';
+
+const rows = [
+  ['Thesis: cell simulation', 'Research', 'In progress', 'review'],
+  ['Client onboarding', 'Business', 'Ready', 'ready'],
+  ['Reading list', 'Second brain', 'Done', 'done'],
+  ['Q1 roadmap', 'Projects', 'In progress', 'review'],
+  ['Lecture notes, week 6', 'Study', 'Done', 'done'],
+  ['Grant application', 'Research', 'Ready', 'ready'],
+  ['Weekly review', 'Second brain', 'In progress', 'review']
+];
+function win(n) {
+  const r = rows.slice(0, n).map(x => `<tr><td>${x[0]}</td><td style="color:var(--muted)">${x[1]}</td><td><span class="st" style="background:var(--${x[3]})">${x[2]}</span></td></tr>`).join('');
+  return `<div class="win">
+    <div class="side"><div class="logo" style="font-size:17px;padding:0 6px 8px"><img src="${mark}" width="20" height="20">based</div>
+      <div class="it">Search</div><div class="it">Home</div><div class="lab">Private</div>
+      <div class="it on">Projects</div><div class="it">Meeting notes</div><div class="it">Reading list</div><div class="it">Clients</div></div>
+    <div class="main"><h3>Projects</h3><div class="tabs"><span class="on">Table</span><span>Board</span><span>Timeline</span><span>Calendar</span></div>
+      <table><tr><th>Name</th><th>Area</th><th>Status</th></tr>${r}</table>
+      <div class="agent"><i></i><span>Agent filed 3 meeting notes into <b>Thesis</b></span><span class="mono" style="margin-left:auto">on device</span></div>
+    </div></div>`;
+}
+const H1 = 'Your data. <span class="hl">Based.</span>';
+const SUB = 'Databases, docs and agents. Instant, private, everywhere.';
+
+if (k === 'avatar') {
+  const s = W * 0.56;
+  a.innerHTML = `<img src="${mark}" style="position:absolute;left:${(W - s) / 2}px;top:${(H - s) / 2 - W * 0.02}px;width:${s}px;height:${s}px">`;
+} else if (k === 'wide' || k === 'og') {
+  // Text column on the right two thirds is kept clear of the avatar overlap on X/Bluesky (bottom left).
+  const u = H / 100;
+  const og = k === 'og';
+  a.innerHTML = `
+    <div class="sun" style="width:${120 * u}px;height:${120 * u}px;right:${-20 * u}px;top:${-55 * u}px"></div>
+    <div style="position:absolute;left:${og ? 7 * u : W * 0.24}px;top:${og ? 12 * u : 20 * u}px;width:${og ? 46 * u * 1.9 : W * 0.31}px;display:flex;flex-direction:column;gap:${4 * u}px">
+      ${og ? `<div class="logo" style="font-size:${7.5 * u}px"><img src="${mark}" width="${9 * u}" height="${9 * u}">based</div>` : ''}
+      <h1 class="disp" style="font-size:${(og ? 13.5 : 15) * u}px">${H1}</h1>
+      <p class="sub" style="font-size:${(og ? 4 : 4) * u}px">${SUB}</p>
+      <div><span class="pill" style="font-size:${(og ? 3.6 : 3.8) * u}px;padding:${2.2 * u}px ${4 * u}px">Join the beta &nbsp;→&nbsp; basednotes.app</span></div>
+    </div>
+    <div style="position:absolute;left:${og ? W * 0.555 : W - 620 * (0.92 * u / 4.6) + 4 * u}px;top:${og ? 16 * u : 14 * u}px;width:620px;transform-origin:top left;transform:scale(${(og ? 0.98 : 0.92) * u / 4.6})">${win(og ? 6 : 5)}</div>`;
+} else if (k === 'strip') {
+  const u = H / 100;
+  a.innerHTML = `
+    <div class="sun" style="width:${200 * u}px;height:${200 * u}px;right:${-30 * u}px;top:${-110 * u}px"></div>
+    <div style="position:absolute;left:${W * 0.36}px;top:${24 * u}px;display:flex;flex-direction:column;gap:${8 * u}px">
+      <h1 class="disp" style="font-size:${30 * u}px">${H1}</h1>
+      <p class="sub" style="font-size:${9.5 * u}px">${SUB} <span class="url">basednotes.app</span></p>
+    </div>`;
+} else if (k === 'square' || k === 'tall') {
+  const u = W / 100;
+  const tall = k === 'tall';
+  a.innerHTML = `
+    <div class="sun" style="width:${110 * u}px;height:${110 * u}px;left:${-5 * u}px;top:${tall ? -40 * u : -55 * u}px"></div>
+    <div style="position:absolute;left:${8 * u}px;top:${tall ? 18 * u : 8 * u}px;right:${8 * u}px;display:flex;flex-direction:column;gap:${3 * u}px">
+      <div class="logo" style="font-size:${(tall ? 6 : 5) * u}px"><img src="${mark}" width="${(tall ? 7 : 6) * u}" height="${(tall ? 7 : 6) * u}">based</div>
+      <h1 class="disp" style="font-size:${(tall ? 13.5 : 11) * u}px;margin-top:${1.5 * u}px">${H1}</h1>
+      <p class="sub" style="font-size:${(tall ? 4.4 : 3.6) * u}px">${SUB}${tall ? '' : ' <span class="url">basednotes.app</span>'}</p>
+    </div>
+    <div style="position:absolute;left:${8 * u}px;top:${tall ? 86 * u : 57 * u}px;width:620px;transform-origin:top left;transform:scale(${(tall ? 0.95 : 0.9) * u / 6.2})">${win(tall ? 7 : 5)}</div>
+    ${tall ? `<div style="position:absolute;left:${8 * u}px;bottom:${15 * u}px"><span class="pill" style="font-size:${4.2 * u}px;padding:${2.2 * u}px ${4.5 * u}px">Join the beta &nbsp;→&nbsp; basednotes.app</span></div>` : ''}`;
+}
+</script></body></html>
