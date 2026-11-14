@@ -44,7 +44,7 @@ neuen Editor auf dem Mac abgenommen hat.
 | Blockfarbe | should | ja | Blockmenü „Color“ |
 | Turn into | must | ja | Blockmenü, ⌘⌥0–8 |
 | Turn into page (⌘⌥9) | should | ja | Blockmenü „Page“ und ⌘⌥9, gleiche ID (14.11.) |
-| Blockmenü (Löschen, Duplizieren, Verschieben, Farbe, Link) | must | ja | Suchfeld, „Move to“ (⌘⇧P) in andere Seite seit 14.11. (BSD-407) |
+| Blockmenü (Löschen, Duplizieren, Verschieben, Farbe, Link) | must | ja | Suchfeld, „Move to“ (⌘⇧P) in andere Seite seit 14.11. (BSD-407); Icons, Kopf (Blocktyp), Fuß (Wortzahl), Untermenüs „Turn into“/„Color“ und Glas wie das Seitenmenü seit Teil 6.1 |
 | Griff ziehen, Verschachteln, Spalten | must | ja | |
 | Blockauswahl (Esc, ⇧↑/↓, Rechteck) | should | ja | |
 | ⌘⇧↑/↓, ⌘D | should | ja | |
@@ -86,7 +86,7 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | erledigt 14.11. |
 | 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | Zeile/Spalte löschen und HTML-Vorschau erledigt 14.11.; Formatierung in Zellen offen |
 | 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Meeting, Whiteboard, Button offen |
-| 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | offen |
+| 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | Blockmenü erledigt (Teil 6.1: Icons aus dem Satz der App, Glas, Fläche/Zeilen wie `.menu`; alle `.bx2-menu` haben jetzt diese Fläche); Formatleiste offen |
 | 3 | Block-Editor ist Standard (neuer Schlüssel `based.legacyEditor`, alter Schalter `based.newEditor` wird einmalig entfernt); Specs auf `getByTestId("block-editor")`/`.bx2-*` umgestellt, Rest gepinnt (unten) | erledigt 14.11. |
 | 4 | BlockNote-Code (`ui/PageEditor.tsx`, `schema/`, `mapping/bn.ts`, y-prosemirror) und `@blocknote/*` löschen; Rundreise-Test Notion-Import | offen |
 
@@ -130,7 +130,6 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 | @-Menü: „New page“, Datumsoptionen (Erinnerung, Bereich, Uhrzeit) | fehlt (Datum einfügen geht) |
 | Bild: Ausrichtung links/Mitte/rechts, Bildleiste, Vollbild-Knopf | fehlt (Breite, Caption, Doppelklick-Vollbild da); `props.align` bleibt erhalten |
 | Codeblock: Kopier- und Umbruch-Knopf | fehlt |
-| Blockmenü mit Icons, Kopf/Fuß (Wortzahl), Glas wie das Seitenmenü | Teil 2g (Astryx-Menüs) |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
 | Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor |
 | Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
@@ -151,6 +150,5 @@ Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEdit
 | `replay/replay.spec.ts`, `replay/record-sample.spec.ts` | ganz – Wiedergabe von ProseMirror-Schritten |
 | `report.spec.ts` | 4 von 5 Tests – Aufzeichnung „tr“/„yjs“, Blockbaum, Entwickler-Ereignisse |
 | `editor-parity.spec.ts` | 16 von 19 Tests (Erwähnungs-Menü, Gliederung, Synced Block, Blockmenü-Abläufe, Spalten, Button, Uploads, Seiten-Optionen …) |
-| `editor-notion.spec.ts` | 6 von 13 Tests (Blockmenü-Kopf/-Suche/-Stabilität, Codeblock-Knöpfe, Formatleiste) |
+| `editor-notion.spec.ts` | 3 von 13 Tests (Codeblock-Knöpfe, Formatleiste) |
 | `image-block.spec.ts` | 3 von 4 Tests (Ausrichtung, Bildleiste, Vollbild-Knopf) |
-| `native-free.spec.ts` | 2 Tests (Blockmenü am Griff mit Icons, Glas) |

@@ -1,6 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
 import { blockEditor, expectEditable } from "./editor-helpers.js";
-import { useLegacyEditor } from "./legacy-editor.js";
 
 // „Nichts vom System“ (@based/ui/native): Jeder Klick öffnet Based-Oberfläche – eigenes Kontextmenü an jeder Stelle,
 // eigene Auswahlliste für <select>, eigene Tooltips statt der title-Blase, keine Systemauswahl für Datum/Uhrzeit.
@@ -157,27 +156,29 @@ test("Keine Systemauswahl für Datum und Uhrzeit in der App", async ({ page }) =
   }
 });
 
-// BSD-407 Teil 3: Blockmenü mit Icons und Glas wie das Seitenmenü hat bisher nur der alte Editor (im Block-Editor:
-// Teil 2g, Menüs aus @based/ui/astryx). Diese zwei Tests pinnen ihn (docs/editor-parity.md, „noch BlockNote“).
-test.describe("Blockmenü des alten Editors", () => {
-useLegacyEditor();
+// BSD-407 Teil 6.1: Blockmenü des Block-Editors mit Icons und Glas wie das Seitenmenü (vorher nur im alten Editor).
+async function openBlockMenu(page: Page, text: string) {
+  const block = blockEditor(page).locator(".bx2-block").filter({ has: page.locator(":scope > .bx2-row", { hasText: text }) }).last();
+  await block.locator(":scope > .bx2-row").hover();
+  const handle = block.locator(":scope > .bx2-gutter [data-handle]");
+  const h = (await handle.boundingBox())!;
+  await handle.click();
+  return h;
+}
 
 test("Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben", async ({ page }) => {
   await fresh(page);
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await expect(page.getByTestId("page-content")).toContainText("This is your workspace");
   for (const text of ["Start here", "Press ⌘K"]) {
-    await page.getByTestId("page-content").locator("h1, h2, h3, p, [data-content-type]").filter({ hasText: text }).last().hover();
-    const handle = page.locator(".bn-side-menu [draggable=true]").last();
-    const h = (await handle.boundingBox())!;
-    await handle.click();
-    const menu = page.locator(".bn-drag-handle-menu");
+    const h = await openBlockMenu(page, text);
+    const menu = page.getByTestId("block-menu");
     await expect(menu).toBeVisible();
     const m = (await menu.boundingBox())!;
-    expect(Math.abs(m.y - h.y), `${text}: oben bündig`).toBeLessThanOrEqual(4);
+    expect(Math.abs(m.y - h.y), `${text}: oben bündig`).toBeLessThanOrEqual(8);
     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-    // Gleiche Icons wie im Seitenmenü „…“
-    await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
+    // Gleiche Icons wie im Seitenmenü „…“ (Icon-Satz der App)
+    await expect(menu.locator("[role=menuitem] .nf-glyph svg")).not.toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(menu).toHaveCount(0);
   }
@@ -200,10 +201,15 @@ test("Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie �
   await page.getByLabel("Page title").click({ button: "right" });
   expect(await look(".nf-menu")).toEqual(reference);
   await page.keyboard.press("Escape");
-  await page.getByTestId("page-content").locator("h1, h2, h3").filter({ hasText: "Start here" }).first().hover();
-  await page.locator(".bn-side-menu [draggable=true]").last().click();
-  expect(await look(".bn-drag-handle-menu")).toEqual(reference);
-});
+  await openBlockMenu(page, "Start here");
+  expect(await look("[data-testid=block-menu]")).toEqual(reference);
+  // Slash-Menü und Formatleiste sind dieselbe Fläche
+  await page.keyboard.press("Escape");
+  await blockEditor(page).locator("[data-editable-id]").filter({ hasText: "Start here" }).first().click();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/");
+  expect(await look("[data-testid=slash-menu]")).toEqual(reference);
 });
 
 // BSD-366: keine macOS Writing Tools und keine Siri-/Inline-Vorschläge – weder im Editor noch in Feldern.

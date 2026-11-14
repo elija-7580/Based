@@ -284,7 +284,8 @@
 
 .bx2-tail { min-height: 120px; cursor: text; }
 
-/* Menüs im Stil des Seitenmenüs */
+/* Menüs im Stil des Seitenmenüs (BSD-407 Teil 6.1): gleiche Fläche, Radius und Schatten wie `.menu`/`.nf-layer`, auf dem
+   Mac Glas mit Unschärfe und Kanten-Licht (data-material="glass"). */
 .bx2-menu {
   position: fixed;
   z-index: 1100;
@@ -293,32 +294,43 @@
   max-height: 340px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: calc(var(--space-1) + var(--space-half));
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--bg);
   box-shadow: var(--shadow-menu);
   color: var(--ink);
   font-family: var(--font-ui);
   font-size: var(--type-ui-size);
+  line-height: var(--type-ui-leading);
+  -webkit-user-select: none;
+  user-select: none;
 }
-.bx2-menu-label { padding: calc(var(--space-1) + var(--space-half)) var(--space-2) var(--space-1); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); }
+[data-material="glass"] .bx2-menu { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
+.bx2-menu-label { padding: var(--space-1) var(--space-3); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); }
 .bx2-menu-item {
   display: flex;
   align-items: center;
-  gap: calc(var(--space-2) + var(--space-half));
+  gap: var(--space-2);
   width: 100%;
-  min-height: 30px;
-  padding: 0 var(--space-2);
+  min-height: var(--space-6);
+  padding: 0 var(--space-3);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
-.bx2-menu-item:hover, .bx2-menu-item[aria-selected="true"] { background: var(--selected); }
+.bx2-menu-item:hover, .bx2-menu-item[aria-selected="true"] { background: var(--surface-raised); }
+.bx2-menu-danger { color: var(--danger); }
+.bx2-menu-glyph { display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--icon-sm); height: var(--icon-sm); color: inherit; }
+.bx2-menu-glyph svg, .bx2-menu-glyph .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
+.bx2-menu-glyph .bx2-swatch { width: var(--icon-sm); height: var(--icon-sm); display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-xs); font-size: var(--type-meta-size); font-weight: 600; }
+.bx2-menu-sub { display: inline-flex; margin-left: auto; color: var(--muted); }
+.bx2-menu-item[aria-checked="true"] .bx2-menu-text { font-weight: 600; }
+.bx2-menu-foot { display: grid; gap: var(--space-1); margin-top: var(--space-1); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--line); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); font-variant-numeric: tabular-nums; }
 .bx2-menu-icon {
   display: inline-flex;
   align-items: center;
@@ -334,8 +346,8 @@
   font-weight: 600;
 }
 .bx2-menu-text { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bx2-menu-hint { color: var(--muted); font-family: var(--font-mono); font-size: var(--type-meta-size); }
-.bx2-menu-sep { height: 1px; margin: calc(var(--space-1) + var(--space-half)) var(--space-1); background: var(--line); }
+.bx2-menu-hint { margin-left: auto; padding-left: var(--space-4); color: var(--muted); font-size: var(--type-meta-size); }
+.bx2-menu-sep { height: 1px; margin: var(--space-1) 0; background: var(--line); }
 
 .bx2-formatbar {
   display: flex;
@@ -584,7 +596,7 @@
 .bx2-menu-search::placeholder { color: var(--muted); }
 .bx2-menu-search:focus-visible { outline: 1px solid var(--focus-ring); border-color: var(--focus-ring); }
 .bx2-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }
-.bx2-menu-item:focus-visible { outline: none; background: var(--selected); }
+.bx2-menu-item:focus-visible, .bx2-menu-item:focus { outline: none; background: var(--surface-raised); }
 .bx2-image-empty { display: flex; flex-direction: column; gap: var(--space-2); }
 .bx2-embed-frame-wrap { margin: 0; }
 .bx2-embed-frame { display: block; width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-soft); }
@@ -592,3 +604,4 @@
 .bx2-embed-frame-wrap figcaption a { color: inherit; }
 .bx2-pdf { display: flex; flex-direction: column; gap: var(--space-1); }
 .bx2-pdf-frame { width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.bx2-blockmenu { max-height: calc(100vh - var(--space-4)); }

@@ -32,9 +32,6 @@ const titleField = (page: Page) => page.getByRole("textbox", { name: "Page title
 /** Blöcke der Seite als „typ:text“ (Block-Editor; Text heißt wie im alten Editor „paragraph“). */
 const blocks = (page: Page) => page.evaluate(() => [...document.querySelectorAll("[data-testid=block-editor] .bx2-block")]
   .map((e) => `${(e as HTMLElement).dataset.type === "text" ? "paragraph" : (e as HTMLElement).dataset.type}:${e.querySelector("[data-editable-id]")?.textContent ?? ""}`));
-/** Dasselbe im alten Editor. */
-const bnBlocks = (page: Page) => page.evaluate(() => [...document.querySelectorAll(".bx-editor > .bx-doc .bn-editor .bn-block-content")]
-  .map((e) => `${e.getAttribute("data-content-type")}${e.getAttribute("data-level") ?? ""}:${e.querySelector(".bn-inline-content")?.textContent ?? ""}`));
 
 async function open(page: Page, title: string, parent?: string): Promise<string> {
   await page.goto("/");
@@ -176,38 +173,107 @@ test("Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl", async
   await expect.poll(() => page.evaluate(() => [...((CSS as unknown as { highlights: Map<string, Iterable<Range>> }).highlights.get("bx2-syn-keyword") ?? [])].map((r) => r.toString()))).toContain("const");
 });
 
-// BSD-407 Teil 3: Blockmenü mit Kopf, Fuß und Icons, Suche mit Pfeilen, Kopier- und Umbruch-Knopf im Codeblock und die kompakte Formatleiste gibt es bisher nur im alten Editor (Block-Editor: Teil 2g).
+// BSD-407 Teil 6.1: Blockmenü des Block-Editors mit Kopf, Fuß, Icons in einer Spalte, Suche und Untermenüs.
+async function openBlockMenu(page: Page, text: string) {
+  const block = editor(page).locator(".bx2-block").filter({ has: page.locator(":scope > .bx2-row", { hasText: text }) }).last();
+  await block.locator(":scope > .bx2-row").hover();
+  await block.locator(":scope > .bx2-gutter [data-handle]").click();
+  await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+}
+
+test("Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl", async ({ page }) => {
+  await open(page, "Menu");
+  await focusEditorEnd(page);
+  await paste(page, "## Heading two\n\nSome text here");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
+  await openBlockMenu(page, "Heading two");
+  const menu = page.getByTestId("block-menu");
+  await expect(page.getByTestId("block-menu-head")).toHaveText("Heading 2");
+  await expect(page.getByTestId("block-menu-foot")).toContainText("2 words · 11 characters");
+  await expect(page.getByTestId("block-menu-foot")).toContainText("Last edited");
+  for (const name of ["Turn into", "Color", "Duplicate", "Move to", "Delete", "Copy as Markdown", "Copy and sync"]) {
+    await expect(menu.getByRole("menuitem", { name })).toBeVisible();
+  }
+  // jeder Eintrag hat genau ein Icon (aus dem Icon-Satz der App wie im Seitenmenü „…“), das Menü bleibt im Fenster
+  expect(await menu.locator("[role=menuitem] .nf-glyph svg").count()).toBeGreaterThanOrEqual(7);
+  for (const item of await menu.getByRole("menuitem").all()) expect(await item.locator(".bx2-menu-glyph").count()).toBe(1);
+  // Icons stehen in einer Spalte links, auch bei Einträgen ohne Kürzel
+  const iconX = async (name: string) => (await menu.getByRole("menuitem", { name }).locator(".bx2-menu-glyph").boundingBox())!.x;
+  for (const name of ["Copy as Markdown", "Copy and sync", "Turn into"]) expect(Math.abs((await iconX(name)) - (await iconX("Duplicate"))), name).toBeLessThanOrEqual(1);
+  await expect(menu.getByRole("menuitem", { name: "Delete" })).toHaveClass(/bx2-menu-danger/);
+  const box = (await menu.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(820);
+  // Turn into ist ein Untermenü mit Icons; das aktuelle Ziel ist markiert
+  await menu.getByRole("menuitem", { name: "Turn into" }).click();
+  await expect(menu.getByRole("menuitemradio", { name: "Heading 2", exact: true })).toHaveAttribute("aria-checked", "true");
+  expect(await menu.locator("[role=menuitemradio] svg.bx-menu-icon").count()).toBeGreaterThanOrEqual(10);
+  await menu.getByRole("menuitemradio", { name: "Quote" }).click();
+  await expect.poll(() => blocks(page)).toEqual(["quote:Heading two", "paragraph:Some text here"]);
+  await openBlockMenu(page, "Heading two");
+  await menu.getByRole("menuitem", { name: "Delete" }).click();
+  await expect.poll(() => blocks(page)).toEqual(["paragraph:Some text here"]);
+});
+
+test("Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus, Tastatur im Untermenü", async ({ page }) => {
+  await open(page, "Search");
+  await focusEditorEnd(page);
+  await paste(page, "## Heading two\n\nSome text here");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
+  const search = page.getByRole("textbox", { name: "Search actions" });
+  await openBlockMenu(page, "Heading two");
+  await page.keyboard.type("cop");
+  await expect(page.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/, /Copy and sync/]);
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
+  await page.keyboard.press("Escape"); // erst das Feld leeren …
+  await expect(search).toHaveValue("");
+  await expect(page.getByRole("menuitem", { name: "Turn into" })).toBeVisible();
+  await page.keyboard.type("zzz");
+  await expect(page.getByRole("menuitem")).toHaveCount(0);
+  await expect(page.getByText("No actions")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.type("dup");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
+  await expect(search).toHaveCount(0);
+  // ↓ geht in die Liste (erster Eintrag „Turn into“), → öffnet das Untermenü, Enter wählt, Escape schließt
+  await openBlockMenu(page, "Some text");
+  await expect(search).toHaveValue("");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("menuitem", { name: "Turn into" })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("menuitemradio").first()).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "heading1:Some text here"]);
+  await openBlockMenu(page, "Some text");
+  await page.keyboard.press("Escape");
+  await expect(search).toHaveCount(0);
+});
+
+// BSD-408: Das Blockmenü bleibt offen, wenn sich die Seitenliste ändert (Editor zeichnet neu).
+test("Blockmenü bleibt offen, wenn der Editor neu zeichnet", async ({ page }) => {
+  await open(page, "Stable");
+  await focusEditorEnd(page);
+  await paste(page, "## Heading two\n\nSome text here");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
+  await openBlockMenu(page, "Heading two");
+  const search = page.getByRole("textbox", { name: "Search actions" });
+  await page.keyboard.type("dup");
+  for (let i = 0; i < 3; i++) {
+    await command(page, { op: "createPage", title: `Other ${i}` });
+    await expect(page.getByRole("treeitem", { name: `Other ${i}`, exact: true })).toBeVisible();
+  }
+  await expect(search).toBeFocused();
+  await expect(search).toHaveValue("dup");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
+});
+
+// BSD-407 Teil 3: Kopier- und Umbruch-Knopf im Codeblock und die kompakte Formatleiste gibt es bisher nur im alten Editor.
 // Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
 test.describe("alter Editor (BlockNote)", () => {
   useLegacyEditor(test);
-
-  test("Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl", async ({ page }) => {
-    await open(page, "Menu");
-    await bnEditor(page).locator(".bn-block-content").first().click();
-    await paste(page, "## Heading two\n\nSome text here");
-    await expect.poll(async () => (await bnBlocks(page)).length).toBeGreaterThan(1);
-    await page.waitForTimeout(500); // Einfügen fertig gezeichnet, bevor der Griff gesucht wird
-    await bnEditor(page).getByText("Heading two").hover();
-    await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-    await page.locator(".bn-side-menu [draggable=true]").last().click();
-    const menu = page.getByRole("menu").first();
-    await expect(page.getByTestId("block-menu-head")).toHaveText("Heading 2");
-    await expect(page.getByTestId("block-menu-foot")).toContainText("2 words · 11 characters");
-    for (const name of ["Turn into", "Color", "Duplicate", "Move to", "Delete", "Copy as Markdown", "Copy and sync"]) {
-      await expect(menu.getByRole("menuitem", { name })).toBeVisible();
-    }
-    // jeder Eintrag hat genau ein Icon (aus dem Icon-Satz der App wie im Seitenmenü „…“), das Menü bleibt im Fenster
-    expect(await menu.locator("[role=menuitem] :is(.bx-menu-icon, .nf-glyph)").count()).toBeGreaterThanOrEqual(7);
-    for (const item of await menu.getByRole("menuitem").all()) expect(await item.locator(":is(.bx-menu-icon, .nf-glyph)").count()).toBe(1);
-    // Icons stehen in einer Spalte links, auch bei Einträgen ohne Kürzel (vorher rechtsbündig nach dem Merge)
-    const iconX = async (name: string) => (await menu.getByRole("menuitem", { name }).locator(":is(.bx-menu-icon, .nf-glyph)").boundingBox())!.x;
-    for (const name of ["Copy as Markdown", "Copy and sync", "Turn into"]) expect(Math.abs((await iconX(name)) - (await iconX("Duplicate"))), name).toBeLessThanOrEqual(1);
-    const box = (await menu.boundingBox())!;
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.y + box.height).toBeLessThanOrEqual(820);
-    await menu.getByRole("menuitem", { name: "Delete" }).click();
-    await expect.poll(() => bnBlocks(page)).toEqual(["paragraph:Some text here"]);
-  });
 
   test("Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts", async ({ page }) => {
     await open(page, "Code");
@@ -225,65 +291,6 @@ test.describe("alter Editor (BlockNote)", () => {
     await expect(code.getByRole("button", { name: /Copied|Couldn’t copy/ })).toBeVisible();
     // der Knopf gehört nicht zum Text
     await expect.poll(() => page.evaluate(() => document.querySelector("[data-content-type=codeBlock] code")?.textContent)).toBe("const answer = 42;");
-  });
-
-  test("Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus", async ({ page }) => {
-    await open(page, "Search");
-    await bnEditor(page).locator(".bn-block-content").first().click();
-    await paste(page, "## Heading two\n\nSome text here");
-    await expect.poll(async () => (await bnBlocks(page)).length).toBeGreaterThan(1);
-    await page.waitForTimeout(500);
-    const openMenu = async () => {
-      await bnEditor(page).getByText("Heading two").first().hover();
-      await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-      await page.locator(".bn-side-menu [draggable=true]").last().click();
-      await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
-    };
-    await openMenu();
-    await page.keyboard.type("cop");
-    await expect(page.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/, /Copy and sync/]);
-    // getippt wurde ins Feld, nicht in den Text der Seite
-    await expect.poll(() => bnBlocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
-    await page.keyboard.press("Escape"); // erst das Feld leeren …
-    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
-    await expect(page.getByRole("menuitem", { name: "Turn into" })).toBeVisible();
-    await page.keyboard.type("zzz");
-    await expect(page.getByRole("menuitem")).toHaveCount(0);
-    await expect(page.getByText("No actions")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await page.keyboard.type("dup");
-    await page.keyboard.press("Enter");
-    await expect.poll(() => bnBlocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
-    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
-    // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
-    await openMenu();
-    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
-    await page.keyboard.press("ArrowDown");
-    await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
-  });
-
-  // BSD-408: Das Blockmenü bleibt offen, wenn der Editor neu zeichnet (z. B. weil sich die Seitenliste ändert). Vorher war
-  // die Seitenleiste bei jedem Neuzeichnen eine neue Komponente und das gerade geöffnete Menü ging wieder zu (CI rot).
-  test("Blockmenü bleibt offen, wenn der Editor neu zeichnet", async ({ page }) => {
-    await open(page, "Stable");
-    await bnEditor(page).locator(".bn-block-content").first().click();
-    await paste(page, "## Heading two\n\nSome text here");
-    await expect.poll(async () => (await bnBlocks(page)).length).toBeGreaterThan(1);
-    await bnEditor(page).getByText("Heading two").first().hover();
-    await page.locator(".bn-side-menu [draggable=true]").last().click();
-    const search = page.getByRole("textbox", { name: "Search actions" });
-    await expect(search).toBeFocused();
-    await page.keyboard.type("dup");
-    for (let i = 0; i < 3; i++) {
-      await command(page, { op: "createPage", title: `Other ${i}` }); // neue Seite → Seitenliste → Editor zeichnet neu
-      await expect(page.getByRole("treeitem", { name: `Other ${i}`, exact: true })).toBeVisible();
-    }
-    await expect(search).toBeFocused();
-    await expect(search).toHaveValue("dup");
-    await page.keyboard.press("Enter");
-    await expect.poll(() => bnBlocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
   });
 
   test("Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen", async ({ page }) => {

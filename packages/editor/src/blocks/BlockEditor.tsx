@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, textStats, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -12,6 +12,8 @@ import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
+import { MenuIcon, type MenuIconName } from "../ui/menuIcons.js";
+import { MenuGlyph } from "@based/ui/native";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
 import { PageOutline } from "../ui/Outline.js";
@@ -1931,10 +1933,45 @@ function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; st
   );
 }
 
+// MARK: Blockmenü (BSD-407 Teil 6.1: Icons, Kopf/Fuß und Glas wie das Seitenmenü „…“ und der alte Editor)
+
+/** Icon je Ziel in „Turn into“ (Satz des Editors, 24er-Raster wie die App). */
+const TURN_ICON: Readonly<Record<string, MenuIconName>> = {
+  text: "text", heading1: "h1", heading2: "h2", heading3: "h3", heading4: "h3", bulletedList: "bullet", numberedList: "numbered",
+  todo: "todo", toggle: "toggle", quote: "quote", callout: "callout", code: "code", page: "page", equation: "equation",
+};
+
+/** Name des Blocktyps für den Kopf des Blockmenüs („Heading 2“, „To-do list“, „Toggle heading 1“ …). */
+export function blockTypeLabel(b: Pick<Block, "type" | "props"> | undefined): string {
+  if (!b) return "Block";
+  const toggle = b.props?.toggleable === true;
+  const hit = SLASH_ITEMS.find((s) => s.type === b.type && (s.props?.toggleable === true) === toggle && s.props?.color === undefined && !s.props?.language);
+  return hit?.label ?? labelOf(b as Block);
+}
+
+/** Sekunden seit 2001-01-01 (Swift) → Datum. */
+const SWIFT_EPOCH = 978307200;
+
+/** Zeile in einem Editor-Menü: Icon links in einer Spalte, Text, Kürzel rechts – wie `.menu-item` der App. */
+function MenuRow({ icon, label, hint, danger, sub, role = "menuitem", checked, onSelect }: {
+  icon: ReactNode; label: string; hint?: string | undefined; danger?: boolean | undefined; sub?: boolean | undefined;
+  role?: "menuitem" | "menuitemradio"; checked?: boolean | undefined; onSelect: () => void;
+}) {
+  return (
+    <div role={role} tabIndex={-1} aria-checked={role === "menuitemradio" ? checked === true : undefined} aria-haspopup={sub ? "menu" : undefined}
+      className={"bx2-menu-item" + (danger ? " bx2-menu-danger" : "")} onClick={onSelect}>
+      <span className="bx2-menu-glyph" aria-hidden="true">{icon}</span>
+      <span className="bx2-menu-text">{label}</span>
+      {hint ? <span className="bx2-menu-hint">{hint}</span> : null}
+      {sub ? <span className="bx2-menu-sub" aria-hidden="true"><ChevronIcon /></span> : null}
+    </div>
+  );
+}
+
 function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: number; onClose: () => void; onMove?: ((ids: string[]) => void) | undefined }) {
   const { store, ctrl, editable, props } = useCtx();
   const ref = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<"main" | "color">("main");
+  const [view, setView] = useState<"main" | "color" | "turn">("main");
   // BSD-407: Suchfeld wie im alten Blockmenü – Tippen filtert, Enter führt den ersten Treffer aus, ↓ geht in die
   // Liste, Escape leert erst das Feld und schließt dann.
   const [query, setQuery] = useState("");
@@ -1966,10 +2003,12 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
     const pad = 8;
     const m = el.getBoundingClientRect();
     const row = el.ownerDocument.querySelector(`[data-block-id="${CSS.escape(id)}"] > .bx2-row`)?.getBoundingClientRect();
+    // oben bündig mit dem Griff (er sitzt an der ersten Zeile, bei Überschriften also unter dem Rand der Zeile)
+    const grip = el.ownerDocument.querySelector(`[data-handle="${CSS.escape(id)}"]`)?.getBoundingClientRect();
     const vw = el.ownerDocument.documentElement.clientWidth;
     const vh = el.ownerDocument.documentElement.clientHeight;
     let left = x - pad - m.width;
-    let top = row ? row.top : y;
+    let top = grip ? grip.top : row ? row.top : y;
     if (left < pad) {
       left = Math.min(Math.max(pad, x - pad), vw - m.width - pad);
       top = row ? row.bottom + 4 : y + pad;
@@ -1978,61 +2017,10 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
   }, [id, x, y, view]);
-  if (view === "color") {
-    const current = typeof b?.props?.color === "string" ? b.props.color : "default";
-    const item = (c: string, label: string) => (
-      <button key={c} type="button" role="menuitemradio" aria-checked={current === c} className="bx2-menu-item"
-        onClick={act(() => cmd.setBlockProps(store, ids, { color: c === "default" ? undefined : c }, "Color"))}>
-        <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c} aria-hidden="true">A</span><span className="bx2-menu-text">{label}</span>
-      </button>
-    );
-    return (
-      <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Color" data-testid="block-menu" style={style}>
-        <div className="bx2-menu-label">Text color</div>
-        {BLOCK_COLORS.map((c) => item(c, c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)))}
-        <div className="bx2-menu-sep" role="separator" />
-        <div className="bx2-menu-label">Background</div>
-        {BLOCK_COLORS.filter((c) => c !== "default").map((c) => item(c + "Background", c[0]!.toUpperCase() + c.slice(1) + " background"))}
-      </div>
-    );
-  }
-  const link = props.blockLink?.(id);
-  type Action = { label: string; hint?: string; run: () => void; keepOpen?: boolean; group: "open" | "edit" | "copy" };
-  const actions: Action[] = [];
-  if (b?.type === "databaseInline" && ids.length === 1 && props.onOpenPage) actions.push({ group: "open", label: "Open as full page", run: () => props.onOpenPage?.(id) });
-  if (link) actions.push({ group: "copy", label: "Copy link to block", hint: "⌥⇧L", run: () => void navigator.clipboard?.writeText(link).catch(() => undefined) });
-  actions.push({ group: "copy", label: "Copy as Markdown", run: () => void navigator.clipboard?.writeText(blocksMarkdown(store, ids)).catch(() => undefined) });
-  if (editable) {
-    // BSD-407: „Copy and sync“ – Blöcke werden zum Original eines Synced Blocks, der Verweis kommt in die Zwischenablage
-    actions.push({ group: "copy", label: "Copy and sync", run: () => {
-      const original = cmd.wrapInSyncedBlock(store, ids);
-      if (!original) return;
-      const text = SYNC_CLIPBOARD_PREFIX + original;
-      rememberSyncClipboard(text);
-      void navigator.clipboard?.writeText(text).catch(() => undefined);
-      ctrl.select([original]);
-    } });
-  }
-  if (editable) {
-    actions.push(
-      { group: "edit", label: "Delete", hint: "Del", run: () => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); } },
-      { group: "edit", label: "Duplicate", hint: "⌘D", run: () => ctrl.select(duplicate(store, ids)) },
-      ...(onMove ? [{ group: "edit" as const, label: "Move to", hint: "⌘⇧P", run: () => onMove(ids) }] : []),
-      { group: "edit", label: "Move up", hint: "⌘⇧↑", run: () => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); } },
-      { group: "edit", label: "Move down", hint: "⌘⇧↓", run: () => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); } },
-      { group: "edit", label: "Color", hint: "›", keepOpen: true, run: () => setView("color") },
-    );
-  }
-  const q = query.trim().toLowerCase();
-  const hit = (label: string) => q === "" || label.toLowerCase().includes(q);
-  const shown = actions.filter((a) => hit(a.label));
-  // „Page“ (⌘⌥9) steht wie im alten Editor unter „Turn into“.
-  const turns = editable && turnable ? SLASH_ITEMS.filter((s) => (s.type === "page" || (cmd.TEXT_TYPES.has(s.type) && !s.page)) && (hit(s.label) || hit("Turn into"))) : [];
-  const runTurn = (s: (typeof SLASH_ITEMS)[number]) => {
-    if (s.type !== "page") return void cmd.turnInto(store, ids, s.type, s.props ?? {});
-    const pages = ids.flatMap((x) => cmd.turnIntoPage(store, x) ?? []);
-    if (pages.length) ctrl.select(pages);
-  };
+  // Untermenü: Fokus auf den ersten Eintrag (Tastatur geht weiter)
+  useEffect(() => {
+    if (view !== "main") ref.current?.querySelector<HTMLElement>("[role^=menuitem]")?.focus({ preventScroll: true });
+  }, [view]);
   const items = () => [...(ref.current?.querySelectorAll<HTMLElement>("[role^=menuitem]") ?? [])];
   const onKey = (e: ReactKeyboardEvent) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -2044,21 +2032,90 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
       else all[Math.min(next, all.length - 1)]?.focus();
     } else if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
       e.preventDefault();
-      if (q !== "") items()[0]?.click();
+      if (queryRef.current.trim() !== "") items()[0]?.click();
+    } else if ((e.key === "Enter" || e.key === " " || (e.key === "ArrowRight" && (e.target as HTMLElement).getAttribute("aria-haspopup"))) && (e.target as HTMLElement).matches?.("[role^=menuitem]")) {
+      e.preventDefault();
+      (e.target as HTMLElement).click();
+    } else if (e.key === "ArrowLeft" && view !== "main") {
+      e.preventDefault();
+      setView("main");
     }
   };
-  const row = (a: Action) => (
-    <button key={a.label} type="button" role="menuitem" aria-haspopup={a.keepOpen ? "menu" : undefined} className="bx2-menu-item"
-      onClick={a.keepOpen ? a.run : act(a.run)}>
-      <span className="bx2-menu-text">{a.label}</span>{a.hint ? <span className="bx2-menu-hint">{a.hint}</span> : null}
-    </button>
+  const shell = (label: string, children: ReactNode) => (
+    <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label={label} data-testid="block-menu" style={style} onKeyDown={onKey}>{children}</div>
   );
-  const groups = (["open", "edit", "copy"] as const).map((g) => shown.filter((a) => a.group === g)).filter((g) => g.length > 0);
-  return (
-    <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Block" data-testid="block-menu" style={style} onKeyDown={onKey}>
+  if (view === "color") {
+    const current = typeof b?.props?.color === "string" ? b.props.color : "default";
+    const item = (c: string, label: string) => (
+      <MenuRow key={c} role="menuitemradio" checked={current === c} label={label}
+        icon={<span className={"bx2-swatch bx2-color-" + c}>A</span>}
+        onSelect={act(() => cmd.setBlockProps(store, ids, { color: c === "default" ? undefined : c }, "Color"))} />
+    );
+    return shell("Color", (
+      <>
+        <div className="bx2-menu-label">Text color</div>
+        {BLOCK_COLORS.map((c) => item(c, c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)))}
+        <div className="bx2-menu-sep" role="separator" />
+        <div className="bx2-menu-label">Background</div>
+        {BLOCK_COLORS.filter((c) => c !== "default").map((c) => item(c + "Background", c[0]!.toUpperCase() + c.slice(1) + " background"))}
+      </>
+    ));
+  }
+  // „Page“ (⌘⌥9) steht wie im alten Editor unter „Turn into“.
+  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => s.type === "page" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
+  const runTurn = (s: (typeof SLASH_ITEMS)[number]) => {
+    if (s.type !== "page") return void cmd.turnInto(store, ids, s.type, s.props ?? {});
+    const pages = ids.flatMap((x) => cmd.turnIntoPage(store, x) ?? []);
+    if (pages.length) ctrl.select(pages);
+  };
+  const isCurrent = (s: (typeof SLASH_ITEMS)[number]) => b?.type === s.type && (b.props?.toggleable === true) === (s.props?.toggleable === true);
+  const turnRow = (s: (typeof SLASH_ITEMS)[number]) => (
+    <MenuRow key={s.type + s.label} role="menuitemradio" checked={isCurrent(s)} label={s.label} icon={<MenuIcon name={TURN_ICON[s.type] ?? "text"} />} onSelect={act(() => runTurn(s))} />
+  );
+  if (view === "turn") return shell("Turn into", <><div className="bx2-menu-label">Turn into</div>{targets.map(turnRow)}</>);
+
+  const link = props.blockLink?.(id);
+  type Action = { label: string; icon: string; hint?: string; run: () => void; sub?: true; danger?: true; group: "turn" | "edit" | "copy" };
+  const actions: Action[] = [];
+  if (targets.length) actions.push({ group: "turn", label: "Turn into", icon: "turnInto", sub: true, run: () => setView("turn") });
+  if (editable) actions.push({ group: "turn", label: "Color", icon: "palette", sub: true, run: () => setView("color") });
+  if (b?.type === "databaseInline" && ids.length === 1 && props.onOpenPage) actions.push({ group: "edit", label: "Open as full page", icon: "expand", run: () => props.onOpenPage?.(id) });
+  if (link) actions.push({ group: "edit", label: "Copy link to block", icon: "link", hint: "⌥⇧L", run: () => void navigator.clipboard?.writeText(link).catch(() => undefined) });
+  if (editable) {
+    actions.push(
+      { group: "edit", label: "Duplicate", icon: "duplicate", hint: "⌘D", run: () => ctrl.select(duplicate(store, ids)) },
+      ...(onMove ? [{ group: "edit" as const, label: "Move to", icon: "move", hint: "⌘⇧P", run: () => onMove(ids) }] : []),
+      { group: "edit", label: "Move up", icon: "up", hint: "⌘⇧↑", run: () => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); } },
+      { group: "edit", label: "Move down", icon: "down", hint: "⌘⇧↓", run: () => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); } },
+      { group: "edit", label: "Delete", icon: "trash", hint: "Del", danger: true, run: () => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); } },
+    );
+  }
+  actions.push({ group: "copy", label: "Copy as Markdown", icon: "export", run: () => void navigator.clipboard?.writeText(blocksMarkdown(store, ids)).catch(() => undefined) });
+  if (editable) {
+    // BSD-407: „Copy and sync“ – Blöcke werden zum Original eines Synced Blocks, der Verweis kommt in die Zwischenablage
+    actions.push({ group: "copy", label: "Copy and sync", icon: "sync", run: () => {
+      const original = cmd.wrapInSyncedBlock(store, ids);
+      if (!original) return;
+      const text = SYNC_CLIPBOARD_PREFIX + original;
+      rememberSyncClipboard(text);
+      void navigator.clipboard?.writeText(text).catch(() => undefined);
+      ctrl.select([original]);
+    } });
+  }
+  const q = query.trim().toLowerCase();
+  const hit = (label: string) => q === "" || label.toLowerCase().includes(q);
+  const shown = actions.filter((a) => hit(a.label));
+  // Mit Suchtext stehen passende Ziele von „Turn into“ direkt in der Liste (z. B. „page“ → Turn into Page).
+  const turns = q !== "" ? targets.filter((s) => hit(s.label)) : [];
+  const row = (a: Action) => (
+    <MenuRow key={a.label} label={a.label} hint={a.hint} danger={a.danger} sub={a.sub} icon={<MenuGlyph name={a.icon} />} onSelect={a.sub ? a.run : act(a.run)} />
+  );
+  const groups = (["turn", "edit", "copy"] as const).map((g) => shown.filter((a) => a.group === g)).filter((g) => g.length > 0);
+  return shell("Block", (
+    <>
       <input className="bx2-menu-search" type="text" placeholder="Search actions…" aria-label="Search actions" value={query} autoFocus
         autoComplete="off" spellCheck={false} onChange={(e) => setQuery(e.target.value)} />
-      {q === "" ? <div className="bx2-menu-label">{labelOf(b)}</div> : null}
+      {q === "" ? <div className="bx2-menu-label" data-testid="block-menu-head">{ids.length > 1 ? `${ids.length} blocks` : blockTypeLabel(b)}</div> : null}
       {groups.map((g, i) => (
         <Fragment key={g[0]!.group}>
           {i > 0 && q === "" ? <div className="bx2-menu-sep" role="separator" /> : null}
@@ -2067,16 +2124,30 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
       ))}
       {turns.length > 0 ? (
         <>
-          {q === "" ? <div className="bx2-menu-sep" role="separator" /> : null}
           <div className="bx2-menu-label">Turn into</div>
-          {turns.map((s) => (
-            <button key={s.type + s.label} type="button" role="menuitemradio" aria-checked={b?.type === s.type} className="bx2-menu-item" onClick={act(() => runTurn(s))}>
-              <span className="bx2-menu-icon" aria-hidden="true">{s.icon}</span><span className="bx2-menu-text">{s.label}</span>
-            </button>
-          ))}
+          {turns.map(turnRow)}
         </>
       ) : null}
       {groups.length === 0 && turns.length === 0 ? <div className="bx2-menu-empty" role="status">No actions</div> : null}
+      {q === "" && ids.length === 1 ? <BlockMenuFoot block={b} /> : null}
+    </>
+  ));
+}
+
+/** Fuß des Blockmenüs wie im alten Editor: „Last edited …“ und Wort-/Zeichenzahl des Blocks. */
+function BlockMenuFoot({ block: b }: { block: Block | undefined }) {
+  if (!b) return null;
+  const at = b.updatedAt;
+  const when = typeof at === "number" && at > 0
+    ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date((at + SWIFT_EPOCH) * 1000))
+    : undefined;
+  const text = cmd.isTextBlock(b) ? plainText(b.text) : undefined;
+  const stats = text !== undefined ? textStats([text]) : undefined;
+  if (!when && !stats) return null;
+  return (
+    <div className="bx2-menu-foot" data-testid="block-menu-foot">
+      {when ? <span>Last edited {when}</span> : null}
+      {stats ? <span>{stats.words} {stats.words === 1 ? "word" : "words"} · {stats.characters} {stats.characters === 1 ? "character" : "characters"}</span> : null}
     </div>
   );
 }
