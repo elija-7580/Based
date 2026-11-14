@@ -304,12 +304,13 @@ test("@ erwähnt eine Seite", async ({ page }) => {
   const menu = page.getByTestId("mention-menu");
   await expect(menu.getByRole("option", { name: /Welcome to Based/ })).toBeVisible();
   await page.keyboard.press("Enter");
-  await expect(fields(page).first().locator(".bx2-mention")).toHaveText("Welcome to Based");
+  // BSD-407 Teil 3: die Erwähnung zeigt wie im alten Editor das Seiten-Icon vor dem Titel
+  await expect(fields(page).first().locator(".bx2-mention .bx2-mention-title")).toHaveText("Welcome to Based");
   await page.keyboard.type("now");
-  await expect(fields(page).first()).toHaveText("see Welcome to Based now");
+  await expect(fields(page).first()).toHaveText(/^see \S*Welcome to Based now$/u);
   // Die Erwähnung zählt ihre Textlänge (wie im Kern): Pfeile springen über sie, ⌫ nimmt sie als Ganzes
   for (let i = 0; i < 4; i++) await page.keyboard.press("Backspace");
-  await expect(fields(page).first()).toHaveText("see Welcome to Based");
+  await expect(fields(page).first()).toHaveText(/^see \S*Welcome to Based$/u);
   await page.keyboard.press("Backspace");
   await expect(fields(page).first().locator(".bx2-mention")).toHaveCount(0);
   await expect(fields(page).first()).toHaveText("see");
@@ -636,13 +637,13 @@ test("[[ verlinkt eine Seite", async ({ page }) => {
   await expect(menu.getByRole("option", { name: /Welcome to Based/ })).toBeVisible();
   await expect(menu.getByRole("option", { name: /Today/ })).toHaveCount(0);
   await page.keyboard.press("Enter");
-  await expect(fields(page).first().locator(".bx2-mention")).toHaveText("Welcome to Based");
+  await expect(fields(page).first().locator(".bx2-mention .bx2-mention-title")).toHaveText("Welcome to Based");
   await page.keyboard.type(" ok");
-  await expect(fields(page).first()).toHaveText("see Welcome to Based ok");
+  await expect(fields(page).first()).toHaveText(/^see \S*Welcome to Based\s+ok$/u);
   // einzelne Klammer bleibt Text
   await page.keyboard.type(" [x]");
   await expect(menu).toHaveCount(0);
-  await expect(fields(page).first()).toHaveText("see Welcome to Based ok [x]");
+  await expect(fields(page).first()).toHaveText(/^see \S*Welcome to Based\s+ok \[x\]$/u);
 });
 
 // BSD-407 Teil 2c: nackte URL in eine leere Zeile wird ein Web-Bookmark; in Text bleibt sie Text.

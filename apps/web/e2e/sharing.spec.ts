@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -68,9 +69,8 @@ async function newPage(page: Page, title: string, text: string) {
   await page.getByRole("button", { name: "New page in Private" }).click();
   await page.getByLabel("Page title").fill(title);
   await expect(page.getByRole("treeitem", { name: title })).toBeVisible();
-  const editor = page.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type(text);
 }
 

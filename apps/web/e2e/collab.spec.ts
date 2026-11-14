@@ -1,9 +1,12 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { pinLegacyEditor } from "./legacy-editor.js";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+// BSD-407 Teil 3: Echtzeit über das Seiten-Dokument `page:` (y-prosemirror) ist der alte Editor; der Block-Editor hat block-editor-collab.spec.ts. Beide Geräte pinnen den alten Editor (docs/editor-parity.md, „noch BlockNote“).
 
 // BSD-220 Teil 3: Echtzeit-Text (Beta). Zwei Browser-Kontexte („Geräte“) am TS-based-server, beide mit
 // „Real-time text (beta)“: Text erscheint live auf dem anderen Gerät, Inhalt steht nirgends doppelt – auch nicht auf
@@ -34,6 +37,7 @@ async function startServer(port: number): Promise<{ proc: ChildProcess; dir: str
 
 async function deviceOn(browser: Browser, baseURL: string): Promise<Page> {
   const ctx = await browser.newContext({ baseURL, viewport: { width: 1280, height: 800 } });
+  await pinLegacyEditor(ctx);
   const page = await ctx.newPage();
   await page.goto("/");
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");

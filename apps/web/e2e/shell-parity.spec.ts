@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor } from "./editor-helpers.js";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -194,7 +195,7 @@ test("Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Spe
   await dialog.getByRole("button", { name: "Done" }).click();
   await page.getByRole("treeitem", { name: "Hike" }).click();
   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
-  const img = page.locator(".bn-editor img").first();
+  const img = blockEditor(page).locator("img").first();
   await expect(img).toBeVisible({ timeout: 15_000 });
   await expect(img).toHaveAttribute("src", /^blob:/, { timeout: 15_000 });
   await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBe(4);

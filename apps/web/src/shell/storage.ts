@@ -220,8 +220,22 @@ export const guestDeviceNode = (id: string) => ({
   set: (node: string) => write(`based.guest.${id}.device`, node),
 });
 
-/** ADR 0016: neuer Block-Editor statt BlockNote (pro Gerät, Settings → Diagnostics → For developers). Standard aus. */
-export const newEditorPref = devicePref<boolean>("based.newEditor", false, isBool);
+/**
+ * BSD-407 Teil 3: Der Block-Editor (ADR 0016) ist Standard. Notausgang pro Gerät: der alte Editor (BlockNote) unter
+ * Settings → Diagnostics → For developers, Standard aus; fällt mit Teil 4 weg. Der frühere Schalter `based.newEditor`
+ * (Standard aus) gilt nicht mehr: `migrateEditorPref` entfernt ihn einmalig, damit auch Geräte, auf denen er bewusst
+ * oder unbewusst auf „aus“ stand, den Block-Editor bekommen.
+ */
+export const legacyEditorPref = devicePref<boolean>("based.legacyEditor", false, isBool);
+/** Alter Schlüssel bis BSD-407 Teil 2 (`true` = neuer Editor). Nur noch zum Aufräumen. */
+export const OLD_EDITOR_KEY = "based.newEditor";
+export function migrateEditorPref() {
+  try {
+    storage()?.removeItem(OLD_EDITOR_KEY);
+  } catch {
+    // ohne Speicher gilt ohnehin der Standard
+  }
+}
 
 /** BSD-319: Entwickler-Ansicht (Blockgrenzen, Ebenen, Fokus, letzte Ereignisse) – pro Gerät, Settings → Diagnostics. */
 const devViewListeners = new Set<() => void>();

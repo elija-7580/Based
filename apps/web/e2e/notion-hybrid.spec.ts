@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { blockEditor } from "./editor-helpers.js";
 import { smallWorld, uid, IDS, type World } from "../../../packages/core/test/fixtures/hybrid-world.js";
 
 // BSD-317: Hybrid-Notion-Import im Browser – Export-ZIP wählen, Struktur zuerst, Inhalt im Hintergrund, gesperrte
@@ -71,9 +72,9 @@ test("Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nac
   // Die wartende Seite ist da, aber gesperrt.
   await page.getByRole("treeitem", { name: "Home", exact: true }).click();
   await expect(page.getByLabel("Page title")).toHaveValue("Home");
-  await expect(page.locator(".bn-editor").first()).toContainText("Welcome home");
+  await expect(blockEditor(page)).toContainText("Welcome home");
   await expect(page.getByTestId("import-pending")).toHaveCount(0);
-  await page.locator(".bn-editor").first().getByText("Notes", { exact: true }).first().click();
+  await blockEditor(page).getByText("Notes", { exact: true }).first().click();
   await expect(page.getByLabel("Page title")).toHaveValue("Notes");
   await expect(page.getByTestId("import-pending")).toBeVisible();
   await expect(page.getByLabel("Page title")).not.toBeEditable();
@@ -104,7 +105,7 @@ test("Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nac
   await expect(page.getByTestId("hybrid-pill")).toHaveCount(0);
   // Die Seite ist entsperrt und hat ihren Inhalt; genau eine Inhaltsanfrage ging an Notion.
   await expect(page.getByTestId("import-pending")).toHaveCount(0);
-  await expect(page.locator(".bn-editor").first()).toContainText("Notes body");
+  await expect(blockEditor(page)).toContainText("Notes body");
   // Inhaltsanfragen gab es nur für diese eine Seite (die vor dem Neuladen angehaltene zählt mit).
   const contentRequests = world.get("children");
   expect(contentRequests).toBeGreaterThanOrEqual(1);
@@ -121,9 +122,9 @@ test("Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nac
   await page.getByRole("dialog").getByRole("button", { name: "Done" }).click();
   expect(world.get("children")).toBe(contentRequests + 1);
   await page.getByRole("treeitem", { name: "Home", exact: true }).click();
-  await page.locator(".bn-editor").first().getByText("Spec", { exact: true }).first().click();
+  await blockEditor(page).getByText("Spec", { exact: true }).first().click();
   await expect(page.getByLabel("Page title")).toHaveValue("Spec");
-  await expect(page.locator(".bn-editor").first()).toContainText("Spec body, changed in Notion");
+  await expect(blockEditor(page)).toContainText("Spec body, changed in Notion");
 });
 
 test("Hybrid-Import: Markdown-Export wird erklärt statt halb importiert", async ({ page }) => {
@@ -181,7 +182,7 @@ test("Hybrid-Import: Bildschirmfotos", async ({ page, browserName }) => {
   await shoot("running");
   await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
   await page.getByRole("treeitem", { name: "Home", exact: true }).click();
-  await page.locator(".bn-editor").first().getByText("Notes", { exact: true }).first().click();
+  await blockEditor(page).getByText("Notes", { exact: true }).first().click();
   await expect(page.getByTestId("import-pending")).toBeVisible();
   await shoot("pending");
   release();

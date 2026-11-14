@@ -4,7 +4,7 @@
 // nach bundles/ kopieren und hier eintragen; wiedergegeben wird in der Engine, die aufgezeichnet hat (engineOf).
 import { readFileSync } from "node:fs";
 import { expect } from "@playwright/test";
-import { ready, test } from "./fixture.js";
+import { legacyTest as test, ready } from "./fixture.js";
 import { engineOf, replayReport } from "./replay.js";
 
 const load = (name: string) => JSON.parse(readFileSync(new URL(`./bundles/${name}.json`, import.meta.url), "utf8")) as unknown;

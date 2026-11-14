@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { useLegacyEditor } from "./legacy-editor.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -26,6 +27,10 @@ const test = base.extend<{ page: Page }>({
     }
   },
 });
+
+// BSD-407 Teil 3: Nachgestellter Fehler des alten Editors (Formatleiste über einer Blockauswahl, Callout-Kasten von BlockNote).
+// Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
+useLegacyEditor(test);
 
 type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>

@@ -11,4 +11,5 @@ export type { BasedClipboard, PasteContent, PasteOptions } from "./paste.js";
 export {
   canNestUnder, isBoundary, isCollapsed, isTextBlock, isToggle, nextVisible, previousVisible, sortByDocument, TEXT_TYPES, topLevel, visibleChildren, visibleOrder,
 } from "./tree.js";
-export { hasMark, marksAt, replaceRuns, runsLength, runsOf, setMark, splitRuns, toggleMark, type MarkKey, type Marks, type Run } from "./text.js";
+export { editPlainText, hasMark, marksAt, replaceRuns, runsLength, runsOf, setMark, splitRuns, toggleMark, type MarkKey, type Marks, type Run } from "./text.js";
+export { addTableColumn, addTableRow, deleteTableColumn, deleteTableRow, insertTable, setTableCell, tableModel, tableProps, type TableModel } from "./table.js";

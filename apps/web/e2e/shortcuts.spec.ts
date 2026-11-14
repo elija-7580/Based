@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-204: Kürzel ⌘N (Palette „New…“), ⌥⌘N, ⌘P, ⇧⌘L, ⌘1–9 – im Test kommen sie an (im Browser-Tab fängt der Browser
 // einige ab, in der App nicht).
@@ -22,7 +23,7 @@ test("⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; �
   await expect(page.locator(".shell-database.full")).toBeVisible();
 
   await page.keyboard.press("ControlOrMeta+Alt+n");
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+  await expectEditable(page);
   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(1);
 
   await page.keyboard.press("ControlOrMeta+n");
@@ -38,7 +39,7 @@ test("⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; 
   await expect(palette.locator(".qf-digit")).toHaveText(["1", "2", "3", "4", "5"]);
   await page.keyboard.press("1");
   await expect(palette).toBeHidden();
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+  await expectEditable(page);
   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(1);
 
   await page.keyboard.press("ControlOrMeta+n");
@@ -85,9 +86,8 @@ test("⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs", async (
 test("Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen", async ({ page }) => {
   await ready(page);
   await page.keyboard.press("ControlOrMeta+Alt+n");
-  const editor = page.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("Hello");
   // WebKit-Testprofile haben kein OPFS („Not saved“); dort zeigt nur das Menü die Zeit.
   await expect(page.getByTestId("page-edited")).toHaveText(/Edited just now|Not saved/);

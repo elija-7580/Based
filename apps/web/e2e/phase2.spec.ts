@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { expectEditable } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,7 +16,7 @@ test("Editor und Datenbank in der Shell, nach dem Neuladen noch da", { tag: "@sm
 
     // Editor: neuen Absatz am Ende der Willkommensseite schreiben.
     await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-    await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+    await expectEditable(page);
     const last = page.getByText("Pages you delete wait in the Trash");
     const box = (await last.boundingBox())!;
     await last.click({ position: { x: box.width - 1, y: box.height / 2 } }); // Schreibmarke ans Zeilenende

@@ -87,7 +87,70 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | Zeile/Spalte löschen und HTML-Vorschau erledigt 14.11.; Formatierung in Zellen offen |
 | 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Meeting, Whiteboard, Button offen |
 | 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | offen |
-| 3 | `based.newEditor` standardmäßig an; 50 Specs mit `.bn-*` auf `getByTestId("block-editor")`/`.bx2-*` umstellen | offen |
+| 3 | Block-Editor ist Standard (neuer Schlüssel `based.legacyEditor`, alter Schalter `based.newEditor` wird einmalig entfernt); Specs auf `getByTestId("block-editor")`/`.bx2-*` umgestellt, Rest gepinnt (unten) | erledigt 14.11. |
 | 4 | BlockNote-Code (`ui/PageEditor.tsx`, `schema/`, `mapping/bn.ts`, y-prosemirror) und `@blocknote/*` löschen; Rundreise-Test Notion-Import | offen |
 
 BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird gelöscht.
+
+## Teil 3 (14.11.2026): Block-Editor ist Standard
+
+- **Schalter:** `legacyEditorPref` (`based.legacyEditor`, Standard aus) in `apps/web/src/shell/storage.ts`; der frühere
+  Schlüssel `based.newEditor` (Standard „aus“) gilt nicht mehr und wird beim Start einmalig gelöscht
+  (`migrateEditorPref`, aufgerufen in `connectEditor`). Damit bekommen auch Geräte, auf denen „New editor“ bewusst
+  oder unbewusst aus war, den Block-Editor – Web und Desktop gleich (Tauri lädt denselben Web-Client).
+  Notausgang: Settings → Diagnostics → For developers → „Old editor (BlockNote)“ (wirkt beim Öffnen einer Seite).
+  Test: `apps/web/e2e/editor-default.spec.ts`.
+- **Vor dem Umschalten geschlossen** (sonst Alltag kaputt oder Daten unsichtbar): Klick auf eine Seiten-Erwähnung
+  öffnet die Seite; Erwähnungen zeigen Icon, Titel live und „in Trash“/„deleted“; `[[Titel]]` fertig getippt wird
+  zur Erwähnung (vorhandene oder neue Seite); „Linked view of database“, „Mermaid diagram“ und „HTML“ im Slash-Menü;
+  ⇧⌘V fügt Klartext ein; Doppelklick zeigt ein Bild groß; Bild mit Datei, die (noch) nicht auf dem Gerät ist, zeigt
+  den Platzhalter der Hülle statt „Add an image“; schwebende Gliederung; Überschriften haben die Rolle `heading`;
+  Rechtschreibprüfung folgt der Einstellung; Formel-Block zeigt beim Tippen die Vorschau; farbiger Callout füllt
+  seinen Kasten; Klick in eine Einbettung beendet die Blockauswahl; Zitat-Sprung (Agent) und F6 finden den Block-Editor.
+- **Einfache Tabelle im gemeinsamen Format:** Der Block-Editor schrieb bis Teil 2 die Zellen flach in
+  `table.props.cells` und zeigte importierte Tabellen (Zeilen-Records `tableRow` mit `cells`, wie Swift, alter Editor,
+  Markdown-/Notion-/Word-Import) leer an. Jetzt liest und schreibt er nur noch Zeilen-Records (Kern
+  `editor/commands/table.ts`); alte flache Tabellen werden gelesen und beim ersten Bearbeiten überführt.
+- **Seiten mit Meeting-Block** öffnen bis Teil 2f im alten Editor (`pageHasMeeting`, entschieden beim Öffnen) –
+  sonst wären Aufnahme, Notizen und „⌘N → Meeting notes“ tot.
+- **Nichts geht verloren:** Blöcke ohne Bearbeitung im Block-Editor (Meeting mit Abschnitten und Transkript,
+  Button mit Aktionen, Breadcrumb) werden angezeigt und nie umgeschrieben; Tabellenzellen werden als Klartext
+  bearbeitet, Formatierung, Links, Erwähnungen außerhalb der geänderten Stelle bleiben (`setTableCell`,
+  `editPlainText` im Kern). Nach Undo/Redo bleibt der Fokus im Editor (vorher ging ⌘⇧Z nach einem
+  zurückgenommenen Einfügen ins Leere). Tests: `apps/web/e2e/editor-passthrough.spec.ts` (auch Notion-Import-Rundreise: Öffnen und
+  Klicken ändert keine Records), `packages/core/test/editor-table-cell.test.ts`.
+
+### Lücken des Block-Editors (bleiben im alten Editor, Notausgang)
+
+| Funktion | Stand im Block-Editor |
+| --- | --- |
+| Meeting-Block (Aufnahme, Notizen, Zusammenfassung) | Seiten mit Meeting öffnen im alten Editor; kommt ein Meeting während der Bearbeitung dazu: Platzhalter, Inhalt darunter bearbeitbar |
+| Button-Block | Beschriftung sichtbar, Aktionen fehlen |
+| „Ask AI“ (Leertaste, Formatleiste) | fehlt |
+| @-Menü: „New page“, Datumsoptionen (Erinnerung, Bereich, Uhrzeit) | fehlt (Datum einfügen geht) |
+| Bild: Ausrichtung links/Mitte/rechts, Bildleiste, Vollbild-Knopf | fehlt (Breite, Caption, Doppelklick-Vollbild da); `props.align` bleibt erhalten |
+| Codeblock: Kopier- und Umbruch-Knopf | fehlt |
+| Blockmenü mit Icons, Kopf/Fuß (Wortzahl), Glas wie das Seitenmenü | Teil 2g (Astryx-Menüs) |
+| Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
+| Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor |
+| Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
+
+### noch BlockNote (gepinnte Specs, Liste für Teil 4)
+
+Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEditor`) bzw. `legacyTest` aus
+`e2e/replay/fixture.ts`. Teil 4 schreibt sie auf den Block-Editor um oder löscht sie mit der Funktion.
+
+| Spec | Was gepinnt ist |
+| --- | --- |
+| `editor-ai.spec.ts` | ganz – „Ask AI“ |
+| `collab.spec.ts` | ganz – Echtzeit über `page:` (y-prosemirror); Block-Editor: `block-editor-collab.spec.ts` |
+| `meeting.spec.ts` | ganz – Meeting-Block |
+| `editor-drag.spec.ts` | ganz – Ziehen am BlockNote-Griff; Block-Editor: `block-editor.spec.ts` |
+| `editor-select.spec.ts` | ganz – Maus-Auswahl in ProseMirror; Block-Editor: `block-editor.spec.ts` |
+| `editor-callout-select.spec.ts` | ganz – nachgestellter BlockNote-Fehler (BSD-318) |
+| `replay/replay.spec.ts`, `replay/record-sample.spec.ts` | ganz – Wiedergabe von ProseMirror-Schritten |
+| `report.spec.ts` | 4 von 5 Tests – Aufzeichnung „tr“/„yjs“, Blockbaum, Entwickler-Ereignisse |
+| `editor-parity.spec.ts` | 16 von 19 Tests (Erwähnungs-Menü, Gliederung, Synced Block, Blockmenü-Abläufe, Spalten, Button, Uploads, Seiten-Optionen …) |
+| `editor-notion.spec.ts` | 6 von 13 Tests (Blockmenü-Kopf/-Suche/-Stabilität, Codeblock-Knöpfe, Formatleiste) |
+| `image-block.spec.ts` | 3 von 4 Tests (Ausrichtung, Bildleiste, Vollbild-Knopf) |
+| `native-free.spec.ts` | 2 Tests (Blockmenü am Griff mit Icons, Glas) |

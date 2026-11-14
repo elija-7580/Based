@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // Feedback 10. Nov.: die Oberfläche ließ sich verschieben (Dokument scrollte/federte, Kopfzeile wanderte weg),
 // Seitenleiste nicht in der Breite änderbar, „/Database – Inline“ legte keine Datenbank an, Datenbankseiten schmal.
@@ -11,7 +12,7 @@ async function ready(page: Page) {
 test("Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen", async ({ page }) => {
   await ready(page);
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+  await expectEditable(page);
   await page.setViewportSize({ width: 1100, height: 360 }); // Willkommensseite länger als das Panel
   const top = page.locator(".topbar");
   const before = (await top.boundingBox())!.y;
@@ -55,11 +56,10 @@ test("„/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten n
   await ready(page);
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   await expect(page.locator(".bx-database-placeholder")).toHaveCount(0);
   await expect(page.locator(".shell-database.inline").getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
 
@@ -108,11 +108,10 @@ test("Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.)",
   await ready(page);
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("/database");
-  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  await page.getByRole("option", { name: "Database", exact: true }).click();
   const db = page.locator(".shell-database.inline");
   await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
   // Seite länger machen als das Fenster

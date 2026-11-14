@@ -108,6 +108,8 @@ function usePeekEscape(close: () => void) {
         const doc = t.closest(".bx-doc");
         // Schreibmarke im Text: das Esc gehört dem Editor (macht eine Blockauswahl).
         if (doc && !doc.hasAttribute("data-block-selection")) return;
+        // BSD-407 Teil 3: Block-Editor – im Textfeld gehört das Esc dem Editor; mit Blockauswahl schließt es den Peek
+        if (t.closest("[data-testid=block-editor] [data-editable-id]")) return;
         if (t.closest("input, textarea, select") && !t.matches(".title-input")) return;
       } else {
         // Fokus dahinter: Felder und die Tabelle (Esc hebt dort erst Auswahl/Bearbeitung auf) haben Vorrang.

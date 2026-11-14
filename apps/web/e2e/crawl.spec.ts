@@ -51,7 +51,7 @@ async function targets(page: Page, scope: string): Promise<Target[]> {
       const r = el.getBoundingClientRect();
       if (r.width < 1 || r.height < 1 || r.bottom < 0 || r.top > innerHeight) continue;
       if ((el as HTMLButtonElement).disabled || el.getAttribute("aria-disabled") === "true" || el.closest("[inert], [aria-hidden=true]")) continue;
-      if (el.closest(".bn-editor")) continue; // Editor-Inhalt prüfen die Editor-Tests
+      if (el.closest("[data-testid=block-editor], .bn-editor")) continue; // Editor-Inhalt prüfen die Editor-Tests
       if (el instanceof HTMLAnchorElement && /^https?:/.test(el.getAttribute("href") ?? "")) continue; // nach außen
       // Schon gewählt (Tab, Umschalter, aktuelle Seite): ein Klick darf nichts tun.
       if (["aria-selected", "aria-pressed", "aria-checked"].some((a) => el.getAttribute(a) === "true") || (el.closest("[aria-current]")?.getAttribute("aria-current") ?? "false") !== "false" || getComputedStyle(el).visibility === "hidden") continue;
@@ -75,7 +75,7 @@ async function probe(page: Page, scope: string, t: Target): Promise<"ok" | "dead
       const r = el.getBoundingClientRect();
       if (r.width < 1 || r.height < 1 || r.bottom < 0 || r.top > innerHeight) continue;
       if ((el as HTMLButtonElement).disabled || el.getAttribute("aria-disabled") === "true" || el.closest("[inert], [aria-hidden=true]")) continue;
-      if (el.closest(".bn-editor")) continue;
+      if (el.closest("[data-testid=block-editor], .bn-editor")) continue;
       if (el instanceof HTMLAnchorElement && /^https?:/.test(el.getAttribute("href") ?? "")) continue;
       if (["aria-selected", "aria-pressed", "aria-checked"].some((a) => el.getAttribute(a) === "true") || (el.closest("[aria-current]")?.getAttribute("aria-current") ?? "false") !== "false" || getComputedStyle(el).visibility === "hidden") continue;
       const name = (el.getAttribute("aria-label") || el.textContent || el.getAttribute("title") || "").replace(/\s+/g, " ").trim().slice(0, 60);

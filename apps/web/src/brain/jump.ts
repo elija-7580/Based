@@ -12,7 +12,9 @@ export function jumpToBlock(pageID: string, blockID?: string, win: Window = wind
   const doc = win.document;
   const started = Date.now();
   const tick = () => {
-    const el = doc.querySelector<HTMLElement>(`.bn-block-outer[data-id="${CSS.escape(blockID)}"]`);
+    // BSD-407 Teil 3: Block-Editor (`.bx2-block`) oder alter Editor (`.bn-block-outer`)
+    const q = CSS.escape(blockID);
+    const el = doc.querySelector<HTMLElement>(`.bx2-block[data-block-id="${q}"], .bn-block-outer[data-id="${q}"]`);
     if (!el) {
       if (Date.now() - started < 5000) win.setTimeout(tick, 80);
       return;

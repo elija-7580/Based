@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable } from "./editor-helpers.js";
 import { readFileSync } from "node:fs";
 
 // Quick Find mit Volltext (Text aus dem Seiteninhalt), Import eines Notion-HTML-Exports (fixtures/import, als ZIP)
@@ -60,7 +61,7 @@ test("Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen"
 
   // Im Editor schreiben, dann danach suchen (Index arbeitet die Änderung ein)
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+  await expectEditable(page);
   const last = page.getByText("Pages you delete wait in the Trash");
   const box = (await last.boundingBox())!;
   await last.click({ position: { x: box.width - 1, y: box.height / 2 } });

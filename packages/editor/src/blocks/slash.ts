@@ -1,5 +1,5 @@
 // ADR 0016 (E5, erster Teil): Einträge des Slash-Menüs im Block-Editor. Reine Daten + Filter; Kürzel im Mac-Stil.
-import { createDatabase, insertPage, type Block, type WorkspaceStore } from "@based/core";
+import { blockCommands, createDatabase, insertPage, type Block, type WorkspaceStore } from "@based/core";
 
 export interface SlashItem {
   type: string;
@@ -15,6 +15,8 @@ export interface SlashItem {
   inline?: "equation";
   /** Spaltenliste mit so vielen Spalten. */
   columns?: number;
+  /** BSD-407 Teil 3: „Linked view of database“ – erst eine Datenbank wählen (Auswahl wie im alten Editor). */
+  linkDatabase?: true;
   /** Sonderfall mit eigenen Records (Datenbank): legt an und gibt die Block-ID zurück. */
   create?: (store: WorkspaceStore, after: string, replace: boolean) => string | undefined;
 }
@@ -49,7 +51,11 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "callout", label: "Callout", group: "Basic blocks", icon: "💡", keywords: "note info tip" },
   { type: "code", label: "Code", group: "Basic blocks", icon: "</>", keywords: "snippet pre", hint: "```" },
   { type: "divider", label: "Divider", group: "Basic blocks", icon: "—", keywords: "hr line separator", hint: "---" },
-  { type: "table", label: "Simple table", group: "Basic blocks", icon: "▦", keywords: "grid cells rows columns", props: { tableColumns: 2, tableHeaderRow: true, cells: ["", "", "", ""] } },
+  // BSD-407 Teil 3: Tabelle im gemeinsamen Format (Zeilen als `tableRow`-Blöcke, Kern insertTable)
+  { type: "table", label: "Simple table", group: "Basic blocks", icon: "▦", keywords: "grid cells rows columns", create: (store, after, replace) => {
+    const f = blockCommands.insertTable(store, after, replace);
+    return f && "blockId" in f ? f.blockId : undefined;
+  } },
   ...[2, 3, 4, 5].map((n): SlashItem => ({ type: "columnList", label: `${n} columns`, group: "Advanced", icon: "▥", keywords: `columns layout side ${n}`, columns: n })),
   { type: "page", label: "Page", group: "Pages", icon: "📄", keywords: "subpage new page", page: subPage },
   { type: "databaseInline", label: "Database", group: "Pages", icon: "▦", keywords: "table inline database grid", create: (store, after, replace) => {
@@ -59,6 +65,7 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
     if (replace) store.transact("Remove empty block", (tx) => tx.remove(`block:${after}`), { coalesce: "db:" + r.blockID });
     return r.blockID;
   } },
+  { type: "databaseInline", label: "Linked view of database", group: "Pages", icon: "⧉", keywords: "linked database view existing", linkDatabase: true },
   { type: "image", label: "Image", group: "Media", icon: "🖼", keywords: "picture photo upload" },
   { type: "video", label: "Video", group: "Media", icon: "▶", keywords: "movie clip upload" },
   { type: "audio", label: "Audio", group: "Media", icon: "♪", keywords: "sound music recording" },
@@ -67,6 +74,9 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "embed", label: "Embed", group: "Media", icon: "⧉", keywords: "iframe link url" },
   { type: "equation", label: "Block equation", group: "Advanced", icon: "∑", keywords: "math latex tex formula", props: { expression: "" } },
   { type: "inlineEquation", label: "Inline equation", group: "Advanced", icon: "√x", keywords: "math latex tex formula inline", inline: "equation" },
+  // BSD-407 Teil 3: wie im alten Editor eigene Einträge für Codeblöcke mit Vorschau
+  { type: "code", label: "Mermaid diagram", group: "Advanced", icon: "⇄", keywords: "diagram flowchart chart graph", props: { language: "mermaid" } },
+  { type: "code", label: "HTML", group: "Advanced", icon: "</>", keywords: "html web preview markup", props: { language: "html" } },
   { type: "tableOfContents", label: "Table of contents", group: "Advanced", icon: "≡", keywords: "toc outline headings" },
 ];
 

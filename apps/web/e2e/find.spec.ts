@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-206: Suchen in der Seite (⌘F), Wortzahl im •••-Menü, Filter in Quick Find. BSD-244: Zurück/Vor per Maustaste,
 // Tastatur und Wischen.
@@ -13,9 +14,9 @@ async function ready(page: Page) {
 
 async function newPageWith(page: Page, lines: string[]) {
   await page.keyboard.press("ControlOrMeta+Alt+n");
-  const editor = page.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  const editor = blockEditor(page);
+  await expectEditable(page);
+  await focusEditorEnd(page);
   for (const l of lines) {
     await page.keyboard.type(l);
     await page.keyboard.press("Enter");
@@ -44,7 +45,7 @@ test("⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor z
   // Der Editor-Text bleibt unberührt (keine Markierung im Dokument).
   await expect(editor.locator("mark")).toHaveCount(0);
 
-  await editor.click();
+  await focusEditorEnd(page);
   await page.keyboard.press("ControlOrMeta+End");
   await page.keyboard.type("one more cafe");
   await expect(count).toHaveText(/of 4$/);

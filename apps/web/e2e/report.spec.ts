@@ -1,7 +1,7 @@
 // BSD-319: „Problem melden“ (⇧⌘B, ⌘K, Settings → Diagnostics): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout,
 // standardmäßig ohne Nutzertext; Liste der Berichte, Log-Filter, Entwickler-Ansicht; Aufzeichnung kostet beim Tippen nichts.
 import { expect, type Page } from "@playwright/test";
-import { editor, openNewPage, ready, test } from "./replay/fixture.js";
+import { editor, legacyTest, openNewPage, ready, test } from "./replay/fixture.js";
 
 const SECRET = "Quarterly salary Ada Lovelace 4711";
 
@@ -20,8 +20,10 @@ const savedReports = (page: Page) => page.evaluate(() => new Promise<(Row & { sh
 }));
 
 test.describe.configure({ timeout: 90_000 });
+// BSD-407 Teil 3: Aufzeichnung (ProseMirror „tr“, Seiten-Y.Doc „yjs“, BlockNote-Blockbaum) gibt es nur im alten Editor:
+// diese Tests laufen mit `legacyTest` (gepinnt, docs/editor-parity.md „noch BlockNote“); Diagnostics-Einstellungen nicht.
 
-test("⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext", async ({ page }) => {
+legacyTest("⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext", async ({ page }) => {
   await ready(page);
   await openNewPage(page, "Report");
   await page.keyboard.type(SECRET);
@@ -62,7 +64,7 @@ test("⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nut
   expect(await savedReports(page)).toHaveLength(0);
 });
 
-test("Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem", async ({ page }) => {
+legacyTest("Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem", async ({ page }) => {
   await ready(page);
   await openNewPage(page, "Real text");
   await page.keyboard.type(SECRET);
@@ -119,7 +121,7 @@ test("Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ans
   await expect(page.getByTestId("dev-overlay")).toHaveCount(0);
 });
 
-test("Entwickler-Ansicht zeigt die letzten Ereignisse live", async ({ page }) => {
+legacyTest("Entwickler-Ansicht zeigt die letzten Ereignisse live", async ({ page }) => {
   await ready(page);
   await page.evaluate(() => localStorage.setItem("based.devView", "true"));
   await ready(page);
@@ -132,7 +134,7 @@ test("Entwickler-Ansicht zeigt die letzten Ereignisse live", async ({ page }) =>
   await editor(page).locator(".bn-block-content").first().click();
 });
 
-test("Aufzeichnung kostet beim Tippen messbar nichts", async ({ page }) => {
+legacyTest("Aufzeichnung kostet beim Tippen messbar nichts", async ({ page }) => {
   await ready(page);
   await openNewPage(page, "Perf");
   // Dieselben Ereignisse mit und ohne Aufzeichnung an den Editor schicken; Unterschied je Taste (Median aus 5 Runden).

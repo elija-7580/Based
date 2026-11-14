@@ -67,6 +67,21 @@ export function meetingInfo(store: WorkspaceStore, id: string): MeetingInfo | un
   return b?.type === "meeting" ? b.props?.meeting ?? { status: "ready" } : undefined;
 }
 
+/**
+ * BSD-407 Teil 3: Hat die Seite (direkt, ohne Unterseiten) einen Meeting-Block? Der Block-Editor kann Meetings noch
+ * nicht bearbeiten (BSD-407 Teil 2f); solche Seiten öffnet die Hülle bis dahin im alten Editor.
+ */
+export function pageHasMeeting(store: WorkspaceStore, pageID: string): boolean {
+  const stack = [...store.children("b:" + pageID)];
+  for (let n = 0; stack.length && n < 100_000; n++) {
+    const b = store.blocks.get(stack.pop()!);
+    if (!b || b.trashedAt !== undefined || b.type === "page" || b.type === "databasePage") continue;
+    if (b.type === "meeting") return true;
+    stack.push(...store.children("b:" + b.id));
+  }
+  return false;
+}
+
 /** Das Meeting, zu dem ein Block gehört (es selbst, ein Abschnitt, eine Notiz darin oder ein Transkript-Chunk). */
 export function meetingContaining(store: WorkspaceStore, id: string): string | undefined {
   let cur: string | undefined = id;

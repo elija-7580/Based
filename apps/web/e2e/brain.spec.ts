@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { editorBlock } from "./editor-helpers.js";
 
 // Agent Brain (BSD-198, BSD-199, BSD-163) mit ScriptedEngine – deterministisch, ohne Netz:
 // Skills importieren → Chips erscheinen beim Tippen und lassen sich tauschen; Privacy-Redact ersetzt vor der Engine
@@ -154,7 +155,7 @@ async function citationFlow(page: Page): Promise<string> {
   await answer.getByTestId("citation").nth(1).click();
   await expect(page).toHaveURL(new RegExp(`#page-${ids.page}`));
   await expect(page.getByTestId("cite-flash")).toHaveAttribute("data-block", ids.blocks[1]!);
-  await expect(page.locator(`.bn-block-outer[data-id="${ids.blocks[1]}"]`)).toBeInViewport();
+  await expect(editorBlock(page, ids.blocks[1]!)).toBeInViewport();
   return ids.page;
 }
 

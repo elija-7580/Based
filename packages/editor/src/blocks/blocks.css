@@ -70,7 +70,8 @@
 .bx2-grip { width: 18px; cursor: grab; touch-action: none; }
 .bx2-is-dragging, .bx2-is-dragging * { cursor: grabbing !important; }
 
-/* Textfelder */
+/* Textfelder (Überschriften stecken in einem Rahmen mit Rolle „heading“) */
+.bx2-field-wrap { display: flex; flex: 1 1 auto; min-width: 1px; }
 .bx2-field {
   flex: 1 1 auto;
   min-width: 1px;
@@ -124,6 +125,15 @@
 }
 .bx2-field a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: 2px; }
 .bx2-mention { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); cursor: pointer; }
+/* BSD-407 Teil 3: Seiten-Erwähnung wie im alten Editor – Icon, Titel (unterstrichen), Papierkorb/gelöscht gedämpft */
+.bx2-mention[data-page] { text-decoration: none; border-radius: var(--radius-xs); padding-inline: var(--space-1); background: var(--surface-soft); white-space: nowrap; }
+.bx2-mention[data-page]:hover { background: var(--surface-raised); }
+.bx2-mention-icon { margin-inline-end: var(--space-1); }
+.bx2-mention-icon .bx-phosphor { width: 1em; height: 1em; vertical-align: -0.125em; }
+.bx2-mention-title { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); }
+.bx2-mention[data-trashed="true"] .bx2-mention-title, .bx2-mention[data-missing="true"] .bx2-mention-title { color: var(--muted); text-decoration: line-through; }
+.bx2-mention[data-missing="true"] { cursor: default; }
+.bx2-mention-flag { margin-inline-start: var(--space-1); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); }
 .bx2-eq { font-family: var(--font-mono); font-size: 0.9em; }
 /* BSD-407: KaTeX im Text – das ganze Atom ist Klickfläche (sonst trifft der Klick die Lücken zwischen den Glyphen) */
 .bx2-eq:has(.katex) { display: inline-block; font-family: inherit; font-size: inherit; cursor: pointer; }
@@ -146,6 +156,9 @@
 .bx2-color-pinkBackground { background: var(--block-pink); border-radius: var(--radius-xs); }
 .bx2-color-red { color: var(--block-red-text); }
 .bx2-color-redBackground { background: var(--block-red); border-radius: var(--radius-xs); }
+/* BSD-407 Teil 3: Callout mit Hintergrundfarbe – die Farbe füllt den Kasten (vorher lag die graue Callout-Fläche darüber) */
+.bx2-row[class*="Background"]:has(> .bx2-callout) { border-radius: var(--radius-sm); }
+.bx2-row[class*="Background"] > .bx2-callout { background: transparent; }
 
 /* Marker (Liste, Nummer, Häkchen, Toggle) – mittig an der ersten Zeile */
 .bx2-marker {
@@ -499,7 +512,8 @@
 .bx2-swatch { display: inline-flex; align-items: center; justify-content: center; width: var(--space-5); height: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-xs); font-weight: 600; }
 
 /* E6: Bild – Rahmen mit Griff zum Breite-Ziehen, Bildunterschrift */
-.bx2-image-frame { position: relative; display: block; max-width: 100%; }
+/* BSD-407 Teil 3: ohne gespeicherte Breite in natürlicher Größe (höchstens Spaltenbreite), nicht hochgezogen */
+.bx2-image-frame { position: relative; display: inline-block; vertical-align: top; max-width: 100%; }
 .bx2-image-frame img { width: 100%; }
 .bx2-image-handle {
   position: absolute;

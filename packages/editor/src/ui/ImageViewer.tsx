@@ -11,7 +11,7 @@ export interface ImageView {
 export function imageAt(target: EventTarget | null): ImageView | undefined {
   const el = target instanceof Element ? target : undefined;
   const img = el?.closest("img");
-  if (!img || !img.closest('[data-content-type="image"]')) return undefined;
+  if (!img || !img.closest('[data-content-type="image"], .bx2-image')) return undefined;
   const src = img.currentSrc || img.src;
   return src ? { src, alt: img.alt || "" } : undefined;
 }

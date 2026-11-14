@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-212: Datenbanken anlegen – verknüpfte Ansicht einer bestehenden Datenbank per Slash, Vorlagen am „New“-Knopf.
 
@@ -24,9 +25,8 @@ test("„/Linked view of database“ zeigt eine Datenbank einer anderen Seite un
 
   await page.getByRole("button", { name: "Home" }).click();
   await page.getByRole("button", { name: "New page" }).first().click();
-  const editor = page.locator(".bn-editor[contenteditable='true']");
-  await expect(editor).toBeVisible();
-  await editor.click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.keyboard.type("/linked");
   await page.getByRole("option", { name: /Linked view of database/ }).click();
   const picker = page.getByTestId("database-link-picker");

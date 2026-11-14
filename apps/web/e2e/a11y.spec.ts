@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -116,9 +117,8 @@ test("Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens", 
   const pageID = (await command(page, { op: "createPage", title: "A11y page" })) as string;
   // Seite mit Überschriften, damit die Gliederung rechts erscheint
   await page.getByRole("treeitem", { name: "A11y page" }).click();
-  const ed = page.locator(".bx-editor > .bx-doc .bn-editor").first();
-  await expect(ed).toHaveAttribute("contenteditable", "true");
-  await ed.locator(".bn-block-content").first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
   await page.evaluate((md) => {
     const dt = new DataTransfer();
     dt.setData("text/plain", md);
@@ -156,8 +156,7 @@ test("Fotos: Gliederung, Quick Find, Tabelle mit Fokus", async ({ page, browserN
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await command(page, { op: "createPage", title: "Outline" });
   await page.getByRole("treeitem", { name: "Outline" }).click();
-  const ed = page.locator(".bx-editor > .bx-doc .bn-editor").first();
-  await ed.locator(".bn-block-content").first().click();
+  await focusEditorEnd(page);
   await page.evaluate((md) => {
     const dt = new DataTransfer();
     dt.setData("text/plain", md);

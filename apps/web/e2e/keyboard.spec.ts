@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { editorFields, expectEditable } from "./editor-helpers.js";
 
 // BSD-238: App per Tastatur – F6 zwischen Bereichen, Tabellen-Zellen (Fokus, Tab, Leertaste), Menüs (Pfeile, Fokus zurück).
 
@@ -11,14 +12,14 @@ async function ready(page: Page) {
 test("F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
-  await page.locator(".bn-editor[contenteditable='true']").click();
+  await expectEditable(page);
+  await editorFields(page).last().click();
   await page.keyboard.press("F6");
   await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest("nav.sidebar"))).toBe(true);
   await page.keyboard.press("F6");
   await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest(".topbar"))).toBe(true);
   await page.keyboard.press("F6");
-  await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest(".bn-editor"))).toBe(true);
+  await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest("[data-testid=block-editor]"))).toBe(true);
   await page.keyboard.press("Shift+F6");
   await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest(".topbar"))).toBe(true);
 });
