@@ -183,6 +183,27 @@ test("Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben
   await expect(page.getByTestId("page-content")).not.toContainText("==");
 });
 
+test("Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const notes = zip([
+    { path: "Notes/Groceries.html", data: Buffer.from(`<html><head><meta charset="utf-8"></head><body><div><b><span style="font-size: 24px">Groceries</span></b></div><div>Buy oat milk</div><div><br></div><ul class="Apple-dash-list"><li>Eggs</li><li>Bread</li></ul></body></html>`) },
+  ]);
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "Notes.zip", mimeType: "application/zip", buffer: notes });
+  await expect(dialog.getByTestId("import-summary")).toContainText("Imported");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  const hits = await quickFind(page, "oat milk");
+  await expect(hits.first()).toContainText("Groceries");
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Page title")).toHaveValue("Groceries");
+  const content = page.getByTestId("page-content");
+  await expect(content).toContainText("Buy oat milk");
+  await expect(content).toContainText("Bread");
+  await expect(content.getByText("Groceries", { exact: true })).toHaveCount(0);
+});
+
 test("Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260)", async ({ page }) => {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();

@@ -129,6 +129,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
     return b?.parent.startsWith("b:") ? store?.containingPage(b.parent.slice(2)) : undefined;
   });
   const readOnly = storeReadOnly || format.locked || pendingImport || guestReadOnly;
+  const guest = isGuest();
 
   // Breadcrumb: Abschnitt und Elternseiten aus der Seitenleisten-Struktur.
   const crumbs: { id?: string; label: string }[] = [];
@@ -162,7 +163,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const favorite = outline?.favorites.includes(pageID) ?? false;
   const chatOpen = useSyncExternalStore(subscribeChatPanel, isChatPanelOpen);
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
-  const subpages = outline?.children[pageID]?.length ?? 0;
+  // BSD-391: Inline-Datenbanken stehen in der Gliederung unter ihrer Seite, sind aber keine Unterseiten.
+  const subpages = (outline?.children[pageID] ?? []).filter((id) => store?.blocks.get(id)?.type !== "databaseInline").length;
   // BSD-255: eine Inline-Datenbank lässt sich per „Open as full page“ wie eine Datenbankseite öffnen.
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
   const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
@@ -214,9 +216,14 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         <span className="spacer" data-testid="page-edited" title={state.status.state === "synced" || state.status.state === "local" ? "Saved" : undefined}>{state.status.state === "synced" || state.status.state === "local" ? (edited ?? "Saved") : isGuest() && state.status.state === "memory" ? "Shared link" : SYNC_LABEL[state.status.state]}</span>
         {page && !trashed ? (
           <>
-            <BasedIconButton label={favorite ? "Remove from Favorites" : "Add to Favorites"} tooltip="Favorite" pressed={favorite} icon={<Icon name="star" size={18} filled={favorite} />}
-              onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })} />
-            <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
+            {/* BSD-402: Gäste teilen nicht weiter und haben keine Favoriten. */}
+            {guest ? null : (
+              <>
+                <BasedIconButton label={favorite ? "Remove from Favorites" : "Add to Favorites"} tooltip="Favorite" pressed={favorite} icon={<Icon name="star" size={18} filled={favorite} />}
+                  onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })} />
+                <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
+              </>
+            )}
             {/* BSD-168: AI-Knopf wie Swift NotionChrome – öffnet/schließt das Chat-Panel (⌘J), aktiv solange es offen ist. */}
             {ai ? (
               <BasedIconButton label="AI chat" tooltip="AI chat (⌘J)" pressed={chatOpen} testID="topbar-ai" icon={<Icon name="chat" size={18} filled={chatOpen} />} onClick={toggleChatPanel} />
@@ -239,17 +246,17 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       {menu ? (
         <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }}
           outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
-          options={store && page && !storeReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
+          options={store && page && !storeReadOnly && !guestReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
           actions={page && !trashed ? {
             copyLink: () => void copyPageLink(pageID),
             openWindow: () => void openPageWindow(routeToHash({ name: "page", id: pageID }), title),
-            duplicate: () => void client.command({ op: "duplicate", ids: [pageID] }),
-            move: () => setMoving(true),
-            favorite: { on: favorite, toggle: () => void client.command({ op: "favorite", ids: [pageID], on: !favorite }) },
+            duplicate: guestReadOnly ? undefined : () => void client.command({ op: "duplicate", ids: [pageID] }),
+            move: guestReadOnly ? undefined : () => setMoving(true),
+            favorite: guest ? undefined : { on: favorite, toggle: () => void client.command({ op: "favorite", ids: [pageID], on: !favorite }) },
             exportPage: () => setExporting(true),
             find: () => setFind((f) => ({ focus: (f?.focus ?? 0) + 1, step: f?.step ?? { n: 0, delta: 1 } })),
             stats: store && !dbID ? pageTextStats(store, pageID) : undefined,
-            trash: () => { void client.command({ op: "trash", ids: [pageID] }); onNavigate({ name: "home" }); },
+            trash: guestReadOnly ? undefined : () => { void client.command({ op: "trash", ids: [pageID] }); onNavigate({ name: "home" }); },
             edited,
           } : undefined} />
       ) : null}
@@ -426,14 +433,16 @@ const FONTS: readonly { id: PageFont; label: string }[] = [{ id: "default", labe
 interface PageActions {
   copyLink: () => void;
   openWindow: () => void;
-  duplicate: () => void;
-  move: () => void;
-  favorite: { on: boolean; toggle: () => void };
+  /** BSD-402: ohne Schreibrecht (Gast mit Nur-Lesen-Link) fehlen Duplizieren, Verschieben und Papierkorb. */
+  duplicate?: (() => void) | undefined;
+  move?: (() => void) | undefined;
+  /** BSD-402: Gäste haben keine Favoriten (der Gast-Arbeitsbereich lebt nur im Speicher). */
+  favorite?: { on: boolean; toggle: () => void } | undefined;
   exportPage: () => void;
   find: () => void;
   /** Wortzahl (nur Seiten mit Text). */
   stats?: { words: number; characters: number } | undefined;
-  trash: () => void;
+  trash?: (() => void) | undefined;
   /** „Edited …“ als Fußzeile. */
   edited?: string | undefined;
 }
@@ -478,9 +487,9 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="link" size={18} />Copy link</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.openWindow(); }}><Icon name="expand" size={18} />Open in new window</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.find(); }}><Icon name="search" size={18} />Find in page<kbd className="menu-kbd t-meta">⌘F</kbd></button>
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.duplicate(); }}><Icon name="duplicate" size={18} />Duplicate</button>
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.move(); }}><Icon name="move" size={18} />Move to…</button>
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.favorite.toggle(); }}><Icon name="star" size={18} />{actions.favorite.on ? "Remove from Favorites" : "Add to Favorites"}</button>
+          {actions.duplicate ? <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.duplicate?.(); }}><Icon name="duplicate" size={18} />Duplicate</button> : null}
+          {actions.move ? <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.move?.(); }}><Icon name="move" size={18} />Move to…</button> : null}
+          {actions.favorite ? <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.favorite?.toggle(); }}><Icon name="star" size={18} />{actions.favorite.on ? "Remove from Favorites" : "Add to Favorites"}</button> : null}
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.exportPage(); }}><Icon name="export" size={18} />Export…</button>
           <div className="menu-sep" role="separator" />
         </>
@@ -512,10 +521,10 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
           </button>
         </>
       ) : null}
-      {actions ? (
+      {actions && (actions.trash || actions.stats || actions.edited) ? (
         <>
           <div className="menu-sep" role="separator" />
-          <button type="button" role="menuitem" className="menu-item danger" onClick={() => { onClose(); actions.trash(); }}><Icon name="trash" size={18} />Move to Trash</button>
+          {actions.trash ? <button type="button" role="menuitem" className="menu-item danger" onClick={() => { onClose(); actions.trash?.(); }}><Icon name="trash" size={18} />Move to Trash</button> : null}
           {actions.stats ? <p className="menu-foot t-meta" data-testid="page-menu-words">{count(actions.stats.words, "word")} · {count(actions.stats.characters, "character")}</p> : null}
           {actions.edited ? <p className="menu-foot t-meta" data-testid="page-menu-edited">{actions.edited}</p> : null}
         </>

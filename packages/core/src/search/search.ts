@@ -65,11 +65,28 @@ export function fold(s: string): string {
 
 const isPageLike = (b: Block) => b.type === "page" || b.type === "databasePage";
 
+const WORD_CHAR = /[\p{L}\p{N}]/u;
+const ALL_WORD_CHARS = /^[\p{L}\p{N}]+$/u;
+
+/** Beginnt in `title` ein Wort (Buchstaben/Ziffern) mit `t`? Wie `split(/[^\p{L}\p{N}]+/u).some(startsWith)`, ohne zu teilen (BSD-280). */
+function wordStartsWith(title: string, t: string): boolean {
+  if (!ALL_WORD_CHARS.test(t)) return title.split(/[^\p{L}\p{N}]+/u).some((w) => w.length > 0 && w.startsWith(t));
+  for (let i = title.indexOf(t); i >= 0; i = title.indexOf(t, i + 1)) {
+    if (i === 0) return true;
+    let j = i - 1;
+    const c = title.charCodeAt(j);
+    if (c >= 0xdc00 && c <= 0xdfff && j > 0) j -= 1; // Ersatzpaar: Zeichen davor ganz ansehen
+    if (!WORD_CHAR.test(String.fromCodePoint(title.codePointAt(j)!))) return true;
+  }
+  return false;
+}
+
 function titleScore(title: string, q: string, terms: string[]): number | undefined {
   if (title === q) return 100;
   if (title.startsWith(q)) return 80;
-  const words = title.split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 0);
-  if (terms.every((t) => words.some((w) => w.startsWith(t)))) return 60;
+  // Alle weiteren Stufen verlangen jeden Begriff im Titel – billig vorab prüfen (BSD-280).
+  if (!terms.every((t) => title.includes(t))) return undefined;
+  if (terms.every((t) => wordStartsWith(title, t))) return 60;
   if (title.includes(q)) return 45;
   if (terms.every((t) => title.includes(t))) return 35;
   return undefined;
@@ -418,6 +435,9 @@ export class SearchIndex implements SearchSource {
     };
     const recency = (b: Block) => Math.max(0, 10 - (now - b.updatedAt) / 86_400 / 3);
     const hits = new Map<string, SearchHit>();
+    // BSD-280: Ausschnitte erst für die zurückgegebenen Treffer bauen (sie ändern die Reihenfolge nicht); bei „p“
+    // in 27 000 Einträgen kostete das sonst den Großteil der Suche.
+    const snippetOf = new Map<string, () => string>();
     let n = 0;
     const tick = () => (++n & 4095) === 0 && cancelled();
     for (const [id, folded] of this.titles) {
@@ -439,21 +459,21 @@ export class SearchIndex implements SearchSource {
       for (const [page, e] of firstMatch) {
         const pb = blocks.get(page), b = blocks.get(e.blockID);
         if (!pb || !b || !allowed(pb)) continue;
-        const text = snippet(contentText(this, b), e.folded, terms[0]!);
+        snippetOf.set(page, () => snippet(contentText(this, b), e.folded, terms[0]!));
         const h = hits.get(page);
         if (h) {
-          h.snippet = text;
           h.blockID = e.blockID;
           h.score += 5;
         } else {
-          hits.set(page, { pageID: page, score: 20 + recency(pb), snippet: text, blockID: e.blockID });
+          hits.set(page, { pageID: page, score: 20 + recency(pb), blockID: e.blockID });
         }
       }
       for (const [id, folded] of this.rows) {
         if (tick()) return undefined;
         const b = blocks.get(id);
         if (hits.has(id) || !b || !allowed(b) || !terms.every((t) => folded.includes(t))) continue;
-        hits.set(id, { pageID: id, score: 15, snippet: snippet(rowText(b), folded, terms[0]!) });
+        hits.set(id, { pageID: id, score: 15 });
+        snippetOf.set(id, () => snippet(rowText(b), folded, terms[0]!));
       }
     }
     const out = [...hits.values()];
@@ -479,7 +499,12 @@ export class SearchIndex implements SearchSource {
         case "createdOldest": return date(a, true) - date(b, true) || byId(a, b);
       }
     });
-    return out.slice(0, limit);
+    const top = out.slice(0, limit);
+    for (const h of top) {
+      const make = snippetOf.get(h.pageID);
+      if (make) h.snippet = make();
+    }
+    return top;
   }
 
   /** Wie `run`, ohne Abbruch (Signatur wie Swift `SearchCorpus.search`). */

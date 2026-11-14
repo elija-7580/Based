@@ -98,6 +98,17 @@ test("Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235)", asyn
   await expect(nav.getByRole("button", { name: /^New page in/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Move to Trash" })).toHaveCount(0);
   await expect(page.getByTestId("sync-status")).toContainText("Shared link");
+  // BSD-402: kein „Share“, keine Favoriten; im „…“-Menü nur, was nicht schreibt
+  await expect(page.getByRole("button", { name: "Share", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Favorites$/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Page menu" }).click();
+  const pageMenu = page.getByRole("menu", { name: "Page menu" });
+  await expect(pageMenu.getByRole("menuitem", { name: "Copy link" })).toBeVisible();
+  await expect(pageMenu.getByRole("menuitem", { name: "Version history" })).toBeVisible();
+  for (const name of ["Duplicate", "Move to…", "Move to Trash", "Add to Favorites"]) await expect(pageMenu.getByRole("menuitem", { name })).toHaveCount(0);
+  await expect(pageMenu.getByRole("menuitemcheckbox", { name: /Lock page|Full width/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(pageMenu).toHaveCount(0);
   // Einstellungen → Sync & server: kein Server-Formular (der Link ist die Verbindung), nur der Hinweis
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
@@ -116,6 +127,13 @@ test("Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235)", asyn
         await page.waitForTimeout(150);
         await page.screenshot({ path: `../../docs/design/screens/web-guest-view-only-${theme}${suffix}.png` });
       }
+      // BSD-402: „…“-Menü des Gasts (nur Einträge, die nichts schreiben)
+      await page.setViewportSize({ width: 1280, height: 820 });
+      await page.getByRole("button", { name: "Page menu" }).click();
+      await expect(page.getByRole("menu", { name: "Page menu" })).toBeVisible();
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: `../../docs/design/screens/web-guest-view-only-menu-${theme}.png` });
+      await page.keyboard.press("Escape");
     }
   }
 });

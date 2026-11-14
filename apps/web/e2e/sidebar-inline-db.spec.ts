@@ -27,6 +27,9 @@ test("Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich al
   const child = page.locator('[role="treeitem"][aria-level="2"]');
   await expect(child).toHaveCount(1);
   await expect(page.getByText("No pages inside")).toHaveCount(0);
+  // BSD-391: die Zeile unter dem Titel zählt die Inline-Datenbank nicht als Unterseite
+  await expect(page.locator(".meta-line")).toContainText("Created");
+  await expect(page.locator(".meta-line")).not.toContainText("sub-page");
 
   if (SHOTS && browserName === "chromium") {
     for (const theme of ["light", "dark"] as const) {
