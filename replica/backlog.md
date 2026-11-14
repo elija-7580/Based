@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 33 (Nachtlauf 2026-11-12, TS-Stack, Abschnitt direkt unten; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 35 (Nachtlauf 2026-11-14, TS-Stack, Abschnitt direkt unten; Pass 33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -12,7 +12,22 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 
 | Anforderung | Status | Notiz |
 |---|---|---|
-| TS · Animationen komplett überarbeiten | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+| TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-14 (Pass 35, TS-Stack)
+
+Sieben Sammel-Merges, main = 64558736; jeweils run-ts --fast (typecheck, lint, Design-Wächter, Unit beider Formate, @smoke) und betroffene E2E in Chromium + WebKit grün.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-408 Volles E2E auf main rot (Blockmenü-Suche, ⇧Tab-Modus, editor-drag) | ✅ | Blockmenü/Seitenleiste wurden bei jedem Neuzeichnen neu eingehängt; Long-Poll setzte den Modus zurück |
+| BSD-404 Dependabot (vitest 4, vite 6.4.6, katex 0.18, minimatch 11) | ✅ | pnpm audit leer; glib (Tauri/gtk3) bleibt mit Grund offen |
+| BSD-403 Agent-Berechtigungen „fragt immer“ + Werkzeug-Aliasse wie Swift | ✅ | Fixture-Runner ohne die Abweichungen grün; Folge: 411 |
+| BSD-402 Gast mit Nur-Lesen-Link ohne Share/Schreib-Einträge | ✅ | guest.spec beide Browser |
+| BSD-407 BlockNote entfernen – Teil 1–2f | 🟡 | Lückenliste in docs/editor-parity.md; neuer Editor: Blockmenü-Suche, Copy as Markdown, Move to, Turn into page, [[, Bookmark, KaTeX inline, Bild per Link, Embed, PDF, Copy and sync, HTML-Vorschau. Offen: Teil 2g, 3 (Standard umschalten, Specs), 4 (löschen) |
+| BSD-391, 409, 412, 413, 415 | ✅ | Seitenzeile, Icon-Export, Design-Wächter-Parser, Blockmenü-Lage, Website-Aussagen (docs/website-claims.md) |
+| BSD-280 Teil 3–4, 260 Teil 10, 231 Teil 2b, 262 Teil 2a, 411 Teil 1 | 🟡 | Teile gelandet, Einträge bleiben Bereit |
+| BSD-416 WebKit: neue Seite fehlt nach sofortigem Neuladen | ❌ | P1, möglicher Datenverlust – nächste Nacht zuerst |
 
 ## Nachtlauf 2026-11-12 (Pass 33, TS-Stack)
 Zwei Schichten (A Kern & Server, B Oberfläche) 05:13–08:50, danach Kurzschichten A2/B2 bis 09:09, alles auf `main` = 11a86d8; nach jedem Merge geprüft: `pnpm -r typecheck`, `pnpm lint`, `pnpm -r test` (beide Datenformate; core 1674, brain 390, web 200+, server 150, editor 80, database-ui 64, sync 52, cli 19), Playwright gezielt + @smoke in Chromium und WebKit, zweimal voll (361 bzw. 378 grün, nur Wackler). CI neu (BSD-322): Merge-Check `ts-fast`, voller Lauf in 4 Shards, Zeitmessungen nicht blockierend, Status immer auf `ci-logs`.

@@ -602,4 +602,4 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - Fehler behoben: die Claude-Zusammenfassung ließ in jedem gelesenen Gespräch dauerhaft „… is thinking“ stehen.
 - Tests: server local/main, web connection, brain acp-history, E2E coding.spec (Chromium + WebKit); Screenshots web-chat-cli-*.
 - Checkliste: geprüft Chat mit CLI-Gespräch in 1280 × 820, 900 × 600, 1728 × 1000, hell und dunkel; behoben Kopfzeile bricht um statt die Herkunft zu verdrängen, linke Kante auf der Linie der Nachrichten; offen „Import chats from the Mac…“ ist in der Chat-Liste gekürzt (eigener Eintrag). Nicht am Mac geprüft.
-
+- Pass 35 · Nachtlauf 14.11. (TS-Stack): P0 rotes E2E behoben (BSD-408), Dependabot leer (vitest 4/vite 6.4.6), Agent-Berechtigungen wie Swift, BlockNote-Ablösung Teil 1–2f im neuen Editor, Gast nur lesen, Quick Find schneller; main 64558736.
