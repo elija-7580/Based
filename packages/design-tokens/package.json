@@ -14,5 +14,8 @@
     "css": "node scripts/build-css.ts",
     "typecheck": "tsc -p .",
     "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5"
   }
 }

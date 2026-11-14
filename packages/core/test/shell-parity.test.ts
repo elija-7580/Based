@@ -275,7 +275,8 @@ describe("Seitengraph", () => {
     l.settle(600);
     const b = l.bounds();
     expect(b.maxX - b.minX).toBeLessThan(40_000);
-  });
+    // Timeout statt 5 s: settle(600) braucht allein ~4 s auf 4 Kernen; das Budget prüft `per` oben (BSD-404).
+  }, 20_000);
 });
 
 describe("HTML- und Druck-Export", () => {
