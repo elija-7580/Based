@@ -1,61 +1,61 @@
-success 6a82cd84a7d5524ad8e0212321508ce9b0016866
-  2) [chromium] › e2e/editor-parity.spec.ts:269:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
+success 2d6efcda0bd3d63d53b510272193cba38bd52a06
+  ✓  134 [chromium] › e2e/editor-notion.spec.ts:255:1 › Blockmenü bleibt offen, wenn der Editor neu zeichnet (1.5s)
+  ✓  133 [chromium] › e2e/editor-parity.spec.ts:269:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (3.8s)
+  ✓  135 [chromium] › e2e/editor-notion.spec.ts:274:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (3.2s)
+  ✓  136 [chromium] › e2e/editor-parity.spec.ts:335:3 › alter Editor (BlockNote) › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (4.0s)
+  ✓  137 [chromium] › e2e/editor-notion.spec.ts:296:1 › Codeblock: Standard ohne Umbruch, „Wrap code“ bricht um und bleibt nach dem Neuladen (3.0s)
+  ✓  139 [chromium] › e2e/editor-notion.spec.ts:324:1 › Codeblock: Sprache wählen mit Suche (wie im alten Editor) (1.4s)
+  ✓  140 [chromium] › e2e/editor-notion.spec.ts:340:3 › alter Editor (BlockNote) › Formatleiste: kompaktes Feld, ganz im Fenster (1.8s)
+  -  141 [chromium] › e2e/editor-notion.spec.ts:375:1 › Fotos: Codeblock-Leiste
+  -  142 [chromium] › e2e/editor-notion.spec.ts:387:1 › Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI
+  ✓  138 [chromium] › e2e/editor-parity.spec.ts:428:3 › alter Editor (BlockNote) › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (6.3s)
+  ✓  143 [chromium] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert (3.7s)
+  ✓  145 [chromium] › e2e/editor-passthrough.spec.ts:151:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records (4.2s)
+  ✓  144 [chromium] › e2e/editor-parity.spec.ts:492:3 › alter Editor (BlockNote) › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (8.4s)
+  ✓  147 [chromium] › e2e/editor-parity.spec.ts:587:3 › alter Editor (BlockNote) › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (4.0s)
+  ✓  148 [chromium] › e2e/editor-parity.spec.ts:615:3 › alter Editor (BlockNote) › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (3.8s)
+  ✓  149 [chromium] › e2e/editor-parity.spec.ts:634:3 › alter Editor (BlockNote) › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (4.3s)
+  ✓  150 [chromium] › e2e/editor-parity.spec.ts:677:3 › alter Editor (BlockNote) › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (2.2s)
+  ✓  146 [chromium] › e2e/editor-polish.spec.ts:55:1 › Editor in Ruhe und in seinen Zuständen (17.1s)
+  ✓  152 [chromium] › e2e/editor-polish.spec.ts:142:1 › Links und Häkchen im Editor ohne Browser-Blau (1.5s)
+  ✓  153 [chromium] › e2e/editor-polish.spec.ts:164:1 › Blockfarben im Dunkelmodus aus den Tokens (1.5s)
+  ✓  151 [chromium] › e2e/editor-parity.spec.ts:701:3 › alter Editor (BlockNote) › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (4.4s)
+  ✓  154 [chromium] › e2e/editor-select.spec.ts:81:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (2.2s)
+  ✓  156 [chromium] › e2e/editor-select.spec.ts:117:1 › Blockauswahl reicht bis unter schwebende Leisten (1.6s)
+  ✓  157 [chromium] › e2e/editor-select.spec.ts:147:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (1.9s)
+  ✓  155 [chromium] › e2e/editor-parity.spec.ts:751:3 › alter Editor (BlockNote) › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (5.2s)
+  ✓  158 [chromium] › e2e/editor-select.spec.ts:167:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (2.7s)
+  ✓  160 [chromium] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (977ms)
+  ✓  159 [chromium] › e2e/editor-parity.spec.ts:780:3 › alter Editor (BlockNote) › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (4.1s)
+  ✓  161 [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (2.0s)
+  ✓  163 [chromium] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (2.0s)
+  ✓  162 [chromium] › e2e/editor-parity.spec.ts:831:3 › alter Editor (BlockNote) › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (3.8s)
+  ✓  164 [chromium] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (4.0s)
+  ✓  165 [chromium] › e2e/editor-parity.spec.ts:864:3 › alter Editor (BlockNote) › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (3.8s)
+  ✓  166 [chromium] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (2.1s)
+  ✓  167 [chromium] › e2e/editor-parity.spec.ts:899:3 › alter Editor (BlockNote) › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (3.3s)
+  ✓  168 [chromium] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (2.5s)
+  ✓  170 [chromium] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (2.0s)
+  ✓  169 [chromium] › e2e/editor-parity.spec.ts:941:3 › alter Editor (BlockNote) › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (4.4s)
+  ✓  171 [chromium] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (2.4s)
+  ✓  173 [chromium] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (2.2s)
+  ✓  172 [chromium] › e2e/editor-parity.spec.ts:975:3 › alter Editor (BlockNote) › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (3.6s)
+(node:11058) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  174 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (3.9s)
+  ✓  175 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.2s)
+  ✓  177 [chromium] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (1.9s)
+  ✓  176 [chromium] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (3.8s)
+  ✓  178 [chromium] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (2.2s)
+  ✓  180 [chromium] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.1s)
+  ✓  181 [chromium] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.2s)
+  ✓  179 [chromium] › e2e/hangs.spec.ts:74:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (6.6s)
+  ✓  182 [chromium] › e2e/hangs.spec.ts:111:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (10.2s)
+  ✓  183 [chromium] › e2e/hangs.spec.ts:136:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (3.5s)
+hang monitor idle: 100 ticks in 5003 ms, 2.20 ms busy (0.044 %)
+  ✓  184 [chromium] › e2e/hangs.spec.ts:152:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (5.9s)
+  ✓  185 [chromium] › e2e/hangs.spec.ts:163:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (4.2s)
+  ✓  186 [chromium] › e2e/hangs.spec.ts:189:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (2.2s)
 
-    Error: expect(locator).toHaveCount(expected) failed
-
-    Locator:  getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
-    Expected: 1
-    Received: 2
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "toHaveCount" getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' }) with timeout 5000ms
-      - waiting for getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
-        14 × locator resolved to 2 elements
-           - unexpected value "2"
-
-
-      292 |   // ein Klick = Undo-Schritt
-      293 |   await page.keyboard.press("ControlOrMeta+z");
-    > 294 |   await expect(outside()).toHaveCount(1);
-          |                           ^
-      295 |   await page.keyboard.press("ControlOrMeta+Shift+z");
-      296 |   await expect(outside()).toHaveCount(2);
-      297 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:294:27
-
-    Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium/error-context.md
-
-  3) [chromium] › e2e/hangs.spec.ts:111:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing 
-
-    Error: expect(locator).toContainText(expected) failed
-
-    Locator: getByTestId('settings-section-diagnostics-problems')
-    Expected substring: "Based hung for more than 2 s during route settings and was then closed or reloaded."
-    Received string:    "ProblemsLast sessionBased hung for more than 3 s during route settings and was then closed or reloaded.Ended in a hangWarningsLast: Based didn't close normally last time (last sign of life 2026-11-14 12:37 UTC, last activity: route settings, memory 20 MB).1"
-    Timeout: 5000ms
-
-    Call log:
-      - Expect "toContainText" getByTestId('settings-section-diagnostics-problems') with timeout 5000ms
-      - waiting for getByTestId('settings-section-diagnostics-problems')
-        14 × locator resolved to <div data-gap="2" data-direction="vertical" data-testid="settings-section-diagnostics-problems" class="astryx-stack x78zum5 xdt5ytf xak3so x1x7z4sm">…</div>
-           - unexpected value "ProblemsLast sessionBased hung for more than 3 s during route settings and was then closed or reloaded.Ended in a hangWarningsLast: Based didn't close normally last time (last sign of life 2026-11-14 12:37 UTC, last activity: route settings, memory 20 MB).1"
-
-
-      128 |   }
-      129 |   await expect(problems.getByTestId("diagnostics-last-session")).toHaveText("Ended in a hang", { timeout: 15_000 });
-    > 130 |   await expect(problems).toContainText("Based hung for more than 2 s during route settings and was then closed or reloaded.");
-          |                          ^
-      131 |   const prev = next.getByTestId("settings-section-diagnostics-hangs").getByTestId("hang-session").first();
-      132 |   await prev.getByRole("button", { name: "Show hangs" }).click();
-      133 |   await expect(prev.getByTestId("hang-item").first()).toContainText("still blocked when the session ended");
-        at /home/runner/work/Based/Based/apps/web/e2e/hangs.spec.ts:130:26
-
-    Error Context: test-results/hangs-Fenster-mitten-im-Hä-84cf4-hste-Start-zeigt-wo-es-hing-chromium/error-context.md
-
-  3 flaky
-    [chromium] › e2e/editor-drag.spec.ts:230:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-    [chromium] › e2e/editor-parity.spec.ts:269:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
-    [chromium] › e2e/hangs.spec.ts:111:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing 
   9 skipped
-  173 passed (6.6m)
+  177 passed (5.9m)
