@@ -1821,6 +1821,26 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
   const act = (f: () => void) => () => { f(); onClose(); };
   const turnable = ids.every((x) => cmd.isTextBlock(store.blocks.get(x)));
   const style = { left: x + 8, top: Math.min(y, window.innerHeight - 360) };
+  // Feinschliff: das Menü liegt links neben dem Griff (wie Notion) und verdeckt den eigenen Block nicht; ist links kein
+  // Platz (schmales Fenster), dann unter der Zeile. Immer ganz im Fenster.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const pad = 8;
+    const m = el.getBoundingClientRect();
+    const row = el.ownerDocument.querySelector(`[data-block-id="${CSS.escape(id)}"] > .bx2-row`)?.getBoundingClientRect();
+    const vw = el.ownerDocument.documentElement.clientWidth;
+    const vh = el.ownerDocument.documentElement.clientHeight;
+    let left = x - pad - m.width;
+    let top = row ? row.top : y;
+    if (left < pad) {
+      left = Math.min(Math.max(pad, x - pad), vw - m.width - pad);
+      top = row ? row.bottom + 4 : y + pad;
+    }
+    top = Math.max(pad, Math.min(top, vh - m.height - pad));
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+  }, [id, x, y, view]);
   if (view === "color") {
     const current = typeof b?.props?.color === "string" ? b.props.color : "default";
     const item = (c: string, label: string) => (

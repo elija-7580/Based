@@ -537,7 +537,7 @@ test("Blockmenü: Suchfeld filtert, Enter führt aus, Copy as Markdown", async (
 
 // BSD-407 Checkliste: Blockmenü mit Suchfeld in drei Größen, hell und dunkel; nichts läuft aus dem Fenster.
 test("Blockmenü-Fotos: Suchfeld, gefiltert, leer", async ({ page, browserName }) => {
-  test.skip(browserName !== "chromium", "Fotos nur einmal (die Bedienung prüft der Test oben in beiden Browsern)");
+  test.skip(browserName !== "chromium", "Fotos und Lage nur einmal (die Bedienung prüft der Test oben in beiden Browsern)");
   await newPage(page);
   await startTyping(page);
   await page.keyboard.type("A heading to open the block menu on");
@@ -556,6 +556,11 @@ test("Blockmenü-Fotos: Suchfeld, gefiltert, leer", async ({ page, browserName }
       const box = (await menu.boundingBox())!;
       expect(box.y + box.height).toBeLessThanOrEqual(h + 1);
       expect(box.x + box.width).toBeLessThanOrEqual(w + 1);
+      // Feinschliff: das Menü verdeckt den eigenen Block nicht
+      const row = (await first.locator(":scope > .bx2-row").boundingBox())!;
+      const overlap = box.x < row.x + row.width && row.x < box.x + box.width && box.y < row.y + row.height && row.y < box.y + box.height;
+      expect(overlap).toBe(false);
+      expect(box.x).toBeGreaterThanOrEqual(0);
       const shot = async (name: string) => {
         await page.waitForTimeout(200);
         if (browserName === "chromium" && process.env.BASED_SCREENSHOTS === "1") await page.screenshot({ path: `../../docs/design/screens/web-block-editor-menu-${name}-${theme}-${w}x${h}.png` });
