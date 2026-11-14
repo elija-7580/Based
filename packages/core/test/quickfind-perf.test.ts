@@ -73,4 +73,13 @@ describe("Quick Find (BSD-280)", () => {
     expect(score("pre-launch")).toEqual({ a: 90 });
     expect(score("2026 lau")).toEqual({ c: 70 });
   });
+
+  it("nur die besten Kandidaten sortieren ändert nichts am Ergebnis (Gleichstände an der Grenze)", () => {
+    const recs = Array.from({ length: 600 }, (_, i) => ({ kind: "block", data: {
+      id: "q" + String(i).padStart(3, "0"), type: "page", parent: "w", sk: "a" + i, text: i % 7 === 0 ? "item" : `Item ${i % 50} notes`,
+      createdAt: 0, updatedAt: -86_400 * 3 * (i % 11), stamp } } as WireRecord));
+    const idx = SearchIndex.fromRecords(recs);
+    const full = idx.run("item", { limit: 1000, now: 0 })!;
+    for (const limit of [1, 5, 30, 100]) expect(idx.run("item", { limit, now: 0 })).toEqual(full.slice(0, limit));
+  });
 });
