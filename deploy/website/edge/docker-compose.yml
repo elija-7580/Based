@@ -1,0 +1,28 @@
+# basednotes.app on a server that already has a shared edge Caddy (container "edge-caddy" on network "edge").
+# Only the waitlist service runs here; edge-caddy serves the static site and proxies /api/*.
+services:
+  waitlist:
+    image: node:22-alpine
+    container_name: basednotes-waitlist
+    restart: unless-stopped
+    working_dir: /app
+    command: ["node", "--no-warnings", "waitlist.mjs"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    environment:
+      WAITLIST_DB: /data/waitlist.sqlite
+      PORT: "8790"
+      TZ: Europe/Vienna
+    volumes:
+      - ../../../apps/website/server/waitlist.mjs:/app/waitlist.mjs:ro
+      - waitlist-data:/data
+    networks: [edge]
+volumes:
+  waitlist-data:
+    name: basednotes_waitlist-data
+networks:
+  edge:
+    external: true
+    name: edge

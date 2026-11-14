@@ -217,6 +217,8 @@ importers:
         specifier: ^6.4.6
         version: 6.4.6(@types/node@22.20.5)(jiti@2.7.0)(tsx@4.23.15)
 
+  apps/website: {}
+
   packages/brain:
     dependencies:
       '@based/core':

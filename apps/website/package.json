@@ -1,0 +1,12 @@
+{
+  "name": "@based/website",
+  "private": true,
+  "description": "basednotes.app: the marketing site (static, built from the design artboards) and the small waitlist service",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "waitlist": "node server/waitlist.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

@@ -1,0 +1,36 @@
+# basednotes.app on one small server (e.g. Hetzner CX22, location Nuremberg or Falkenstein).
+#   cd deploy/website && cp .env.example .env && docker compose up -d
+# The site itself is the prebuilt folder apps/website/public (git pull updates it).
+services:
+  waitlist:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: ["node", "--no-warnings", "waitlist.mjs"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    environment:
+      WAITLIST_DB: /data/waitlist.sqlite
+      PORT: "8790"
+      TZ: Europe/Vienna
+    volumes:
+      - ../../apps/website/server/waitlist.mjs:/app/waitlist.mjs:ro
+      - waitlist-data:/data
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?your email for Let's Encrypt}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../apps/website/public:/srv/site:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [waitlist]
+volumes:
+  waitlist-data:
+  caddy-data:
+  caddy-config:

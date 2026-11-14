@@ -11,16 +11,23 @@ import { hrefOf, optionTone, storedFiles } from "../logic/values.js";
 import { Icon, type Anchor } from "../ui.js";
 import { CardBody, cardProperties, EmptyState, GroupHeader, groupProperty, RowMenu, useAddRow } from "./shared.js";
 
-const LIST_ROW = 40;
+const LIST_ROW = 32;
 const GROUP_ROW = 44;
 
-const ListRow = memo(function ListRow({ row, props, agent, onMenu }: { row: Block; props: PropertySchema[]; agent: boolean; onMenu: (row: Block, el: HTMLElement) => void }) {
+/** Liste wie Notion: Seiten-Icon (Emoji oder Seite) vor dem Namen, keine Tabellenlinien. */
+function RowIcon({ row }: { row: Block }) {
+  const icon = row.props?.icon;
+  const emoji = typeof icon === "string" ? icon : (icon as { emoji?: string } | undefined)?.emoji;
+  return <span className="dbui-list-icon" aria-hidden>{emoji ?? <Icon name="file" size={16} />}</span>;
+}
+
+const ListRow = memo(function ListRow({ row, props, agent, icons, onMenu }: { row: Block; props: PropertySchema[]; agent: boolean; icons: boolean; onMenu: (row: Block, el: HTMLElement) => void }) {
   const { db, onOpenPage } = useDB();
   const title = propertyOf(db, "title") ?? db.properties.find((p) => p.type === "title")!;
   return (
     <div className="dbui-list-row" role="listitem" data-row-id={row.id} onContextMenu={(e) => { e.preventDefault(); onMenu(row, e.currentTarget); }}>
       {agent ? <span className="dbui-agent-bar" role="img" aria-label="Changed by Based" /> : <span className="dbui-agent-bar off" aria-hidden />}
-      <button type="button" className="dbui-list-title" onClick={() => onOpenPage?.(row.id)}><CellView row={row} prop={title} /></button>
+      <button type="button" className="dbui-list-title" onClick={() => onOpenPage?.(row.id)}>{icons && <RowIcon row={row} />}<CellView row={row} prop={title} /></button>
       <span className="dbui-list-props">
         {props.map((p) => <span key={p.id} className="dbui-list-prop" title={p.name}><CellView row={row} prop={p} compact /></span>)}
       </span>
@@ -104,7 +111,7 @@ export function ListLayout({ view, result }: { view: DatabaseView; result: Query
       <Virtual items={items} label={view.name} testID="list-scroll" estimate={(it) => (it.kind === "group" ? GROUP_ROW : LIST_ROW)} render={(it) => {
         if (it.kind === "group") return <GroupHeader group={it.group} prop={gp} collapsed={it.collapsed} onToggle={() => toggle(it.group.id)} />;
         if (it.kind === "new") return <button type="button" className="dbui-new-row" onClick={() => addRow(it.groupID)}><Icon name="plus" size={14} />New</button>;
-        if (it.kind === "row") return <ListRow row={it.row} props={props} agent={isAgentEdit(it.row)} onMenu={onMenu} />;
+        if (it.kind === "row") return <ListRow row={it.row} props={props} agent={isAgentEdit(it.row)} icons={view.showIcons !== false} onMenu={onMenu} />;
         return null;
       }} />
       {result.rows.length === 0 && <EmptyState>No pages.</EmptyState>}

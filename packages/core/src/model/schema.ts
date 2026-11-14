@@ -270,6 +270,8 @@ export const databaseView = z.looseObject({
   properties: z.array(viewProperty).optional(), calculations: z.record(z.string(), calculationType).optional(),
   datePropertyID: z.string().optional(), endDatePropertyID: z.string().optional(), cardCover: cardCover.optional(),
   cardSize: cardSize.optional(), wrapCells: z.boolean().optional(), openIn: openMode.optional(), showIcons: z.boolean().optional(),
+  /** Titel der Datenbank inline zeigen (fehlt = ja); nur der TS-Stack kennt das Feld. */
+  showTitle: z.boolean().optional(),
   loadLimit: int.optional(), chart: chartConfig.optional(), mapPropertyID: z.string().optional(), mapHeight: z.string().optional(),
   dashboard: dashboardConfig.optional(), widgetOf: recordID.optional(), sortKey: z.string(),
   createdAt: swiftDate, updatedAt: swiftDate, stamp,

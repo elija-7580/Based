@@ -247,13 +247,15 @@
 /* Liste und Galerie */
 .dbui-vlist { position: relative; margin: 0 var(--space-6); }
 .dbui-vitem { position: absolute; top: 0; left: 0; width: 100%; }
+/* Liste wie Notion: eine Seite je Zeile, keine Tabellenlinien – nur eine weiche Fläche beim Überfahren. */
 .dbui-list-row {
-  position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-7); padding: 0 var(--space-2) 0 var(--space-4);
-  border-bottom: 1px solid var(--line);
+  position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-6); padding: 0 var(--space-2) 0 var(--space-3);
+  border-radius: var(--radius-sm);
 }
 .dbui-list-row:hover { background: var(--surface-soft); }
 .dbui-list-row .dbui-agent-bar { left: 0; }
-.dbui-list-title { flex: 1; min-width: 0; border: 0; background: transparent; padding: 0; text-align: left; display: flex; font-weight: var(--type-meta-weight); }
+.dbui-list-title { flex: 1; min-width: 0; border: 0; background: transparent; padding: 0; text-align: left; display: flex; align-items: center; gap: var(--space-2); font-weight: var(--type-meta-weight); }
+.dbui-list-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--space-5); color: var(--muted); line-height: 1; }
 .dbui-list-props { display: flex; gap: var(--space-3); align-items: center; min-width: 0; overflow: hidden; color: var(--ink-2); font-size: var(--type-description-size); }
 .dbui-list-prop { display: inline-flex; max-width: calc(var(--space-8) * 3); overflow: hidden; }
 .dbui-gallery-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -668,3 +670,13 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 /* Fußzeile überall ohne Trennlinie (Entscheidung 14. 11.): sonst stand unter jeder Tabelle ein leerer, umrandeter Streifen. */
 .dbui-tfoot { border-top: 0; }
 .dbui-root.inline .dbui-vrow.group { background: transparent; }
+
+/* Inline-Liste: keine Linie unter der Werkzeugleiste, Zeilen hängen ihren Innenabstand links heraus (Namen bündig mit
+   dem Seitentext); „+ New“ steht auf derselben Kante wie die Namen. */
+.dbui-root.inline:has(> .dbui-body[data-view-type="list"]) .dbui-toolbar { border-bottom: 0; }
+.dbui-root.inline .dbui-body[data-view-type="list"] .dbui-vlist { margin-left: calc(-1 * var(--space-3)); }
+.dbui-body[data-view-type="list"] .dbui-new-row { height: var(--space-6); gap: var(--space-3); padding-left: calc(var(--space-3) + var(--space-1)); border-radius: var(--radius-sm); }
+/* Titel ausgeblendet („Show database title“ aus): auch die Werkzeugleiste tritt zurück – ohne Linie, unsichtbar bis zum
+   Überfahren oder Fokus. Ihr Platz bleibt, damit beim Überfahren nichts springt. */
+.dbui-root.inline .dbui-head.untitled .dbui-toolbar { border-bottom: 0; opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.dbui-root.inline:is(:hover, :focus-within) .dbui-head.untitled .dbui-toolbar { opacity: 1; }

@@ -1,5 +1,6 @@
 // BSD-155: Einstellungen einer Ansicht (Swift ViewSettingsView): Name, Layout, Properties, Gruppierung,
 // Karten, Diagramm, Dashboard-Widgets, Sperre, Duplizieren/Löschen. Alles über Store-Transaktionen.
+import { useContext } from "react";
 import { CHART_THEMES } from "../layouts/Chart.js";
 import {
   CALENDAR_PROPERTY_TYPES, DASHBOARD_COLUMNS, PROPERTY_TYPE_LABELS, TIMELINE_SCALES, calendarDateProperty, addDashboardWidget, deleteView, duplicateView, movePropertyInView, removeDashboardWidget,
@@ -7,7 +8,7 @@ import {
   setViewType, updateChart, updateView, visiblePropertyIDs, valueCase, WIDGET_TYPES,
   type DatabaseView,
 } from "@based/core";
-import { useDB } from "../context.js";
+import { InlineView, useDB } from "../context.js";
 import { openModeOf } from "../logic/peek.js";
 import { MAP_HEIGHTS } from "../map/geo.js";
 import { mapProperty } from "../layouts/Map.js";
@@ -276,6 +277,7 @@ export function ViewSettings({ view, anchor, onClose, groups, onDeleted }: {
 }) {
   const { store, db } = useDB();
   const isWidget = view.widgetOf !== undefined;
+  const inline = useContext(InlineView) !== null && !isWidget;
   return (
     <Popover anchor={anchor} onClose={onClose} className="dbui-view-settings" label="View settings">
       <label className="dbui-field"><span className="dbui-field-label">Name</span>
@@ -300,6 +302,7 @@ export function ViewSettings({ view, anchor, onClose, groups, onDeleted }: {
           {(view.type === "board" || view.type === "gallery") && <CardSection view={view} />}
           <section className="dbui-config-section" aria-label="Display">
             {view.type === "table" && <Toggle label="Wrap all content" checked={view.wrapCells === true} onChange={(on) => updateView(store, view.id, (v) => { if (on) v.wrapCells = true; else delete v.wrapCells; }, "Wrap cells")} />}
+            {inline && <Toggle label="Show database title" checked={view.showTitle !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showTitle; else v.showTitle = false; }, "Database title")} />}
             <Toggle label="Show page icon" checked={view.showIcons !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showIcons; else v.showIcons = false; }, "Icons")} />
             <label className="dbui-field"><span className="dbui-field-label">Open pages in</span>
               <select className="dbui-select" aria-label="Open pages in" value={openModeOf(view)} onChange={(e) => updateView(store, view.id, (v) => { v.openIn = e.target.value; }, "Open pages in")}>
