@@ -3,11 +3,12 @@
 // (packages/core/src/bugReport.ts); hier nur, was der Browser liefert.
 import {
   buildBugBundle, bundleID, InputRecorder, type BugApp, type BugBundle, type BugEnv, type BugState, type LayoutItem, type Mods, type RecordedEvent,
-  type RecordedInput, type SelectionInfo,
+  type HangReport, type RecordedInput, type SelectionInfo,
 } from "@based/core";
 import { applyStepsJSON, loadDocJSON, setEditorProbe, setSelectionJSON, type EditorProbeTarget } from "@based/editor";
 import { isTauri } from "../desktop.js";
 import { diagnosticsLog } from "./diagnostics.js";
+import { hangBundle } from "./hangs.js";
 
 /** Ab Build (vite.config.ts): Version der App und Commit. */
 export const BUILD = { version: __BASED_VERSION__, commit: __BASED_COMMIT__ };
@@ -255,6 +256,8 @@ export interface FrozenReport {
   env: BugEnv;
   app: BugApp;
   log: ReturnType<typeof diagnosticsLog.getSnapshot>;
+  /** BSD-418: Hänger dieser und früherer Sitzungen. */
+  hangs?: HangReport;
 }
 
 /** Den Zustand jetzt einfrieren (synchron, bevor der Dialog etwas verändert). */
@@ -283,7 +286,7 @@ export function freezeReport(win: Window = globalThis as unknown as Window): Fro
     platform: (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ?? navigator.platform, userAgent: navigator.userAgent,
   };
   // erst nach dem Zustand: das Layout liest Rahmen (kann einen Layout-Durchlauf auslösen, ändert aber nichts)
-  return { at: Date.now(), events: recorder.snapshot(), state, layout: layoutSnapshot(win), env, app, log: diagnosticsLog.getSnapshot() };
+  return { at: Date.now(), events: recorder.snapshot(), state, layout: layoutSnapshot(win), env, app, log: diagnosticsLog.getSnapshot(), hangs: hangBundle() };
 }
 
 /** Bildschirmfoto des Fensters (DOM gerastert; der Melde-Dialog bleibt draußen). Scheitert still → undefined. */
@@ -307,7 +310,7 @@ export async function captureScreenshot(win: Window = globalThis as unknown as W
 export function makeBundle(f: FrozenReport, note: string, opts: { realText: boolean; screenshot: boolean }): BugBundle {
   return buildBugBundle({
     id: bundleID(f.at), now: f.at, note, realText: opts.realText, ...(opts.screenshot ? { screenshot: "screenshot.png" } : {}),
-    app: f.app, env: f.env, state: f.state, layout: f.layout, events: f.events, log: f.log,
+    app: f.app, env: f.env, state: f.state, layout: f.layout, events: f.events, log: f.log, ...(f.hangs ? { hangs: f.hangs } : {}),
   });
 }
 

@@ -2,10 +2,11 @@
 // Ebenen als Rahmen mit z-index, die letzten Ereignisse der Aufzeichnung. Fängt keine Klicks ab und landet weder im
 // Layout-Schnappschuss noch im Bildschirmfoto eines Berichts.
 import type { LayoutItem, RecordedEvent } from "@based/core";
-import { scrambleText } from "@based/core";
+import { formatHangMs, scrambleText } from "@based/core";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { layoutSnapshot, onRecorded, REPORT_EXCLUDE } from "../shell/bugReport.js";
 import { devViewPref } from "../shell/storage.js";
+import { hangMonitor } from "../shell/hangs.js";
 
 const summary = (e: RecordedEvent): string => {
   switch (e.kind) {
@@ -30,6 +31,8 @@ export function DevOverlay() {
   const on = useSyncExternalStore(devViewPref.subscribe, devViewPref.get);
   const [events, setEvents] = useState<string[]>([]);
   const [layers, setLayers] = useState<LayoutItem[]>([]);
+  // BSD-418: der letzte Hänger live (Dauer, Quelle, Aktivität, Ursache)
+  const lastHang = useSyncExternalStore(hangMonitor.subscribe, hangMonitor.getSnapshot).at(-1);
   useEffect(() => {
     const root = document.documentElement;
     if (!on) {
@@ -57,6 +60,7 @@ export function DevOverlay() {
       ))}
       <div className="dev-events" data-testid="dev-events">
         <div className="dev-events-head">Developer view · last events</div>
+        {lastHang ? <div className="dev-event" data-testid="dev-last-hang">{`Last hang ${formatHangMs(lastHang.ms)} · ${lastHang.source}${lastHang.activity ? ` · ${lastHang.activity}` : ""}${lastHang.culprit ? ` · ${lastHang.culprit}` : ""}`}</div> : null}
         {events.length === 0 ? <div className="dev-event">Type or click in a page</div> : events.map((e, i) => <div key={i} className="dev-event">{e}</div>)}
       </div>
     </div>

@@ -23,7 +23,7 @@ export function CrashReportPrompt() {
   };
   const lines = report.log.length;
   return (
-    <BasedDialog open onClose={close} width={520} title={report.kind === "crash" ? "Based didn’t close normally" : "Based froze last time"}
+    <BasedDialog open onClose={close} width={520} title={report.kind === "hang" ? "Based hung and was closed" : report.kind === "crash" ? "Based didn’t close normally" : "Based froze last time"}
       subtitle="Prepare a report for the beta? It holds no pages, titles or text."
       actions={<>
         <BasedButton label={status === "copied" || status.startsWith("saved:") ? "Done" : "Not now"} variant="ghost" onClick={close} />
@@ -34,7 +34,7 @@ export function CrashReportPrompt() {
         <Text type="body" display="block" data-testid="crash-report-summary">{crashReportSummary(report)}</Text>
         {/* Offen zeigt die Vorschau genau, was drinsteht – dann ersetzt sie die Beschreibung (Aktionen bleiben im Fenster). */}
         {preview ? null : <Text type="supporting" color="secondary" display="block">
-          {`Included: app version, platform, when the session started and stopped, freezes, and the last ${lines} diagnostics line${lines === 1 ? "" : "s"} with names and quoted text removed. Sending from the app isn’t available yet — save the file or copy it and pass it on.`}
+          {`Included: app version, platform, when the session started and stopped, freezes${report.hang ? ", the hang with the steps before it" : ""}, and the last ${lines} diagnostics line${lines === 1 ? "" : "s"} with names and quoted text removed. Sending from the app isn’t available yet — save the file or copy it and pass it on.`}
         </Text>}
         {status.startsWith("saved:") ? <Text type="supporting" display="block" data-testid="crash-report-saved">{`Saved · ${status.slice(6)}`}</Text> : null}
         <HStack><BasedButton label={preview ? "Hide report" : "Show report"} variant="ghost" onClick={() => setPreview((p) => !p)} /></HStack>

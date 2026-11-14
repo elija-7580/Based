@@ -15,7 +15,7 @@ import {
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController, TextAlignButton,
   ComponentsContext, useBlockNoteEditor, useComponentsContext, useSelectedBlocks, useExtensionState, usePortalElement, type DefaultReactSuggestionItem, type SideMenuProps,
 } from "@blocknote/react";
-import { type BookmarkMeta, createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { type BookmarkMeta, createDatabase, noteBreadcrumb, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import type { ResolvedPos } from "prosemirror-model";
 import { createContext, createElement, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
@@ -916,7 +916,8 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     });
   }
   const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/^(Heading [56]|Toggle Heading [56]|Emoji|Page Break)$/i.test(i.title));
-  return groupContiguous([...defaults, ...custom]);
+  // BSD-418: gewählter Befehl als Breadcrumb für die Hänger-Analyse (fester Menüname, kein Inhalt)
+  return groupContiguous([...defaults, ...custom]).map((i) => ({ ...i, onItemClick: () => { noteBreadcrumb(`slash ${i.title}`); i.onItemClick(); } }));
 }
 
 /**
