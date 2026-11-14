@@ -54,15 +54,26 @@ function isWrite(req: Request): boolean {
   return !(req.type === "command" && typeof op === "string" && READ_COMMANDS.has(op));
 }
 
+const SLOW_REQUEST_MS = 1000;
+const now = () => globalThis.performance?.now() ?? Date.now();
+/** BSD-418: Name einer Anfrage für die Hänger-Analyse – Art und Operation, nie Inhalte. */
+export function requestName(req: Request): string {
+  const r = req as { type: string; op?: unknown; command?: { op?: unknown }; action?: { op?: unknown } };
+  const op = r.command?.op ?? r.action?.op ?? r.op;
+  return typeof op === "string" && /^[A-Za-z][\w-]{0,40}$/.test(op) ? `${r.type} ${op}` : r.type;
+}
+
 export class StoreClient {
   private nextID = 1;
-  private pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+  private pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void; t0: number; req: Request }>();
   private listeners = new Set<() => void>();
   private state: ShellState = INITIAL;
   private replicas = new Map<string, PageReplica>();
   private lastSearch: number | undefined;
   /** Neue Gerätekennung (der Hauptthread speichert sie). */
   onDevice: ((node: string) => void) | undefined;
+  /** BSD-418: Anfrage brauchte über 1 s (Operationsname ohne Inhalte, monotone Zeiten) – Hänger-Analyse. */
+  onSlowRequest: ((op: string, t0: number, t1: number) => void) | undefined;
 
   constructor(private readonly endpoint: Endpoint<Event, RequestMessage>) {
     endpoint.addEventListener("message", this.onMessage);
@@ -138,6 +149,10 @@ export class StoreClient {
         if (!p) return;
         this.pending.delete(ev.id);
         this.writes.delete(ev.id);
+        if (this.onSlowRequest) {
+          const t1 = now();
+          if (t1 - p.t0 >= SLOW_REQUEST_MS) this.onSlowRequest(requestName(p.req), p.t0, t1);
+        }
         if (ev.ok) p.resolve(ev.result);
         else p.reject(ev.cancelled ? new RequestCancelled() : new Error(ev.error));
         this.checkSettled();
@@ -165,7 +180,7 @@ export class StoreClient {
   request<T>(req: Request): Promise<T> {
     const id = this.nextID++;
     return new Promise<T>((resolve, reject) => {
-      this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
+      this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject, t0: now(), req });
       if (isWrite(req)) this.writes.add(id);
       this.endpoint.postMessage({ ...req, id } as RequestMessage);
     });

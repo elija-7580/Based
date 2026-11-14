@@ -183,7 +183,7 @@ export function startStallDetector(o: StallDetectorOptions): () => void {
 export interface ReportFacts { [name: string]: string | number | boolean | undefined }
 
 /** Bericht als Text: Fakten, vorige Sitzung, Log. Enthält keine Seiteninhalte (Log ist bereits geschwärzt). */
-export function buildReport(facts: ReportFacts, previous: SessionRecord | undefined, log: readonly DiagnosticsEntry[], now: number): string {
+export function buildReport(facts: ReportFacts, previous: SessionRecord | undefined, log: readonly DiagnosticsEntry[], now: number, extra: readonly string[] = []): string {
   const lines = [`Based diagnostics · ${new Date(now).toISOString()}`, ""];
   for (const [k, v] of Object.entries(facts)) if (v !== undefined) lines.push(`${k}: ${redact(String(v))}`);
   lines.push("");
@@ -194,6 +194,8 @@ export function buildReport(facts: ReportFacts, previous: SessionRecord | undefi
       for (const e of previous.log) lines.push("  " + formatEntry({ ...e, message: redact(e.message) }));
     }
   } else lines.push("previous session: none recorded");
+  // BSD-418: weitere Abschnitte (Hänger) vor dem Log
+  if (extra.length) lines.push("", ...extra);
   lines.push("", `log (${log.length} entries):`);
   for (const e of log) lines.push(formatEntry(e));
   return lines.join("\n") + "\n";

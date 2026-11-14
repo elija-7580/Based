@@ -50,7 +50,8 @@ run_suite() {
   echo "== Swift-Client gegen $label ($url)"
   (cd "$PKG" && BASED_COMPAT_SERVER_URL="$url" BASED_COMPAT_SERVER_TOKEN="$TOKEN" \
     swift test --skip-build --filter ExternalServerCompatTests 2>&1) | tee "$WORK/$label.log" | grep -E "✔|✘|passed|failed|error" || true
-  if ! grep -q "Test run with .* passed" "$WORK/$label.log"; then
+  # „passed“ allein reicht nicht: swift test meldet XCTest und Swift Testing getrennt (XCTest „passed“ mit 0 Tests).
+  if ! grep -q "Test run with .* passed" "$WORK/$label.log" || grep -qE "✘|Test run with .* failed" "$WORK/$label.log"; then
     echo "FEHLER: Swift-Client gegen $label" >&2
     tail -50 "$WORK/$label.log" >&2
     return 1

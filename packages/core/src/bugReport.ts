@@ -8,6 +8,7 @@
 // Echter Text nur auf ausdrücklichen Wunsch; Token und E-Mails werden auch dann geschwärzt.
 
 import { redactSecrets, type DiagnosticsEntry } from "./diagnostics.js";
+import type { HangReport } from "./hangs.js";
 
 // MARK: Text ersetzen
 
@@ -231,6 +232,8 @@ export interface BugBundle {
   layout: { items: LayoutItem[]; issues: LayoutIssue[] };
   recording: { events: unknown[] };
   log: DiagnosticsEntry[];
+  /** BSD-418: Hänger dieser und früherer Sitzungen (fehlt in älteren Bündeln). */
+  hangs?: HangReport;
 }
 
 export interface BugBundleInput {
@@ -245,6 +248,7 @@ export interface BugBundleInput {
   layout: LayoutItem[];
   events: readonly RecordedEvent[];
   log: readonly DiagnosticsEntry[];
+  hangs?: HangReport;
 }
 
 /** Bündel-ID aus der Zeit, sortierbar und als Ordnername tauglich: `20261111-170512-ab3f`. */
@@ -310,6 +314,7 @@ export function buildBugBundle(i: BugBundleInput): BugBundle {
     layout: { items: [...i.layout], issues: layoutIssues(i.layout) },
     recording: { events },
     log: i.log.map((e) => ({ ...e })),
+    ...(i.hangs ? { hangs: i.hangs } : {}),
   };
 }
 

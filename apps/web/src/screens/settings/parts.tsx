@@ -32,3 +32,13 @@ export function Row({ label, hint, labelID, children }: { label: string; hint?: 
 export function Value({ children, mono = false, testID }: { children: ReactNode; mono?: boolean; testID?: string }) {
   return <Text type={mono ? "code" : "body"} color="secondary" {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
 }
+
+/** Untereinander (Listen in einer Gruppe), optional mit Test-ID. */
+export function Lines({ children, gap = 2, testID }: { children: ReactNode; gap?: 0 | 1 | 2 | 3 | 4; testID?: string }) {
+  return <VStack gap={gap} {...(testID ? { "data-testid": testID } : {})}>{children}</VStack>;
+}
+
+/** Kleine Zusatzzeile unter einer Zeile (z. B. aufgeklappte Schritte); `mono` für Zeiten und Namen. */
+export function Note({ children, mono = false, testID }: { children: ReactNode; mono?: boolean; testID?: string }) {
+  return <Text type={mono ? "code" : "supporting"} color="secondary" display="block" {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
+}
