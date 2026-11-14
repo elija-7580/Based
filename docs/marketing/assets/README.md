@@ -15,6 +15,8 @@ eine gezeichnete Darstellung im Stil von Based Next, kein Screenshot.
 | `mastodon-header.png` | 1500 × 500 | Mastodon Header |
 | `bluesky-banner.png` | 3000 × 1000 | Bluesky Banner |
 | `linkedin-cover.png` | 1128 × 191 | LinkedIn Seiten-Cover |
+| `reddit-profile-banner.png` | 1920 × 384 | Reddit Profil-Banner (u/…). Inhalt mittig, weil Reddit am Handy links und rechts abschneidet |
+| `reddit-community-banner.png` | 1600 × 480 | Banner für ein eigenes Subreddit, falls du r/basednotes aufmachst |
 | `github-social-preview.png` | 1280 × 640 | GitHub → Settings → Social preview des Repos |
 | `og-image.png` / `og-image-dark.png` | 1200 × 630 | Linkvorschau. Die helle Variante ist auf basednotes.app eingebaut |
 | `producthunt-gallery-1.png` | 1270 × 760 | Erstes Galeriebild auf Product Hunt (weitere mit echten Screens, sobald die Beta steht) |
