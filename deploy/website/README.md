@@ -3,7 +3,15 @@
 Die Website (`apps/website/public`, fertig gebaut im Repo) und der Warteliste-Dienst (`apps/website/server/waitlist.mjs`)
 laufen zusammen auf einem kleinen Server. Caddy holt das TLS-Zertifikat selbst und schreibt keine Zugriffsprotokolle.
 
-## Einmalig
+## Schnellweg auf einem bestehenden Server
+
+```bash
+ssh root@<server> 'curl -fsSL https://raw.githubusercontent.com/elija-7580/Based/main/deploy/website/install.sh | bash'
+```
+
+Prüft, ob 80/443 frei sind, installiert bei Bedarf Docker und git, startet Caddy + Warteliste und holt alle 10 Minuten Updates aus `main`.
+
+## Einmalig (neuer Server)
 
 1. **Server:** In der Hetzner Cloud Console einen CX22 anlegen (Standort Nürnberg oder Falkenstein, damit die Daten in
    Deutschland liegen, wie es in der Datenschutzerklärung steht), Image „Docker CE“ aus den Apps, SSH-Schlüssel hinterlegen.
