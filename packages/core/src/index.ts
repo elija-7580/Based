@@ -174,9 +174,9 @@ export {
   type DiagnosticsEntry, type DiagnosticsLevel, type DiagnosticsStorage, type ReportFacts, type SessionRecord, type StallDetectorOptions,
 } from "./diagnostics.js";
 export {
-  appendToSession, BREADCRUMB_LIMIT, BreadcrumbTrail, deadMarkers, formatHangMs, FREEZE_MS, HANG_CRUMBS, HANG_LIMIT, HANG_MARKER_VERSION, HANG_STORE_KEY,
+  appendToSession, BREADCRUMB_LIMIT, BreadcrumbTrail, deadMarkers, formatHangMs, FREEZE_MS, HANG_CRUMBS, HANG_LIMIT, HANG_MARKER_GRACE_MS, HANG_MARKER_VERSION, HANG_STORE_KEY,
   HANG_STORE_PER_SESSION, HANG_STORE_SESSIONS, HANG_STORE_VERSION, HANG_THRESHOLDS, hangLine, HangMonitor, hangName, hangReport, hangReportLines, hangStats,
-  hangStatsLine, HangWatchdog, loafCulprit, markerHang, ongoingHangNotice, parseHangMarker, parseHangRecord, parseHangStore, storeSession,
+  hangStatsLine, HangWatchdog, loafCulprit, markerHang, noteBreadcrumb, ongoingHangNotice, parseHangMarker, parseHangRecord, parseHangStore, setBreadcrumbSink, storeSession,
   type FrameInfo, type HangInput, type HangMarker, type HangMonitorOptions, type HangRecord, type HangReport, type HangSessionData, type HangSource,
   type HangStats, type HangStoreData, type LoAFScript, type WatchdogEvent, type WatchdogMessage, type WatchdogOptions,
 } from "./hangs.js";

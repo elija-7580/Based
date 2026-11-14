@@ -153,6 +153,12 @@ describe("Hänger (BSD-418)", () => {
     expect(cleared).toEqual([]);
     t = 3600; w.handle({ type: "pong", id: 2 });
     expect(sent.at(-1)).toEqual({ type: "recovered", ms: 3100 });
+    // endgültige Dauer im Marker; gelöscht erst, wenn die Hülle nach der Gnadenfrist „clear“ schickt
+    expect(markers.at(-1)).toMatchObject({ ms: 3100, recovered: true, updatedAt: T0 + 3600 });
+    expect(cleared).toEqual([]);
+    w.handle({ type: "clear" });
+    expect(cleared).toEqual(["tab-1"]);
+    w.handle({ type: "clear" });
     expect(cleared).toEqual(["tab-1"]);
     // verborgen: kein Ping
     w.handle({ type: "pause" });
@@ -171,9 +177,14 @@ describe("Hänger (BSD-418)", () => {
     expect(deadMarkers([m, other], { mine: "new", now: T0 + 60_000 }).map((x) => x.session)).toEqual(["old", "other"]);
     expect(markerHang(m)).toMatchObject({ ms: 3200, ongoing: true, source: "main", activity: "route page" });
     expect(ongoingHangNotice(m)).toBe("Based hung for more than 3 s during route page and was then closed or reloaded.");
+    expect(ongoingHangNotice({ ...m, recovered: true })).toBe("Based hung for 3.2 s during route page and was reloaded or closed right after.");
+    expect(parseHangMarker({ ...m, recovered: true })?.recovered).toBe(true);
     expect(hangLine(markerHang(m))).toContain("3.2 s+ (still blocked at the end) · main · during route page · after click hang-3000");
     const data = appendToSession(storeSession(parseHangStore(null), { id: "old", startedAt: T0 - 1000, hangs: [] }), "old", markerHang(m));
     expect(data.sessions[0]).toMatchObject({ id: "old", startedAt: T0 - 1000, stats: { count: 1, freezes: 1, max: 3200 } });
+    // schon von der Sitzung selbst gespeichert: nicht doppelt
+    expect(appendToSession(data, "old", { ...markerHang(m), at: T0 + 100, ongoing: false })).toBe(data);
+    expect(markerHang({ ...m, recovered: true }).ongoing).toBeUndefined();
   });
 
   it("Absturzbericht nach einem laufenden Hänger; alte Sitzungen und Berichte ohne Hänger-Felder bleiben lesbar", () => {

@@ -79,6 +79,12 @@ export class BreadcrumbTrail {
   }
 }
 
+let sink: ((name: string) => void) | undefined;
+/** Die Hülle legt fest, wohin Breadcrumbs aus Paketen (Editor: Slash-Befehl) gehen. */
+export function setBreadcrumbSink(fn: ((name: string) => void) | undefined) { sink = fn; }
+/** Ein fester Name (z. B. „slash Heading 1“) in die Breadcrumbs der Hülle – ohne Hülle: nichts. Nie Inhalte übergeben. */
+export function noteBreadcrumb(name: string) { sink?.(name); }
+
 // MARK: Statistik
 
 export interface HangStats {
@@ -133,7 +139,7 @@ export interface HangInput {
 }
 
 /** Ein langer Frame (Long Animation Frame oder Long Task) auf der monotonen Uhr. */
-export interface FrameInfo { start: number; duration: number; culprit?: string }
+export interface FrameInfo { start: number; duration: number; culprit?: string | undefined }
 
 export interface HangMonitorOptions {
   thresholds?: Partial<Record<HangSource, number>>;
@@ -356,6 +362,8 @@ export function storeSession(data: HangStoreData, session: { id: string; started
 /** Einen Hänger an eine (frühere) Sitzung anhängen – z. B. den laufenden Hänger, mit dem sie endete. */
 export function appendToSession(data: HangStoreData, sessionID: string, hang: HangRecord, startedAt = hang.at): HangStoreData {
   const cur = data.sessions.find((s) => s.id === sessionID);
+  // Schon erfasst (die Sitzung hat den Hänger nach seinem Ende selbst gespeichert)? Dann nicht doppelt.
+  if (cur?.hangs.some((h) => h.source === hang.source && overlaps(h.at, h.at + h.ms, hang.at, hang.at + hang.ms))) return data;
   const hangs = [...(cur?.hangs ?? []), hang].slice(-HANG_STORE_PER_SESSION);
   const prevStats = cur?.stats;
   const added = hangStats([hang]);
@@ -384,7 +392,16 @@ export interface HangMarker {
   updatedAt: number;
   activity: string;
   breadcrumbs: string[];
+  /**
+   * Der Hauptthread antwortete wieder (Dauer ist dann endgültig). Die Hülle löscht den Marker nach ein paar Sekunden;
+   * steht er beim nächsten Start noch da, wurde das Fenster gleich danach neu geladen oder geschlossen – meist wegen
+   * des Hängers (das Neuladen wartet, bis der Hauptthread frei ist).
+   */
+  recovered?: boolean;
 }
+
+/** So lange bleibt ein Marker nach dem Ende des Hängers stehen (ms) – Neuladen/Schließen in dieser Zeit zählt als „wegen des Hängers“. */
+export const HANG_MARKER_GRACE_MS = 3000;
 
 export function parseHangMarker(v: unknown): HangMarker | undefined {
   const o = v as Partial<HangMarker> | null;
@@ -395,18 +412,20 @@ export function parseHangMarker(v: unknown): HangMarker | undefined {
     v: HANG_MARKER_VERSION, session: o.session, startedAt, ms, updatedAt: num(o.updatedAt) ?? startedAt + ms,
     activity: typeof o.activity === "string" ? hangName(o.activity, 80) : "",
     breadcrumbs: Array.isArray(o.breadcrumbs) ? o.breadcrumbs.filter((c): c is string => typeof c === "string").slice(-HANG_CRUMBS).map((c) => hangName(c)) : [],
+    ...(o.recovered === true ? { recovered: true } : {}),
   };
 }
 
 /** Der Hänger, mit dem eine Sitzung endete, als Datensatz. */
 export function markerHang(m: HangMarker): HangRecord {
-  return { at: m.startedAt, ms: Math.round(m.ms), activity: m.activity, breadcrumbs: m.breadcrumbs, source: "main", ongoing: true };
+  return { at: m.startedAt, ms: Math.round(m.ms), activity: m.activity, breadcrumbs: m.breadcrumbs, source: "main", ...(m.recovered ? {} : { ongoing: true }) };
 }
 
 /** Ein Satz für Hinweis, Log und Bericht. */
-export function ongoingHangNotice(m: Pick<HangMarker, "ms" | "activity">): string {
-  const secs = Math.max(2, Math.floor(m.ms / 1000));
-  return `Based hung for more than ${secs} s${m.activity ? ` during ${m.activity}` : ""} and was then closed or reloaded.`;
+export function ongoingHangNotice(m: Pick<HangMarker, "ms" | "activity" | "recovered">): string {
+  const during = m.activity ? ` during ${m.activity}` : "";
+  if (m.recovered) return `Based hung for ${formatHangMs(m.ms)}${during} and was reloaded or closed right after.`;
+  return `Based hung for more than ${Math.max(2, Math.floor(m.ms / 1000))} s${during} and was then closed or reloaded.`;
 }
 
 /**
@@ -425,7 +444,9 @@ export type WatchdogMessage =
   | { type: "pong"; id: number }
   | { type: "context"; activity: string; breadcrumbs: string[] }
   | { type: "pause" }
-  | { type: "resume" };
+  | { type: "resume" }
+  /** Hülle: Hänger ist erfasst und die Gnadenfrist vorbei – Marker löschen. */
+  | { type: "clear" };
 export type WatchdogEvent = { type: "ping"; id: number } | { type: "recovered"; ms: number };
 
 export interface WatchdogOptions {
@@ -445,7 +466,7 @@ export interface WatchdogOptions {
 /**
  * Gegenstück zum Swift-Watchdog-Thread: der Worker pingt den Hauptthread; antwortet er länger als 2 s nicht, schreibt
  * der Worker einen Marker (Beginn, Aktivität, Breadcrumbs) und aktualisiert ihn jede Sekunde. Antwortet der Hauptthread,
- * wird der Marker gelöscht. Überlebt der Marker (Tab beendet, neu geladen, App hart beendet), zeigt der nächste Start, wo
+ * steht die endgültige Dauer im Marker („recovered“); die Hülle lässt ihn nach der Gnadenfrist löschen. Überlebt der Marker (Tab beendet, neu geladen, App hart beendet), zeigt der nächste Start, wo
  * es hing. `tick()` ruft der Worker in seinem Takt.
  */
 export class HangWatchdog {
@@ -454,6 +475,8 @@ export class HangWatchdog {
   private sentAt: number | undefined;
   private sentEpoch = 0;
   private marked = false;
+  /** Marker des letzten Hängers steht noch (nach dem Ende, bis die Hülle „clear“ schickt). */
+  private kept: HangMarker | undefined;
   private lastWrite = 0;
   private paused = true;
   private activity = "";
@@ -473,22 +496,25 @@ export class HangWatchdog {
     switch (m.type) {
       case "start": this.session = m.session; this.paused = false; return;
       case "context": this.activity = hangName(m.activity, 80); this.breadcrumbs = m.breadcrumbs.slice(-HANG_CRUMBS).map((c) => hangName(c)); return;
-      case "pause": this.paused = true; this.sentAt = undefined; this.finish(); return;
+      case "pause": this.paused = true; this.sentAt = undefined; return;
       case "resume": this.paused = false; return;
+      case "clear":
+        if (this.marked || !this.kept) return;
+        this.kept = undefined;
+        this.o.clearMarker(this.session);
+        return;
       case "pong": {
         if (m.id !== this.pingID || this.sentAt === undefined) return;
-        const ms = this.o.now() - this.sentAt;
+        const ms = Math.round(this.o.now() - this.sentAt);
         this.sentAt = undefined;
-        if (this.marked) this.o.send({ type: "recovered", ms: Math.round(ms) });
-        this.finish();
+        if (!this.marked || !this.kept) return;
+        // endgültige Dauer festhalten; gelöscht wird erst nach der Gnadenfrist (Hülle schickt „clear“)
+        this.marked = false;
+        this.kept = { ...this.kept, ms, updatedAt: this.o.epoch(), recovered: true };
+        this.o.writeMarker(this.kept);
+        this.o.send({ type: "recovered", ms });
       }
     }
-  }
-
-  private finish() {
-    if (!this.marked) return;
-    this.marked = false;
-    this.o.clearMarker(this.session);
   }
 
   tick() {
@@ -506,10 +532,11 @@ export class HangWatchdog {
     if (this.marked && t - this.lastWrite < this.updateEvery) return;
     this.marked = true;
     this.lastWrite = t;
-    this.o.writeMarker({
+    this.kept = {
       v: HANG_MARKER_VERSION, session: this.session, startedAt: this.sentEpoch, ms: Math.round(waited), updatedAt: this.o.epoch(),
       activity: this.activity, breadcrumbs: this.breadcrumbs,
-    });
+    };
+    this.o.writeMarker(this.kept);
   }
 }
 
