@@ -40,6 +40,8 @@ export { GRAPH_EDGE_KINDS, buildPageGraph, filterGraph, graphAdjacency } from ".
 export type { GraphEdge, GraphEdgeKind, GraphFilter, GraphNode, GraphNodeKind, PageGraph } from "./graph/page-graph.js";
 export { ForceLayout, hashID, layoutBounds, nodeAtPoint } from "./graph/layout.js";
 export type { LayoutOptions, Point } from "./graph/layout.js";
+export { treeLayout } from "./graph/tree-layout.js";
+export type { TreeLayout, TreeLayoutOptions } from "./graph/tree-layout.js";
 export { PRIVATE_SECTION, SHARED_SECTION, buildOutline, iconText, pageAncestors, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
 export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/outline.js";
 // BSD-156: Import und Export (Notion-HTML, Markdown/CSV, Workspace-Archiv, ZIP)
