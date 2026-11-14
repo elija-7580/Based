@@ -1,61 +1,61 @@
-cancelled 221e9a71e1925e7c76f007763a82ed9874e2787c
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+failure cc179ac45197a103f897ede67edbfcb4f6c7d9f1
+    expect(received).toBeLessThanOrEqual(expected)
 
-Running 178 tests using 2 workers, shard 2 of 2
+    Expected: <= 8
+    Received:    29.546875
 
-  ✓    2 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (14.1s)
-  ✓    3 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (4.9s)
-  ✓    1 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (24.7s)
-  ✓    4 [webkit] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (6.1s)
-  ✓    5 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.9s)
-  ✓    7 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (4.2s)
-  ✓    6 [webkit] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (9.1s)
-  ✓    8 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.1s)
-  -   10 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
-  -   11 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
-  ✓   12 [webkit] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (3.9s)
-  ✓    9 [webkit] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (6.1s)
-  -   14 [webkit] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
-  ✓   13 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (4.7s)
-  ✓   15 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (2.7s)
-  -   17 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
-  -   18 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
-  ✓   19 [webkit] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (2.9s)
-  ✓   16 [webkit] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (5.6s)
+      176 |     await expect(menu).toBeVisible();
+      177 |     const m = (await menu.boundingBox())!;
+    > 178 |     expect(Math.abs(m.y - h.y), `${text}: oben bündig`).toBeLessThanOrEqual(8);
+          |                                                         ^
+      179 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
+      180 |     // Gleiche Icons wie im Seitenmenü „…“ (Icon-Satz der App)
+      181 |     await expect(menu.locator("[role=menuitem] .nf-glyph svg")).not.toHaveCount(0);
+        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:178:57
+
+    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit-retry1/error-context.md
+
+  2) [webkit] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "rgb(235, 235, 231)"
+    Received: "rgb(242, 242, 239)"
+
+      54 |     return out;
+      55 |   });
+    > 56 |   expect(bg).toBe(selected);
+         |              ^
+      57 |   expect(color).toBe(ink);
+      58 | });
+      59 |
+        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:56:14
+
+    Error Context: test-results/polish-Slash-Menü-Überfahr-1bb3c-mit-dem-Blau-der-Bibliothek-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "rgb(235, 235, 231)"
+    Received: "rgb(242, 242, 239)"
+
+      54 |     return out;
+      55 |   });
+    > 56 |   expect(bg).toBe(selected);
+         |              ^
+      57 |   expect(color).toBe(ink);
+      58 | });
+      59 |
+        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:56:14
+
+    Error Context: test-results/polish-Slash-Menü-Überfahr-1bb3c-mit-dem-Blau-der-Bibliothek-webkit-retry1/error-context.md
+
+  2 failed
+    [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
+    [webkit] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek 
+  21 skipped
+  155 passed (7.5m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
