@@ -163,7 +163,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const favorite = outline?.favorites.includes(pageID) ?? false;
   const chatOpen = useSyncExternalStore(subscribeChatPanel, isChatPanelOpen);
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
-  const subpages = outline?.children[pageID]?.length ?? 0;
+  // BSD-391: Inline-Datenbanken stehen in der Gliederung unter ihrer Seite, sind aber keine Unterseiten.
+  const subpages = (outline?.children[pageID] ?? []).filter((id) => store?.blocks.get(id)?.type !== "databaseInline").length;
   // BSD-255: eine Inline-Datenbank lässt sich per „Open as full page“ wie eine Datenbankseite öffnen.
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
   const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
