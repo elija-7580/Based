@@ -1,32 +1,31 @@
-success 4633e488b43059ab4bea7870a7e0c773a52c1e94
-  ✓  157 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (15.7s)
-  ✓  158 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (16.9s)
-  ✓  159 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (4.6s)
-  ✓  160 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (6.6s)
-  -  162 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  163 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  161 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.2s)
-  ✓  165 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.2s)
-  ✓  164 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (7.4s)
-  ✓  166 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.7s)
-  ✓  168 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (2.2s)
-  ✓  167 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.1s)
-  ✓  169 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.5s)
-  ✓  171 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.8s)
-  ✓  172 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (4.3s)
-  ✓  170 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (9.5s)
-  ✓  173 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (4.2s)
-  ✓  174 [webkit] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (4.8s)
-  ✓  175 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.4s)
-  ✓  176 [webkit] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.5s)
-  ✓  177 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.6s)
-  ✓  179 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.4s)
-  ✓  178 [webkit] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (2.7s)
-  -  181 [webkit] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
-  ✓  180 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.0s)
+success 0f77273fbadefb36b7239d5b024a917e843538a0
+  ✓  177 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.7s)
+  ✓  176 [webkit] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (3.1s)
+  ✓  178 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.7s)
+  ✓  180 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.8s)
+  ✓  179 [webkit] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.4s)
+  -  182 [webkit] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
+  ✓  181 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.2s)
 
 
-  1) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+  1) [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 320
+    Received: 360
+
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
+
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit/error-context.md
+
+  2) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
 
     Error: expect(received).toEqual(expected) // deep equality
 
@@ -55,7 +54,8 @@ success 4633e488b43059ab4bea7870a7e0c773a52c1e94
 
     Error Context: test-results/sidebar-nav-Einträge-ziehe-52dba--bleibt-nach-Neuladen-Reset-webkit/error-context.md
 
-  1 flaky
+  2 flaky
+    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
     [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
   21 skipped
-  158 passed (9.3m)
+  157 passed (11.8m)
