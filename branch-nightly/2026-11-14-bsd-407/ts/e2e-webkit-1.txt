@@ -1,61 +1,61 @@
-failure 68fa5b3b100d13afbb1dc26cf18d2430ab79ae31
-    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByTestId('block-editor').first()
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByTestId('block-editor').first() with timeout 5000ms
-      - waiting for getByTestId('block-editor').first()
+success c2e7f9754a70991995f3f17c21993de8c084ae10
+  ✓  176 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (21.7s)
+  ✓  178 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.9s)
+  ✓  179 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.5s)
+  ✓  180 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.9s)
+  -  181 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  182 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
 
 
-       at editor-helpers.ts:19
+  1) [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
 
-      17 | /** Editor sichtbar und bearbeitbar (er hat die Fläche unter dem letzten Block). */
-      18 | export async function expectEditable(scope: Scope): Promise<void> {
-    > 19 |   await expect(blockEditor(scope)).toBeVisible();
-         |                                    ^
-      20 |   await expect(blockEditor(scope).getByTestId("block-editor-tail")).toHaveCount(1);
-      21 | }
-      22 |
-        at expectEditable (/home/runner/work/Based/Based/apps/web/e2e/editor-helpers.ts:19:36)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-passthrough.spec.ts:166:9
+    Error: tote Knöpfe
 
-    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-webkit-retry1/error-context.md
+    expect(received).toEqual(expected) // deep equality
 
-  5) [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ────────────────
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Home: „New page“ #0",
+    + ]
+
+      228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
+      229 |   expect(total).toBeGreaterThan(60);
+    > 230 |   expect(dead, "tote Knöpfe").toEqual([]);
+          |                               ^
+      231 |   expect(errors, "Konsolenfehler").toEqual([]);
+      232 | });
+      233 |
+        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:230:31
+
+    Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
+
+  2) [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
 
     Error: expect(received).toBe(expected) // Object.is equality
 
-    Expected: "dead"
-    Received: "ok"
+    Expected: "Row 137"
+    Received: "Row 148"
 
-      260 |     document.querySelector("main.main")!.prepend(live);
-      261 |   });
-    > 262 |   expect(await probe(page, "main.main", { name: "Crawl dead probe", nth: 0 })).toBe("dead");
-          |                                                                                ^
-      263 |   expect(await probe(page, "main.main", { name: "Crawl live probe", nth: 0 })).toBe("ok");
-      264 | });
-      265 |
-        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:262:80
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
 
-    Error Context: test-results/crawl-Ein-eingeschleuster-toter-Knopf-fällt-auf-webkit/error-context.md
+      26 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
+      27 |   await page.mouse.click(x, y);
+    > 28 |   await expect.poll(() => activeRow(page)).toBe(under);
+         |                                            ^
+      29 |   await page.keyboard.press("Escape"); // Zelleneditor zu
+      30 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
+      31 | }
+        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:28:44)
+        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:47:40
 
-  4 failed
-    [webkit] › e2e/editor-default.spec.ts:28:1 › früher „New editor: aus“ (bewusst false): einmalig auf den Block-Editor umgestellt, alter Schlüssel weg 
-    [webkit] › e2e/editor-default.spec.ts:67:1 › gepinnter alter Editor (Helfer der Specs) bleibt über das Neuladen 
-    [webkit] › e2e/editor-passthrough.spec.ts:47:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert 
-    [webkit] › e2e/editor-passthrough.spec.ts:134:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
-  1 flaky
-    [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ─────────────────
+    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
+
+  2 flaky
+    [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
+    [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
   16 skipped
-  159 passed (16.0m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
+  162 passed (16.6m)

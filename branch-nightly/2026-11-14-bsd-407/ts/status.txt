@@ -1,1 +1,1 @@
-rot 68fa5b3b100d13afbb1dc26cf18d2430ab79ae31 nightly/2026-11-14-bsd-407 · ts-fast=success e2e=failure perf=success (nicht blockierend) · run 43586036270
+grün c2e7f9754a70991995f3f17c21993de8c084ae10 nightly/2026-11-14-bsd-407 · ts-fast=success e2e=success perf=success (nicht blockierend) · run 43588635458
