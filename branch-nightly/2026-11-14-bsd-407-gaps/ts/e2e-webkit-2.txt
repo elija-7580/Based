@@ -1,61 +1,61 @@
-cancelled af15cdeb87120a974155b578d7c11b5f54fe85ba
-  ✓  109 [webkit] › e2e/shell-layout.spec.ts:54:1 › „/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten nutzen die volle Breite (6.1s)
-  ✓  107 [webkit] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis (14.1s)
-  ✓  110 [webkit] › e2e/shell-layout.spec.ts:74:1 › Fokusrahmen per Tastatur neutral (Token focus-ring, nicht Marker – BSD-367) (1.5s)
-  ✓  112 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (4.7s)
-  ✓  111 [webkit] › e2e/shell-parity.spec.ts:71:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (10.8s)
-  ✓  113 [webkit] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) (6.7s)
-  ✓  115 [webkit] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (10.1s)
-  ✓  114 [webkit] › e2e/shell-parity.spec.ts:109:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (13.1s)
-  ✓  116 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (6.4s)
-  ✓  117 [webkit] › e2e/shell-parity.spec.ts:168:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (4.6s)
-  ✓  118 [webkit] › e2e/shell.spec.ts:94:1 › Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Position (3.3s)
-  ✓  119 [webkit] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher (5.9s)
-  ✓  120 [webkit] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke (8.6s)
-  ✓  121 [webkit] › e2e/shell-parity.spec.ts:204:1 › Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet (8.6s)
-  ✓  123 [webkit] › e2e/shortcuts.spec.ts:13:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite (2.4s)
-  ✓  122 [webkit] › e2e/shell.spec.ts:199:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (6.2s)
-  ✓  124 [webkit] › e2e/shortcuts.spec.ts:34:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) (3.1s)
-  ✓  126 [webkit] › e2e/shortcuts.spec.ts:63:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs (3.2s)
-  ✓  125 [webkit] › e2e/sidebar-inline-db.spec.ts:9:1 › Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich als ganze Seite (6.7s)
-  ✓  127 [webkit] › e2e/shortcuts.spec.ts:86:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen (4.0s)
-  ✓  128 [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown (5.6s)
-  ✓  129 [webkit] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (5.6s)
-  ✓  130 [webkit] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links (5.6s)
-  ✓  131 [webkit] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (3.6s)
-  ✓  132 [webkit] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar (3.9s)
-  ✓  133 [webkit] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (6.6s)
-  ✓  134 [webkit] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (7.2s)
-  ✓  135 [webkit] › e2e/sidebar-scroll.spec.ts:10:1 › Aufklappen oberhalb der aktiven Seite: Liste bleibt stehen, Zeile bleibt unter der Maus (4.9s)
-  ✓  137 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (2.7s)
-  ✓  136 [webkit] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (6.5s)
-  -  139 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light)
-  -  140 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark)
-  ✓  138 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (3.8s)
-  ✓  141 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (6.2s)
-  ✓  142 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (7.2s)
-  ✓  144 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (5.4s)
-  ✓  143 [webkit] › e2e/storage.spec.ts:51:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (8.9s)
-  ✓  146 [webkit] › e2e/storage.spec.ts:72:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (3.1s)
-  ✓  145 [webkit] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (5.3s)
-  -  147 [webkit] › e2e/storage.spec.ts:88:1 › Screenshots web-storage-warning-*
-(node:16573) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  148 [webkit] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (3.3s)
-  ✓  150 [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (4.1s)
-  ✓  151 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (8.7s)
-  ✓  152 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (7.2s)
-  ✓  149 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (21.9s)
-  -  153 [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-(node:17413) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  154 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.3s)
-  ✓  155 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (5.7s)
-  ✓  156 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (14.2s)
-  ✓  157 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (15.6s)
-  ✓  158 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (4.3s)
-  ✓  159 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (5.5s)
-  -  161 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  162 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  160 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.1s)
-  ✓  164 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.6s)
+cancelled 4d2148bac01fc552df415a47956fbe52fe731874
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 178 tests using 2 workers, shard 2 of 2
+
+  ✓    1 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (15.6s)
+  ✓    3 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (4.8s)
+  ✓    2 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (25.4s)
+  ✓    4 [webkit] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (6.0s)
+  ✓    5 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.7s)
+  ✓    7 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.1s)
+  ✓    6 [webkit] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (8.0s)
+  ✓    8 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.1s)
+  -   10 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -   11 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓   12 [webkit] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (3.4s)
+  ✓    9 [webkit] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (5.3s)
+  -   14 [webkit] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓   13 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (4.6s)
+  ✓   15 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (3.4s)
+  -   17 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -   18 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓   16 [webkit] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (4.6s)
+  ✓   19 [webkit] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (2.9s)
+  ✓   20 [webkit] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (4.8s)
+  ✓   21 [webkit] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (4.6s)
+  ✓   23 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (4.1s)
+  ✓   22 [webkit] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (5.5s)
+  ✓   25 [webkit] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (4.5s)
+  ✓   24 [webkit] › e2e/meeting.spec.ts:102:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (7.9s)
+  ✓   26 [webkit] › e2e/interop.spec.ts:208:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (3.9s)
+  -   27 [webkit] › e2e/meeting.spec.ts:122:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen
+  ✓   29 [webkit] › e2e/meeting.spec.ts:201:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (6.3s)
+  ✓   28 [webkit] › e2e/interop.spec.ts:227:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (7.2s)
+  ✓   30 [webkit] › e2e/native-free.spec.ts:26:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (2.8s)
+  ✓   31 [webkit] › e2e/interop.spec.ts:258:1 › Word-Dokument (.docx) importieren (BSD-260) (5.0s)
+  ✓   32 [webkit] › e2e/native-free.spec.ts:42:1 › Rechtsklick an vielen Stellen: überall unterdrückt, Escape und Klick daneben schließen (2.8s)
+  ✓   34 [webkit] › e2e/native-free.spec.ts:65:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (3.9s)
+  ✓   33 [webkit] › e2e/interop.spec.ts:275:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (4.9s)
+  ✓   35 [webkit] › e2e/native-free.spec.ts:86:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (2.1s)
+  ✓   36 [webkit] › e2e/interop.spec.ts:289:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (4.3s)
+  ✓   37 [webkit] › e2e/native-free.spec.ts:93:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (3.8s)
+  ✓   39 [webkit] › e2e/native-free.spec.ts:131:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (3.5s)
+  ✓   38 [webkit] › e2e/interop.spec.ts:308:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (5.5s)
+  ✓   40 [webkit] › e2e/native-free.spec.ts:151:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (2.8s)
+  ✘   42 [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (4.2s)
+  ✘   43 [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (retry #1) (2.9s)

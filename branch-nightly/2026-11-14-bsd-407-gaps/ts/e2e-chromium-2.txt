@@ -1,61 +1,61 @@
-failure af15cdeb87120a974155b578d7c11b5f54fe85ba
-    expect(received).toBeLessThanOrEqual(expected)
-
-    Expected: <= 8
-    Received:    29.546875
-
-      176 |     await expect(menu).toBeVisible();
-      177 |     const m = (await menu.boundingBox())!;
-    > 178 |     expect(Math.abs(m.y - h.y), `${text}: oben bündig`).toBeLessThanOrEqual(8);
-          |                                                         ^
-      179 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      180 |     // Gleiche Icons wie im Seitenmenü „…“ (Icon-Satz der App)
-      181 |     await expect(menu.locator("[role=menuitem] .nf-glyph svg")).not.toHaveCount(0);
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:178:57
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-chromium-retry1/error-context.md
-
-  2) [chromium] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "rgb(235, 235, 231)"
-    Received: "rgb(242, 242, 239)"
-
-      54 |     return out;
-      55 |   });
-    > 56 |   expect(bg).toBe(selected);
-         |              ^
-      57 |   expect(color).toBe(ink);
-      58 | });
-      59 |
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:56:14
-
-    Error Context: test-results/polish-Slash-Menü-Überfahr-1bb3c-mit-dem-Blau-der-Bibliothek-chromium/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "rgb(235, 235, 231)"
-    Received: "rgb(242, 242, 239)"
-
-      54 |     return out;
-      55 |   });
-    > 56 |   expect(bg).toBe(selected);
-         |              ^
-      57 |   expect(color).toBe(ink);
-      58 | });
-      59 |
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:56:14
-
-    Error Context: test-results/polish-Slash-Menü-Überfahr-1bb3c-mit-dem-Blau-der-Bibliothek-chromium-retry1/error-context.md
-
-  2 failed
-    [chromium] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
-    [chromium] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek 
-  10 skipped
-  166 passed (4.2m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
+cancelled 4d2148bac01fc552df415a47956fbe52fe731874
+  ✓   35 [chromium] › e2e/native-free.spec.ts:65:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (1.2s)
+  ✓   36 [chromium] › e2e/native-free.spec.ts:86:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (891ms)
+  ✓   37 [chromium] › e2e/native-free.spec.ts:93:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (1.4s)
+  ✓   38 [chromium] › e2e/native-free.spec.ts:131:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (1.8s)
+  ✓   33 [chromium] › e2e/meeting.spec.ts:122:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen (7.9s)
+  ✓   39 [chromium] › e2e/native-free.spec.ts:151:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (1.1s)
+  ✘   41 [chromium] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (1.5s)
+  ✓   40 [chromium] › e2e/meeting.spec.ts:201:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (2.8s)
+  ✘   42 [chromium] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (retry #1) (1.4s)
+  ✓   44 [chromium] › e2e/native-free.spec.ts:187:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (1.4s)
+  ✓   45 [chromium] › e2e/native-free.spec.ts:218:1 › Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfung bleibt (978ms)
+  ✓   46 [chromium] › e2e/native-free.spec.ts:241:1 › Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unverändert (1.3s)
+  ✓   47 [chromium] › e2e/notion-hybrid.spec.ts:44:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (9.8s)
+  ✓   48 [chromium] › e2e/notion-hybrid.spec.ts:130:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (1.4s)
+  -   49 [chromium] › e2e/notion-hybrid.spec.ts:148:1 › Hybrid-Import: Bildschirmfotos
+  ✓   43 [chromium] › e2e/notion-api.spec.ts:53:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (20.9s)
+  ✓   51 [chromium] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (2.9s)
+  ✓   52 [chromium] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (2.3s)
+  ✓   50 [chromium] › e2e/overflow.spec.ts:136:1 › Leerer Workspace: nichts läuft über (10.1s)
+  ✓   53 [chromium] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (1.6s)
+  ✓   55 [chromium] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (2.1s)
+  ✓   56 [chromium] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light) (1.3s)
+  ✓   57 [chromium] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark) (1.3s)
+  ✓   58 [chromium] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (1.8s)
+  ✓   54 [chromium] › e2e/overflow.spec.ts:150:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (10.1s)
+  ✓   59 [chromium] › e2e/peek-resize.spec.ts:29:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (3.1s)
+  ✓   60 [chromium] › e2e/overflow.spec.ts:169:1 › Gliederung überdeckt nie den Text (1.7s)
+  ✓   61 [chromium] › e2e/peek-resize.spec.ts:68:1 › Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mit Fokus in der Tabelle (2.3s)
+  ✓   63 [chromium] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (1.9s)
+  ✓   62 [chromium] › e2e/overflow.spec.ts:201:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (5.2s)
+  ✓   64 [chromium] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (2.1s)
+  ✓   65 [chromium] › e2e/overflow.spec.ts:222:1 › Kopfzeile bleibt in 900 × 600 einzeilig, auch 6 Ebenen tief mit langen Namen (1.2s)
+  ✓   67 [chromium] › e2e/overflow.spec.ts:251:1 › Inline-Datenbank: Werkzeugleiste in 900 × 600 einzeilig (1.3s)
+  ✓   66 [chromium] › e2e/phase2.spec.ts:9:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (3.8s)
+  ✓   68 [chromium] › e2e/overflow.spec.ts:277:1 › Datenbank: 1.000 Zeilen, lange Spaltennamen und Optionen (3.0s)
+  ✓   69 [chromium] › e2e/polish.spec.ts:14:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (1.8s)
+  ✓   71 [chromium] › e2e/polish.spec.ts:28:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (1.1s)
+  ✘   72 [chromium] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek (1.1s)
+  ✓   70 [chromium] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (4.4s)
+  -   74 [chromium] › e2e/replay/record-sample.spec.ts:13:1 › Beispielbündel: tippen, fett, Liste, Auswahl mit der Maus, Einfügen
+  ✘   73 [chromium] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek (retry #1) (2.1s)
+  ✓   75 [chromium] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung (2.4s)
+  ✓   76 [chromium] › e2e/polish.spec.ts:60:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (1.9s)
+  ✓   77 [chromium] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung (1.8s)
+  -   79 [chromium] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (input): gleicher Endzustand, keine Überdeckung
+  -   80 [chromium] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (steps): gleicher Endzustand, keine Überdeckung
+  ✓   78 [chromium] › e2e/polish.spec.ts:86:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (2.5s)
+  ✓   81 [chromium] › e2e/report.spec.ts:26:1 › ⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext (4.1s)
+  ✓   82 [chromium] › e2e/polish.spec.ts:121:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (2.7s)
+  ✓   84 [chromium] › e2e/polish.spec.ts:190:1 › Fokusrahmen und Textauswahl neutral, unabhängig vom Marker (1.6s)
+  ✓   83 [chromium] › e2e/report.spec.ts:67:1 › Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem (2.9s)
+  ✓   85 [chromium] › e2e/polish.spec.ts:221:1 › Icon-Auswahl: kein seitliches Rollen, Raster passt zur Breite (2.0s)
+  ✓   86 [chromium] › e2e/report.spec.ts:89:1 › Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht (1.7s)
+  ✓   87 [chromium] › e2e/polish.spec.ts:243:1 › Icon-Auswahl: Rasterzellen überlappen sich nicht (1.8s)
+  ✓   88 [chromium] › e2e/report.spec.ts:124:1 › Entwickler-Ansicht zeigt die letzten Ereignisse live (1.5s)
+  ✓   89 [chromium] › e2e/polish.spec.ts:260:1 › Icon-Auswahl: Phosphor-Icon mit Farbe als Seiten-Icon (2.0s)
+  ✓   90 [chromium] › e2e/report.spec.ts:137:1 › Aufzeichnung kostet beim Tippen messbar nichts (1.8s)
+(node:6462) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   92 [chromium] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (3.0s)

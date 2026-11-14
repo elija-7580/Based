@@ -1,61 +1,61 @@
-cancelled af15cdeb87120a974155b578d7c11b5f54fe85ba
-  ✓   98 [webkit] › e2e/editor-bookmark.spec.ts:67:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (7.2s)
-  ✓  100 [webkit] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (3.7s)
-  ✓  101 [webkit] › e2e/editor-bookmark.spec.ts:96:1 › Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App) (3.6s)
-  -  103 [webkit] › e2e/editor-bookmark.spec.ts:104:1 › Bildschirmfotos: Bookmark mit Vorschau
-  ✓  104 [webkit] › e2e/editor-default.spec.ts:40:1 › frisches Gerät: Block-Editor (1.9s)
-  ✓  105 [webkit] › e2e/editor-default.spec.ts:46:1 › früher „New editor: aus“ (bewusst false): einmalig auf den Block-Editor umgestellt, alter Schlüssel weg (3.5s)
-  ✓  102 [webkit] › e2e/editor-callout-select.spec.ts:72:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (7.5s)
-  ✓  106 [webkit] › e2e/editor-default.spec.ts:64:1 › Notausgang: alter Editor in Settings → Diagnostics, Standard aus, wirkt beim Öffnen der Seite (4.7s)
-  ✓  108 [webkit] › e2e/editor-default.spec.ts:85:1 › gepinnter alter Editor (Helfer der Specs) bleibt über das Neuladen (3.7s)
-  ✓  107 [webkit] › e2e/editor-drag.spec.ts:130:1 › Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach dem Neuladen gleich (9.3s)
-  ✓  109 [webkit] › e2e/editor-embed.spec.ts:7:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (2.5s)
-  ✓  110 [webkit] › e2e/editor-drag.spec.ts:158:1 › Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt (4.8s)
-  ✓  111 [webkit] › e2e/editor-mermaid.spec.ts:62:1 › Mermaid: Diagramm als Bild ohne Netz, Fehler in einem Satz, nach dem Neuladen wieder da (9.2s)
-  ✓  112 [webkit] › e2e/editor-drag.spec.ts:172:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter (6.7s)
-  ✓  113 [webkit] › e2e/editor-mermaid.spec.ts:98:1 › Mermaid: beim Umschalten auf dunkel zeichnet sich die Vorschau in den dunklen Farben neu (4.0s)
-  -  115 [webkit] › e2e/editor-mermaid.spec.ts:112:1 › Bildschirmfotos: Mermaid-Vorschau
-  ✓  116 [webkit] › e2e/editor-notion.spec.ts:53:1 › Titel und Text: Enter teilt, ↓ und ↑ wechseln (3.4s)
-  ✓  114 [webkit] › e2e/editor-drag.spec.ts:202:1 › Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Neuladen gleich (10.0s)
-  ✓  117 [webkit] › e2e/editor-notion.spec.ts:72:1 › Enter im Titel nimmt die leere erste Zeile, statt eine weitere anzulegen (3.6s)
-  ✓  119 [webkit] › e2e/editor-notion.spec.ts:82:1 › Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text (4.1s)
-  ✓  118 [webkit] › e2e/editor-drag.spec.ts:230:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter (7.2s)
-  ✓  120 [webkit] › e2e/editor-notion.spec.ts:102:1 › Klick unter den Inhalt setzt die Schreibmarke ans Ende (4.0s)
-  ✓  121 [webkit] › e2e/editor-parity.spec.ts:148:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (6.6s)
-  ✓  122 [webkit] › e2e/editor-notion.spec.ts:119:1 › Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf (4.6s)
-  -  124 [webkit] › e2e/editor-notion.spec.ts:140:1 › Beim Öffnen einer Seite springt der Titel nicht
-  ✓  123 [webkit] › e2e/editor-parity.spec.ts:204:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz (4.8s)
-  ✓  125 [webkit] › e2e/editor-notion.spec.ts:163:1 › Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl (3.2s)
-  ✓  126 [webkit] › e2e/editor-parity.spec.ts:243:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (4.6s)
-  ✓  127 [webkit] › e2e/editor-notion.spec.ts:184:1 › Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl (6.1s)
-  ✓  129 [webkit] › e2e/editor-notion.spec.ts:218:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus, Tastatur im Untermenü (6.5s)
-  ✓  128 [webkit] › e2e/editor-parity.spec.ts:271:3 › alter Editor (BlockNote) › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (11.4s)
-  ✓  130 [webkit] › e2e/editor-notion.spec.ts:255:1 › Blockmenü bleibt offen, wenn der Editor neu zeichnet (4.6s)
-  ✓  132 [webkit] › e2e/editor-notion.spec.ts:274:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (6.8s)
-  ✓  131 [webkit] › e2e/editor-parity.spec.ts:364:3 › alter Editor (BlockNote) › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (13.6s)
-  ✓  133 [webkit] › e2e/editor-notion.spec.ts:296:1 › Codeblock: Standard ohne Umbruch, „Wrap code“ bricht um und bleibt nach dem Neuladen (6.8s)
-  ✓  135 [webkit] › e2e/editor-notion.spec.ts:324:1 › Codeblock: Sprache wählen mit Suche (wie im alten Editor) (3.9s)
-  ✓  136 [webkit] › e2e/editor-notion.spec.ts:340:3 › alter Editor (BlockNote) › Formatleiste: kompaktes Feld, ganz im Fenster (5.7s)
-  -  137 [webkit] › e2e/editor-notion.spec.ts:375:1 › Fotos: Codeblock-Leiste
-  ✓  134 [webkit] › e2e/editor-parity.spec.ts:428:3 › alter Editor (BlockNote) › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (18.5s)
-  ✓  138 [webkit] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert (8.2s)
-  ✓  139 [webkit] › e2e/editor-parity.spec.ts:523:3 › alter Editor (BlockNote) › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (8.5s)
-  ✓  140 [webkit] › e2e/editor-passthrough.spec.ts:151:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records (10.3s)
-  ✓  141 [webkit] › e2e/editor-parity.spec.ts:551:3 › alter Editor (BlockNote) › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (8.6s)
-  ✓  143 [webkit] › e2e/editor-parity.spec.ts:570:3 › alter Editor (BlockNote) › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (9.8s)
-  ✓  144 [webkit] › e2e/editor-parity.spec.ts:613:3 › alter Editor (BlockNote) › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (5.1s)
-  ✓  145 [webkit] › e2e/editor-parity.spec.ts:637:3 › alter Editor (BlockNote) › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (8.1s)
-  ✓  142 [webkit] › e2e/editor-polish.spec.ts:55:1 › Editor in Ruhe und in seinen Zuständen (29.1s)
-  ✓  147 [webkit] › e2e/editor-polish.spec.ts:142:1 › Links und Häkchen im Editor ohne Browser-Blau (3.2s)
-  ✓  148 [webkit] › e2e/editor-polish.spec.ts:164:1 › Blockfarben im Dunkelmodus aus den Tokens (3.2s)
-  ✓  146 [webkit] › e2e/editor-parity.spec.ts:687:3 › alter Editor (BlockNote) › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (9.9s)
-  ✓  149 [webkit] › e2e/editor-select.spec.ts:81:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (4.4s)
-  -  151 [webkit] › e2e/editor-select.spec.ts:117:1 › Blockauswahl reicht bis unter schwebende Leisten
-  ✓  150 [webkit] › e2e/editor-parity.spec.ts:716:3 › alter Editor (BlockNote) › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (8.2s)
-  ✓  152 [webkit] › e2e/editor-select.spec.ts:147:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (4.9s)
-  ✓  154 [webkit] › e2e/editor-select.spec.ts:167:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (5.6s)
-  ✓  153 [webkit] › e2e/editor-parity.spec.ts:767:3 › alter Editor (BlockNote) › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (7.6s)
-  ✓  155 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (1.9s)
-  ✓  157 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (4.6s)
-  ✓  156 [webkit] › e2e/editor-parity.spec.ts:800:3 › alter Editor (BlockNote) › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (12.5s)
-  ✓  158 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (8.2s)
+cancelled 4d2148bac01fc552df415a47956fbe52fe731874
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 180 tests using 2 workers, shard 1 of 2
+
+  ✓    1 [webkit] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (3.7s)
+  ✓    3 [webkit] › e2e/ai-switch.spec.ts:48:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (4.7s)
+  -    4 [webkit] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (light)
+  -    5 [webkit] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (dark)
+(node:5306) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    6 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (13.9s)
+(node:5430) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+  ✓    2 [webkit] › e2e/a11y.spec.ts:114:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (47.2s)
+  -    8 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓    9 [webkit] › e2e/a11y.spec.ts:194:1 › Quick Find: Esc gibt den Fokus zurück (4.3s)
+  ✓    7 [webkit] › e2e/block-editor-collab.spec.ts:61:1 › Neuer Editor, Echtzeit: zwei Geräte im selben Block, live, nichts doppelt, Schreibmarke des anderen (29.1s)
+  ✓   11 [webkit] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (5.5s)
+  ✓   10 [webkit] › e2e/a11y.spec.ts:210:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (11.3s)
+  ✓   12 [webkit] › e2e/block-editor.spec.ts:64:1 › Nach dem Neuladen ist alles da (dauerhaftes Profil, Records über den Store-Worker) (8.2s)
+  ✓   13 [webkit] › e2e/block-link.spec.ts:10:1 › Link zu einem Block kopieren und öffnen (10.4s)
+  ✓   14 [webkit] › e2e/block-editor.spec.ts:86:1 › Tab rückt ein, ⇧Tab aus; Pfeile wechseln zwischen Blöcken (4.6s)
+  ✓   15 [webkit] › e2e/brain.spec.ts:73:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (8.0s)
+  ✓   16 [webkit] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (11.3s)
+  ✓   17 [webkit] › e2e/brain.spec.ts:102:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (5.9s)
+  ✓   18 [webkit] › e2e/block-editor.spec.ts:155:1 › Ziehen am Griff: davor/danach, Spalte rechts daneben und wieder heraus (8.8s)
+  ✓   19 [webkit] › e2e/brain.spec.ts:107:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (7.9s)
+  ✓   20 [webkit] › e2e/block-editor.spec.ts:182:1 › Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, ⌫ löscht (4.8s)
+  ✓   21 [webkit] › e2e/brain.spec.ts:162:1 › workspace answer with sources: the citation jumps to the block (5.8s)
+  ✓   22 [webkit] › e2e/block-editor.spec.ts:220:1 › Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift (6.6s)
+  ✓   23 [webkit] › e2e/brain.spec.ts:167:1 › memory suggestions are saved only after Save (6.6s)
+  -   25 [webkit] › e2e/brain.spec.ts:189:1 › Screenshots web-brain-*
+  ✓   24 [webkit] › e2e/block-editor.spec.ts:250:1 › Formatierung: ⌘B auf Auswahl, Formatleiste erscheint (4.4s)
