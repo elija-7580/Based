@@ -199,6 +199,7 @@
     return props;
   }
 
+  var dispatching = false;
   function mount(meta, root) {
     var tpl = document.getElementById(meta.template);
     var Component = meta.make(DCLogic);
@@ -223,7 +224,8 @@
       (window.requestAnimationFrame || setTimeout)(render);
     };
     render();
-    dispatch(root);
+    // Handlers live on the elements (el.__h), so one set of root listeners serves every mount.
+    if (!dispatching) { dispatch(root); dispatching = true; }
     if (!window.__DC_PRERENDER && typeof inst.componentDidMount === "function") inst.componentDidMount();
     return inst;
   }
@@ -239,12 +241,51 @@
     return pages[0];
   }
 
+  // Carry what the visitor typed (and a finished sign-up) across the desktop/phone swap.
+  var CARRY = ["name", "email", "role"];
+  function carryOver(from, to) {
+    var s = from.state || {};
+    var patch = {};
+    CARRY.forEach(function (k) { if (k in s && k in to.state) patch[k] = s[k]; });
+    if (s.phase && s.phase !== "form" && s.reply) {
+      patch.phase = "done";
+      patch.reply = s.reply;
+      patch.replyChars = s.reply.length;
+    }
+    to.setState(patch);
+  }
+
+  function unmount(inst) {
+    inst.__schedule = null; // drop any render a leftover timer would queue
+    if (typeof inst.componentWillUnmount === "function") {
+      try { inst.componentWillUnmount(); } catch (err) { console.error(err); }
+    }
+  }
+
   function start() {
     var root = document.getElementById("dc-root");
     var meta = pick();
     if (!root || !meta) return;
-    mount(meta, root);
+    var inst = mount(meta, root);
     document.documentElement.setAttribute("data-dc-ready", "1");
+    // The phone version is picked by width, so swap when the window crosses the
+    // breakpoint (e.g. a page opened at half screen, then made full width).
+    var hasMobile = (window.__dcPages || []).some(function (p) { return p.mobile; });
+    if (hasMobile && window.matchMedia && !window.__DC_PRERENDER) {
+      var mq = window.matchMedia("(max-width: 760px)");
+      var onChange = function () {
+        var next = pick();
+        if (next === meta) return;
+        unmount(inst);
+        root.textContent = "";
+        var prev = inst;
+        meta = next;
+        inst = mount(meta, root);
+        carryOver(prev, inst);
+      };
+      if (mq.addEventListener) mq.addEventListener("change", onChange);
+      else if (mq.addListener) mq.addListener(onChange);
+    }
     // Anchors in prerendered/updated markup: honour #hash after the first render.
     if (location.hash && !window.__DC_PRERENDER) {
       var t = document.getElementById(location.hash.slice(1));
