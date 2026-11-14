@@ -156,6 +156,16 @@ export class EditorController {
   /** Nächster/vorheriger sichtbarer Block mit Textfeld (Pfeiltasten, auch über Spalten hinweg). */
   neighbourText(id: string, dir: -1 | 1): string | undefined {
     const order = this.order();
+    // BSD-407 Teil 5: Blöcke in einem eigenen Bereich (Notizen/Zusammenfassung eines Meetings) stehen nicht in der
+    // Seitenreihenfolge – dort bleiben die Pfeile im Bereich (nextVisible/previousVisible halten an der Grenze).
+    if (!order.includes(id)) {
+      let cur: string | undefined = id;
+      for (let n = 0; n < 10_000; n++) {
+        cur = dir > 0 ? cmd.nextVisible(this.store, cur) : cmd.previousVisible(this.store, cur);
+        if (!cur || cmd.isTextBlock(this.store.blocks.get(cur))) return cur;
+      }
+      return undefined;
+    }
     for (let i = order.indexOf(id) + dir; i >= 0 && i < order.length; i += dir) {
       if (cmd.isTextBlock(this.store.blocks.get(order[i]!))) return order[i];
     }

@@ -15,6 +15,8 @@ import { buttonVariant, dialogPurpose, fieldStatus, menuItems, type BasedButtonV
 
 export { buttonVariant, dialogPurpose, fieldStatus, menuItems } from "./variants.js";
 export type { BasedButtonVariant, BasedMenuItem } from "./variants.js";
+export { BasedTabs, type BasedTab, type BasedTabsProps } from "./tabs.js";
+export { BasedToken, tokenColor, type BasedTokenColor, type BasedTokenProps } from "./token.js";
 
 export interface BasedButtonProps {
   label: string;

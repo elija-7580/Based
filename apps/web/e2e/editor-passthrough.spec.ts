@@ -19,11 +19,11 @@ const test = base.extend<{ page: Page }>({
 });
 
 
-// BSD-407 Teil 3: Blöcke, die der Block-Editor (jetzt Standard) noch nicht bearbeiten kann – Meeting mit Abschnitten und
-// Transkript, Button mit Aktionen, Breadcrumb, Tabelle mit Formatierung in den Zellen – werden angezeigt und bleiben
+// BSD-407 Teil 3: Blöcke mit Daten, die der Block-Editor (jetzt Standard) nicht umschreiben darf – Meeting mit Abschnitten
+// und Transkript, Button mit Aktionen, Breadcrumb, Tabelle mit Formatierung in den Zellen – werden angezeigt und bleiben
 // beim Arbeiten auf der Seite unverändert (Records gleich vor und nach dem Tippen und Neuladen). Tabellen liegen im
 // gemeinsamen Format (Zeilen-Records `tableRow`) und werden angezeigt; eine bearbeitete Zelle behält ihre Formatierung.
-// Seiten mit Meeting öffnen beim nächsten Laden im alten Editor (bis Teil 2f).
+// Teil 5: das Meeting ist ein echter Meeting-Block im Block-Editor (Notizen im Reiter „Notes“), auch nach dem Neuladen.
 
 interface Rec { id: string; type: string; parent: string; sk: string; text?: unknown; props?: Record<string, unknown> }
 interface Store { blocks: Map<string, Rec>; transact(n: string, f: (tx: { put(r: unknown): void }) => void): void }
@@ -73,20 +73,22 @@ test("Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverä
   expect(Object.values(before)).not.toContain("missing");
 
   const ed = blockEditor(page);
-  // angezeigt: Meeting als Platzhalter mit Titel und Inhalt darunter, Button mit Beschriftung, Tabelle mit Text
-  await expect(editorBlock(page, "PT-MEET")).toContainText("Meeting");
+  // angezeigt: Meeting-Block mit Titel und Notizen (Reiter „Notes“), Button mit Beschriftung, Tabelle mit Text
+  const meeting = editorBlock(page, "PT-MEET").getByTestId("meeting-block");
+  await expect(meeting.getByLabel("Meeting title")).toHaveValue("Weekly sync");
+  await meeting.getByRole("tab", { name: "Notes" }).click();
   await expect(editorBlock(page, "PT-NOTE")).toContainText("Decision: ship on Friday");
   await expect(editorBlock(page, "PT-BUTTON").getByRole("button", { name: "Start standup" })).toBeVisible();
   await expect(editorBlock(page, "PT-CRUMB")).toBeVisible();
   await expect(editorBlock(page, "PT-TABLE").locator("td")).toHaveText(["Ada (lead)", "Ready"]);
 
-  // auf der Seite arbeiten: tippen, neue Zeilen, Klick auf den Platzhalter
+  // auf der Seite arbeiten: tippen, neue Zeilen, Klick in den Kopf des Meetings
   await ed.locator('[data-editable-id="PT-AFTER"]').click();
   await page.keyboard.press("End");
   await page.keyboard.type(" and more");
   await page.keyboard.press("Enter");
   await page.keyboard.type("New line");
-  await editorBlock(page, "PT-MEET").locator(".bx2-unsupported").first().click();
+  await meeting.locator(".bx-meet-icon").click();
   await focusEditorEnd(page);
   await page.keyboard.type("At the end");
 
@@ -103,12 +105,11 @@ test("Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverä
   expect(unchanged(await records(page, pageID))).toEqual(unchanged(expected));
   expect(JSON.parse((await records(page, pageID))["PT-TABLE"]!).props.cells).toBeUndefined(); // kein zweites Format am Tabellen-Block
 
-  // Neu laden: eine Seite mit Meeting öffnet bis Teil 2f im alten Editor (dort gibt es Aufnahme und Notizen) –
-  // auch dabei ändert sich nichts
+  // Neu laden: die Seite öffnet wieder im Block-Editor mit dem Meeting-Block – auch dabei ändert sich nichts
   await page.waitForTimeout(800);
   await page.reload();
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await expect(page.getByTestId("meeting-block")).toBeVisible();
+  await expect(blockEditor(page).getByTestId("meeting-block")).toBeVisible();
   await expect(page.getByTestId("page-content")).toContainText("At the end");
   await page.waitForTimeout(800);
   expect(unchanged(await records(page, pageID))).toEqual(unchanged(expected));

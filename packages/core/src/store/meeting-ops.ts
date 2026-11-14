@@ -49,17 +49,47 @@ export interface CreateMeetingOptions {
 export function createMeeting(store: WorkspaceStore, opts: CreateMeetingOptions): string {
   const id = opts.id ?? newID();
   store.transact("New meeting notes", (tx) => {
-    const now = store.now();
-    const title = opts.title ?? meetingTitleFor(new Date(Date.now()));
-    const m = freshBlock(store, "meeting", opts.parent, opts.sk ?? store.endKey(opts.parent), now, { meeting: opts.info ?? { status: "ready" } }, title);
-    m.id = id;
-    tx.put({ kind: "block", data: m });
-    const keys = keysBetween(2, undefined, undefined);
-    (["notes", "summary"] as const).forEach((kind, i) => {
-      tx.put({ kind: "block", data: freshBlock(store, "meetingSection", "b:" + id, keys[i]!, now, { meetingSection: kind }) });
-    });
+    putMeeting(store, tx, id, opts.parent, opts.sk ?? store.endKey(opts.parent), opts.title, opts.info);
   }, { undoable: opts.undoable ?? true });
   return id;
+}
+
+/** Meeting-Records (Block, Notizen, Zusammenfassung) in eine laufende Transaktion; gibt die ID des Notiz-Abschnitts zurück. */
+function putMeeting(store: WorkspaceStore, tx: Tx, id: string, parent: string, sk: string, title?: string, info?: MeetingInfo): string {
+  const now = store.now();
+  const m = freshBlock(store, "meeting", parent, sk, now, { meeting: info ?? { status: "ready" } }, title ?? meetingTitleFor(new Date(Date.now())));
+  m.id = id;
+  tx.put({ kind: "block", data: m });
+  const keys = keysBetween(2, undefined, undefined);
+  let notes = "";
+  (["notes", "summary"] as const).forEach((kind, i) => {
+    const s = freshBlock(store, "meetingSection", "b:" + id, keys[i]!, now, { meetingSection: kind });
+    if (kind === "notes") notes = s.id;
+    tx.put({ kind: "block", data: s });
+  });
+  return notes;
+}
+
+/**
+ * BSD-407 Teil 5: „/meet“ im Block-Editor – Meeting hinter Block `after` (oder an Stelle des leeren Blocks `after`),
+ * dazu eine leere erste Notiz, in die die Schreibmarke kommt. Ein Undo-Schritt, gleiche Records wie `createMeeting`.
+ */
+export function insertMeetingAfter(store: WorkspaceStore, after: string, opts: { replace?: boolean; title?: string } = {}): { meetingID: string; noteID: string } | undefined {
+  const a = store.blocks.get(after);
+  if (!a || a.trashedAt !== undefined) return undefined;
+  const meetingID = newID();
+  let noteID = "";
+  store.transact("New meeting notes", (tx) => {
+    const sibs = store.children(a.parent);
+    const next = sibs[sibs.indexOf(after) + 1];
+    const sk = opts.replace ? a.sk : keyBetween(a.sk, next ? store.blocks.get(next)?.sk : undefined);
+    if (opts.replace) tx.remove(keyOf("block", after));
+    const notes = putMeeting(store, tx, meetingID, a.parent, sk, opts.title);
+    const note = freshBlock(store, "text", "b:" + notes, keyBetween(undefined, undefined), store.now());
+    noteID = note.id;
+    tx.put({ kind: "block", data: note });
+  });
+  return { meetingID, noteID };
 }
 
 export function meetingInfo(store: WorkspaceStore, id: string): MeetingInfo | undefined {
@@ -68,8 +98,8 @@ export function meetingInfo(store: WorkspaceStore, id: string): MeetingInfo | un
 }
 
 /**
- * BSD-407 Teil 3: Hat die Seite (direkt, ohne Unterseiten) einen Meeting-Block? Der Block-Editor kann Meetings noch
- * nicht bearbeiten (BSD-407 Teil 2f); solche Seiten öffnet die Hülle bis dahin im alten Editor.
+ * BSD-407 Teil 3: Hat die Seite (direkt, ohne Unterseiten) einen Meeting-Block? (Bis Teil 5 öffnete die Hülle solche
+ * Seiten im alten Editor; seit Teil 5 kann der Block-Editor Meetings, die Prüfung bleibt für Werkzeuge und Tests.)
  */
 export function pageHasMeeting(store: WorkspaceStore, pageID: string): boolean {
   const stack = [...store.children("b:" + pageID)];

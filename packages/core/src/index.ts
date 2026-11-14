@@ -154,7 +154,7 @@ export type {
   TranscriptParagraph, TranscriptSegment, TranscriptWord,
 } from "./model/meeting.js";
 export {
-  addMeetingContext, addMeetingTrack, appendTranscript, applyMeetingSummary, applySpeakerTurns, createMeeting, editTranscript, findMeetingSection,
+  addMeetingContext, addMeetingTrack, appendTranscript, applyMeetingSummary, applySpeakerTurns, createMeeting, editTranscript, findMeetingSection, insertMeetingAfter,
   meetingContaining, meetingContextText, meetingInfo, pageHasMeeting, meetingNotesText, meetingSection, meetingSummaryTexts, meetingTitleFor, meetingTranscript,
   meetingVocabulary, mergeSpeakers, mergedSpeakers, removeMeetingContext, renameSpeaker, replaceTranscript, setMeetingStatus, setMeetingTitle,
   setSegmentSpeaker, stampNote, stampedNotes, transcriptChunks, unstampedNotes, updateMeeting,

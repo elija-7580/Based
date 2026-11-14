@@ -24,6 +24,7 @@ import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn
 import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
 import { PresenceLayer, useRealtime } from "./realtime.js";
 import { highlightCode } from "./highlight.js";
+import { MeetingBlock } from "./meeting.js";
 import "./blocks.css";
 
 interface Ctx {
@@ -467,7 +468,8 @@ export function BlockEditor(props: PageEditorProps) {
     }
     if (item.create) {
       const created = item.create(store, s.id, empty);
-      if (created) ctrl.select([created]);
+      if (created && item.caret) ctrl.setCaret({ id: created, from: 0, to: 0 });
+      else if (created) ctrl.select([created]);
       return;
     }
     if (empty) run(cmd.convertEmptyBlock(store, s.id, item.type, item.props ?? {}));
@@ -810,7 +812,8 @@ export function BlockEditor(props: PageEditorProps) {
         return;
       }
       const edge = dir < 0 ? sel[0]! : sel[sel.length - 1]!;
-      const next = order[order.indexOf(edge) + dir];
+      // Blöcke in einem Meeting-Abschnitt stehen nicht in der Seitenreihenfolge: dort im Abschnitt bleiben
+      const next = order.includes(edge) ? order[order.indexOf(edge) + dir] : (dir < 0 ? cmd.previousVisible(store, edge) : cmd.nextVisible(store, edge));
       ctrl.select([next ?? edge]);
     }
   };
@@ -1229,6 +1232,27 @@ export function sectionColor(b: { type: string; props?: Record<string, unknown> 
   return /^heading[1-3]$/.test(b.type) && b.props?.toggleable === true && typeof c === "string" && c.endsWith("Background") ? c : undefined;
 }
 
+/** BSD-407 Teil 5: Abschnitt eines Meetings (Notizen, Zusammenfassung) – Klick in die freie Fläche schreibt am Ende weiter. */
+function MeetingSection({ id, depth, placeholder }: { id: string; depth: number; placeholder: string | undefined }) {
+  const { store, ctrl, editable } = useCtx();
+  const kids = useKids(store, id);
+  const onClick = (e: React.MouseEvent) => {
+    if (!editable || (e.target as Element).closest("[data-editable-id], button, input, a, [data-embed]:not(.bx2-meet)")) return;
+    const row = (e.target as Element).closest<HTMLElement>(".bx2-block");
+    const rowID = row && e.currentTarget.contains(row) ? row.dataset.blockId : undefined;
+    if (rowID && cmd.isTextBlock(store.blocks.get(rowID))) { ctrl.setCaret(endCaret(store, rowID)); return; }
+    const last = kids[kids.length - 1];
+    const lb = last ? store.blocks.get(last) : undefined;
+    if (lb && lb.type === "text" && textLen(store, lb.id) === 0) ctrl.setCaret({ id: lb.id, from: 0, to: 0 });
+    else ctrl.apply(cmd.insertBlock(store, { inside: id, at: "end" }, "text"));
+  };
+  return (
+    <div className="bx-meet-doc bx2-meet-doc" data-section-id={id} onClick={onClick}>
+      {kids.length ? <BlockList parent={id} depth={depth} /> : placeholder ? <span className="bx2-meet-placeholder">{placeholder}</span> : null}
+    </div>
+  );
+}
+
 function ChildList({ id, depth }: { id: string; depth: number }) {
   const { store } = useCtx();
   const kids = useKids(store, id);
@@ -1423,6 +1447,10 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <TableOfContents />;
     case "button":
       return <div className="bx2-embed" data-embed="" contentEditable={false}><button type="button" className="bx2-button" disabled>{b.props?.buttonLabel || "Button"}</button></div>;
+    case "meeting":
+      // BSD-407 Teil 5: Aufnahme, Notizen, Zusammenfassung, Transkript (Notizen/Zusammenfassung sind Blöcke dieses Editors)
+      return <MeetingBlock id={b.id} store={store} editable={editable} host={props.meeting} pages={props.pages} onOpenPage={props.onOpenPage}
+        renderSection={(section, placeholder) => <MeetingSection id={section} depth={depth + 1} placeholder={placeholder} />} />;
     case "syncedBlock": {
       // Kopie: zeigt (und bearbeitet) den Inhalt des Originals
       const source = typeof b.props?.syncSource === "string" && store.blocks.has(b.props.syncSource) ? b.props.syncSource : b.id;

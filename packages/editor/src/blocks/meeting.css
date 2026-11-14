@@ -1,0 +1,20 @@
+/* BSD-407 Teil 5: Meeting-Block im Block-Editor. Grundaussehen aus ../meeting.css (gleich wie im alten Editor); hier nur,
+   was der Block-Editor anders braucht: Notizen und Zusammenfassung sind Blöcke des Editors (mit Griff und Auswahl). */
+.bx2-meet { flex: 1 1 auto; min-width: 0; user-select: none; -webkit-user-select: none; }
+.bx2-meet .bx-meet-title, .bx2-meet .bx-meet-para-text, .bx2-meet-doc { user-select: text; -webkit-user-select: text; }
+.bx2-meet-tabs { align-self: stretch; }
+.bx2-meet-doc {
+  position: relative; display: block; min-height: calc(var(--space-8) + var(--space-1));
+  padding: var(--space-1) var(--space-3); font-family: var(--font-body); font-size: var(--type-body-size); cursor: text;
+}
+.bx2-meet-doc > .bx2-block > .bx2-gutter { left: calc(-1 * var(--space-8) - var(--space-3)); }
+.bx2-meet-placeholder { display: block; padding: var(--space-1) var(--space-half); color: var(--muted); }
+.bx2-meet-picker, .bx2-meet-note-field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; width: min(100%, 22em); }
+.bx2-meet-results { display: flex; flex-direction: column; align-items: flex-start; }
+.bx2-meet-speaker-edit { flex-wrap: wrap; }
+.bx2-meet .bx-meet-time:focus-visible, .bx2-meet .bx-meet-para:focus-visible, .bx2-meet .bx-meet-chip:focus-visible, .bx2-meet .bx-meet-x:focus-visible, .bx2-meet .bx-meet-link:focus-visible {
+  outline: 1px solid var(--focus-ring); outline-offset: 1px;
+}
+/* Zeitmarken und Zahlen: Mono mit Tabellenziffern (Checkliste 4); Klasse von BasedToken mono */
+.based-token-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.bx2-meet .bx2-meet-playing { font-family: var(--font-ui); font-size: var(--type-description-size); gap: var(--space-1); }

@@ -1,5 +1,5 @@
 // ADR 0016 (E5, erster Teil): Einträge des Slash-Menüs im Block-Editor. Reine Daten + Filter; Kürzel im Mac-Stil.
-import { blockCommands, createDatabase, insertPage, type Block, type WorkspaceStore } from "@based/core";
+import { blockCommands, createDatabase, insertMeetingAfter, insertPage, type Block, type WorkspaceStore } from "@based/core";
 
 export interface SlashItem {
   type: string;
@@ -19,6 +19,8 @@ export interface SlashItem {
   linkDatabase?: true;
   /** Sonderfall mit eigenen Records (Datenbank): legt an und gibt die Block-ID zurück. */
   create?: (store: WorkspaceStore, after: string, replace: boolean) => string | undefined;
+  /** `create` gibt einen Textblock zurück: Schreibmarke hinein statt Blockauswahl (Meeting: erste Notiz). */
+  caret?: true;
 }
 
 const subPage = (store: WorkspaceStore, replace: string | undefined, after: string): string | undefined => {
@@ -77,6 +79,9 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   // BSD-407 Teil 3: wie im alten Editor eigene Einträge für Codeblöcke mit Vorschau
   { type: "code", label: "Mermaid diagram", group: "Advanced", icon: "⇄", keywords: "diagram flowchart chart graph", props: { language: "mermaid" } },
   { type: "code", label: "HTML", group: "Advanced", icon: "</>", keywords: "html web preview markup", props: { language: "html" } },
+  // BSD-407 Teil 5: Meeting wie im alten Editor (gleiche Records); die Schreibmarke kommt in die erste Notiz
+  { type: "meeting", label: "Meeting notes", group: "Advanced", icon: "●", keywords: "meet meeting transcribe record notes", caret: true,
+    create: (store, after, replace) => insertMeetingAfter(store, after, { replace })?.noteID },
   { type: "tableOfContents", label: "Table of contents", group: "Advanced", icon: "≡", keywords: "toc outline headings" },
 ];
 

@@ -14,7 +14,8 @@ const NESTABLE_TYPES: ReadonlySet<string> = new Set(["text", "bulletedList", "nu
 /** Grenzen: über sie hinweg wird nicht zusammengeführt oder ausgerückt. */
 const BOUNDARY_TYPES: ReadonlySet<string> = new Set(["page", "databasePage", "column", "columnList", "table", "meeting", "meetingSection", "syncedBlock"]);
 /** Kinder dieser Blöcke sind keine Editor-Blöcke (Tabellenzeilen) oder liegen auf einer eigenen Seite. */
-const OPAQUE_TYPES: ReadonlySet<string> = new Set(["page", "databasePage", "databaseInline", "table", "linkToPage"]);
+// BSD-407 Teil 5: Meeting – Notizen, Zusammenfassung und Transkript zeichnet der Meeting-Block selbst (Reiter), nicht der Seitenfluss.
+const OPAQUE_TYPES: ReadonlySet<string> = new Set(["page", "databasePage", "databaseInline", "table", "linkToPage", "meeting"]);
 
 export const isHeading = (type: string) => /^heading[1-4]$/.test(type);
 export const isTextBlock = (b: Block | undefined): boolean => b !== undefined && TEXT_TYPES.has(b.type);
