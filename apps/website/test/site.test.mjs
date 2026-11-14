@@ -33,6 +33,9 @@ test("build: every page exists, nothing points back to the design canvas or to G
   const home = readFileSync(join(out, "index.html"), "utf8");
   assert.match(home, /window\.basedSite\.waitlist\(this, e\)/, "home sends the waitlist");
   assert.match(home, /dc-tpl-mobile/, "home carries the phone version");
+  const runtime = readdirSync(join(out, "assets")).find((f) => f.startsWith("dc-lite."));
+  assert.match(readFileSync(join(out, "assets", runtime), "utf8"), /mq\.addEventListener\("change"/,
+    "home swaps desktop/phone version when the window crosses the breakpoint");
   assert.match(home, /href="\/privacy"/);
   const imprint = readFileSync(join(out, "imprint", "index.html"), "utf8");
   assert.match(imprint, /Offenlegung gemäß § 25 Mediengesetz/);
