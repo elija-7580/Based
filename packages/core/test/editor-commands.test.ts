@@ -366,6 +366,18 @@ describe.each([false, true])("Block-Editor E1 (propertyRecords=%s)", (pr) => {
       expect(cmd.moveBlocksToPage(s, ["sub"], "sub")).toBe(0);
     });
 
+    it("BSD-407: Turn into page – Titel aus dem Text, Kinder werden Inhalt, an derselben Stelle", () => {
+      const s = make(pr, [
+        blk("a", "text", "b:P", "a0", { text: "a" }), blk("t", "toggle", "b:P", "a1", { text: "Plan", props: { isOpen: true } }),
+        blk("t1", "text", "b:t", "a0", { text: "one" }), blk("t2", "todo", "b:t", "a1", { text: "two" }), blk("z", "text", "b:P", "a2", { text: "z" }),
+      ]);
+      const id = step(s, () => cmd.turnIntoPage(s, "t"))!;
+      expect(outline(s)).toEqual(["text: a", "page: Plan", "  text: one", "  todo: two", "text: z"]);
+      expect(s.blocks.get(id)!.type).toBe("page");
+      expect(s.blocks.get("t1")!.trashedAt).toBeUndefined();
+      expect(cmd.turnIntoPage(s, id)).toBeUndefined(); // eine Seite ist kein Textblock
+    });
+
     it("vor/nach/hinein, mit Kindern, nicht in sich selbst", () => {
       const s = base();
       step(s, () => cmd.moveBlocks(s, ["c"], "a", "before"));

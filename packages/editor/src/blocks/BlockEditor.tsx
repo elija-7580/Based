@@ -11,6 +11,7 @@ import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX } from "../mapping/bn.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
+import { MovePicker } from "../ui/MovePicker.js";
 import { IconView } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
@@ -61,6 +62,8 @@ export function BlockEditor(props: PageEditorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [slash, setSlash] = useState<SlashState | undefined>();
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | undefined>();
+  // BSD-407: Blockmenü „Move to“ – Zielseite wählen (MovePicker wie im alten Editor).
+  const [moving, setMoving] = useState<string[] | undefined>();
   // Nach dem Schließen des Blockmenüs (Fokus lag im Suchfeld): Fokus zurück auf den Rahmen, solange Blöcke gewählt sind.
   const closeMenu = useCallback(() => {
     setMenu(undefined);
@@ -167,6 +170,7 @@ export function BlockEditor(props: PageEditorProps) {
           if (data === "/" && pos !== undefined && !block) openSlash(id, pos - 1);
           else if (slashRef.current) updateSlash(id);
           if (data === "@" && pos !== undefined && props.pages) openMention(id, pos - 1);
+          else if (data === "[" && pos !== undefined && pos >= 2 && props.pages && plainText(store.blocks.get(id)?.text)[pos - 2] === "[") openMention(id, pos - 2, "[[");
           else if (mentionRef.current) updateMention(id);
           break;
         }
@@ -254,6 +258,12 @@ export function BlockEditor(props: PageEditorProps) {
       if (!c) { run(cmd.insertContentAfter(store, anchor, content, opts)); return; }
       // URL über markiertem Text: Link setzen (wie Notion)
       if (c.from !== c.to && /^https?:\/\/\S+$/.test(text.trim())) { run(cmd.formatText(store, [R(c)], "link", text.trim())); return; }
+      // BSD-407: nackte URL in eine leere Zeile → Web-Bookmark (wie der alte Editor; Vorschau holt der Block selbst)
+      const blk = store.blocks.get(c.id);
+      if (!based && /^https?:\/\/\S+$/.test(text.trim()) && blk?.type === "text" && plainText(blk.text).length === 0) {
+        const f = cmd.convertEmptyBlock(store, c.id, "bookmark", { url: text.trim() });
+        if (f) { run(f); return; }
+      }
       run(cmd.insertContent(store, R(c), content, opts));
     };
 
@@ -367,18 +377,18 @@ export function BlockEditor(props: PageEditorProps) {
 
   // MARK: @-Erwähnungen
 
-  const openMention = (id: string, at: number) => {
+  const openMention = (id: string, at: number, trigger: "@" | "[[" = "@") => {
     const el = ctrl.editable(id);
     if (!el) return;
     const r = el.ownerDocument.getSelection()?.getRangeAt(0).getBoundingClientRect();
     const box = r && (r.width || r.height) ? r : el.getBoundingClientRect();
-    const st: MentionState = { id, at, query: "", index: 0, x: box.left, y: box.bottom + 6, items: [] };
+    const st: MentionState = { id, at, trigger, query: "", index: 0, x: box.left, y: box.bottom + 6, items: [] };
     setMention(st);
     void searchMention(st);
   };
   const searchMention = async (st: MentionState) => {
     const pages = await (props.pages?.search(st.query) ?? Promise.resolve([] as PageRef[])).catch(() => [] as PageRef[]);
-    const dates = dateSuggestions(st.query, new Date()).slice(0, st.query ? 3 : 2);
+    const dates = st.trigger === "[[" ? [] : dateSuggestions(st.query, new Date()).slice(0, st.query ? 3 : 2);
     const items: MentionItem[] = [...pages.slice(0, 8).map((ref) => ({ kind: "page" as const, ref })), ...dates.map((d) => ({ kind: "date" as const, label: d.label, date: d.date }))];
     setMention((cur) => (cur && cur.id === st.id && cur.at === st.at && cur.query === st.query ? { ...cur, items, index: 0 } : cur));
   };
@@ -387,8 +397,8 @@ export function BlockEditor(props: PageEditorProps) {
     if (!s || s.id !== id) return;
     const text = plainText(store.blocks.get(id)?.text);
     const c = ctrl.caret;
-    if (!c || c.from <= s.at || text[s.at] !== "@") { setMention(undefined); return; }
-    const query = text.slice(s.at + 1, c.from);
+    if (!c || c.from < s.at + s.trigger.length || text.slice(s.at, s.at + s.trigger.length) !== s.trigger) { setMention(undefined); return; }
+    const query = text.slice(s.at + s.trigger.length, c.from).replace(/\]\]$/, "");
     if (/\s\s/.test(query) || query.length > 40) { setMention(undefined); return; }
     const next = { ...s, query };
     setMention(next);
@@ -398,7 +408,10 @@ export function BlockEditor(props: PageEditorProps) {
     const s = mentionRef.current;
     setMention(undefined);
     if (!s) return;
-    const range = { blockId: s.id, from: s.at, to: s.at + 1 + s.query.length };
+    const text = plainText(store.blocks.get(s.id)?.text);
+    let to = s.at + s.trigger.length + s.query.length;
+    if (s.trigger === "[[" && text.slice(to, to + 2) === "]]") to += 2; // automatisch geschlossene Klammern mitnehmen
+    const range = { blockId: s.id, from: s.at, to };
     if (item.kind === "page") run(cmd.insertMention(store, range, { page: { _0: item.ref.id } }, item.ref.title || "Untitled"));
     else run(cmd.insertMention(store, range, { date: { _0: dateMentionValue(item.date) } }, "@" + item.label));
   };
@@ -482,7 +495,13 @@ export function BlockEditor(props: PageEditorProps) {
     const type = types[Number(m[1])]!;
     e.preventDefault();
     const targets = ids.filter((x) => cmd.isTextBlock(store.blocks.get(x)));
-    if (type === "page" || targets.length === 0) return true;
+    if (targets.length === 0) return true;
+    if (type === "page") {
+      // BSD-407: ⌘⌥9 – jeder Textblock wird an seiner Stelle zur Unterseite (Titel = Text, Kinder = Inhalt).
+      const pages = targets.flatMap((x) => cmd.turnIntoPage(store, x) ?? []);
+      if (pages.length) ctrl.select(pages);
+      return true;
+    }
     const c = ctrl.caret;
     cmd.turnInto(store, targets, type);
     if (c && targets.includes(c.id)) ctrl.setCaret(clampCaret(store, c));
@@ -631,6 +650,7 @@ export function BlockEditor(props: PageEditorProps) {
     }
     if (mod && key.toLowerCase() === "a") { e.preventDefault(); ctrl.select(order); return; }
     if (mod && key.toLowerCase() === "d" && editable) { e.preventDefault(); ctrl.select(duplicate(store, sel)); return; }
+    if (mod && e.shiftKey && key.toLowerCase() === "p" && editable && props.pages) { e.preventDefault(); setMoving([...sel]); return; }
     if (mod && e.shiftKey && (key === "ArrowUp" || key === "ArrowDown") && editable) {
       e.preventDefault();
       cmd.moveBlocksBy(store, sel, key === "ArrowUp" ? "up" : "down");
@@ -929,7 +949,15 @@ export function BlockEditor(props: PageEditorProps) {
         {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
-      {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={closeMenu} /> : null}
+      {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={closeMenu} onMove={props.pages ? setMoving : undefined} /> : null}
+      {moving && props.pages ? (
+        <MovePicker pages={props.pages} selfID={pageID} moving={moving} onClose={() => setMoving(undefined)}
+          onPick={(page) => void (async () => {
+            setMoving(undefined);
+            const last = await props.pages?.lastChildKey?.(page.id).catch(() => undefined);
+            if (cmd.moveBlocksToPage(store, moving, page.id, last)) ctrl.clearSelection();
+          })()} />
+      ) : null}
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
       {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
@@ -1583,7 +1611,7 @@ function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; st
   );
 }
 
-function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; onClose: () => void }) {
+function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: number; onClose: () => void; onMove?: ((ids: string[]) => void) | undefined }) {
   const { store, ctrl, editable, props } = useCtx();
   const ref = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<"main" | "color">("main");
@@ -1638,6 +1666,7 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
     actions.push(
       { group: "edit", label: "Delete", hint: "Del", run: () => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); } },
       { group: "edit", label: "Duplicate", hint: "⌘D", run: () => ctrl.select(duplicate(store, ids)) },
+      ...(onMove ? [{ group: "edit" as const, label: "Move to", hint: "⌘⇧P", run: () => onMove(ids) }] : []),
       { group: "edit", label: "Move up", hint: "⌘⇧↑", run: () => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); } },
       { group: "edit", label: "Move down", hint: "⌘⇧↓", run: () => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); } },
       { group: "edit", label: "Color", hint: "›", keepOpen: true, run: () => setView("color") },
@@ -1646,8 +1675,13 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
   const q = query.trim().toLowerCase();
   const hit = (label: string) => q === "" || label.toLowerCase().includes(q);
   const shown = actions.filter((a) => hit(a.label));
-  const turns = editable && turnable ? SLASH_ITEMS.filter((s) => cmd.TEXT_TYPES.has(s.type) && !s.page && (hit(s.label) || hit("Turn into"))) : [];
-  const runTurn = (s: (typeof SLASH_ITEMS)[number]) => cmd.turnInto(store, ids, s.type, s.props ?? {});
+  // „Page“ (⌘⌥9) steht wie im alten Editor unter „Turn into“.
+  const turns = editable && turnable ? SLASH_ITEMS.filter((s) => (s.type === "page" || (cmd.TEXT_TYPES.has(s.type) && !s.page)) && (hit(s.label) || hit("Turn into"))) : [];
+  const runTurn = (s: (typeof SLASH_ITEMS)[number]) => {
+    if (s.type !== "page") return void cmd.turnInto(store, ids, s.type, s.props ?? {});
+    const pages = ids.flatMap((x) => cmd.turnIntoPage(store, x) ?? []);
+    if (pages.length) ctrl.select(pages);
+  };
   const items = () => [...(ref.current?.querySelectorAll<HTMLElement>("[role^=menuitem]") ?? [])];
   const onKey = (e: ReactKeyboardEvent) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -1727,7 +1761,8 @@ function FormatBar({ x, y, onMark, onColor }: { x: number; y: number; onMark: (m
 }
 
 type MentionItem = { kind: "page"; ref: PageRef } | { kind: "date"; label: string; date: Date };
-interface MentionState { id: string; at: number; query: string; index: number; x: number; y: number; items: MentionItem[] }
+// `trigger`: „@“ (Seiten und Daten) oder „[[“ (nur Seiten, wie im alten Editor).
+interface MentionState { id: string; at: number; trigger: "@" | "[["; query: string; index: number; x: number; y: number; items: MentionItem[] }
 
 function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoose: (r: MentionItem) => void; onHover: (i: number) => void }) {
   const firstDate = state.items.findIndex((x) => x.kind === "date");

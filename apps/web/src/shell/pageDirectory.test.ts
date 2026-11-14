@@ -59,4 +59,12 @@ describe("ShellPageDirectory", () => {
     expect(dir.get("p1")?.trashed).toBe(true);
     expect(notified).toBe(2);
   });
+
+  it("BSD-407: vorläufiger Eintrag (Worker hat noch nicht geantwortet) ist bei gleichen Werten dasselbe Objekt", () => {
+    const fake = fakeClient();
+    const dir = new ShellPageDirectory(fake.client);
+    const a = dir.get("p1");
+    expect(a?.title).toBe("Airship");
+    expect(dir.get("p1")).toBe(a); // sonst zeichnet useSyncExternalStore endlos neu (React-Fehler 185)
+  });
 });

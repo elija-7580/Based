@@ -3,7 +3,7 @@
 export {
   applyInlineMarkdown, applyMarkdownShortcut, convertEmptyBlock, deleteBackward, deleteBlocks, deleteForward, insertBlock, insertColumns, insertMention,
   setBlockProps, setColumnRatios, dissolveColumns, duplicateBlocks, formatText, indentBlocks, markdownShortcut, mergeBackward, mergeForward,
-  moveBlocks, moveBlocksBy, moveBlocksToPage, newBlockID, outdentBlocks, replaceText, setBlockText, setChecked, splitBlock, turnInto,
+  moveBlocks, moveBlocksBy, moveBlocksToPage, newBlockID, outdentBlocks, replaceText, setBlockText, setChecked, splitBlock, turnInto, turnIntoPage,
 } from "./blocks.js";
 export type { BlockPlace, DropZone, Focus, ReplaceTextOptions, TextRange } from "./blocks.js";
 export { BASED_CLIPBOARD_MIME, copyBlocks, insertContent, insertContentAfter, isBasedClipboard, parsePaste } from "./paste.js";

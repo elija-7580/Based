@@ -534,6 +534,24 @@ export function moveBlocksToPage(store: WorkspaceStore, ids: readonly string[], 
   return roots.length;
 }
 
+/**
+ * Turn into page (⌘⌥9, Blockmenü): der Textblock wird an seiner Stelle zur Unterseite, sein Text (ohne Formatierung)
+ * zum Titel, seine Kinder zum Inhalt der Seite. Gleiche ID: Links auf den Block führen danach auf die Seite.
+ */
+export function turnIntoPage(store: WorkspaceStore, blockId: string): string | undefined {
+  const b = store.blocks.get(blockId);
+  if (!b || b.trashedAt !== undefined || !isTextBlock(b)) return undefined;
+  const title = plainRuns(textOf(b));
+  store.transact("Turn into page", (tx) => {
+    tx.update(blockId, (x) => {
+      x.type = "page";
+      x.text = blockText(title);
+      delete x.props;
+    });
+  });
+  return blockId;
+}
+
 /** Spaltenliste auflösen: Spalten nacheinander an ihre Stelle (Blockmenü „Unwrap columns“). */
 export function dissolveColumns(store: WorkspaceStore, columnListId: string): Focus | undefined {
   const list = store.blocks.get(columnListId);
