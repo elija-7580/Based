@@ -149,8 +149,12 @@ test("Links und Häkchen im Editor ohne Browser-Blau", async ({ page }) => {
   await paste(page, "A [link](https://example.com) here.\n\n- [x] Done");
   const link = editor(page).locator("a").first();
   await expect(link).toBeVisible();
-  const [linkColor, textColor] = await link.evaluate((a) => [getComputedStyle(a).color, getComputedStyle(a.closest("[data-editable-id]") ?? a.parentElement!).color]);
-  expect(linkColor).toBe(textColor);
+  // Der Block-Editor rendert den Absatz nach dem Einfügen einmal neu – erst messen, wenn der Link im Dokument hängt
+  // (sonst greift evaluate das abgehängte alte <a>). Geprüft wird weiter: Linkfarbe = Textfarbe.
+  await expect.poll(() => link.evaluate((a) => {
+    const host = a.isConnected ? (a.closest("[data-editable-id]") ?? a.parentElement) : null;
+    return host ? getComputedStyle(a).color === getComputedStyle(host).color : "detached";
+  })).toBe(true);
   const accent = await editor(page).locator("input[type=checkbox]").first().evaluate((c) => getComputedStyle(c).accentColor);
   const ink = await page.evaluate(() => { const d = document.createElement("div"); d.style.color = "var(--ink)"; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c; });
   expect(accent).toBe(ink);
