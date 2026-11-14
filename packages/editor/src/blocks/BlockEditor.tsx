@@ -1613,6 +1613,9 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
   return (
     <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Block" data-testid="block-menu" style={style}>
       <div className="bx2-menu-label">{labelOf(b)}</div>
+      {b?.type === "databaseInline" && ids.length === 1 && props.onOpenPage ? (
+        <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => props.onOpenPage?.(id))}><span className="bx2-menu-text">Open as full page</span></button>
+      ) : null}
       {link ? <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => void navigator.clipboard?.writeText(link).catch(() => undefined))}><span className="bx2-menu-text">Copy link to block</span><span className="bx2-menu-hint">⌥⇧L</span></button> : null}
       {editable ? (
         <>

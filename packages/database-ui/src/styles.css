@@ -45,6 +45,7 @@
 .dbui-title {
   font-family: var(--font-head); font-size: var(--type-heading-size); font-weight: var(--weight-heading); line-height: var(--type-heading-leading);
   letter-spacing: var(--type-heading-tracking); border: 0; background: transparent; color: var(--ink); padding: 0; margin: 0; outline: none; width: 100%;
+  resize: none; overflow: hidden; overflow-wrap: anywhere; display: block;
 }
 .dbui-title::placeholder { color: var(--muted); }
 /* BSD-375: Inline-Datenbank ohne Titel – kein graues „Untitled“ (wie Notion); beim Überfahren oder im Fokus erscheint
@@ -163,6 +164,14 @@
 .dbui-vrow.group { height: var(--dbui-group); border-bottom: 0; align-items: flex-end; }
 .dbui-vrow.new { border-bottom: 0; }
 .dbui-vrow:not(.group):not(.new):hover { background: var(--surface-soft); }
+/* Linien und Flächen der Zeilen beginnen an der ersten Spalte – die Kästchen-Spalte, die links in den Rand hängt, bleibt
+   frei (wie Notion). Sonst liefen die Linien über den Seitenrand bzw. in einer Spalte über den Abstand in die Nachbarspalte. */
+.dbui-table :is(.dbui-thead, .dbui-vrow) { border-bottom: 0; }
+.dbui-table .dbui-thead::after, .dbui-table .dbui-vrow:not(.group):not(.new)::after {
+  content: ""; position: absolute; left: var(--dbui-gutter); right: 0; bottom: 0; border-bottom: 1px solid var(--line); pointer-events: none;
+}
+.dbui-table .dbui-vrow:not(.group):not(.new):hover { background: linear-gradient(to right, transparent var(--dbui-gutter), var(--surface-soft) var(--dbui-gutter)); }
+.dbui-table .dbui-new-row:hover { background: linear-gradient(to right, transparent var(--dbui-gutter), var(--surface-soft) var(--dbui-gutter)); }
 .dbui-cell {
   flex: none; position: relative; display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-2); min-width: 0; overflow: hidden;
   border-right: 1px solid var(--line); cursor: default;
@@ -589,6 +598,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-vrow:hover .dbui-row-check, .dbui-vrow.selected .dbui-row-check, .dbui-thead:hover .dbui-row-check, .dbui-row-check.shown, .dbui-row-check:focus-visible { opacity: 1; }
 .dbui-table:has(.dbui-vrow.selected) .dbui-row-check { opacity: 1; }
 .dbui-vrow.selected { background: var(--selected); }
+.dbui-table .dbui-vrow.selected { background: linear-gradient(to right, transparent var(--dbui-gutter), var(--selected) var(--dbui-gutter)); }
 .dbui-selection-bar {
   position: sticky; left: 0; z-index: 3; display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap;
   padding: var(--space-1) var(--space-2); background: var(--surface-raised); border-radius: var(--radius-md); margin-bottom: var(--space-1);
@@ -645,7 +655,11 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2) + var(--space-2))); }
 .dbui-root.inline .dbui-tabs { margin-left: calc(-1 * var(--space-2)); }
 .dbui-root.inline .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin: 0; }
-.dbui-root.inline .dbui-load-more { padding-left: calc(var(--space-7) + var(--space-2) + var(--space-2)); }
+/* „Load more“ wie die Zeilen: Linie und Fläche ab der ersten Spalte, Text auf der Kante der Namen. */
+.dbui-root.inline .dbui-load-more {
+  --dbui-load-hang: calc(var(--space-7) + var(--space-2));
+  margin-left: var(--dbui-load-hang); width: calc(100% - var(--dbui-load-hang)); padding-left: var(--space-2);
+}
 
 /* Inline in einer Seite (auch in farbigen Abschnitten): Kopf- und Fußzeile ohne eigene Fläche; die Fußzeile klebt nicht
    und hat keine Linie – Berechnungen erscheinen erst beim Überfahren (wie Notion), gesetzte bleiben sichtbar. */

@@ -404,6 +404,12 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .page.page-database .dbui-root:not(.inline) .dbui-tabs { margin-left: calc(-1 * var(--space-2)); }
 .page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2) + var(--space-2))); }
 .page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin-left: 0; }
+/* Inline-Tabelle in einer Spalte rechts: die Kästchen-Spalte hängt 56 px links heraus, der Spaltenabstand ist nur 46 px –
+   Bildlaufleiste und Kästchen ragten so in die Nachbarspalte. Hier hängt sie nur 44 px heraus (vorne 12 px Leerraum der
+   Kästchen-Spalte abgeschnitten), die Namen bleiben bündig mit dem Text. */
+.bx2-column + .bx2-column .dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-1))); }
+.bx2-column + .bx2-column .dbui-root.inline .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin-left: calc(-1 * (var(--space-2) + var(--space-1))); }
+.bx2-column + .bx2-column .dbui-root.inline .dbui-load-more { --dbui-load-hang: calc(var(--space-7) - var(--space-1)); }
 .page.page-database .page-grid { max-width: none; grid-template-columns: minmax(0, 1fr); }
 .page.page-database .spacer-cell { display: none; }
 .page-grid { max-width: calc(var(--page-measure) + var(--margin-column) + var(--space-5)); margin: 0 auto; display: grid; grid-template-columns: var(--margin-column) minmax(0, 1fr); column-gap: var(--space-5); row-gap: var(--space-3); }

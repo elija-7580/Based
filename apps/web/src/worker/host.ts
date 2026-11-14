@@ -18,6 +18,7 @@ import {
   emptyTrash,
   insertPage,
   isDescendant,
+  hasPageTitle,
   isPageLike,
   isTrashed,
   iconText,
@@ -527,10 +528,8 @@ export class StoreHost {
     this.titles.clear();
     for (const b of this.store.blocks.values()) {
       this.parents.set(b.id, b.parent);
-      if (isPageLike(b)) {
-        this.signatures.set(b.id, structureSignature(b));
-        this.titles.set(b.id, titleOf(this.store, b.id));
-      }
+      if (isPageLike(b)) this.signatures.set(b.id, structureSignature(b));
+      if (hasPageTitle(b)) this.titles.set(b.id, titleOf(this.store, b.id));
     }
   }
 
@@ -580,7 +579,7 @@ export class StoreHost {
 
   private trackTitle(id: string) {
     const b = this.store.blocks.get(id);
-    const t = b && isPageLike(b) ? titleOf(this.store, id) : "";
+    const t = b && hasPageTitle(b) ? titleOf(this.store, id) : "";
     if ((this.titles.get(id) ?? "") === t) return;
     if (t) this.titles.set(id, t);
     else this.titles.delete(id);

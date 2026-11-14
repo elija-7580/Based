@@ -17,6 +17,8 @@ export type InsertPosition = { kind: "end" } | { kind: "before"; id: string } | 
 export type DropZone = "before" | "inside" | "after";
 
 export const isPageLike = (b: Block | undefined): boolean => b?.type === "page" || b?.type === "databasePage";
+/** Blöcke mit eigenem Titel in Seitenleiste, Breadcrumb und Tabs: Seiten und Inline-Datenbanken (Titel = Datenbanktitel). */
+export const hasPageTitle = (b: Block | undefined): boolean => isPageLike(b) || b?.type === "databaseInline";
 
 const newID = () => crypto.randomUUID().toUpperCase();
 
