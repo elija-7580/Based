@@ -87,7 +87,7 @@ function CellViewInner({ row, prop, wrap, onToggleCheckbox, onButton, blankEmpty
     }
     case "uniqueID": {
       const c = valueCase(row.values?.[prop.id]);
-      return c?.[0] === "uniqueID" ? <span className="dbui-data">{(prop.idPrefix ? prop.idPrefix + "-" : "") + String(c[1])}</span> : null;
+      return c?.[0] === "uniqueID" ? <span className="dbui-data dbui-id">{(prop.idPrefix ? prop.idPrefix + "-" : "") + String(c[1])}</span> : null;
     }
     case "date": {
       const c = valueCase(row.values?.[prop.id]);

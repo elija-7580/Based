@@ -28,6 +28,8 @@ export interface RowGroup {
   title: string;
   color: string | null;
   rows: Block[];
+  /** Relation mit genau einer Zielseite: deren ID (Gruppenkopf zeigt Icon und Link, wie Notion). */
+  pageID?: string;
 }
 
 export interface QueryResult {
@@ -649,6 +651,7 @@ export class QueryEngine {
     const buckets = new Map<string, Block[]>();
     let order: [string, string, string | null][] = [];
     const seen = new Set<string>();
+    const pages = new Map<string, string | undefined>();
     const add = (k: string, r: Block) => { const l = buckets.get(k) ?? []; l.push(r); buckets.set(k, l); };
     switch (p.type) {
       case "select": case "status": case "multiSelect":
@@ -694,6 +697,10 @@ export class QueryEngine {
           const v = this.value(r, p, db);
           const text = cellText(this.store, v);
           if (isEmptyValue(v) || !text) { add("", r); continue; }
+          if (p.type === "relation" && !pages.has(text)) {
+            const one = asList(v);
+            pages.set(text, one.length === 1 && one[0]!.t === "page" ? String(one[0]!.v) : undefined);
+          }
           if (!seen.has(text)) { seen.add(text); order.push([text, text, null]); }
           add(text, r);
         }
@@ -713,7 +720,8 @@ export class QueryEngine {
       const rs = buckets.get(k) ?? [];
       if (rs.length === 0 && rule.hideEmptyGroups === true) continue;
       if (rs.length === 0 && k === "" && p.type !== "select" && p.type !== "status" && p.type !== "multiSelect") continue;
-      out.push({ id: k, title, color, rows: rs });
+      const pageID = pages.get(k);
+      out.push(pageID ? { id: k, title, color, rows: rs, pageID } : { id: k, title, color, rows: rs });
     }
     return out;
   }

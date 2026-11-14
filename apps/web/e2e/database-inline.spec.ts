@@ -61,9 +61,9 @@ test("Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Üb
   await more.click();
   await expect(rows).toHaveCount(28);
   await expect(more).toHaveCount(0);
-  // Werkzeuge erst beim Überfahren
+  // Werkzeuge gedimmt, beim Überfahren voll (Entscheidung 14. 11.)
   await page.locator(".page-title").hover();
-  await expect(db.locator(".dbui-actions")).toHaveCSS("opacity", "0");
+  await expect(db.locator(".dbui-actions")).toHaveCSS("opacity", "0.45");
   await db.hover();
   await expect(db.locator(".dbui-actions")).toHaveCSS("opacity", "1");
   if (SHOTS && browserName === "chromium") {

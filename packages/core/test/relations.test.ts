@@ -82,3 +82,23 @@ describe("setRelation", () => {
     expect(relationLimitViolations(s, "A", "proj")).toEqual(["a1"]);
   });
 });
+
+describe("Gruppieren nach Relation", () => {
+  it("Gruppe mit genau einer Zielseite trägt deren ID (Gruppenkopf mit Icon und Link)", async () => {
+    const { QueryEngine } = await import("../src/index.js");
+    const dbBlock = (id: string): WireRecord => ({ kind: "block", data: { id: `blk-${id}`, type: "databasePage", parent: "w", sk: "a0" + id, props: { databaseID: id }, createdAt: 0, updatedAt: 0, stamp } as never });
+    const titled = (id: string, dbID: string): WireRecord => ({ kind: "block", data: { id, type: "page", parent: `d:${dbID}`, sk: "a0" + id, text: [{ t: id }], createdAt: 0, updatedAt: 0, stamp } as never });
+    const s = new WorkspaceStore({ persistence: new MemoryPersistence([
+      db("A", [{ id: "proj", name: "Projekt", type: "relation", relation: { databaseID: "B" } }]),
+      db("B", []), dbBlock("A"), dbBlock("B"), titled("a1", "A"), titled("a2", "A"), titled("b1", "B"), titled("b2", "B"),
+    ]), node: "n" });
+    setRelation(s, "a1", "proj", ["b1"]);
+    setRelation(s, "a2", "proj", ["b1", "b2"]);
+    const view = { id: "v", databaseID: "A", blockID: "blk-A", name: "By project", type: "table", sortKey: "a0", groupBy: { propertyID: "proj" }, createdAt: 0, updatedAt: 0, stamp } as never;
+    const groups = new QueryEngine(s).run(view).groups!;
+    const one = groups.find((g) => g.title === "b1")!;
+    expect(one.pageID).toBe("b1");
+    expect(one.rows.map((r) => r.id)).toEqual(["a1"]);
+    expect(groups.find((g) => g.title.includes("b2"))!.pageID).toBeUndefined();
+  });
+});

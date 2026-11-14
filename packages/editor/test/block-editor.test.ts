@@ -1,6 +1,6 @@
 // ADR 0016: reine Regeln des Block-Editors – Ablageziel beim Ziehen und Filter des Slash-Menüs.
 import { describe, expect, it } from "vitest";
-import { dropTarget, filterSlash, SLASH_ITEMS } from "../src/index.js";
+import { dropTarget, filterSlash, sectionColor, SLASH_ITEMS } from "../src/index.js";
 
 const row = (id: string, top: number, bottom: number, extra: Partial<{ left: number; right: number; nestable: boolean; columnable: boolean }> = {}) =>
   ({ id, top, bottom, wholeBottom: bottom, left: 100, right: 700, nestable: true, columnable: true, ...extra });
@@ -29,8 +29,22 @@ describe("Ablageziel", () => {
 
 describe("Slash-Menü", () => {
   it("findet über Name und Suchwörter", () => {
-    expect(filterSlash(SLASH_ITEMS, "head").map((i) => i.label)).toEqual(["Heading 1", "Heading 2", "Heading 3", "Toggle heading 1", "Toggle heading 2", "Toggle heading 3", "Table of contents"]);
+    expect(filterSlash(SLASH_ITEMS, "head").map((i) => i.label)).toEqual(["Heading 1", "Heading 2", "Heading 3", "Toggle heading 1", "Toggle heading 2", "Toggle heading 3", "Section", "Table of contents"]);
     expect(filterSlash(SLASH_ITEMS, "check").map((i) => i.type)).toEqual(["todo"]);
     expect(filterSlash(SLASH_ITEMS, "").length).toBe(SLASH_ITEMS.length);
+  });
+  it("„Section“ legt eine graue, offene Toggle-Überschrift an", () => {
+    const item = filterSlash(SLASH_ITEMS, "section")[0]!;
+    expect(item.label).toBe("Section");
+    expect(sectionColor({ type: item.type, props: item.props })).toBe("grayBackground");
+  });
+});
+
+describe("Abschnitt", () => {
+  it("nur Toggle-Überschriften mit Hintergrundfarbe werden zur Fläche", () => {
+    expect(sectionColor({ type: "heading1", props: { toggleable: true, color: "blueBackground" } })).toBe("blueBackground");
+    expect(sectionColor({ type: "heading2", props: { toggleable: true, color: "blue" } })).toBeUndefined();
+    expect(sectionColor({ type: "heading1", props: { color: "blueBackground" } })).toBeUndefined();
+    expect(sectionColor({ type: "toggle", props: { toggleable: true, color: "redBackground" } })).toBeUndefined();
   });
 });

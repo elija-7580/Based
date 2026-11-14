@@ -1007,16 +1007,25 @@ const BlockView = memo(function BlockView({ id, depth, number }: { id: string; d
   if (!b || b.trashedAt !== undefined) return null;
   if (b.type === "columnList") return <Columns block={b} depth={depth} />;
   const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table";
+  const color = typeof b.props?.color === "string" && b.props.color !== "default" ? b.props.color : undefined;
+  // Abschnitt (Entscheidung 14. 11.): Toggle-Überschrift mit Hintergrundfarbe färbt den ganzen Block samt Inhalt als Fläche.
+  const section = sectionColor(b);
   return (
-    <div className="bx2-block" data-block-id={id} data-type={b.type} data-selected={selected ? "" : undefined} data-depth={depth}>
+    <div className={"bx2-block" + (section ? " bx2-section bx2-color-" + section : "")} data-block-id={id} data-type={b.type} data-selected={selected ? "" : undefined} data-depth={depth}>
       <Gutter id={id} />
-      <div className={"bx2-row" + (typeof b.props?.color === "string" && b.props.color !== "default" ? " bx2-color-" + b.props.color : "")}>
+      <div className={"bx2-row" + (color && !section ? " bx2-color-" + color : "")}>
         <BlockContent block={b} depth={depth} number={number} />
       </div>
       {showKids ? <ChildList id={id} depth={depth + 1} /> : null}
     </div>
   );
 });
+
+/** Hintergrundfarbe eines Abschnitts: Toggle-Überschrift (H1–H3) mit „…Background“-Farbe, sonst undefined. */
+export function sectionColor(b: { type: string; props?: Record<string, unknown> | undefined }): string | undefined {
+  const c = b.props?.color;
+  return /^heading[1-3]$/.test(b.type) && b.props?.toggleable === true && typeof c === "string" && c.endsWith("Background") ? c : undefined;
+}
 
 function ChildList({ id, depth }: { id: string; depth: number }) {
   const { store } = useCtx();
