@@ -14,6 +14,7 @@ import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const LIST = join(ROOT, "ci/design-allowlist.json");
@@ -33,8 +34,17 @@ function walk(dir, out = []) {
   return out;
 }
 
-/** Kommentare entfernen (Zeilenumbrüche bleiben), damit Hinweise wie „kein <button>“ nicht zählen. */
-const stripComments = (s, css) => (css ? s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " ")) : s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " ")).replace(/(^|[^:"'`\\])\/\/[^\n]*/g, "$1"));
+/**
+ * Kommentare entfernen, damit Hinweise wie „kein <button>“ nicht zählen. CSS: Regex genügt (keine Strings mit „/*“
+ * im Bestand). TS/TSX (BSD-412): mit dem TypeScript-Parser neu ausgeben, ohne Kommentare – ein „/*“ in einem String
+ * oder Regex (`accept="image/*"`) öffnete mit der Regex einen Kommentar bis zum nächsten echten „*\/“.
+ */
+const stripCSSComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
+const printer = ts.createPrinter({ removeComments: true });
+export function stripTSComments(src, file = "x.tsx") {
+  const kind = file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  return printer.printFile(ts.createSourceFile(file, src, ts.ScriptTarget.Latest, false, kind));
+}
 
 export function scan(root = ROOT) {
   const counts = {};
@@ -44,11 +54,11 @@ export function scan(root = ROOT) {
       const file = relative(root, abs).split(sep).join("/");
       if (isTest(file)) continue;
       if (/\.tsx?$/.test(file)) {
-        const src = stripComments(readFileSync(abs, "utf8"), false);
+        const src = stripTSComments(readFileSync(abs, "utf8"), file);
         if (file.endsWith(".tsx") && !file.startsWith("packages/ui/")) add(file, "button", (src.match(/<button\b/g) ?? []).length);
         if (!file.startsWith("packages/ui/") && !ASTRYX_OK.has(file)) add(file, "astryx", (src.match(/(?:from\s*|import\s*\(\s*|import\s+)["']@astryxdesign\/core[^"']*["']/g) ?? []).length);
       } else if (file.endsWith(".css")) {
-        const src = stripComments(readFileSync(abs, "utf8"), true);
+        const src = stripCSSComments(readFileSync(abs, "utf8"));
         const px = [...src.matchAll(/(?<![\w.-])(\d*\.?\d+)px\b/g)].filter((m) => !["0", "1", "3"].includes(String(Number(m[1]))));
         add(file, "px", px.length);
       }
@@ -100,11 +110,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (bi > 0 && process.argv[bi + 1]) {
     let base;
     try { base = JSON.parse(execFileSync("git", ["show", `${process.argv[bi + 1]}:ci/design-allowlist.json`], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })).files; } catch { base = undefined; }
+    // BSD-412: Ändert sich die Zählweise (dieses Skript) gegenüber der Basis, darf die Liste einmal auf den echten
+    // Stand steigen – aber nur bis zur tatsächlichen Zahl, nie darüber.
+    let guardChanged = false;
+    try { guardChanged = execFileSync("git", ["diff", "--name-only", process.argv[bi + 1], "--", "ci/design-guard.mjs"], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() !== ""; } catch { guardChanged = false; }
     if (base) {
       for (const [file, rules] of Object.entries(allowed)) {
         for (const [rule, max] of Object.entries(rules)) {
           const before = base[file]?.[rule] ?? 0;
-          if (max > before) errors.push(`ci/design-allowlist.json: ${file} ${rule} ${before} → ${max} (die Liste darf nur schrumpfen)`);
+          if (max <= before) continue;
+          if (guardChanged && max <= (actual[file]?.[rule] ?? 0)) console.log(`design-guard: Zählweise geändert – ${file} ${rule} ${before} → ${max} (echter Stand)`);
+          else errors.push(`ci/design-allowlist.json: ${file} ${rule} ${before} → ${max} (die Liste darf nur schrumpfen)`);
         }
       }
     }
