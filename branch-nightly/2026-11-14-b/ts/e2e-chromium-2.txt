@@ -1,61 +1,61 @@
-success 93c94eb076db78b7c50f4a2a741c0ff9434ce7d7
-  ✓  113 [chromium] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links (1.9s)
-  ✓  114 [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen (1.5s)
-  ✓  115 [chromium] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar (1.8s)
-  ✓  116 [chromium] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (2.7s)
-  ✓  118 [chromium] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (1.4s)
-  ✓  117 [chromium] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (2.8s)
-  ✓  120 [chromium] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (1.7s)
-  ✓  119 [chromium] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (2.0s)
-  ✓  121 [chromium] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light) (1.3s)
-  ✓  123 [chromium] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark) (1.6s)
-  ✓  122 [chromium] › e2e/sidebar-scroll.spec.ts:10:1 › Aufklappen oberhalb der aktiven Seite: Liste bleibt stehen, Zeile bleibt unter der Maus (3.1s)
-  ✓  125 [chromium] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (1.3s)
-  ✓  124 [chromium] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (2.4s)
-  ✓  126 [chromium] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (1.8s)
-  ✓  127 [chromium] › e2e/storage.spec.ts:50:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (3.2s)
-  ✓  128 [chromium] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (2.6s)
-  ✓  129 [chromium] › e2e/storage.spec.ts:71:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (1.5s)
-  -  131 [chromium] › e2e/storage.spec.ts:87:1 › Screenshots web-storage-warning-*
-  ✓  130 [chromium] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (2.2s)
-  ✓  132 [chromium] › e2e/switch-parity.spec.ts:41:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (1.3s)
-  ✓  134 [chromium] › e2e/switch-parity.spec.ts:54:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (1.6s)
-(node:7070) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  135 [chromium] › e2e/switch-parity.spec.ts:66:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (1.6s)
-  ✓  136 [chromium] › e2e/switch-parity.spec.ts:89:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (2.6s)
-  ✓  137 [chromium] › e2e/switch-parity.spec.ts:105:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (3.3s)
-  -  138 [chromium] › e2e/switch-parity.spec.ts:145:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓  139 [chromium] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (2.6s)
-  ✓  133 [chromium] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (11.6s)
-(node:7595) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  140 [chromium] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (3.9s)
-  ✓  142 [chromium] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (2.2s)
-  ✓  141 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.8s)
-  ✓  144 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (2.0s)
-  ✓  145 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.1s)
-  ✓  146 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (1.7s)
-  ✓  143 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (8.1s)
-  ✓  147 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.5s)
-  ✓  149 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.1s)
-  ✓  150 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.7s)
-  ✓  148 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (3.2s)
-  ✓  151 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.0s)
-  ✓  152 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (2.8s)
-  ✓  153 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.9s)
-  ✓  154 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (2.9s)
-  ✓  155 [chromium] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (3.3s)
-  ✓  156 [chromium] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (2.8s)
-  ✓  157 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (2.3s)
-  ✓  158 [chromium] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (2.2s)
-  ✓  160 [chromium] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (1.1s)
-  ✓  159 [chromium] › e2e/scrollbars.spec.ts:41:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.8s)
-  ✓  162 [chromium] › e2e/scrollbars.spec.ts:46:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.1s)
-  ✓  161 [chromium] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (1.5s)
-  -  164 [chromium] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
-  ✓  163 [chromium] › e2e/scrollbars.spec.ts:52:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (861ms)
-  ✓  165 [chromium] › e2e/scrollbars.spec.ts:58:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (1.5s)
+cancelled d97582c0aacfc06e498c7712d883416586ca346c
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
-  9 skipped
-  156 passed (4.4m)
+Running 165 tests using 2 workers, shard 2 of 2
+
+  ✓    1 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.6s)
+  ✓    2 [chromium] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (2.5s)
+  ✓    3 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.1s)
+  ✓    4 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light) (1.8s)
+  ✓    5 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (1.7s)
+  ✓    6 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark) (1.8s)
+  ✓    8 [chromium] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (860ms)
+  ✓    7 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.1s)
+  ✓    9 [chromium] › e2e/keyboard.spec.ts:26:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (1.3s)
+  ✓   10 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (1.8s)
+  ✓   11 [chromium] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (2.1s)
+  ✓   12 [chromium] › e2e/interop.spec.ts:186:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.1s)
+  ✓   13 [chromium] › e2e/meeting.spec.ts:97:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (2.4s)
+  ✓   14 [chromium] › e2e/interop.spec.ts:205:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.5s)
+  ✓   16 [chromium] › e2e/interop.spec.ts:236:1 › Word-Dokument (.docx) importieren (BSD-260) (2.0s)
+  ✓   17 [chromium] › e2e/interop.spec.ts:253:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.9s)
+  ✓   18 [chromium] › e2e/interop.spec.ts:267:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.3s)
+  ✓   15 [chromium] › e2e/meeting.spec.ts:117:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen (7.4s)
+  ✓   19 [chromium] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.4s)
