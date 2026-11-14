@@ -3,12 +3,14 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, CODE_LANGUAGES, dateMentionValue, dateSuggestions, embedTarget, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, CODE_LANGUAGES, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
+import { htmlPreviewFrame } from "./htmlPreview.js";
 import type { PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/PageEditor.js";
-import { ASSET_URL_PREFIX } from "../mapping/bn.js";
+import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
+import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { MovePicker } from "../ui/MovePicker.js";
@@ -252,6 +254,9 @@ export function BlockEditor(props: PageEditorProps) {
       } catch { based = undefined; }
       const text = data.getData("text/plain");
       const html = data.getData("text/html");
+      // BSD-407: „based-sync:<id>“ (Copy and sync) → synchronisierte Kopie hinter dem Block (leere Zeile: an ihrer Stelle)
+      const syncSrc = !based ? syncSourceFromClipboard(text) : undefined;
+      if (syncSrc) { void pasteSynced(anchor, syncSrc); return; }
       const image = !html && !based ? Array.from(data.files ?? []).find((f) => f.type.startsWith("image/")) : undefined;
       if (image && props.uploadFile) { insertImage(anchor, image); return; }
       const content: cmd.PasteContent = { based, text: text || undefined, html: html || undefined };
@@ -267,6 +272,16 @@ export function BlockEditor(props: PageEditorProps) {
         if (f) { run(f); return; }
       }
       run(cmd.insertContent(store, R(c), content, opts));
+    };
+
+    const pasteSynced = async (anchor: string, source: string) => {
+      if (!store.blocks.has(source) && props.loadSynced) await props.loadSynced(source).catch(() => false);
+      if (syncedPasteProblem(store, source, pageID)) return;
+      const original = syncedOriginal(store, source)!;
+      const a = store.blocks.get(anchor);
+      const empty = a?.type === "text" && plainText(a.text).length === 0 && store.children("b:" + anchor).length === 0;
+      const f = empty ? cmd.convertEmptyBlock(store, anchor, "syncedBlock", { syncSource: original }) : cmd.insertBlock(store, { after: anchor }, "syncedBlock", { props: { syncSource: original } });
+      if (f) run(f);
     };
 
     // Bild einfügen (Zwischenablage, Ablegen): Bildblock sofort, Hochladen danach
@@ -753,7 +768,7 @@ export function BlockEditor(props: PageEditorProps) {
       // Inline-Gleichung bearbeiten: Klick öffnet das TeX-Feld
       e.preventDefault();
       const from = offsetOf(field, eq, 0);
-      openEquation(field.dataset.editableId!, from, from + Number(eq.dataset.len ?? 0), eq.textContent ?? "");
+      openEquation(field.dataset.editableId!, from, from + Number(eq.dataset.len ?? 0), eq.dataset.tex ?? eq.textContent ?? "");
       return;
     }
     if (field) {
@@ -1215,6 +1230,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
           <TextField block={b} />
           <CodeLanguage block={b} />
           {b.props?.language === "mermaid" && plainText(b.text).length > 0 ? <MermaidPreview code={plainText(b.text)} /> : null}
+          {b.props?.language === "html" && plainText(b.text).trim().length > 0 ? <HtmlPreview code={plainText(b.text)} /> : null}
         </div>
       );
     case "bulletedList":
@@ -1690,6 +1706,18 @@ function MermaidPreview({ code }: { code: string }) {
   return <div ref={ref} className="bx2-mermaid" contentEditable={false} data-embed="" />;
 }
 
+// BSD-407: HTML-Codeblock mit Vorschau wie im alten Editor (htmlPreviewFrame: sandbox ohne same-origin, CSP, kein Netz)
+function HtmlPreview({ code }: { code: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    const t = setTimeout(() => host.replaceChildren(htmlPreviewFrame(code)), 250);
+    return () => clearTimeout(t);
+  }, [code]);
+  return <div ref={ref} className="bx2-html-preview" contentEditable={false} data-embed="" />;
+}
+
 function labelOf(b: Block | undefined): string {
   if (!b) return "Block";
   return b.type.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
@@ -1697,7 +1725,18 @@ function labelOf(b: Block | undefined): string {
 
 // MARK: Textfeld
 
-const atomRenderer = (props: PageEditorProps) => ({ pageTitle: (id: string) => props.pages?.get(id)?.title });
+const atomRenderer = (props: PageEditorProps) => ({
+  pageTitle: (id: string) => props.pages?.get(id)?.title,
+  ...(props.renderEquationHTML ? { equationHTML: (tex: string) => props.renderEquationHTML!(tex, () => refreshEquations(props)) } : {}),
+});
+
+// KaTeX kam nach: alle Inline-Gleichungen der Editoren neu zeichnen (nur das Innere der Atome, die Länge bleibt).
+function refreshEquations(props: PageEditorProps) {
+  for (const el of document.querySelectorAll<HTMLElement>(".bx2-eq[data-tex]")) {
+    const html = props.renderEquationHTML?.(el.dataset.tex!, () => undefined);
+    if (html) el.innerHTML = html;
+  }
+}
 
 const TextField = memo(function TextField({ block }: { block: Block }) {
   const { ctrl, props, editable } = useCtx();
@@ -1806,6 +1845,17 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
   if (b?.type === "databaseInline" && ids.length === 1 && props.onOpenPage) actions.push({ group: "open", label: "Open as full page", run: () => props.onOpenPage?.(id) });
   if (link) actions.push({ group: "copy", label: "Copy link to block", hint: "⌥⇧L", run: () => void navigator.clipboard?.writeText(link).catch(() => undefined) });
   actions.push({ group: "copy", label: "Copy as Markdown", run: () => void navigator.clipboard?.writeText(blocksMarkdown(store, ids)).catch(() => undefined) });
+  if (editable) {
+    // BSD-407: „Copy and sync“ – Blöcke werden zum Original eines Synced Blocks, der Verweis kommt in die Zwischenablage
+    actions.push({ group: "copy", label: "Copy and sync", run: () => {
+      const original = cmd.wrapInSyncedBlock(store, ids);
+      if (!original) return;
+      const text = SYNC_CLIPBOARD_PREFIX + original;
+      rememberSyncClipboard(text);
+      void navigator.clipboard?.writeText(text).catch(() => undefined);
+      ctrl.select([original]);
+    } });
+  }
   if (editable) {
     actions.push(
       { group: "edit", label: "Delete", hint: "Del", run: () => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); } },

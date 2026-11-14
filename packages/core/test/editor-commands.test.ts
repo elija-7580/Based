@@ -378,6 +378,18 @@ describe.each([false, true])("Block-Editor E1 (propertyRecords=%s)", (pr) => {
       expect(cmd.turnIntoPage(s, id)).toBeUndefined(); // eine Seite ist kein Textblock
     });
 
+    it("BSD-407: Copy and sync – Geschwister in einen Synced Block, an der Stelle des ersten", () => {
+      const s = make(pr, [
+        blk("a", "text", "b:P", "a0", { text: "a" }), blk("b", "text", "b:P", "a1", { text: "b" }), blk("bk", "text", "b:b", "a0", { text: "bk" }),
+        blk("c", "text", "b:P", "a2", { text: "c" }),
+      ]);
+      const id = step(s, () => cmd.wrapInSyncedBlock(s, ["c", "b"]))!;
+      expect(outline(s)).toEqual(["text: a", "syncedBlock: ", "  text: b", "    text: bk", "  text: c"]);
+      expect(s.blocks.get(id)!.type).toBe("syncedBlock");
+      expect(cmd.wrapInSyncedBlock(s, [id])).toBe(id); // ein Synced Block bleibt
+      expect(cmd.wrapInSyncedBlock(s, ["a", "bk"])).toBeUndefined(); // keine Geschwister
+    });
+
     it("vor/nach/hinein, mit Kindern, nicht in sich selbst", () => {
       const s = base();
       step(s, () => cmd.moveBlocks(s, ["c"], "a", "before"));

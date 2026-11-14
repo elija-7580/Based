@@ -49,6 +49,11 @@ export interface PageEditorProps {
   renderDatabase?: (p: DatabaseRenderProps) => ReactNode;
   /** Zeichnet eine Gleichung (KaTeX, eigener Eintrag). Ohne: TeX als Code. */
   renderEquation?: (p: EquationRenderProps) => ReactNode;
+  /**
+   * BSD-407 (neuer Editor): Inline-Gleichung als HTML für die Textfelder. `undefined`, solange der Renderer noch lädt;
+   * dann ruft die Hülle `onReady` auf, sobald er da ist.
+   */
+  renderEquationHTML?: (expression: string, onReady: () => void) => string | undefined;
   /** BSD-209: Bookmark-Vorschau holen (Desktop-App über Tauri-HTTP, nur auf Klick „Fetch preview“). */
   fetchLinkPreview?: (url: string) => Promise<BookmarkMeta>;
   /** Klick auf Unterseite, Seitenlink oder Seiten-Erwähnung. */
