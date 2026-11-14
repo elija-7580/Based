@@ -1,6 +1,7 @@
 // ADR 0016: reine Regeln des Block-Editors – Ablageziel beim Ziehen und Filter des Slash-Menüs.
 import { describe, expect, it } from "vitest";
 import { dropTarget, filterSlash, sectionColor, SLASH_ITEMS } from "../src/index.js";
+import { BLOCK_ICON_PATHS, isBlockIcon } from "../src/blocks/icons.js";
 
 const row = (id: string, top: number, bottom: number, extra: Partial<{ left: number; right: number; nestable: boolean; columnable: boolean }> = {}) =>
   ({ id, top, bottom, wholeBottom: bottom, left: 100, right: 700, nestable: true, columnable: true, ...extra });
@@ -32,6 +33,10 @@ describe("Slash-Menü", () => {
     expect(filterSlash(SLASH_ITEMS, "head").map((i) => i.label)).toEqual(["Heading 1", "Heading 2", "Heading 3", "Toggle heading 1", "Toggle heading 2", "Toggle heading 3", "Section", "Table of contents"]);
     expect(filterSlash(SLASH_ITEMS, "check").map((i) => i.type)).toEqual(["todo"]);
     expect(filterSlash(SLASH_ITEMS, "").length).toBe(SLASH_ITEMS.length);
+  });
+  it("jeder Eintrag hat ein Based-Icon (kein Emoji, kein Textzeichen)", () => {
+    for (const it of SLASH_ITEMS) expect(isBlockIcon(it.icon), it.label).toBe(true);
+    for (const d of Object.values(BLOCK_ICON_PATHS)) expect(d).toMatch(/^[MmLlHhVvCcSsQqTtAaZz0-9 .,-]+$/);
   });
   it("„Section“ legt eine graue, offene Toggle-Überschrift an", () => {
     const item = filterSlash(SLASH_ITEMS, "section")[0]!;

@@ -3,6 +3,9 @@
 .lib-head { display: flex; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; }
 .lib-head .t-desc { color: var(--muted); }
 .lib-toolbar { flex: none; }
+/* Schmale Fenster: Filter brechen um statt über die Fläche hinauszuragen (sonst schob sich die Fläche seitlich, 14.11.). */
+.lib-toolbar [role="toolbar"] { flex-wrap: wrap; height: auto; row-gap: var(--space-2); }
+.lib-toolbar [role="toolbar"] > * { flex-wrap: wrap; min-width: 0; max-width: 100%; }
 .lib-bulk { flex: none; background: var(--surface-raised); border-radius: var(--radius-lg); padding-inline: var(--space-2); }
 .lib-nocheck { display: inline-block; width: var(--icon-sm); height: var(--icon-sm); }
 

@@ -275,7 +275,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       <Sidebar client={client} state={state} route={route} homePage={homePage} onHome={goHome} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} onImportStatus={() => setImporting("notion")} advanced={appearance.agentDetails} ai={ai} />
       <main className="main">
         <TabBar history={history} titles={state.titles} />
-        <div className="panel"><Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading" />}>{screen}</Suspense></div>
+        <div className="panel" onScroll={keepPanelStill}><Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading" />}>{screen}</Suspense></div>
         <div ref={swipeHint} className="swipe-hint" aria-hidden="true" data-side="">
           <span className="swipe-back"><Icon name="back" size={18} /></span>
           <span className="swipe-forward"><Icon name="forward" size={18} /></span>
@@ -299,4 +299,10 @@ export function App({ client, history }: { client: StoreClient; history: History
         }} /> : null}
     </div>
   );
+}
+
+/** Die Inhaltsfläche rollt nur senkrecht: ein seitlicher Versatz (Trackpad, scrollIntoView, Code) wird sofort,
+ *  noch vor dem Zeichnen, zurückgesetzt. */
+function keepPanelStill(e: { currentTarget: HTMLElement }) {
+  if (e.currentTarget.scrollLeft !== 0) e.currentTarget.scrollLeft = 0;
 }
