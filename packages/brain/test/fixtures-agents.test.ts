@@ -24,9 +24,9 @@ const MODE: Record<SwiftMode, PermissionMode> = { ask: "askEdits", acceptEdits: 
 /** TS kennt nur „schreibt“ oder nicht (ToolHost.isWrite); Lesen und Web sind keine Schreibwerkzeuge. */
 const isWrite = (c: SwiftCall) => c.category !== "read" && c.category !== "web";
 
-/** Was der TS-Port tatsächlich tut – wie `executeTool` (engine.ts): Regel deny → Plan sammelt Schreiben → Regel → Modus. */
+/** Was der TS-Port tatsächlich tut – wie `executeTool` (engine.ts): Regel deny → Plan sammelt Schreiben → Regel → Modus (mit „fragt immer“, BSD-403). */
 function effective(p: Permissions, c: SwiftCall): PermissionEffect {
-  const call: PermissionCall = { tool: c.tool, argument: c.argument };
+  const call: PermissionCall = { tool: c.tool, argument: c.argument, category: c.category, sandboxed: c.sandboxed ?? false };
   const write = isWrite(c);
   const v = p.ruleVerdict(call)?.effect;
   if (v === "deny") return "deny";
@@ -38,7 +38,6 @@ function effective(p: Permissions, c: SwiftCall): PermissionEffect {
 interface Deviation { why: string; backlog?: string; applies: (c: Case) => boolean; ts: (c: Case) => unknown }
 const call = (c: Case) => c.input.call as SwiftCall;
 const swiftEffect = (c: Case) => c.output.effect as PermissionEffect;
-const rulesOf = (c: Case) => `${String(c.input.rules ?? "")}\n${String(c.input.layerRules ?? "")}`;
 
 /** Bewusste Abweichungen des TS-Ports (Reihenfolge = Vorrang). */
 const PERMISSION_DEVIATIONS: Deviation[] = [
@@ -51,18 +50,6 @@ const PERMISSION_DEVIATIONS: Deviation[] = [
     why: "Swift fragt im Modus „Ask“ auch bei Web und Shell in der Sandbox; TS „Ask before edits“ fragt nur bei Schreibwerkzeugen (Web zählt als Lesen).",
     applies: (c) => (c.input.mode === "ask" || c.input.mode === "acceptEdits") && call(c).category === "web" && swiftEffect(c) === "ask",
     ts: () => "allow",
-  },
-  {
-    why: "„Fragt immer“ (endgültig löschen, Inbox beantworten, etwas senden, Shell ohne Sandbox) fehlt in TS: „Work freely“ erlaubt es ohne Regel.",
-    backlog: "BSD-403",
-    applies: (c) => (c.input.layerMode ?? c.input.mode) === "bypass" && swiftEffect(c) === "ask" && String(c.output.reason).startsWith("always asks"),
-    ts: () => "allow",
-  },
-  {
-    backlog: "BSD-403",
-    why: "Werkzeug-Aliasse (Edit/Write, Web = WebFetch/WebSearch, Bash = Shell) und das Bash-Präfix `cmd:*` gibt es in TS nicht: Regeln treffen nur den Werkzeugnamen als Glob.",
-    applies: (c) => /\b(Web|Bash)\b/.test(rulesOf(c)) && ["web", "shell"].includes(call(c).category),
-    ts: (c) => effective(tsPermissions(c), call(c)),
   },
 ];
 

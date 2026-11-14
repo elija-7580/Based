@@ -7,6 +7,7 @@ import { compactionChanged, compactionNotice, ContextBudget } from "./context.js
 import type { ChatEvent } from "./events.js";
 import { AbortError, isAbort, isTruncated, type AIProvider, type AIResponse, type ChatMessage, type ToolCall, type ToolSpec } from "./messages.js";
 import { estimateCost } from "./pricing.js";
+import { alwaysAsks } from "./agents/permissions.js";
 
 // MARK: Schnittstellen
 
@@ -98,7 +99,10 @@ export async function executeTool(host: ToolHost, call: ToolCall, policy: ToolPo
     policy.onPlanned?.(call);
     return { text: PLANNED_RESULT, isError: false };
   }
-  const needsAsk = verdict === "ask" || (verdict !== "allow" && (policy.mode === "ask" || (policy.mode === "askEdits" && host.isWrite(call.name))));
+  // BSD-403 (Swift `alwaysAsks`): endgültig löschen, Inbox beantworten, nach außen senden, Shell ohne Sandbox – auch
+  // in „Work freely“ nur mit ausdrücklicher allow-Regel ohne Rückfrage.
+  const always = verdict === undefined && policy.mode === "free" && host.isWrite(call.name) && alwaysAsks({ tool: call.name }) !== undefined;
+  const needsAsk = always || verdict === "ask" || (verdict !== "allow" && (policy.mode === "ask" || (policy.mode === "askEdits" && host.isWrite(call.name))));
   if (needsAsk) {
     if (!policy.approve) return { text: "This action needs the user's approval, and nobody can be asked right now.", isError: true };
     emit({ type: "permissionRequest", id: call.id, name: call.name });
