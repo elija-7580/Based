@@ -7,6 +7,7 @@ import { BUILD } from "./bugReport.js";
 import { diagnosticsLog, previousSession } from "./diagnostics.js";
 import { hangHistory, previousHang } from "./hangs.js";
 import { REPORTS_DIR } from "./reportStore.js";
+import { copyText } from "./copyText.js";
 
 const ls = (): Storage | undefined => {
   try {
@@ -130,13 +131,7 @@ function downloadCrashReport(r: CrashReport) {
 
 /** In die Zwischenablage; false, wenn das nicht geht. */
 export async function copyCrashReport(r: CrashReport): Promise<boolean> {
-  const clip = globalThis.navigator?.clipboard;
-  if (!clip) return false;
-  try {
-    await clip.writeText(crashReportText(r));
-    diagnosticsLog.add("info", "crash report copied");
-    return true;
-  } catch {
-    return false;
-  }
+  const ok = await copyText(crashReportText(r));
+  if (ok) diagnosticsLog.add("info", "crash report copied");
+  return ok;
 }

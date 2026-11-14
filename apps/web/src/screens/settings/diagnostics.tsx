@@ -6,10 +6,11 @@ import { Text } from "@astryxdesign/core/Text";
 import { HStack, StackItem, VStack } from "@astryxdesign/core/Layout";
 import type { DiagnosticsEntry, DiagnosticsLevel } from "@based/core";
 import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { isTauri } from "../../desktop.js";
 import { BUILD, recorder } from "../../shell/bugReport.js";
+import { copyText } from "../../shell/copyText.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText, stallCount } from "../../shell/diagnostics.js";
 import { hangHistory } from "../../shell/hangs.js";
 import { ongoingHangNotice } from "@based/core";
@@ -171,15 +172,29 @@ export function LogSection({ state }: SettingsSectionProps) {
     pages: Object.keys(state.outline?.nodes ?? {}).length,
     trash: state.outline?.trash.length ?? 0,
   };
-  const copy = () => {
-    const clip = globalThis.navigator?.clipboard;
-    if (!clip) return setCopied("failed");
-    void clip.writeText(diagnosticsReport(facts)).then(() => setCopied("ok"), () => setCopied("failed"));
+  const copy = () => { void copyText(diagnosticsReport(facts)).then((ok) => setCopied(ok ? "ok" : "failed")); };
+  // Nur die gezeigten Zeilen (Filter und Suche gelten) – fürs schnelle Weitergeben eines Ausschnitts.
+  const [logCopied, setLogCopied] = useState<"" | "ok" | "failed">("");
+  const copyLog = () => { void copyText(shown.map(logLine).join("\n")).then((ok) => setLogCopied(ok ? "ok" : "failed")); };
+  // ⌘A im Log markiert nur das Log (nicht die ganze Einstellungsseite)
+  const selectLog = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "a") return;
+    e.preventDefault();
+    const sel = globalThis.getSelection?.();
+    if (!sel) return;
+    const r = globalThis.document.createRange();
+    r.selectNodeContents(e.currentTarget);
+    sel.removeAllRanges();
+    sel.addRange(r);
   };
   return (
     <Group>
       <Row label="Events on this device" hint="Newest last — no page content">
-        <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy diagnostics"} onClick={copy} />
+        <HStack gap={2}>
+          <BasedButton label={logCopied === "ok" ? "Copied" : logCopied === "failed" ? "Couldn’t copy – try again" : `Copy log (${shown.length})`} variant="ghost" onClick={copyLog}
+            disabled={shown.length === 0} />
+          <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy diagnostics"} onClick={copy} />
+        </HStack>
       </Row>
       <HStack gap={3} vAlign="end" wrap="wrap">
         <SegmentedControl label="Level" value={level} onChange={(v) => setLevel(v as LevelFilter)}>
@@ -189,7 +204,7 @@ export function LogSection({ state }: SettingsSectionProps) {
           <BasedField label="Search the log" value={query} onChange={setQuery} placeholder="Filter…" />
         </StackItem>
       </HStack>
-      <div className="diagnostics-log" data-testid="diagnostics-log" role="log" aria-label="Diagnostics log" tabIndex={0}>
+      <div className="diagnostics-log" data-testid="diagnostics-log" role="log" aria-label="Diagnostics log" tabIndex={0} onKeyDown={selectLog}>
         {shown.length === 0 ? <Value>{log.length ? "No matching entries" : "—"}</Value> : shown.map((e, i) => (
           <div key={`${e.at}-${i}`} className="diagnostics-log-line" data-level={e.level}>{logLine(e)}</div>
         ))}

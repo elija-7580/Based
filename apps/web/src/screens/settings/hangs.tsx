@@ -1,9 +1,10 @@
 // BSD-418: Settings → Diagnostics → Hangs – wie der Reiter „Hangs“ der Swift-App (DiagnosticsView.swift): Kennzahlen der
 // Sitzung, Liste (Zeit, Dauer, Quelle, Aktivität, Ursache, Schritte aufklappbar), Hänger früherer Sitzungen und der
 // Hänger, in dem die vorige Sitzung endete. Nur Bausteine aus parts.tsx und @based/ui/astryx.
-import { formatHangMs, ongoingHangNotice, type HangRecord, type HangSessionData, type HangSource } from "@based/core";
+import { formatHangMs, hangReportLines, ongoingHangNotice, type HangRecord, type HangSessionData, type HangSource } from "@based/core";
 import { BasedButton } from "@based/ui/astryx";
 import { useState, useSyncExternalStore } from "react";
+import { copyText } from "../../shell/copyText.js";
 import { hangAttribution, hangHistory, hangMonitor } from "../../shell/hangs.js";
 import { Group, Lines, Note, Row, Value } from "./parts.js";
 import type { SettingsSectionProps } from "./registry.js";
@@ -75,6 +76,14 @@ export function HangsSection(_: SettingsSectionProps) {
   const { previous, endedInHang } = useSyncExternalStore(hangHistory.subscribe, hangHistory.get);
   const s = hangMonitor.stats();
   const earlier = [...previous].reverse().filter((p) => p.stats.count > 0);
+  // Alle Hänger als Text (diese Sitzung, alle Zeilen; dazu frühere Sitzungen) – dieselbe Form wie im Diagnose-Bericht.
+  const [copied, setCopied] = useState<"" | "ok" | "failed">("");
+  const copy = () => {
+    const lines = [...hangReportLines(hangs, previous, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)];
+    if (endedInHang) lines.unshift(`last session ended in a hang: ${ongoingHangNotice(endedInHang.marker)}${endedInHang.marker.breadcrumbs.length ? ` steps before: ${endedInHang.marker.breadcrumbs.join(" › ")}` : ""}`);
+    void copyText(lines.join("\n")).then((ok) => setCopied(ok ? "ok" : "failed"));
+  };
+  const any = hangs.length > 0 || earlier.length > 0 || endedInHang !== undefined;
   return (
     <Group>
       <Row label="This session" hint="Moments when Based didn’t respond for 250 ms or more">
@@ -88,6 +97,11 @@ export function HangsSection(_: SettingsSectionProps) {
       {endedInHang ? (
         <Row label="Last session" hint={`${ongoingHangNotice(endedInHang.marker)}${endedInHang.marker.breadcrumbs.length ? ` Steps before: ${endedInHang.marker.breadcrumbs.join(" › ")}` : ""}`}>
           <Value testID="hangs-ended-in-hang">Ended in a hang</Value>
+        </Row>
+      ) : null}
+      {any ? (
+        <Row label="All hangs" hint="This session and earlier ones, with steps — as text">
+          <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy hangs"} variant="ghost" size="sm" onClick={copy} />
         </Row>
       ) : null}
       {hangs.length ? <HangList hangs={hangs} testID="hangs-list" /> : null}

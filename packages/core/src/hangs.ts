@@ -559,12 +559,12 @@ export function hangStatsLine(s: HangStats): string {
 }
 
 /** Abschnitt „hangs“ des kopierbaren Berichts: diese Sitzung und frühere. */
-export function hangReportLines(current: readonly HangRecord[], previous: readonly HangSessionData[], limit = 30): string[] {
+export function hangReportLines(current: readonly HangRecord[], previous: readonly HangSessionData[], limit = 30, previousLimit = 10): string[] {
   const lines = [`hangs this session: ${hangStatsLine(hangStats(current))}`];
   for (const h of current.slice(-limit)) lines.push("  " + hangLine(h));
   for (const s of previous) {
     lines.push(`hangs in session from ${time(s.startedAt)} UTC: ${hangStatsLine(s.stats)}`);
-    for (const h of s.hangs.slice(-10)) lines.push("  " + hangLine(h));
+    for (const h of s.hangs.slice(-previousLimit)) lines.push("  " + hangLine(h));
   }
   return lines;
 }
