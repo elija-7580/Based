@@ -1,0 +1,61 @@
+success 4ceffa031d9b39be8abdba777e4b9f829d191f67
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  152 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.2s)
+  ✓  154 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (6.0s)
+  ✓  155 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (17.3s)
+  ✓  157 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.2s)
+  ✓  156 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (18.7s)
+  ✓  158 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.5s)
+  ✓  159 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (5.6s)
+  -  161 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  ✓  160 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.7s)
+  -  162 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  163 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.3s)
+  ✓  165 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (2.1s)
+  ✓  164 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (7.2s)
+  ✓  166 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.7s)
+  ✓  167 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.6s)
+  ✓  168 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.0s)
+  ✓  170 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (4.3s)
+  ✓  171 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (4.7s)
+  ✓  169 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (9.8s)
+  ✓  173 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.5s)
+  ✓  174 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.6s)
+  ✓  172 [webkit] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (4.5s)
+  ✓  175 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.4s)
+  ✓  176 [webkit] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.7s)
+  ✓  178 [webkit] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (2.7s)
+  -  179 [webkit] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
+  ✓  177 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (5.3s)
+
+
+  1) [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "Name",
+        "Tags",
+        "Date",
+    -   "Number",
+      ]
+
+      68 |   await ready(page);
+      69 |   await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+    > 70 |   expect(await headers(page)).toEqual(after);
+         |                               ^
+      71 |   expect(await status(page)).toBe(true);
+      72 |
+      73 |   // in den Einstellungen steht der neue Zustand, der Knopf ist weg
+        at run (/home/runner/work/Based/Based/apps/web/e2e/property-records.spec.ts:70:31)
+        at /home/runner/work/Based/Based/apps/web/e2e/property-records.spec.ts:22:5
+
+    Error Context: test-results/property-records-Umstellen-f9cf1-rbeitbar-übersteht-Neuladen-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen 
+  21 skipped
+  156 passed (9.7m)
