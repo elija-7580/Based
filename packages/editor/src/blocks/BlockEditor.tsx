@@ -768,7 +768,7 @@ export function BlockEditor(props: PageEditorProps) {
       // Inline-Gleichung bearbeiten: Klick öffnet das TeX-Feld
       e.preventDefault();
       const from = offsetOf(field, eq, 0);
-      openEquation(field.dataset.editableId!, from, from + Number(eq.dataset.len ?? 0), eq.textContent ?? "");
+      openEquation(field.dataset.editableId!, from, from + Number(eq.dataset.len ?? 0), eq.dataset.tex ?? eq.textContent ?? "");
       return;
     }
     if (field) {
@@ -1725,7 +1725,18 @@ function labelOf(b: Block | undefined): string {
 
 // MARK: Textfeld
 
-const atomRenderer = (props: PageEditorProps) => ({ pageTitle: (id: string) => props.pages?.get(id)?.title });
+const atomRenderer = (props: PageEditorProps) => ({
+  pageTitle: (id: string) => props.pages?.get(id)?.title,
+  ...(props.renderEquationHTML ? { equationHTML: (tex: string) => props.renderEquationHTML!(tex, () => refreshEquations(props)) } : {}),
+});
+
+// KaTeX kam nach: alle Inline-Gleichungen der Editoren neu zeichnen (nur das Innere der Atome, die Länge bleibt).
+function refreshEquations(props: PageEditorProps) {
+  for (const el of document.querySelectorAll<HTMLElement>(".bx2-eq[data-tex]")) {
+    const html = props.renderEquationHTML?.(el.dataset.tex!, () => undefined);
+    if (html) el.innerHTML = html;
+  }
+}
 
 const TextField = memo(function TextField({ block }: { block: Block }) {
   const { ctrl, props, editable } = useCtx();

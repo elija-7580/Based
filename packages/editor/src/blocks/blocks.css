@@ -125,6 +125,9 @@
 .bx2-field a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: 2px; }
 .bx2-mention { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); cursor: pointer; }
 .bx2-eq { font-family: var(--font-mono); font-size: 0.9em; }
+/* BSD-407: KaTeX im Text – das ganze Atom ist Klickfläche (sonst trifft der Klick die Lücken zwischen den Glyphen) */
+.bx2-eq:has(.katex) { display: inline-block; font-family: inherit; font-size: inherit; cursor: pointer; }
+.bx2-eq:has(.katex) * { pointer-events: none; }
 .bx2-color-gray { color: var(--muted); }
 .bx2-color-grayBackground { background: var(--surface-soft); border-radius: var(--radius-xs); }
 .bx2-color-brown { color: var(--block-brown-text); }
