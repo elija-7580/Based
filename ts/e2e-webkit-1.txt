@@ -1,61 +1,61 @@
-cancelled 056a6e31cefbf27cbf7b87c994f0fa7eb333fab1
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+success c40d07d450a4ec0237e762a444bbb361a4902a35
+  ✓  151 [webkit] › e2e/editor-parity.spec.ts:687:3 › alter Editor (BlockNote) › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (10.1s)
+  ✓  154 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (3.8s)
+  ✓  155 [webkit] › e2e/editor-parity.spec.ts:716:3 › alter Editor (BlockNote) › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (8.7s)
+  ✓  156 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (8.2s)
+  ✓  157 [webkit] › e2e/editor-parity.spec.ts:767:3 › alter Editor (BlockNote) › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (8.0s)
+  ✓  158 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (7.3s)
+  ✓  160 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (3.5s)
+  ✓  161 [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (3.8s)
+  ✓  162 [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (3.7s)
+  ✓  159 [webkit] › e2e/editor-parity.spec.ts:800:3 › alter Editor (BlockNote) › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (13.3s)
+  ✓  163 [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (4.5s)
+  ✓  165 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (2.8s)
+  ✓  164 [webkit] › e2e/editor-parity.spec.ts:858:3 › alter Editor (BlockNote) › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (8.8s)
+  ✓  166 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (5.7s)
+(node:20224) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  167 [webkit] › e2e/editor-parity.spec.ts:893:3 › alter Editor (BlockNote) › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (6.3s)
+  ✓  168 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (4.7s)
+  ✓  170 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (4.5s)
+  ✘  171 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (1.5s)
+  ✓  169 [webkit] › e2e/editor-parity.spec.ts:935:3 › alter Editor (BlockNote) › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (9.8s)
+(node:20666) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  172 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (retry #1) (2.4s)
+  ✓  174 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.6s)
+  ✓  175 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.0s)
+  ✓  173 [webkit] › e2e/editor-parity.spec.ts:969:3 › alter Editor (BlockNote) › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (8.7s)
+  ✓  176 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (5.0s)
+  ✓  177 [webkit] › e2e/hangs.spec.ts:74:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (7.8s)
+  ✓  178 [webkit] › e2e/hangs.spec.ts:111:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (8.3s)
+  ✓  179 [webkit] › e2e/hangs.spec.ts:136:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (4.2s)
+hang monitor idle: 96 ticks in 5004 ms, 3.00 ms busy (0.060 %)
+  ✓  180 [webkit] › e2e/hangs.spec.ts:152:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (6.6s)
+  ✓  181 [webkit] › e2e/hangs.spec.ts:163:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (5.1s)
+
+
+  1) [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs 
+
+    Error: page.reload: Navigation canceled by policy check
+    Call log:
+      - waiting for navigation until "load"
+
+
+      145 |   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      146 |   expect((await fetch(`${serverURL}/share/v1/links/${link.id}/revoke`, { method: "POST", headers: owner })).ok).toBe(true);
+    > 147 |   await page.reload();
+          |              ^
+      148 |   await expect(page.getByRole("heading", { name: "This link no longer works" })).toBeVisible({ timeout: 20_000 });
+      149 |   await expect(page.getByTestId("based-root")).toHaveCount(0);
+      150 |   await page.getByRole("button", { name: "Open Based" }).click();
+        at /home/runner/work/Based/Based/apps/web/e2e/guest.spec.ts:147:14
+
+    Error Context: test-results/guest-Teil-3-widerrufener--98ff8-leeren-Gast-Arbeitsbereichs-webkit/error-context.md
+
+    Error Context: test-results/guest-Teil-3-widerrufener--98ff8-leeren-Gast-Arbeitsbereichs-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs 
+  14 skipped
+  165 passed (9.8m)
