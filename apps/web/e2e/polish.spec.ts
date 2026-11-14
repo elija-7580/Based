@@ -36,7 +36,8 @@ test("Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus", async ({ page 
   expect(library).not.toBe(await icon("Welcome to Based"));
 });
 
-test("Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek", async ({ page }) => {
+// BSD-407 Teil 6.1: Editor-Menüs sehen aus wie das Seitenmenü – Überfahren = `.menu-item:hover` (--surface-raised).
+test("Slash-Menü: Überfahren färbt die Zeile wie das Seitenmenü, nicht mit dem Blau der Bibliothek", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 820 });
   await fresh(page);
   await page.getByRole("button", { name: "New page" }).first().click();
@@ -46,7 +47,7 @@ test("Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht m
   await item.hover();
   const [bg, selected, ink, color] = await item.evaluate((el) => {
     const probe = document.createElement("i");
-    probe.style.cssText = "background: var(--selected); color: var(--ink)";
+    probe.style.cssText = "background: var(--surface-raised); color: var(--ink)";
     document.body.append(probe);
     const p = getComputedStyle(probe);
     const out = [getComputedStyle(el).backgroundColor, p.backgroundColor, p.color, getComputedStyle(el).color];

@@ -1966,7 +1966,11 @@ function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
       }
     }
   };
+  const running = useRef(false);
   const run = async (from = 0, added: Record<number, string> = {}) => {
+    // Ein Lauf auf einmal: run wartet ggf. auf fremde Datenbanken (include) – ein zweiter Klick in der Zeit lief sonst doppelt.
+    if (running.current) return;
+    running.current = true;
     setPause(undefined);
     setNote(undefined);
     setBusy(true);
@@ -1978,7 +1982,7 @@ function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
       const r = runButton(store, b.id, { from, added, pageExists });
       apply(r.effects);
       if (r.pause) setPause(r.pause);
-    } finally { setBusy(false); }
+    } finally { running.current = false; setBusy(false); }
   };
   return (
     <div className="bx2-embed bx2-btn" data-embed="" contentEditable={false} data-editing={editing ? "" : undefined}>
