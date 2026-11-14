@@ -83,7 +83,8 @@ test("3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“
   const problems = page.getByTestId("settings-section-diagnostics-problems");
   await expect(problems.getByTestId("diagnostics-last-session")).toHaveText("Ended in a hang", { timeout: 10_000 });
   // Chromium: der Worker hält die Dauer fest; WebKit: der Hauptthread beim Verlassen (Worker-Speicher hängt dort mit)
-  await expect(problems).toContainText(/Based hung for \d\.\d s during route settings and was reloaded or closed right after/);
+  // WebKit: je nach Zeitpunkt des Neuladens kommt der Marker „lief noch“ (Worker) oder „gleich danach neu geladen“ (pagehide) an
+  await expect(problems).toContainText(/Based hung for (\d\.\d s|more than \d+ s) during route settings and was (reloaded or closed right after|then closed or reloaded)/);
   const section = page.getByTestId("settings-section-diagnostics-hangs");
   await expect(section.getByTestId("hangs-ended-in-hang")).toBeVisible();
   await expect(section).toContainText(/Steps before: .*click settings-section-diagnostics-status \(group\) › test hang 3000/);
