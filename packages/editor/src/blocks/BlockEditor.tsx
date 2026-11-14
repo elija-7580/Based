@@ -889,6 +889,15 @@ export function BlockEditor(props: PageEditorProps) {
       if (t.closest("[data-embed]") && !t.closest(".bx2-menu") && ctrl.selected.length) ctrl.clearSelection();
       return;
     }
+    // Leere Fläche unter dem letzten Block einer Spalte (die kürzere Spalte reicht bis zum Ende der Zeile): wie Notion
+    // dort weiterschreiben – in einen leeren Absatz am Ende der Spalte, sonst einen neuen.
+    const colTail = t.closest<HTMLElement>(".bx2-col-tail");
+    if (colTail && editable) {
+      e.preventDefault();
+      const col = colTail.closest<HTMLElement>(".bx2-column")?.dataset.columnId;
+      if (col) focusEndOf(col);
+      return;
+    }
     // Klick rechts neben dem Text einer Zeile: Cursor ans Ende
     const row = t.closest<HTMLElement>(".bx2-row");
     const rowField = row?.querySelector<HTMLElement>(":scope > [data-editable-id], :scope > .bx2-field-wrap > [data-editable-id]");
@@ -1091,14 +1100,16 @@ export function BlockEditor(props: PageEditorProps) {
     doc.addEventListener("pointerup", done);
   };
 
-  const onTailClick = () => {
+  /** Klick unter den letzten Block (der Seite oder einer Spalte): in einen leeren Absatz am Ende, sonst einen anlegen. */
+  const focusEndOf = (parent: string) => {
     if (!editable) return;
-    const kids = store.children("b:" + pageID).filter((k) => store.blocks.get(k)?.trashedAt === undefined);
+    const kids = store.children("b:" + parent).filter((k) => store.blocks.get(k)?.trashedAt === undefined);
     const last = kids[kids.length - 1];
     const lb = last ? store.blocks.get(last) : undefined;
     if (lb && lb.type === "text" && plainText(lb.text).length === 0) { ctrl.setCaret({ id: last!, from: 0, to: 0 }); return; }
-    run(cmd.insertBlock(store, { inside: pageID }, "text"));
+    run(cmd.insertBlock(store, { inside: parent }, "text"));
   };
+  const onTailClick = () => focusEndOf(pageID);
 
   const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable }), [ctrl, store, props, editable]);
   // ADR 0016 (E7): Echtzeit-Text und Präsenz über /collab (Dokument `text:<seite>`)
@@ -1331,12 +1342,13 @@ function ColumnResizer({ left, right }: { left: string; right: string }) {
 }
 
 function Column({ id, depth, next }: { id: string; depth: number; next: string | undefined }) {
-  const { store } = useCtx();
+  const { store, editable } = useCtx();
   const b = useBlock(store, id);
   const ratio = typeof b?.props?.ratio === "number" && b.props.ratio > 0 ? b.props.ratio : 1;
   return (
     <div className="bx2-column" data-column-id={id} style={{ flexGrow: ratio }}>
       <BlockList parent={id} depth={depth} />
+      {editable ? <div className="bx2-col-tail" data-testid="column-tail" aria-hidden /> : null}
       {next ? <ColumnResizer left={id} right={next} /> : null}
     </div>
   );

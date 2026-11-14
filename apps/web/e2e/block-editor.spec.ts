@@ -830,3 +830,28 @@ test("HTML-Codeblock mit Vorschau", async ({ page }) => {
   await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
   await expect(page.frameLocator("iframe.bx-html-preview").locator("b")).toHaveText("Hi preview");
 });
+
+// 14. 11.: in der kürzeren Spalte unter dem letzten Block weiterschreiben (wie Notion) – vorher war die Fläche tot.
+test("Spalten: Klick unter den letzten Block der kürzeren Spalte schreibt dort weiter", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("/2 col");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).locator(".bx2-column")).toHaveCount(2);
+  // linke Spalte lang, rechte kurz
+  await page.keyboard.type("L1");
+  for (const t of ["L2", "L3", "L4", "L5", "L6"]) { await page.keyboard.press("Enter"); await page.keyboard.type(t); }
+  const right = editor(page).locator(".bx2-column").nth(1);
+  await right.locator("[data-editable-id]").first().click();
+  await page.keyboard.type("R1");
+  const tail = right.getByTestId("column-tail");
+  const box = (await tail.boundingBox())!;
+  expect(box.height).toBeGreaterThan(60);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height - 10);
+  await page.keyboard.type("R2");
+  await expect.poll(() => right.locator("[data-editable-id]").evaluateAll((els) => els.map((e) => e.textContent))).toEqual(["R1", "R2"]);
+  // Noch einmal: der leere Absatz am Ende wird wiederverwendet, kein zweiter
+  await page.keyboard.press("Enter");
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height - 4);
+  await expect(right.locator("[data-editable-id]")).toHaveCount(3);
+});

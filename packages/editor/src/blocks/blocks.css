@@ -236,7 +236,9 @@
 
 /* Spalten */
 .bx2-columns { display: flex; gap: calc(var(--space-7) + var(--space-1) + var(--space-half)); padding: var(--pad) 0 calc(var(--space-1) - 1px); }
-.bx2-column { flex: 1 1 0; min-width: 0; }
+.bx2-column { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+/* Fläche unter dem letzten Block einer Spalte bis zum Ende der Spaltenzeile: Klick schreibt dort weiter (wie Notion). */
+.bx2-col-tail { flex: 1 0 0; cursor: text; }
 
 /* Auswahl, Ziehen, Rechteck */
 .bx2-block[data-selected] { background: var(--selected); }
