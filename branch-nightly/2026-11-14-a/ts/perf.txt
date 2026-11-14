@@ -1,13 +1,9 @@
-success 4292bf4185fa0bec6a598b58d08642e5342b6fa0 (nicht blockierend)
-perf 5000: {"mapOpen":[],"idleBeforePan":[160],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3829,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":9.55,"peekLong":[],"formSubmitMs":86,"formLong":[]}
-BSD-215 chromium: 50 000 Zeilen öffnen 889 ms, ans Ende scrollen 52 ms, Zelle ändern 149 ms
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 4.7, 5.2, 11.4, 12.9, 18.8
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.8s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1125 ms, ans Ende scrollen 335 ms, Zelle ändern 819 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 7, 8, 11, 18, 30
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.9s)
-  ✘  14 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (18.2s)
-    Error: expect(received).toBeLessThan(expected)
-    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
-  1 flaky
-  14 passed (2.0m)
+success 2d19575f4afa36be50a532175a91478560dedb63 (nicht blockierend)
+BSD-215 chromium: 50 000 Zeilen öffnen 628 ms, ans Ende scrollen 37 ms, Zelle ändern 108 ms
+perf 5000: {"mapOpen":[],"idleBeforePan":[144],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3807,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":8.3,"peekLong":[],"formSubmitMs":59,"formLong":[]}
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 3.5, 3.6, 5.8, 9.9, 12.5
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.2s)
+BSD-215 webkit: 50 000 Zeilen öffnen 1198 ms, ans Ende scrollen 255 ms, Zelle ändern 633 ms
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 5, 6, 8, 8, 17
+  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.7s)
+  15 passed (1.6m)
