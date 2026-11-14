@@ -346,6 +346,7 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions, in
   const inner = useMemo(() => (peekOptions ? { ...ctx, onOpenPage: openRow } : ctx), [ctx, peekOptions, openRow]);
   const onOpenPage = inner.onOpenPage;
   if (!active) return <div className="dbui-empty">This database has no views.</div>;
+  const titled = showTitle && !(inline && active.showTitle === false);
   const peekView = peek ? views.find((v) => v.id === peek.viewID) ?? active : undefined;
   const onNew = (template?: string) => {
     const values = newRowValues(db, active, groupProperty(db, active), null);
@@ -361,8 +362,9 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions, in
   };
   return (
     <DBContext.Provider value={inner}>
-      <div className="dbui-head">
-        {showTitle && <Title />}
+      {/* Inline lässt sich der Titel je Ansicht ausblenden (wie Notions „Show database title“); dann nur noch die Liste. */}
+      <div className={"dbui-head" + (titled ? "" : " untitled")}>
+        {titled && <Title />}
         <div className="dbui-toolbar">
           <Tabs views={views} active={active} onSelect={select} blockID={blockID} inline={inline} onEdit={setEditView} />
           <Toolbar view={active} search={search} setSearch={setSearch} onNew={onNew} settingsRequest={editView} onSettingsShown={clearEditView} />

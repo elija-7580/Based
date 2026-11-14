@@ -38,7 +38,10 @@ describe("Records aus Swift", () => {
 
 describe("Drift-Check gegen Swift", () => {
   it.each(Object.keys(swift.keys))("bekannte Schlüssel von %s", (name) => {
-    expect([...KNOWN_KEYS[name as keyof typeof KNOWN_KEYS]].sort()).toEqual(swift.keys[name]);
+    // Felder, die nur der TS-Stack kennt (Swift ist eingefroren und behält sie als unbekannte Felder).
+    const tsOnly: Record<string, string[]> = { DatabaseView: ["showTitle"] };
+    const ts = [...KNOWN_KEYS[name as keyof typeof KNOWN_KEYS]].filter((k) => !tsOnly[name]?.includes(k));
+    expect(ts.sort()).toEqual(swift.keys[name]);
   });
   it("es gibt keinen Swift-Typ ohne TS-Gegenstück", () => {
     expect(Object.keys(KNOWN_KEYS).sort()).toEqual(Object.keys(swift.keys).sort());
