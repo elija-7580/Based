@@ -1,61 +1,61 @@
-failure 01d977b711c5a2c531f6145e10409adb51e35750
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
+failure 25565897bc6b59cdcc47aef58f16480d1c5633e3
 
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
+    Error: expect(locator).toHaveCount(expected) failed
 
-      244 |   // links vom Griff, unten in der Zeile
-      245 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 246 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      247 | });
-      248 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:246:46
+    Locator:  getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+    Expected: 1
+    Received: 2
+    Timeout:  5000ms
 
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' }) with timeout 5000ms
+      - waiting for getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      292 |   // ein Klick = Undo-Schritt
+      293 |   await page.keyboard.press("ControlOrMeta+z");
+    > 294 |   await expect(outside()).toHaveCount(1);
+          |                           ^
+      295 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      296 |   await expect(outside()).toHaveCount(2);
+      297 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:294:27
+
+    Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium/error-context.md
 
     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
-    Error: expect(received).toEqual(expected) // deep equality
+    Error: expect(locator).toHaveCount(expected) failed
 
-    - Expected  - 8
-    + Received  + 1
+    Locator:  getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+    Expected: 1
+    Received: 2
+    Timeout:  5000ms
 
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' }) with timeout 5000ms
+      - waiting for getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
 
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
 
-      244 |   // links vom Griff, unten in der Zeile
-      245 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 246 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      247 | });
-      248 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:246:46
+      292 |   // ein Klick = Undo-Schritt
+      293 |   await page.keyboard.press("ControlOrMeta+z");
+    > 294 |   await expect(outside()).toHaveCount(1);
+          |                           ^
+      295 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      296 |   await expect(outside()).toHaveCount(2);
+      297 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:294:27
 
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium-retry1/error-context.md
+    Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium-retry1/error-context.md
 
   1 failed
-    [chromium] › e2e/editor-drag.spec.ts:230:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+    [chromium] › e2e/editor-parity.spec.ts:269:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
   9 skipped
-  178 passed (6.1m)
+  186 passed (5.3m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf

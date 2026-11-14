@@ -1,9 +1,21 @@
-success 01d977b711c5a2c531f6145e10409adb51e35750 (nicht blockierend)
-BSD-215 chromium: 50 000 Zeilen öffnen 654 ms, ans Ende scrollen 31 ms, Zelle ändern 113 ms
-perf 5000: {"mapOpen":[],"idleBeforePan":[143],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3824,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":8.9,"peekLong":[],"formSubmitMs":64,"formLong":[]}
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 3.9, 5.9, 8.3, 12.2, 13.9
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.8s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1225 ms, ans Ende scrollen 412 ms, Zelle ändern 338 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 8, 9, 10, 25, 35
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.8s)
-  15 passed (1.6m)
+failure 25565897bc6b59cdcc47aef58f16480d1c5633e3 (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[203],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3886,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":15.55,"peekLong":[],"formSubmitMs":80,"formLong":[]}
+BSD-215 chromium: 50 000 Zeilen öffnen 1044 ms, ans Ende scrollen 74 ms, Zelle ändern 258 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 2.5, 5.8, 7.9, 9.1, 17.3
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.4s)
+  ✘   9 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (9.0s)
+BSD-215 webkit: 50 000 Zeilen öffnen 2127 ms, ans Ende scrollen 447 ms, Zelle ändern 341 ms
+  ✘  10 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (retry #1) (10.1s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 12, 15, 20, 23, 23
+  ✓  14 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (5.4s)
+  ✘  16 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (20.7s)
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium/error-context.md
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium-retry1/error-context.md
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
+  1 failed
+  1 flaky
+  13 passed (2.3m)
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --grep @perf
