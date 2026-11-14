@@ -556,6 +556,35 @@
   transition: opacity var(--duration-fast) var(--ease-out);
 }
 .bx2-image-frame:hover .bx2-image-handle { opacity: 0.6; }
+.bx2-image-handle-left { right: auto; left: var(--space-1); }
+/* BSD-407 Teil 6.3: Ausrichtung (props.align) und Bildleiste oben rechts im Bild, beim Überfahren oder mit Fokus */
+.bx2-image { display: flex; flex-direction: column; }
+.bx2-image[data-align="left"] { align-items: flex-start; }
+.bx2-image[data-align="center"] { align-items: center; }
+.bx2-image[data-align="right"] { align-items: flex-end; }
+.bx2-image[data-align="center"] .bx2-caption { text-align: center; }
+.bx2-image[data-align="right"] .bx2-caption { text-align: right; }
+.bx2-image-tools {
+  position: absolute;
+  bottom: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 2;
+  display: inline-flex;
+  gap: var(--space-half);
+  padding: var(--space-half);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  box-shadow: var(--shadow-menu);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+[data-material="glass"] .bx2-image-tools { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
+/* über dem Bild (verdeckt auch kleine Bilder nicht); ein unsichtbarer Steg hält das Überfahren auf dem Weg dorthin */
+.bx2-image-tools::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: var(--space-1); }
+.bx2-image-frame:hover .bx2-image-tools, .bx2-image-tools:focus-within { opacity: 1; pointer-events: auto; }
+.bx2-image-tools .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
+@media (prefers-reduced-motion: reduce) { .bx2-image-tools { transition: none; } }
 .bx2-caption {
   display: block;
   width: 100%;

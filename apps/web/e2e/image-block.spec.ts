@@ -1,6 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
 import { blockEditor } from "./editor-helpers.js";
-import { useLegacyEditor } from "./legacy-editor.js";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -26,7 +25,6 @@ const test = base.extend<{ page: Page }>({
 type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
-const editor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
 
 function png(width: number, height: number): Buffer {
   const table = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
@@ -123,8 +121,6 @@ async function dropImageFile(page: Page, target: string, bytes: Buffer, name = "
   }, { b64: bytes.toString("base64"), name, target });
 }
 
-const imageBlock = (page: Page) => editor(page).locator("[data-content-type=image]").first();
-const imageEl = (page: Page) => imageBlock(page).locator("img").first();
 
 test.describe.configure({ timeout: 120_000 });
 test.beforeEach(async ({ page }) => fresh(page));
@@ -144,167 +140,164 @@ test("Importiertes Notion-Bild erscheint mit Caption und Breite", async ({ page 
   await expect.poll(async () => Math.round((await block.locator(".bx2-image-frame").boundingBox())!.width)).toBe(320);
 });
 
-// BSD-407 Teil 3: Ausrichtung (links/Mitte/rechts), Bildleiste und Vollbild-Knopf hat bisher nur der alte Editor; Einfügen, Ablegen, Breite, Caption und Doppelklick-Vollbild hat der Block-Editor (block-editor.spec.ts, switch-parity.spec.ts).
-// Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
-test.describe("alter Editor (BlockNote)", () => {
-  useLegacyEditor(test);
+// BSD-407 Teil 6.3: Bild-Block im Block-Editor wie im alten Editor – Ausrichtung (links/Mitte/rechts, `props.align`),
+// Bildleiste (Beschriftung, Ersetzen, Herunterladen, Vollbild), Breite an beiden Rändern ziehen.
+const bxImage = (page: Page) => blockEditor(page).locator('.bx2-block[data-type="image"] figure.bx2-image').first();
+const bxImg = (page: Page) => bxImage(page).locator("img").first();
+const bxTools = (page: Page) => bxImage(page).getByTestId("image-toolbar");
 
-  test("Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles", async ({ page, context }) => {
-    await command(page, { op: "createPage", title: "Gallery" });
-    await command(page, { op: "createPage", title: "Other" });
+async function focusEnd(page: Page) {
+  await blockEditor(page).getByTestId("block-editor-tail").click();
+  await expect(blockEditor(page).locator("[data-editable-id]:focus")).toHaveCount(1);
+}
+
+test("Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles", async ({ page, context }) => {
+  await command(page, { op: "createPage", title: "Gallery" });
+  await command(page, { op: "createPage", title: "Other" });
+  await openPage(page, "Gallery");
+  await focusEnd(page);
+  await pasteImageFile(page, png(320, 180));
+  await expect(bxImg(page)).toHaveAttribute("src", /^blob:/);
+  await expect.poll(() => bxImg(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(320);
+
+  // Überfahren → Leiste mit Ausrichtung, Caption, Ersetzen, Herunterladen, Vollbild
+  await bxImg(page).hover();
+  await expect(bxTools(page)).toBeVisible();
+  for (const name of ["Align left", "Align center", "Align right", "Caption", "Replace image", "Download", "View full size"]) {
+    await expect(bxTools(page).getByRole("button", { name, exact: true })).toBeVisible();
+  }
+  await expect(bxTools(page).getByRole("button", { name: "Align left" })).toHaveAttribute("aria-pressed", "true");
+  await bxTools(page).getByRole("button", { name: "Align center" }).click();
+  await expect(bxImage(page)).toHaveAttribute("data-align", "center");
+  await expect(bxTools(page).getByRole("button", { name: "Align center" })).toHaveAttribute("aria-pressed", "true");
+  // mittig heißt: Bild steht in der Mitte der Spalte
+  const col = (await bxImage(page).boundingBox())!;
+  const pic = (await bxImg(page).boundingBox())!;
+  expect(Math.abs(pic.x + pic.width / 2 - (col.x + col.width / 2))).toBeLessThan(4);
+
+  // Caption über die Leiste
+  await bxImg(page).hover();
+  await bxTools(page).getByRole("button", { name: "Caption" }).click();
+  const caption = bxImage(page).getByRole("textbox", { name: "Caption" });
+  await expect(caption).toBeFocused();
+  await page.keyboard.type("Sunset over the lake");
+  await page.keyboard.press("Enter");
+  await expect(caption).toHaveValue("Sunset over the lake");
+
+  // Vollbild per Knopf, Esc schließt
+  await bxImg(page).hover();
+  await bxTools(page).getByRole("button", { name: "View full size" }).click();
+  await expect(page.getByTestId("image-viewer")).toBeVisible();
+  await expect(page.getByTestId("image-viewer").locator("img")).toHaveAttribute("src", /^blob:/);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("image-viewer")).toHaveCount(0);
+
+  // Größe per Griff (mittig: beide Seiten wandern)
+  const frame = bxImage(page).locator(".bx2-image-frame");
+  await frame.hover();
+  const handle = frame.getByRole("separator", { name: "Resize image", exact: true });
+  const before = (await frame.boundingBox())!.width;
+  const h = (await handle.boundingBox())!;
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x + h.width / 2 - 40, h.y + h.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await expect.poll(async () => (await frame.boundingBox())!.width).toBeLessThan(before - 40);
+  const after = Math.round((await frame.boundingBox())!.width);
+  // ⌘Z nimmt die Größe in einem Schritt zurück, ⇧⌘Z wieder her
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect.poll(async () => Math.round((await frame.boundingBox())!.width)).toBe(Math.round(before));
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await expect.poll(async () => Math.round((await frame.boundingBox())!.width)).toBe(after);
+
+  await page.waitForTimeout(800);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Gallery");
+  await expect(bxImage(page)).toHaveAttribute("data-align", "center");
+  await expect(bxImage(page).getByRole("textbox", { name: "Caption" })).toHaveValue("Sunset over the lake");
+  await expect.poll(async () => Math.round((await bxImage(page).locator(".bx2-image-frame").boundingBox())!.width)).toBe(after);
+  await expect.poll(() => bxImg(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(320);
+
+  // Offline: Seite wechseln und zurück – das Bild kommt aus dem lokalen Speicher
+  await context.setOffline(true);
+  try {
+    await openPage(page, "Other");
     await openPage(page, "Gallery");
-    const ed = editor(page);
-    await expect(ed).toHaveAttribute("contenteditable", "true");
-    await ed.locator(".bn-block-content").first().click();
-    await pasteImageFile(page, png(320, 180));
-    await expect(imageEl(page)).toHaveAttribute("src", /^blob:/);
-    await expect.poll(() => imageEl(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(320);
+    await expect(bxImg(page)).toHaveAttribute("src", /^blob:/);
+    await expect.poll(() => bxImg(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(320);
+  } finally {
+    await context.setOffline(false);
+  }
+});
 
-    // Bild anklicken → Leiste mit Caption, Ausrichtung, Vollbild
-    await imageEl(page).click();
-    const toolbar = page.locator(".bn-formatting-toolbar");
-    await expect(toolbar).toBeVisible();
-    await expect(toolbar.locator("[data-test=alignTextCenter]")).toBeVisible();
-    // Feinschliff: kein „Ask AI“ über einem Bild, Markierung ohne das Blau von BlockNote
-    await expect(toolbar.getByRole("button", { name: "Ask AI" })).toHaveCount(0);
-    const ring = await imageBlock(page).evaluate((el) => {
-      const inner = el.firstElementChild!;
-      const after = getComputedStyle(inner, "::after");
-      return { shadow: after.boxShadow, bg: after.backgroundColor };
-    });
-    expect(ring.shadow).not.toContain("100, 160, 255");
-    expect(ring.bg).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
-    await toolbar.locator("[data-test=alignTextCenter]").click();
-    await expect(imageBlock(page)).toHaveAttribute("data-text-alignment", "center");
-    // mittig heißt: Bild steht in der Mitte der Spalte
-    const col = (await imageBlock(page).boundingBox())!;
-    const pic = (await imageEl(page).boundingBox())!;
-    expect(Math.abs(pic.x + pic.width / 2 - (col.x + col.width / 2))).toBeLessThan(4);
+test("Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen", async ({ page }) => {
+  await command(page, { op: "createPage", title: "Drops" });
+  await openPage(page, "Drops");
+  await focusEnd(page);
+  await page.keyboard.type("Above the picture");
+  await dropImageFile(page, "[data-testid=block-editor] [data-editable-id]", png(200, 120));
+  await expect(bxImg(page)).toHaveAttribute("src", /^blob:/);
+  await expect.poll(() => bxImg(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(200);
+  await expect(blockEditor(page)).toContainText("Above the picture");
 
-    const capInput = page.getByPlaceholder("Edit caption");
-    // WebKit unter Last: die Leiste baut sich nach dem Klick (und wenn der Upload fertig wird) neu auf – dann den
-    // ganzen Schritt wiederholen, bis die Caption steht.
-    await expect(async () => {
-      await imageEl(page).click();
-      await toolbar.getByRole("button", { name: "Edit caption" }).click({ timeout: 3000 });
-      await capInput.fill("Sunset over the lake", { timeout: 2000 });
-      await capInput.press("Enter", { timeout: 2000 });
-      await expect(imageBlock(page).locator(".bn-file-caption")).toHaveText("Sunset over the lake", { timeout: 2000 });
-    }).toPass({ timeout: 40_000 });
-    await expect(imageBlock(page).locator(".bn-file-caption")).toHaveText("Sunset over the lake");
+  await bxImg(page).hover();
+  await bxTools(page).getByRole("button", { name: "Align right" }).click();
+  await expect(bxImage(page)).toHaveAttribute("data-align", "right");
+  const col = (await bxImage(page).boundingBox())!;
+  const pic = (await bxImg(page).boundingBox())!;
+  expect(Math.abs(pic.x + pic.width - (col.x + col.width))).toBeLessThan(4);
+  await bxImg(page).hover();
+  await bxTools(page).getByRole("button", { name: "Align left" }).click();
+  await expect(bxImage(page)).toHaveAttribute("data-align", "left");
+  await expect.poll(async () => Math.round((await bxImg(page).boundingBox())!.x - (await bxImage(page).boundingBox())!.x)).toBeLessThan(4);
 
-    // Vollbild per Knopf in der Leiste, Esc schließt und gibt den Fokus zurück
-    await imageEl(page).click();
-    await toolbar.getByRole("button", { name: "View full size" }).click();
-    await expect(page.getByTestId("image-viewer")).toBeVisible();
-    await expect(page.getByTestId("image-viewer").locator("img")).toHaveAttribute("src", /^blob:/);
-    await page.keyboard.press("Escape");
-    await expect(page.getByTestId("image-viewer")).toHaveCount(0);
+  // Herunterladen: eine Datei kommt an
+  await bxImg(page).hover();
+  const download = page.waitForEvent("download");
+  await bxTools(page).getByRole("button", { name: "Download" }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.png$|^image/);
 
-    // Größe per Griff
-    const wrapper = imageBlock(page).locator(".bn-visual-media-wrapper").first();
-    await wrapper.hover();
-    const handle = wrapper.locator(".bn-resize-handle").last();
-    await expect(handle).toBeVisible();
-    const before = (await wrapper.boundingBox())!.width;
-    const h = (await handle.boundingBox())!;
-    await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(h.x + h.width / 2 - 80, h.y + h.height / 2, { steps: 8 });
-    await page.mouse.up();
-    await expect.poll(async () => (await wrapper.boundingBox())!.width).toBeLessThan(before - 40);
-    const after = Math.round((await wrapper.boundingBox())!.width);
+  // Ersetzen: andere Datei, gleicher Block
+  const blockID = await blockEditor(page).locator('.bx2-block[data-type="image"]').first().getAttribute("data-block-id");
+  await bxImage(page).getByLabel("Replace image file").setInputFiles({ name: "wide.png", mimeType: "image/png", buffer: png(260, 90) });
+  await expect.poll(() => bxImg(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(260);
+  expect(await blockEditor(page).locator('.bx2-block[data-type="image"]').first().getAttribute("data-block-id")).toBe(blockID);
+});
 
-    await page.waitForTimeout(800);
-    await page.reload();
-    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-    await openPage(page, "Gallery");
-    await expect(imageBlock(page)).toHaveAttribute("data-text-alignment", "center");
-    await expect(imageBlock(page).locator(".bn-file-caption")).toHaveText("Sunset over the lake");
-    await expect.poll(async () => Math.round((await imageBlock(page).locator(".bn-visual-media-wrapper").boundingBox())!.width)).toBe(after);
-    await expect.poll(() => imageEl(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(320);
-
-    // Offline: Seite wechseln und zurück – das Bild kommt aus dem lokalen Speicher
-    await context.setOffline(true);
-    try {
-      await openPage(page, "Other");
-      await openPage(page, "Gallery");
-      await expect(imageEl(page)).toHaveAttribute("src", /^blob:/);
-      await expect.poll(() => imageEl(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(320);
-      await expect(imageBlock(page).locator(".bn-file-caption")).toHaveText("Sunset over the lake");
-    } finally {
-      await context.setOffline(false);
+// Bildschirmfotos für docs/design/screens (nur mit BASED_SCREENSHOTS=1, Chromium): Bild mit Leiste (Mitte, Caption) und
+// Vollbild, in 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel.
+test("Bildschirmfotos: Bild-Block mit Leiste und Vollbild", async ({ page, browserName }) => {
+  test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium");
+  const id = (await command(page, { op: "createPage", title: "Trip to the lake" })) as string;
+  await openPage(page, "Trip to the lake");
+  await focusEnd(page);
+  await page.keyboard.type("Photos from the weekend.");
+  await page.keyboard.press("Enter");
+  await pasteImageFile(page, png(640, 360));
+  await expect(bxImg(page)).toHaveAttribute("src", /^blob:/);
+  await bxImg(page).hover();
+  await bxTools(page).getByRole("button", { name: "Align center" }).click();
+  await bxImage(page).getByRole("textbox", { name: "Caption" }).fill("Sunset over the lake");
+  await bxImage(page).getByRole("textbox", { name: "Caption" }).press("Enter");
+  await page.waitForTimeout(800);
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ ...JSON.parse(localStorage.getItem("based.appearance") ?? "{}"), theme: t })), theme);
+      await page.goto("/#page-" + id);
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await expect(bxImg(page)).toHaveAttribute("src", /^blob:/);
+      await bxImg(page).hover();
+      await expect(bxTools(page)).toBeVisible();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `../../docs/design/screens/web-image-block-${w}x${h}-${theme}.png` });
+      await bxTools(page).getByRole("button", { name: "View full size" }).click();
+      await expect(page.getByTestId("image-viewer")).toBeVisible();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `../../docs/design/screens/web-image-viewer-${w}x${h}-${theme}.png` });
+      await page.keyboard.press("Escape");
     }
-  });
-
-  test("Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links", async ({ page }) => {
-    await command(page, { op: "createPage", title: "Drops" });
-    await openPage(page, "Drops");
-    const ed = editor(page);
-    await expect(ed).toHaveAttribute("contenteditable", "true");
-    await ed.locator(".bn-block-content").first().click();
-    await page.keyboard.type("Above the picture");
-    await dropImageFile(page, ".bx-editor > .bx-doc .bn-editor .bn-block-content", png(200, 120));
-    await expect(imageEl(page)).toHaveAttribute("src", /^blob:/);
-    await expect.poll(() => imageEl(page).evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(200);
-    await expect(ed).toContainText("Above the picture");
-
-    await imageEl(page).click();
-    const toolbar = page.locator(".bn-formatting-toolbar");
-    await toolbar.locator("[data-test=alignTextRight]").click();
-    await expect(imageBlock(page)).toHaveAttribute("data-text-alignment", "right");
-    const col = (await imageBlock(page).boundingBox())!;
-    const pic = (await imageEl(page).boundingBox())!;
-    expect(Math.abs(pic.x + pic.width - (col.x + col.width))).toBeLessThan(4);
-    await imageEl(page).click();
-    await toolbar.locator("[data-test=alignTextLeft]").click();
-    // links ist die Vorgabe (BlockNote lässt das Attribut dann weg)
-    await expect(imageBlock(page)).not.toHaveAttribute("data-text-alignment", "right");
-    await expect.poll(async () => Math.round((await imageEl(page).boundingBox())!.x - (await imageBlock(page).boundingBox())!.x)).toBeLessThan(4);
-
-    // In einem Textblock zeigt die Leiste keine Ausrichtung (Based richtet Text nicht aus).
-    await ed.getByText("Above the picture").dblclick();
-    await expect(toolbar).toBeVisible();
-    await expect(toolbar.locator("[data-test^=alignText]")).toHaveCount(0);
-  });
-
-  // Bildschirmfotos für docs/design/screens (nur mit BASED_SCREENSHOTS=1, Chromium): markiertes Bild mit Leiste
-  // (Mitte, Caption) und Vollbild, in 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel.
-  test("Bildschirmfotos: Bild-Block mit Leiste und Vollbild", async ({ page, browserName }) => {
-    test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium");
-    const id = (await command(page, { op: "createPage", title: "Trip to the lake" })) as string;
-    await openPage(page, "Trip to the lake");
-    const ed = editor(page);
-    await ed.locator(".bn-block-content").first().click();
-    await page.keyboard.type("Photos from the weekend.");
-    await page.keyboard.press("Enter");
-    await pasteImageFile(page, png(640, 360));
-    await expect(imageEl(page)).toHaveAttribute("src", /^blob:/);
-    await imageEl(page).click();
-    await page.locator(".bn-formatting-toolbar [data-test=alignTextCenter]").click();
-    await imageEl(page).click();
-    await page.locator(".bn-formatting-toolbar").getByRole("button", { name: "Edit caption" }).click();
-    await page.getByPlaceholder("Edit caption").fill("Sunset over the lake");
-    await page.getByPlaceholder("Edit caption").press("Enter");
-    await page.waitForTimeout(800);
-    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
-      await page.setViewportSize({ width: w, height: h });
-      for (const theme of ["light", "dark"] as const) {
-        await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ ...JSON.parse(localStorage.getItem("based.appearance") ?? "{}"), theme: t })), theme);
-        await page.goto("/#page-" + id);
-        await page.reload();
-        await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-        await expect(imageEl(page)).toHaveAttribute("src", /^blob:/);
-        await imageEl(page).click();
-        await expect(page.locator(".bn-formatting-toolbar")).toBeVisible();
-        await page.waitForTimeout(400);
-        await page.screenshot({ path: `../../docs/design/screens/web-image-block-${w}x${h}-${theme}.png` });
-        await page.locator(".bn-formatting-toolbar").getByRole("button", { name: "View full size" }).click();
-        await expect(page.getByTestId("image-viewer")).toBeVisible();
-        await page.waitForTimeout(300);
-        await page.screenshot({ path: `../../docs/design/screens/web-image-viewer-${w}x${h}-${theme}.png` });
-        await page.keyboard.press("Escape");
-      }
-    }
-  });
+  }
 });

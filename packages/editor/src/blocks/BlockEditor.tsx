@@ -1513,41 +1513,66 @@ function BookmarkCard({ block: b, url }: { block: Block; url: string }) {
   );
 }
 
+/** Ausrichtung eines Bildes (Record `props.align`, wie Swift und der alte Editor): links ist die Vorgabe (kein Wert). */
+export function imageAlign(v: unknown): "left" | "center" | "right" {
+  return v === "center" || v === "right" ? v : "left";
+}
+
+const ALIGN_ICON = { left: "M4 6h16M4 10h10M4 14h16M4 18h10", center: "M4 6h16M7 10h10M4 14h16M7 18h10", right: "M4 6h16M10 10h10M4 14h16M10 18h10" } as const;
+const TOOL_ICON = {
+  caption: "M4.5 5.5h15A1.5 1.5 0 0 1 21 7v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17V7a1.5 1.5 0 0 1 1.5-1.5zM7 14.5h4M13 14.5h4",
+  replace: "M5 9a7.5 7.5 0 0 1 13-2.5M19 4v3.5h-3.5M19 15a7.5 7.5 0 0 1-13 2.5M5 20v-3.5h3.5",
+  download: "M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14",
+  expand: "M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6",
+} as const;
+function ToolIcon({ d }: { d: string }) {
+  return <svg className="bx-menu-icon" aria-hidden="true" viewBox="0 0 24 24"><path d={d} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
 function ImageBlock({ block: b }: { block: Block }) {
   const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
   const src = useFileURL(raw);
   const width = typeof b.props?.width === "number" ? b.props.width : undefined;
-  const { store, props, editable } = useCtx();
+  const align = imageAlign(b.props?.align);
+  const { store, props, editable, ctrl } = useCtx();
+  // nach einer Aktion am Bild ist es gewählt und der Editor hat den Fokus: ⌘Z/⇧⌘Z, Entf und Pfeile wirken (wie Notion)
+  const selectSelf = () => { ctrl.select([b.id]); ctrl.root?.focus({ preventScroll: true }); };
   const input = useRef<HTMLInputElement>(null);
+  const replaceInput = useRef<HTMLInputElement>(null);
+  const captionRef = useRef<HTMLInputElement>(null);
   const fig = useRef<HTMLElement>(null);
   const [busy, setBusy] = useState(false);
   const [live, setLive] = useState<number | undefined>();
-  // BSD-407 Teil 3: Doppelklick zeigt das Bild groß (wie im alten Editor, BSD-168/290)
+  // BSD-407 Teil 3: Doppelklick zeigt das Bild groß (wie im alten Editor, BSD-168/290); Teil 6.3 auch per Knopf
   const [viewing, setViewing] = useState<ImageView | undefined>();
   const closeViewer = useCallback(() => setViewing(undefined), []);
-  const upload = async (f: File | undefined) => {
+  const upload = async (f: File | undefined, label = "Add image") => {
     if (!f || !props.uploadFile) return;
     setBusy(true);
     try {
       const url = await props.uploadFile(f, b.id);
-      cmd.setBlockProps(store, [b.id], { url }, "Add image");
+      // Ersetzen: die neue Datei gilt, ein älterer Verweis auf ein Asset fällt weg (ein Undo-Schritt)
+      cmd.setBlockProps(store, [b.id], { url, asset: undefined }, label);
     } finally { setBusy(false); }
   };
-  // Breite am rechten Rand ziehen (wie Notion); gespeichert in Pixeln, ein Undo-Schritt beim Loslassen
-  const startResize = (e: React.PointerEvent) => {
+  // Breite am Rand ziehen (wie Notion); gespeichert in Pixeln, ein Undo-Schritt beim Loslassen. Mittig wächst das Bild
+  // nach beiden Seiten (doppelter Weg), sonst nur zur gezogenen Seite.
+  const startResize = (e: React.PointerEvent, side: "left" | "right") => {
     e.preventDefault();
     e.stopPropagation();
     const img = fig.current?.querySelector("img");
     const host = fig.current?.parentElement;
     if (!img || !host) return;
     const x0 = e.clientX, w0 = img.getBoundingClientRect().width, max = host.getBoundingClientRect().width;
+    const factor = (align === "center" ? 2 : 1) * (side === "left" ? -1 : 1);
     let w = w0;
-    const move = (ev: PointerEvent) => { w = Math.round(Math.max(80, Math.min(max, w0 + (ev.clientX - x0) * 2))); setLive(w); };
+    const move = (ev: PointerEvent) => { w = Math.round(Math.max(80, Math.min(max, w0 + (ev.clientX - x0) * factor))); setLive(w); };
     const up = () => {
       doc.removeEventListener("pointermove", move);
       doc.removeEventListener("pointerup", up);
       setLive(undefined);
       if (w !== w0) cmd.setBlockProps(store, [b.id], { width: w }, "Resize image");
+      selectSelf();
     };
     const doc = img.ownerDocument;
     doc.addEventListener("pointermove", move);
@@ -1555,14 +1580,39 @@ function ImageBlock({ block: b }: { block: Block }) {
   };
   const caption = b.props?.caption !== undefined ? plainText(b.props.caption) : undefined;
   const shown = live ?? width;
+  const setAlign = (a: "left" | "center" | "right") => { cmd.setBlockProps(store, [b.id], { align: a === "left" ? undefined : a }, "Align image"); selectSelf(); };
+  const download = () => {
+    if (!src) return;
+    const a = (fig.current?.ownerDocument ?? document).createElement("a");
+    a.href = src;
+    a.download = b.props?.asset?.name ?? (b.props?.url && !b.props.url.startsWith("blob:") ? b.props.url.split("/").pop()?.split("?")[0] : undefined) ?? "image";
+    a.rel = "noopener";
+    a.click();
+  };
   return (
-    <figure ref={fig} className="bx2-embed bx2-image" data-embed="" contentEditable={false} data-url={raw}
+    <figure ref={fig} className="bx2-embed bx2-image" data-embed="" contentEditable={false} data-url={raw} data-align={align}
       onDragOver={(e) => { if (editable && props.uploadFile && e.dataTransfer.types.includes("Files")) e.preventDefault(); }}
       onDrop={(e) => { const f = e.dataTransfer.files[0]; if (editable && f?.type.startsWith("image/")) { e.preventDefault(); void upload(f); } }}>
       {src ? (
         <span className="bx2-image-frame" style={shown ? { width: shown } : undefined}>
           <img src={src} alt={caption ?? ""} draggable={false} onDoubleClick={(e) => { const v = imageAt(e.target); if (v) { e.preventDefault(); setViewing(v); } }} />
-          {editable ? <span className="bx2-image-handle" role="separator" aria-orientation="vertical" aria-label="Resize image" onPointerDown={startResize} /> : null}
+          {editable ? (
+            <>
+              <span className="bx2-image-handle bx2-image-handle-left" role="separator" aria-orientation="vertical" aria-label="Drag the left edge to resize" onPointerDown={(e) => startResize(e, "left")} />
+              <span className="bx2-image-handle" role="separator" aria-orientation="vertical" aria-label="Resize image" onPointerDown={(e) => startResize(e, "right")} />
+            </>
+          ) : null}
+          {/* BSD-407 Teil 6.3: Bildleiste wie im alten Editor – Ausrichtung, Beschriftung, Ersetzen, Herunterladen, Vollbild */}
+          <span className="bx2-image-tools" role="toolbar" aria-label="Image" data-testid="image-toolbar" onMouseDown={(e) => e.preventDefault()}>
+            {editable ? (["left", "center", "right"] as const).map((a) => (
+              <BasedIconButton key={a} label={`Align ${a}`} pressed={align === a} icon={<ToolIcon d={ALIGN_ICON[a]} />} onClick={() => setAlign(a)} />
+            )) : null}
+            {editable ? <BasedIconButton label="Caption" icon={<ToolIcon d={TOOL_ICON.caption} />} onClick={() => { captionRef.current?.focus(); }} /> : null}
+            {editable && props.uploadFile ? <BasedIconButton label={busy ? "Uploading…" : "Replace image"} disabled={busy} icon={<ToolIcon d={TOOL_ICON.replace} />} onClick={() => replaceInput.current?.click()} /> : null}
+            <BasedIconButton label="Download" icon={<ToolIcon d={TOOL_ICON.download} />} onClick={download} />
+            <BasedIconButton label="View full size" icon={<ToolIcon d={TOOL_ICON.expand} />} onClick={() => src && setViewing({ src, alt: caption ?? "" })} />
+            {editable && props.uploadFile ? <input ref={replaceInput} type="file" accept="image/*" hidden aria-label="Replace image file" onChange={(e) => { void upload(e.target.files?.[0], "Replace image"); e.target.value = ""; }} /> : null}
+          </span>
         </span>
       ) : raw ? (
         // BSD-407 Teil 3: Bild mit Datei, die (noch) nicht auf diesem Gerät ist – kein „Add an image“, sondern der
@@ -1586,7 +1636,7 @@ function ImageBlock({ block: b }: { block: Block }) {
         </span>
       )}
       {src && (caption !== undefined || editable) ? (
-        <input className="bx2-caption" aria-label="Caption" placeholder={editable ? "Add a caption" : ""} readOnly={!editable} defaultValue={caption ?? ""} key={caption ?? ""}
+        <input ref={captionRef} className="bx2-caption" aria-label="Caption" placeholder={editable ? "Add a caption" : ""} readOnly={!editable} defaultValue={caption ?? ""} key={caption ?? ""}
           onBlur={(e) => { const v = e.target.value; if (v !== (caption ?? "")) cmd.setBlockProps(store, [b.id], { caption: v || undefined }, "Caption"); }}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }} />
       ) : null}
