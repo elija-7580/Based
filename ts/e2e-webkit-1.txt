@@ -1,61 +1,61 @@
-success 5908137e761edf44a13411540121feb1bdd61f72
-  ✓  150 [webkit] › e2e/editor-select.spec.ts:147:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (8.5s)
-  ✓  149 [webkit] › e2e/editor-parity.spec.ts:687:3 › alter Editor (BlockNote) › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (14.9s)
-  ✓  151 [webkit] › e2e/editor-select.spec.ts:167:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (8.1s)
-  ✓  153 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (3.5s)
-  ✓  154 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (6.8s)
-  ✓  152 [webkit] › e2e/editor-parity.spec.ts:716:3 › alter Editor (BlockNote) › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (13.7s)
-  ✓  155 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (14.6s)
-  ✓  156 [webkit] › e2e/editor-parity.spec.ts:767:3 › alter Editor (BlockNote) › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (14.0s)
-  ✓  157 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (13.6s)
-  ✓  159 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (5.6s)
-  ✓  158 [webkit] › e2e/editor-parity.spec.ts:800:3 › alter Editor (BlockNote) › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (20.9s)
-  ✓  160 [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (5.9s)
-  ✓  162 [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (6.6s)
-  ✓  161 [webkit] › e2e/editor-parity.spec.ts:858:3 › alter Editor (BlockNote) › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (15.3s)
-  ✓  163 [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (6.1s)
-  ✓  165 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (4.2s)
-  ✓  164 [webkit] › e2e/editor-parity.spec.ts:893:3 › alter Editor (BlockNote) › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (11.7s)
-  ✓  166 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (10.1s)
-(node:20759) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  168 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (6.4s)
-  ✓  167 [webkit] › e2e/editor-parity.spec.ts:935:3 › alter Editor (BlockNote) › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (17.1s)
-  ✓  169 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (6.6s)
-  ✓  171 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.6s)
-  ✓  172 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.0s)
-  ✓  173 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.2s)
-  ✓  170 [webkit] › e2e/editor-parity.spec.ts:969:3 › alter Editor (BlockNote) › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (15.2s)
-  ✓  174 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (6.9s)
-  ✓  175 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (10.5s)
-  ✓  176 [webkit] › e2e/hangs.spec.ts:74:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (15.0s)
-  ✓  177 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (10.6s)
-  ✓  178 [webkit] › e2e/hangs.spec.ts:111:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (9.4s)
-  ✓  179 [webkit] › e2e/hangs.spec.ts:136:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (4.7s)
-hang monitor idle: 96 ticks in 5005 ms, 0.00 ms busy (0.000 %)
-  ✓  180 [webkit] › e2e/hangs.spec.ts:152:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (7.1s)
-  ✓  181 [webkit] › e2e/hangs.spec.ts:163:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (7.0s)
-
-
-  1) [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ────────────────
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "dead"
-    Received: "ok"
-
-      260 |     document.querySelector("main.main")!.prepend(live);
-      261 |   });
-    > 262 |   expect(await probe(page, "main.main", { name: "Crawl dead probe", nth: 0 })).toBe("dead");
-          |                                                                                ^
-      263 |   expect(await probe(page, "main.main", { name: "Crawl live probe", nth: 0 })).toBe("ok");
-      264 | });
-      265 |
-        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:262:80
-
-    Error Context: test-results/crawl-Ein-eingeschleuster-toter-Knopf-fällt-auf-webkit/error-context.md
-
-  1 flaky
-    [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ─────────────────
-  14 skipped
-  165 passed (15.6m)
+cancelled 056a6e31cefbf27cbf7b87c994f0fa7eb333fab1
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
