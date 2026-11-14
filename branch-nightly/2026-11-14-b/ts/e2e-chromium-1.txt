@@ -1,61 +1,61 @@
-success 0cc1b6aa7f683df3efa1dfc4550f5dec9f96b719
-  ✓  120 [chromium] › e2e/editor-parity.spec.ts:193:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz (2.3s)
-  ✓  121 [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus (2.9s)
-  ✓  123 [chromium] › e2e/editor-notion.spec.ts:200:1 › Blockmenü bleibt offen, wenn der Editor neu zeichnet (1.7s)
-  ✓  122 [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (4.5s)
-  ✓  124 [chromium] › e2e/editor-notion.spec.ts:220:1 › Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen (3.5s)
-  ✓  126 [chromium] › e2e/editor-notion.spec.ts:242:1 › Formatleiste: kompaktes Feld, ganz im Fenster (2.0s)
-  ✓  125 [chromium] › e2e/editor-parity.spec.ts:318:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (6.2s)
-  ✓  127 [chromium] › e2e/editor-notion.spec.ts:258:1 › Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf (2.4s)
-  ✓  129 [chromium] › e2e/editor-notion.spec.ts:279:1 › Beim Öffnen einer Seite springt der Titel nicht (2.5s)
-  ✓  130 [chromium] › e2e/editor-notion.spec.ts:302:1 › Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl (1.4s)
-  ✓  128 [chromium] › e2e/editor-parity.spec.ts:382:1 › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (8.9s)
-  ✓  132 [chromium] › e2e/editor-parity.spec.ts:477:1 › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (3.9s)
-  ✓  133 [chromium] › e2e/editor-parity.spec.ts:505:1 › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (3.6s)
-  ✓  131 [chromium] › e2e/editor-polish.spec.ts:54:1 › Editor in Ruhe und in seinen Zuständen (13.9s)
-  ✓  135 [chromium] › e2e/editor-polish.spec.ts:140:1 › Links und Häkchen im Editor ohne Browser-Blau (1.4s)
-  ✓  134 [chromium] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (4.6s)
-  ✓  136 [chromium] › e2e/editor-polish.spec.ts:158:1 › Blockfarben im Dunkelmodus aus den Tokens (2.2s)
-  ✓  137 [chromium] › e2e/editor-parity.spec.ts:574:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (2.6s)
-  ✓  138 [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (2.4s)
-  ✓  140 [chromium] › e2e/editor-select.spec.ts:112:1 › Blockauswahl reicht bis unter schwebende Leisten (1.6s)
-  ✓  139 [chromium] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (4.0s)
-  ✓  141 [chromium] › e2e/editor-select.spec.ts:142:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (2.3s)
-  ✓  143 [chromium] › e2e/editor-select.spec.ts:162:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (2.6s)
-  ✓  142 [chromium] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (4.8s)
-  ✓  144 [chromium] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (1.6s)
-  ✓  146 [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (2.0s)
-  ✓  145 [chromium] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (3.8s)
-  ✓  147 [chromium] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (2.5s)
-  ✓  148 [chromium] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (3.4s)
-  ✓  149 [chromium] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (2.9s)
-  ✓  151 [chromium] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (2.1s)
-  ✓  150 [chromium] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (4.4s)
-  ✓  152 [chromium] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (2.6s)
-  ✓  154 [chromium] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (1.6s)
-  ✓  153 [chromium] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (3.8s)
-  ✓  155 [chromium] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (2.7s)
-  ✓  156 [chromium] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (3.0s)
-  ✓  157 [chromium] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (1.7s)
-  ✓  158 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.7s)
-  ✓  159 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (4.3s)
-  ✓  160 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (4.2s)
-(node:9950) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  162 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (3.3s)
-  ✓  161 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.9s)
-  ✓  164 [chromium] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (1.8s)
-  ✓  163 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.5s)
-  ✓  165 [chromium] › e2e/guest.spec.ts:123:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (2.0s)
-  ✓  167 [chromium] › e2e/guest.spec.ts:137:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.6s)
-  ✓  166 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (3.0s)
-  ✓  168 [chromium] › e2e/guest.spec.ts:149:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.5s)
-  ✓  169 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.1s)
-  ✓  170 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.3s)
-  ✓  171 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (1.9s)
-  ✓  172 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.2s)
-  ✓  173 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (10.3s)
-  ✓  174 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.4s)
+cancelled 4d388eae7fdfdb30c8136fbf6df86b0bf55e9670
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
-  7 skipped
-  167 passed (6.2m)
+Running 174 tests using 2 workers, shard 1 of 2
+
+  ✓    2 [chromium] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (2.3s)
+  ✓    3 [chromium] › e2e/ai-switch.spec.ts:48:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (1.5s)
+  ✓    4 [chromium] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (light) (1.8s)
+  ✓    5 [chromium] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (dark) (2.2s)
+(node:3541) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    6 [chromium] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (9.2s)
+(node:3617) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    7 [chromium] › e2e/block-editor-collab.spec.ts:61:1 › Neuer Editor, Echtzeit: zwei Geräte im selben Block, live, nichts doppelt, Schreibmarke des anderen (7.6s)
+  ✓    8 [chromium] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (1.4s)
+
+  ✓    1 [chromium] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (29.3s)
+  -   10 [chromium] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓   11 [chromium] › e2e/a11y.spec.ts:195:1 › Quick Find: Esc gibt den Fokus zurück (1.2s)
+  ✓    9 [chromium] › e2e/block-editor.spec.ts:64:1 › Nach dem Neuladen ist alles da (dauerhaftes Profil, Records über den Store-Worker) (2.7s)
+  ✓   12 [chromium] › e2e/a11y.spec.ts:211:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (1.8s)
+  ✓   13 [chromium] › e2e/block-editor.spec.ts:86:1 › Tab rückt ein, ⇧Tab aus; Pfeile wechseln zwischen Blöcken (1.8s)
+  ✓   15 [chromium] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (2.3s)
+  ✓   14 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (3.8s)
+  ✓   16 [chromium] › e2e/block-editor.spec.ts:155:1 › Ziehen am Griff: davor/danach, Spalte rechts daneben und wieder heraus (2.7s)
+  ✓   18 [chromium] › e2e/block-editor.spec.ts:182:1 › Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, ⌫ löscht (1.4s)
+  ✓   17 [chromium] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (3.6s)
+  ✓   19 [chromium] › e2e/block-editor.spec.ts:220:1 › Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift (2.2s)
+  ✓   20 [chromium] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.9s)
