@@ -1,0 +1,45 @@
+# basednotes.app: static site + waitlist service. No access logs (see /privacy).
+{
+	email {$ACME_EMAIL}
+}
+
+www.basednotes.app {
+	redir https://basednotes.app{uri} permanent
+}
+
+basednotes.app {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy waitlist:8790
+	}
+
+	handle {
+		root * /srv/site
+		@hashed path /assets/* /fonts/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		@pages not path /assets/* /fonts/*
+		header @pages Cache-Control "public, max-age=300"
+		file_server
+	}
+
+	handle_errors 404 {
+		root * /srv/site
+		rewrite * /404.html
+		file_server
+	}
+}
+
+# Later, when based-server goes online on the same machine, add e.g.:
+# sync.basednotes.app {
+# 	reverse_proxy based:8787
+# }
