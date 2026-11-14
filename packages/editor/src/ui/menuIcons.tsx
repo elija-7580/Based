@@ -11,6 +11,15 @@ const P = {
   sync: "M5 9a7.5 7.5 0 0 1 13-2.5M19 4v3.5h-3.5M19 15a7.5 7.5 0 0 1-13 2.5M5 20v-3.5h3.5",
   check: "M5 12.5l4.5 4.5L19 7.5",
   wrap: "M4 6.5h16M4 12h13a3 3 0 0 1 0 6h-3.5M15.5 15.5 13 18l2.5 2.5M4 18h5",
+  // BSD-407 Teil 6.3/6.4: Bildleiste und Datums-Erwähnungen im Block-Editor
+  alignLeft: "M4 6h16M4 10h10M4 14h16M4 18h10",
+  alignCenter: "M4 6h16M7 10h10M4 14h16M7 18h10",
+  alignRight: "M4 6h16M10 10h10M4 14h16M10 18h10",
+  caption: "M4.5 5.5h15A1.5 1.5 0 0 1 21 7v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17V7a1.5 1.5 0 0 1 1.5-1.5zM7 14.5h4M13 14.5h4",
+  download: "M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14",
+  expand: "M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6",
+  calendar: "M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5zM4 10h16M8 3v4M16 3v4",
+  bell: "M18 15.5V11a6 6 0 0 0-12 0v4.5L4.5 18h15zM10 20.5a2 2 0 0 0 4 0",
   // Blocktypen („Turn into“)
   text: "M5.5 6.5V5h13v1.5M12 5v14M9.5 19h5",
   h1: "M4 6v12M11 6v12M4 12h7M16 13.5l2.5-1.5v6",

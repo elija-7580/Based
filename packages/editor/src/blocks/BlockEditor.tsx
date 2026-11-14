@@ -1573,16 +1573,7 @@ export function imageAlign(v: unknown): "left" | "center" | "right" {
   return v === "center" || v === "right" ? v : "left";
 }
 
-const ALIGN_ICON = { left: "M4 6h16M4 10h10M4 14h16M4 18h10", center: "M4 6h16M7 10h10M4 14h16M7 18h10", right: "M4 6h16M10 10h10M4 14h16M10 18h10" } as const;
-const TOOL_ICON = {
-  caption: "M4.5 5.5h15A1.5 1.5 0 0 1 21 7v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17V7a1.5 1.5 0 0 1 1.5-1.5zM7 14.5h4M13 14.5h4",
-  replace: "M5 9a7.5 7.5 0 0 1 13-2.5M19 4v3.5h-3.5M19 15a7.5 7.5 0 0 1-13 2.5M5 20v-3.5h3.5",
-  download: "M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14",
-  expand: "M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6",
-} as const;
-function ToolIcon({ d }: { d: string }) {
-  return <svg className="bx-menu-icon" aria-hidden="true" viewBox="0 0 24 24"><path d={d} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></svg>;
-}
+const ALIGN_ICON = { left: "alignLeft", center: "alignCenter", right: "alignRight" } as const;
 
 function ImageBlock({ block: b }: { block: Block }) {
   const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
@@ -1660,12 +1651,12 @@ function ImageBlock({ block: b }: { block: Block }) {
           {/* BSD-407 Teil 6.3: Bildleiste wie im alten Editor – Ausrichtung, Beschriftung, Ersetzen, Herunterladen, Vollbild */}
           <span className="bx2-image-tools" role="toolbar" aria-label="Image" data-testid="image-toolbar" onMouseDown={(e) => e.preventDefault()}>
             {editable ? (["left", "center", "right"] as const).map((a) => (
-              <BasedIconButton key={a} label={`Align ${a}`} pressed={align === a} icon={<ToolIcon d={ALIGN_ICON[a]} />} onClick={() => setAlign(a)} />
+              <BasedIconButton key={a} label={`Align ${a}`} pressed={align === a} icon={<MenuIcon name={ALIGN_ICON[a]} />} onClick={() => setAlign(a)} />
             )) : null}
-            {editable ? <BasedIconButton label="Caption" icon={<ToolIcon d={TOOL_ICON.caption} />} onClick={() => { captionRef.current?.focus(); }} /> : null}
-            {editable && props.uploadFile ? <BasedIconButton label={busy ? "Uploading…" : "Replace image"} disabled={busy} icon={<ToolIcon d={TOOL_ICON.replace} />} onClick={() => replaceInput.current?.click()} /> : null}
-            <BasedIconButton label="Download" icon={<ToolIcon d={TOOL_ICON.download} />} onClick={download} />
-            <BasedIconButton label="View full size" icon={<ToolIcon d={TOOL_ICON.expand} />} onClick={() => src && setViewing({ src, alt: caption ?? "" })} />
+            {editable ? <BasedIconButton label="Caption" icon={<MenuIcon name="caption" />} onClick={() => { captionRef.current?.focus(); }} /> : null}
+            {editable && props.uploadFile ? <BasedIconButton label={busy ? "Uploading…" : "Replace image"} disabled={busy} icon={<MenuIcon name="sync" />} onClick={() => replaceInput.current?.click()} /> : null}
+            <BasedIconButton label="Download" icon={<MenuIcon name="download" />} onClick={download} />
+            <BasedIconButton label="View full size" icon={<MenuIcon name="expand" />} onClick={() => src && setViewing({ src, alt: caption ?? "" })} />
             {editable && props.uploadFile ? <input ref={replaceInput} type="file" accept="image/*" hidden aria-label="Replace image file" onChange={(e) => { void upload(e.target.files?.[0], "Replace image"); e.target.value = ""; }} /> : null}
           </span>
         </span>
@@ -2670,21 +2661,13 @@ function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoo
             </div>
           ) : (
             <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
-              <span className="bx2-menu-icon" aria-hidden="true"><DateIcon remind={it.remind === true} /></span>
+              <span className="bx2-menu-icon" aria-hidden="true"><MenuIcon name={it.remind === true ? "bell" : "calendar"} /></span>
               <span className="bx2-menu-text">{it.label}</span>
             </div>
           )}
         </Fragment>
       ))}
     </div>
-  );
-}
-
-function DateIcon({ remind }: { remind: boolean }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d={remind ? "M18 15.5V11a6 6 0 0 0-12 0v4.5L4.5 18h15zM10 20.5a2 2 0 0 0 4 0" : "M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5zM4 10h16M8 3v4M16 3v4"} />
-    </svg>
   );
 }
 

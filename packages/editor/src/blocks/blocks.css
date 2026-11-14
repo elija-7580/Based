@@ -680,3 +680,4 @@
 .bx2-ai-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .bx2-ai-status { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); }
 .bx2-ai-preview { max-height: calc(var(--space-8) * 4); overflow: auto; white-space: pre-wrap; color: var(--ink); -webkit-user-select: text; user-select: text; }
+.bx2-menu-icon .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
