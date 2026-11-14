@@ -13,11 +13,11 @@ import { BlockNoteView } from "@blocknote/ariakit";
 import {
   BlockColorsItem, DragHandleMenu, FormattingToolbar, FormattingToolbarController, getDefaultReactSlashMenuItems,
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController, TextAlignButton,
-  ComponentsContext, useBlockNoteEditor, useComponentsContext, useSelectedBlocks, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
+  ComponentsContext, useBlockNoteEditor, useComponentsContext, useSelectedBlocks, useExtensionState, usePortalElement, type DefaultReactSuggestionItem, type SideMenuProps,
 } from "@blocknote/react";
 import { type BookmarkMeta, createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import type { ResolvedPos } from "prosemirror-model";
-import { createContext, createElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
+import { createContext, createElement, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
 import { attachBlockDrop, type BlockDropHost, type Rect } from "./dragDrop.js";
@@ -766,7 +766,9 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
-          <AnchoredMenus><SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} blockLink={shared.blockLink} notify={shared.notify} />} />} /></AnchoredMenus>
+          <BlockMenuContext.Provider value={{ session, duplicate, startMove: shared.startMove, blockLink: shared.blockLink, notify: shared.notify }}>
+            <AnchoredMenus><SideMenuController sideMenu={BasedSideMenu} /></AnchoredMenus>
+          </BlockMenuContext.Provider>
           {/* BSD-318: Bei einer Blockauswahl keine Formatleiste (die Editor-Auswahl spannt dann nur für Blockaktionen über die Blöcke). */}
           {range ? null : (
             <FormattingToolbarController formattingToolbar={() => (
@@ -1043,7 +1045,23 @@ function mediaSelected(editor: BasedEditor): boolean {
 
 // MARK: Block-Menü mit „Copy and sync“
 
-function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly BlockLike[]) => unknown; startMove: (req: MoveRequest) => void; blockLink?: ((id: string) => string) | undefined; notify: (m: string) => void }) {
+/**
+ * BSD-408: Seitenleiste und Blockmenü als feste Komponenten. BlockNote zeichnet `sideMenu` und `dragHandleMenu` als
+ * `<Component />`; eine Pfeilfunktion im Render war bei jedem Neuzeichnen des Editors eine neue Komponente – der Griff
+ * samt offenem Menü wurde neu eingehängt und das Menü ging gleich nach dem Öffnen wieder zu (unter Last in der CI).
+ * Die wechselnden Werte kommen deshalb über einen Kontext.
+ */
+type BlockMenuProps = { session: DocSession; duplicate: (blocks: readonly BlockLike[]) => unknown; startMove: (req: MoveRequest) => void; blockLink?: ((id: string) => string) | undefined; notify: (m: string) => void };
+const BlockMenuContext = createContext<BlockMenuProps | undefined>(undefined);
+function BasedDragHandleMenu() {
+  const props = useContext(BlockMenuContext);
+  return props ? <BlockMenu {...props} /> : null;
+}
+function BasedSideMenu(props: SideMenuProps) {
+  return <SideMenu {...props} dragHandleMenu={BasedDragHandleMenu} />;
+}
+
+function BlockMenu(props: BlockMenuProps) {
   const Components = useComponentsContext()!;
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
