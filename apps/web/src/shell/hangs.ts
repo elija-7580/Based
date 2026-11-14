@@ -205,19 +205,27 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
   // Hauptthread: Zeitgeber-Kette, nur bei sichtbarer Seite
   let timer: ReturnType<typeof setTimeout> | undefined;
   let last = 0;
+  let throttledRun = 0;
   const tick = () => {
     const t = perfNow();
     const late = t - last - TICK_MS;
     last = t;
-    if (late >= hangMonitor.thresholds.main) onRecorded(hangMonitor.record({ ms: late, source: "main", start: t - late }));
+    // WebKit/macOS drosselt Zeitgeber im Hintergrund (anderes Fenster vorn, App Nap) auf ~1 s, ohne dass die Seite
+    // „hidden“ wird. Das sah aus wie Hänger von ~950 ms im Sekundentakt. Darum: ohne Fokus nicht messen, und eine
+    // Folge von Verspätungen genau im Sekundenraster gilt als Drosselung, nicht als Hänger.
+    const onGrid = Math.abs(late + TICK_MS - 1000) <= 25;
+    throttledRun = onGrid ? throttledRun + 1 : 0;
+    if (late >= hangMonitor.thresholds.main && focused() && throttledRun < 2) onRecorded(hangMonitor.record({ ms: late, source: "main", start: t - late }));
     overhead.ticks += 1;
     timer = setTimeout(tick, TICK_MS);
     overhead.busyMs += perfNow() - t;
   };
   const visible = () => win.document.visibilityState === "visible";
+  const focused = () => { try { return win.document.hasFocus(); } catch { return true; } };
   const watch = () => {
     if (timer !== undefined) { clearTimeout(timer); timer = undefined; }
-    if (visible()) {
+    throttledRun = 0;
+    if (visible() && focused()) {
       last = perfNow();
       timer = setTimeout(tick, TICK_MS);
       toWorker({ type: "resume" });
@@ -296,6 +304,8 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
 
   watch();
   win.document.addEventListener("visibilitychange", watch);
+  win.addEventListener("focus", watch);
+  win.addEventListener("blur", watch);
   win.addEventListener("pagehide", () => { persist(); noteLeaving(); });
   void adoptMarkers().catch(() => undefined);
   addReportSection(() => hangReportLines(hangMonitor.all, previousSessions));

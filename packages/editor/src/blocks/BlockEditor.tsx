@@ -893,6 +893,36 @@ export function BlockEditor(props: PageEditorProps) {
     }
   };
 
+  // Slash- und @-Menü schließen, wenn man daneben klickt oder die Schreibmarke den Block verlässt (wie Notion).
+  // Der eingetippte Text („/abc“) bleibt stehen; nur das Menü geht zu.
+  const popupOpen = slash !== undefined || mention !== undefined;
+  useEffect(() => {
+    if (!popupOpen) return;
+    const doc = rootRef.current?.ownerDocument;
+    if (!doc) return;
+    const close = () => { setSlash(undefined); setMention(undefined); };
+    const onDown = (e: PointerEvent) => {
+      const t = e.target instanceof Element ? e.target : null;
+      if (t?.closest("[data-testid=slash-menu], [data-testid=mention-menu]")) return;
+      close();
+    };
+    const onSel = () => {
+      const open = slashRef.current ?? mentionRef.current;
+      if (!open) return;
+      const active = doc.activeElement as HTMLElement | null;
+      if (active?.dataset?.editableId !== open.id) close();
+    };
+    const onBlur = () => close();
+    doc.addEventListener("pointerdown", onDown, true);
+    doc.addEventListener("selectionchange", onSel);
+    doc.defaultView?.addEventListener("blur", onBlur);
+    return () => {
+      doc.removeEventListener("pointerdown", onDown, true);
+      doc.removeEventListener("selectionchange", onSel);
+      doc.defaultView?.removeEventListener("blur", onBlur);
+    };
+  }, [popupOpen]);
+
   // MARK: Auswahlleiste für Text (B I U S Code)
 
   useEffect(() => {
@@ -2496,6 +2526,10 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
       const next = e.target instanceof HTMLInputElement ? (e.key === "ArrowDown" ? 0 : all.length - 1) : i + (e.key === "ArrowDown" ? 1 : -1);
       if (next < 0) ref.current?.querySelector<HTMLInputElement>(".bx2-menu-search")?.focus();
       else all[Math.min(next, all.length - 1)]?.focus();
+    } else if ((e.key === "Backspace" || e.key === "Delete") && e.target instanceof HTMLInputElement && queryRef.current === "" && editable) {
+      // Griff geklickt, Suchfeld leer: ⌫/Entf löscht den Block (wie Notion; das Menü zeigt „Del“ als Kürzel)
+      e.preventDefault();
+      act(() => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); }, "Delete")();
     } else if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
       e.preventDefault();
       if (queryRef.current.trim() !== "") items()[0]?.click();

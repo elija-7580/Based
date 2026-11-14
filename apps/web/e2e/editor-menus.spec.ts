@@ -95,3 +95,38 @@ for (const theme of ["light", "dark"] as const) test(`Blockmenü: Aktionen mit I
   expect(bg).not.toBe("rgba(0, 0, 0, 0)");
   await shot(page, "block-menu-color", "1280x820", theme);
 });
+
+test("Slash-Menü schließt bei Klick daneben, der Text bleibt", async ({ page }) => {
+  await newPage(page);
+  await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
+  await page.keyboard.type("Hello /he");
+  const menu = page.getByTestId("slash-menu");
+  await expect(menu).toBeVisible();
+  // Klick auf eine freie Fläche der Seite (unter den Blöcken)
+  await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
+  await expect(menu).toHaveCount(0);
+  await expect(page.getByTestId("block-editor").locator("[data-editable-id]").first()).toHaveText("Hello /he");
+});
+
+test("Griff geklickt: Entf und ⌫ löschen den Block", async ({ page }) => {
+  await newPage(page);
+  const ed = page.getByTestId("block-editor");
+  await ed.getByTestId("block-editor-tail").click();
+  await page.keyboard.type("Keep me");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Delete me");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Backspace me");
+  await expect(ed.locator("[data-editable-id]")).toHaveCount(3);
+  await ed.locator(".bx2-block").nth(1).hover();
+  await ed.locator(".bx2-block").nth(1).locator(".bx2-grip").click();
+  await expect(page.getByTestId("block-menu")).toBeVisible();
+  await page.keyboard.press("Delete");
+  await expect(page.getByTestId("block-menu")).toHaveCount(0);
+  await expect(ed.locator("[data-editable-id]")).toHaveText(["Keep me", "Backspace me"]);
+  await ed.locator(".bx2-block").nth(1).hover();
+  await ed.locator(".bx2-block").nth(1).locator(".bx2-grip").click();
+  await expect(page.getByTestId("block-menu")).toBeVisible();
+  await page.keyboard.press("Backspace");
+  await expect(ed.locator("[data-editable-id]")).toHaveText(["Keep me"]);
+});
