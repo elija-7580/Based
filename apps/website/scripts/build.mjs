@@ -170,6 +170,7 @@ function main() {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(join(OUT, "assets"), { recursive: true });
   cpSync(join(SRC, "static", "fonts"), join(OUT, "fonts"), { recursive: true });
+  cpSync(join(SRC, "static", "mail"), join(OUT, "mail"), { recursive: true });
   for (const f of ["mark.svg", "mark-dark.svg", "favicon.svg"]) cpSync(join(SRC, "static", f), join(OUT, f));
 
   const runtime = read(join(SRC, "static", "dc-lite.js"));
