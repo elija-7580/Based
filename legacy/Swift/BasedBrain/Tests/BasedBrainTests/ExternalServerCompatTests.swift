@@ -51,8 +51,11 @@ struct ExternalServerCompatTests {
         var req = URLRequest(url: baseURL.appendingPathComponent("sync/v2/info"))
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let (data, _) = try await URLSession.shared.data(for: req)
-        let v = try JSONDecoder().decode([String: Int64].self, from: data)
-        return (v["seq"] ?? -1, v["oldestSeq"] ?? -1, Int(v["protocol"] ?? 0))
+        // Nur die Zahlen lesen: der TS-Server schickt zusätzlich Objekte (`assets`, `agents`), wie es die App auch tut
+        // (SyncServer.serverOldestSeq liest tolerant).
+        let v = (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+        func num(_ k: String) -> Int64? { (v[k] as? NSNumber)?.int64Value }
+        return (num("seq") ?? -1, num("oldestSeq") ?? -1, Int(num("protocol") ?? 0))
     }
 
     func tick() async throws { try await Task.sleep(nanoseconds: 3_000_000) }
@@ -203,8 +206,10 @@ struct ExternalServerCompatTests {
     /// The shared record corpus (fixtures/records/corpus.jsonl, every block/property/view type) goes Swift → server →
     /// Swift unchanged: the server must keep every field, including ones it doesn't know.
     @Test func recordCorpusSurvivesTheServer() async throws {
+        // Tests/BasedBrainTests/… → Repo-Wurzel (seit BSD-168 liegt der Swift-Code unter legacy/, fixtures/ bleibt oben).
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("fixtures/records/corpus.jsonl")
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("fixtures/records/corpus.jsonl")
         let lines = try String(contentsOf: url, encoding: .utf8).split(separator: "\n").filter { !$0.isEmpty }
         let records = try lines.map { try JSONDecoder().decode(Record.self, from: Data($0.utf8)) }.filter { $0.key.kind != .workspace }
         #expect(records.count > 50)
