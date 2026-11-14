@@ -5,6 +5,7 @@ import { buildCrashReport, CRASH_CONSENT_KEY, CRASH_HANDLED_KEY, crashReportText
 import { isTauri } from "../desktop.js";
 import { BUILD } from "./bugReport.js";
 import { diagnosticsLog, previousSession } from "./diagnostics.js";
+import { hangHistory, previousHang } from "./hangs.js";
 import { REPORTS_DIR } from "./reportStore.js";
 
 const ls = (): Storage | undefined => {
@@ -52,6 +53,9 @@ export function previousCrashReport(): CrashReport | undefined {
       platform: platform?.userAgentData?.platform ?? platform?.platform ?? "unknown",
     },
     now: Date.now(),
+    // BSD-418: endete die Sitzung mitten in einem Hänger, steht er im Bericht (Beginn, Dauer, Aktivität, Breadcrumbs)
+    ongoing: previousHang()?.marker,
+    hangs: previousHang()?.session,
   });
 }
 
@@ -60,12 +64,19 @@ let open = false;
 let decided = false;
 let snap = { open: false };
 
+// BSD-418: Der Marker eines laufenden Hängers kommt asynchron (IndexedDB) – dann neu entscheiden.
+hangHistory.subscribe(() => {
+  if (!previousHang() || open) return;
+  decided = false;
+  emit();
+});
+
 export const crashPrompt = {
   subscribe,
   get: () => {
     if (!decided) {
       decided = true;
-      open = shouldOfferCrashReport(previousSession(), crashConsentPref.get(), handled());
+      open = shouldOfferCrashReport(previousSession(), crashConsentPref.get(), handled(), previousHang()?.marker);
       if (open) diagnosticsLog.add("info", "crash report offered at start");
     }
     if (snap.open !== open) snap = { open };

@@ -11,6 +11,8 @@ import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { isTauri } from "../../desktop.js";
 import { BUILD, recorder } from "../../shell/bugReport.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText, stallCount } from "../../shell/diagnostics.js";
+import { hangHistory } from "../../shell/hangs.js";
+import { ongoingHangNotice } from "@based/core";
 import { bundleFile, onReportsChanged, reportsChanged, reportStore, type SavedReport } from "../../shell/reportStore.js";
 import { reportUI, startReport } from "../../shell/reportUI.js";
 import { crashConsentPref, crashPrompt, previousCrashReport } from "../../shell/crashReport.js";
@@ -44,16 +46,19 @@ export function StatusSection({ state }: SettingsSectionProps) {
 export function ProblemsSection(_: SettingsSectionProps) {
   const log = useLog();
   const notice = previousSessionText();
+  // BSD-418: endete die vorige Sitzung in einem Hänger, steht das hier – auch wenn sie danach „sauber“ schloss (Neuladen)
+  const hang = useSyncExternalStore(hangHistory.subscribe, hangHistory.get).endedInHang;
   const freezes = stallCount();
   const errors = log.filter((e) => e.level === "error");
-  const warnings = log.filter((e) => e.level === "warning" && !e.message.startsWith("main thread blocked"));
-  if (!notice && freezes === 0 && errors.length === 0 && warnings.length === 0) {
+  const warnings = log.filter((e) => e.level === "warning" && !/^(main thread blocked|slow input|slow store request|previous session ended in a hang)/.test(e.message));
+  if (!hang && !notice && freezes === 0 && errors.length === 0 && warnings.length === 0) {
     return <Group><Row label="Nothing to report" hint="No crashes, freezes or errors on this device since Based started." /></Group>;
   }
   const last = (l: DiagnosticsEntry[]) => (l.length ? `Last: ${l.at(-1)!.message}` : undefined);
   return (
     <Group>
-      {notice ? <Row label="Last session" hint={notice}><Value testID="diagnostics-last-session">Ended unexpectedly</Value></Row> : null}
+      {hang ? <Row label="Last session" hint={ongoingHangNotice(hang.marker)}><Value testID="diagnostics-last-session">Ended in a hang</Value></Row>
+        : notice ? <Row label="Last session" hint={notice}><Value testID="diagnostics-last-session">Ended unexpectedly</Value></Row> : null}
       {freezes ? <Row label="Freezes" hint="The app stopped responding for two seconds or longer"><Value testID="diagnostics-freezes">{freezes}</Value></Row> : null}
       {errors.length ? <Row label="Errors" hint={last(errors)}><Value testID="diagnostics-errors">{errors.length}</Value></Row> : null}
       {warnings.length ? <Row label="Warnings" hint={last(warnings)}><Value testID="diagnostics-warnings">{warnings.length}</Value></Row> : null}
@@ -72,7 +77,7 @@ export function CrashReportsSection(_: SettingsSectionProps) {
     <Group>
       <Switch label="Offer a report after a crash or freeze" description="When Based didn’t close normally or froze, it asks at the next start. Reports hold no pages, titles or text."
         value={on} onChange={(v) => crashConsentPref.set(v)} labelPosition="start" labelSpacing="spread" width="100%" data-testid="crash-consent" />
-      <Row label="Last session" hint={report ? (report.kind === "crash" ? "Didn’t close normally" : `Froze ${plural(report.session.freezes, "time")}`) : "Closed normally — nothing to report"}>
+      <Row label="Last session" hint={report ? (report.kind === "hang" ? "Ended in a hang" : report.kind === "crash" ? "Didn’t close normally" : `Froze ${plural(report.session.freezes, "time")}`) : "Closed normally — nothing to report"}>
         <BasedButton label="Prepare report…" variant="ghost" disabled={!report} onClick={() => crashPrompt.show()} />
       </Row>
       <Row label="Sending" hint="Not available in this beta yet — save the report as a file or copy it and pass it on." />
