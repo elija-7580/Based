@@ -76,8 +76,10 @@ export type AutoDecision = { effect: "allow" | "deny"; optionId: string | undefi
  * (einmalig bevorzugt, „always“ nur, wenn es keine einmalige gibt) – fehlt eine passende, wird gefragt bzw.
  * abgebrochen.
  */
-export function autoDecide(req: AcpPermissionRequest, permissions: Permissions): AutoDecision {
-  const call: PermissionCall = { tool: ruleToolName(req.kind), argument: req.argument };
+export function autoDecide(req: AcpPermissionRequest, permissions: Permissions, opts: { sandboxed?: boolean } = {}): AutoDecision {
+  // BSD-411: Shell-Befehle einer Sitzung in einer Sandbox (Container) zählen als „sandboxed“ – nur dann darf ein Modus
+  // sie ohne Rückfrage erlauben (Swift `PermissionCall.acp(…, sandboxed:)`); ohne Sandbox fragt „Work freely“ (BSD-403).
+  const call: PermissionCall = { tool: ruleToolName(req.kind), argument: req.argument, ...(req.kind === "execute" && opts.sandboxed ? { sandboxed: true } : {}) };
   const verdict = permissions.decide(call, !READ_ONLY_KINDS.has(req.kind));
   if (verdict.effect === "ask") return { effect: "ask", reason: verdict.reason };
   const prefer = verdict.effect === "allow" ? ["allow_once", "allow_always"] : ["reject_once", "reject_always"];

@@ -52,6 +52,10 @@ describe("fragt immer", () => {
     expect(autoDecide(req, new Permissions("free")).effect).toBe("ask");
     expect(autoDecide(req, Permissions.from("allow Bash(npm:*)", "free"))).toMatchObject({ effect: "allow", optionId: "y" });
     expect(autoDecide({ ...req, kind: "edit", argument: "/a" }, new Permissions("free")).effect).toBe("allow");
+    // BSD-411: in einer Sandbox erlaubt „Work freely“ die Shell ohne Frage; Regeln gelten weiter, Löschen fragt weiter
+    expect(autoDecide(req, new Permissions("free"), { sandboxed: true })).toMatchObject({ effect: "allow", optionId: "y" });
+    expect(autoDecide(req, Permissions.from("deny Bash(npm:*)", "free"), { sandboxed: true }).effect).toBe("deny");
+    expect(autoDecide(req, new Permissions("askEdits"), { sandboxed: true }).effect).toBe("ask");
   });
 });
 

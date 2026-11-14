@@ -68,6 +68,8 @@ export interface AcpEngineOptions {
   inbox: PermissionInbox;
   /** Modus + Regeln; ohne: „askEdits“ ohne Regeln. Funktion = jeweils aktueller Stand (Modus änderbar). */
   permissions?: Permissions | (() => Permissions) | undefined;
+  /** BSD-411: Die Sitzung läuft in einer Sandbox (Container) – Shell-Befehle gelten dann als „sandboxed“. */
+  sandboxed?: boolean | undefined;
   /** Name des vorherigen Agenten bei einem Wechsel (für die Übergabe). */
   handoffFrom?: string | undefined;
 }
@@ -199,7 +201,7 @@ export class AcpEngine implements ChatEngine {
 
   private async permission(req: AcpPermissionRequest, signal: AbortSignal, emit: (e: ChatEvent) => void): Promise<string | undefined> {
     const p = typeof this.o.permissions === "function" ? this.o.permissions() : this.o.permissions;
-    const d = autoDecide(req, p ?? new Permissions());
+    const d = autoDecide(req, p ?? new Permissions(), { sandboxed: this.o.sandboxed === true });
     if (d.effect !== "ask") {
       if (d.effect === "deny") emit({ type: "notice", text: `Denied “${req.title}”: ${d.reason}` });
       return d.optionId;
