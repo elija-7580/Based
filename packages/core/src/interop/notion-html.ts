@@ -127,6 +127,20 @@ interface RowSource {
 
 const INLINE_TAGS = new Set(["", "a", "span", "strong", "b", "em", "i", "u", "s", "del", "strike", "code", "mark", "sub", "sup",
   "small", "big", "time", "br", "abbr", "cite", "kbd", "q", "label", "font", "wbr"]);
+/**
+ * BSD-260 Teil 10: Apple Notes (und Google Docs) schreiben den Titel als erste Zeile in den Text. Ist das erste
+ * Element nur Text und gleich dem Seitentitel, fällt es weg – sonst stünde der Titel doppelt da.
+ */
+function withoutTitleLine(nodes: HTMLNode[], title: string): HTMLNode[] {
+  const want = trimWS(title);
+  if (!want) return nodes;
+  const i = nodes.findIndex((n) => n.tag !== "" ? n.textContent.trim() !== "" || n.first((x) => MEDIA_TAGS.has(x.tag)) !== undefined : n.text.trim() !== "");
+  const first = nodes[i];
+  if (!first || first.tag === "" || first.first((x) => MEDIA_TAGS.has(x.tag)) !== undefined) return nodes;
+  return trimWS(first.textContent) === want ? nodes.filter((_, j) => j !== i) : nodes;
+}
+const MEDIA_TAGS = new Set(["img", "video", "audio", "iframe", "table", "object", "embed", "svg", "picture"]);
+
 const SKIP_TAGS = new Set(["style", "script", "meta", "link", "title", "head", "noscript", "template"]);
 const VIDEO_EXT = new Set(["mp4", "mov", "m4v", "webm", "avi", "mkv"]);
 const AUDIO_EXT = new Set(["mp3", "m4a", "wav", "ogg", "aac", "flac"]);
@@ -354,7 +368,7 @@ export class NotionHTMLImporter {
       this.convert(bodyNode.children, "b:" + id, ctx);
     } else if (!article.has("page")) {
       // Jede andere HTML-Datei: ihren Inhalt behalten.
-      this.convert(article.children.filter((c) => c.tag !== "header"), "b:" + id, ctx);
+      this.convert(withoutTitleLine(article.children.filter((c) => c.tag !== "header"), plain(title)), "b:" + id, ctx);
     }
     this.importRemainingChildren(k, id);
     this.builder.markComplete("b:" + id);
