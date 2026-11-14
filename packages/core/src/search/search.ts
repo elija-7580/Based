@@ -476,7 +476,14 @@ export class SearchIndex implements SearchSource {
         snippetOf.set(id, () => snippet(rowText(b), folded, terms[0]!));
       }
     }
-    const out = [...hits.values()];
+    let out = [...hits.values()];
+    // BSD-280: Bei vielen Treffern nur die Kandidaten voll sortieren, deren Punktzahl für die ersten `limit` reicht
+    // (Gleichstände an der Grenze bleiben alle drin – das Ergebnis ist dasselbe wie bei voller Sortierung).
+    if (sort === "bestMatch" && limit > 0 && out.length > limit * 4) {
+      const scores = Float64Array.from(out, (h) => h.score).sort();
+      const cut = scores[scores.length - limit]!;
+      out = out.filter((h) => h.score >= cut);
+    }
     const date = (h: SearchHit, created: boolean) => { const b = blocks.get(h.pageID); return b ? (created ? b.createdAt : b.updatedAt) : -Infinity; };
     const byId = (a: SearchHit, b: SearchHit) => (a.pageID < b.pageID ? -1 : a.pageID > b.pageID ? 1 : 0);
     const titleCache = new Map<string, string>();
