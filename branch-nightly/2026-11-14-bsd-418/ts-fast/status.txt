@@ -1,1 +1,1 @@
-failure f1f341c5ccffe3b6c6c839c4eeca1484e3b6512f nightly/2026-11-14-bsd-418
+cancelled 78b7bfd3d58598572ed2fa92c6e23a0340c602d7 nightly/2026-11-14-bsd-418
