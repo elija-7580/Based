@@ -270,50 +270,72 @@ test("Blockmenü bleibt offen, wenn der Editor neu zeichnet", async ({ page }) =
   await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
 });
 
-// BSD-407 Teil 3: Kopier- und Umbruch-Knopf im Codeblock und die kompakte Formatleiste gibt es bisher nur im alten Editor.
+// BSD-407 Teil 6.2: Codeblock im Block-Editor – Kopier- und Umbruch-Knopf (Standard ohne Umbruch wie Notion, BSD-340).
+test("Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts", async ({ page, browserName }) => {
+  if (browserName === "chromium") await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await open(page, "Code");
+  await focusEditorEnd(page);
+  await paste(page, "```javascript\nconst answer = 42;\n```\n\nafter");
+  const code = editor(page).locator(".bx2-block[data-type=code]").first();
+  await expect(code).toBeVisible();
+  const before = (await code.boundingBox())!;
+  await code.locator(".bx2-codewrap").hover();
+  const copy = code.getByRole("button", { name: "Copy code" });
+  await expect(copy).toBeVisible();
+  await expect.poll(async () => Number(await code.locator(".bx2-code-actions").evaluate((e) => getComputedStyle(e).opacity))).toBe(1);
+  const during = (await code.boundingBox())!;
+  expect(during.height).toBe(before.height);
+  await copy.click();
+  await expect(code.getByRole("button", { name: /Copied|Couldn’t copy/ })).toBeVisible();
+  if (browserName === "chromium") await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("const answer = 42;");
+  // der Knopf gehört nicht zum Text
+  await expect(code.locator("[data-editable-id]")).toHaveText("const answer = 42;");
+  await expect(code.getByRole("button", { name: "Copy code" })).toBeVisible({ timeout: 4000 });
+});
+
+test("Codeblock: Standard ohne Umbruch, „Wrap code“ bricht um und bleibt nach dem Neuladen", async ({ page }) => {
+  await open(page, "Wrap");
+  await focusEditorEnd(page);
+  await paste(page, "```javascript\nconst long = '" + "on and ".repeat(40) + "';\n```\n\nafter");
+  const code = editor(page).locator(".bx2-block[data-type=code]").first();
+  const field = code.locator("[data-editable-id]");
+  await expect(field).toBeVisible();
+  expect(await field.evaluate((e) => e.scrollWidth > e.clientWidth + 50)).toBe(true); // Standard: rollt im Block
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); // die Seite rollt nicht
+  await code.locator(".bx2-codewrap").hover();
+  const wrap = code.getByRole("button", { name: "Wrap code" });
+  await expect(wrap).toHaveAttribute("aria-pressed", "false");
+  await wrap.click();
+  await expect(code.locator(".bx2-codewrap")).toHaveAttribute("data-wrap", "");
+  await expect(code.getByRole("button", { name: "Wrap code" })).toHaveAttribute("aria-pressed", "true");
+  expect(await field.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
+  // ein Undo-Schritt
+  await field.click();
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(code.locator(".bx2-codewrap")).not.toHaveAttribute("data-wrap", "");
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await expect(code.locator(".bx2-codewrap")).toHaveAttribute("data-wrap", "");
+  await page.waitForTimeout(1200); // gespeichert
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await expect(editor(page).locator(".bx2-block[data-type=code] .bx2-codewrap").first()).toHaveAttribute("data-wrap", "");
+});
+
+test("Codeblock: Sprache wählen mit Suche (wie im alten Editor)", async ({ page }) => {
+  await open(page, "Lang");
+  await focusEditorEnd(page);
+  await paste(page, "```\nprint('hi')\n```");
+  const code = editor(page).locator(".bx2-block[data-type=code]").first();
+  await code.getByRole("button", { name: "Plain text" }).click();
+  await page.keyboard.type("pyth");
+  await page.keyboard.press("Enter");
+  await expect(code.getByRole("button", { name: "Python" })).toBeVisible();
+});
+
+// BSD-407 Teil 3: Die kompakte Formatleiste gibt es bisher nur im alten Editor.
 // Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
 test.describe("alter Editor (BlockNote)", () => {
   useLegacyEditor(test);
-
-  test("Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts", async ({ page }) => {
-    await open(page, "Code");
-    await bnEditor(page).locator(".bn-block-content").first().click();
-    await paste(page, "```javascript\nconst answer = 42;\n```\n\nafter");
-    const code = bnEditor(page).locator("[data-content-type=codeBlock]").first();
-    await expect(code).toBeVisible();
-    const before = (await code.boundingBox())!;
-    await code.hover();
-    const copy = code.getByRole("button", { name: "Copy code" });
-    await expect(copy).toBeVisible();
-    const during = (await code.boundingBox())!;
-    expect(during.height).toBe(before.height);
-    await copy.click();
-    await expect(code.getByRole("button", { name: /Copied|Couldn’t copy/ })).toBeVisible();
-    // der Knopf gehört nicht zum Text
-    await expect.poll(() => page.evaluate(() => document.querySelector("[data-content-type=codeBlock] code")?.textContent)).toBe("const answer = 42;");
-  });
-
-  test("Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen", async ({ page }) => {
-    await open(page, "Wrap");
-    await bnEditor(page).locator(".bn-block-content").first().click();
-    await paste(page, "```javascript\nconst long = '" + "on and ".repeat(40) + "';\n```\n\nafter");
-    const code = bnEditor(page).locator("[data-content-type=codeBlock]").first();
-    await expect(code).toBeVisible();
-    const pre = code.locator("pre");
-    expect(await pre.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true); // Standard: umbrochen
-    await code.hover();
-    const wrap = code.getByRole("button", { name: "Wrap code" });
-    await expect(wrap).toHaveAttribute("aria-pressed", "true");
-    await wrap.click();
-    await expect(code).toHaveAttribute("data-wrap", "false");
-    await expect(code.getByRole("button", { name: "Wrap code" })).toHaveAttribute("aria-pressed", "false");
-    expect(await pre.evaluate((e) => e.scrollWidth > e.clientWidth + 50)).toBe(true);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); // die Seite rollt nicht
-    await page.waitForTimeout(1200); // gespeichert
-    await page.reload();
-    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-    await expect(bnEditor(page).locator("[data-content-type=codeBlock]").first()).toHaveAttribute("data-wrap", "false");
-  });
 
   test("Formatleiste: kompaktes Feld, ganz im Fenster", async ({ page }) => {
     await open(page, "Format");
@@ -329,5 +351,35 @@ test.describe("alter Editor (BlockNote)", () => {
     expect(box.width).toBeLessThan(220);
     await bar.getByRole("button", { name: "Bold", exact: true }).click();
     await expect(bar.getByRole("button", { name: "Bold", exact: true })).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+// BSD-407 Teil 6.2–6.5 Checkliste: Fotos der neuen Flächen im Block-Editor (nur mit BASED_SCREENSHOTS=1, Chromium) in
+// 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel.
+async function shots(page: Page, name: string, prepare: () => Promise<void>) {
+  for (const theme of ["light", "dark"] as const) {
+    await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await expect(editor(page)).toBeVisible();
+      await prepare();
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: `../../docs/design/screens/web-block-editor-${name}-${theme}-${w}x${h}.png` });
+    }
+  }
+  await page.evaluate(() => localStorage.removeItem("based.appearance"));
+}
+
+test("Fotos: Codeblock-Leiste", async ({ page, browserName }) => {
+  test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium");
+  await open(page, "Code tools");
+  await focusEditorEnd(page);
+  await paste(page, "```javascript\nconst answer = 42; // " + "long line ".repeat(20) + "\n```\n\nafter");
+  await shots(page, "code-tools", async () => {
+    const wrap = editor(page).locator(".bx2-block[data-type=code] .bx2-codewrap").first();
+    await wrap.hover();
+    await expect(wrap.getByRole("button", { name: "Copy code" })).toBeVisible();
   });
 });

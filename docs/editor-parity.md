@@ -14,7 +14,7 @@ neuen Editor auf dem Mac abgenommen hat.
 | Toggle-Überschriften | should | ja | Slash „Toggle heading 1–3“, Enter am Ende legt das erste Kind an |
 | Callout mit Icon und Farbe | must | ja | Icon über Emoji-Picker, Farbe über Blockmenü |
 | Trenner | must | ja | |
-| Code mit Sprache und Hervorhebung | must | ja | Sprachwahl mit Suche, Hervorhebung über CSS Highlight API; kein Kopierknopf, kein Umbruch-Schalter |
+| Code mit Sprache und Hervorhebung | must | ja | Sprachwahl mit Suche, Hervorhebung über CSS Highlight API; Leiste mit „Wrap code“ (Standard ohne Umbruch wie Notion, BSD-340; `wrap: true` im Record) und „Copy code“ seit Teil 6.2 |
 | Block-Gleichung | should | ja | |
 | Inline-Gleichung | should | ja | Anlegen („/Inline equation“), Bearbeiten per Klick, leer entfernt, Anzeige mit KaTeX (14.11.) |
 | Bild (Upload, Link, Unterschrift) | must | ja | Upload, Einfügen, Ablegen, Breite, Unterschrift; Bild per Link seit 14.11. |
@@ -129,7 +129,6 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 | „Ask AI“ (Leertaste, Formatleiste) | fehlt |
 | @-Menü: „New page“, Datumsoptionen (Erinnerung, Bereich, Uhrzeit) | fehlt (Datum einfügen geht) |
 | Bild: Ausrichtung links/Mitte/rechts, Bildleiste, Vollbild-Knopf | fehlt (Breite, Caption, Doppelklick-Vollbild da); `props.align` bleibt erhalten |
-| Codeblock: Kopier- und Umbruch-Knopf | fehlt |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
 | Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor |
 | Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
@@ -150,5 +149,5 @@ Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEdit
 | `replay/replay.spec.ts`, `replay/record-sample.spec.ts` | ganz – Wiedergabe von ProseMirror-Schritten |
 | `report.spec.ts` | 4 von 5 Tests – Aufzeichnung „tr“/„yjs“, Blockbaum, Entwickler-Ereignisse |
 | `editor-parity.spec.ts` | 16 von 19 Tests (Erwähnungs-Menü, Gliederung, Synced Block, Blockmenü-Abläufe, Spalten, Button, Uploads, Seiten-Optionen …) |
-| `editor-notion.spec.ts` | 3 von 13 Tests (Codeblock-Knöpfe, Formatleiste) |
+| `editor-notion.spec.ts` | 1 von 14 Tests (Formatleiste) |
 | `image-block.spec.ts` | 3 von 4 Tests (Ausrichtung, Bildleiste, Vollbild-Knopf) |

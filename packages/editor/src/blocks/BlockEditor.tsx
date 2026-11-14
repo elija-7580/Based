@@ -19,7 +19,7 @@ import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
 import { PageOutline } from "../ui/Outline.js";
 import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
-import { BasedButton } from "@based/ui/astryx";
+import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
@@ -1339,10 +1339,11 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
     case "text": case "quote":
       return <TextField block={b} />;
     case "code":
+      // BSD-407 Teil 6.2: Umbruch nur mit `wrap: true` (Standard ohne Umbruch wie Notion, Entscheidung BSD-340)
       return (
-        <div className="bx2-codewrap">
+        <div className="bx2-codewrap" data-wrap={b.props?.wrap === true ? "" : undefined}>
           <TextField block={b} />
-          <CodeLanguage block={b} />
+          <CodeTools block={b} />
           {b.props?.language === "mermaid" && plainText(b.text).length > 0 ? <MermaidPreview code={plainText(b.text)} /> : null}
           {b.props?.language === "html" && plainText(b.text).trim().length > 0 ? <HtmlPreview code={plainText(b.text)} /> : null}
         </div>
@@ -1774,6 +1775,42 @@ function CalloutIcon({ block: b }: { block: Block }) {
         <EmojiPicker className="bx-callout-picker" current={icon} onClose={() => setOpen(false)}
           onPick={(e) => { setOpen(false); cmd.setBlockProps(store, [b.id], { icon: e ?? undefined }, "Change icon"); }} />
       ) : null}
+    </span>
+  );
+}
+
+/** Zuletzt mit dem Kopierknopf eines Codeblocks kopiert (für Tests und Umgebungen ohne Zwischenablage-Recht). */
+export let lastCodeCopy = "";
+
+/**
+ * BSD-407 Teil 6.2: Leiste oben rechts im Codeblock wie Notion und der alte Editor – Sprache, „Wrap code“ (an/aus) und
+ * „Copy code“. Umbruch und Kopieren erscheinen beim Überfahren oder mit Tastaturfokus; die Leiste verschiebt nichts.
+ */
+function CodeTools({ block: b }: { block: Block }) {
+  const { store, editable } = useCtx();
+  const wrap = b.props?.wrap === true;
+  const [copied, setCopied] = useState<"ok" | "failed" | undefined>();
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(undefined), 1500);
+    return () => clearTimeout(t);
+  }, [copied]);
+  const copy = () => {
+    lastCodeCopy = plainText(store.blocks.get(b.id)?.text);
+    const clip = globalThis.navigator?.clipboard;
+    if (!clip) { setCopied("failed"); return; }
+    void clip.writeText(lastCodeCopy).then(() => setCopied("ok"), () => setCopied("failed"));
+  };
+  return (
+    <span className="bx2-code-tools" contentEditable={false}>
+      <CodeLanguage block={b} />
+      <span className="bx2-code-actions" onMouseDown={(e) => e.preventDefault() /* Schreibmarke bleibt, wo sie ist */}>
+        {editable ? (
+          <BasedIconButton label="Wrap code" pressed={wrap} icon={<MenuIcon name="wrap" />}
+            onClick={() => cmd.setBlockProps(store, [b.id], { wrap: !wrap }, "Wrap code")} />
+        ) : null}
+        <BasedIconButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy" : "Copy code"} icon={<MenuIcon name={copied === "ok" ? "check" : "duplicate"} />} onClick={copy} />
+      </span>
     </span>
   );
 }

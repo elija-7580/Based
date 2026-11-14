@@ -378,10 +378,25 @@
 /* Code: Sprache, Mermaid-Vorschau */
 .bx2-codewrap { position: relative; flex: 1 1 auto; min-width: 0; }
 .bx2-codewrap > .bx2-field { display: block; }
-.bx2-code-lang {
+/* BSD-407 Teil 6.2: Leiste oben rechts (Sprache immer, Umbruch und Kopieren beim Überfahren/Fokus) */
+.bx2-code-tools {
   position: absolute;
   top: var(--space-1);
   right: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.bx2-code-tools { padding: 0 var(--space-half) 0 var(--space-1); border-radius: var(--radius-md); }
+/* beim Überfahren liegt die Leiste auf einer Fläche, damit langer Code darunter sie nicht unlesbar macht */
+.bx2-codewrap:hover .bx2-code-tools, .bx2-code-tools:focus-within { background: var(--surface-raised); box-shadow: var(--shadow-float); }
+.bx2-code-actions { display: inline-flex; align-items: center; gap: var(--space-half); opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.bx2-codewrap:hover .bx2-code-actions, .bx2-code-actions:focus-within { opacity: 1; }
+.bx2-code-actions .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
+.bx2-codewrap[data-wrap] > .bx2-t-code { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: visible; }
+@media (prefers-reduced-motion: reduce) { .bx2-code-actions { transition: none; } }
+.bx2-code-lang {
+  position: relative;
   color: var(--muted);
   font-family: var(--font-ui);
   font-size: var(--type-meta-size);
