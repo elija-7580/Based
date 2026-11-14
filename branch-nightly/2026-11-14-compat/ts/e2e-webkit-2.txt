@@ -1,0 +1,61 @@
+failure 1e15253012e678bcf8787841bb07ca451441a8da
+  ✓  155 [webkit] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (8.9s)
+  ✓  156 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (5.9s)
+  ✓  158 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (2.5s)
+  ✓  157 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (6.3s)
+  ✓  159 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (4.7s)
+  ✓  161 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.7s)
+  ✓  162 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (6.3s)
+  ✓  160 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (12.9s)
+  ✓  163 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (5.0s)
+  ✓  164 [webkit] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (6.0s)
+  ✓  165 [webkit] › e2e/scrollbars.spec.ts:41:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.8s)
+  ✓  167 [webkit] › e2e/scrollbars.spec.ts:46:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (2.3s)
+  ✓  166 [webkit] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (3.6s)
+  ✓  168 [webkit] › e2e/scrollbars.spec.ts:52:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (2.0s)
+  ✓  169 [webkit] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.1s)
+  -  171 [webkit] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
+  ✓  170 [webkit] › e2e/scrollbars.spec.ts:58:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.7s)
+
+
+  1) [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 320
+    Received: 360
+
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
+
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 320
+    Received: 360
+
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
+
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+  19 skipped
+  150 passed (11.6m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
