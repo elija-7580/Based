@@ -12,7 +12,7 @@ sie aus den Seitenquellen). Nach einer Änderung dort die Dateien hierher kopier
   Schrift selbst gehostet (keine Google Fonts), Footer-Links auf `/imprint` und `/privacy`, Einwilligungstext und Honeypot an
   der Warteliste, Aufruf von `/api/waitlist` und `/api/ideas`.
 - Startseite: am Handy (≤ 760 px) die eigene Mobile-Version (`Mobile.dc.html`), `/?desktop` erzwingt die Desktop-Version.
-- Dunkler Modus folgt der Systemeinstellung; `?theme=dark|light` erzwingt ihn.
+- Nur heller Modus: kein dunkler Modus, auch nicht per Systemeinstellung.
 - Mit Google Chrome auf dem Rechner werden alle Seiten vorgerendert (Inhalt ohne JavaScript sichtbar, gut für Suchmaschinen).
 - `src/legal/`: Impressum (Offenlegung § 25 MedienG) und Datenschutzerklärung, Deutsch mit kurzer englischer Zusammenfassung.
 

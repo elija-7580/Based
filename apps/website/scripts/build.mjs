@@ -120,9 +120,8 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 <title>${title}</title>
 <meta name="description" content="${description}">
 <link rel="canonical" href="${url}">
-<meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#F1F1EE" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F1F1EE">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Based">
 <meta property="og:title" content="${title}">
@@ -135,7 +134,6 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 </head>
 <body>
 <div id="dc-root">${root}</div>
-<script>(function(){try{if(matchMedia("(prefers-color-scheme: dark)").matches&&!/[?&]theme=light/.test(location.search)){var b=document.querySelector("#dc-root>.bsd");if(b)b.setAttribute("data-theme","dark")}}catch(e){}})();</script>
 ${templates}
 <script>window.__dcPages=[${pages}];</script>
 <script src="${assets.site}" defer></script>
@@ -161,7 +159,7 @@ function prerender(chrome, file) {
   writeFileSync(tmp, html);
   const dom = execFileSync(chrome, ["--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run",
     "--virtual-time-budget=3000", "--dump-dom", pathToFileURL(tmp).href], { encoding: "utf8", maxBuffer: 64 << 20, stdio: ["ignore", "pipe", "ignore"] });
-  const m = /<div id="dc-root">([\s\S]*?)<\/div>\s*<script>\(function\(\)\{try\{if\(matchMedia/.exec(dom);
+  const m = /<div id="dc-root">([\s\S]*?)<\/div>\s*<template/.exec(dom);
   if (!m || m[1].length < 200) throw new Error("prerender produced no markup for " + file);
   return m[1];
 }
