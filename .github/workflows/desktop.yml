@@ -37,6 +37,8 @@ jobs:
       TARGET: universal-apple-darwin
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # BSD-168: Tags next-* für die Update-Notizen
 
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -74,15 +76,41 @@ jobs:
           V: ${{ steps.version.outputs.version }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          # Feedback 14. 11.: Ad hoc signiert verweigert macOS (App-Verwaltung) dem Updater das Ersetzen der App –
+          # er fragt dann nach dem Admin-Passwort. Mit Developer-ID-Zertifikat (Secrets, docs/desktop.md) signiert
+          # und notarisiert Tauri selbst; ohne Secrets bleibt es bei ad hoc.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: |
           CONF="$RUNNER_TEMP/tauri.ci.json"
+          UPD=false
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "{\"version\":\"$V\",\"bundle\":{\"createUpdaterArtifacts\":true}}" > "$CONF"
+            UPD=true
           else
             echo "::warning::Secret TAURI_SIGNING_PRIVATE_KEY fehlt – DMG ohne Update-Paket (siehe docs/desktop.md)."
             unset TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD
-            echo "{\"version\":\"$V\"}" > "$CONF"
           fi
+          SIGN='"-"'
+          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_SIGNING_IDENTITY" ]; then
+            SIGN="$(jq -Rn --arg id "$APPLE_SIGNING_IDENTITY" '$id')"
+            echo "Developer ID: $APPLE_SIGNING_IDENTITY"
+            if [ -n "$APPLE_API_KEY_P8" ] && [ -n "$APPLE_API_KEY" ] && [ -n "$APPLE_API_ISSUER" ]; then
+              export APPLE_API_KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
+              printf '%s' "$APPLE_API_KEY_P8" > "$APPLE_API_KEY_PATH"
+            else
+              echo "::warning::Ohne APPLE_API_KEY/APPLE_API_ISSUER/APPLE_API_KEY_P8 wird nicht notarisiert."
+              unset APPLE_API_KEY APPLE_API_ISSUER
+            fi
+          else
+            echo "::warning::Kein Developer-ID-Zertifikat (APPLE_CERTIFICATE, APPLE_SIGNING_IDENTITY) – ad hoc signiert; Updates fragen nach dem Admin-Passwort."
+            unset APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_API_KEY APPLE_API_ISSUER
+          fi
+          echo "{\"version\":\"$V\",\"bundle\":{\"createUpdaterArtifacts\":$UPD,\"macOS\":{\"signingIdentity\":$SIGN}}}" > "$CONF"
+          cat "$CONF"
           cd apps/desktop
           pnpm exec tauri build --target "$TARGET" --bundles app --config "$CONF"
 
@@ -100,6 +128,8 @@ jobs:
         run: |
           BUNDLE="apps/desktop/src-tauri/target/$TARGET/release/bundle/macos"
           mkdir -p dist "$RUNNER_TEMP/dmg"
+          # BSD-168: Notizen für den Update-Dialog (höchstens 12 Punkte) aus den Commits seit dem letzten next-Tag.
+          node scripts/release-notes.mjs > dist/notes.md || echo "• Small fixes and improvements" > dist/notes.md
           ditto "$BUNDLE/$APP_NAME.app" "$RUNNER_TEMP/dmg/$APP_NAME.app"
           ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
           hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Next.dmg
@@ -111,7 +141,7 @@ jobs:
             SIG="$(cat dist/Based-Next.app.tar.gz.sig)"
             # Ein universelles Paket für beide Architekturen.
             jq -n --arg v "$V" --arg url "$URL" --arg sig "$SIG" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              --arg notes "Based Next $V ($(git rev-parse --short HEAD))" \
+              --arg notes "$(cat dist/notes.md)" \
               '{version:$v, notes:$notes, pub_date:$date, platforms:{
                  "darwin-aarch64":{signature:$sig,url:$url},
                  "darwin-x86_64":{signature:$sig,url:$url}}}' > dist/latest.json
@@ -131,14 +161,18 @@ jobs:
           retention-days: 14
 
       - name: Release veröffentlichen
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # BSD-337: auch ein Lauf von Hand (workflow_dispatch) auf main veröffentlicht – sonst baut er nur.
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
           V: ${{ steps.version.outputs.version }}
         run: |
           NOTES="Based Next $V – die neue Oberfläche (TypeScript/Tauri) als Mac-App, ad hoc signiert.
           Installieren: Based-Next.dmg öffnen, „Based Next“ nach Programme ziehen, beim ersten Start Rechtsklick → Öffnen.
-          Läuft neben „Based“ (Swift); eigene Daten. Commit ${GITHUB_SHA}."
+          Läuft neben „Based“ (Swift); eigene Daten. Commit ${GITHUB_SHA}.
+
+          Neu:
+          $(cat dist/notes.md)"
           ASSETS=(dist/Based-Next.dmg)
           [ -f dist/Based-Next.app.tar.gz ] && ASSETS+=(dist/Based-Next.app.tar.gz dist/Based-Next.app.tar.gz.sig)
           gh release create "next-$V" "${ASSETS[@]}" --target "$GITHUB_SHA" --title "Based Next $V" \

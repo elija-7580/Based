@@ -219,6 +219,12 @@ export interface MeetingRecorderOptions {
   /** Bytes einer gespeicherten Spur (finaler Durchlauf). */
   loadAudio?: (asset: SavedAudio) => Promise<unknown>;
   transcriber?: () => Transcriber | undefined;
+  /**
+   * Feedback 14. 11. (Akku sparen): `true` = jetzt nicht transkribieren. Die Aufnahme wird gesichert, das Meeting
+   * bekommt `transcribePending`; transkribiert wird später mit `finalize(…, { force: true })` (Host: am Strom, von Hand).
+   * Während einer solchen Aufnahme läuft auch keine Live-Transkription.
+   */
+  deferTranscription?: () => boolean | Promise<boolean>;
   /** Engine für die Zusammenfassung; `undefined` = keine KI eingerichtet. */
   engine?: () => Promise<ChatEngine | undefined> | ChatEngine | undefined;
   /** Takt für die Uhr (ms; Standard 250). 0 = kein Takt (Tests). */
@@ -237,6 +243,8 @@ interface Session {
   skip: Set<string>;
   live: Promise<void>;
   timer: ReturnType<typeof setInterval> | undefined;
+  /** Live-Transkription aus (Transkript kommt später). */
+  deferred: boolean;
 }
 
 /** Eine Aufnahme gleichzeitig je Gerät; der Dienst schreibt in den Store, den `start` bekommt. */
@@ -282,6 +290,7 @@ export class MeetingRecorder {
     this.errors.delete(meetingID);
     this.set({ error: undefined, warning: undefined });
     const base = info.duration ?? 0;
+    const deferred = this.o.transcriber?.() !== undefined && (await this.o.deferTranscription?.()) === true;
     const pending: AudioChunk[] = [];
     const box: { session?: Session } = {};
     const onChunk = (c: AudioChunk) => {
@@ -298,7 +307,7 @@ export class MeetingRecorder {
     // Notizen, die beim Start schon Text haben, bekommen keinen Stempel.
     const notes = findMeetingSection(store, meetingID, "notes");
     const skip = new Set((notes ? store.descendants(notes) : []).filter((id) => plainText(store.blocks.get(id)?.text).trim() !== ""));
-    const s: Session = { store, meetingID, base, capture, skip, unobserve: () => undefined, live: Promise.resolve(), timer: undefined };
+    const s: Session = { store, meetingID, base, capture, skip, unobserve: () => undefined, live: Promise.resolve(), timer: undefined, deferred };
     box.session = s;
     this.session = s;
     s.unobserve = store.observe((c) => this.onStoreChange(s, c));
@@ -396,13 +405,21 @@ export class MeetingRecorder {
     return true;
   }
 
-  /** Finaler Durchlauf: jede Spur neu transkribieren (ersetzt das Live-Transkript). Ohne Transcriber: nur Status. */
-  async finalize(store: WorkspaceStore, meetingID: string): Promise<void> {
+  /**
+   * Finaler Durchlauf: jede Spur neu transkribieren (ersetzt das Live-Transkript). Ohne Transcriber: nur Status.
+   * Will der Host später transkribieren (`deferTranscription`), bleibt es bei `transcribePending`, außer mit `force`.
+   */
+  async finalize(store: WorkspaceStore, meetingID: string, opts: { force?: boolean } = {}): Promise<void> {
     const info = meetingInfo(store, meetingID);
     const transcriber = this.o.transcriber?.();
     const tracks = info?.tracks ?? [];
     if (!info || !transcriber || tracks.length === 0 || this.state.processing.includes(meetingID)) {
       if (info && info.status !== "done") setMeetingStatus(store, meetingID, "done");
+      return;
+    }
+    if (!opts.force && (await this.o.deferTranscription?.()) === true) {
+      updateMeeting(store, meetingID, (m) => { m.transcribePending = true; }, { name: "Transcribe later", undoable: false });
+      setMeetingStatus(store, meetingID, "done");
       return;
     }
     this.set({ processing: [...this.state.processing, meetingID] });
@@ -417,6 +434,7 @@ export class MeetingRecorder {
       const segments = result.segments.map((sg) => withDefaultSpeaker(sg, hasSystem));
       replaceTranscript(store, meetingID, segments, transcriber.id);
       updateMeeting(store, meetingID, (m) => {
+        delete m.transcribePending;
         const used = [...segments].sort((a, b) => a.s - b.s).map((x) => x.sp).filter((x): x is string => x !== undefined);
         m.speakers = mergedSpeakers(m.speakers ?? [], used);
       }, { name: "Speakers", undoable: false });
@@ -457,7 +475,7 @@ export class MeetingRecorder {
 
   private transcribeLive(s: Session, c: AudioChunk) {
     const t = this.o.transcriber?.();
-    if (!t?.live) return;
+    if (!t?.live || s.deferred) return;
     const hasSystem = s.capture.roles.includes("system");
     const ctx = { vocabulary: [] as string[], language: meetingInfo(s.store, s.meetingID)?.language };
     s.live = s.live.then(async () => {

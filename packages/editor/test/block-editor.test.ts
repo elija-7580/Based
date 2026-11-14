@@ -34,6 +34,25 @@ describe("Slash-Menü", () => {
     expect(filterSlash(SLASH_ITEMS, "check").map((i) => i.type)).toEqual(["todo"]);
     expect(filterSlash(SLASH_ITEMS, "").length).toBe(SLASH_ITEMS.length);
   });
+  it("findet über Aliase, Deutsch, Abkürzungen und einen Tippfehler – bester Treffer oben", () => {
+    const first = (q: string) => filterSlash(SLASH_ITEMS, q)[0]?.label;
+    expect(first("bild")).toBe("Image");
+    expect(first("photo")).toBe("Image");
+    expect(first("überschrift")).toBe("Heading 1");
+    expect(first("ueberschrift")).toBe("Heading 1");
+    expect(first("h2")).toBe("Heading 2");
+    expect(first("todo")).toBe("To-do list");
+    expect(first("to do")).toBe("To-do list");
+    expect(first("checklist")).toBe("To-do list");
+    expect(first("tabelle")).toBe("Simple table");
+    expect(first("haeding")).toBe("Heading 1");
+    expect(first("calout")).toBe("Callout");
+    expect(first("hr")).toBe("Divider");
+    expect(first("math")).toBe("Block equation");
+    expect(first("toc")).toBe("Table of contents");
+    expect(first("num list")).toBe("Numbered list");
+    expect(filterSlash(SLASH_ITEMS, "xyzqq")).toEqual([]);
+  });
   it("jeder Eintrag hat ein Based-Icon (kein Emoji, kein Textzeichen)", () => {
     for (const it of SLASH_ITEMS) expect(isBlockIcon(it.icon), it.label).toBe(true);
     for (const d of Object.values(BLOCK_ICON_PATHS)) expect(d).toMatch(/^[MmLlHhVvCcSsQqTtAaZz0-9 .,-]+$/);

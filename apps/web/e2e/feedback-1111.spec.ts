@@ -147,7 +147,7 @@ test("Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-
   expect(await select(".settings-nav")).toBe("none");
   // … auch die Einstellungsseite selbst (Titel, Hinweise, „Not available yet“): Dreifachklick markiert nichts
   await expect(page.getByTestId("settings-page")).toBeVisible();
-  expect(await select("[data-testid=settings-page]")).toBe("none");
+  expect(await select(".settings-screen")).toBe("none");
   await page.getByTestId("settings-page").locator("h1").click({ clickCount: 3 });
   expect(await selected()).toBe("");
 
@@ -159,4 +159,29 @@ test("Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-
   const field = page.getByLabel("Search pages");
   await expect(field).toBeVisible();
   expect(await field.evaluate((el) => getComputedStyle(el).userSelect || getComputedStyle(el).webkitUserSelect)).not.toBe("none");
+});
+
+test("Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen", async ({ page }) => {
+  await ready(page);
+  const id = await command<string>(page, { op: "createPage", title: "Quarterly Roadmap" });
+  await command<string>(page, { op: "createPage", title: "Reading list" });
+  await page.keyboard.press("ControlOrMeta+Comma");
+  const section = page.getByTestId("settings-section-start-page");
+  await expect(section.getByTestId("home-current")).toBeVisible();
+  await section.getByRole("button", { name: "Choose page…" }).click();
+  const dialog = page.getByTestId("page-picker");
+  await expect(dialog).toBeVisible();
+  const field = dialog.getByRole("searchbox", { name: "Find a page" });
+  await expect(field).toBeFocused();
+  await field.fill("roadmpa");
+  await expect(dialog.getByRole("listitem").first()).toContainText("Quarterly Roadmap");
+  await field.fill("qr");
+  await expect(dialog.getByRole("listitem").first()).toContainText("Quarterly Roadmap");
+  await dialog.getByText("Quarterly Roadmap").click();
+  await expect(dialog).toHaveCount(0);
+  await expect(section.getByTestId("home-current")).toHaveText("Quarterly Roadmap");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("based.startPage") ?? "null"))).toBe(id);
+  await section.getByRole("button", { name: "Reset" }).click();
+  await expect(section.getByRole("button", { name: "Reset" })).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem("based.startPage"))).toBeNull();
 });

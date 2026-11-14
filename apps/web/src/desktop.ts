@@ -60,6 +60,9 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
     });
     if (!yes) return;
     await update.downloadAndInstall();
+    // Neustart nach dem Update ist ein gewolltes Ende – sonst meldete der nächste Start „didn't close normally“.
+    const { markSessionEnd } = await import("./shell/diagnostics.js");
+    markSessionEnd();
     const { relaunch } = await import("@tauri-apps/plugin-process");
     await relaunch();
   } catch (e) {

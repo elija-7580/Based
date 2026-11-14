@@ -1,6 +1,6 @@
 // Einstellungen im Notion-Stil (Vorlage: legacy/App/Shared/Views/Settings/SettingsView.swift): links die Seiten in den
 // Gruppen Account und Workspace, rechts die Abschnitte der gewählten Seite – aus Astryx-Komponenten im Theme
-// „Based Default“. Die Ansicht ist dünn: Seiten und „Not available yet“ kommen aus shell/settings.ts, die Abschnitte
+// „Based Default“. Die Ansicht ist dünn: Seiten und „Coming later“ kommen aus shell/settings.ts, die Abschnitte
 // aus der Registry (settings/registry.ts); eingebaute Abschnitte stehen in settings/sections.tsx.
 import { Card } from "@astryxdesign/core/Card";
 import { Layout, LayoutContent, LayoutPanel, VStack } from "@astryxdesign/core/Layout";
@@ -10,6 +10,7 @@ import { useSyncExternalStore } from "react";
 import type { Appearance } from "../appearance.js";
 import type { Route } from "../shell/router.js";
 import { aiSetting } from "../shell/ai.js";
+import { devViewPref } from "../shell/storage.js";
 import { resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages } from "../shell/settings.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import { AstryxKit } from "./settings/AstryxKit.js";
@@ -40,7 +41,11 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
   const kit = pageID === "kit";
   const page = resolveSettingsPage(pageID, pages);
   const sections = settingsRegistry.sectionsFor(page.id, view);
-  const missing = settingsRegistry.missingFor(page.id, view);
+  const dev = useSyncExternalStore(devViewPref.subscribe, devViewPref.get);
+  // Was noch fehlt, steht nur auf Seiten ohne eigene Abschnitte (sonst wäre die Seite leer) – auf Seiten mit echten
+  // Einstellungen ist die Liste Entwickler-Wissen (Settings → Diagnostics → For developers), keine Nutzer-Information.
+  const allMissing = settingsRegistry.missingFor(page.id, view);
+  const missing = sections.length === 0 || dev ? allMissing : [];
   const props = { client, state, appearance: value, setAppearance: onChange, navigate: onNavigate };
 
   const nav = (
@@ -85,11 +90,11 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
               ))}
               {missing.length ? (
                 <VStack gap={2} data-testid="settings-missing">
-                  <Heading level={2}>Not available yet</Heading>
+                  <Heading level={2}>Coming later</Heading>
                   <Card variant="transparent" className="settings-missing">
                     <VStack gap={2}>
                       <Text type="supporting" color="secondary" display="block">
-                        The Mac app has these. Based Next doesn't yet — nothing here is switched on or stored.
+                        These settings come in a later version of Based. Nothing here is switched on yet.
                       </Text>
                       <List density="compact" listStyle="disc">
                         {missing.map((m) => <ListItem key={m} label={m} />)}

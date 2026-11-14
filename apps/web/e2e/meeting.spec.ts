@@ -223,6 +223,45 @@ test("Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfas
   await expect(page.getByTestId("meeting-playback")).toContainText("Playing");
 });
 
+test("Feedback 14. 11.: auf Akku nur aufnehmen – Transkript wartet, kommt am Strom bzw. mit „Transcribe now“", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Playwright-WebKit hat kein Fake-Mikrofon; Aufnahme nur in Chromium geprüft.");
+  await page.evaluate(() => localStorage.setItem("based.meeting.transcribe", JSON.stringify("plugged-in")));
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  type Hooks = { __basedMeeting: { useTranscriber(l: unknown): void; usePower(b: boolean | undefined): Promise<void> } };
+  await page.evaluate(async () => {
+    const m = (globalThis as unknown as Hooks).__basedMeeting;
+    m.useTranscriber([{ start: 0.2, end: 1.4, text: "Welcome everyone.", speaker: "me" }]);
+    await m.usePower(true);
+  });
+  const record = async (title: string) => {
+    await newPageWithMeeting(page, title);
+    await block(page).getByRole("button", { name: "Start transcribing" }).click();
+    await expect(block(page)).toHaveAttribute("data-recording", "true");
+    await page.waitForTimeout(2000);
+    await block(page).getByRole("button", { name: "Stop" }).click();
+    await expect(block(page)).toHaveAttribute("data-status", "done", { timeout: 15_000 });
+    const pending = block(page).getByTestId("meeting-transcribe-pending");
+    await expect(pending).toContainText("transcript when this device is plugged in");
+    await block(page).getByRole("tab", { name: "Transcript" }).click();
+    await expect(block(page)).not.toContainText("Welcome everyone.");
+    return pending;
+  };
+  // Am Strom: die Warteschlange holt das Transkript nach
+  const first = await record("On battery");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("based.meeting.pending") ?? "[]").length)).toBe(1);
+  await page.evaluate(() => (globalThis as unknown as Hooks).__basedMeeting.usePower(false));
+  await expect(page.getByTestId("meeting-transcript")).toContainText("Welcome everyone.", { timeout: 10_000 });
+  await expect(first).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem("based.meeting.pending"))).toBeNull();
+  // Von Hand, weiter auf Akku
+  await page.evaluate(() => (globalThis as unknown as Hooks).__basedMeeting.usePower(true));
+  const second = await record("By hand");
+  await second.getByRole("button", { name: "Transcribe now" }).click();
+  await expect(page.getByTestId("meeting-transcript")).toContainText("Welcome everyone.", { timeout: 10_000 });
+  await expect(second).toHaveCount(0);
+});
+
 test("BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite", async ({ page }) => {
   await newPageWithMeeting(page, "Planning");
   await block(page).getByLabel("Meeting title").fill("Roadmap planning");

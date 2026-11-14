@@ -7,7 +7,7 @@ import { VStack } from "@astryxdesign/core/Layout";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { PRIVATE_SECTION, type Outline } from "@based/core";
+import { createFuzzyIndex, PRIVATE_SECTION, type Outline } from "@based/core";
 import { useMemo, useState } from "react";
 import { Icon } from "../icons.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
@@ -119,6 +119,56 @@ export function MoveDialog({ client, state, ids, onClose, onMoved }: { client: S
                 {targets.sections.length + targets.pages.length === 0 ? <Text type="body" color="secondary">No matching destination.</Text> : null}
               </div>
             </VStack>
+    </BasedDialog>
+  );
+}
+
+export interface PickedPage { id: string; label: string; path: string; icon?: string; kind: "page" | "database" }
+
+/** Seiten und Datenbanken (ohne Papierkorb) mit Pfad – Grundlage der Seitenwahl. */
+export function pickablePages(outline: Outline, titles: ReadonlyMap<string, string>): PickedPage[] {
+  const trashed = new Set((outline.trash ?? []).map((t) => t.id));
+  const sectionName = new Map(outline.sections.map((s) => [s.id, s.name]));
+  const out: PickedPage[] = [];
+  for (const [id, node] of Object.entries(outline.nodes)) {
+    if ((node.kind !== "page" && node.kind !== "database") || trashed.has(id)) continue;
+    const chain: string[] = [];
+    for (let p = node.parent, n = 0; p && n < 50; p = outline.nodes[p]?.parent, n++) chain.unshift(titles.get(p) || "Untitled");
+    const t: PickedPage = { id, label: titles.get(id) || "Untitled", path: [sectionName.get(node.section) ?? "Private", ...chain].join(" / "), kind: node.kind };
+    if (node.icon) t.icon = node.icon;
+    out.push(t);
+  }
+  return out.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base", numeric: true }));
+}
+
+/**
+ * Feedback 14. 11.: Seite wählen (z. B. Home) mit Suche statt einer langen Auswahlliste. Einmal indexiert, sucht über
+ * Titel und Pfad, tolerant (Wortanfänge, Abkürzungen, ein Tippfehler); höchstens 40 Treffer auf einmal.
+ */
+export function PagePickerDialog({ state, title, onPick, onClose }: { state: ShellState; title: string; onPick: (page: PickedPage) => void; onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  useReturnFocus();
+  const outline = state.outline;
+  const index = useMemo(() => createFuzzyIndex(outline ? pickablePages(outline, state.titles) : [], (p) => ({ label: p.label, terms: [p.path] })), [outline, state.titles]);
+  const hits = useMemo(() => index.search(query, MAX_PAGES + 1), [index, query]);
+  const shown = hits.slice(0, MAX_PAGES);
+  return (
+    <BasedDialog open onClose={onClose} title={title} width={480} testID="page-picker"
+      actions={<BasedButton label="Cancel" variant="ghost" onClick={onClose} />}>
+      <VStack gap={3}>
+        <TextInput type="search" label="Find a page" isLabelHidden placeholder="Find a page" value={query} onChange={setQuery} hasAutoFocus hasClear />
+        <div className="move-list">
+          {shown.length ? (
+            <List density="compact">
+              {shown.map((p) => (
+                <ListItem key={p.id} label={p.label} description={p.path} onClick={() => onPick(p)}
+                  startContent={<span className="move-tile" aria-hidden="true">{p.icon ?? <Icon name={p.kind === "database" ? "database" : "page"} size={16} />}</span>} />
+              ))}
+            </List>
+          ) : <Text type="body" color="secondary">{index.size ? "No matching page." : "No pages yet."}</Text>}
+          {hits.length > MAX_PAGES ? <Text type="supporting" color="secondary">More pages match — type to narrow down.</Text> : null}
+        </div>
+      </VStack>
     </BasedDialog>
   );
 }

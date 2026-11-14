@@ -12,13 +12,14 @@ import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
 import { useId, useState, useSyncExternalStore } from "react";
 import type { Appearance } from "../../appearance.js";
 import { ExportDialog, ImportDialog } from "../../components/ImportExport.js";
+import { PagePickerDialog } from "../../components/MoveDialog.js";
 import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { HangsSection } from "./hangs.js";
-import { autoUpdatePref, deviceNode, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
@@ -267,6 +268,25 @@ function LanguageSection(_: SettingsSectionProps) {
   );
 }
 
+/** Feedback 14. 11.: Meeting-Aufnahmen sofort oder erst am Strom transkribieren (Akku sparen; pro Gerät). */
+function MeetingsSection(_: SettingsSectionProps) {
+  const when = useSyncExternalStore(meetingTranscribePref.subscribe, meetingTranscribePref.get);
+  return (
+    <Group>
+      <Row label="Transcribe recordings" hint={when === "plugged-in"
+        ? "On battery, Based only records. The transcript is made once this device is plugged in — or right away with “Transcribe now” in the meeting."
+        : "The transcript is made right after you stop recording."}>
+        <Selector
+          label="Transcribe recordings"
+          value={when}
+          onChange={(v) => meetingTranscribePref.set(v === "plugged-in" ? "plugged-in" : "now")}
+          options={[{ value: "now", label: "Right away" }, { value: "plugged-in", label: "When plugged in" }]}
+        />
+      </Row>
+    </Group>
+  );
+}
+
 function DeviceSection({ state }: SettingsSectionProps) {
   return (
     <Group>
@@ -325,31 +345,34 @@ function AboutSection() {
   );
 }
 
-const HOME = "__home";
 
-/** Home: wohin „Home“ in der Seitenleiste, neue Tabs, der Start der App und das Schließen des letzten Tabs führen. */
+/**
+ * Home: wohin „Home“ in der Seitenleiste, neue Tabs, der Start der App und das Schließen des letzten Tabs führen.
+ * Feedback 14. 11.: Seite über einen Dialog mit Suche wählen statt über eine Auswahlliste aller Seiten.
+ */
 function StartPageSection({ state }: SettingsSectionProps) {
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
-  const value = useSyncExternalStore(startPage.subscribe, startPage.get) ?? HOME;
-  const nodes = state.outline?.nodes ?? {};
-  const trashed = new Set((state.outline?.trash ?? []).map((t) => t.id));
-  const pages = Object.entries(nodes)
-    .filter(([id, n]) => (n.kind === "page" || n.kind === "database") && !trashed.has(id))
-    .map(([id]) => ({ value: id, label: state.titles.get(id) || "Untitled" }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-  const known = value === HOME || pages.some((p) => p.value === value);
+  const value = useSyncExternalStore(startPage.subscribe, startPage.get);
+  const [picking, setPicking] = useState(false);
+  const node = value ? state.outline?.nodes[value] : undefined;
+  const trashed = value ? (state.outline?.trash ?? []).some((t) => t.id === value) : false;
+  const current = value && node && !trashed ? state.titles.get(value) || "Untitled" : undefined;
+  const fallback = ai ? "Dashboard" : "A new page called Home";
   return (
     <Group>
       <Row label="Home" hint={ai
         ? "Home in the sidebar, new tabs and app start lead here. You can also right-click a page → Set as Home. The dashboard stays reachable with ⌘K → Dashboard."
         : "Home in the sidebar, new tabs and app start lead here. You can also right-click a page → Set as Home."}>
-        <Selector
-          label="Home"
-          value={known ? value : HOME}
-          onChange={(v) => startPage.set(!v || v === HOME ? undefined : v)}
-          options={[{ value: HOME, label: ai ? "Dashboard" : "A new page called Home" }, ...pages]}
-        />
+        <HStack gap={2} vAlign="center">
+          <Text type="body" color="secondary" data-testid="home-current">{current ?? fallback}</Text>
+          {current ? <BasedButton label="Reset" variant="ghost" onClick={() => startPage.set(undefined)} /> : null}
+          <BasedButton label="Choose page…" variant="secondary" onClick={() => setPicking(true)} />
+        </HStack>
       </Row>
+      {picking ? (
+        <PagePickerDialog state={state} title="Choose Home" onClose={() => setPicking(false)}
+          onPick={(p) => { startPage.set(p.id); setPicking(false); }} />
+      ) : null}
     </Group>
   );
 }
@@ -409,6 +432,7 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "appearance", page: "my-settings", title: "Appearance", order: 10, component: AppearanceSection });
   registerSettingsSection({ id: "start-page", page: "my-settings", title: "Home", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
   registerSettingsSection({ id: "writing", page: "my-settings", title: "Writing", order: 30, component: WritingSection, provides: ["Default font, small text and full width for new pages", "Spell-check"] });
+  registerSettingsSection({ id: "meetings", page: "my-settings", title: "Meeting notes", order: 40, component: MeetingsSection });
   registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection, provides: ["Workspace icon"] });
   registerSettingsSection({ id: "language", page: "language", title: "Week", order: 10, component: LanguageSection, provides: ["Start week on Monday"] });
   registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection });

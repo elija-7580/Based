@@ -40,7 +40,7 @@ export interface MeetingBlockProps {
 }
 
 /** Feste Namen für die Hänger-Breadcrumbs (BSD-418): was getan wurde, nie Titel, Notizen oder Transkript. */
-export const MEETING_BREADCRUMBS = ["meeting start", "meeting pause", "meeting resume", "meeting stop", "meeting summarize", "meeting play", "meeting stop playback", "meeting tab"] as const;
+export const MEETING_BREADCRUMBS = ["meeting start", "meeting pause", "meeting resume", "meeting stop", "meeting summarize", "meeting play", "meeting stop playback", "meeting tab", "meeting transcribe now"] as const;
 const crumb = (name: (typeof MEETING_BREADCRUMBS)[number]) => noteBreadcrumb(name);
 
 export function MeetingBlock(props: MeetingBlockProps) {
@@ -148,6 +148,17 @@ export function MeetingBlock(props: MeetingBlockProps) {
       <div className="bx-meet-status">
         {meta.length ? <span>{meta.join(" · ")}</span> : null}
         {processing ? <span>Saving and transcribing…</span> : null}
+        {info.transcribePending && !processing && !recordingHere ? (
+          <span className="bx-meet-pending" data-testid="meeting-transcribe-pending">
+            Recording saved · transcript {host?.pendingReason?.() ?? "comes later"}
+            {host?.transcribeNow && editable ? (
+              <BasedButton label="Transcribe now" variant="ghost" size="sm" onClick={() => {
+                crumb("meeting transcribe now");
+                void host.transcribeNow?.(store, id);
+              }} />
+            ) : null}
+          </span>
+        ) : null}
         {summarizing ? <span>Writing summary…</span> : null}
         {error ? <span className="bx-meet-error" role="alert">{error}</span> : null}
       </div>

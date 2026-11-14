@@ -56,6 +56,23 @@ signiert sind. Dafür braucht GitHub Actions **ein** Repository-Secret:
   in `tauri.conf.json` → `plugins.updater.pubkey` eintragen, Secret ersetzen und die DMG einmal von Hand neu installieren.
 - Mit dem Sparkle-Schlüssel (`SPARKLE_PRIVATE_KEY`) der Swift-App hat das nichts zu tun.
 
+## Developer ID: Updates ohne Admin-Passwort (einmalig anlegen)
+
+Ad hoc signiert lässt macOS (Datenschutz → App-Verwaltung) den Updater die App in /Programme nicht ersetzen; der
+Updater weicht dann auf „mit Administratorrechten“ aus – darum fragt jedes Update nach dem Mac-Passwort. Mit einem
+**Developer-ID-Application**-Zertifikat signiert (und notarisiert) der Desktop-Workflow die App selbst, sobald diese
+Repository-Secrets da sind; ohne sie bleibt alles ad hoc wie bisher:
+
+| Name | Inhalt |
+|---|---|
+| `APPLE_CERTIFICATE` | Developer-ID-Application-Zertifikat als .p12, base64 (`base64 -i cert.p12 \| pbcopy`) |
+| `APPLE_CERTIFICATE_PASSWORD` | Passwort, mit dem die .p12 exportiert wurde |
+| `APPLE_SIGNING_IDENTITY` | z. B. `Developer ID Application: Elija Friedrich-Ulrich (TEAMID)` |
+| `APPLE_API_ISSUER`, `APPLE_API_KEY`, `APPLE_API_KEY_P8` | App-Store-Connect-API-Schlüssel (Issuer-ID, Key-ID, Inhalt der .p8) für die Notarisierung |
+
+Das erste Update von einer ad-hoc-Kopie auf die signierte fragt noch einmal (die alte App darf die neue nicht
+ersetzen); danach nicht mehr. Notarisiert entfällt auch das „Dennoch öffnen“ beim ersten Start.
+
 ## Speicher
 
 Die Daten liegen dauerhaft im Datenbereich der App, getrennt von der Swift-App: SQLite-WASM auf OPFS im

@@ -14,12 +14,20 @@ describe("Absturzbericht (BSD-276)", () => {
   });
 
   it("Hinweis nur mit Einwilligung und nur einmal je Sitzung", () => {
-    const prev: SessionRecord = { startedAt: T0, lastBeat: T0 + 1000, clean: false, stalls: 0 };
+    const prev: SessionRecord = { startedAt: T0, lastBeat: T0 + 1000, clean: false, stalls: 0, log: [{ at: T0 + 5, level: "error", message: "TypeError" }] };
     expect(shouldOfferCrashReport(prev, false, undefined)).toBe(false);
     expect(shouldOfferCrashReport(prev, true, undefined)).toBe(true);
     expect(shouldOfferCrashReport(prev, true, T0)).toBe(false);
     expect(shouldOfferCrashReport(prev, true, T0 - 5)).toBe(true);
     expect(shouldOfferCrashReport({ ...prev, clean: true }, true, undefined)).toBe(false);
+  });
+
+  it("Ende ohne Anzeichen (Update-Neustart, Sofort beenden) bietet nichts an; Hänger oder Fehler schon", () => {
+    const quiet: SessionRecord = { startedAt: T0, lastBeat: T0 + 1000, clean: false, stalls: 0, log: [{ at: T0 + 5, level: "info", message: "boot: ready" }] };
+    expect(shouldOfferCrashReport(quiet, true, undefined)).toBe(false);
+    expect(shouldOfferCrashReport({ startedAt: T0, lastBeat: T0 + 1000, clean: false, stalls: 0 }, true, undefined)).toBe(false);
+    expect(shouldOfferCrashReport({ ...quiet, stalls: 1 }, true, undefined)).toBe(true);
+    expect(shouldOfferCrashReport({ ...quiet, log: [{ at: T0 + 5, level: "error", message: "boom" }] }, true, undefined)).toBe(true);
   });
 
   it("Bericht enthält keine Titel oder Texte aus dem Workspace", () => {

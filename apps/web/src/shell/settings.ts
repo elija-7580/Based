@@ -48,7 +48,7 @@ export const SETTINGS_PAGES: readonly SettingsPageDef[] = [
   { id: "import", group: "workspace", title: "Import", summary: "Bring in a Notion export or Markdown files, or take everything with you.", missing: [] },
   { id: "sync", group: "workspace", title: "Sync & server", summary: "Use your workspace on your other devices.", missing: [] },
   { id: "billing", group: "workspace", title: "Billing", summary: "Based is open source and free.", ai: "missing", missing: ["AI usage overview"] },
-  { id: "updates", group: "workspace", title: "Updates", summary: "How this copy of Based stays current.", missing: ["Update channel", "Automatic update checks on or off"] },
+  { id: "updates", group: "workspace", title: "Updates", summary: "How this copy of Based stays current.", missing: [] },
   { id: "diagnostics", group: "workspace", title: "Diagnostics", summary: "What the app knows about its own state.", missing: ["Logs", "Hang reports", "Layout audit"] },
   { id: "about", group: "workspace", title: "About", summary: "Based Next — the notes app that keeps your data yours.", missing: [] },
 ];

@@ -45,6 +45,10 @@ export interface MeetingHost {
   resume(): void;
   stop(): Promise<void>;
   summarize(store: WorkspaceStore, meetingID: string): Promise<void>;
+  /** Feedback 14. 11.: Transkript, das auf später wartet (`transcribePending`, z. B. bis zum Laden), jetzt erstellen. */
+  transcribeNow?(store: WorkspaceStore, meetingID: string): Promise<void>;
+  /** Warum das Transkript wartet (für den Hinweis im Block), z. B. „when your Mac is plugged in“. */
+  pendingReason?(): string;
   /** Ab `seconds` (im Meeting) abspielen. */
   play(store: WorkspaceStore, meetingID: string, seconds: number): void;
   stopPlayback(): void;

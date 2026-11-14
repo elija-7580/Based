@@ -1,6 +1,6 @@
 // ADR 0016 (E5, erster Teil): Einträge des Slash-Menüs im Block-Editor. Reine Daten + Filter; Kürzel im Mac-Stil.
 import type { BlockIconName } from "./icons.js";
-import { blockCommands, createDatabase, insertMeetingAfter, insertPage, type Block, type WorkspaceStore } from "@based/core";
+import { blockCommands, createDatabase, createFuzzyIndex, insertMeetingAfter, insertPage, type Block, type FuzzyIndex, type WorkspaceStore } from "@based/core";
 
 export interface SlashItem {
   type: string;
@@ -96,10 +96,65 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
 /** „Ask AI“ steht nur im Menü, wenn die Hülle AI anbietet (AI-Schalter an). */
 export const ASK_AI_ITEM: SlashItem = { type: "ai", label: "Ask AI", group: "AI", icon: "askAI", keywords: "ai write assistant generate", ai: true };
 
-/** Einträge passend zur Eingabe nach „/“ (Anfang von Name oder Suchwort). */
+/**
+ * Feedback 14. 11.: Weitere Namen je Eintrag (Synonyme, Notion-/Markdown-Begriffe, Deutsch), damit man findet, was man
+ * meint, auch ohne den genauen Namen. Schlüssel = Name im Menü.
+ */
+const ALIASES: Record<string, string> = {
+  "Text": "body normal p absatz fliesstext schreiben",
+  "Heading 1": "header headline title large überschrift titel gross",
+  "Heading 2": "header headline medium überschrift mittel",
+  "Heading 3": "header headline small überschrift klein",
+  "Bulleted list": "list dots points bullets liste aufzählung punkte stichpunkte",
+  "Numbered list": "list numbers steps enumerated liste nummeriert nummerierung schritte",
+  "To-do list": "todo checklist check tick done task aufgabe aufgaben checkliste haken erledigt",
+  "Toggle list": "toggle dropdown fold expand accordion aufklappen einklappen ausklappen",
+  "Quote": "quotation blockquote zitat",
+  "Toggle heading 1": "header dropdown fold überschrift aufklappen",
+  "Toggle heading 2": "header dropdown fold überschrift aufklappen",
+  "Toggle heading 3": "header dropdown fold überschrift aufklappen",
+  "Section": "region block colored heading farbig",
+  "Callout": "alert box highlight warning important hinweis kasten box wichtig warnung",
+  "Code": "programming script codeblock syntax programm quelltext",
+  "Divider": "rule horizontal break trennlinie linie trenner strich",
+  "Simple table": "table spreadsheet tabelle raster",
+  "Page": "document doc subpage seite unterseite dokument",
+  "Database": "db table board kanban list gallery calendar datenbank tabelle",
+  "Linked view of database": "db reference datenbank verknüpft ansicht",
+  "Image": "img picture photo screenshot bild foto grafik",
+  "Video": "movie film youtube clip",
+  "Audio": "sound voice mp3 podcast ton tonaufnahme",
+  "File": "attachment pdf upload datei anhang dokument",
+  "Web bookmark": "link url website lesezeichen webseite",
+  "Embed": "iframe website external einbetten",
+  "Block equation": "math latex katex formel mathe gleichung",
+  "Inline equation": "math latex katex formel mathe gleichung",
+  "Mermaid diagram": "diagram flowchart sequence diagramm ablauf",
+  "HTML": "web markup preview webseite",
+  "Meeting notes": "meeting call transcript transcription recording besprechung protokoll aufnahme transkript",
+  "Table of contents": "toc contents index navigation inhaltsverzeichnis inhalt",
+  "Button": "action trigger automation template knopf schaltfläche vorlage",
+  "Ask AI": "ai assistant gpt claude write ki schreiben",
+};
+
+const indexes = new WeakMap<readonly SlashItem[], FuzzyIndex<SlashItem>>();
+function indexOf(items: readonly SlashItem[]): FuzzyIndex<SlashItem> {
+  let ix = indexes.get(items);
+  if (!ix) {
+    ix = createFuzzyIndex(items, (it) => ({
+      label: it.label,
+      terms: [it.keywords, ALIASES[it.label] ?? "", it.type.replace(/([a-z])([A-Z0-9])/g, "$1 $2"), it.type, it.hint ?? ""],
+    }));
+    indexes.set(items, ix);
+  }
+  return ix;
+}
+
+/**
+ * Einträge passend zur Eingabe nach „/“: einmal indexiert (je Liste), über Name, Suchwörter, Aliase (auch Deutsch),
+ * Wortanfänge, Abkürzungen und einen Tippfehler; der beste Treffer steht oben.
+ */
 export function filterSlash(items: readonly SlashItem[], query: string): SlashItem[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [...items];
-  return items.filter((it) => it.label.toLowerCase().split(/\s+/).some((w) => w.startsWith(q)) || it.label.toLowerCase().startsWith(q)
-    || it.keywords.split(/\s+/).some((w) => w.startsWith(q)) || it.type.toLowerCase().startsWith(q));
+  if (!query.trim()) return [...items];
+  return indexOf(items).search(query);
 }

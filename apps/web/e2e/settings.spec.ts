@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// Einstellungen aus Astryx-Komponenten: Navigation links, Abschnitte rechts, ehrliche „Not available yet“-Seiten.
+// Einstellungen aus Astryx-Komponenten: Navigation links, Abschnitte rechts, ehrliche „Coming later“-Seiten.
 
 async function open(page: Page, hash = "appearance") {
   await page.goto("/#" + hash);
@@ -32,10 +32,12 @@ test("Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adres
 });
 
 test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", async ({ page }) => {
+  // Offene Punkte auf Seiten mit echten Abschnitten zeigt nur die Entwickler-Ansicht (unten eigens geprüft).
+  await page.addInitScript(() => localStorage.setItem("based.devView", "true"));
   await open(page, "prefs-people");
   await expect(page.getByRole("heading", { level: 1, name: "People" })).toBeVisible();
   const missing = page.getByTestId("settings-missing");
-  await expect(missing.getByRole("heading", { name: "Not available yet" })).toBeVisible();
+  await expect(missing.getByRole("heading", { name: "Coming later" })).toBeVisible();
   await expect(missing.getByText("Members", { exact: true })).toBeVisible();
   await expect(missing.getByText("Invitations")).toBeVisible();
   const content = page.getByTestId("settings-page");
@@ -58,6 +60,18 @@ test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", 
   await expect(page.getByTestId("settings-missing").getByText("MCP connections")).toHaveCount(0);
   await expect(page.getByTestId("settings-missing").getByText("Tool permissions")).toBeVisible();
   await expect(page.getByTestId("settings-page").getByRole("switch")).toHaveCount(0);
+});
+
+test("Seiten mit echten Einstellungen zeigen keine Liste offener Punkte (Updates: kein „Update channel“)", async ({ page }) => {
+  await open(page, "prefs-updates");
+  await expect(page.getByRole("heading", { level: 1, name: "Updates" })).toBeVisible();
+  await expect(page.getByTestId("settings-section-updates")).toBeVisible();
+  await expect(page.getByTestId("settings-missing")).toHaveCount(0);
+  await expect(page.getByTestId("settings-page")).not.toContainText("Update channel");
+  await expect(page.getByTestId("settings-page")).not.toContainText("Mac app");
+  // Seiten ganz ohne Abschnitte sagen weiter ehrlich, was noch kommt.
+  await nav(page).getByRole("button", { name: "People", exact: true }).click();
+  await expect(page.getByTestId("settings-missing").getByRole("heading", { name: "Coming later" })).toBeVisible();
 });
 
 test("Sync-Formular prüft die Adresse, bevor es verbindet", async ({ page }) => {

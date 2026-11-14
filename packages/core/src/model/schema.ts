@@ -159,6 +159,8 @@ export const meetingInfo = z.looseObject({
   attendees: z.array(z.string()).optional(), vocabulary: z.array(z.string()).optional(), language: z.string().optional(),
   engine: z.string().optional(), summary: meetingSummaryState.optional(), summaryEngine: z.string().optional(),
   summaryInstructions: z.string().optional(), consentNotice: z.boolean().optional(), error: z.string().optional(),
+  /** Feedback 14. 11.: Aufnahme gesichert, Transkript kommt später (z. B. sobald der Mac am Strom hängt). */
+  transcribePending: z.boolean().optional(),
 });
 /** Zeitstempel in Sekunden ab Aufnahmebeginn; kurze Schlüssel wie in Swift. */
 export const transcriptSegment = z.looseObject({

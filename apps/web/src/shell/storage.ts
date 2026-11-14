@@ -207,6 +207,20 @@ export const spellCheckPref = devicePref<boolean>("based.spellCheck", true, isBo
 export const peekWidthPref = devicePref<number | undefined>("based.peekWidth", undefined, (v): v is number | undefined => v === undefined || (typeof v === "number" && Number.isFinite(v) && v > 0));
 /** BSD-168: Desktop-App sucht beim Start nach Updates (Standard an). */
 export const autoUpdatePref = devicePref<boolean>("based.autoUpdateCheck", true, isBool);
+/**
+ * Feedback 14. 11.: Wann Meeting-Aufnahmen transkribiert werden (pro Gerät). „plugged-in“: auf Akku nur aufnehmen,
+ * transkribieren, sobald das Gerät am Strom hängt (oder von Hand mit „Transcribe now“).
+ */
+export type MeetingTranscribeWhen = "now" | "plugged-in";
+export const meetingTranscribePref = devicePref<MeetingTranscribeWhen>("based.meeting.transcribe", "now", (v): v is MeetingTranscribeWhen => v === "now" || v === "plugged-in");
+/** Meetings, deren Transkript auf später wartet (Seite + Block), damit es auch nach einem Neustart nachgeholt wird. */
+export const pendingTranscripts = {
+  get: (): { page: string; meeting: string }[] => {
+    const v = read<unknown>("based.meeting.pending", []);
+    return Array.isArray(v) ? v.filter((x): x is { page: string; meeting: string } => typeof x?.page === "string" && typeof x?.meeting === "string") : [];
+  },
+  set: (list: { page: string; meeting: string }[]) => write("based.meeting.pending", list.length ? list : undefined),
+};
 
 /** BSD-281: angepinnte und ausgeblendete Einträge der Seitenleiste (pro Gerät). */
 export const sidebarNavPrefs = {

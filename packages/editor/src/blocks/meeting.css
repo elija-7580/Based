@@ -18,3 +18,6 @@
 /* Zeitmarken und Zahlen: Mono mit Tabellenziffern (Checkliste 4); Klasse von BasedToken mono */
 .based-token-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .bx2-meet .bx2-meet-playing { font-family: var(--font-ui); font-size: var(--type-description-size); gap: var(--space-1); }
+
+/* Feedback 14. 11.: Transkript wartet (Akku) – Hinweis mit „Transcribe now“ in der Statuszeile. */
+.bx-meet-pending { display: inline-flex; align-items: center; gap: var(--space-2); }

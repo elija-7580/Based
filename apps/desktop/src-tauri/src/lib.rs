@@ -56,6 +56,27 @@ fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Feedback 14. 11.: Läuft der Mac auf Akku? Für „Meeting-Transkript erst am Strom“ (`pmset -g ps`; None = unbekannt).
+#[tauri::command]
+fn power_on_battery() -> Option<bool> {
+    #[cfg(target_os = "macos")]
+    {
+        let out = std::process::Command::new("/usr/bin/pmset").args(["-g", "ps"]).output().ok()?;
+        let text = String::from_utf8_lossy(&out.stdout);
+        if text.contains("'Battery Power'") {
+            return Some(true);
+        }
+        if text.contains("'AC Power'") {
+            return Some(false);
+        }
+        None
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        None
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .manage(FrontWindow(Mutex::new("main".to_string())))
@@ -67,6 +88,7 @@ pub fn run() {
         // BSD-319: Fehlerberichte nach ~/.config/based/reports (Rechte nur dort, capabilities/default.json) und im Finder zeigen.
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .invoke_handler(tauri::generate_handler![power_on_battery])
         .setup(|app| {
             create_main_window(app)?;
             Ok(())

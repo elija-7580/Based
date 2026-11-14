@@ -204,3 +204,4 @@ export {
 // BSD-382 (ADR 0016, E1): Befehle des neuen Block-Editors (Namensraum, damit nichts mit Seiten-/Store-Funktionen kollidiert).
 export * as blockCommands from "./editor/commands/index.js";
 export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
+export { createFuzzyIndex, normalizeSearch, type FuzzyFields, type FuzzyIndex } from "./fuzzy.js";

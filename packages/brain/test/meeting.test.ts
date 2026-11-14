@@ -34,7 +34,7 @@ const LINES = [
   { start: 3, end: 5, text: "The release ships on Friday.", speaker: "others" },
 ];
 
-function setup(opts: { transcriber?: boolean; engine?: ScriptedEngine; roles?: AudioTrackRole[] } = {}) {
+function setup(opts: { transcriber?: boolean; engine?: ScriptedEngine; roles?: AudioTrackRole[]; defer?: () => boolean } = {}) {
   let now = 1000;
   const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t", now: () => now });
   const m = createMeeting(store, { parent: "w", title: "Weekly" });
@@ -51,6 +51,7 @@ function setup(opts: { transcriber?: boolean; engine?: ScriptedEngine; roles?: A
     loadAudio: async (a) => "loaded:" + a.id,
     transcriber: () => (opts.transcriber === false ? undefined : transcriber),
     engine: () => opts.engine,
+    ...(opts.defer ? { deferTranscription: opts.defer } : {}),
     tickMs: 0,
   });
   return { store, m, rec, saved, cap: () => capture!, tick: (d: number) => (now += d) };
@@ -101,6 +102,39 @@ describe("MeetingRecorder", () => {
     expect(meetingTranscript(store, m).map((s) => [s.id, s.t, s.sp])).toEqual([["t-0", "Welcome everyone.", "me"], ["t-1", "The release ships on Friday.", "others"]]);
     expect(info.speakers?.map((s) => s.name)).toEqual(["Me", "Others"]);
     expect(rec.getState().recording).toBe(false);
+  });
+
+  it("Feedback 14. 11.: später transkribieren (Akku) – kein Live-Transkript, Aufnahme gesichert, am Strom bzw. von Hand nachholen", async () => {
+    let onBattery = true;
+    const { store, m, rec, cap } = setup({ defer: () => onBattery });
+    await rec.start(store, m);
+    cap().advance(4);
+    await flush();
+    expect(meetingTranscript(store, m)).toEqual([]);
+    await rec.stop();
+    let info = meetingInfo(store, m)!;
+    expect(info.tracks?.length).toBe(1);
+    expect(info.status).toBe("done");
+    expect(info.transcribePending).toBe(true);
+    expect(meetingTranscript(store, m)).toEqual([]);
+    // Ohne force wartet es weiter, solange der Host „später“ sagt
+    await rec.finalize(store, m);
+    expect(meetingInfo(store, m)!.transcribePending).toBe(true);
+    onBattery = false;
+    await rec.finalize(store, m);
+    info = meetingInfo(store, m)!;
+    expect(info.transcribePending).toBeUndefined();
+    expect(meetingTranscript(store, m).map((s) => s.t)).toEqual(["Welcome everyone.", "The release ships on Friday."]);
+    // Von Hand („Transcribe now“) auch auf Akku
+    onBattery = true;
+    const b = setup({ defer: () => onBattery });
+    await b.rec.start(b.store, b.m);
+    b.cap().advance(3);
+    await b.rec.stop();
+    expect(meetingInfo(b.store, b.m)!.transcribePending).toBe(true);
+    await b.rec.finalize(b.store, b.m, { force: true });
+    expect(meetingInfo(b.store, b.m)!.transcribePending).toBeUndefined();
+    expect(meetingTranscript(b.store, b.m).length).toBe(2);
   });
 
   it("Pause stempelt nicht; Mikrofon + Systemton als getrennte Spuren (Me/Others)", async () => {

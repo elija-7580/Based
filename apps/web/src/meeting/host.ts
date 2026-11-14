@@ -12,12 +12,16 @@ import { aiConfig } from "../chat/aiConfig.js";
 import type { PageReplica, StoreClient } from "../worker/client.js";
 import { canCaptureSystemAudio, canRecordAudio, startBrowserCapture } from "./capture.js";
 import { MeetingPlayer } from "./player.js";
+import { onBattery, watchPower } from "./power.js";
+import { meetingTranscribePref, pendingTranscripts } from "../shell/storage.js";
 
 export interface MeetingTestHooks {
   /** Fester Transcriber (Zeilen mit Zeiten in Sekunden ab Aufnahmebeginn); `undefined` = keiner. */
   useTranscriber(lines: FixedLine[] | undefined): void;
   /** Zusammenfassung nach Skript statt über das eingerichtete Modell. */
   useSummaryScript(steps: ScriptStep[] | undefined): void;
+  /** Akku-Zustand vortäuschen (`undefined` = echter Zustand) und die Warteschlange prüfen. */
+  usePower(battery: boolean | undefined): Promise<void>;
 }
 
 /** BSD-281: dazu die Seite der laufenden Aufnahme (Pille oben in der Seitenleiste). */
@@ -54,6 +58,8 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
       return new Blob([r.bytes], { type: asset.mime ?? "audio/webm" });
     },
     transcriber: () => transcriber,
+    // Feedback 14. 11.: auf Akku nur aufnehmen, am Strom transkribieren (Einstellung „When plugged in“).
+    deferTranscription: async () => meetingTranscribePref.get() === "plugged-in" && (await battery()) === true,
     async engine(): Promise<ChatEngine | undefined> {
       if (script) return new ScriptedEngine({ script, label: "Scripted" });
       const choice = config.activeModel();
@@ -62,6 +68,52 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
     },
   });
   recorder.subscribe(notify);
+
+  // Warteschlange der Transkripte für später: nach dem Stop eintragen, am Strom (oder beim nächsten Start) nachholen.
+  let fakeBattery: boolean | undefined;
+  const battery = async () => (fakeBattery !== undefined ? fakeBattery : onBattery());
+  const queue = (page: string | undefined, meeting: string, on: boolean) => {
+    const rest = pendingTranscripts.get().filter((p) => p.meeting !== meeting);
+    pendingTranscripts.set(on && page ? [...rest, { page, meeting }] : rest);
+    syncWatch();
+  };
+  let lastStore: WorkspaceStore | undefined;
+  let draining = false;
+  const drain = async (force = false) => {
+    if (draining || recorder.getState().recording) return;
+    const list = pendingTranscripts.get();
+    if (!list.length || !transcriber) return;
+    if (!force && meetingTranscribePref.get() === "plugged-in" && (await battery()) !== false) return;
+    draining = true;
+    try {
+      for (const p of list) {
+        let r: PageReplica | undefined;
+        try {
+          r = await client.openPage(p.page);
+          const info = meetingInfo(r.store, p.meeting);
+          if (info?.transcribePending) await recorder.finalize(r.store, p.meeting, { force: true });
+          if (!meetingInfo(r.store, p.meeting)?.transcribePending) queue(undefined, p.meeting, false);
+        } catch {
+          queue(undefined, p.meeting, false);
+        } finally {
+          r?.close();
+        }
+      }
+    } finally {
+      draining = false;
+    }
+  };
+  let unwatch: (() => void) | undefined;
+  function syncWatch() {
+    const want = pendingTranscripts.get().length > 0;
+    if (want && !unwatch) unwatch = watchPower(() => void drain());
+    if (!want && unwatch) { unwatch(); unwatch = undefined; }
+  }
+  syncWatch();
+  setTimeout(() => void drain(), 10_000);
+  const remember = (store: WorkspaceStore, meetingID: string) => {
+    if (meetingInfo(store, meetingID)?.transcribePending) queue(store.containingPage(meetingID), meetingID, true);
+  };
 
   const player = new MeetingPlayer({
     async url(id) {
@@ -105,6 +157,10 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
       script = steps;
       notify();
     },
+    async usePower(b) {
+      fakeBattery = b;
+      await drain();
+    },
   };
   (globalThis as { __basedMeeting?: MeetingTestHooks }).__basedMeeting = hooks;
 
@@ -130,18 +186,27 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
       if (recorder.getState().recording) return;
       player.stop();
       const target = await hold(store, meetingID);
+      lastStore = target;
       await recorder.start(target, meetingID, opts);
       if (!recorder.getState().recording) release();
     },
     pause: () => recorder.pause(),
     resume: () => recorder.resume(),
     async stop() {
+      const id = recorder.getState().meetingID;
+      const store = held?.store ?? lastStore;
       try {
         await recorder.stop();
       } finally {
+        if (id && store) remember(store, id);
         release();
       }
     },
+    async transcribeNow(store, meetingID) {
+      await recorder.finalize(store, meetingID, { force: true });
+      if (!meetingInfo(store, meetingID)?.transcribePending) queue(undefined, meetingID, false);
+    },
+    pendingReason: () => (meetingTranscribePref.get() === "plugged-in" ? "when this device is plugged in" : "comes later"),
     summarize: (store, meetingID) => recorder.summarize(store, meetingID),
     play(store, meetingID, seconds) {
       void player.play(meetingID, meetingInfo(store, meetingID)?.tracks ?? [], seconds);

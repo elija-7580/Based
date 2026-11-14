@@ -42,7 +42,16 @@ export function crashKind(prev: SessionRecord | undefined, ongoing?: HangMarker)
 
 /** Hinweis beim Start nur mit Einwilligung, nur nach Absturz/Hänger und nur einmal je Sitzung. */
 export function shouldOfferCrashReport(prev: SessionRecord | undefined, consent: boolean, handledStartedAt: number | undefined, ongoing?: HangMarker): boolean {
-  return consent && crashKind(prev, ongoing) !== undefined && prev!.startedAt !== handledStartedAt;
+  const kind = crashKind(prev, ongoing);
+  if (!consent || kind === undefined || prev!.startedAt === handledStartedAt) return false;
+  // Feedback 14. 11.: Ein Ende ohne jedes Anzeichen (kein Fehler, kein Hänger) ist fast immer gewollt – Update mit
+  // Neustart, „Sofort beenden“, Neustart des Mac. Dafür kein Hinweis beim Start; der Satz bleibt im Diagnose-Log.
+  return kind !== "crash" || endedWithTrouble(prev!);
+}
+
+/** Gab es in der Sitzung Anzeichen eines Problems (Hänger oder Fehler im Log)? */
+export function endedWithTrouble(prev: SessionRecord): boolean {
+  return prev.stalls > 0 || (prev.log ?? []).some((e) => e?.level === "error");
 }
 
 const iso = (ms: number) => new Date(ms).toISOString();
