@@ -4,7 +4,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedButton, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMenu, BasedPopover } from "@based/ui/astryx";
+import { BasedButton, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
 import { useState } from "react";
 import { Icon } from "../../icons.js";
 
@@ -14,6 +14,7 @@ export function AstryxKit() {
   const [name, setName] = useState("Lecture notes");
   const [url, setURL] = useState("based.example");
   const [picked, setPicked] = useState("nothing yet");
+  const [tab, setTab] = useState("notes");
   return (
     <VStack gap={6} className="kit" data-testid="astryx-kit">
       <VStack gap={1}>
@@ -70,6 +71,21 @@ export function AstryxKit() {
               <BasedButton label="Confirm…" variant="danger" onClick={() => setConfirm(true)} />
             </HStack>
             <Text type="supporting" color="secondary" display="block" data-testid="kit-picked">Last menu choice: {picked}</Text>
+          </VStack>
+        </Card>
+      </VStack>
+
+      <VStack gap={2}>
+        <Heading level={2}>Tabs and tokens</Heading>
+        <Card>
+          <VStack gap={3}>
+            <BasedTabs label="Meeting" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "notes", label: "Notes" }, { id: "transcript", label: "Transcript" }]} />
+            <HStack gap={2} wrap="wrap" vAlign="center">
+              <BasedToken label="Agenda: release" onRemove={() => setPicked("Removed token")} />
+              <BasedToken label="Ada" color="blue" onClick={() => setPicked("Ada")} />
+              <BasedToken label="1:05" mono onClick={() => setPicked("1:05")} description="Play from here" />
+              <BasedToken label="0:00" mono disabled />
+            </HStack>
           </VStack>
         </Card>
       </VStack>

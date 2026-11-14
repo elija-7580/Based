@@ -5,7 +5,6 @@
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { pageHasMeeting } from "@based/core";
 import { BlockEditor, PageEditor, textDocName, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { legacyEditorPref, migrateEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
@@ -72,11 +71,9 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   const theme = useRootTheme();
   const client = shellClient;
   // BSD-407 Teil 3: Block-Editor (ADR 0016) ist Standard; BlockNote nur noch als Notausgang (Settings → Diagnostics).
-  // Seiten mit Meeting-Block öffnen bis Teil 2f im alten Editor (Aufnahme, Notizen, Zusammenfassung gibt es nur dort);
-  // entschieden beim Öffnen der Seite, damit der Editor nicht mitten im Schreiben wechselt.
+  // Teil 5: auch Seiten mit Meeting-Block öffnen im Block-Editor (Aufnahme, Notizen, Zusammenfassung gibt es dort).
   const legacy = useSyncExternalStore(legacyEditorPref.subscribe, legacyEditorPref.get);
-  const meetingPage = useMemo(() => pageHasMeeting(store, pageID), [store, pageID]);
-  const newEditor = !legacy && !meetingPage;
+  const newEditor = !legacy;
   const Editor = newEditor ? BlockEditor : PageEditor;
   const renderDatabase = (p: DatabaseRenderProps) => {
     const View = slots.DatabaseView;

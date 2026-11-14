@@ -30,7 +30,8 @@ neuen Editor auf dem Mac abgenommen hat.
 | Unterseite im Inhalt | must | ja | |
 | HTML-/Mermaid-Vorschau | should | ja | Mermaid; HTML-Vorschau im abgeschotteten Rahmen seit 14.11. |
 | Inline-Datenbank | must | ja | über `renderDatabase` |
-| Meeting-Block, Whiteboard | — | nein | Platzhalter „in the new editor soon“ |
+| Meeting-Block | — | ja | BSD-407 Teil 5 (14.11.): Aufnahme, Notizen mit Zeitmarken, Wiedergabe, Transkript, Zusammenfassung, Kontext, Sprecher; gleiche Records wie der alte Editor |
+| Whiteboard | — | nein | Platzhalter „in the new editor soon“ |
 
 ## Bearbeiten
 
@@ -85,7 +86,7 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | erledigt 14.11. |
 | 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | erledigt 14.11. |
 | 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | Zeile/Spalte löschen und HTML-Vorschau erledigt 14.11.; Formatierung in Zellen offen |
-| 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Button erledigt (Teil 6.5); Meeting, Whiteboard offen |
+| 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Meeting erledigt 14.11. (Teil 5, unten); Button erledigt (Teil 6.5); Whiteboard offen |
 | 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | Blockmenü erledigt (Teil 6.1: Icons aus dem Satz der App, Glas, Fläche/Zeilen wie `.menu`; alle `.bx2-menu` haben jetzt diese Fläche); Formatleiste offen |
 | 3 | Block-Editor ist Standard (neuer Schlüssel `based.legacyEditor`, alter Schalter `based.newEditor` wird einmalig entfernt); Specs auf `getByTestId("block-editor")`/`.bx2-*` umgestellt, Rest gepinnt (unten) | erledigt 14.11. |
 | 4 | BlockNote-Code (`ui/PageEditor.tsx`, `schema/`, `mapping/bn.ts`, y-prosemirror) und `@blocknote/*` löschen; Rundreise-Test Notion-Import | offen |
@@ -111,8 +112,8 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
   `table.props.cells` und zeigte importierte Tabellen (Zeilen-Records `tableRow` mit `cells`, wie Swift, alter Editor,
   Markdown-/Notion-/Word-Import) leer an. Jetzt liest und schreibt er nur noch Zeilen-Records (Kern
   `editor/commands/table.ts`); alte flache Tabellen werden gelesen und beim ersten Bearbeiten überführt.
-- **Seiten mit Meeting-Block** öffnen bis Teil 2f im alten Editor (`pageHasMeeting`, entschieden beim Öffnen) –
-  sonst wären Aufnahme, Notizen und „⌘N → Meeting notes“ tot.
+- **Seiten mit Meeting-Block** öffneten bis Teil 5 im alten Editor (`pageHasMeeting`, entschieden beim Öffnen) –
+  seit Teil 5 (unten) im Block-Editor.
 - **Nichts geht verloren:** Blöcke ohne Bearbeitung im Block-Editor (Meeting mit Abschnitten und Transkript,
   Button mit Aktionen, Breadcrumb) werden angezeigt und nie umgeschrieben; Tabellenzellen werden als Klartext
   bearbeitet, Formatierung, Links, Erwähnungen außerhalb der geänderten Stelle bleiben (`setTableCell`,
@@ -124,10 +125,28 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 
 | Funktion | Stand im Block-Editor |
 | --- | --- |
-| Meeting-Block (Aufnahme, Notizen, Zusammenfassung) | Seiten mit Meeting öffnen im alten Editor; kommt ein Meeting während der Bearbeitung dazu: Platzhalter, Inhalt darunter bearbeitbar |
 | Synced Block: Unsync, Hinweis bei Original im Papierkorb | nicht geprüft (Copy and sync geht) |
 | Aufzeichnung für „Report a problem“ (ProseMirror-Schritte, Wiedergabe) | nur alter Editor; Hänger-Schritte (BSD-418) für Slash-Befehle („slash <Eintrag>“) und Blockmenü-Aktionen („block menu <Aktion>“) seit Teil 6.7 |
 | Formatierung in Tabellenzellen | Klartext-Bearbeitung, vorhandene Formatierung bleibt erhalten |
+
+## Teil 5 (14.11.2026): Meeting-Block im Block-Editor
+
+- **Gleiche Records, kein Format-Wechsel:** Meeting-Block (`props.meeting`, Titel als Text), Abschnitte `meetingSection`
+  „notes“/„summary“, Transkript-Chunks (`transcript`, `props.segments`), Notizen mit `meetingTime` – wie BSD-226 und Swift.
+  „/meet“ (Slash „Meeting notes“) legt Meeting und Abschnitte im Kern an (`insertMeetingAfter`, ein Undo-Schritt) plus
+  eine leere erste Notiz, in die die Schreibmarke kommt; „⌘N → Meeting notes“ wie bisher über `createMeeting`.
+- **Ansicht** `packages/editor/src/blocks/meeting.tsx`: Kopf mit Titel, Aufnahme (Start/Pause/Stop, Tab-Audio in
+  Chromium), Hinweis an alle, Status/Fehler, Kontext (Seite oder Notiz), Reiter Summary/Notes/Transcript
+  (`BasedTabs`), Zeitmarken, Kontext und Sprecher als `BasedToken`, Knöpfe `BasedButton`, Menüs `BasedMenu`. Notizen und
+  Zusammenfassung sind Blöcke dieses Editors (eigene Textfelder, Griff, Ziehen, Markdown-Kürzel); Aufnahme, Zeitstempel,
+  Transkript und Zusammenfassung kommen unverändert aus `@based/brain` (MeetingRecorder) über den MeetingHost der App.
+- **Seitenfluss:** `meeting` ist im Kern undurchsichtig (`OPAQUE_TYPES`): Pfeile, ⌫/Entf und die Blockauswahl gehen am
+  Meeting vorbei, nicht in Notizen, Zusammenfassung oder Transkript; in den Notizen bleiben die Pfeile im Abschnitt.
+- **Hänger-Breadcrumbs (BSD-418):** feste Namen `meeting start|pause|resume|stop|summarize|play|stop playback|tab`.
+- **Ausnahme entfernt:** `apps/web/src/editorSlot.tsx` öffnet auch Meeting-Seiten im Block-Editor.
+- Tests: `apps/web/e2e/meeting.spec.ts` (ohne Pin, beide Browser; Aufnahme nur Chromium – WebKit hat unter
+  Playwright kein Fake-Mikrofon), darin Rundreise Block-Editor ↔ alter Editor (Records unverändert beim Öffnen, Notizen
+  aus beiden Editoren bleiben) und ⌘N/Tastatur; `editor-passthrough.spec.ts`; `packages/core/test/editor-meeting.test.ts`.
 
 ### noch BlockNote (gepinnte Specs, Liste für Teil 4)
 
@@ -137,7 +156,6 @@ Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEdit
 | Spec | Was gepinnt ist |
 | --- | --- |
 | `collab.spec.ts` | ganz – Echtzeit über `page:` (y-prosemirror); Block-Editor: `block-editor-collab.spec.ts` |
-| `meeting.spec.ts` | ganz – Meeting-Block |
 | `editor-drag.spec.ts` | ganz – Ziehen am BlockNote-Griff; Block-Editor: `block-editor.spec.ts` |
 | `editor-select.spec.ts` | ganz – Maus-Auswahl in ProseMirror; Block-Editor: `block-editor.spec.ts` |
 | `editor-callout-select.spec.ts` | ganz – nachgestellter BlockNote-Fehler (BSD-318) |
