@@ -1,5 +1,23 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test as base, type Page } from "@playwright/test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { LEGACY_EDITOR_KEY, pinLegacyEditor } from "./legacy-editor.js";
+
+// Dauerhaftes Profil je Test: WebKit hat OPFS nur dort, und die Tests laden neu.
+const test = base.extend<{ page: Page }>({
+  page: async ({ playwright, browserName, baseURL }, use) => {
+    const dir = mkdtempSync(join(tmpdir(), "based-default-"));
+    const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL!, viewport: { width: 1280, height: 820 } });
+    try {
+      await use(ctx.pages()[0] ?? (await ctx.newPage()));
+    } finally {
+      await ctx.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+});
+
 
 // BSD-407 Teil 3: Der Block-Editor (ADR 0016) ist für alle Standard – auch auf Geräten, auf denen der frühere Schalter
 // „New editor“ (`based.newEditor`) bewusst oder unbewusst auf „aus“ stand. Der alte Editor (BlockNote) bleibt bis Teil 4

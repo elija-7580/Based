@@ -149,7 +149,7 @@ test("Links und Häkchen im Editor ohne Browser-Blau", async ({ page }) => {
   await paste(page, "A [link](https://example.com) here.\n\n- [x] Done");
   const link = editor(page).locator("a").first();
   await expect(link).toBeVisible();
-  const [linkColor, textColor] = await link.evaluate((a) => [getComputedStyle(a).color, getComputedStyle(a.parentElement!).color]);
+  const [linkColor, textColor] = await link.evaluate((a) => [getComputedStyle(a).color, getComputedStyle(a.closest("[data-editable-id]") ?? a.parentElement!).color]);
   expect(linkColor).toBe(textColor);
   const accent = await editor(page).locator("input[type=checkbox]").first().evaluate((c) => getComputedStyle(c).accentColor);
   const ink = await page.evaluate(() => { const d = document.createElement("div"); d.style.color = "var(--ink)"; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c; });

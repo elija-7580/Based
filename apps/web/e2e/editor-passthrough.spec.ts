@@ -1,6 +1,23 @@
-import { expect, test, type Page } from "@playwright/test";
-import { readFileSync } from "node:fs";
+import { expect, test as base, type Page } from "@playwright/test";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { blockEditor, editorBlock, expectEditable, focusEditorEnd } from "./editor-helpers.js";
+
+// Dauerhaftes Profil je Test: WebKit hat OPFS nur dort, und die Tests laden neu.
+const test = base.extend<{ page: Page }>({
+  page: async ({ playwright, browserName, baseURL }, use) => {
+    const dir = mkdtempSync(join(tmpdir(), "based-passthrough-"));
+    const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL!, viewport: { width: 1280, height: 820 } });
+    try {
+      await use(ctx.pages()[0] ?? (await ctx.newPage()));
+    } finally {
+      await ctx.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+});
+
 
 // BSD-407 Teil 3: Blöcke, die der Block-Editor (jetzt Standard) noch nicht bearbeiten kann – Meeting mit Abschnitten und
 // Transkript, Button mit Aktionen, Breadcrumb, Tabelle mit Formatierung in den Zellen – werden angezeigt und bleiben
