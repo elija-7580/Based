@@ -1,61 +1,61 @@
-success f1f341c5ccffe3b6c6c839c4eeca1484e3b6512f
-  ✓  144 [webkit] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (14.7s)
-  ✓  148 [webkit] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (12.9s)
-  ✓  147 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (14.8s)
-  ✓  149 [webkit] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (13.2s)
-  ✓  150 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (13.9s)
-  ✓  152 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (6.2s)
-  ✓  153 [webkit] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (7.5s)
-  ✓  151 [webkit] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (21.4s)
-  ✓  154 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (6.3s)
-  ✓  156 [webkit] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (7.3s)
-  ✓  155 [webkit] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (12.6s)
-  ✓  157 [webkit] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (4.6s)
-  ✓  159 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (11.0s)
-  ✓  158 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (11.4s)
-(node:19614) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+cancelled 78b7bfd3d58598572ed2fa92c6e23a0340c602d7
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 174 tests using 2 workers, shard 1 of 2
+
+  ✓    1 [webkit] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (10.3s)
+  ✓    3 [webkit] › e2e/ai-switch.spec.ts:48:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (6.7s)
+  -    4 [webkit] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (light)
+  -    5 [webkit] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (dark)
+(node:5799) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  161 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (7.6s)
-  ✓  160 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (7.1s)
-  ✓  163 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (7.7s)
-  ✓  164 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.9s)
-  ✓  162 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (16.9s)
-  ✓  165 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.4s)
-  ✓  167 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.6s)
-  ✓  166 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (15.7s)
-  ✓  168 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (13.5s)
-  ✓  170 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (11.3s)
-  ✓  169 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (22.8s)
-  ✓  171 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.6s)
-  ✓  172 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.7s)
-  ✓  173 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.0s)
-  -  174 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
-  -  175 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓    6 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (13.2s)
+(node:5923) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
 
-
-  1) [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "Row 151"
-    Received: "Row 152"
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      25 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
-      26 |   await page.mouse.click(x, y);
-    > 27 |   await expect.poll(() => activeRow(page)).toBe(under);
-         |                                            ^
-      28 |   await page.keyboard.press("Escape"); // Zelleneditor zu
-      29 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
-      30 | }
-        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:27:44)
-        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:46:40
-
-    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
-
-  1 flaky
-    [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
-  16 skipped
-  157 passed (15.5m)
+  ✓    2 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (55.4s)
+  -    8 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓    9 [webkit] › e2e/a11y.spec.ts:195:1 › Quick Find: Esc gibt den Fokus zurück (3.4s)
+  ✓    7 [webkit] › e2e/block-editor-collab.spec.ts:61:1 › Neuer Editor, Echtzeit: zwei Geräte im selben Block, live, nichts doppelt, Schreibmarke des anderen (27.8s)
+  ✓   11 [webkit] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (4.9s)
+  ✓   10 [webkit] › e2e/a11y.spec.ts:211:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (11.8s)
+  ✓   12 [webkit] › e2e/block-editor.spec.ts:64:1 › Nach dem Neuladen ist alles da (dauerhaftes Profil, Records über den Store-Worker) (7.4s)
+  ✓   14 [webkit] › e2e/block-editor.spec.ts:86:1 › Tab rückt ein, ⇧Tab aus; Pfeile wechseln zwischen Blöcken (3.8s)
+  ✓   13 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (10.1s)
+  ✓   16 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (8.9s)
+  ✓   15 [webkit] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (10.8s)
+  ✓   17 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (6.2s)
+  ✓   18 [webkit] › e2e/block-editor.spec.ts:155:1 › Ziehen am Griff: davor/danach, Spalte rechts daneben und wieder heraus (7.6s)
+  ✓   20 [webkit] › e2e/block-editor.spec.ts:182:1 › Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, ⌫ löscht (5.1s)
+  ✓   19 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (8.2s)
+  ✓   21 [webkit] › e2e/block-editor.spec.ts:220:1 › Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift (6.3s)
+  ✓   22 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (5.7s)
+  ✓   23 [webkit] › e2e/block-editor.spec.ts:250:1 › Formatierung: ⌘B auf Auswahl, Formatleiste erscheint (4.9s)
+  ✓   24 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (6.3s)
+  -   26 [webkit] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
+  ✓   25 [webkit] › e2e/block-editor.spec.ts:277:1 › Einfügen aus dem Web: HTML wird zu Blöcken, URL über Auswahl wird Link; ⌘K setzt Link (4.7s)
+  ✓   28 [webkit] › e2e/block-editor.spec.ts:300:1 › @ erwähnt eine Seite (4.2s)
+  ✓   27 [webkit] › e2e/brain.spec.ts:222:1 › trashing the Agent Brain shows why it stays (6.6s)
+  -   30 [webkit] › e2e/brain.spec.ts:233:1 › Screenshots web-brain-refused-*
+  ✓   29 [webkit] › e2e/block-editor.spec.ts:320:1 › Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel (3.0s)
+  ✓   31 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (14.1s)
+  ✓   32 [webkit] › e2e/block-editor.spec.ts:334:1 › Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per @ (15.2s)
+  ✓   33 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (4.2s)
+  ✓   35 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (4.2s)
+  ✓   34 [webkit] › e2e/block-editor.spec.ts:388:1 › ⌘⌥-Kürzel, Textfarbe, Spalten per Slash, Toggle-Überschrift, Syntax-Hervorhebung (10.2s)
+  ✓   36 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (5.9s)
+  ✓   37 [webkit] › e2e/block-editor.spec.ts:436:1 › Spaltenbreite ziehen (4.8s)
+  -   39 [webkit] › e2e/block-editor.spec.ts:465:3 › Screenshots neuer Editor (light)
+  -   40 [webkit] › e2e/block-editor.spec.ts:465:3 › Screenshots neuer Editor (dark)
+  ✓   38 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (7.1s)

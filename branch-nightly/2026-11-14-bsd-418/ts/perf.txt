@@ -1,9 +1,13 @@
-success f1f341c5ccffe3b6c6c839c4eeca1484e3b6512f (nicht blockierend)
-BSD-215 chromium: 50 000 Zeilen öffnen 596 ms, ans Ende scrollen 43 ms, Zelle ändern 90 ms
-perf 5000: {"mapOpen":[],"idleBeforePan":[155],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3822,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":8.25,"peekLong":[],"formSubmitMs":62,"formLong":[]}
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 2, 3, 5.5, 6.6, 13.7
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.5s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1155 ms, ans Ende scrollen 545 ms, Zelle ändern 159 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 2, 3, 4, 10, 11
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.3s)
-  15 passed (1.4m)
+success 78b7bfd3d58598572ed2fa92c6e23a0340c602d7 (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[172],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3857,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":8.95,"peekLong":[],"formSubmitMs":78,"formLong":[]}
+BSD-215 chromium: 50 000 Zeilen öffnen 787 ms, ans Ende scrollen 71 ms, Zelle ändern 144 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 3, 5.3, 9.9, 13.1, 13.2
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.8s)
+BSD-215 webkit: 50 000 Zeilen öffnen 1331 ms, ans Ende scrollen 442 ms, Zelle ändern 577 ms
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 7, 12, 13, 14, 19
+  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (5.7s)
+  ✘  14 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (17.9s)
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
+  1 flaky
+  14 passed (2.0m)

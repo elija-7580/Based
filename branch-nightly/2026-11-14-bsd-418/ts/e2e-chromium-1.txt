@@ -1,61 +1,61 @@
-failure f1f341c5ccffe3b6c6c839c4eeca1484e3b6512f
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      239 |   // links vom Griff, unten in der Zeile
-      240 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 241 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      242 | });
-      243 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:241:46
-
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(received).toEqual(expected) // deep equality
-
-    - Expected  - 8
-    + Received  + 1
-
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      239 |   // links vom Griff, unten in der Zeile
-      240 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 241 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      242 | });
-      243 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:241:46
-
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium-retry1/error-context.md
-
-  1 failed
-    [chromium] › e2e/editor-drag.spec.ts:225:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-  7 skipped
-  166 passed (5.4m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+cancelled 78b7bfd3d58598572ed2fa92c6e23a0340c602d7
+  ✓   65 [chromium] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (3.7s)
+  ✓   66 [chromium] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus (2.4s)
+  ✓   67 [chromium] › e2e/database-click.spec.ts:64:1 › Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite (2.2s)
+  ✓   68 [chromium] › e2e/database-click.spec.ts:100:1 › Kästchen der ausgewählten Zeile ist gesetzt (1.1s)
+  ✓   69 [chromium] › e2e/database-columns.spec.ts:45:1 › Inline-Datenbanken in Spalten: nichts ragt in die Nachbarspalte, lange Titel brechen um (1.5s)
+  ✓   70 [chromium] › e2e/database-columns.spec.ts:90:1 › Inline-Datenbank als ganze Seite: Knopf und Blockmenü, Titel der Datenbank überall (1.7s)
+  ✓   71 [chromium] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (1.5s)
+  ✓   72 [chromium] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (1.4s)
+  ✓   73 [chromium] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (2.1s)
+  ✓   74 [chromium] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (1.2s)
+  ✓   75 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (1.9s)
+  ✓   76 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (2.3s)
+  ✓   77 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (1.6s)
+  ✓   78 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (1.7s)
+  ✓   79 [chromium] › e2e/database-look.spec.ts:23:1 › Section mit Inline-Datenbank: Fläche, kein Einzel-Tab, Daten in UI-Schrift (1.1s)
+  ✓   80 [chromium] › e2e/database-look.spec.ts:65:1 › Daten in UI-Schrift, IDs in Monospace (889ms)
+  ✓   81 [chromium] › e2e/database-look.spec.ts:76:1 › Ansichts-Tab: Klick auf den aktiven Tab öffnet das Menü – umbenennen, duplizieren, löschen (1.2s)
+  ✓   82 [chromium] › e2e/database-polish.spec.ts:6:1 › Inline-Tabelle: leere Titel bleiben leer, Zelleneditor ist ein BasedField, kein Rahmen um den Block (1.5s)
+  ✓   83 [chromium] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (1.2s)
+  ✓   84 [chromium] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (6.5s)
+  ✓   85 [chromium] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (4.7s)
+  ✓   86 [chromium] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (1.1s)
+  ✓   87 [chromium] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (2.5s)
+  ✓   88 [chromium] › e2e/database-views.spec.ts:460:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (1.8s)
+  ✓   89 [chromium] › e2e/database-views.spec.ts:490:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (1.9s)
+  ✓   90 [chromium] › e2e/database-views.spec.ts:534:1 › BSD-216 Teil 2: Diagramm – Farben und Höhe (1.3s)
+  ✓   91 [chromium] › e2e/database-views.spec.ts:558:1 › BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen) (1.3s)
+  ✓   92 [chromium] › e2e/database-views.spec.ts:576:1 › BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank (1.3s)
+  ✓   93 [chromium] › e2e/database-views.spec.ts:607:1 › BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken (1.4s)
+  ✓   94 [chromium] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (1.4s)
+  ✓   95 [chromium] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (957ms)
+  ✓   96 [chromium] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (1.5s)
+[chromium] Klick-Durchlauf: 108 Klicks, 4 ausgelassen
+  ✓   64 [chromium] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (1.1m)
+  ✓   97 [chromium] › e2e/editor-bookmark.spec.ts:66:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (3.2s)
+  ✓   98 [chromium] › e2e/crawl.spec.ts:234:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (3.2s)
+  ✓   99 [chromium] › e2e/editor-bookmark.spec.ts:95:1 › Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App) (1.5s)
+  -  101 [chromium] › e2e/editor-bookmark.spec.ts:103:1 › Bildschirmfotos: Bookmark mit Vorschau
+  ✓  100 [chromium] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf (2.1s)
+  -  103 [chromium] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
+  ✓  102 [chromium] › e2e/editor-callout-select.spec.ts:67:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (3.8s)
+  ✓  104 [chromium] › e2e/editor-drag.spec.ts:125:1 › Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach dem Neuladen gleich (3.3s)
+  ✓  105 [chromium] › e2e/editor-embed.spec.ts:6:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (1.9s)
+  ✓  106 [chromium] › e2e/editor-drag.spec.ts:153:1 › Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt (1.8s)
+  ✓  108 [chromium] › e2e/editor-drag.spec.ts:167:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter (2.3s)
+  ✓  107 [chromium] › e2e/editor-mermaid.spec.ts:60:1 › Mermaid: Diagramm als Bild ohne Netz, Fehler in einem Satz, nach dem Neuladen wieder da (4.2s)
+  ✓  109 [chromium] › e2e/editor-drag.spec.ts:197:1 › Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Neuladen gleich (3.4s)
+  ✓  110 [chromium] › e2e/editor-mermaid.spec.ts:96:1 › Mermaid: beim Umschalten auf dunkel zeichnet sich die Vorschau in den dunklen Farben neu (2.1s)
+  -  112 [chromium] › e2e/editor-mermaid.spec.ts:110:1 › Bildschirmfotos: Mermaid-Vorschau
+  ✓  111 [chromium] › e2e/editor-drag.spec.ts:225:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter (2.6s)
+  ✓  113 [chromium] › e2e/editor-notion.spec.ts:49:1 › Titel und Text: Enter teilt, ↓ und ↑ wechseln (1.3s)
+  ✓  115 [chromium] › e2e/editor-notion.spec.ts:68:1 › Enter im Titel nimmt die leere erste Zeile, statt eine weitere anzulegen (1.2s)
+  ✓  116 [chromium] › e2e/editor-notion.spec.ts:78:1 › Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text (1.3s)
+  ✓  114 [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (3.9s)
+  ✓  117 [chromium] › e2e/editor-notion.spec.ts:98:1 › Klick unter den Inhalt setzt die Schreibmarke ans Ende (1.5s)
+  ✓  118 [chromium] › e2e/editor-parity.spec.ts:193:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz (1.7s)
+  ✓  119 [chromium] › e2e/editor-notion.spec.ts:115:1 › Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl (2.0s)
+  ✓  121 [chromium] › e2e/editor-notion.spec.ts:143:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (1.3s)
+  ✓  120 [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (3.5s)
+  ✓  122 [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus (2.4s)
