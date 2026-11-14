@@ -350,6 +350,22 @@ describe.each([false, true])("Block-Editor E1 (propertyRecords=%s)", (pr) => {
       blk("c", "bulletedList", "b:P", "a2", { text: "c" }), blk("ck", "text", "b:c", "a0", { text: "ck" }),
     ]);
 
+    it("BSD-407: Move to – ans Ende einer anderen Seite, mit Kindern, nicht in die eigene Unterseite", () => {
+      const s = make(pr, [
+        blk("a", "text", "b:P", "a0", { text: "a" }), blk("c", "bulletedList", "b:P", "a2", { text: "c" }), blk("ck", "text", "b:c", "a0", { text: "ck" }),
+        blk("sub", "page", "b:P", "a3", { text: "Sub" }), blk("Q", "page", "w", "a1", { text: "Other" }), blk("q1", "text", "b:Q", "a5", { text: "q1" }),
+      ]);
+      expect(step(s, () => cmd.moveBlocksToPage(s, ["c", "ck", "a"], "Q"))).toBe(2);
+      expect(outline(s)).toEqual(["page: Sub"]);
+      expect(outline(s, "Q")).toEqual(["text: q1", "text: a", "bulletedList: c", "  text: ck"]);
+      // Zielseite ohne bekannte Blöcke: hinter den Schlüssel aus dem Seitenverzeichnis
+      expect(step(s, () => cmd.moveBlocksToPage(s, ["sub"], "Q", "z9"))).toBe(1);
+      expect(s.blocks.get("sub")!.sk > "z9").toBe(true);
+      // nicht in sich selbst oder eine eigene Unterseite
+      expect(cmd.moveBlocksToPage(s, ["Q"], "q1")).toBe(0);
+      expect(cmd.moveBlocksToPage(s, ["sub"], "sub")).toBe(0);
+    });
+
     it("vor/nach/hinein, mit Kindern, nicht in sich selbst", () => {
       const s = base();
       step(s, () => cmd.moveBlocks(s, ["c"], "a", "before"));

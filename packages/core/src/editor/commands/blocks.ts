@@ -506,6 +506,34 @@ export function moveBlocksBy(store: WorkspaceStore, ids: readonly string[], dire
   return moveBlocks(store, roots, anchor, direction === "up" ? "before" : "after");
 }
 
+/**
+ * Blockmenü „Move to“: Blöcke (mit Kindern) ans Ende einer anderen Seite. `lastKey` ist der letzte Sortierschlüssel
+ * der Zielseite, wenn der Store ihre Blöcke nicht kennt (Seitenverzeichnis des Servers). Nicht in sich selbst, nicht
+ * in eine Unterseite der bewegten Blöcke. Leer gewordene Spalten verschwinden wie beim Ziehen. Gibt die Zahl der bewegten Blöcke zurück.
+ */
+export function moveBlocksToPage(store: WorkspaceStore, ids: readonly string[], pageId: string, lastKey?: string): number {
+  const roots = topLevel(store, ids).filter((id) => id !== pageId && !isInside(store, pageId, id));
+  if (roots.length === 0) return 0;
+  const parent = "b:" + pageId;
+  const moving = new Set(roots);
+  let after = lastKey;
+  for (const c of store.children(parent)) {
+    const k = store.blocks.get(c)?.sk;
+    if (!moving.has(c) && k !== undefined && (after === undefined || k > after)) after = k;
+  }
+  const sourceLists = roots.map((id) => columnListOf(store, id)).filter((x): x is string => !!x);
+  store.transact(roots.length === 1 ? "Move block" : `Move ${roots.length} blocks`, (tx) => {
+    let k = after;
+    for (const id of roots) {
+      k = keyBetween(k, undefined);
+      const sk = k;
+      tx.update(id, (b) => { b.parent = parent; b.sk = sk; });
+    }
+    tidyColumns(store, tx, sourceLists);
+  });
+  return roots.length;
+}
+
 /** Spaltenliste auflösen: Spalten nacheinander an ihre Stelle (Blockmenü „Unwrap columns“). */
 export function dissolveColumns(store: WorkspaceStore, columnListId: string): Focus | undefined {
   const list = store.blocks.get(columnListId);
