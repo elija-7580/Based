@@ -81,6 +81,8 @@ const PAGE_PATCHES = {
     p.body = must(p.body, '<button type="submit" class="btn" style="min-height: 50px;">Join the beta</button>',
       '<button type="submit" class="btn" style="min-height: 50px;">Join the beta</button>' + CONSENT_DESKTOP, "main consent");
     p.code = must(p.code, "const reply = this.composeReply();", WAITLIST_CALL, "main waitlist");
+    // Prerendered HTML (search engines, no JavaScript) shows the final numbers; the browser still counts up.
+    p.code = must(p.code, "statsT: 0,", "statsT: window.__DC_PRERENDER ? 1 : 0,", "main stats prerender");
   },
   "Mobile.dc.html": (p) => {
     const btn = /<button type="submit" class="mb-full"[^>]*>Join the beta<\/button>/.exec(p.body)[0];

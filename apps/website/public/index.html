@@ -399,12 +399,12 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px;">
 
 <div class="reveal" style="padding: 28px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px;">
-<p class="disp" style="margin: 0; font-size: clamp(48px, 6vw, 76px);">0</p>
+<p class="disp" style="margin: 0; font-size: clamp(48px, 6vw, 76px);">221</p>
 <p style="margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted);">Notion features tracked one by one, from the public help pages</p>
 </div>
 
 <div class="reveal" style="padding: 28px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px;">
-<p class="disp" style="margin: 0; font-size: clamp(48px, 6vw, 76px);">0</p>
+<p class="disp" style="margin: 0; font-size: clamp(48px, 6vw, 76px);">178</p>
 <p style="margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted);">already working in the prototype. The rest is on the roadmap.</p>
 </div>
 
@@ -1007,7 +1007,7 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flipped: {}, statsT: 0, flapI: 0, ev: 0, menuI: 0, promptI: 0, promptN: 0, clock: 0 };
+    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flipped: {}, statsT: window.__DC_PRERENDER ? 1 : 0, flapI: 0, ev: 0, menuI: 0, promptI: 0, promptN: 0, clock: 0 };
     this.timers = { reply: [], loop: [] };
     this.prompts = ['Prepare my week: deadlines first, then the Acme proposal', 'Summarise yesterday\u2019s calls into the Clients database', 'Find sources for thesis chapter 2 and add them to Reading', 'Draft the investor update from the Metrics database'];
     this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'log files', 'reading list'];
