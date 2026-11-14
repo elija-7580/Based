@@ -1,61 +1,61 @@
-success 4133a99605b7ac7f605e76ca565118e913aeec38
-  -  165 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
-  -  163 [webkit] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
-  ✓  166 [webkit] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (3.1s)
-  ✓  167 [webkit] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (4.1s)
-  ✓  168 [webkit] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (4.1s)
-  ✓  169 [webkit] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (4.0s)
-  ✓  170 [webkit] › e2e/interop.spec.ts:160:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (3.9s)
-  ✓  171 [webkit] › e2e/interop.spec.ts:186:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (3.5s)
-  ✓  172 [webkit] › e2e/interop.spec.ts:205:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (5.0s)
-  ✓  173 [webkit] › e2e/interop.spec.ts:236:1 › Word-Dokument (.docx) importieren (BSD-260) (3.6s)
-  ✓  174 [webkit] › e2e/interop.spec.ts:253:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (3.5s)
-  ✓  175 [webkit] › e2e/interop.spec.ts:267:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.0s)
-  ✓  176 [webkit] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (4.4s)
+success 22bdea9187bd1d85d2af1fde3ea0497181aacf4b
+  ✓  112 [webkit] › e2e/editor-notion.spec.ts:198:1 › Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen (9.8s)
+  ✓  111 [webkit] › e2e/editor-parity.spec.ts:318:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (21.3s)
+  ✓  113 [webkit] › e2e/editor-notion.spec.ts:220:1 › Formatleiste: kompaktes Feld, ganz im Fenster (9.8s)
+  ✓  115 [webkit] › e2e/editor-notion.spec.ts:236:1 › Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf (9.3s)
+  -  116 [webkit] › e2e/editor-notion.spec.ts:257:1 › Beim Öffnen einer Seite springt der Titel nicht
+  ✓  117 [webkit] › e2e/editor-notion.spec.ts:280:1 › Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl (5.8s)
+  ✓  114 [webkit] › e2e/editor-parity.spec.ts:382:1 › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (27.5s)
+  ✓  119 [webkit] › e2e/editor-parity.spec.ts:477:1 › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (12.5s)
+  ✓  118 [webkit] › e2e/editor-polish.spec.ts:54:1 › Editor in Ruhe und in seinen Zuständen (32.1s)
+  ✓  120 [webkit] › e2e/editor-parity.spec.ts:505:1 › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (9.6s)
+  ✓  121 [webkit] › e2e/editor-polish.spec.ts:140:1 › Links und Häkchen im Editor ohne Browser-Blau (6.0s)
+  ✓  123 [webkit] › e2e/editor-polish.spec.ts:158:1 › Blockfarben im Dunkelmodus aus den Tokens (5.7s)
+  ✓  122 [webkit] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (15.4s)
+  ✓  124 [webkit] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (7.7s)
+  -  126 [webkit] › e2e/editor-select.spec.ts:112:1 › Blockauswahl reicht bis unter schwebende Leisten
+  ✓  125 [webkit] › e2e/editor-parity.spec.ts:574:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (8.6s)
+  ✓  127 [webkit] › e2e/editor-select.spec.ts:142:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (8.9s)
+  ✓  128 [webkit] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (10.9s)
+  ✓  129 [webkit] › e2e/editor-select.spec.ts:162:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (7.5s)
+  ✓  131 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (3.4s)
+  ✓  132 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (6.6s)
+  ✓  130 [webkit] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (14.8s)
+  ✓  134 [webkit] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (12.7s)
+  ✓  133 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (15.2s)
+  ✓  135 [webkit] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (13.3s)
+  ✓  136 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (13.7s)
+  ✓  138 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (6.1s)
+  ✓  139 [webkit] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (6.9s)
+  ✓  137 [webkit] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (21.1s)
+  ✓  140 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (7.1s)
+  ✓  142 [webkit] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (6.5s)
+  ✓  143 [webkit] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (3.9s)
+  ✓  141 [webkit] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (12.9s)
+  ✓  144 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (11.1s)
+  ✓  145 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (10.7s)
+(node:18565) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  147 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (7.0s)
+  ✓  146 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (7.2s)
+  ✓  149 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (6.0s)
+  ✓  150 [webkit] › e2e/guest.spec.ts:123:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.8s)
+  ✓  151 [webkit] › e2e/guest.spec.ts:137:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.2s)
+  ✓  148 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (16.0s)
+  ✓  152 [webkit] › e2e/guest.spec.ts:149:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.2s)
+  ✓  153 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (14.8s)
+  ✓  154 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (12.9s)
+  ✓  156 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (11.7s)
+  ✓  155 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (24.0s)
+  ✓  157 [webkit] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (16.4s)
+  ✓  158 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (6.5s)
+  ✓  160 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (7.7s)
+  ✓  159 [webkit] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (12.9s)
+  ✓  161 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (4.1s)
+  -  163 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  164 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  162 [webkit] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (7.5s)
+  -  165 [webkit] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
 
-
-  1) [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "Row 24"
-    Received: null
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      25 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
-      26 |   await page.mouse.click(x, y);
-    > 27 |   await expect.poll(() => activeRow(page)).toBe(under);
-         |                                            ^
-      28 |   await page.keyboard.press("Escape"); // Zelleneditor zu
-      29 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
-      30 | }
-        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:27:44)
-        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:46:40
-
-    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
-
-  2) [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more ───
-
-    Error: expect(received).toBeLessThan(expected)
-
-    Expected: < 4
-    Received:   8
-
-      105 |     // kein eigener senkrechter Scroller: der Inhalt passt in die Fläche
-      106 |     const [sh, ch] = await body.evaluate((el) => [el.scrollHeight, el.clientHeight]);
-    > 107 |     expect(sh - ch).toBeLessThan(4);
-          |                     ^
-      108 |     const more = db.getByRole("button", { name: /Load more/ }).first();
-      109 |     await expect(more).toContainText("8 of 8");
-      110 |     if (SHOTS && browserName === "chromium") {
-        at /home/runner/work/Based/Based/apps/web/e2e/database-inline.spec.ts:107:21
-
-    Error Context: test-results/database-inline-Inline-board-wächst-mit-der-Seite-Load-more-webkit/error-context.md
-
-  2 flaky
-    [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
-    [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more ────
   16 skipped
-  156 passed (12.2m)
+  149 passed (14.9m)
