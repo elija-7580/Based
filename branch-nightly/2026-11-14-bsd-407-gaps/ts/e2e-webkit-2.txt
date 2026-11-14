@@ -1,38 +1,4 @@
-failure 2d6efcda0bd3d63d53b510272193cba38bd52a06
-    expect(received).toBeLessThanOrEqual(expected)
-
-    Expected: <= 8
-    Received:    29.546875
-
-      176 |     await expect(menu).toBeVisible();
-      177 |     const m = (await menu.boundingBox())!;
-    > 178 |     expect(Math.abs(m.y - h.y), `${text}: oben bündig`).toBeLessThanOrEqual(8);
-          |                                                         ^
-      179 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      180 |     // Gleiche Icons wie im Seitenmenü „…“ (Icon-Satz der App)
-      181 |     await expect(menu.locator("[role=menuitem] .nf-glyph svg")).not.toHaveCount(0);
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:178:57
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit-retry1/error-context.md
-
-  2) [webkit] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "rgb(235, 235, 231)"
-    Received: "rgb(242, 242, 239)"
-
-      54 |     return out;
-      55 |   });
-    > 56 |   expect(bg).toBe(selected);
-         |              ^
-      57 |   expect(color).toBe(ink);
-      58 | });
-      59 |
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:56:14
-
-    Error Context: test-results/polish-Slash-Menü-Überfahr-1bb3c-mit-dem-Blau-der-Bibliothek-webkit/error-context.md
-
+failure e026a6ea91b04d2308fec54df3edde22e7b915a0
     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
     Error: expect(received).toBe(expected) // Object.is equality
@@ -51,11 +17,45 @@ failure 2d6efcda0bd3d63d53b510272193cba38bd52a06
 
     Error Context: test-results/polish-Slash-Menü-Überfahr-1bb3c-mit-dem-Blau-der-Bibliothek-webkit-retry1/error-context.md
 
+  2) [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 320
+    Received: 360
+
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
+
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 320
+    Received: 360
+
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
+
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit-retry1/error-context.md
+
   2 failed
-    [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
     [webkit] › e2e/polish.spec.ts:39:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek 
+    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
   21 skipped
-  155 passed (8.4m)
+  157 passed (12.0m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf

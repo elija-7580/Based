@@ -1,9 +1,9 @@
-success 2d6efcda0bd3d63d53b510272193cba38bd52a06 (nicht blockierend)
-BSD-215 chromium: 50 000 Zeilen öffnen 634 ms, ans Ende scrollen 30 ms, Zelle ändern 133 ms
-perf 5000: {"mapOpen":[],"idleBeforePan":[167],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3813,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":7.1,"peekLong":[],"formSubmitMs":67,"formLong":[]}
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 5.8, 8.4, 8.6, 8.9, 10.1
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.2s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1347 ms, ans Ende scrollen 414 ms, Zelle ändern 532 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 6, 7, 9, 12, 19
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.9s)
-  15 passed (1.6m)
+success e026a6ea91b04d2308fec54df3edde22e7b915a0 (nicht blockierend)
+BSD-215 chromium: 50 000 Zeilen öffnen 555 ms, ans Ende scrollen 34 ms, Zelle ändern 147 ms
+perf 5000: {"mapOpen":[],"idleBeforePan":[111],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3868,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":9.2,"peekLong":[],"formSubmitMs":75,"formLong":[]}
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 2.3, 2.5, 3, 3.2, 3.4
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.8s)
+BSD-215 webkit: 50 000 Zeilen öffnen 1243 ms, ans Ende scrollen 237 ms, Zelle ändern 873 ms
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 5, 13, 14, 18, 18
+  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.7s)
+  15 passed (1.3m)
