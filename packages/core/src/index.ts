@@ -31,6 +31,7 @@ export type { HTMLExporterOptions } from "./interop/export.js";
 export { relationLimitViolations, setRelation } from "./store/relations.js";
 export { PRIVATE, topmost, createPage, createTeamspace, deleteForever, deleteTeamspace, duplicatePages, renameTeamspace, setTeamspaceIcon, dropPages, emptyTrash, hasPageTitle, insertPage, isDescendant, isPageLike, movePages, renamePage, restorePages, sameSection, sectionOf, setFavorite, sortKeys, subtree, trashPages, trashedPages } from "./store/pages.js";
 export { renameWorkspace, setWorkspaceIcon } from "./store/pages.js";
+export { orphanCandidates, orphanedBlocks, RECOVERED_BLOCKS_PAGE_ID, rescueOrphans } from "./store/orphans.js";
 export { linkUnlinkedMention, unlinkedMentions, type UnlinkedMention } from "./store/unlinked.js";
 export type { CreatePageOptions, DropZone, InsertPosition, PageDestination, SectionID } from "./store/pages.js";
 // Library, Seitengraph (Shell-Parität)
