@@ -345,6 +345,42 @@ test("Formatleiste: kompaktes Feld, ganz im Fenster", async ({ page }) => {
   await expect(editor(page).locator(".bx2-b", { hasText: "tail" })).toBeVisible();
 });
 
+// BSD-407 Teil 2g, BSD-341, BSD-342: Formatleiste aus Based-Knöpfen – Blocktyp heißt wie im Blockmenü („Text“) und
+// öffnet „Turn into“, Knöpfe zeigen ihren Zustand (aria-pressed), Inline-Code und Inline-Gleichung aus der Markierung.
+test("Formatleiste: Blocktyp „Text“ mit Turn into, gedrückte Knöpfe, Inline-Code und Gleichung", async ({ page }) => {
+  await open(page, "Format bar");
+  await focusEditorEnd(page);
+  await page.keyboard.type("alpha beta x^2");
+  const field = editor(page).locator("[data-editable-id]").first();
+  const bar = page.getByTestId("format-bar");
+  const select = async (n: number) => {
+    await field.click();
+    await page.keyboard.press("End");
+    for (let i = 0; i < n; i++) await page.keyboard.press("Shift+ArrowLeft");
+    await expect(bar).toBeVisible();
+  };
+  // Inline-Code: Knopf, dann gedrückt
+  await select(3);
+  await expect(bar.getByRole("button", { name: "Turn into · Text" })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Code", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await bar.getByRole("button", { name: "Code", exact: true }).click();
+  await expect(field.locator(".bx2-c")).toHaveText("x^2");
+  await expect(bar.getByRole("button", { name: "Code", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await bar.getByRole("button", { name: "Code", exact: true }).click();
+  await expect(field.locator(".bx2-c")).toHaveCount(0);
+  // Gleichung aus der Markierung
+  await select(3);
+  await bar.getByRole("button", { name: "Equation", exact: true }).click();
+  await page.keyboard.press("Enter");
+  await expect(field.locator(".bx2-eq")).toHaveCount(1);
+  await expect(field).toContainText("alpha beta");
+  // Blocktyp: Turn into → Heading 2
+  await select(4);
+  await bar.getByRole("button", { name: "Turn into · Text" }).click();
+  await page.getByTestId("block-menu").getByRole("menuitemradio", { name: "Heading 2", exact: true }).click();
+  await expect(editor(page).locator('.bx2-block[data-type="heading2"]')).toHaveCount(1);
+});
+
 // BSD-407 Teil 6.2–6.5 Checkliste: Fotos der neuen Flächen im Block-Editor (nur mit BASED_SCREENSHOTS=1, Chromium) in
 // 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel.
 async function shots(page: Page, name: string, prepare: () => Promise<void>) {
@@ -409,5 +445,26 @@ test("Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI", async ({ page
     await expect(page.getByTestId("slash-menu").getByRole("option", { name: /Ask AI/ })).toBeVisible();
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("ai-box")).toBeVisible();
+  });
+});
+
+test("Fotos: Formatleiste und Farbe", async ({ page, browserName }) => {
+  test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium");
+  test.setTimeout(240_000);
+  await open(page, "Format shots");
+  await focusEditorEnd(page);
+  await page.keyboard.type("Select these words to format them");
+  const field = editor(page).locator("[data-editable-id]").first();
+  const select = async () => {
+    await field.click();
+    await page.keyboard.press("End");
+    for (let i = 0; i < 14; i++) await page.keyboard.press("Shift+ArrowLeft");
+    await expect(page.getByTestId("format-bar")).toBeVisible();
+  };
+  await shots(page, "format-bar", select);
+  await shots(page, "format-color", async () => {
+    await select();
+    await page.getByTestId("format-bar").getByRole("button", { name: "Text color" }).click();
+    await expect(page.getByRole("menu", { name: "Text color" })).toBeVisible();
   });
 });
