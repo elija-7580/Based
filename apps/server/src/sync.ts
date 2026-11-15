@@ -46,6 +46,12 @@ export interface PushReply {
   newer: WireRecord[];
   seq: number;
   deleted: WireDeletion[];
+  /**
+   * BSD-427: Records, die der Server wegen eines Stempels in der Zukunft neu gestempelt hat (BSD-279). Ihre
+   * Server-Kopie steht in `newer`; das Gerät übernimmt sie trotz eigenem (größerem) Stempel – sonst behielte es
+   * den Zukunfts-Stempel und verwürfe alle späteren Änderungen anderer an diesem Record. Fehlt, wenn leer.
+   */
+  restamped?: WireDeletion[];
 }
 
 export interface PullPage {
@@ -200,7 +206,7 @@ export class SyncService {
   /** Push nach dem Dekodieren (Teilen: die Freigabeprüfung filtert dazwischen). */
   pushDecoded(p: DecodedPush): PushReply {
     for (const k of p.deletions) if (!p.stamps.has(k)) p.stamps.set(k, this.store.clock.now());
-    this.restampFuture(p);
+    const restamped = this.restampFuture(p);
     this.adoptDeviceWorkspace(p.records);
     const merge = this.store.applyRemote(p.records, p.deletions, p.stamps);
     const newer: WireRecord[] = [];
@@ -210,8 +216,16 @@ export class SyncService {
       if (r) newer.push(r);
     }
     const deleted = [...merge.tombstoned.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([k, s]) => wireDeletion(k, s));
+    // BSD-427: neu gestempelte Records mit ihrer Server-Kopie zurück (das Gerät übernimmt sie erzwungen)
+    const back: WireDeletion[] = [];
+    for (const k of restamped) {
+      const r = this.store.record(k);
+      if (!r) continue;
+      if (!merge.stale.includes(k)) newer.push(r);
+      back.push(wireDeletion(k, undefined));
+    }
     this.wake();
-    return { newer, seq: this.seq, deleted };
+    return back.length > 0 ? { newer, seq: this.seq, deleted, restamped: back } : { newer, seq: this.seq, deleted };
   }
 
   /**
@@ -219,14 +233,19 @@ export class SyncService {
    * spätere Änderung aller anderen überstimmen, bis die Zeit ihn eingeholt hat – die Seite wäre für alle
    * eingefroren. Solche Records und Löschungen bekommen deshalb den Stempel des Empfangs. Inhalt bleibt unverändert.
    */
-  private restampFuture(p: DecodedPush) {
+  private restampFuture(p: DecodedPush): RecordKeyString[] {
     const limit = this.store.clock.wallClock() + StampClock.maxDrift;
+    const keys: RecordKeyString[] = [];
     for (let i = 0; i < p.records.length; i++) {
       const r = p.records[i]!;
       const s = r.data.stamp as Stamp | undefined;
-      if (s && s.millis > limit) p.records[i] = { ...r, data: { ...r.data, stamp: this.store.clock.now() } } as WireRecord;
+      if (s && s.millis > limit) {
+        p.records[i] = { ...r, data: { ...r.data, stamp: this.store.clock.now() } } as WireRecord;
+        keys.push(keyOf(r.kind, r.data.id));
+      }
     }
     for (const [k, s] of p.stamps) if (s.millis > limit) p.stamps.set(k, this.store.clock.now());
+    return keys;
   }
 
   /**
