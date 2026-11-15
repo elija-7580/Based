@@ -1,69 +1,67 @@
-failure 8caa78bc3e203dd6b953a6ff2c13ebc49bb72f9c (nicht blockierend)
-perf 5000: {"mapOpen":[],"idleBeforePan":[217],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3827,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":7.25,"peekLong":[],"formSubmitMs":87,"formLong":[]}
-BSD-215 chromium: 50 000 Zeilen öffnen 741 ms, ans Ende scrollen 41 ms, Zelle ändern 186 ms
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 8.9, 13.1, 18.4, 19, 40.4
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.1s)
-  ✘   9 [webkit] › e2e/database-perf.spec.ts:6:1 › 50 000 Zeilen: öffnen, scrollen, Zelle ändern @perf (3ms)
-  ✘  10 [webkit] › e2e/database-perf.spec.ts:6:1 › 50 000 Zeilen: öffnen, scrollen, Zelle ändern @perf (retry #1) (3ms)
-  ✘  11 [webkit] › e2e/database-views.spec.ts:378:1 › 5.000 Zeilen: Karte, Peek und Formular bleiben flüssig @perf (5ms)
-  ✘  12 [webkit] › e2e/database-views.spec.ts:378:1 › 5.000 Zeilen: Karte, Peek und Formular bleiben flüssig @perf (retry #1) (3ms)
-  ✘  13 [webkit] › e2e/polish.spec.ts:148:1 › Alles löschen: Library → alle in den Papierkorb, Papierkorb leeren; die Oberfläche bleibt bedienbar @perf (4ms)
-  ✘  14 [webkit] › e2e/polish.spec.ts:148:1 › Alles löschen: Library → alle in den Papierkorb, Papierkorb leeren; die Oberfläche bleibt bedienbar @perf (retry #1) (2ms)
-  ✘  15 [webkit] › e2e/shell-parity.spec.ts:260:1 › Graph bleibt mit 5.000 Seiten bedienbar @perf (3ms)
-  ✘  16 [webkit] › e2e/shell-parity.spec.ts:260:1 › Graph bleibt mit 5.000 Seiten bedienbar @perf (retry #1) (6ms)
-  ✘  17 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3ms)
-  ✘  18 [webkit] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (35ms)
-  ✘  19 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (retry #1) (4ms)
-  ✘  20 [webkit] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (retry #1) (57ms)
-  ✘  21 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (4ms)
-  ✘  22 [webkit] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (3ms)
-  ✘  23 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (retry #1) (3ms)
-  ✘  24 [webkit] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (retry #1) (4ms)
+failure 22957c3524bc0d0f1214768ab39d24ec4eca84b5 (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[186],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3832,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":11.1,"peekLong":[],"formSubmitMs":73,"formLong":[]}
+BSD-215 chromium: 50 000 Zeilen öffnen 890 ms, ans Ende scrollen 53 ms, Zelle ändern 159 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 5.8, 11.8, 12.8, 15, 20.4
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.8s)
+  ✘   8 [webkit] › e2e/database-perf.spec.ts:6:1 › 50 000 Zeilen: öffnen, scrollen, Zelle ändern @perf (4ms)
+  ✘  10 [webkit] › e2e/database-perf.spec.ts:6:1 › 50 000 Zeilen: öffnen, scrollen, Zelle ändern @perf (retry #1) (4ms)
+  ✘  11 [webkit] › e2e/database-views.spec.ts:378:1 › 5.000 Zeilen: Karte, Peek und Formular bleiben flüssig @perf (7ms)
+  ✘  12 [webkit] › e2e/database-views.spec.ts:378:1 › 5.000 Zeilen: Karte, Peek und Formular bleiben flüssig @perf (retry #1) (5ms)
+  ✘  13 [webkit] › e2e/polish.spec.ts:149:1 › Alles löschen: Library → alle in den Papierkorb, Papierkorb leeren; die Oberfläche bleibt bedienbar @perf (5ms)
+  ✘  14 [webkit] › e2e/polish.spec.ts:149:1 › Alles löschen: Library → alle in den Papierkorb, Papierkorb leeren; die Oberfläche bleibt bedienbar @perf (retry #1) (3ms)
+  ✘  15 [webkit] › e2e/shell-parity.spec.ts:260:1 › Graph bleibt mit 5.000 Seiten bedienbar @perf (4ms)
+  ✘  16 [webkit] › e2e/shell-parity.spec.ts:260:1 › Graph bleibt mit 5.000 Seiten bedienbar @perf (retry #1) (4ms)
+  ✘  17 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (6ms)
+  ✘  18 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (retry #1) (4ms)
+  ✘  19 [webkit] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (45ms)
+  ✘  20 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (4ms)
+  ✘  21 [webkit] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (retry #1) (46ms)
+  ✘  22 [webkit] › e2e/shell.spec.ts:129:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln @perf (retry #1) (4ms)
+  ✘  23 [webkit] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (3ms)
+  ✘  24 [webkit] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (retry #1) (3ms)
     Error: browserType.launch: Target page, context or browser has been closed
+      - [pid=5083] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/database-perf-50-000-Zeilen-öffnen-scrollen-Zelle-ändern-webkit/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5092] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/database-perf-50-000-Zeilen-öffnen-scrollen-Zelle-ändern-webkit-retry1/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
     Error Context: test-results/database-views-5-000-Zeile-4fa74-nd-Formular-bleiben-flüssig-webkit/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5134] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/database-views-5-000-Zeile-4fa74-nd-Formular-bleiben-flüssig-webkit-retry1/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
+      - [pid=5183] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/polish-Alles-löschen-Libra-753f5-Oberfläche-bleibt-bedienbar-webkit/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5177] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/polish-Alles-löschen-Libra-753f5-Oberfläche-bleibt-bedienbar-webkit-retry1/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5198] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/shell-parity-Graph-bleibt-mit-5-000-Seiten-bedienbar-webkit/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5226] exception while trying to kill process: Error: kill ESRCH
+      - [pid=5246] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/shell-parity-Graph-bleibt-mit-5-000-Seiten-bedienbar-webkit-retry1/error-context.md
   5) [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf ──
     Error: browserType.launch: Target page, context or browser has been closed
     Error Context: test-results/shell-Quick-Find-über-5-000-Seiten-antwortet-in-50-ms-webkit/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5291] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/shell-Quick-Find-über-5-000-Seiten-antwortet-in-50-ms-webkit-retry1/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5333] exception while trying to kill process: Error: kill ESRCH
+      - [pid=5337] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5375] exception while trying to kill process: Error: kill ESRCH
+      - [pid=5379] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit-retry1/error-context.md
     Error: browserType.launchPersistentContext: Target page, context or browser has been closed
-      - [pid=5269] exception while trying to kill process: Error: kill ESRCH
+      - [pid=5317] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/startup-perf-Start-mit-5-0-af402-anger-Hänger-im-Hauptthread-webkit/error-context.md
     Error: browserType.launchPersistentContext: Target page, context or browser has been closed
-      - [pid=5312] exception while trying to kill process: Error: kill ESRCH
+      - [pid=5359] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/startup-perf-Start-mit-5-0-af402-anger-Hänger-im-Hauptthread-webkit-retry1/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
+      - [pid=5393] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-webkit/error-context.md
     Error: browserType.launch: Target page, context or browser has been closed
-      - [pid=5388] exception while trying to kill process: Error: kill ESRCH
+      - [pid=5414] exception while trying to kill process: Error: kill ESRCH
     Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-webkit-retry1/error-context.md
   8 failed
     [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf ───
-  8 passed (1.0m)
+  8 passed (1.2m)
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --grep @perf
