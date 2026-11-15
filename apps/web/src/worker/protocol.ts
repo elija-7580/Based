@@ -198,7 +198,7 @@ export type Request =
   | { type: "openPage"; pageID: string }
   | { type: "closePage"; pageID: string }
   /** Änderungen aus einer Seiten-Replik (Editor) übernehmen. */
-  | { type: "applyLocal"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[]; derived?: boolean }
+  | { type: "applyLocal"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[]; derived?: boolean; /** BSD-416: nur übernehmen, was neuer ist (Nachholen aus dem Journal) */ lww?: boolean }
   | { type: "setSync"; sync?: SyncConfig }
   | { type: "syncNow" }
   /** Im Import-Worker vorbereiteten Import schreiben (Antwort: ImportSummary). */

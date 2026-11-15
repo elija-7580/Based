@@ -63,6 +63,17 @@ export function requestName(req: Request): string {
   return typeof op === "string" && /^[A-Za-z][\w-]{0,40}$/.test(op) ? `${r.type} ${op}` : r.type;
 }
 
+/** BSD-416: Teil von localStorage, den das Journal braucht (Tests: Map-basiert). */
+export interface JournalStorage {
+  readonly length: number;
+  key(i: number): string | null;
+  getItem(k: string): string | null;
+  setItem(k: string, v: string): void;
+  removeItem(k: string): void;
+}
+export const JOURNAL_PREFIX = "based.unsavedJournal.";
+const JOURNAL_MAX_CHARS = 2_000_000;
+
 export class StoreClient {
   private nextID = 1;
   private pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void; t0: number; req: Request }>();
@@ -94,6 +105,49 @@ export class StoreClient {
   /** BSD-336: Wie viele Änderungen noch unterwegs sind. Solange > 0, fragt das Fenster beim Neuladen/Schließen nach. */
   get unsavedWrites(): number {
     return this.writes.size;
+  }
+
+  /**
+   * BSD-416: Beim Verlassen (pagehide) noch unbestätigte Editor-Änderungen (`applyLocal`) synchron sichern. WebKit
+   * arbeitet die Warteschlange des Store-Workers langsamer ab; nach „sofort neu laden“ (und in der Tauri-Hülle, die
+   * nicht nachfragt) gingen die letzten getippten Zeichen mit dem Worker unter. Die Records tragen ihre Stempel – der
+   * nächste Start holt sie per `replayJournal` nach (nur wo neuer). Befehle (Seite anlegen …) kommen nicht ins
+   * Journal; sie doppelt auszuführen wäre schlimmer. Gibt die Zahl der gesicherten Records zurück.
+   */
+  journalUnsaved(storage: JournalStorage | undefined, key = `${JOURNAL_PREFIX}${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`): number {
+    if (!storage) return 0;
+    const byKey = new Map<string, WireRecord>();
+    for (const id of [...this.writes].sort((a, b) => a - b)) {
+      const req = this.pending.get(id)?.req;
+      if (req?.type !== "applyLocal" || req.derived) continue;
+      for (const r of req.upserts) byKey.set(recordKey(r), r);
+    }
+    if (byKey.size === 0) return 0;
+    const text = JSON.stringify({ v: 1, at: Date.now(), upserts: [...byKey.values()] });
+    if (text.length > JOURNAL_MAX_CHARS) return 0;
+    try { storage.setItem(key, text); } catch { return 0; }
+    return byKey.size;
+  }
+
+  /** BSD-416: Gesicherte Änderungen früherer Sitzungen nachholen (nach `init`), dann löschen. */
+  async replayJournal(storage: JournalStorage | undefined): Promise<number> {
+    if (!storage) return 0;
+    let n = 0;
+    const keys: string[] = [];
+    try { for (let i = 0; i < storage.length; i++) { const k = storage.key(i); if (k?.startsWith(JOURNAL_PREFIX)) keys.push(k); } } catch { return 0; }
+    for (const k of keys.sort()) {
+      let upserts: WireRecord[] = [];
+      try {
+        const v = JSON.parse(storage.getItem(k) ?? "null") as { v?: unknown; upserts?: unknown } | null;
+        if (v?.v === 1 && Array.isArray(v.upserts)) upserts = v.upserts as WireRecord[];
+      } catch { /* kaputt: verwerfen */ }
+      if (upserts.length) {
+        await this.request({ type: "applyLocal", pageID: "", upserts, deletions: [], lww: true });
+        n += upserts.length;
+      }
+      try { storage.removeItem(k); } catch { /* gesperrt */ }
+    }
+    return n;
   }
 
   /**

@@ -7,7 +7,7 @@ export { ENUMS, KNOWN_KEYS } from "./model/schema.js";
 export * from "./model/records.js";
 export * as propertyRecords from "./model/property-records.js";
 export type { DatabaseCore, MigrationReport, PropertyDiff, SchemaIssue } from "./model/property-records.js";
-export { StampClock, ZERO_STAMP, parseStamp, stampToString } from "./hlc.js";
+export { StampClock, ZERO_STAMP, compareStamps, parseStamp, stampToString, type Stamp } from "./hlc.js";
 export { FIRST_KEY, isValidKey, keyBetween, keysBetween } from "./sortkeys.js";
 export { plainText } from "./richtext.js";
 export { MemoryPersistence, StoreReadOnlyError, Tx, WorkspaceStore, keyOf, parseKey, recordKey, WORKSPACE_ID } from "./store/store.js";

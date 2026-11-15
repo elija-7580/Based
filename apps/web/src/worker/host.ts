@@ -72,6 +72,8 @@ import {
   type SearchFilters,
   type SearchOptions,
   type SearchSort,
+  compareStamps,
+  type Stamp,
 } from "@based/core";
 import { AssetError, AssetSync, MemoryAssetBlobStore, MemoryYDocStorage, PUSHED_KEY, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence, type YDocStorage } from "@based/sync";
 import type { AssetStore, StoredAsset } from "./assets.js";
@@ -209,7 +211,7 @@ export class StoreHost {
         case "dueItems": reply(dueItems(this.store, msg.fromMs, msg.toMs)); break;
         case "meetings": reply(this.meetings()); break;
         case "unlinkedMentions": reply(unlinkedMentions(this.store, msg.pageID).map((m) => ({ ...m, pageTitle: titleOf(this.store, m.pageID) || "Untitled" }))); break;
-        case "applyLocal": this.applyLocal(msg.upserts, msg.deletions, msg.derived === true); reply(true); break;
+        case "applyLocal": this.applyLocal(msg.lww ? this.newerOnly(msg.upserts) : msg.upserts, msg.lww ? [] : msg.deletions, msg.derived === true); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(await this.commitImport(msg.payload, msg.parent)); break;
@@ -867,6 +869,22 @@ export class StoreHost {
 
   /** Änderungen aus einer Replik: als lokale Transaktion speichern (neu gestempelt, wird gepusht). */
   /** `derived` (BSD-220): Text aus einem /collab-Y.Doc – speichern, aber nicht pushen (der Server materialisiert ihn). */
+  /**
+   * BSD-416: Aus dem Journal nachgeholte Editor-Änderungen (StoreClient.journalUnsaved) nur übernehmen, wo sie neuer
+   * sind als der gespeicherte Stand bzw. eine Löschung – sie können schon angekommen oder überholt sein.
+   */
+  newerOnly(upserts: WireRecord[]): WireRecord[] {
+    const store = this.store;
+    return upserts.filter((r) => {
+      const stamp = r.data.stamp as Stamp | undefined;
+      if (!stamp) return false;
+      const key = recordKey(r);
+      const local = store.record(key);
+      const other = (local?.data.stamp as Stamp | undefined) ?? (local ? undefined : store.persistence?.tombstone(key));
+      return !other || compareStamps(stamp, other) > 0;
+    });
+  }
+
   applyLocal(upserts: WireRecord[], deletions: RecordKeyString[], derived = false) {
     const store = this.store;
     for (const r of upserts) if (r.data.stamp) store.clock.observe(r.data.stamp as never);
