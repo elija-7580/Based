@@ -4,6 +4,8 @@
 // Nur Protokoll v2 (der TS-Client kommt nach v2; ein Server ohne v2 ist ein Fehler, kein Rückfall auf v1).
 import {
   keyOf,
+  orphanCandidates,
+  rescueOrphans,
   safeParseRecord,
   StoreReadOnlyError,
   type RecordKeyString,
@@ -280,6 +282,8 @@ export class SyncClient {
       after = 0;
     }
     const seen = new Set<RecordKeyString>();
+    // BSD-437 (Swift BSD-104): Blöcke, deren Elternteil nach dem Pull fehlt, am Ende in den Papierkorb
+    const candidates: string[] = [];
     for (;;) {
       const page = await this.request<{ records?: unknown; deletions?: unknown; next: number; more: boolean }>(
         "GET",
@@ -291,6 +295,7 @@ export class SyncClient {
         // Angekommenes wird als nicht-lokal geloggt und deshalb nie zurückgepusht.
         this.store.applyRemote(records, deletions.keys, deletions.stamps);
         result.received += records.length + deletions.keys.length;
+        candidates.push(...orphanCandidates(this.store, records, deletions.keys));
       }
       if (fullPull) for (const r of records) seen.add(keyOf(r.kind, r.data.id));
       if (typeof page.next !== "number") throw new Error("sync/v2/pull: reply without next");
@@ -311,11 +316,14 @@ export class SyncClient {
         .map((r) => keyOf(r.kind, r.data.id))
         .filter((k) => !k.startsWith("workspace:") && !seen.has(k) && !unpushed.has(k));
       if (gone.length > 0) {
+        candidates.push(...orphanCandidates(this.store, [], gone));
         this.store.applyRemote([], gone);
         result.received += gone.length;
       }
       this.persistence.setMeta(PULLED_KEY, String(after));
     }
+    const rescued = rescueOrphans(this.store, candidates);
+    if (rescued.length > 0) log?.("warning", `Sync: recovered ${rescued.length} orphaned block${rescued.length === 1 ? "" : "s"} into the Trash`);
     return result;
   }
 
