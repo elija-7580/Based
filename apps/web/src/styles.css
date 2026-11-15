@@ -738,3 +738,19 @@ button.row:hover, a.row:hover { background: var(--bg); }
 
 /* Rückfragen der App (components/PromptHost.tsx): Zeilenumbrüche des Hinweistexts bleiben. */
 .prompt-text { margin: 0; white-space: pre-line; }
+
+/* BSD-422: Karte am Sync-Status (Überfahren, Tastaturfokus) – Fläche wie die Menüs, über dem Status */
+.synced { cursor: pointer; border-radius: var(--radius-md); }
+.sidebar-footer, .synced-row { position: relative; }
+.synced:focus-visible { outline: var(--marker-width) solid var(--focus-ring); outline-offset: calc(-1 * var(--marker-width)); }
+.sync-card {
+  position: absolute; left: 0; right: 0; bottom: calc(100% + var(--space-1)); z-index: 20; display: grid; gap: var(--space-1);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); background: var(--bg); box-shadow: var(--shadow-menu);
+  color: var(--ink); font-size: var(--type-meta-size); opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out); -webkit-user-select: none; user-select: none;
+}
+.synced:hover ~ .sync-card, .synced:focus-visible ~ .sync-card { opacity: 1; visibility: visible; }
+.sync-card-row { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2); }
+.sync-card-label { color: var(--muted); }
+.sync-card-value { overflow-wrap: anywhere; }
+.sync-card-hint { color: var(--muted); padding-top: var(--space-1); }
