@@ -202,6 +202,11 @@ export interface ArchiveImportResult {
   keptNewer: number;
   /** Unlesbare Zeilen. */
   skipped: number;
+  /**
+   * BSD-423: Records, die hier seit dem Export in den Papierkorb gelegt oder endgültig gelöscht wurden und aus dem
+   * Archiv zurückkamen (in `imported` enthalten). Fehlt, wenn 0 (Swift-Fixtures kennen das Feld nicht).
+   */
+  restored?: number;
 }
 
 /** `local` um die Einstellungen des Archivs ergänzt, ohne etwas zu überschreiben (ID bleibt). */
@@ -220,14 +225,42 @@ export function mergeWorkspace(local: Workspace, incoming: Workspace): Workspace
 }
 
 const stampOf = (r: WireRecord): Stamp => (r.data.stamp as Stamp | undefined) ?? ZERO_STAMP;
+const trashed = (r: WireRecord | undefined) => r?.kind === "block" && r.data.trashedAt !== undefined;
+
+export interface ApplyImportedOptions {
+  /**
+   * BSD-423: Ein Archiv ist der Rückweg. Was hier nach dem Export in den Papierkorb kam (lokal neuer, aber im
+   * Papierkorb) oder endgültig gelöscht wurde (Tombstone neuer als die Archivversion), kommt mit neuem Stempel zurück –
+   * sonst zeigte der Import nach „alles löschen, Papierkorb leeren“ nichts an. Lokal neuer bearbeitete Records bleiben.
+   */
+  restoreDeleted?: boolean;
+}
+
+export interface ApplyImportedResult {
+  /** Lokal neuer (bleiben). */
+  stale: RecordKeyString[];
+  /** Hier gelöscht, nachdem die Archivversion entstand (bleiben gelöscht; nur ohne `restoreDeleted`). */
+  tombstoned: RecordKeyString[];
+  /** Aus Papierkorb bzw. Löschung zurückgeholt (mit `restoreDeleted`). */
+  restored: RecordKeyString[];
+  /** Geschrieben (ohne Gleiche). */
+  written: number;
+}
 
 /**
  * Records mit Herkunft „import“ einspielen (Last-Writer-Wins wie Sync, nichts wird gelöscht; Stempel bleiben, kein
  * Undo, an den Sync gemeldet). Swift `WorkspaceStore.applyImported`; gibt die Schlüssel zurück, die lokal neuer waren.
  */
 export function applyImported(store: WorkspaceStore, records: WireRecord[]): RecordKeyString[] {
+  return applyImportedRecords(store, records).stale;
+}
+
+/** Wie `applyImported`, mit Bericht und optional Wiederherstellen gelöschter Records (BSD-423). */
+export function applyImportedRecords(store: WorkspaceStore, records: WireRecord[], opts: ApplyImportedOptions = {}): ApplyImportedResult {
   const puts: WireRecord[] = [];
+  const revive: WireRecord[] = [];
   const stale: RecordKeyString[] = [];
+  const tombstoned: RecordKeyString[] = [];
   for (const r of records) {
     if (r.kind === "workspace" && r.data.id !== store.workspace.id) continue;
     const key = recordKey(r);
@@ -235,18 +268,33 @@ export function applyImported(store: WorkspaceStore, records: WireRecord[]): Rec
     const local = store.record(key);
     if (local) {
       if (canonicalStringify(local) === canonicalStringify(r)) continue;
-      if (compareStamps(stampOf(local), stampOf(r)) > 0) { stale.push(key); continue; }
+      if (compareStamps(stampOf(local), stampOf(r)) > 0) {
+        if (opts.restoreDeleted && trashed(local) && !trashed(r)) revive.push(r);
+        else stale.push(key);
+        continue;
+      }
     } else {
       const ts = store.persistence?.tombstone(key);
-      if (ts && compareStamps(ts, stampOf(r)) >= 0) continue; // hier gelöscht, nachdem diese Version entstand
+      if (ts && compareStamps(ts, stampOf(r)) >= 0) {
+        // hier gelöscht, nachdem diese Version entstand
+        if (opts.restoreDeleted) revive.push(r); else tombstoned.push(key);
+        continue;
+      }
     }
     puts.push(r);
   }
   // Öffentlicher Weg: `keepStamps` speichert mit Herkunft „import“ (kein Neustempeln, kein Undo, wird gesynct).
   const rejected = store.writeFailure?.rejected ?? 0;
   store.transact("Import", (t) => { for (const r of puts) t.put(r); }, { keepStamps: true });
+  // Zurückgeholtes neu stempeln (sonst gewänne beim Sync wieder die Löschung); Bearbeitungszeiten bleiben.
+  if (revive.length > 0) {
+    store.transact("Restore from archive", (t) => {
+      t.preserveTimestamps = true;
+      for (const r of revive) t.put(r);
+    }, { undoable: false });
+  }
   if (store.writeFailure && store.writeFailure.rejected !== rejected) throw new Error(store.writeFailure.message || "write failed");
-  return stale;
+  return { stale, tombstoned, restored: revive.map(recordKey), written: puts.length + revive.length };
 }
 
 /** Ein gelesenes Archiv in `store` übernehmen (Swift `importRecords`). Leerer Workspace: Einstellungen des Archivs
@@ -270,8 +318,10 @@ export function importArchiveRecords(store: WorkspaceStore, read: ArchiveReadRes
       }
     }
   }
-  const stale = applyImported(store, records);
-  return { imported: records.length - stale.length + restored, keptNewer: stale.length, skipped: read.skipped };
+  const r = applyImportedRecords(store, records, { restoreDeleted: true });
+  const out: ArchiveImportResult = { imported: records.length - r.stale.length - r.tombstoned.length + restored, keptNewer: r.stale.length, skipped: read.skipped };
+  if (r.restored.length > 0) out.restored = r.restored.length;
+  return out;
 }
 
 /** Archivtext importieren (Swift `importArchive`). */

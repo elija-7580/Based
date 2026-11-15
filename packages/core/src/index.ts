@@ -77,7 +77,7 @@ export { base64Encode, embeddableImageType, exportAssetRefs, exportPageHTML, exp
 export type { HTMLExportOptions, HTMLExportResult } from "./interop/html-export.js";
 export { ASSETS_FOLDER, defaultHTMLPageLink, encodeExportPath, exportSummary, planWorkspaceExport, relativeExportPath, subpages, topLevelPages, uniqueExportName, writeExportZip } from "./interop/workspace-export.js";
 export type { ExportFormat, ExportPlan, ExportPlanOptions, ExportReport } from "./interop/workspace-export.js";
-export { ARCHIVE_FORMAT, ARCHIVE_PLAIN_VERSION, ARCHIVE_VERSION, ArchiveError, PACKAGE_EXTENSION, PACKAGE_RECORDS, applyImported, archiveAssetRefs, archiveEntryPath,
+export { ARCHIVE_FORMAT, ARCHIVE_PLAIN_VERSION, ARCHIVE_VERSION, ArchiveError, PACKAGE_EXTENSION, PACKAGE_RECORDS, applyImported, applyImportedRecords, archiveAssetRefs, archiveEntryPath,
   assetRefForEntry, encodeArchive, importArchive, importArchiveRecords, isArchive, loadArchive, mergeWorkspace, readArchive, writeArchive, writeArchivePackage } from "./interop/archive.js";
 export type { ArchiveHeader, ArchiveImportResult, ArchiveReadResult, LoadedArchive } from "./interop/archive.js";
 export * from "./backup/backup.js";

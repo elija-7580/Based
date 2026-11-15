@@ -328,3 +328,50 @@ test("Export: Seite als Markdown, Workspace als Based-Archiv", { tag: "@smoke" }
   expect(bytes.subarray(0, 2).toString()).toBe("PK");
   expect(bytes.includes(Buffer.from("workspace.jsonl"))).toBe(true);
 });
+
+// BSD-423 (Mac-Test 14.11.): Archiv exportieren, alles löschen und den Papierkorb leeren, Archiv importieren → alles
+// wieder da (vorher: Last-Writer-Wins gegen die neueren Löschungen, der Import zeigte nichts an). Auch nach Neuladen.
+test("BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück", async ({ page }) => {
+  test.setTimeout(90_000);
+  type Client = { command(c: unknown): Promise<unknown>; library(): Promise<{ id: string; title: string; parentID?: string; kind: string }[]> };
+  const cmd = (c: unknown) => page.evaluate((x) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(x), c);
+  const topLevel = () => page.evaluate(async () => (await (globalThis as unknown as { __based: { client: Client } }).__based.client.library()).filter((i) => i.parentID === undefined));
+  const parent = await cmd({ op: "createPage", title: "Archive parent" }) as string;
+  await cmd({ op: "createPage", title: "Archive child", parent });
+  await cmd({ op: "createDatabase", title: "Archive tasks" });
+  await expect(page.getByRole("treeitem", { name: "Archive parent" })).toBeVisible();
+  const before = (await topLevel()).map((i) => i.title).sort();
+  expect(before).toEqual(expect.arrayContaining(["Archive parent", "Archive tasks"]));
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Export workspace…" }).click();
+  const ws = page.getByRole("dialog", { name: "Export workspace" });
+  await ws.getByRole("radio", { name: /Based archive/ }).click();
+  const [archive] = await Promise.all([page.waitForEvent("download"), ws.getByRole("button", { name: "Export", exact: true }).click()]);
+  const bytes = readFileSync((await archive.path())!);
+  await ws.getByRole("button", { name: "Done" }).click();
+
+  await cmd({ op: "trash", ids: (await topLevel()).map((i) => i.id) });
+  await cmd({ op: "emptyTrash" });
+  await expect.poll(async () => (await topLevel()).length).toBe(0);
+  await expect(page.getByRole("treeitem", { name: "Archive parent" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "Workspace 2026-11-14.based.zip", mimeType: "application/zip", buffer: bytes });
+  await expect(dialog.getByTestId("import-summary")).toContainText(/came back from Trash or deletion/, { timeout: 30_000 });
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("treeitem", { name: "Archive parent" })).toBeVisible();
+  await expect(page.getByRole("treeitem", { name: "Archive tasks" })).toBeVisible();
+  expect((await topLevel()).map((i) => i.title).sort()).toEqual(before);
+
+  // Neuladen nur, wo der Workspace dauerhaft liegt (WebKit hat OPFS nur in einem dauerhaften Profil, siehe tabs.spec)
+  if (await page.getByTestId("sync-status").getAttribute("data-state") !== "local") return;
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await expect(page.getByRole("treeitem", { name: "Archive parent" })).toBeVisible();
+  expect((await topLevel()).map((i) => i.title).sort()).toEqual(before);
+  await page.getByRole("treeitem", { name: "Archive parent" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Archive parent");
+});

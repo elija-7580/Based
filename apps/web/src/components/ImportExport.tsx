@@ -61,7 +61,9 @@ function summaryLine(s: ImportSummary): string {
   if (s.rows) parts.push(count(s.rows, "row"));
   if (s.assets) parts.push(count(s.assets, "attached file"));
   if (s.archiveRecords) parts.push(count(s.archiveRecords, "record") + " from an archive");
-  return parts.length ? `Imported ${parts.join(", ")}.` : "Nothing new to import.";
+  // BSD-423: sagen, dass Gelöschtes zurückkam (sonst wirkt ein Rückweg-Import wie „nichts passiert“)
+  const back = s.restored ? ` ${count(s.restored, "record")} came back from Trash or deletion.` : "";
+  return parts.length ? `Imported ${parts.join(", ")}.${back}` : "Nothing new to import.";
 }
 
 type Phase =

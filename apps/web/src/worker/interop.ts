@@ -33,6 +33,8 @@ export interface ImportSummary {
   archiveRecords: number;
   /** Archiv-Records, die hier schon neuer waren (bleiben). */
   keptNewer: number;
+  /** BSD-423: Archiv-Records, die hier gelöscht oder im Papierkorb waren und zurückkamen. */
+  restored?: number;
   /** Reimport-Schutz: in Based geänderte bzw. hinzugefügte Blöcke, die bleiben. */
   keptLocalChanges: number;
   keptLocalAdditions: number;
@@ -83,6 +85,7 @@ export function commitImportPayload(store: WorkspaceStore, payload: ImportPayloa
     const r = importArchiveRecords(store, a.read);
     s.archiveRecords += r.imported;
     s.keptNewer += r.keptNewer;
+    if (r.restored) s.restored = (s.restored ?? 0) + r.restored;
     if (r.keptNewer > 0) s.warnings.push(`${a.name}: kept ${r.keptNewer} newer record${r.keptNewer === 1 ? "" : "s"} from this workspace`);
   }
   if (payload.notion) {
