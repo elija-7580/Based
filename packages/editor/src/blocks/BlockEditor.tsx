@@ -1237,6 +1237,27 @@ export function BlockEditor(props: PageEditorProps) {
   };
   const onTailClick = () => focusEndOf(pageID);
 
+  // BSD-344: Luft unter der letzten Zeile wie Notion – aber nur, wenn der Inhalt schon den größten Teil des Fensters
+  // füllt (kurze Seiten rollen sonst ohne Grund). Gemessen wird die Oberkante der Fläche unter dem letzten Block; die
+  // hängt nicht von deren eigener Höhe ab, also kein Hin und Her.
+  const [long, setLong] = useState(false);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    let scroller: HTMLElement | null = root.parentElement;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    const measure = () => {
+      const tail = root.querySelector<HTMLElement>(":scope > .bx2-tail");
+      if (!tail || !scroller) return setLong(false);
+      const top = tail.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      setLong(top > scroller.clientHeight * 0.75);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(root);
+    if (scroller) ro.observe(scroller);
+    return () => ro.disconnect();
+  }, []);
   const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable, notify }), [ctrl, store, props, editable, notify]);
   // ADR 0016 (E7): Echtzeit-Text und Präsenz über /collab (Dokument `text:<seite>`)
   const presence = useRealtime(store, pageID, props.collab, ctrl, props.presenceName);
@@ -1244,7 +1265,7 @@ export function BlockEditor(props: PageEditorProps) {
 
   return (
     <EditorCtx.Provider value={ctx}>
-      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-root={pageID} data-theme={props.theme} data-collab={presence ? "" : undefined}
+      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-root={pageID} data-theme={props.theme} data-collab={presence ? "" : undefined} data-long={long ? "" : undefined}
         tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={onPointerDown} writingsuggestions="false">
         <BlockList parent={pageID} depth={0} />
         {editable ? <div className="bx2-tail" onClick={onTailClick} data-testid="block-editor-tail" /> : null}

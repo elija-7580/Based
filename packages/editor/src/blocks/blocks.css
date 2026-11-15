@@ -286,6 +286,8 @@
 @keyframes bx2-flash { 0%, 40% { background: var(--selected); } 100% { background: transparent; } }
 
 .bx2-tail { min-height: 120px; cursor: text; }
+/* BSD-344: lange Seiten bekommen Luft unter der letzten Zeile (wie Notion), kurze rollen nicht */
+.bx2-editor[data-long] > .bx2-tail { min-height: 40vh; }
 
 /* Menüs im Stil des Seitenmenüs (BSD-407 Teil 6.1): gleiche Fläche, Radius und Schatten wie `.menu`/`.nf-layer`, auf dem
    Mac Glas mit Unschärfe und Kanten-Licht (data-material="glass"). */
