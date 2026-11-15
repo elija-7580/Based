@@ -11,7 +11,7 @@ import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { DevOverlay } from "./components/DevOverlay.js";
 import { ReportProblemDialog } from "./components/ReportProblem.js";
-import { REPORT_PROBLEM_EVENT } from "./desktop.js";
+import { isTauri, REPORT_PROBLEM_EVENT } from "./desktop.js";
 import { startReport } from "./shell/reportUI.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { Notice } from "./components/Notice.js";
@@ -28,7 +28,7 @@ import { installKeyHints } from "./shell/keyHints.js";
 import { Icon } from "./icons.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion } from "./shell/regions.js";
-import { FIND_EVENT, matchShortcut, parentPage } from "./shell/shortcuts.js";
+import { FIND_EVENT, matchShortcut, menuOwnsShortcut, parentPage } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
@@ -167,6 +167,8 @@ export function App({ client, history }: { client: StoreClient; history: History
       }
       const a = matchShortcut(e);
       if (!a) return;
+      // BSD-310: ⌘W in der Desktop-App ans Menü durchlassen (kein preventDefault), sonst kommt „Close Tab“ nie an.
+      if (menuOwnsShortcut(a, isTauri())) return;
       if (a.kind === "find" || a.kind === "findStep") {
         // BSD-206: nur auf Seiten; die Seite hört selbst zu (PageView). Sonst bleibt ⌘F beim Browser.
         if (history.route.name !== "page") return;

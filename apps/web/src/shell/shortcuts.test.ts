@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchShortcut, parentPage } from "./shortcuts.js";
+import { matchShortcut, menuOwnsShortcut, parentPage } from "./shortcuts.js";
 
 const key = (key: string, mods: Partial<{ meta: boolean; ctrl: boolean; shift: boolean; alt: boolean; code: string }> = {}) => ({
   key, code: mods.code ?? "", metaKey: mods.meta ?? true, ctrlKey: mods.ctrl ?? false, shiftKey: mods.shift ?? false, altKey: mods.alt ?? false,
@@ -47,5 +47,18 @@ describe("⇧⌘U (BSD-168)", () => {
     expect(parentPage(outline, "a")).toBeUndefined();
     expect(parentPage(outline, "c")).toBeUndefined();
     expect(parentPage(undefined, "b")).toBeUndefined();
+  });
+});
+
+describe("⌘W gehört in der Desktop-App dem Menü (BSD-310)", () => {
+  const cmdW = matchShortcut({ key: "w", code: "KeyW", metaKey: true, ctrlKey: false, shiftKey: false, altKey: false })!;
+  it("Desktop: die Web-Shell nimmt ⌘W nicht (das Menü schickt close-tab an das Fenster vorn)", () => {
+    expect(cmdW).toEqual({ kind: "closeTab" });
+    expect(menuOwnsShortcut(cmdW, true)).toBe(true);
+  });
+  it("Browser/PWA: ⌘W bleibt bei der Web-Shell; andere Kürzel nie beim Menü", () => {
+    expect(menuOwnsShortcut(cmdW, false)).toBe(false);
+    expect(menuOwnsShortcut({ kind: "newTab" }, true)).toBe(false);
+    expect(menuOwnsShortcut({ kind: "quickFind" }, true)).toBe(false);
   });
 });
