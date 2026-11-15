@@ -86,8 +86,9 @@ import { ChatHost } from "./chat.js";
 import { AgentHost } from "./agents.js";
 import { BrainHost } from "./brain.js";
 import { dueItems } from "@based/brain/home";
+import { localModels } from "@based/brain";
 import type { MeetingListItem } from "./protocol.js";
-import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, LocalModelAction, LocalModelInfo, LocalModelPurpose, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
   store: WorkspaceStore;
@@ -125,6 +126,10 @@ export interface HostOptions {
   migrateDelayMs?: number;
   /** Aufschub für Quick Find, damit neuere Eingaben ältere abbrechen (Tests: synchron über 0). */
   defer?: (fn: () => void) => void;
+  /** BSD-231: Ablage der lokalen Modelle (OPFS im Worker); ohne: im Speicher. */
+  openModels?: () => Promise<localModels.LocalModelStore>;
+  /** BSD-231: Modell-Katalog (Tests: eigener); Standard LOCAL_MODEL_CATALOG. */
+  modelCatalog?: readonly localModels.LocalModelSpec[];
 }
 
 const WELCOME = "Welcome to Based";
@@ -241,6 +246,13 @@ export class StoreHost {
         case "ydocLoad": reply(this.ydocs.get(msg.rootID) ?? null); break;
         case "pendingLocal": reply(this.pendingLocal(msg.rootID)); break;
         case "ydocSave": this.ydocs.put(msg.rootID, msg.state); reply(true); break;
+        // BSD-231: Laden dauert – nicht abwarten, die Nachrichten-Schlange des Workers läuft weiter.
+        case "localModels":
+          void this.localModels(msg.action, msg.consent).then(
+            (r) => this.opts.post({ type: "reply", id: msg.id, ok: true, result: r }),
+            (e: unknown) => this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) }),
+          );
+          break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
@@ -899,6 +911,87 @@ export class StoreHost {
     if (store.isReadOnly) throw new Error("read-only: " + (store.writeFailure?.message ?? ""));
   }
 
+  // MARK: Lokale Modelle (BSD-231 Teil 2c)
+
+  /** Eigener based-server (Quelle für Modelldateien ohne feste URL). */
+  private syncURL: string | undefined;
+  private modelConsent = new Set<localModels.LocalModelPurpose>();
+  private modelManager: localModels.LocalModelManager | undefined;
+  private modelInstalled = new Map<string, boolean>();
+  private modelDownloads = new Map<string, AbortController>();
+
+  private async models(): Promise<localModels.LocalModelManager> {
+    if (!this.modelManager) {
+      const store = this.opts.openModels ? await this.opts.openModels().catch(() => new localModels.MemoryLocalModelStore()) : new localModels.MemoryLocalModelStore();
+      this.modelManager = new localModels.LocalModelManager({
+        store,
+        fetch: this.opts.fetch ?? ((...a) => fetch(...a)),
+        consent: () => this.modelConsent,
+        server: () => this.syncURL,
+      });
+    }
+    return this.modelManager;
+  }
+
+  private modelCatalog(): readonly localModels.LocalModelSpec[] {
+    return this.opts.modelCatalog ?? localModels.LOCAL_MODEL_CATALOG;
+  }
+
+  private async modelInfo(): Promise<LocalModelInfo[]> {
+    const m = await this.models();
+    const out: LocalModelInfo[] = [];
+    for (const spec of this.modelCatalog()) {
+      let installed = this.modelInstalled.get(spec.id);
+      if (installed === undefined && !this.modelDownloads.has(spec.id)) this.modelInstalled.set(spec.id, (installed = await m.installed(spec)));
+      out.push({ id: spec.id, purpose: spec.purpose, name: spec.name, license: spec.license, size: spec.files.reduce((n, f) => n + f.size, 0),
+        installed: installed === true, downloading: this.modelDownloads.has(spec.id) });
+    }
+    return out;
+  }
+
+  /**
+   * Status, Laden (nur mit Einwilligung für den Zweck – sonst keine Anfrage, `ConsentRequired`), Abbrechen, Entfernen.
+   * Fortschritt kommt als Ereignis `localModelProgress`. Antwort: der Katalog mit Stand.
+   */
+  async localModels(action: LocalModelAction, consent: readonly LocalModelPurpose[]): Promise<LocalModelInfo[]> {
+    this.modelConsent = new Set(consent);
+    const m = await this.models();
+    const spec = action.op === "status" ? undefined : this.modelCatalog().find((x) => x.id === action.id);
+    if (action.op !== "status" && !spec) throw new Error(`unknown model: ${action.id}`);
+    if (action.op === "cancel") this.modelDownloads.get(spec!.id)?.abort();
+    if (action.op === "remove") {
+      this.modelDownloads.get(spec!.id)?.abort();
+      await m.remove(spec!);
+      this.modelInstalled.set(spec!.id, false);
+    }
+    if (action.op === "download" && !this.modelDownloads.has(spec!.id)) {
+      const ctl = new AbortController();
+      this.modelDownloads.set(spec!.id, ctl);
+      const total = spec!.files.reduce((n, f) => n + f.size, 0);
+      let last = 0;
+      try {
+        await m.download(spec!, {
+          signal: ctl.signal,
+          onProgress: (p) => {
+            // höchstens alle 1 % melden (große Dateien, viele Stücke)
+            if (p.loaded - last < total / 100 && p.loaded < p.total) return;
+            last = p.loaded;
+            this.opts.post({ type: "localModelProgress", id: spec!.id, loaded: p.loaded, total: p.total });
+          },
+        });
+        this.modelInstalled.set(spec!.id, true);
+        this.opts.post({ type: "localModelProgress", id: spec!.id, loaded: total, total, done: true });
+      } catch (e) {
+        const error = ctl.signal.aborted ? "cancelled" : e instanceof Error ? e.message : String(e);
+        this.opts.post({ type: "localModelProgress", id: spec!.id, loaded: last, total, done: true, error });
+        if (!ctl.signal.aborted) throw e;
+      } finally {
+        this.modelDownloads.delete(spec!.id);
+      }
+    }
+    return this.modelInfo();
+  }
+
   // MARK: Quick Find
 
   /** Index auf dem Stand des Stores: beim ersten Mal gebaut, danach nur geänderte Blöcke/Datenbanken eingearbeitet. */
@@ -986,6 +1079,7 @@ export class StoreHost {
       }
     }
     this.assets?.configure(cfg?.url ? { baseURL: cfg.url, token: cfg.token } : undefined);
+    this.syncURL = cfg?.url || undefined;
     if (!cfg?.url) {
       this.syncState = ws.persistent ? "local" : "memory";
       this.syncDetail = ws.note;
