@@ -1,9 +1,17 @@
-success 90f74ed77f191f5e4256b5e5ab64071c6b4dd993 (nicht blockierend)
-BSD-215 chromium: 50 000 Zeilen öffnen 549 ms, ans Ende scrollen 31 ms, Zelle ändern 141 ms
-perf 5000: {"mapOpen":[],"idleBeforePan":[142],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3813,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":10.35,"peekLong":[],"formSubmitMs":51,"formLong":[]}
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 8.3, 9.3, 23.5, 30.4, 30.4
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.1s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1205 ms, ans Ende scrollen 331 ms, Zelle ändern 224 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 7, 13, 17, 23, 24
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.8s)
-  15 passed (1.4m)
+failure 2341af8c23dd0074c79d36207568d8e14161811f (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[191],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3876,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":10.15,"peekLong":[],"formSubmitMs":70,"formLong":[]}
+BSD-215 chromium: 50 000 Zeilen öffnen 948 ms, ans Ende scrollen 46 ms, Zelle ändern 164 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 10.3, 10.3, 16.9, 26, 32.5
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.0s)
+  ✘   8 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (7.9s)
+BSD-215 webkit: 50 000 Zeilen öffnen 2118 ms, ans Ende scrollen 95 ms, Zelle ändern 386 ms
+  ✘  10 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (retry #1) (9.1s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 10, 27, 27, 37, 50
+  ✓  14 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.7s)
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium/error-context.md
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium-retry1/error-context.md
+  1 failed
+  14 passed (1.9m)
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --grep @perf
