@@ -1,0 +1,1079 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "Just text."
+      },
+      "name" : "render: ohne Marker",
+      "output" : {
+        "citations" : [
+
+        ],
+        "markdown" : "Just text."
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Just text."
+      },
+      "name" : "markers: ohne Marker",
+      "output" : {
+        "markers" : [
+
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "Marketing gets 40 % [[block:b1]]."
+      },
+      "name" : "render: ein Block",
+      "output" : {
+        "citations" : [
+          {
+            "blockID" : "b1",
+            "number" : 1,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          }
+        ],
+        "markdown" : "Marketing gets 40 %[¹](based://page/p1?block=b1).\n\n**Sources**\n\n1. [Budget 2027](based://page/p1?block=b1) — Marketing gets 40 %"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Marketing gets 40 % [[block:b1]]."
+      },
+      "name" : "markers: ein Block",
+      "output" : {
+        "markers" : [
+          [
+            "block",
+            "b1"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "A [[block:b1]] and again [[block:b1]]."
+      },
+      "name" : "render: gleiche Quelle zweimal",
+      "output" : {
+        "citations" : [
+          {
+            "blockID" : "b1",
+            "number" : 1,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          }
+        ],
+        "markdown" : "A[¹](based://page/p1?block=b1) and again[¹](based://page/p1?block=b1).\n\n**Sources**\n\n1. [Budget 2027](based://page/p1?block=b1) — Marketing gets 40 %"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "A [[block:b1]] and again [[block:b1]]."
+      },
+      "name" : "markers: gleiche Quelle zweimal",
+      "output" : {
+        "markers" : [
+          [
+            "block",
+            "b1"
+          ],
+          [
+            "block",
+            "b1"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "See [[page:p2]], [[block:b2]] and [[block:b3]]."
+      },
+      "name" : "render: Seite und Blöcke",
+      "output" : {
+        "citations" : [
+          {
+            "number" : 1,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          },
+          {
+            "blockID" : "b2",
+            "number" : 2,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          {
+            "blockID" : "b3",
+            "number" : 3,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          }
+        ],
+        "markdown" : "See[¹](based://page/p2),[²](based://page/p1?block=b2) and[³](based://page/p3?block=b3).\n\n**Sources**\n\n1. [Untitled](based://page/p2)\n2. [Budget 2027](based://page/p1?block=b2)\n3. [Notes [draft\\]](based://page/p3?block=b3) — Ship it"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "See [[page:p2]], [[block:b2]] and [[block:b3]]."
+      },
+      "name" : "markers: Seite und Blöcke",
+      "output" : {
+        "markers" : [
+          [
+            "page",
+            "p2"
+          ],
+          [
+            "block",
+            "b2"
+          ],
+          [
+            "block",
+            "b3"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "Gone [[block:zz]] here."
+      },
+      "name" : "render: unbekannte ID fällt weg",
+      "output" : {
+        "citations" : [
+
+        ],
+        "markdown" : "Gone here."
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Gone [[block:zz]] here."
+      },
+      "name" : "markers: unbekannte ID fällt weg",
+      "output" : {
+        "markers" : [
+          [
+            "block",
+            "zz"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "Spaced [[ block: b1 ]] and [[page:  p1]]."
+      },
+      "name" : "render: Leerraum im Marker",
+      "output" : {
+        "citations" : [
+          {
+            "number" : 1,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          }
+        ],
+        "markdown" : "Spaced [[ block: b1 ]] and[¹](based://page/p1).\n\n**Sources**\n\n1. [Budget 2027](based://page/p1)"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Spaced [[ block: b1 ]] and [[page:  p1]]."
+      },
+      "name" : "markers: Leerraum im Marker",
+      "output" : {
+        "markers" : [
+          [
+            "page",
+            "p1"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "Tight[[block:b1]]"
+      },
+      "name" : "render: ohne Leerzeichen davor",
+      "output" : {
+        "citations" : [
+          {
+            "blockID" : "b1",
+            "number" : 1,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          }
+        ],
+        "markdown" : "Tight[¹](based://page/p1?block=b1)\n\n**Sources**\n\n1. [Budget 2027](based://page/p1?block=b1) — Marketing gets 40 %"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Tight[[block:b1]]"
+      },
+      "name" : "markers: ohne Leerzeichen davor",
+      "output" : {
+        "markers" : [
+          [
+            "block",
+            "b1"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : true,
+        "text" : "Answer so far [[blo"
+      },
+      "name" : "render: Streaming: abgeschnittener Marker",
+      "output" : {
+        "citations" : [
+
+        ],
+        "markdown" : "Answer so far"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Answer so far [[blo"
+      },
+      "name" : "markers: Streaming: abgeschnittener Marker",
+      "output" : {
+        "markers" : [
+
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : true,
+        "text" : "Answer [[block:b1]] and [[block:12ab"
+      },
+      "name" : "render: Streaming: angefangene ID",
+      "output" : {
+        "citations" : [
+          {
+            "blockID" : "b1",
+            "number" : 1,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          }
+        ],
+        "markdown" : "Answer[¹](based://page/p1?block=b1) and\n\n**Sources**\n\n1. [Budget 2027](based://page/p1?block=b1) — Marketing gets 40 %"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Answer [[block:b1]] and [[block:12ab"
+      },
+      "name" : "markers: Streaming: angefangene ID",
+      "output" : {
+        "markers" : [
+          [
+            "block",
+            "b1"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : true,
+        "text" : "Answer ["
+      },
+      "name" : "render: Streaming: einzelne Klammer",
+      "output" : {
+        "citations" : [
+
+        ],
+        "markdown" : "Answer "
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Answer ["
+      },
+      "name" : "markers: Streaming: einzelne Klammer",
+      "output" : {
+        "markers" : [
+
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : true,
+        "text" : "Answer [[block:b1]]"
+      },
+      "name" : "render: Streaming: fertiger Marker",
+      "output" : {
+        "citations" : [
+          {
+            "blockID" : "b1",
+            "number" : 1,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          }
+        ],
+        "markdown" : "Answer[¹](based://page/p1?block=b1)\n\n**Sources**\n\n1. [Budget 2027](based://page/p1?block=b1) — Marketing gets 40 %"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Answer [[block:b1]]"
+      },
+      "name" : "markers: Streaming: fertiger Marker",
+      "output" : {
+        "markers" : [
+          [
+            "block",
+            "b1"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : true,
+        "text" : "Array [[1, 2]"
+      },
+      "name" : "render: Streaming: andere Klammern bleiben",
+      "output" : {
+        "citations" : [
+
+        ],
+        "markdown" : "Array [[1, 2]"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Array [[1, 2]"
+      },
+      "name" : "markers: Streaming: andere Klammern bleiben",
+      "output" : {
+        "markers" : [
+
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "From notes [[block:b3]]."
+      },
+      "name" : "render: Titel mit ]",
+      "output" : {
+        "citations" : [
+          {
+            "blockID" : "b3",
+            "number" : 1,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          }
+        ],
+        "markdown" : "From notes[¹](based://page/p3?block=b3).\n\n**Sources**\n\n1. [Notes [draft\\]](based://page/p3?block=b3) — Ship it"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "From notes [[block:b3]]."
+      },
+      "name" : "markers: Titel mit ]",
+      "output" : {
+        "markers" : [
+          [
+            "block",
+            "b3"
+          ]
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "render",
+        "known" : {
+          "block:b1" : {
+            "blockID" : "b1",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "Marketing gets 40 %",
+            "title" : "Budget 2027"
+          },
+          "block:b2" : {
+            "blockID" : "b2",
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "block:b3" : {
+            "blockID" : "b3",
+            "number" : 0,
+            "pageID" : "p3",
+            "snippet" : "Ship it",
+            "title" : "Notes [draft]"
+          },
+          "page:p1" : {
+            "number" : 0,
+            "pageID" : "p1",
+            "snippet" : "",
+            "title" : "Budget 2027"
+          },
+          "page:p2" : {
+            "number" : 0,
+            "pageID" : "p2",
+            "snippet" : "",
+            "title" : ""
+          }
+        },
+        "streaming" : false,
+        "text" : "Long [[block:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]]"
+      },
+      "name" : "render: ID zu lang",
+      "output" : {
+        "citations" : [
+
+        ],
+        "markdown" : "Long [[block:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]]"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "markers",
+        "text" : "Long [[block:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]]"
+      },
+      "name" : "markers: ID zu lang",
+      "output" : {
+        "markers" : [
+
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : ""
+      },
+      "name" : "streamingSafe: (leer)",
+      "output" : {
+        "text" : ""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "plain"
+      },
+      "name" : "streamingSafe: plain",
+      "output" : {
+        "text" : "plain"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "end ["
+      },
+      "name" : "streamingSafe: end [",
+      "output" : {
+        "text" : "end "
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x [["
+      },
+      "name" : "streamingSafe: x [[",
+      "output" : {
+        "text" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x [[b"
+      },
+      "name" : "streamingSafe: x [[b",
+      "output" : {
+        "text" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x [[block"
+      },
+      "name" : "streamingSafe: x [[block",
+      "output" : {
+        "text" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x [[block:"
+      },
+      "name" : "streamingSafe: x [[block:",
+      "output" : {
+        "text" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x [[page:ab"
+      },
+      "name" : "streamingSafe: x [[page:ab",
+      "output" : {
+        "text" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x [[pa"
+      },
+      "name" : "streamingSafe: x [[pa",
+      "output" : {
+        "text" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x [[other"
+      },
+      "name" : "streamingSafe: x [[other",
+      "output" : {
+        "text" : "x [[other"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "x  [[block:1"
+      },
+      "name" : "streamingSafe: x  [[block:1",
+      "output" : {
+        "text" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "streamingSafe",
+        "text" : "[[block:a]] y [[pag"
+      },
+      "name" : "streamingSafe: [[block:a]] y [[pag",
+      "output" : {
+        "text" : "[[block:a]] y"
+      }
+    }
+  ],
+  "module" : "agents-citations",
+  "note" : "Swift Citations (render mit festem resolve, markers, streamingSafe); Links im Swift-Format based://page/ID?block=… – der TS-Runner übergibt dieselbe Link-Funktion. Erzeugt von AgentFixtureExport.swift (BSD-410)."
+}

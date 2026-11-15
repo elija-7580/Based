@@ -51,6 +51,21 @@ async function prompt(p) {
     }
     return { stopReason: "end_turn" };
   }
+  if (t.startsWith("run ")) {
+    // BSD-411: Shell-Befehl (ACP kind „execute“) – fragt um Erlaubnis, läuft aber nicht wirklich
+    const command = t.slice(4);
+    update(sid, { sessionUpdate: "tool_call", toolCallId: "t2", title: command, kind: "execute", status: "pending", rawInput: { command } });
+    const r = await request("session/request_permission", {
+      sessionId: sid,
+      toolCall: { toolCallId: "t2", title: command, kind: "execute", rawInput: { command } },
+      options: [{ optionId: "yes", name: "Allow", kind: "allow_once" }, { optionId: "no", name: "Reject", kind: "reject_once" }],
+    });
+    if (r.outcome.outcome === "cancelled") return { stopReason: s.cancelled ? "cancelled" : "end_turn" };
+    const ok = r.outcome.optionId === "yes";
+    update(sid, { sessionUpdate: "tool_call_update", toolCallId: "t2", status: ok ? "completed" : "failed", content: [{ type: "content", content: { type: "text", text: ok ? "ran" : "rejected" } }] });
+    text(sid, ok ? "ran " + command : "not running");
+    return { stopReason: "end_turn" };
+  }
   if (t.startsWith("read ")) {
     try { const r = await request("fs/read_text_file", { sessionId: sid, path: t.slice(5) }); text(sid, "content: " + r.content); }
     catch (e) { text(sid, "read failed: " + e.message); }

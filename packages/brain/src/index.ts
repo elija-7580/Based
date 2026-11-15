@@ -10,6 +10,7 @@ export * from "./pricing.js";
 export * from "./engine.js";
 export * from "./planmode.js";
 export * from "./history.js";
+export * from "./linediff.js";
 export * from "./tools.js";
 export * from "./transcript.js";
 export * from "./legacy.js";

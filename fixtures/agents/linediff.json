@@ -1,0 +1,825 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "a\nb\nc",
+        "old" : "a\nb\nc"
+      },
+      "name" : "LineDiff: gleich",
+      "output" : {
+        "added" : 0,
+        "ops" : [
+          [
+            "same",
+            "a"
+          ],
+          [
+            "same",
+            "b"
+          ],
+          [
+            "same",
+            "c"
+          ]
+        ],
+        "parsed" : [
+
+        ],
+        "removed" : 0,
+        "unified" : ""
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "eins\nzwei",
+        "old" : ""
+      },
+      "name" : "LineDiff: leer → Text",
+      "output" : {
+        "added" : 2,
+        "ops" : [
+          [
+            "added",
+            "eins"
+          ],
+          [
+            "added",
+            "zwei"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,0 +1,2 @@"
+          },
+          {
+            "kind" : "added",
+            "new" : 1,
+            "text" : "eins"
+          },
+          {
+            "kind" : "added",
+            "new" : 2,
+            "text" : "zwei"
+          }
+        ],
+        "removed" : 0,
+        "unified" : "@@ -1,0 +1,2 @@\n+eins\n+zwei"
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "",
+        "old" : "eins\nzwei"
+      },
+      "name" : "LineDiff: Text → leer",
+      "output" : {
+        "added" : 0,
+        "ops" : [
+          [
+            "removed",
+            "eins"
+          ],
+          [
+            "removed",
+            "zwei"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,2 +1,0 @@"
+          },
+          {
+            "kind" : "removed",
+            "old" : 1,
+            "text" : "eins"
+          },
+          {
+            "kind" : "removed",
+            "old" : 2,
+            "text" : "zwei"
+          }
+        ],
+        "removed" : 2,
+        "unified" : "@@ -1,2 +1,0 @@\n-eins\n-zwei"
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "a\nb\nX\nd\ne",
+        "old" : "a\nb\nc\nd\ne"
+      },
+      "name" : "LineDiff: eine Zeile geändert",
+      "output" : {
+        "added" : 1,
+        "ops" : [
+          [
+            "same",
+            "a"
+          ],
+          [
+            "same",
+            "b"
+          ],
+          [
+            "removed",
+            "c"
+          ],
+          [
+            "added",
+            "X"
+          ],
+          [
+            "same",
+            "d"
+          ],
+          [
+            "same",
+            "e"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,5 +1,5 @@"
+          },
+          {
+            "kind" : "same",
+            "new" : 1,
+            "old" : 1,
+            "text" : "a"
+          },
+          {
+            "kind" : "same",
+            "new" : 2,
+            "old" : 2,
+            "text" : "b"
+          },
+          {
+            "kind" : "removed",
+            "old" : 3,
+            "text" : "c"
+          },
+          {
+            "kind" : "added",
+            "new" : 3,
+            "text" : "X"
+          },
+          {
+            "kind" : "same",
+            "new" : 4,
+            "old" : 4,
+            "text" : "d"
+          },
+          {
+            "kind" : "same",
+            "new" : 5,
+            "old" : 5,
+            "text" : "e"
+          }
+        ],
+        "removed" : 1,
+        "unified" : "@@ -1,5 +1,5 @@\n a\n b\n-c\n+X\n d\n e"
+      }
+    },
+    {
+      "input" : {
+        "context" : 1,
+        "firstLine" : 1,
+        "new" : "1\nzwei\n3\n4\n5\n6\n7\n8\nneun\n10",
+        "old" : "1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+      },
+      "name" : "LineDiff: Kontext 1, zwei Hunks",
+      "output" : {
+        "added" : 2,
+        "ops" : [
+          [
+            "same",
+            "1"
+          ],
+          [
+            "removed",
+            "2"
+          ],
+          [
+            "added",
+            "zwei"
+          ],
+          [
+            "same",
+            "3"
+          ],
+          [
+            "same",
+            "4"
+          ],
+          [
+            "same",
+            "5"
+          ],
+          [
+            "same",
+            "6"
+          ],
+          [
+            "same",
+            "7"
+          ],
+          [
+            "same",
+            "8"
+          ],
+          [
+            "removed",
+            "9"
+          ],
+          [
+            "added",
+            "neun"
+          ],
+          [
+            "same",
+            "10"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,3 +1,3 @@"
+          },
+          {
+            "kind" : "same",
+            "new" : 1,
+            "old" : 1,
+            "text" : "1"
+          },
+          {
+            "kind" : "removed",
+            "old" : 2,
+            "text" : "2"
+          },
+          {
+            "kind" : "added",
+            "new" : 2,
+            "text" : "zwei"
+          },
+          {
+            "kind" : "same",
+            "new" : 3,
+            "old" : 3,
+            "text" : "3"
+          },
+          {
+            "kind" : "hunk",
+            "text" : "@@ -8,3 +8,3 @@"
+          },
+          {
+            "kind" : "same",
+            "new" : 8,
+            "old" : 8,
+            "text" : "8"
+          },
+          {
+            "kind" : "removed",
+            "old" : 9,
+            "text" : "9"
+          },
+          {
+            "kind" : "added",
+            "new" : 9,
+            "text" : "neun"
+          },
+          {
+            "kind" : "same",
+            "new" : 10,
+            "old" : 10,
+            "text" : "10"
+          }
+        ],
+        "removed" : 2,
+        "unified" : "@@ -1,3 +1,3 @@\n 1\n-2\n+zwei\n 3\n@@ -8,3 +8,3 @@\n 8\n-9\n+neun\n 10"
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "1\nB\n3\n4\n5\n6\nG\n8",
+        "old" : "1\n2\n3\n4\n5\n6\n7\n8"
+      },
+      "name" : "LineDiff: Kontext 3 verbindet Hunks",
+      "output" : {
+        "added" : 2,
+        "ops" : [
+          [
+            "same",
+            "1"
+          ],
+          [
+            "removed",
+            "2"
+          ],
+          [
+            "added",
+            "B"
+          ],
+          [
+            "same",
+            "3"
+          ],
+          [
+            "same",
+            "4"
+          ],
+          [
+            "same",
+            "5"
+          ],
+          [
+            "same",
+            "6"
+          ],
+          [
+            "removed",
+            "7"
+          ],
+          [
+            "added",
+            "G"
+          ],
+          [
+            "same",
+            "8"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,8 +1,8 @@"
+          },
+          {
+            "kind" : "same",
+            "new" : 1,
+            "old" : 1,
+            "text" : "1"
+          },
+          {
+            "kind" : "removed",
+            "old" : 2,
+            "text" : "2"
+          },
+          {
+            "kind" : "added",
+            "new" : 2,
+            "text" : "B"
+          },
+          {
+            "kind" : "same",
+            "new" : 3,
+            "old" : 3,
+            "text" : "3"
+          },
+          {
+            "kind" : "same",
+            "new" : 4,
+            "old" : 4,
+            "text" : "4"
+          },
+          {
+            "kind" : "same",
+            "new" : 5,
+            "old" : 5,
+            "text" : "5"
+          },
+          {
+            "kind" : "same",
+            "new" : 6,
+            "old" : 6,
+            "text" : "6"
+          },
+          {
+            "kind" : "removed",
+            "old" : 7,
+            "text" : "7"
+          },
+          {
+            "kind" : "added",
+            "new" : 7,
+            "text" : "G"
+          },
+          {
+            "kind" : "same",
+            "new" : 8,
+            "old" : 8,
+            "text" : "8"
+          }
+        ],
+        "removed" : 2,
+        "unified" : "@@ -1,8 +1,8 @@\n 1\n-2\n+B\n 3\n 4\n 5\n 6\n-7\n+G\n 8"
+      }
+    },
+    {
+      "input" : {
+        "context" : 2,
+        "firstLine" : 40,
+        "new" : "func a() {\n  y\n  z\n}\n",
+        "old" : "func a() {\n  x\n}\n"
+      },
+      "name" : "LineDiff: Zeilen eingefügt und entfernt",
+      "output" : {
+        "added" : 2,
+        "ops" : [
+          [
+            "same",
+            "func a() {"
+          ],
+          [
+            "removed",
+            "  x"
+          ],
+          [
+            "added",
+            "  y"
+          ],
+          [
+            "added",
+            "  z"
+          ],
+          [
+            "same",
+            "}"
+          ],
+          [
+            "same",
+            ""
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -40,4 +40,5 @@"
+          },
+          {
+            "kind" : "same",
+            "new" : 40,
+            "old" : 40,
+            "text" : "func a() {"
+          },
+          {
+            "kind" : "removed",
+            "old" : 41,
+            "text" : "  x"
+          },
+          {
+            "kind" : "added",
+            "new" : 41,
+            "text" : "  y"
+          },
+          {
+            "kind" : "added",
+            "new" : 42,
+            "text" : "  z"
+          },
+          {
+            "kind" : "same",
+            "new" : 43,
+            "old" : 42,
+            "text" : "}"
+          },
+          {
+            "kind" : "same",
+            "new" : 44,
+            "old" : 43,
+            "text" : ""
+          }
+        ],
+        "removed" : 1,
+        "unified" : "@@ -40,4 +40,5 @@\n func a() {\n-  x\n+  y\n+  z\n }\n "
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 0,
+        "new" : "b",
+        "old" : "a"
+      },
+      "name" : "LineDiff: firstLine 0 → 1",
+      "output" : {
+        "added" : 1,
+        "ops" : [
+          [
+            "removed",
+            "a"
+          ],
+          [
+            "added",
+            "b"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,1 +1,1 @@"
+          },
+          {
+            "kind" : "removed",
+            "old" : 1,
+            "text" : "a"
+          },
+          {
+            "kind" : "added",
+            "new" : 1,
+            "text" : "b"
+          }
+        ],
+        "removed" : 1,
+        "unified" : "@@ -1,1 +1,1 @@\n-a\n+b"
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "b\na\nb\na\nb",
+        "old" : "a\nb\na\nb\na"
+      },
+      "name" : "LineDiff: Wiederholungen (LCS)",
+      "output" : {
+        "added" : 1,
+        "ops" : [
+          [
+            "removed",
+            "a"
+          ],
+          [
+            "same",
+            "b"
+          ],
+          [
+            "same",
+            "a"
+          ],
+          [
+            "same",
+            "b"
+          ],
+          [
+            "same",
+            "a"
+          ],
+          [
+            "added",
+            "b"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,5 +1,5 @@"
+          },
+          {
+            "kind" : "removed",
+            "old" : 1,
+            "text" : "a"
+          },
+          {
+            "kind" : "same",
+            "new" : 1,
+            "old" : 2,
+            "text" : "b"
+          },
+          {
+            "kind" : "same",
+            "new" : 2,
+            "old" : 3,
+            "text" : "a"
+          },
+          {
+            "kind" : "same",
+            "new" : 3,
+            "old" : 4,
+            "text" : "b"
+          },
+          {
+            "kind" : "same",
+            "new" : 4,
+            "old" : 5,
+            "text" : "a"
+          },
+          {
+            "kind" : "added",
+            "new" : 5,
+            "text" : "b"
+          }
+        ],
+        "removed" : 1,
+        "unified" : "@@ -1,5 +1,5 @@\n-a\n b\n a\n b\n a\n+b"
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "a\n\n\n",
+        "old" : "a\n\n"
+      },
+      "name" : "LineDiff: Leerzeilen am Ende",
+      "output" : {
+        "added" : 1,
+        "ops" : [
+          [
+            "same",
+            "a"
+          ],
+          [
+            "same",
+            ""
+          ],
+          [
+            "same",
+            ""
+          ],
+          [
+            "added",
+            ""
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,3 +1,4 @@"
+          },
+          {
+            "kind" : "same",
+            "new" : 1,
+            "old" : 1,
+            "text" : "a"
+          },
+          {
+            "kind" : "same",
+            "new" : 2,
+            "old" : 2,
+            "text" : ""
+          },
+          {
+            "kind" : "same",
+            "new" : 3,
+            "old" : 3,
+            "text" : ""
+          },
+          {
+            "kind" : "added",
+            "new" : 4,
+            "text" : ""
+          }
+        ],
+        "removed" : 0,
+        "unified" : "@@ -1,3 +1,4 @@\n a\n \n \n+"
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "Grüße\n👋 hallo\nEnde",
+        "old" : "Grüße\n👋🏽 hallo\nEnde"
+      },
+      "name" : "LineDiff: Unicode",
+      "output" : {
+        "added" : 1,
+        "ops" : [
+          [
+            "same",
+            "Grüße"
+          ],
+          [
+            "removed",
+            "👋🏽 hallo"
+          ],
+          [
+            "added",
+            "👋 hallo"
+          ],
+          [
+            "same",
+            "Ende"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,3 +1,3 @@"
+          },
+          {
+            "kind" : "same",
+            "new" : 1,
+            "old" : 1,
+            "text" : "Grüße"
+          },
+          {
+            "kind" : "removed",
+            "old" : 2,
+            "text" : "👋🏽 hallo"
+          },
+          {
+            "kind" : "added",
+            "new" : 2,
+            "text" : "👋 hallo"
+          },
+          {
+            "kind" : "same",
+            "new" : 3,
+            "old" : 3,
+            "text" : "Ende"
+          }
+        ],
+        "removed" : 1,
+        "unified" : "@@ -1,3 +1,3 @@\n Grüße\n-👋🏽 hallo\n+👋 hallo\n Ende"
+      }
+    },
+    {
+      "input" : {
+        "context" : 3,
+        "firstLine" : 1,
+        "new" : "a\r\nc",
+        "old" : "a\r\nb"
+      },
+      "name" : "LineDiff: CRLF bleibt in der Zeile",
+      "output" : {
+        "added" : 1,
+        "ops" : [
+          [
+            "removed",
+            "a\r\nb"
+          ],
+          [
+            "added",
+            "a\r\nc"
+          ]
+        ],
+        "parsed" : [
+          {
+            "kind" : "hunk",
+            "text" : "@@ -1,1 +1,1 @@"
+          },
+          {
+            "kind" : "removed",
+            "old" : 1,
+            "text" : "a\r\nb"
+          },
+          {
+            "kind" : "added",
+            "new" : 1,
+            "text" : "a\r\nc"
+          }
+        ],
+        "removed" : 1,
+        "unified" : "@@ -1,1 +1,1 @@\n-a\r\nb\n+a\r\nc"
+      }
+    },
+    {
+      "input" : {
+        "newGen" : [
+          "b",
+          1500
+        ],
+        "oldGen" : [
+          "a",
+          1500
+        ]
+      },
+      "name" : "LineDiff: große Eingabe ohne LCS",
+      "output" : {
+        "added" : 1500,
+        "count" : 3000,
+        "firstOps" : [
+          [
+            "removed",
+            "a0"
+          ],
+          [
+            "removed",
+            "a1"
+          ],
+          [
+            "removed",
+            "a2"
+          ]
+        ],
+        "removed" : 1500
+      }
+    }
+  ],
+  "module" : "agents-linediff",
+  "note" : "Swift LineDiff (ops, counts, unified, parse). Erzeugt von AgentFixtureExport.swift (BSD-410); TS: packages/brain/src/linediff.ts, Runner packages/brain/test/fixtures-agents-2.test.ts."
+}

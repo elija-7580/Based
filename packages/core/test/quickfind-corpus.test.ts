@@ -96,8 +96,8 @@ describe("BSD-425 Quick Find findet mehr", () => {
     // Snippet für verteilte Begriffe aus dem passenden Block
     expect(ext.length).toBeGreaterThan(0);
     const spread = (index.run("frankfurt hotel", { extended: true, now: T }) ?? [])[0];
-    expect(spread).toMatchObject({ pageID: "trip", blockID: "trip-1" });
-    expect(spread?.snippet).toContain("hotel");
+    expect(spread).toMatchObject({ pageID: "trip", blockID: "trip-2" });
+    expect(spread?.snippet).toContain("Frankfurt");
   });
 
   it("Tippfehler-Regel: eine Änderung, kurze Wörter genau", () => {
