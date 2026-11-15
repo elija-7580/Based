@@ -1,4 +1,4 @@
-failure 8caa78bc3e203dd6b953a6ff2c13ebc49bb72f9c
+failure c20b8ea14bcb3205f5db0940eacfba85b53c1d36
     [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘P zweimal: Quick Find zu, Schreibmarke zurück ──
     [webkit] › e2e/shortcut-toggle.spec.ts:52:1 › ⌘N zweimal: Neu-Palette zu, Schreibmarke zurück ──
     [webkit] › e2e/shortcut-toggle.spec.ts:62:1 › ⌘, zweimal: Einstellungen auf und zurück zur Seite 
