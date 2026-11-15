@@ -4,7 +4,7 @@
 import { findInText } from "@based/core";
 
 // BSD-407 Teil 3: im Block-Editor ist jedes Textfeld (`[data-editable-id]`) ein Block
-const BLOCK = "[data-editable-id], .bn-block-content, td, th, li, p, h1, h2, h3, h4, pre, blockquote, [role=gridcell], [role=cell], [data-find-block]";
+const BLOCK = "[data-editable-id], td, th, li, p, h1, h2, h3, h4, pre, blockquote, [role=gridcell], [role=cell], [data-find-block]";
 const SKIP = "[aria-hidden=true], [data-find-skip], script, style, .find-bar, button[aria-haspopup]";
 export const MAX_MATCHES = 2000;
 

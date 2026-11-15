@@ -1,7 +1,7 @@
 // BSD-319: „Problem melden“ (⇧⌘B, ⌘K, Settings → Diagnostics): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout,
 // standardmäßig ohne Nutzertext; Liste der Berichte, Log-Filter, Entwickler-Ansicht; Aufzeichnung kostet beim Tippen nichts.
 import { expect, type Page } from "@playwright/test";
-import { editor, legacyTest, openNewLegacyPage, openNewPage, ready, test } from "./replay/fixture.js";
+import { editor, openNewPage, ready, test } from "./replay/fixture.js";
 
 const SECRET = "Quarterly salary Ada Lovelace 4711";
 
@@ -20,11 +20,10 @@ const savedReports = (page: Page) => page.evaluate(() => new Promise<(Row & { sh
 }));
 
 test.describe.configure({ timeout: 90_000 });
-// Aufzeichnung in beiden Editoren: Block-Editor (ADR 0016) mit Block-Transaktionen „change“ und Blockbaum, der alte
-// (BlockNote, gepinnt bis zum Löschen) mit ProseMirror „tr“ und Seiten-Y.Doc „yjs“.
+// Aufzeichnung im Block-Editor (ADR 0016) mit Block-Transaktionen „change“ und Blockbaum (der alte BlockNote-Editor mit
+// „tr“/„yjs“ ist mit BSD-407 Teil 4 entfernt).
 const EDITORS = [
   { name: "Block-Editor", t: test, open: openNewPage, kinds: ["checkpoint", "key", "input", "change", "select"], list: "bulletedList" },
-  { name: "alter Editor", t: legacyTest, open: openNewLegacyPage, kinds: ["checkpoint", "key", "input", "tr", "yjs"], list: "bulletListItem" },
 ];
 
 for (const { name, t, open, kinds: expectedKinds, list } of EDITORS) t(`⇧⌘B (${name}): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext`, async ({ page }) => {

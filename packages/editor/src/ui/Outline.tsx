@@ -39,8 +39,7 @@ function scrollParent(el: HTMLElement | null): HTMLElement | Window {
 
 function headingElement(root: HTMLElement | null, id: string): HTMLElement | null {
   const q = CSS.escape(id);
-  // BSD-407 Teil 3: Block-Editor (`.bx2-block`) und alter Editor (`.bn-block-outer`)
-  return (root ?? document).querySelector<HTMLElement>(`.bx2-block[data-block-id="${q}"], .bn-block-outer[data-id="${q}"]`);
+  return (root ?? document).querySelector<HTMLElement>(`.bx2-block[data-block-id="${q}"]`);
 }
 
 /** Zur Überschrift scrollen (auch vom Inhaltsverzeichnis-Block benutzt). */
@@ -104,7 +103,7 @@ export function PageOutline(props: { store: WorkspaceStore; pageID: string; cont
     const check = () => {
       const n = nav.current;
       if (!n) return;
-      const text = container.querySelector(".bn-editor > .bn-block-group") ?? container.querySelector("[data-testid=block-editor]") ?? container;
+      const text = container.querySelector("[data-testid=block-editor]") ?? container;
       // Block-Editor: der Rahmen hat innen Platz für Griff und Ränder – maßgeblich ist die Textspalte (ohne Innenabstand)
       const textRight = text.getBoundingClientRect().right - (parseFloat(getComputedStyle(text).paddingRight) || 0);
       setCramped(n.getBoundingClientRect().left < textRight);

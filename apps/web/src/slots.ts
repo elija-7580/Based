@@ -1,8 +1,8 @@
 // BSD-153: Steckplätze für Editor (@based/editor) und Datenbank-Ansichten (@based/database-ui). Bis die Pakete
 // fertig sind, zeigt die Shell eine Lese-Darstellung bzw. einen Platzhalter. Anschließen in main.tsx, z. B.:
 //
-//   import { PageEditor } from "@based/editor";
-//   registerSlots({ PageEditor });
+//   import { BlockEditor } from "@based/editor";
+//   registerSlots({ PageEditor: BlockEditor });
 //
 // Beide bekommen `store`: die Replik der offenen Seite im Hauptthread – ein vollwertiger WorkspaceStore mit der
 // Seite und allem darin (Unterblöcke, eigene Datenbanken, deren Zeilen und Ansichten). Änderungen über

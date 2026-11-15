@@ -2,7 +2,6 @@ import { expect, test as base, type Page } from "@playwright/test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LEGACY_EDITOR_KEY, pinLegacyEditor } from "./legacy-editor.js";
 
 // Dauerhaftes Profil je Test: WebKit hat OPFS nur dort, und die Tests laden neu.
 const test = base.extend<{ page: Page }>({
@@ -19,9 +18,9 @@ const test = base.extend<{ page: Page }>({
 });
 
 
-// BSD-407 Teil 3: Der Block-Editor (ADR 0016) ist für alle Standard – auch auf Geräten, auf denen der frühere Schalter
-// „New editor“ (`based.newEditor`) bewusst oder unbewusst auf „aus“ stand. Der alte Editor (BlockNote) bleibt bis Teil 4
-// als Notausgang unter Settings → Diagnostics, Standard aus.
+// BSD-407: Der Block-Editor (ADR 0016) ist der einzige Editor – auch auf Geräten, auf denen der frühere Schalter
+// „New editor“ (`based.newEditor`) auf „aus“ stand oder der Notausgang „Old editor (BlockNote)“ (`based.legacyEditor`,
+// Teil 3) an war. Beide Schlüssel werden beim Start einmalig entfernt; den Notausgang gibt es seit Teil 4 nicht mehr.
 
 async function openNewPage(page: Page): Promise<string> {
   await page.setViewportSize({ width: 1280, height: 820 });
@@ -40,7 +39,6 @@ const stored = (page: Page, key: string) => page.evaluate((k) => localStorage.ge
 test("frisches Gerät: Block-Editor", async ({ page }) => {
   await openNewPage(page);
   await expect(page.getByTestId("block-editor")).toBeVisible();
-  await expect(page.locator(".bn-editor")).toHaveCount(0);
 });
 
 test("früher „New editor: aus“ (bewusst false): einmalig auf den Block-Editor umgestellt, alter Schlüssel weg", async ({ page }) => {
@@ -53,39 +51,26 @@ test("früher „New editor: aus“ (bewusst false): einmalig auf den Block-Edit
   });
   await openNewPage(page);
   await expect(page.getByTestId("block-editor")).toBeVisible();
-  await expect(page.locator(".bn-editor")).toHaveCount(0);
   expect(await stored(page, "based.newEditor")).toBeNull();
-  expect(await stored(page, LEGACY_EDITOR_KEY)).toBeNull();
+  expect(await stored(page, "based.legacyEditor")).toBeNull();
   await page.reload();
   await expect(page.getByTestId("block-editor")).toBeVisible();
   expect(await stored(page, "based.newEditor")).toBeNull();
 });
 
-test("Notausgang: alter Editor in Settings → Diagnostics, Standard aus, wirkt beim Öffnen der Seite", async ({ page }) => {
+test("früher Notausgang „Old editor“ an: Block-Editor, Schlüssel weg, kein Schalter mehr in Diagnostics", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem("seeded")) {
+      sessionStorage.setItem("seeded", "1");
+      localStorage.setItem("based.legacyEditor", "true");
+    }
+  });
   const id = await openNewPage(page);
   await expect(page.getByTestId("block-editor")).toBeVisible();
+  expect(await stored(page, "based.legacyEditor")).toBeNull();
   await page.goto("/#prefs-diagnostics");
-  const toggle = page.getByRole("switch", { name: "Old editor (BlockNote)" });
-  await expect(toggle).toBeVisible();
-  await expect(toggle).not.toBeChecked();
-  await toggle.click();
-  await expect(toggle).toBeChecked();
-  expect(await stored(page, LEGACY_EDITOR_KEY)).toBe("true");
-  await page.goto(`/#page-${id}`);
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
-  await expect(page.getByTestId("block-editor")).toHaveCount(0);
-
-  // zurück: Schalter aus → wieder der Block-Editor
-  await page.goto("/#prefs-diagnostics");
-  await page.getByRole("switch", { name: "Old editor (BlockNote)" }).click();
+  await expect(page.getByRole("switch", { name: "Developer view" })).toBeVisible();
+  await expect(page.getByRole("switch", { name: /Old editor/ })).toHaveCount(0);
   await page.goto(`/#page-${id}`);
   await expect(page.getByTestId("block-editor")).toBeVisible();
-});
-
-test("gepinnter alter Editor (Helfer der Specs) bleibt über das Neuladen", async ({ page }) => {
-  await pinLegacyEditor(page);
-  await openNewPage(page);
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
-  await page.reload();
-  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
 });

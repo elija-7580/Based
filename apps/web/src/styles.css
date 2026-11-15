@@ -696,8 +696,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
 
 /* BSD-319: Entwickler-Ansicht (Settings → Diagnostics → For developers). Blockgrenzen und Fokus nur per outline (kein
    Einfluss aufs Layout); Ebenen und Ereignisse in einer Schicht, die keine Klicks fängt. */
-[data-dev-view] .bn-block-outer { outline: 1px dashed color-mix(in srgb, var(--marker-strong) 55%, transparent); outline-offset: -1px; }
-[data-dev-view] .bn-block-outer[data-id]:hover { outline-style: solid; }
+[data-dev-view] .bx2-block { outline: 1px dashed color-mix(in srgb, var(--marker-strong) 55%, transparent); outline-offset: -1px; }
+[data-dev-view] .bx2-block[data-block-id]:hover { outline-style: solid; }
 [data-dev-view] :focus { outline: 2px solid var(--marker-strong) !important; outline-offset: 1px; }
 .dev-overlay { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; -webkit-user-select: none; user-select: none; }
 .dev-layer { position: fixed; outline: 1px solid var(--marker-strong); background: color-mix(in srgb, var(--marker) 12%, transparent); }

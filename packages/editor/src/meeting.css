@@ -58,7 +58,6 @@ button.bx-meet-chip:disabled { cursor: default; }
 .bx-meet-tab[aria-selected="true"] { background: var(--surface-raised); color: var(--ink); }
 .bx-meet-body { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-1); }
 .bx-meet-doc { border-radius: var(--radius-md); background: var(--bg); padding: var(--space-1) 0; cursor: text; }
-.bx-meet-doc .bx-synced-editor .bn-editor { padding-inline: var(--space-3); }
 .bx-meet-stamped { display: grid; gap: var(--space-1); }
 .bx-meet-stamp-row { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .bx-meet-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -76,5 +75,3 @@ button.bx-meet-chip:disabled { cursor: default; }
 .bx-meet-para-text { color: var(--ink-2); line-height: var(--type-body-leading); user-select: text; }
 .bx-meet-para[data-partial="true"] .bx-meet-para-text { color: var(--muted); font-style: italic; }
 /* Eingebettete Editoren: deren oberste Blockgruppe ist keine Verschachtelung (sonst Einzug + Linie aus BlockNote). */
-.bx-meet-doc .bn-editor > .bn-block-group { margin-left: 0; }
-.bx-meet-doc .bn-editor > .bn-block-group > .bn-block-outer::before { content: none; }

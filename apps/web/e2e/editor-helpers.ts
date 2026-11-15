@@ -1,6 +1,6 @@
 // BSD-407 Teil 3: gemeinsame Griffe für den Block-Editor (ADR 0016), der jetzt Standard ist. Ein Editor ist
 // `getByTestId("block-editor")`, jeder Block `.bx2-block[data-block-id][data-type]`, jedes Textfeld
-// `[data-editable-id]` (ein eigenes contenteditable pro Block). Den alten Editor pinnt `legacy-editor.ts`.
+// `[data-editable-id]` (ein eigenes contenteditable pro Block).
 import { expect, type Locator, type Page } from "@playwright/test";
 
 type Scope = Page | Locator;

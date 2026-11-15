@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { IconView } from "./phosphor.js";
 import type { PageDirectory, PageRef } from "./env.js";
-import { moveTargetAllowed } from "./blockActions.js";
 
 export interface MovePickerProps {
   pages: PageDirectory;
@@ -189,4 +188,9 @@ export function PageTargetPicker(props: { pages: PageDirectory; onPick: (page: P
       </div>
     </div>
   );
+}
+
+/** Ziele für „Move to“: Seiten und Zeilen (keine Datenbanken), nicht die eigene Seite und nichts, was bewegt wird. */
+export function moveTargetAllowed(kind: string | undefined, id: string, selfID: string, moving: readonly string[]): boolean {
+  return kind !== "database" && id !== selfID && !moving.includes(id);
 }

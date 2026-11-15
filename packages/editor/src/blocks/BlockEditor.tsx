@@ -3,12 +3,12 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import type { PageEditorProps } from "../ui/PageEditor.js";
+import type { PageEditorProps } from "../ui/props.js";
 import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
@@ -30,6 +30,7 @@ import { PresenceLayer, useRealtime } from "./realtime.js";
 import { highlightCode } from "./highlight.js";
 import { MeetingBlock } from "./meeting.js";
 import { attachBlockEditorProbe } from "../ui/probe.js";
+import "../styles.css";
 import "./blocks.css";
 
 interface Ctx {
@@ -37,6 +38,8 @@ interface Ctx {
   store: WorkspaceStore;
   props: PageEditorProps;
   editable: boolean;
+  /** Kurzer Hinweis unten im Fenster (z. B. „Moved to …“, abgelehnter Synced Block). */
+  notify: (message: string) => void;
 }
 const EditorCtx = createContext<Ctx | null>(null);
 const useCtx = () => useContext(EditorCtx)!;
@@ -220,6 +223,15 @@ export function BlockEditor(props: PageEditorProps) {
   }, [props.focusBlock]);
 
   const run = useCallback((f: EditorFocus | undefined) => ctrl.apply(f), [ctrl]);
+  // BSD-407 Teil 4: Hinweis am Editor (wie im alten Editor), verschwindet nach ein paar Sekunden
+  const [notice, setNotice] = useState<string | undefined>();
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const notify = useCallback((message: string) => {
+    setNotice(message);
+    clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(undefined), 5000);
+  }, []);
+  useEffect(() => () => clearTimeout(noticeTimer.current), []);
   /** ⌘B/⌘I/… über die Auswahl im Block (ohne Auswahl: nichts – das übernimmt „stored“). */
   const format = (c: Caret, key: cmd.MarkKey) => (c.from === c.to ? undefined : cmd.formatText(store, [R(c)], key));
 
@@ -388,7 +400,8 @@ export function BlockEditor(props: PageEditorProps) {
 
     const pasteSynced = async (anchor: string, source: string) => {
       if (!store.blocks.has(source) && props.loadSynced) await props.loadSynced(source).catch(() => false);
-      if (syncedPasteProblem(store, source, pageID)) return;
+      const problem = syncedPasteProblem(store, source, pageID);
+      if (problem) { notify(PASTE_PROBLEMS[problem]); return; }
       const original = syncedOriginal(store, source)!;
       const a = store.blocks.get(anchor);
       const empty = a?.type === "text" && plainText(a.text).length === 0 && store.children("b:" + anchor).length === 0;
@@ -403,7 +416,7 @@ export function BlockEditor(props: PageEditorProps) {
       const f = empty ? cmd.convertEmptyBlock(store, anchor, "image") : cmd.insertBlock(store, { after: anchor }, "image");
       if (!f) return;
       run(f);
-      void props.uploadFile?.(file, f.blockId).then((url) => cmd.setBlockProps(store, [f.blockId], { url }, "Add image")).catch(() => undefined);
+      void props.uploadFile?.(file, f.blockId).then((url) => cmd.setBlockProps(store, [f.blockId], uploadedProps(url, file), "Add image")).catch(() => undefined);
     };
     const onDrop = (e: DragEvent) => {
       const file = Array.from(e.dataTransfer?.files ?? []).find((f) => f.type.startsWith("image/"));
@@ -1224,7 +1237,7 @@ export function BlockEditor(props: PageEditorProps) {
   };
   const onTailClick = () => focusEndOf(pageID);
 
-  const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable }), [ctrl, store, props, editable]);
+  const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable, notify }), [ctrl, store, props, editable, notify]);
   // ADR 0016 (E7): Echtzeit-Text und Präsenz über /collab (Dokument `text:<seite>`)
   const presence = useRealtime(store, pageID, props.collab, ctrl, props.presenceName);
   const slashItems = slash ? filterSlash(slashItems_, slash.query) : [];
@@ -1246,7 +1259,10 @@ export function BlockEditor(props: PageEditorProps) {
           onPick={(page) => void (async () => {
             setMoving(undefined);
             const last = await props.pages?.lastChildKey?.(page.id).catch(() => undefined);
-            if (cmd.moveBlocksToPage(store, moving, page.id, last)) ctrl.clearSelection();
+            if (cmd.moveBlocksToPage(store, moving, page.id, last)) {
+              ctrl.clearSelection();
+              notify("Moved to " + (page.title || "Untitled"));
+            }
           })()} />
       ) : null}
       {linking ? <DatabasePicker source={databases} onClose={() => { const l = linking; setLinking(undefined); ctrl.setCaret({ id: l.after, from: textLen(store, l.after), to: textLen(store, l.after) }); }} onPick={(d) => void pickDatabase(linking, d)} /> : null}
@@ -1257,6 +1273,12 @@ export function BlockEditor(props: PageEditorProps) {
       {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
         onAI={props.ai ? () => { const c = ctrl.caret; if (c && c.from !== c.to) openAI(c.id, c); } : undefined}
         onColor={(color) => { const c = ctrl.caret; if (c && c.from !== c.to) run(cmd.formatText(store, [R(c)], "color", color ?? false)); }} /> : null}
+      {notice ? (
+        <div className="bx-notice" role="status" data-testid="editor-notice">
+          <span>{notice}</span>
+          <BasedButton size="sm" variant="ghost" label="Dismiss" onClick={() => setNotice(undefined)} />
+        </div>
+      ) : null}
     </EditorCtx.Provider>
   );
 }
@@ -1581,19 +1603,52 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       // BSD-407 Teil 5: Aufnahme, Notizen, Zusammenfassung, Transkript (Notizen/Zusammenfassung sind Blöcke dieses Editors)
       return <MeetingBlock id={b.id} store={store} editable={editable} host={props.meeting} pages={props.pages} onOpenPage={props.onOpenPage}
         renderSection={(section, placeholder) => <MeetingSection id={section} depth={depth + 1} placeholder={placeholder} />} />;
-    case "syncedBlock": {
-      // Kopie: zeigt (und bearbeitet) den Inhalt des Originals
-      const source = typeof b.props?.syncSource === "string" && store.blocks.has(b.props.syncSource) ? b.props.syncSource : b.id;
-      return (
-        <div className="bx2-embed bx2-synced" data-embed="" data-synced-copy={source !== b.id ? "" : undefined}>
-          <ChildList id={source} depth={depth + 1} />
-          {!store.children("b:" + source).length ? <span className="bx2-muted">Synced block</span> : null}
-        </div>
-      );
-    }
+    case "syncedBlock":
+      return <SyncedBlockView block={b} depth={depth} />;
     default:
       return <div className="bx2-embed bx2-unsupported" data-embed="" contentEditable={false}>{labelOf(b)}<span className="bx2-muted"> · in the new editor soon</span></div>;
   }
+}
+
+const PASTE_PROBLEMS: Record<SyncedPasteProblem, string> = {
+  noSource: "That synced block no longer exists.",
+  alreadyOnPage: "This synced block is already on this page.",
+  insideItself: "A synced block can't be placed inside itself.",
+};
+
+/**
+ * Synced Block (BSD-407 Teil 4, wie im alten Editor): das Original zeigt seine Kinder, eine Kopie die des Originals
+ * (bearbeitbar). Kopie: „Original in <Seite>“ öffnet die Seite des Originals, „Unsync“ macht den Inhalt zu eigenen
+ * Blöcken (Kern unsyncCopy, ein Undo-Schritt). Liegt das Original im Papierkorb, zeigt die Kopie einen Hinweis.
+ */
+function SyncedBlockView({ block: b, depth }: { block: Block; depth: number }) {
+  const { store, props, editable } = useCtx();
+  const raw = typeof b.props?.syncSource === "string" ? b.props.syncSource : undefined;
+  const isCopy = raw !== undefined && raw !== b.id;
+  const missing = isCopy && !store.blocks.has(raw);
+  const source = isCopy && !missing ? raw : b.id;
+  const trashed = isCopy && !missing ? trashedRoot(store, raw) : undefined;
+  const home = isCopy && !missing ? containingPage(store, raw) : undefined;
+  const dir = props.pages;
+  const homeRef = useSyncExternalStore(dir ? dir.subscribe : storeSubscribe(store), () => (home ? dir?.get(home) : undefined));
+  const homeTitle = home ? (homeRef && !homeRef.missing ? homeRef.title : plainText(store.blocks.get(home)?.text)) || "Untitled" : undefined;
+  return (
+    <div className="bx2-embed bx2-synced" data-embed="" data-synced-copy={isCopy ? "" : undefined} data-trashed={trashed ? "true" : undefined}>
+      {isCopy ? (
+        <div className="bx2-synced-bar" contentEditable={false}>
+          {home && !trashed ? <BasedButton size="sm" variant="ghost" label={"Original in " + homeTitle} onClick={() => props.onOpenPage?.(home)} /> : null}
+          {editable ? <BasedButton size="sm" variant="ghost" label="Unsync" onClick={() => unsyncCopy(store, b.id)} /> : null}
+        </div>
+      ) : null}
+      {trashed ? (
+        <div className="bx2-synced-note" role="status" contentEditable={false}>
+          The original of this synced block is in the Trash{homeTitle ? ` (${homeTitle})` : ""}. Restore it there, or unsync to keep the content here.
+        </div>
+      ) : null}
+      {missing ? <span className="bx2-muted">The original synced block was deleted.</span> : <ChildList id={source} depth={depth + 1} />}
+      {!missing && !store.children("b:" + source).length ? <span className="bx2-muted">Synced block</span> : null}
+    </div>
+  );
 }
 
 /** BSD-407 Teil 3: Überschriften sind für Hilfstechnik Überschriften (Rolle `heading`, Ebene), das Feld bleibt Textfeld. */
@@ -1697,8 +1752,8 @@ function ImageBlock({ block: b }: { block: Block }) {
     setBusy(true);
     try {
       const url = await props.uploadFile(f, b.id);
-      // Ersetzen: die neue Datei gilt, ein älterer Verweis auf ein Asset fällt weg (ein Undo-Schritt)
-      cmd.setBlockProps(store, [b.id], { url, asset: undefined }, label);
+      // Ersetzen: die neue Datei gilt, ein älterer Verweis fällt weg (ein Undo-Schritt)
+      cmd.setBlockProps(store, [b.id], uploadedProps(url, f), label);
     } finally { setBusy(false); }
   };
   // Breite am Rand ziehen (wie Notion); gespeichert in Pixeln, ein Undo-Schritt beim Loslassen. Mittig wächst das Bild
@@ -1817,6 +1872,16 @@ function UrlPrompt({ block: b }: { block: Block }) {
   );
 }
 
+/**
+ * BSD-407 Teil 4: hochgeladene Datei als Record-Felder. Dateien in der Ablage stehen kanonisch in `asset` (Name, Typ,
+ * Größe – wie Swift, Importer und der alte Editor); bis jetzt schrieb der Block-Editor nur `url: "based-asset:<id>"`
+ * (ohne Namen; solche Blöcke werden weiter gelesen). Andere Adressen bleiben `url`.
+ */
+export function uploadedProps(url: string, f: { name: string; type: string; size: number }): { url?: string; asset?: { id: string; name: string; mime?: string; size?: number } } {
+  if (!url.startsWith(ASSET_URL_PREFIX)) return { url, asset: undefined };
+  return { asset: { id: url.slice(ASSET_URL_PREFIX.length), name: f.name, ...(f.type ? { mime: f.type } : {}), size: Math.round(f.size) }, url: undefined };
+}
+
 function FileBlock({ block: b }: { block: Block }) {
   const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
   const src = useFileURL(raw);
@@ -1828,7 +1893,7 @@ function FileBlock({ block: b }: { block: Block }) {
     const upload = async (f: File | undefined) => {
       if (!f || !props.uploadFile) return;
       setBusy(true);
-      try { cmd.setBlockProps(store, [b.id], { url: await props.uploadFile(f, b.id) }, "Upload"); } finally { setBusy(false); }
+      try { cmd.setBlockProps(store, [b.id], uploadedProps(await props.uploadFile(f, b.id), f), "Upload"); } finally { setBusy(false); }
     };
     return (
       <div className="bx2-embed bx2-image" data-embed="" contentEditable={false}>
@@ -2562,8 +2627,10 @@ function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: nu
     ));
   }
   // „Page“ (⌘⌥9) steht wie im alten Editor unter „Turn into“.
-  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => s.type === "page" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
+  // BSD-407 Teil 4: auch „Block equation“ (Text wird TeX) wie im alten Editor.
+  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => s.type === "page" || s.type === "equation" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
   const runTurn = (s: (typeof SLASH_ITEMS)[number]) => {
+    if (s.type === "equation") return void ctrl.apply(cmd.turnIntoEquation(store, ids));
     if (s.type !== "page") return void cmd.turnInto(store, ids, s.type, s.props ?? {});
     const pages = ids.flatMap((x) => cmd.turnIntoPage(store, x) ?? []);
     if (pages.length) ctrl.select(pages);

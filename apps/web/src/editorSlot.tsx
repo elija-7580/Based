@@ -5,8 +5,8 @@
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { BlockEditor, PageEditor, textDocName, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
-import { legacyEditorPref, migrateEditorPref } from "./shell/storage.js";
+import { BlockEditor, textDocName, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { migrateEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
@@ -32,20 +32,18 @@ export const meetingHost = (): WebMeetingHost | undefined => meeting;
 /** BSD-225 Teil 2: Store-Client für Datenbank-Autofill (gleiches Modell wie „Ask AI“ im Editor). */
 export const editorClient = (): StoreClient | undefined => shellClient;
 let docStore: WorkerYDocStore | undefined;
-let collab: CollabBinder | undefined;
 /** ADR 0016 (E7): Echtzeit-Text des neuen Editors (Dokumente `text:<seite>`, ein Y.Text je Block). */
 let textCollab: CollabBinder | undefined;
 
 /** Der Editor-Steckplatz braucht den Store-Client (Seitensuche, Backlinks). Einmal beim Start setzen (main.tsx). */
 export function connectEditor(client: StoreClient) {
-  // BSD-407 Teil 3: Block-Editor für alle; der alte Schalter „New editor“ (Standard aus) wird einmalig entfernt.
+  // BSD-407: Block-Editor für alle; die alten Schalter „New editor“/„Old editor“ werden einmalig entfernt.
   migrateEditorPref();
   shellClient = client;
   directory = new ShellPageDirectory(client);
   meeting = createMeetingHost(client);
   docStore = new WorkerYDocStore(client);
   // BSD-252: Seiten mit noch nicht gepushten Änderungen erst nach dem Push mit /collab öffnen (kein Verlust).
-  collab = createCollab(docStore, () => syncConfig.get(), (rootID) => client.pendingLocal(rootID));
   textCollab = createCollab(prefixedDocStore(docStore, "text:"), () => syncConfig.get(), (rootID) => client.pendingLocal(rootID), textDocName);
 }
 
@@ -70,11 +68,8 @@ const blockLink = (pageID: string) => (blockID: string) => {
 export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock }: PageEditorProps) {
   const theme = useRootTheme();
   const client = shellClient;
-  // BSD-407 Teil 3: Block-Editor (ADR 0016) ist Standard; BlockNote nur noch als Notausgang (Settings → Diagnostics).
-  // Teil 5: auch Seiten mit Meeting-Block öffnen im Block-Editor (Aufnahme, Notizen, Zusammenfassung gibt es dort).
-  const legacy = useSyncExternalStore(legacyEditorPref.subscribe, legacyEditorPref.get);
-  const newEditor = !legacy;
-  const Editor = newEditor ? BlockEditor : PageEditor;
+  // BSD-407 Teil 4: nur noch der Block-Editor (ADR 0016); der alte BlockNote-Editor ist entfernt.
+  const Editor = BlockEditor;
   const renderDatabase = (p: DatabaseRenderProps) => {
     const View = slots.DatabaseView;
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
@@ -94,11 +89,8 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   } : undefined), [client, pageID]);
   // BSD-220: Echtzeit-Text nur, wenn eingeschaltet (beim Öffnen der Seite entschieden).
   const collabOn = syncConfig.get()?.collab === true;
-  const pageCollabSource = useMemo(() => {
-    // ADR 0016 (E7): der neue Editor hat sein eigenes Dokument je Seite (Synced Blocks laufen dort über Records).
-    if (newEditor) return textCollab && collabOn ? pageCollab(textCollab, pageID, () => false) : undefined;
-    return collab && collabOn ? pageCollab(collab, pageID, () => true /* BSD-252: verschachtelte Wurzeln sind nur Synced-Block-Originale */) : undefined;
-  }, [pageID, collabOn, newEditor]);
+  // ADR 0016 (E7): der Block-Editor hat sein eigenes Dokument je Seite (Synced Blocks laufen dort über Records).
+  const pageCollabSource = useMemo(() => (textCollab && collabOn ? pageCollab(textCollab, pageID, () => false) : undefined), [pageID, collabOn]);
   // BSD-225: „Ask AI“ über die Chat-Engine (Modell aus Einstellungen → Agents & AI; in Tests die Skript-Engine).
   // AI-Schalter (shell/ai.ts): ohne AI kein „Ask AI“ (Slash, Leertaste, Formatleiste).
   const aiOn = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
@@ -109,7 +101,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   return (
     <div className="shell-editor">
       <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} renderEquationHTML={renderEquationHTML}
-        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
+        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>

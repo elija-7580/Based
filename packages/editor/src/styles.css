@@ -2,72 +2,10 @@
    Abstands-, Schrift- oder Radius-Literale; Ausnahmen: 0, 1px-Haarlinien, Prozent-/flex-Layout.
    Block- und Textfarben (rot, blau …) kommen aus den Tokens block-* (BSD-323). */
 @import "@based/design-tokens/tokens.css";
-
-.bx-editor .bn-root,
-.bx-editor .bn-container {
-  --bn-font-family: var(--font-body);
-  --bn-colors-editor-text: var(--ink-2);
-  --bn-colors-editor-background: var(--bg);
-  --bn-colors-menu-text: var(--ink);
-  --bn-colors-menu-background: var(--bg);
-  --bn-colors-tooltip-text: var(--ink);
-  --bn-colors-tooltip-background: var(--surface-raised);
-  --bn-colors-hovered-text: var(--ink);
-  --bn-colors-hovered-background: var(--surface-raised);
-  --bn-colors-selected-text: var(--ink);
-  --bn-colors-selected-background: var(--selected);
-  --bn-colors-disabled-text: var(--muted);
-  --bn-colors-disabled-background: var(--surface-soft);
-  --bn-colors-shadow: var(--line);
-  --bn-colors-border: var(--line);
-  --bn-colors-side-menu: var(--muted);
-  /* BSD-318: Grau ist die Standardfarbe der Callouts aus Notion. BlockNotes Dunkel-Grau ist eine helle Fläche
-     unter heller Schrift; Grau kommt deshalb aus den Tokens. */
-  --bn-colors-highlights-gray-background: var(--surface-raised);
-  --bn-colors-highlights-gray-text: var(--muted);
-  /* BSD-323: alle Blockfarben aus den Tokens, hell und dunkel (BlockNotes Dunkelfarben waren grelle Flächen). */
-  --bn-colors-highlights-brown-background: var(--block-brown);
-  --bn-colors-highlights-brown-text: var(--block-brown-text);
-  --bn-colors-highlights-orange-background: var(--block-orange);
-  --bn-colors-highlights-orange-text: var(--block-orange-text);
-  --bn-colors-highlights-yellow-background: var(--block-yellow);
-  --bn-colors-highlights-yellow-text: var(--block-yellow-text);
-  --bn-colors-highlights-green-background: var(--block-green);
-  --bn-colors-highlights-green-text: var(--block-green-text);
-  --bn-colors-highlights-blue-background: var(--block-blue);
-  --bn-colors-highlights-blue-text: var(--block-blue-text);
-  --bn-colors-highlights-purple-background: var(--block-purple);
-  --bn-colors-highlights-purple-text: var(--block-purple-text);
-  --bn-colors-highlights-pink-background: var(--block-pink);
-  --bn-colors-highlights-pink-text: var(--block-pink-text);
-  --bn-colors-highlights-red-background: var(--block-red);
-  --bn-colors-highlights-red-text: var(--block-red-text);
-  --bn-border-radius: var(--radius-md);
-  --bn-border-radius-small: var(--radius-sm);
-  --bn-border-radius-medium: var(--radius-md);
-}
-
-.bx-editor {
-  color: var(--ink-2);
-  font-family: var(--font-body);
-  font-size: var(--type-body-size);
-  line-height: var(--type-body-leading);
-}
-.bx-editor .bn-editor {
-  background: var(--bg);
-  padding-inline: var(--space-8);
-}
-.bx-editor [data-content-type="heading"] { font-family: var(--font-head); font-weight: var(--weight-heading); color: var(--ink); }
 /* Überschriften kleiner als der Seitentitel (Elija 11.11.: „H1 war größer als der Titel“). Verhältnis wie Notion
    (Titel 40 : H1 30 : H2 24 : H3 20), relativ zu --size-title, damit es mit Default/Bold/Compact mitgeht.
    Überschreibt BlockNotes --level (3em/2em/1.3em vom Absatz-Schriftgrad). */
-.bx-editor .bn-block-content[data-content-type="heading"] { --level: calc(var(--size-title) * 0.75); }
-.bx-editor .bn-block-content[data-content-type="heading"][data-level="2"] { --level: calc(var(--size-title) * 0.62); }
-.bx-editor .bn-block-content[data-content-type="heading"][data-level="3"] { --level: calc(var(--size-title) * 0.53); }
-.bx-editor code, .bx-editor .bn-inline-content code, .bx-tex { font-family: var(--font-mono); font-size: var(--type-code-size); }
-.bx-editor [data-content-type="codeBlock"] { border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); }
-.bx-editor [data-content-type="codeBlock"] code, .bx-editor [data-content-type="codeBlock"] pre { color: var(--ink); background: none; }
-.bx-editor .bn-menu, .bx-editor .bn-suggestion-menu { box-shadow: var(--shadow-menu); border-radius: var(--radius-lg); }
+.bx-tex { font-family: var(--font-mono); font-size: var(--type-code-size); }
 
 .bx-muted { color: var(--muted); font-size: var(--type-description-size); }
 
@@ -95,14 +33,6 @@
 /* BSD-318: Der Kasten gehört an den ganzen Block – so liegen Kinder (mehrzeilige Callouts aus Notion) im Kasten statt
    als zweite Fläche darunter, und eine Blockauswahl färbt den Kasten mit (vorher blieb er als helle Fläche stehen).
    :where hält die Spezifität klein: Farbe (BlockNote) und Auswahl gewinnen. */
-.bx-editor :where(.bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { border-radius: var(--radius-md); }
-.bx-editor :where(.bn-block-content[data-content-type="callout"]) { border-radius: var(--radius-md); }
-.bx-editor :where(.bn-block:not([data-background-color]):has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { background: var(--surface-raised); }
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"]) > .bn-block-group {
-  margin-left: calc(var(--space-4) + var(--icon-md) + var(--space-3) + var(--space-1));
-  padding: 0 var(--space-4) var(--space-3) 0;
-}
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"]) > .bn-block-group > .bn-block-outer::before { content: none; }
 .bx-callout-icon { background: none; border: 0; padding: 0; font-size: var(--icon-md); line-height: var(--type-body-leading); cursor: pointer; }
 .bx-callout-text { flex: 1; min-width: 0; }
 
@@ -132,7 +62,6 @@
 /* Synced Block: Rahmen in der Synced-Farbe */
 .bx-synced { width: 100%; border: 1px solid var(--synced); border-radius: var(--radius-md); padding: var(--space-1) 0; position: relative; }
 .bx-synced-label { position: absolute; top: calc(-1 * var(--space-3)); right: var(--space-3); background: var(--bg); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); padding-inline: var(--space-1); }
-.bx-synced-editor .bn-editor { padding-inline: var(--space-4); }
 
 /* Datenbank, Einbettungen, Button */
 .bx-database-placeholder, .bx-embed-card {
@@ -163,21 +92,10 @@
 .bx-opaque-type { font-family: var(--font-mono); font-size: var(--type-data-size); color: var(--muted); }
 
 /* Spalten: die Kinder einer Spaltenliste liegen nebeneinander, die Griffe selbst sind unsichtbar */
-.bx-editor .bn-block-content[data-content-type="columnList"],
-.bx-editor .bn-block-content[data-content-type="column"] { padding: 0; min-height: var(--space-1); }
 .bx-columns-handle, .bx-column-handle { height: var(--space-1); width: 100%; }
 /* Der Inhalt eigener Blöcke steckt in BlockNotes .react-renderer – deshalb über :has am Block, nicht per „+“. */
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="columnList"]) > .bn-block-group {
-  display: flex; gap: var(--space-6); margin-left: 0; padding-left: 0; border-left: 0;
-}
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="columnList"]) > .bn-block-group > .bn-block-outer { flex: var(--bx-col, 1) 1 0; min-width: 0; }
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="column"]) > .bn-block-group { margin-left: 0; padding-left: 0; border-left: 0; }
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="column"]) > .bn-trailing-block { display: none; }
 /* Keine Verschachtelungs-Linie an Spalten und ihrem direkten Inhalt (sie sind Layout, keine Einrückung) */
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="columnList"]) > .bn-block-group > .bn-block-outer::before,
-.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="column"]) > .bn-block-group > .bn-block-outer::before { content: none; }
 /* BSD-210: Griff zum Ziehen der Spaltenbreite, mittig in der Lücke rechts der Spalte, sichtbar beim Überfahren */
-.bx-editor .bn-block-content[data-content-type="column"], .bx-editor .react-renderer:has(> .bn-block-content[data-content-type="column"]) { position: static; }
 .bx-column-resize {
   position: absolute; top: 0; bottom: 0; right: calc(-1 * var(--space-2)); width: var(--space-2); z-index: 30; /* am Anfang der Lücke, damit der Griff ⋮⋮ der nächsten Spalte frei bleibt */
   cursor: col-resize; border-radius: var(--radius-pill); touch-action: none;
@@ -186,25 +104,8 @@
 
 /* Ariakit-Akzent (Blau) durch Based-Flächen ersetzen: eine Aktion = Tinte, Auswahl = `selected`. Menüs und
    Popover hängen BlockNote außerhalb von .bx-editor an (Portale), daher global unter den bn-Klassen. */
-.bn-root .bn-ak-menu-item:hover,
-.bn-root .bn-ak-menu-item[aria-selected="true"],
-.bn-root .bn-ak-menu-item[data-active-item],
-.bn-root .bn-ak-select-item[data-active-item],
-.bn-root .bn-suggestion-menu-item[aria-selected="true"],
-.bn-root .bn-ak-tab[aria-selected="true"] { color: var(--ink); background-color: var(--selected); }
-.bn-root .bn-ak-primary { color: var(--button-ink); background-color: var(--button); }
-.bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--focus-ring); }
-.bn-root .bn-ak-popover, .bn-root .bn-ak-menu, .bn-root .bn-suggestion-menu { border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); background: var(--bg); color: var(--ink); }
 /* Menüs (Blockgriff ⋮⋮ und Untermenüs) wie die übrigen Based-Menüs (.menu, „…“ oben rechts auf einer Seite): Glas auf
    dem Mac, Kanten-Licht, gleiche Zeilen, Icons und Abstände. */
-.bn-root .bn-ak-menu { border: 0; padding: var(--space-1); min-width: calc(var(--sidebar-width) - var(--space-5)); gap: 0; }
-[data-material="glass"] .bn-root .bn-ak-menu { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
-.bn-root .bn-ak-menu .bn-ak-menu-item {
-  display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-6); padding: 0 var(--space-3); border-radius: var(--radius-md);
-  font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading); color: var(--ink);
-}
-.bn-root .bn-ak-menu .bn-ak-menu-item.bx-menu-danger { color: var(--danger); }
-.bn-root .bn-ak-menu .nf-glyph { display: inline-flex; flex: none; }
 
 /* Erwähnungen: Icon + Titel, Papierkorb/gelöscht markiert; Datum mit Erinnerungs-Feld */
 .bx-mention[data-kind="page"] { display: inline-flex; align-items: baseline; gap: var(--space-1); white-space: nowrap; max-width: 100%; }
@@ -278,26 +179,17 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 @media print { .bx-outline, .bx-notice { display: none; } }
 
 /* Die Schreibfläche selbst bekommt keinen Fokusrahmen (die Schreibmarke zeigt den Fokus); eingebettete Felder schon. */
-.bx-editor .bn-editor:focus, .bx-editor .bn-editor:focus-visible { outline: none; }
 /* BSD-318: Bei einer Blockauswahl hat der Dokument-Rahmen den Fokus; die markierten Blöcke zeigen ihn schon – kein
    Fokusring um die ganze Seite. */
 .bx-doc:focus, .bx-doc:focus-visible { outline: none; }
 
 /* Astryx setzt in seiner Basisschicht Farbe und Schrift auf p und h1–h6 (aus dem Astryx-Theme, das nicht dunkel
    wird). Im Editor gilt die Typografie von Based: die Textelemente erben vom Block. */
-.bx-editor p, .bx-editor h1, .bx-editor h2, .bx-editor h3, .bx-editor h4, .bx-editor h5, .bx-editor h6 { color: inherit; font-family: inherit; }
-.bx-editor p.bn-inline-content { font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: inherit; }
 
 /* Formatleiste: BlockNote/Ariakit setzt `overflow: scroll` – bei „Rollbalken immer anzeigen“ (macOS) erschienen
    dadurch leere Leisten unten und rechts. Nur waagrecht scrollen, ohne sichtbaren Balken; Fläche wie die Menüs. */
-.bn-root .bn-ak-toolbar {
-  overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
-  background: var(--bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); padding: var(--space-1);
-}
-.bn-root .bn-ak-toolbar::-webkit-scrollbar { display: none; }
 
 /* Tastenkürzel rechts im Blockmenü (BSD-207). */
-.bn-root .bx-menu-key { margin-left: auto; padding-left: var(--space-4); color: var(--muted); font-size: var(--type-meta-size); }
 
 /* BSD-207: „Move to“ aus dem Blockmenü – Popover oben in der Mitte, Liste wie im @-Menü */
 .bx-move-scrim { position: fixed; inset: 0; z-index: 45; display: flex; justify-content: center; align-items: flex-start; padding-top: 15vh; }
@@ -316,14 +208,6 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 
 /* BSD-210: Nummerierung je Ebene wie Notion/Swift: 1. → a. → i. → 1. … Oben zählt BlockNote (data-index, inkl. Start);
    darunter ein CSS-Zähler je Liste, der nach jedem anderen Block neu beginnt. */
-.bx-editor .bn-block-group { counter-reset: bx-num; }
-.bx-editor .bn-block-group > .bn-block-outer:not(:has(> .bn-block > .bn-block-content[data-content-type="numberedListItem"])) { counter-reset: bx-num; }
-.bx-editor .bn-block-group > .bn-block-outer:has(> .bn-block > .bn-block-content[data-content-type="numberedListItem"]) { counter-increment: bx-num; }
-.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-alpha) "."; }
-.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-roman) "."; }
-.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, decimal) "."; }
-.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-alpha) "."; }
-.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-roman) "."; }
 
 /* BSD-210: Emoji-Picker (Callout-Icon, später Seiten-Icons) */
 .bx-callout-icon-wrap { position: relative; display: inline-flex; }
@@ -376,37 +260,10 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 
 /* BSD-209: Syntax-Hervorhebung (Swift-Hervorheber). Bis es Syntax-Tokens gibt (Designentscheidung, docs/design/astryx.md
    „Offen“): nur vorhandene Text-Tokens – Gewicht für Struktur, `synced` für Literale, `muted` für Kommentare. */
-.bx-editor .bx-tok-keyword { font-weight: var(--type-title-weight); color: var(--ink); }
-.bx-editor .bx-tok-type { font-weight: var(--type-meta-weight); color: var(--ink-2); }
-.bx-editor .bx-tok-function { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); }
-.bx-editor .bx-tok-string, .bx-editor .bx-tok-number { color: var(--synced); }
-.bx-editor .bx-tok-comment { color: var(--muted); font-style: italic; }
-.bx-editor .bx-tok-property { color: var(--ink-2); }
 /* Sprachwahl sichtbar (BlockNote blendet sie fast aus) und in Based-Farben */
 /* Leiste oben rechts wie Notion: Sprachwahl und Kopierknopf, sichtbar beim Überfahren oder mit Fokus. Sie liegt
    über dem Code (nimmt keinen Platz), damit beim Ein- und Ausblenden nichts springt. */
-.bx-editor [data-content-type="codeBlock"] > pre { padding: var(--space-4) var(--space-5); }
-.bx-editor [data-content-type="codeBlock"] > div > select,
-.bx-editor .bx-code-tools {
-  position: absolute; top: var(--space-2); height: var(--space-5); opacity: 0; color: var(--muted); background: var(--bg);
-  border: 0; border-radius: var(--radius-sm); font-family: var(--font-ui); font-size: var(--type-meta-size);
-  transition: opacity var(--duration-fast) var(--ease-out);
-}
-.bx-editor [data-content-type="codeBlock"] > div > select { left: auto; right: calc(var(--space-2) + var(--space-5) * 2 + var(--space-1)); padding: 0 var(--space-2); cursor: pointer; }
-.bx-editor [data-content-type="codeBlock"]:has(.bx-code-tools > :only-child) > div > select { right: calc(var(--space-2) + var(--space-5) + var(--space-1)); }
-.bx-editor .bx-code-tools { right: var(--space-2); display: inline-flex; white-space: normal; user-select: none; -webkit-user-select: none; }
-.bx-editor .bx-code-tool { width: var(--space-5); height: var(--space-5); display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-sm); background: none; color: inherit; cursor: pointer; }
-.bx-editor .bx-code-tool .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
-.bx-editor .bx-code-tool[aria-pressed="true"] { color: var(--ink); background: var(--selected); }
-.bx-editor [data-content-type="codeBlock"]:hover > div > select, .bx-editor [data-content-type="codeBlock"] > div > select:focus-visible,
-.bx-editor [data-content-type="codeBlock"]:hover .bx-code-tools, .bx-editor .bx-code-tools:focus-within { opacity: 1; transition-delay: 0s; }
-.bx-editor [data-content-type="codeBlock"] > div > select:hover, .bx-editor .bx-code-tool:hover { color: var(--ink); }
-.bx-editor [data-content-type="codeBlock"] > div > select:focus-visible, .bx-editor .bx-code-tool:focus-visible { outline: 1px solid var(--focus-ring) !important; }
 /* Umbruch aus: eine Zeile je Codezeile, der Block rollt waagrecht (die Seite nicht). */
-.bx-editor [data-content-type="codeBlock"] > pre { overflow-x: auto; }
-.bx-editor [data-content-type="codeBlock"][data-wrap="false"] > pre, .bx-editor [data-content-type="codeBlock"][data-wrap="false"] > pre * { white-space: pre; overflow-wrap: normal; word-break: normal; }
-.bx-editor [data-content-type="codeBlock"]:not([data-wrap="false"]) > pre, .bx-editor [data-content-type="codeBlock"]:not([data-wrap="false"]) > pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
-.bx-editor [data-content-type="codeBlock"] > div > select option { color: var(--ink); background: var(--bg); }
 .bx-html-preview-wrap { display: grid; gap: var(--space-1); margin-top: var(--space-3); white-space: normal; font-family: var(--font-ui); }
 .bx-html-preview-label { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
 /* BSD-209: Mermaid-Vorschau – Fläche hat schon beim Laden ihre Höhe, Diagramm mittig, Fehler gedämpft in einem Satz. */
@@ -483,7 +340,7 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 
 /* BSD-249: Ziel beim Ziehen (davor/dahinter, Verschachteln, Ausrücken, Spalte) – Strich wie die Einfügestelle bei Tabs */
 .bx-drop-indicator { position: fixed; z-index: 60; pointer-events: none; background: var(--marker-strong); border-radius: var(--radius-pill); }
-html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn-drop-cursor { display: none; }
+html[data-bx-dropzone] .prosemirror-dropcursor-block { display: none; }
 
 /* BSD-258: Rechteck-Auswahl aus dem Seitenrand */
 .bx-marquee { position: fixed; z-index: 60; pointer-events: none; background: color-mix(in srgb, var(--selected) 60%, transparent); border: 1px solid var(--control-border); border-radius: var(--radius-xs); }
@@ -501,66 +358,20 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 .bx-image-viewer-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media print { .bx-image-viewer { display: none; } }
 /* BSD-290/367: Markiertes Bild/Video ohne das Blau von BlockNote – neutraler Rahmen (focus-ring), keine Tönung. */
-.bx-editor .bn-block-content.ProseMirror-selectednode > [data-file-block]::after,
-.bx-editor .bn-block-content.ProseMirror-selectednode > *:not(.bx-database)::after,
-.bx-editor .ProseMirror-selectednode > .bn-block-content > *:not(.bx-database)::after {
-  background-color: transparent; box-shadow: inset 0 0 0 2px var(--focus-ring); border-radius: var(--radius-xs);
-}
 /* BSD-375: Eine Inline-Datenbank, in der man arbeitet (Zelle bearbeiten), ist kein „markierter Block“ – weder Rahmen
    noch die blaue Tönung von BlockNote. */
-.bx-editor .ProseMirror-selectednode .bx-database::after,
-.bx-editor .bn-block-content.ProseMirror-selectednode > .bx-database::after { background-color: transparent; box-shadow: none; }
 
 /* BSD-305: Links im Text und Häkchen der To-dos ohne das Blau des Browsers – Tinte mit gedämpfter Unterstreichung
    (wie Notion), Häkchen in der Tinte (wie die To-dos in der Seitenleiste). */
-.bx-editor .bn-inline-content a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: var(--space-half); }
-.bx-editor .bn-inline-content a:hover { text-decoration-color: var(--ink); }
-.bx-editor input[type="checkbox"] { accent-color: var(--ink); }
 /* BSD-359: BlockNote zeichnet das To-do-Kästchen 12 × 24 (für das Systemkästchen); in Based-Optik quadratisch, mittig. */
-.bx-editor .bn-block-content[data-content-type=checkListItem] > div > input { width: var(--icon-sm); height: var(--icon-sm); margin-block: auto; margin-left: 0; }
 
 /* Blockmenü (am Griff ⋮⋮) im Stil des Seitenmenüs der Shell: Icon, Text, Kürzel rechts, Gruppen mit Trennlinie,
    Blocktyp als Kopf, „Last edited“ als Fuß. Die Menüs hängen als Portal außerhalb von .bx-editor. */
-.bn-root .bn-ak-menu { padding: var(--space-1); min-width: calc(var(--space-8) * 4); font-family: var(--font-ui); font-size: var(--type-ui-size); border: 0; gap: 0; }
-.bn-root .bn-ak-menu .bn-ak-menu-item { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-6); padding: 0 var(--space-3); border-radius: var(--radius-md); color: var(--ink); }
-.bn-root .bx-menu-icon { flex: none; width: var(--icon-sm); height: var(--icon-sm); }
-.bn-root .bx-menu-head { padding: var(--space-2) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); user-select: none; -webkit-user-select: none; }
-.bn-root .bx-menu-sep { height: 1px; border: 0; background: var(--line); margin: var(--space-1) 0; }
-.bn-root .bx-menu-foot { display: grid; gap: var(--space-1); margin-top: var(--space-1); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--line); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
 /* Pfeil des Untermenüs und Häkchen stehen rechts (wie die Kürzel). */
-.bn-root .bn-ak-menu .bn-ak-menu-item > :last-child:not(.bx-menu-icon):not(.bx-menu-key):not(.nf-glyph) { margin-left: auto; }
 
 /* Formatleiste als kompaktes Feld wie in Notion (statt einer langen Zeile, die am Fensterrand abgeschnitten wurde):
    oben der Blocktyp über die ganze Breite, darunter die Zeichenformate als Raster aus Icon-Knöpfen, unten „Ask AI“. */
-.bn-root .bn-formatting-toolbar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0; width: calc(var(--space-6) * 5 + var(--space-1) * 2); max-width: none;
-  overflow: visible; font-family: var(--font-ui); font-size: var(--type-ui-size);
-}
-.bn-root .bn-formatting-toolbar > .bn-ak-button {
-  flex: none; width: var(--space-6); height: var(--space-6); min-width: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-md); color: var(--ink); background: transparent;
-}
-.bn-root .bn-formatting-toolbar > .bn-ak-button:hover { background: var(--surface-raised); }
-.bn-root .bn-formatting-toolbar > .bn-ak-button[aria-pressed="true"], .bn-root .bn-formatting-toolbar > .bn-ak-button[data-selected] { background: var(--selected); color: var(--ink); }
-.bn-root .bn-formatting-toolbar > .bn-ak-button:disabled, .bn-root .bn-formatting-toolbar > .bn-ak-button[aria-disabled="true"] { color: var(--muted); background: transparent; }
-.bn-root .bn-formatting-toolbar > .bn-ak-button svg { width: var(--icon-sm); height: var(--icon-sm); }
 /* Blocktyp: erste Zeile, Text links, Pfeil rechts, Trennlinie darunter */
-.bn-root .bn-formatting-toolbar > [role="combobox"] {
-  order: -1; flex: 1 0 100%; width: auto; justify-content: flex-start; gap: var(--space-2); padding: 0 var(--space-2);
-  margin-bottom: var(--space-1); box-shadow: 0 var(--space-1) 0 calc(-1 * var(--space-1) + 1px) var(--line);
-}
-.bn-root .bn-formatting-toolbar > [role="combobox"] > span:last-child { margin-left: auto; color: var(--muted); }
 /* „Ask AI“: letzte Zeile, wie ein Menüeintrag */
-.bn-root .bn-formatting-toolbar > .bx-ask-ai {
-  order: 1; flex: 1 0 100%; width: auto; justify-content: flex-start; padding: 0 var(--space-2);
-  margin-top: var(--space-1); box-shadow: 0 calc(-1 * var(--space-1)) 0 calc(-1 * var(--space-1) + 1px) var(--line);
-}
 
 /* Suchfeld oben im Blockmenü („Search actions…“, wie Notion) */
-.bn-root .bx-menu-search {
-  width: 100%; min-height: var(--space-6); margin-bottom: var(--space-1); padding: 0 var(--space-3); border: 1px solid var(--control-border);
-  border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font: inherit;
-}
-.bn-root .bx-menu-search::placeholder { color: var(--muted); }
-.bn-root .bx-menu-search:focus-visible { outline: 1px solid var(--focus-ring); border-color: var(--focus-ring); }
-.bn-root .bx-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }
