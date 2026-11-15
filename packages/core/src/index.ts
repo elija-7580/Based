@@ -52,7 +52,7 @@ export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZIP_EAGER_BYTES, ZipError, crc32, 
 export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
 export { AssetRejected, DEFAULT_MAX_ASSET_BYTES, ImportBuilder, LimitedAssetSink, MemoryAssetSink, formatBytes, importAssetFrom, looksLikeLocalFile, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
 export type { AssetRef, AssetSink, ImportBuilderOptions, LazyAsset, ImportBuilderWire, ImportReport, NewBlock } from "./interop/builder.js";
-export { cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter, parseNotionNumber, rowType, svgType, trimRuns } from "./interop/notion-html.js";
+export { classRules, cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter, parseNotionNumber, rowType, svgType, trimRuns, unwrapRedirect } from "./interop/notion-html.js";
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
 export { decodeCSV, decodeInlineMarkdown, encodeCSV, guardCSVFormula, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";

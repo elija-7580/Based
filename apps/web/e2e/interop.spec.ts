@@ -205,6 +205,26 @@ test("Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text ble
   await expect(content.getByText("Groceries", { exact: true })).toHaveCount(0);
 });
 
+test("Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const doc = zip([
+    { path: "Roadmap/Roadmap.html", data: Buffer.from(`<html><head><style type="text/css">.c1{font-weight:700}.c0{font-weight:400}</style><title>Roadmap</title></head><body class="doc-content"><p><span class="c0">Ship the </span><span class="c1">quarterly plan</span></p><p><span class="c0"><a href="https://www.google.com/url?q=https://example.org/plan&amp;sa=D">details</a></span></p></body></html>`) },
+  ]);
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "Roadmap.zip", mimeType: "application/zip", buffer: doc });
+  await expect(dialog.getByTestId("import-summary")).toContainText("Imported");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  const hits = await quickFind(page, "quarterly plan");
+  await expect(hits.first()).toContainText("Roadmap");
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Page title")).toHaveValue("Roadmap");
+  const content = page.getByTestId("page-content");
+  await expect(content.locator(".bx2-b").filter({ hasText: "quarterly plan" })).toHaveCount(1);
+  await expect(content.getByRole("link", { name: "details" })).toHaveAttribute("href", "https://example.org/plan");
+});
+
 test("Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260)", async ({ page }) => {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
