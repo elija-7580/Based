@@ -309,6 +309,8 @@ export class SearchIndex implements SearchSource {
   /** BSD-425: Zusatztexte für `extended` (Dateinamen/Links in Blöcken, Optionen/Zahlen in Zeilen). */
   private readonly extraEntries = new Map<string, ContentEntry>();
   private readonly extraRows = new Map<string, string>();
+  /** BSD-425: Wörter der Titel (für die Tippfehler-Suche, einmal beim Einarbeiten zerlegt). */
+  private readonly titleWords = new Map<string, string[]>();
   /** Zählt jede Änderung (wie Swift `revision`). */
   revision = 0;
 
@@ -328,7 +330,7 @@ export class SearchIndex implements SearchSource {
 
   /** Ersetzt den Inhalt durch einen vollständigen Stand. */
   load(src: SearchSource) {
-    for (const m of [this.blocks, this.databases, this.children, this.mentionedBy, this.mentionsOf, this.titles, this.contentEntries, this.rows, this.extraEntries, this.extraRows]) m.clear();
+    for (const m of [this.blocks, this.databases, this.children, this.mentionedBy, this.mentionsOf, this.titles, this.contentEntries, this.rows, this.extraEntries, this.extraRows, this.titleWords]) m.clear();
     for (const d of src.databases.values()) this.databases.set(d.id, d);
     for (const b of src.blocks.values()) this.putBlock(b);
     for (const id of this.blocks.keys()) this.recompute(id);
@@ -454,12 +456,15 @@ export class SearchIndex implements SearchSource {
     this.rows.delete(id);
     this.extraEntries.delete(id);
     this.extraRows.delete(id);
+    this.titleWords.delete(id);
     const b = this.blocks.get(id);
     if (!b) return;
     let live: boolean | undefined;
     const isLive = () => (live ??= !isTrashedIn(this, id));
     if ((isPageLike(b) || (b.type === "databaseInline" && ownsDatabase(this, b))) && isLive()) {
-      this.titles.set(id, fold(searchTitle(this, id)));
+      const t = fold(searchTitle(this, id));
+      this.titles.set(id, t);
+      this.titleWords.set(id, t.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
     }
     if (!isPageLike(b) && b.trashedAt === undefined) {
       const text = contentText(this, b);
@@ -589,8 +594,6 @@ export class SearchIndex implements SearchSource {
   private extendedHits(q: string, terms: string[], hits: Map<string, SearchHit>, snippetOf: Map<string, () => string>, allowed: (b: Block) => boolean,
     recency: (b: Block) => number, titleOnly: boolean, limit: number, tick: () => boolean): true | undefined {
     const blocks = this.blocks;
-    const full = (1 << terms.length) - 1;
-    const maskOf = (folded: string) => { let m = 0; terms.forEach((t, i) => { if (folded.includes(t)) m |= 1 << i; }); return m; };
     const add = (page: string, score: number, blockID?: string, snip?: () => string, withRecency = true) => {
       if (hits.has(page)) return;
       const pb = blocks.get(page);
@@ -617,34 +620,48 @@ export class SearchIndex implements SearchSource {
           if (b) add(id, EXTENDED_SCORES.extraRow, undefined, () => snippet(rowText(b) + " " + rowExtraText(b, this.databases.get(b.parent.slice(2))), both, terms[0]!), false);
         }
       }
-      // Begriffe über Titel, Blöcke und Zeilenwerte einer Seite verteilt
+      // Begriffe über Titel, Blöcke und Zeilenwerte einer Seite verteilt. Begriff für Begriff (der längste, meist
+      // seltenste zuerst): Seiten mit dem ersten Begriff, dann nur noch deren Einträge prüfen (BSD-280: billig).
       if (terms.length > 1) {
-        const masks = new Map<string, { m: number; entry?: ContentEntry }>();
-        const note = (page: string, m: number, entry?: ContentEntry) => {
-          if (m === 0 || hits.has(page)) return;
-          const cur = masks.get(page);
-          if (!cur) masks.set(page, { m, ...(entry ? { entry } : {}) });
-          else { cur.m |= m; if (entry && (!cur.entry || comparePaths(entry.path, cur.entry.path) < 0)) cur.entry = entry; }
-        };
-        for (const [id, folded] of this.titles) { if (tick()) return undefined; note(id, maskOf(folded)); }
-        for (const map of [this.contentEntries, this.extraEntries]) {
-          for (const e of map.values()) { if (tick()) return undefined; note(e.page, maskOf(e.folded), e); }
+        // Ziffern (Nummern, IDs) und lange Begriffe sind selten – zuerst, dann bleiben wenige Kandidaten.
+        const rare = (t: string) => (/\p{N}/u.test(t) ? 1000 : 0) + t.length;
+        const sorted = [...terms].sort((a, b) => rare(b) - rare(a));
+        let cand: Set<string> | undefined;
+        const firstEntry = new Map<string, ContentEntry>();
+        for (const [k, t] of sorted.entries()) {
+          const next = new Set<string>();
+          const visit = (page: string, folded: string, entry?: ContentEntry) => {
+            if (hits.has(page) || (cand && !cand.has(page))) return;
+            if (next.has(page) && (k > 0 || !entry)) return;
+            if (!folded.includes(t)) return;
+            next.add(page);
+            if (k === 0 && entry) {
+              const best = firstEntry.get(page);
+              if (!best || comparePaths(entry.path, best.path) < 0) firstEntry.set(page, entry);
+            }
+          };
+          for (const [id, folded] of this.titles) { if (tick()) return undefined; visit(id, folded); }
+          for (const map of [this.contentEntries, this.extraEntries]) {
+            for (const e of map.values()) { if (tick()) return undefined; visit(e.page, e.folded, e); }
+          }
+          for (const [id, folded] of this.rows) { if (tick()) return undefined; visit(id, folded); }
+          for (const [id, folded] of this.extraRows) { if (tick()) return undefined; visit(id, folded); }
+          cand = next;
+          if (cand.size === 0) break;
         }
-        for (const [id, folded] of this.rows) { if (tick()) return undefined; note(id, maskOf(folded)); }
-        for (const [id, folded] of this.extraRows) { if (tick()) return undefined; note(id, maskOf(folded)); }
-        for (const [page, { m, entry }] of masks) {
-          if (m !== full) continue;
+        for (const page of cand ?? []) {
+          const entry = firstEntry.get(page);
           const b = entry ? blocks.get(entry.blockID) : undefined;
-          add(page, EXTENDED_SCORES.spread, entry?.blockID, entry && b ? () => snippet(this.extraEntries.get(b.id) === entry ? blockExtraText(b) : contentText(this, b), entry.folded, terms.find((t) => entry.folded.includes(t)) ?? terms[0]!) : undefined);
+          add(page, EXTENDED_SCORES.spread, entry?.blockID, entry && b ? () => snippet(this.extraEntries.get(b.id) === entry ? blockExtraText(b) : contentText(this, b), entry.folded, sorted[0]!) : undefined);
         }
       }
     }
-    // Ein Tippfehler bzw. Plural-s in Titelwörtern – nur, solange die genauen Treffer die Liste nicht füllen
-    if (hits.size < limit && q.length >= 4) {
-      for (const [id, folded] of this.titles) {
+    // Ein Tippfehler bzw. Plural-s in Titelwörtern – nur für kurze Anfragen (ein, zwei Wörter, ohne Ziffern) und
+    // solange die genauen Treffer die Liste nicht füllen (BSD-280: lange Anfragen sind Volltext, keine Titel).
+    if (hits.size < limit && q.length >= 4 && terms.length <= 2 && !/\p{N}/u.test(q)) {
+      for (const [id, words] of this.titleWords) {
         if (tick()) return undefined;
         if (hits.has(id)) continue;
-        const words = folded.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
         if (words.length && terms.every((t) => words.some((w) => w.startsWith(t) || nearWord(w, t) || (w.length > t.length && nearWord(w.slice(0, t.length + 1), t)))))
           add(id, EXTENDED_SCORES.fuzzyTitle);
       }

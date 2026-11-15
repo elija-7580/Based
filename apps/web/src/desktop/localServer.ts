@@ -1,9 +1,13 @@
-// BSD-138: lokaler based-server und die Kommandozeile `based` aus der Desktop-App – beides nur per Opt-in und ohne
-// gebündelte Node-Laufzeit. Der App liegt nur ein JavaScript-Bundle bei (Resource `based-server.cjs`); es läuft mit
-// der Node des Nutzers (≥ 22), gefunden über die Login-Shell wie im Terminal. Die Hülle hat keine eigene Rust-Logik:
-// das offizielle Shell-Plugin darf genau zwei feste Aufrufe (capabilities/local-server.json):
-//   based-node-probe  /bin/zsh -ilc 'command -v node && node --version'
-//   based-node-run    /bin/zsh -ilc 'exec node "$BASED_BUNDLE" desktop'   (was zu tun ist: BASED_ACTION)
+// BSD-138: lokaler based-server und die Kommandozeile `based` aus der Desktop-App – beides nur per Opt-in. Der App
+// liegt ein JavaScript-Bundle bei (Resource `based-server.cjs`). BSD-414: es läuft mit der mitgelieferten Node
+// (Resource `node/bin/node`, siehe apps/desktop/scripts/fetch-node.mjs); fehlt sie (Intel-Mac im Universal-Build,
+// Entwickler-Build ohne Netz), mit der Node des Nutzers (≥ 22), gefunden über die Login-Shell wie im Terminal.
+// Die Hülle hat keine eigene Rust-Logik: das offizielle Shell-Plugin darf genau vier feste Aufrufe
+// (capabilities/local-server.json):
+//   based-node-bundled-probe  /bin/sh -c 'printf … "$BASED_NODE" && exec "$BASED_NODE" --version'   (BSD-414)
+//   based-node-bundled-run    /bin/zsh -ilc 'exec "$BASED_NODE" "$BASED_BUNDLE" desktop'          (BSD-414)
+//   based-node-probe          /bin/zsh -ilc 'command -v node && node --version'
+//   based-node-run            /bin/zsh -ilc 'exec node "$BASED_BUNDLE" desktop'   (was zu tun ist: BASED_ACTION)
 // - Lokaler Server: nur 127.0.0.1, fester Port; Token von der App erzeugt, in ihrer verschlüsselten Ablage, an den
 //   Prozess über die Umgebung (nie Kommandozeile). Er schreibt ~/.config/based/local.json (+ Token-Datei 0600) für
 //   die CLI und endet mit der App (stdin zu).
@@ -17,12 +21,22 @@ export const LOCAL_SERVER_PORT = 47821;
 export const MIN_NODE_MAJOR = 22;
 export const PROBE = { name: "based-node-probe", args: ["-ilc", "command -v node && node --version"] } as const;
 export const RUN = { name: "based-node-run", args: ["-ilc", 'exec node "$BASED_BUNDLE" desktop'] } as const;
+/** BSD-414: die mitgelieferte Node (Resource `node/bin/node`, Pfad in BASED_NODE) – vor der Login-Shell. */
+export const BUNDLED_PROBE = { name: "based-node-bundled-probe", args: ["-c", `printf '%s\\n' "$BASED_NODE" && exec "$BASED_NODE" --version`] } as const;
+export const BUNDLED_RUN = { name: "based-node-bundled-run", args: ["-ilc", 'exec "$BASED_NODE" "$BASED_BUNDLE" desktop'] } as const;
+export const BUNDLED_NODE_RESOURCE = "node/bin/node";
+
+/** BSD-414: Welche Node? Die mitgelieferte, wenn sie läuft (≥ 22); sonst die aus der Login-Shell. */
+export function chooseNode(bundled: NodeInfo | undefined, shell: () => Promise<NodeInfo>): Promise<NodeInfo> {
+  if (bundled?.ok) return Promise.resolve({ ...bundled, bundled: true, message: `Node.js ${bundled.version} (built in)` });
+  return shell();
+}
 const SETTINGS_KEY = "based.localServer";
 const TOKEN_SECRET = "local-server-token";
 
 export type LocalServerStatus = "off" | "starting" | "running" | "failed" | "unavailable";
 
-export interface NodeInfo { ok: boolean; path: string | undefined; version: string | undefined; message: string }
+export interface NodeInfo { ok: boolean; path: string | undefined; version: string | undefined; message: string; /** BSD-414: die mit der App gelieferte Node */ bundled?: boolean }
 export interface CliState { installed: boolean; target: string | undefined; message: string | undefined; busy: boolean }
 
 export interface LocalServerState {
@@ -197,13 +211,24 @@ class LocalServer {
     return resolveResource("based-server.cjs");
   }
 
-  /** Node über die Login-Shell suchen (nichts wird installiert oder geladen). */
+  /** BSD-414: Pfad der mitgelieferten Node (fehlt sie im Bundle, scheitert die Probe und die Login-Shell gilt). */
+  private async bundledNode(): Promise<string> {
+    const { resolveResource } = await import("@tauri-apps/api/path");
+    return resolveResource(BUNDLED_NODE_RESOURCE);
+  }
+
+  /** Mitgelieferte Node (BSD-414), sonst Node über die Login-Shell suchen (nichts wird installiert oder geladen). */
   async probeNode(): Promise<NodeInfo | undefined> {
     if (!isTauri()) return undefined;
     try {
       const { Command } = await import("@tauri-apps/plugin-shell");
-      const r = await Command.create(PROBE.name, [...PROBE.args]).execute();
-      const info = parseNodeProbe(r.stdout, r.code);
+      const bundled = await this.bundledNode()
+        .then((node) => Command.create(BUNDLED_PROBE.name, [...BUNDLED_PROBE.args], { env: { BASED_NODE: node } }).execute())
+        .then((r) => parseNodeProbe(r.stdout, r.code), () => undefined);
+      const info = await chooseNode(bundled, async () => {
+        const r = await Command.create(PROBE.name, [...PROBE.args]).execute();
+        return parseNodeProbe(r.stdout, r.code);
+      });
       this.set({ node: info });
       return info;
     } catch (e) {
@@ -215,8 +240,16 @@ class LocalServer {
 
   private async action(action: "install-cli" | "uninstall-cli" | "cli-status", extra: Record<string, string> = {}) {
     const { Command } = await import("@tauri-apps/plugin-shell");
-    const r = await Command.create(RUN.name, [...RUN.args], { env: actionEnv(await this.bundle(), action, extra) }).execute();
+    const run = await this.runner();
+    const r = await Command.create(run.name, [...run.args], { env: { ...actionEnv(await this.bundle(), action, extra), ...run.env } }).execute();
     return parseResult(r.stdout) ?? { ok: false, message: (r.stderr.trim().split("\n").at(-1) ?? "") || `exit ${r.code ?? "?"}` };
+  }
+
+  /** BSD-414: Aufruf mit der mitgelieferten Node, falls die Probe sie gefunden hat; sonst über die Login-Shell. */
+  private async runner(): Promise<{ name: string; args: readonly string[]; env: Record<string, string> }> {
+    const node = this.state.node;
+    if (node?.bundled && node.path) return { ...BUNDLED_RUN, env: { BASED_NODE: node.path } };
+    return { ...RUN, env: {} };
   }
 
   /** Ist `based` installiert (am Standardort bzw. `target`)? */
@@ -362,7 +395,8 @@ class LocalServer {
         // BSD-274: automatische Backups (stündlich bei Änderungen, beim Beenden) außerhalb des App-Speichers
         BASED_BACKUP_DIR: await path.join(await path.documentDir(), "Based Backups"),
       });
-      const cmd = Command.create(RUN.name, [...RUN.args], { env });
+      const run = await this.runner();
+      const cmd = Command.create(run.name, [...run.args], { env: { ...env, ...run.env } });
       let failure: string | undefined;
       cmd.stdout.on("data", (line: string) => {
         const r = parseReady(line);

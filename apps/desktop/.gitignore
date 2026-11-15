@@ -1,3 +1,4 @@
 # BSD-138: gebaute Beilage (scripts/build-sidecar.mjs)
 dist-sidecar/
 src-tauri/binaries/
+.cache/

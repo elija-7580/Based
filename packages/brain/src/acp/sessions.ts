@@ -38,11 +38,18 @@ export interface CodingSessionView {
   eventCount: number;
   error: string | undefined;
   handoffFrom: string | undefined;
+  /** BSD-411: läuft in einer Sandbox (Shell-Befehle „sandboxed“). */
+  sandboxed: boolean;
 }
 
 export interface ConnectedAgent {
   client: AcpClient;
   stop(): void;
+  /**
+   * BSD-411: Der Agent läuft in einer Sandbox (Container). Seine Shell-Befehle gelten dann als „sandboxed“ –
+   * „Work freely“ erlaubt sie ohne Rückfrage (deny-Regeln greifen weiter); ohne Sandbox fragt es (BSD-403).
+   */
+  sandboxed?: boolean;
 }
 
 export interface CodingSessionsOptions {
@@ -163,6 +170,7 @@ export class CodingSessions {
         inbox: this.inbox,
         permissions,
         handoffFrom: from?.agent.name,
+        sandboxed: proc.sandboxed === true,
       });
       await s.engine.ensureSession();
       s.state = "idle";
@@ -309,6 +317,7 @@ export class CodingSessions {
       eventCount: s.events.length,
       error: s.error,
       handoffFrom: s.handoffFrom,
+      sandboxed: s.agentProcess?.sandboxed === true,
     };
   }
 }
