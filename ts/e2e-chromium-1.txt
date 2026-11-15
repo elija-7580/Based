@@ -1,4 +1,4 @@
-failure ce1e97819fdd0073bf5264b81b1ff9762853a30d
+failure a209c1264d01490fe9951d3503b796de6677b716
 
     Error: expect(locator).toHaveCount(expected) failed
 
@@ -14,14 +14,14 @@ failure ce1e97819fdd0073bf5264b81b1ff9762853a30d
            - unexpected value "2"
 
 
-      292 |   // ein Klick = Undo-Schritt
-      293 |   await page.keyboard.press("ControlOrMeta+z");
-    > 294 |   await expect(outside()).toHaveCount(1);
+      259 |   // ein Klick = Undo-Schritt
+      260 |   await page.keyboard.press("ControlOrMeta+z");
+    > 261 |   await expect(outside()).toHaveCount(1);
           |                           ^
-      295 |   await page.keyboard.press("ControlOrMeta+Shift+z");
-      296 |   await expect(outside()).toHaveCount(2);
-      297 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:294:27
+      262 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      263 |   await expect(outside()).toHaveCount(2);
+      264 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:261:27
 
     Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium/error-context.md
 
@@ -41,21 +41,21 @@ failure ce1e97819fdd0073bf5264b81b1ff9762853a30d
            - unexpected value "2"
 
 
-      292 |   // ein Klick = Undo-Schritt
-      293 |   await page.keyboard.press("ControlOrMeta+z");
-    > 294 |   await expect(outside()).toHaveCount(1);
+      259 |   // ein Klick = Undo-Schritt
+      260 |   await page.keyboard.press("ControlOrMeta+z");
+    > 261 |   await expect(outside()).toHaveCount(1);
           |                           ^
-      295 |   await page.keyboard.press("ControlOrMeta+Shift+z");
-      296 |   await expect(outside()).toHaveCount(2);
-      297 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:294:27
+      262 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      263 |   await expect(outside()).toHaveCount(2);
+      264 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:261:27
 
     Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium-retry1/error-context.md
 
   1 failed
-    [chromium] › e2e/editor-parity.spec.ts:269:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
-  9 skipped
-  189 passed (5.7m)
+    [chromium] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
+  10 skipped
+  182 passed (4.9m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
