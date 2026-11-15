@@ -7,7 +7,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parseOptions } from "../src/main.js";
-import { localPaths, loginShellPath, mergePath } from "../src/local.js";
+import { localPaths, loginShellPath, mergePath, replaceStaleLocal, writeLocalDiscovery } from "../src/local.js";
+import { createServer } from "node:net";
 
 const serverDir = fileURLToPath(new URL("..", import.meta.url));
 
@@ -85,4 +86,71 @@ describe("BSD-138 based-server --local", () => {
       rmSync(data, { recursive: true, force: true });
     }
   }, 60_000);
+
+  it("BSD-424: Port belegt – eigener alter Server wird abgelöst, fremdes Programm nicht", async () => {
+    const home = mkdtempSync(join(tmpdir(), "based-stale-home-"));
+    try {
+      const killed: [number, string][] = [];
+      let up = true;
+      const deps = { alive: () => up, kill: (pid: number, sig: string) => { killed.push([pid, sig]); up = false; }, health: async () => true, sleep: async () => {} };
+      // keine Discovery: fremd
+      expect(await replaceStaleLocal(home, 47821, "Based Next", deps)).toBe("foreign");
+      writeLocalDiscovery(home, { port: 47821, token: "t", pid: 4242, owner: "Based Next" });
+      // anderer Starter (von Hand gestartet) oder anderer Port: fremd
+      expect(await replaceStaleLocal(home, 47821, "based-server --local", deps)).toBe("foreign");
+      expect(await replaceStaleLocal(home, 47822, "Based Next", deps)).toBe("foreign");
+      // antwortet nicht als based-server: fremd
+      expect(await replaceStaleLocal(home, 47821, "Based Next", { ...deps, health: async () => false })).toBe("foreign");
+      expect(killed).toEqual([]);
+      expect(await replaceStaleLocal(home, 47821, "Based Next", deps)).toBe("replaced");
+      expect(killed).toEqual([[4242, "SIGTERM"]]);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it("BSD-424: zweiter Start auf demselben Port löst den verwaisten ersten ab; fremder Port → klare Meldung", async () => {
+    const home = mkdtempSync(join(tmpdir(), "based-stale2-home-"));
+    const data = mkdtempSync(join(tmpdir(), "based-stale2-db-"));
+    const port = await new Promise<number>((resolve) => { const s = createServer(); s.listen(0, "127.0.0.1", () => { const p = (s.address() as { port: number }).port; s.close(() => resolve(p)); }); });
+    const start = (db: string) => {
+      const child = spawn("pnpm", ["exec", "tsx", "src/main.ts", "--local", "--port", String(port), "--db", join(data, db)], {
+        cwd: serverDir,
+        env: { ...process.env, HOME: home, BASED_TOKEN: "stale-token-0123456789", BASED_LOG_LEVEL: "warning", BASED_LOCAL_OWNER: "Based Next" },
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      let out = "", err = "";
+      child.stdout!.setEncoding("utf8").on("data", (d: string) => { out += d; });
+      child.stderr!.setEncoding("utf8").on("data", (d: string) => { err += d; });
+      const exited = new Promise<number | null>((resolve) => child.once("exit", (code) => resolve(code)));
+      const ready = async () => { for (let i = 0; i < 300 && !/BASED_LOCAL_READY/.test(out); i++) { if (child.exitCode !== null) break; await new Promise((r) => setTimeout(r, 100)); } return /BASED_LOCAL_READY/.test(out); };
+      return { child, exited, ready, err: () => err };
+    };
+    try {
+      const a = start("a.sqlite");
+      expect(await a.ready()).toBe(true);
+      // A ist verwaist (stdin bleibt offen, die App ist weg); B startet auf demselben Port
+      const b = start("b.sqlite");
+      expect(await b.ready()).toBe(true);
+      expect(await a.exited).not.toBeNull();
+      expect((await fetch(`http://127.0.0.1:${port}/health`)).ok).toBe(true);
+      b.child.stdin!.end();
+      expect(await b.exited).toBe(0);
+
+      // fremdes Programm auf dem Port: Exit ≠ 0 mit verständlicher Meldung, nichts wird beendet
+      const foreign = createServer();
+      await new Promise<void>((r) => foreign.listen(port, "127.0.0.1", () => r()));
+      try {
+        const c = start("c.sqlite");
+        expect(await c.exited).not.toBe(0);
+        expect(c.err()).toContain(`Port ${port} is already in use`);
+        expect(foreign.listening).toBe(true);
+      } finally {
+        await new Promise<void>((r) => foreign.close(() => r()));
+      }
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(data, { recursive: true, force: true });
+    }
+  }, 90_000);
 });

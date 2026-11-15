@@ -89,3 +89,57 @@ export function mergePath(login: string | undefined, current: string | undefined
   const seen = new Set<string>();
   return [...login.split(":"), ...(current ?? "").split(":")].filter((p) => p !== "" && !seen.has(p) && (seen.add(p), true)).join(":");
 }
+
+/**
+ * BSD-424: Der Port ist belegt. Gehört er laut Discovery-Datei einem älteren lokalen Server desselben Starters (z. B.
+ * nach einem Absturz der App übrig geblieben) und antwortet dort ein based-server, wird dieser beendet, damit der neue
+ * starten kann. Alles andere (fremdes Programm, von Hand gestarteter Server) bleibt unberührt.
+ *   "replaced" – alter Server beendet, Port wieder frei
+ *   "foreign"  – Port gehört einem anderen Programm oder Starter
+ */
+export interface StaleLocalDeps {
+  alive?: (pid: number) => boolean;
+  kill?: (pid: number, signal: NodeJS.Signals) => void;
+  health?: (url: string) => Promise<boolean>;
+  sleep?: (ms: number) => Promise<void>;
+  /** Wie lange auf das Ende des alten Prozesses gewartet wird (ms). */
+  waitMs?: number;
+}
+
+const isAlive = (pid: number) => {
+  try { process.kill(pid, 0); return true; } catch (e) { return (e as NodeJS.ErrnoException).code === "EPERM"; }
+};
+const basedHealth = async (url: string) => {
+  try {
+    const r = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1500) });
+    const v = (await r.json()) as { name?: unknown };
+    return r.ok && v.name === "based-server";
+  } catch {
+    return false;
+  }
+};
+
+export async function replaceStaleLocal(home: string, port: number, owner: string, deps: StaleLocalDeps = {}): Promise<"replaced" | "foreign"> {
+  const alive = deps.alive ?? isAlive;
+  const kill = deps.kill ?? ((pid, sig) => process.kill(pid, sig));
+  const health = deps.health ?? basedHealth;
+  const sleep = deps.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
+  let d: Partial<LocalDiscovery>;
+  try { d = JSON.parse(readFileSync(localPaths(home).discovery, "utf8")) as Partial<LocalDiscovery>; } catch { return "foreign"; }
+  const url = `http://127.0.0.1:${port}`;
+  if (d.url !== url || d.owner !== owner || typeof d.pid !== "number" || d.pid <= 1 || d.pid === process.pid) return "foreign";
+  if (!alive(d.pid) || !(await health(url))) return "foreign";
+  kill(d.pid, "SIGTERM");
+  const waitMs = deps.waitMs ?? 5000;
+  for (let t = 0; t < waitMs && alive(d.pid); t += 100) await sleep(100);
+  if (alive(d.pid)) {
+    try { kill(d.pid, "SIGKILL"); } catch { /* schon weg */ }
+    await sleep(200);
+  }
+  return "replaced";
+}
+
+/** BSD-424: verständliche Meldung statt Stacktrace, wenn der Port belegt ist. */
+export function portInUseMessage(port: number): string {
+  return `Port ${port} is already in use by another program, so the local server can't start. Quit that program (or restart the Mac) and turn the local server on again.`;
+}

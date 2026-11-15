@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, folderSyncEnv, ICLOUD_FOLDER, localServer, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { actionEnv, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -58,5 +58,21 @@ describe("Tailnet (BSD-315)", () => {
     expect(parsePairingLink(link)).toEqual({ url: "http://100.101.102.103:47821", token: "bdo_abc" });
     expect(parsePairingLink(pairingLink("http://x:1", "main-token"))).toBeUndefined();
     expect(parsePairingLink("https://evil/pair?url=x")).toBeUndefined();
+  });
+
+  it("BSD-424: Fehlerzeile statt „Node.js v26“ (Absturz mit Stacktrace) und BASED_LOCAL_FAILED", () => {
+    const crash = [
+      "node:events:486\n      throw er; // Unhandled 'error' event\n      ^\n",
+      "Error: listen EADDRINUSE: address already in use 127.0.0.1:47821\n    at Server.setupListenHandle [as _listen2] (node:net:1940:16)\n    at listenInCluster (node:net:1997:12)\n",
+      "{\n  code: 'EADDRINUSE',\n  errno: -48,\n  syscall: 'listen',\n  address: '127.0.0.1',\n  port: 47821\n}\n",
+      "\nNode.js v26.13.0\n",
+    ];
+    expect(failureLine(crash)).toBe("Error: listen EADDRINUSE: address already in use 127.0.0.1:47821");
+    expect(failureLine(["some warning", "Node.js v26.13.0"])).toBe("some warning");
+    expect(failureLine(["based-server: Port 47821 is already in use by another program", "Node.js v26.13.0"])).toContain("Port 47821");
+    expect(failureLine([])).toBe("");
+    expect(parseFailed('BASED_LOCAL_FAILED {"message":"Port 47821 is already in use","code":"EADDRINUSE"}\n')).toBe("Port 47821 is already in use");
+    expect(parseFailed("BASED_LOCAL_READY {}")).toBeUndefined();
+    expect(parseFailed("BASED_LOCAL_FAILED {kaputt")).toBeUndefined();
   });
 });
