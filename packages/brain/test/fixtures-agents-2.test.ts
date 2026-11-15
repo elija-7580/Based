@@ -1,17 +1,21 @@
-// BSD-410 Teil 1: Golden Fixtures Agent Brain – LineDiff und Zitate. Die Fälle in fixtures/agents/linediff.json und
-// citations.json erzeugt der Swift-Export (legacy/Swift/BasedBrain/Tests/BasedBrainTests/AgentFixtureExport.swift);
+// BSD-410: Golden Fixtures Agent Brain – LineDiff, Zitate (Teil 1), Kontextbudget (Teil 2). Die Fälle in
+// fixtures/agents/linediff.json, citations.json und context.json erzeugt der Swift-Export (legacy/Swift/BasedBrain/Tests/BasedBrainTests/AgentFixtureExport.swift);
 // dieser Runner spielt sie gegen den TS-Port ab. Bewusste Abweichungen stehen in DEVIATIONS (mit Grund und dem, was
 // TS stattdessen liefert); jeder andere Unterschied ist ein Fehler.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { citationMarkers, lineCounts, lineOps, parseUnified, renderCitations, streamingSafe, unifiedDiff, type Citation } from "../src/index.js";
+import { citationMarkers, compactionNotice, ContextBudget, lineCounts, lineOps, parseUnified, renderCitations, streamingSafe, unifiedDiff, type ChatMessage, type Citation } from "../src/index.js";
 
 interface Case<I = Record<string, unknown>, O = Record<string, unknown>> { name: string; input: I; output: O }
 const load = (f: string) => JSON.parse(readFileSync(fileURLToPath(new URL(`../../../fixtures/agents/${f}`, import.meta.url)), "utf8")) as { module: string; cases: Case[] };
 
 /** Bewusste Abweichungen: Fallname → warum und was TS liefert. */
 const DEVIATIONS: Record<string, { why: string; output: Record<string, unknown> }> = {
+  "tokens: Emoji mit Hautfarbe": {
+    why: "Swift zählt Grapheme (3), TS die UTF-16-Länge (12) – TS schätzt so eher zu viel, das Kontextfenster läuft nie über.",
+    output: { tokens: 4 },
+  },
   "LineDiff: CRLF bleibt in der Zeile": {
     why: "Swift zählt \"\\r\\n\" als ein Zeichen und trennt CRLF-Text gar nicht (ganze Datei = eine Zeile); TS trennt an \\n, \\r bleibt am Zeilenende – ein Diff von Windows-Dateien zeigt so die geänderte Zeile.",
     output: {"ops": [["same", "a\r"], ["removed", "b"], ["added", "c"]], "added": 1, "removed": 1, "unified": "@@ -1,2 +1,2 @@\n a\r\n-b\n+c", "parsed": [{"kind": "hunk", "text": "@@ -1,2 +1,2 @@"}, {"kind": "same", "old": 1, "new": 1, "text": "a\r"}, {"kind": "removed", "old": 2, "text": "b"}, {"kind": "added", "new": 2, "text": "c"}]},
@@ -84,6 +88,26 @@ describe("fixtures/agents/citations.json", () => {
         return rest;
       }, { streaming: i.streaming === true, link: swiftLink });
       check(file.module, c, { markdown: r.markdown, citations: r.citations });
+    });
+  }
+});
+
+describe("fixtures/agents/context.json", () => {
+  const file = load("context.json");
+  for (const c of file.cases) {
+    it(c.name, async () => {
+      const i = c.input as { kind: string; model?: string; text?: string; window?: number; messages?: ChatMessage[]; summarize?: boolean; force?: boolean };
+      if (i.kind === "window") return check(file.module, c, { window: ContextBudget.windowFor(i.model!) });
+      if (i.kind === "tokens") return check(file.module, c, { tokens: ContextBudget.tokensOfText(i.text!) });
+      const budget = new ContextBudget(i.window!);
+      const summarizer = i.summarize ? async (text: string) => `SUMMARY of ${[...new Intl.Segmenter().segment(text)].length} chars` : undefined;
+      const { messages, report } = await budget.fit(i.messages!, summarizer, i.force === true);
+      const r: Record<string, unknown> = { before: report.before, after: report.after, shortenedToolResults: report.shortenedToolResults,
+        summarizedMessages: report.summarizedMessages, droppedMessages: report.droppedMessages, shortenedMessages: report.shortenedMessages };
+      if (report.summary !== undefined) r.summary = report.summary;
+      const notice = compactionNotice(report);
+      if (notice) r.notice = notice;
+      check(file.module, c, { messages: messages.map((m) => ({ role: m.role, content: m.content })), report: r });
     });
   }
 });

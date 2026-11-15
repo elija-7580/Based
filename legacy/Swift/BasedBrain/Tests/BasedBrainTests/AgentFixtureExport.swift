@@ -345,6 +345,55 @@ import Testing
         ])
     }
 
+    // MARK: BSD-410 Teil 2: Kontextbudget
+
+    func messageJSON(_ m: ChatMessage) -> JSONValue {
+        .object(["role": .string(m.role.rawValue), "content": .string(m.content)])
+    }
+
+    func contextBudget() async -> JSONValue {
+        var cases: [JSONValue] = []
+        for model in ["claude-sonnet-4-5", "anthropic/claude-opus", "gpt-4.1-mini", "gpt-5", "o3-mini", "o4", "gpt-4o", "gpt-4-turbo",
+                      "gemini-2.5-pro", "openrouter/google/gemini-flash", "apple/on-device", "On-Device", "llama3", "", "GPT-5-CODEX"] {
+            cases.append(CoreFixtures.testCase("window: \(model.isEmpty ? "(leer)" : model)", ["kind": "window", "model": .string(model)],
+                ["window": .number(Double(ContextBudget.window(for: model)))]))
+        }
+        for (name, text) in [("leer", ""), ("ASCII", "hello world"), ("sieben", "1234567"), ("Umlaute", "Grüße aus Wien"),
+                             ("Emoji mit Hautfarbe", "👋🏽👋🏽👋🏽"), ("Zeilen", "a\nb\r\nc")] {
+            cases.append(CoreFixtures.testCase("tokens: \(name)", ["kind": "tokens", "text": .string(text)],
+                ["tokens": .number(Double(ContextBudget.tokens(text)))]))
+        }
+        // fit: kleines Fenster, damit kurze Texte reichen
+        let long = { (c: Character, n: Int) in String(repeating: c, count: n) }
+        let convos: [(String, Int, [ChatMessage], Bool, Bool)] = [
+            ("passt", 1_000, [.system("sys"), .user("hi"), .assistant("hello")], false, false),
+            ("Tool-Ergebnisse kürzen", 2_000, [.system("sys"), .user("u1"), .init(role: .tool, content: long("a", 3_000)),
+                .assistant("a1"), .user("u2"), .init(role: .tool, content: long("b", 1_500)), .init(role: .tool, content: long("c", 1_500)),
+                .init(role: .tool, content: long("d", 1_500)), .init(role: .tool, content: long("e", 1_500)), .init(role: .tool, content: long("f", 1_500))], false, false),
+            ("alte Turns weglassen", 1_000, [.system("sys")] + (1...9).flatMap { i -> [ChatMessage] in [.user("frage \(i) " + long("q", 300)), .assistant("antwort \(i) " + long("x", 300))] }, false, false),
+            ("alte Turns zusammenfassen", 1_000, [.system("sys")] + (1...9).flatMap { i -> [ChatMessage] in [.user("frage \(i) " + long("q", 300)), .assistant("antwort \(i) " + long("x", 300))] }, true, false),
+            ("ohne System-Nachricht", 1_000, (1...8).flatMap { i -> [ChatMessage] in [.user("u\(i) " + long("q", 350)), .assistant("a\(i) " + long("x", 350))] }, false, false),
+            ("lange Nachricht in der Mitte kürzen", 2_000, [.system("sys"), .user("hier ist ein Text " + long("t", 9_000)), .assistant("ok"), .user("und jetzt?")], false, false),
+            ("force unter der Schwelle", 4_000, [.system("sys"), .user("u1"), .init(role: .tool, content: long("r", 2_500)), .assistant("a"), .user("u2")], false, true),
+        ]
+        for (name, window, msgs, summarize, force) in convos {
+            let budget = ContextBudget(window: window)
+            let summarizer: ContextBudget.Summarizer? = summarize ? { text in "SUMMARY of \(text.count) chars" } : nil
+            let (out, r) = await budget.fit(msgs, summarizer: summarizer, force: force)
+            var report: [String: JSONValue] = ["before": .number(Double(r.before)), "after": .number(Double(r.after)),
+                "shortenedToolResults": .number(Double(r.shortenedToolResults)), "summarizedMessages": .number(Double(r.summarizedMessages)),
+                "droppedMessages": .number(Double(r.droppedMessages)), "shortenedMessages": .number(Double(r.shortenedMessages))]
+            if let s = r.summary { report["summary"] = .string(s) }
+            if let n = r.userNotice { report["notice"] = .string(n) }
+            cases.append(CoreFixtures.testCase("fit: \(name)",
+                ["kind": "fit", "window": .number(Double(window)), "messages": .array(msgs.map(messageJSON)), "summarize": .bool(summarize), "force": .bool(force)],
+                ["messages": .array(out.map(messageJSON)), "report": .object(report)]))
+        }
+        return CoreFixtures.file("agents-context", cases, meta: [
+            "note": .string("Swift ContextBudget (window(for:), tokens, fit mit festem Zusammenfasser „SUMMARY of <n> chars“). Erzeugt von AgentFixtureExport.swift (BSD-410 Teil 2)."),
+        ])
+    }
+
     func check(_ value: JSONValue, _ name: String) throws {
         let text = try ImportFixtures.prettyForExport(value)
         let file = Self.dir.appendingPathComponent(name)
@@ -355,6 +404,10 @@ import Testing
         }
         guard let committed = try? String(contentsOf: file, encoding: .utf8) else { return }
         #expect(committed == text, "fixtures/agents/\(name) is stale – regenerate with BASED_WRITE_FIXTURES=1")
+    }
+
+    @Test func contextFixturesAreCurrent() async throws {
+        try check(await contextBudget(), "context.json")
     }
 
     @Test func agentFixturesAreCurrent() throws {
