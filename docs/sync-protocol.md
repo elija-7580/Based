@@ -112,6 +112,11 @@ Reply:
 deletion lost against a newer edit). `deleted` (optional, may be missing from older servers) lists pushed
 records the server keeps deleted because its tombstone is newer. The client applies both. Push in batches of about 500 records.
 
+`restamped` (optional, TS server, BSD-427) lists pushed records (`{kind, id}`) whose stamp was more than an hour in
+the future; the server stored them with its own receive stamp (BSD-279) and sends that copy in `newer`. The client
+takes those copies even though its own stamp is larger (same content, server stamp) – otherwise it would keep the
+future stamp and ignore later edits of other devices to that record. Clients that don't know the field ignore it.
+
 ### `GET /sync/v2/pull?after=<seq>&limit=<n>`
 
 Reply:

@@ -1,7 +1,9 @@
 // BSD-279 (Review Sync): Ein Gerät mit vorgehender Uhr darf eine Seite nicht für alle anderen einfrieren.
 import { afterEach, describe, expect, it } from "vitest";
 import type { WireRecord } from "@based/core";
-import { post, startApp } from "./helpers.js";
+import { openWorkspace, SyncClient } from "@based/sync";
+import { openNodeDatabase } from "@based/sync/node";
+import { post, startApp, TOKEN } from "./helpers.js";
 
 const HOUR = 3_600_000;
 const page = (id: string, text: string, millis: number, node = "dev"): WireRecord => ({
@@ -45,6 +47,40 @@ describe("Stempel aus der Zukunft (BSD-279)", () => {
     // Wiederherstellen von einem Gerät mit richtiger Uhr ist möglich.
     await post(`${app.url}/sync/v2/push`, { records: [page("p3", "wieder da", Date.now() + 1000, "ok")], deletions: [] });
     expect(app.sync.pull(0).records.find((r) => r.data.id === "p3")?.data.text).toBe("wieder da");
+  });
+});
+
+describe("BSD-427: Gerät übernimmt den neuen Stempel des Servers", () => {
+  it("Antwort nennt den neu gestempelten Record (restamped + newer mit Server-Stempel)", async () => {
+    const app = await startApp();
+    apps.push(app);
+    const r = await post(`${app.url}/sync/v2/push`, { records: [page("p4", "voraus", Date.now() + 3 * HOUR, "skewed")], deletions: [] });
+    const body = r.body as { newer: WireRecord[]; restamped?: { kind: string; id: string }[] };
+    expect(body.restamped).toEqual([{ kind: "block", id: "p4" }]);
+    expect(body.newer.map((x) => x.data.id)).toEqual(["p4"]);
+    expect((body.newer[0]!.data.stamp as { millis: number }).millis).toBeLessThan(Date.now() + HOUR);
+    // normaler Push: kein Feld
+    const ok = await post(`${app.url}/sync/v2/push`, { records: [page("p5", "jetzt", Date.now())], deletions: [] });
+    expect((ok.body as { restamped?: unknown }).restamped).toBeUndefined();
+  });
+
+  it("Gerät A mit Uhr +3 h synct offline Geändertes; danach sieht A die Änderung von B am selben Record", async () => {
+    const app = await startApp();
+    apps.push(app);
+    const a = openWorkspace(openNodeDatabase(), { node: "a" });
+    const b = openWorkspace(openNodeDatabase(), { node: "b" });
+    const client = (d: typeof a) => new SyncClient(d.store, d.persistence, { baseURL: app.url, token: TOKEN });
+    a.store.clock.wallClock = () => Date.now() + 3 * HOUR; // vor dem ersten Uhrvergleich (offline)
+    a.store.transact("New page", (tx) => tx.put(page("shared", "von A", 0)));
+    expect((a.store.blocks.get("shared")!.stamp as { millis: number }).millis).toBeGreaterThan(Date.now() + 2 * HOUR);
+    await client(a).syncOnce();
+    expect((a.store.blocks.get("shared")!.stamp as { millis: number }).millis).toBeLessThan(Date.now() + HOUR);
+    a.store.clock.wallClock = () => Date.now();
+    await client(b).syncOnce();
+    b.store.transact("Edit", (tx) => tx.update("shared", (x) => { x.text = "von B"; }));
+    await client(b).syncOnce();
+    await client(a).syncOnce();
+    expect(a.store.blocks.get("shared")!.text).toBe("von B");
   });
 });
 
