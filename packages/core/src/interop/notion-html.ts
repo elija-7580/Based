@@ -110,6 +110,71 @@ interface Ctx {
   counter: number;
   /** Notion-Markup (pre-wrap) statt allgemeinem HTML (Leerraum fällt zusammen). */
   notion: boolean;
+  /** BSD-260 Teil 11: Klassen-Regeln aus `<style>` (Google Docs: `.c3{font-weight:700}`), nur allgemeines HTML. */
+  classCSS?: Map<string, Map<string, string>>;
+}
+
+/**
+ * BSD-260 Teil 11: einfache Klassen-Regeln (`.name{prop:value;…}`, auch in Listen `.a,.b{…}`) aus `<style>`-Blöcken.
+ * Mehr braucht es für Google-Docs-Exporte nicht (Fett, Kursiv, Unterstrichen, Durchgestrichen stehen in Klassen).
+ */
+export function classRules(css: string): Map<string, Map<string, string>> {
+  const out = new Map<string, Map<string, string>>();
+  const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const m of text.matchAll(/([^{}@]+)\{([^{}]*)\}/g)) {
+    const decls = new Map<string, string>();
+    for (const d of m[2]!.split(";")) {
+      const i = d.indexOf(":");
+      if (i > 0) decls.set(d.slice(0, i).trim().toLowerCase(), d.slice(i + 1).trim().toLowerCase());
+    }
+    if (decls.size === 0) continue;
+    for (const sel of m[1]!.split(",")) {
+      const c = /^\s*(?:[a-z0-9]+)?\.([\w-]+)\s*$/i.exec(sel);
+      if (!c) continue;
+      const cur = out.get(c[1]!) ?? new Map<string, string>();
+      for (const [k, v] of decls) cur.set(k, v);
+      out.set(c[1]!, cur);
+    }
+  }
+  return out;
+}
+
+/** BSD-260 Teil 11: Google Docs verpackt Links als `https://www.google.com/url?q=<Ziel>&sa=…` – das Ziel zählt. */
+export function unwrapRedirect(href: string): string {
+  try {
+    const u = new URL(href);
+    if (/^(www\.)?google\.[a-z.]+$/.test(u.hostname) && u.pathname === "/url") {
+      const q = u.searchParams.get("q");
+      if (q && /^(https?|mailto):/i.test(q)) return q;
+    }
+  } catch { /* keine absolute URL */ }
+  return href;
+}
+
+/** Stil eines Elements: Klassen-Regeln, darüber der Inline-Stil. */
+function cssOf(n: HTMLNode, ctx: Ctx, prop: string): string | undefined {
+  const inline = n.style(prop)?.toLowerCase();
+  if (inline !== undefined) return inline;
+  let v: string | undefined;
+  if (ctx.classCSS) for (const c of n.classList) { const x = ctx.classCSS.get(c)?.get(prop); if (x !== undefined) v = x; }
+  return v;
+}
+
+/** BSD-260 Teil 11: Fett/Kursiv/Unterstrichen/Durchgestrichen aus CSS (allgemeines HTML, z. B. Google Docs). */
+function applyCSSMarks(n: HTMLNode, ctx: Ctx, m: Marks) {
+  const fw = cssOf(n, ctx, "font-weight");
+  if (fw !== undefined) {
+    const num = Number(fw);
+    if (fw === "bold" || fw === "bolder" || (Number.isFinite(num) && num >= 600)) m.b = true;
+    else if (fw === "normal" || fw === "lighter" || (Number.isFinite(num) && num < 600)) delete m.b;
+  }
+  const fs = cssOf(n, ctx, "font-style");
+  if (fs === "italic" || fs === "oblique") m.i = true; else if (fs === "normal") delete m.i;
+  const td = cssOf(n, ctx, "text-decoration") ?? cssOf(n, ctx, "text-decoration-line");
+  if (td !== undefined) {
+    if (td.includes("underline")) m.u = true;
+    if (td.includes("line-through")) m.s = true;
+  }
 }
 
 const newCtx = (dir: string, file: string, pageID: string): Ctx => ({ dir, file, pageID, counter: 0, notion: true });
@@ -321,6 +386,10 @@ export class NotionHTMLImporter {
     const id = this.pageFiles.get(k) ?? derivedID("html", k);
     const ctx = newCtx(dirname(k), k, id);
     ctx.notion = article.has("page");
+    if (!ctx.notion) {
+      const css = doc.all((n) => n.tag === "style").map((n) => n.innerHTML).join("\n");
+      if (css) ctx.classCSS = classRules(css);
+    }
     const header = article.first((n) => n.tag === "header");
     const bodyNode = article.first((n) => n.has("page-body"));
     const titleNode = header?.first((n) => n.has("page-title"));
@@ -910,8 +979,8 @@ export class NotionHTMLImporter {
       switch (n.tag) {
         case "br": add("\n", m); return;
         case "style": case "script": case "svg": return;
-        case "strong": case "b": m.b = true; break;
-        case "em": case "i": m.i = true; break;
+        case "strong": case "b": m.b = true; if (!ctx.notion) applyCSSMarks(n, ctx, m); break;
+        case "em": case "i": m.i = true; if (!ctx.notion) applyCSSMarks(n, ctx, m); break;
         case "u": case "ins": m.u = true; break;
         case "s": case "del": case "strike": m.s = true; break;
         case "code": case "kbd": m.c = true; break;
@@ -945,6 +1014,7 @@ export class NotionHTMLImporter {
           }
           if (n.has("icon") && inLink) return;
           if ((n.attrs.get("style") ?? "").includes("border-bottom")) m.u = true;
+          if (!ctx.notion) applyCSSMarks(n, ctx, m);
           const h = n.classList.find((c) => c.startsWith("highlight-"));
           if (h !== undefined) {
             const c = notionColor(h.slice(10));
@@ -969,7 +1039,7 @@ export class NotionHTMLImporter {
           } else if (href.startsWith("#")) {
             break;
           } else {
-            m.link = href;
+            m.link = ctx.notion ? href : unwrapRedirect(href);
           }
           for (const c of n.children) walk(c, m, true);
           return;
