@@ -182,7 +182,12 @@ export function App({ client, history }: { client: StoreClient; history: History
         case "quickFind": flushSync(() => { setPalette(false); setQuickFind((v) => !v); }); break;
         case "palette": setQuickFind(false); setPalette((v) => !v); break;
         case "newPage": void newPage(); break;
-        case "settings": history.navigate({ name: "settings" }); break;
+        // BSD-421: ⌘, in den Einstellungen geht zurück, wo man war
+        case "settings":
+          if (history.route.name !== "settings") history.navigate({ name: "settings" });
+          else if (history.canBack) history.back();
+          else history.navigate({ name: "home" });
+          break;
         case "toggleTheme": {
           const cur = appearanceStore.get();
           setAppearance({ ...cur, theme: effectiveTheme(cur) === "dark" ? "light" : "dark" });

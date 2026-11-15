@@ -12,7 +12,7 @@ import type { PageEditorProps } from "../ui/props.js";
 import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
-import { MenuIcon } from "../ui/menuIcons.js";
+import { MenuIcon, type MenuIconName } from "../ui/menuIcons.js";
 import { DateField, MenuGlyph, TimeField } from "@based/ui/native";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
@@ -76,7 +76,7 @@ export function BlockEditor(props: PageEditorProps) {
   const ctrl = useMemo(() => new EditorController(store, pageID), [store, pageID]);
   const rootRef = useRef<HTMLDivElement>(null);
   const [slash, setSlash] = useState<SlashState | undefined>();
-  const [menu, setMenu] = useState<{ id: string; x: number; y: number } | undefined>();
+  const [menu, setMenu] = useState<{ id: string; x: number; y: number; view?: "turn" } | undefined>();
   // BSD-407: Blockmenü „Move to“ – Zielseite wählen (MovePicker wie im alten Editor).
   const [moving, setMoving] = useState<string[] | undefined>();
   // BSD-407 Teil 3: Slash „Linked view of database“ – Datenbank wählen, Ansicht hinter (oder an Stelle von) Block `after`.
@@ -1253,7 +1253,7 @@ export function BlockEditor(props: PageEditorProps) {
       {props.outline === false ? null : <PageOutline store={store} pageID={pageID} container={rootEl} />}
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
       {eqEdit ? <EquationPopover x={eqEdit.x} y={eqEdit.y} initial={eqEdit.value} onDone={commitEquation} /> : null}
-      {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={closeMenu} onMove={props.pages ? setMoving : undefined} /> : null}
+      {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} view0={menu.view} onClose={closeMenu} onMove={props.pages ? setMoving : undefined} /> : null}
       {moving && props.pages ? (
         <MovePicker pages={props.pages} selfID={pageID} moving={moving} onClose={() => setMoving(undefined)}
           onPick={(page) => void (async () => {
@@ -1270,7 +1270,10 @@ export function BlockEditor(props: PageEditorProps) {
       {dateEdit ? <DatePopover key={dateEdit.id + ":" + dateEdit.from} state={dateEdit} onChange={(v) => changeDate(dateEdit, v)} onClose={() => setDateEdit(undefined)} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
       {aiReq && props.ai ? <BlockAIBox ai={props.ai} req={aiReq} onClose={() => setAIReq(undefined)} /> : null}
-      {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
+      {toolbar && editable && ctrl.caret && ctrl.caret.from !== ctrl.caret.to ? <FormatBar x={toolbar.x} y={toolbar.y} caret={ctrl.caret} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
+        onLink={() => { const c = ctrl.caret; if (c && c.from !== c.to) openLink(c); }}
+        onEquation={() => { const c = ctrl.caret; if (c && c.from !== c.to) openEquation(c.id, c.from, c.to, plainText(store.blocks.get(c.id)?.text).slice(c.from, c.to)); }}
+        onTurn={() => { const c = ctrl.caret; if (!c || !toolbar) return; setMenu({ id: c.id, x: Math.max(8, toolbar.x - 160), y: toolbar.y + 4, view: "turn" }); }}
         onAI={props.ai ? () => { const c = ctrl.caret; if (c && c.from !== c.to) openAI(c.id, c); } : undefined}
         onColor={(color) => { const c = ctrl.caret; if (c && c.from !== c.to) run(cmd.formatText(store, [R(c)], "color", color ?? false)); }} /> : null}
       {notice ? (
@@ -2524,10 +2527,10 @@ function MenuRow({ icon, label, hint, danger, sub, role = "menuitem", checked, o
   );
 }
 
-function BlockMenu({ id, x, y, onClose, onMove }: { id: string; x: number; y: number; onClose: () => void; onMove?: ((ids: string[]) => void) | undefined }) {
+function BlockMenu({ id, x, y, view0, onClose, onMove }: { id: string; x: number; y: number; view0?: "turn" | undefined; onClose: () => void; onMove?: ((ids: string[]) => void) | undefined }) {
   const { store, ctrl, editable, props } = useCtx();
   const ref = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<"main" | "color" | "turn">("main");
+  const [view, setView] = useState<"main" | "color" | "turn">(view0 ?? "main");
   // BSD-407: Suchfeld wie im alten Blockmenü – Tippen filtert, Enter führt den ersten Treffer aus, ↓ geht in die
   // Liste, Escape leert erst das Feld und schließt dann.
   const [query, setQuery] = useState("");
@@ -2721,30 +2724,56 @@ function BlockMenuFoot({ block: b }: { block: Block | undefined }) {
 
 const BLOCK_COLORS = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"] as const;
 
-function FormatBar({ x, y, onMark, onColor, onAI }: { x: number; y: number; onMark: (m: "b" | "i" | "u" | "s" | "c") => void; onColor: (color: string | undefined) => void; onAI?: (() => void) | undefined }) {
+type FormatMark = "b" | "i" | "u" | "s" | "c";
+
+/**
+ * Formatleiste über markiertem Text (BSD-407 Teil 2g): Fläche wie die anderen Editor-Menüs, Knöpfe als Based-Icon-
+ * Knöpfe mit Namen, Tooltip mit Kürzel und gedrücktem Zustand. Links der Blocktyp mit „Turn into“ (heißt wie im
+ * Blockmenü, BSD-341), dann Ask AI, Fett/Kursiv/Unterstrichen/Durchgestrichen, Inline-Code und Inline-Gleichung
+ * (BSD-342), Link, Textfarbe.
+ */
+function FormatBar({ x, y, caret, onMark, onColor, onAI, onLink, onEquation, onTurn }: {
+  x: number; y: number; caret: Caret;
+  onMark: (m: FormatMark) => void; onColor: (color: string | undefined) => void; onAI?: (() => void) | undefined;
+  onLink: () => void; onEquation: () => void; onTurn: () => void;
+}) {
+  const { store } = useCtx();
+  useSyncExternalStore(storeSubscribe(store), () => store.revision);
   const [colors, setColors] = useState(false);
-  const items: { m: "b" | "i" | "u" | "s" | "c"; label: string; title: string }[] = [
-    { m: "b", label: "B", title: "Bold (⌘B)" }, { m: "i", label: "I", title: "Italic (⌘I)" }, { m: "u", label: "U", title: "Underline (⌘U)" },
-    { m: "s", label: "S", title: "Strikethrough (⌘⇧S)" }, { m: "c", label: "</>", title: "Code (⌘E)" },
+  const b = store.blocks.get(caret.id);
+  const runs = cmd.runsOf(b?.text);
+  const on = (key: FormatMark | "link") => caret.from !== caret.to && cmd.hasMark(runs, caret.from, caret.to, key);
+  const items: { m: FormatMark; icon: MenuIconName; label: string; key: string }[] = [
+    { m: "b", icon: "bold", label: "Bold", key: "⌘B" }, { m: "i", icon: "italic", label: "Italic", key: "⌘I" },
+    { m: "u", icon: "underline", label: "Underline", key: "⌘U" }, { m: "s", icon: "strike", label: "Strikethrough", key: "⌘⇧S" },
+    { m: "c", icon: "code", label: "Code", key: "⌘E" },
   ];
+  const turnable = cmd.isTextBlock(b);
   return (
-    <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 44) }} onPointerDown={(e) => e.preventDefault()}>
+    <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 48) }} onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("input")) e.preventDefault(); }}>
+      {turnable ? (
+        <BasedButton size="sm" variant="ghost" label={blockTypeLabel(b)} ariaLabel={"Turn into · " + blockTypeLabel(b)} icon={<MenuIcon name="turn" />} onClick={onTurn} />
+      ) : null}
       {onAI ? <BasedButton size="sm" variant="ghost" label="Ask AI" onClick={onAI} /> : null}
-      {items.map((it) => <button key={it.m} type="button" className={"bx2-format-btn bx2-format-" + it.m} title={it.title} aria-label={it.title} onClick={() => onMark(it.m)}>{it.label}</button>)}
-      <button type="button" className="bx2-format-btn" title="Text color" aria-label="Text color" aria-expanded={colors} onClick={() => setColors((c) => !c)}>A</button>
+      <span className="bx2-format-sep" aria-hidden="true" />
+      {items.map((it) => <BasedIconButton key={it.m} label={it.label} tooltip={`${it.label} (${it.key})`} pressed={on(it.m)} icon={<MenuIcon name={it.icon} />} onClick={() => onMark(it.m)} testID={"format-" + it.m} />)}
+      <BasedIconButton label="Equation" tooltip="Equation" icon={<MenuIcon name="sqrt" />} onClick={onEquation} testID="format-equation" />
+      <BasedIconButton label="Link" tooltip="Link (⌘K)" pressed={on("link")} icon={<MenuIcon name="link" />} onClick={onLink} testID="format-link" />
+      <BasedIconButton label="Text color" tooltip="Text color" icon={<MenuIcon name="textColor" />} menu={{ expanded: colors }} onClick={() => setColors((c) => !c)} testID="format-color" />
       {colors ? (
-        <span className="bx2-menu bx2-color-menu" role="menu" aria-label="Text color">
+        <div className="bx2-menu bx2-color-menu" role="menu" aria-label="Text color">
+          <div className="bx2-menu-label">Text color</div>
           {BLOCK_COLORS.map((c) => (
-            <button key={c} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c === "default" ? undefined : c); }}>
-              <span className={"bx2-swatch bx2-color-" + c} aria-hidden="true">A</span><span className="bx2-menu-text">{c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)}</span>
-            </button>
+            <MenuRow key={c} label={c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)} icon={<span className={"bx2-swatch bx2-color-" + c}>A</span>}
+              onSelect={() => { setColors(false); onColor(c === "default" ? undefined : c); }} />
           ))}
+          <div className="bx2-menu-sep" role="separator" />
+          <div className="bx2-menu-label">Background</div>
           {BLOCK_COLORS.filter((c) => c !== "default").map((c) => (
-            <button key={c + "Background"} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c + "Background"); }}>
-              <span className={"bx2-swatch bx2-color-" + c + "Background"} aria-hidden="true">A</span><span className="bx2-menu-text">{c[0]!.toUpperCase() + c.slice(1)} background</span>
-            </button>
+            <MenuRow key={c + "Background"} label={c[0]!.toUpperCase() + c.slice(1) + " background"} icon={<span className={"bx2-swatch bx2-color-" + c + "Background"}>A</span>}
+              onSelect={() => { setColors(false); onColor(c + "Background"); }} />
           ))}
-        </span>
+        </div>
       ) : null}
     </div>
   );

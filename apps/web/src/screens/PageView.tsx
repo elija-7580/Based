@@ -77,7 +77,10 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       const a = (e as CustomEvent<ShortcutAction>).detail;
       e.preventDefault();
       // Sofort zeichnen: das Feld hat den Fokus, bevor die nächste Taste kommt.
+      // BSD-421: ⌘F ein zweites Mal (Fokus im Suchfeld) schließt die Leiste wieder.
+      const inBar = document.activeElement?.closest("[data-testid=find-bar]") != null;
       flushSync(() => setFind((f) => {
+        if (a.kind === "find" && f && inBar) return undefined;
         if (a.kind === "findStep" && f) return { ...f, step: { n: f.step.n + 1, delta: a.delta } };
         return { focus: (f?.focus ?? 0) + 1, step: f?.step ?? { n: 0, delta: 1 } };
       }));

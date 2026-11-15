@@ -361,23 +361,10 @@
   transform: translateX(-50%);
   overflow: visible;
 }
-.bx2-format-btn {
-  min-width: 30px;
-  height: 28px;
-  padding: 0 calc(var(--space-1) + var(--space-half));
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-}
-.bx2-format-btn:hover { background: var(--selected); }
-.bx2-format-b { font-weight: 700; }
-.bx2-format-i { font-style: italic; }
-.bx2-format-u { text-decoration: underline; }
-.bx2-format-s { text-decoration: line-through; }
-.bx2-format-c { font-family: var(--font-mono); font-size: var(--type-meta-size); }
+.bx2-formatbar { align-items: center; width: max-content; max-width: none; max-height: none; }
+.bx2-formatbar > * { flex: none; }
+.bx2-format-sep { width: 1px; align-self: stretch; margin: var(--space-1) var(--space-half); background: var(--line); }
+.bx2-formatbar .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
 
 /* Code: Sprache, Mermaid-Vorschau */
 .bx2-codewrap { position: relative; flex: 1 1 auto; min-width: 0; }
