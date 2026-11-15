@@ -129,7 +129,8 @@
 .bx2-mention[data-page] { text-decoration: none; border-radius: var(--radius-xs); padding-inline: var(--space-1); background: var(--surface-soft); white-space: nowrap; }
 .bx2-mention[data-page]:hover { background: var(--surface-raised); }
 .bx2-mention-icon { margin-inline-end: var(--space-1); }
-.bx2-mention-icon .bx-phosphor { width: 1em; height: 1em; vertical-align: -0.125em; }
+.bx2-mention-icon :is(.bx-phosphor, .bx-menu-icon) { display: inline-block; width: 1em; height: 1em; vertical-align: -0.125em; }
+.bx2-pagelink-icon .bx-menu-icon, .bx2-file-icon .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); vertical-align: middle; color: var(--muted); }
 .bx2-mention-title { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); }
 .bx2-mention[data-trashed="true"] .bx2-mention-title, .bx2-mention[data-missing="true"] .bx2-mention-title { color: var(--muted); text-decoration: line-through; }
 .bx2-mention[data-missing="true"] { cursor: default; }

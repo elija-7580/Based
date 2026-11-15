@@ -126,7 +126,7 @@ test("Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bi
   await page.getByTestId("page-content").getByText("Welcome").first().click();
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome");
   const content = page.getByTestId("page-content");
-  await expect(content).toContainText("Go to 📄Seeds"); // Erwähnung zeigt den Seitentitel
+  await expect(content).toContainText(/Go to\s*Seeds/); // Erwähnung zeigt den Seitentitel
   await expect(content).not.toContainText("[[");
   await expect(content.locator("img").first()).toBeVisible();
 });
