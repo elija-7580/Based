@@ -1,61 +1,61 @@
-cancelled c9e643cb112d1fee2345d2042f2711598a51738b
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+failure bdc1051649ccbc415674aae7ae3e6305065a7ace
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+    Expected: 1
+    Received: 2
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' }) with timeout 5000ms
+      - waiting for getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      259 |   // ein Klick = Undo-Schritt
+      260 |   await page.keyboard.press("ControlOrMeta+z");
+    > 261 |   await expect(outside()).toHaveCount(1);
+          |                           ^
+      262 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      263 |   await expect(outside()).toHaveCount(2);
+      264 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:261:27
+
+    Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+    Expected: 1
+    Received: 2
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' }) with timeout 5000ms
+      - waiting for getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      259 |   // ein Klick = Undo-Schritt
+      260 |   await page.keyboard.press("ControlOrMeta+z");
+    > 261 |   await expect(outside()).toHaveCount(1);
+          |                           ^
+      262 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      263 |   await expect(outside()).toHaveCount(2);
+      264 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:261:27
+
+    Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium-retry1/error-context.md
+
+  1 failed
+    [chromium] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
+  11 skipped
+  183 passed (5.6m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
