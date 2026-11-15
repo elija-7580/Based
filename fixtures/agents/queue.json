@@ -1,0 +1,670 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "submit",
+            "two"
+          ],
+          [
+            "submit",
+            "three"
+          ],
+          [
+            "finish"
+          ],
+          [
+            "finish"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: drei schnell hintereinander",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two",
+              "three"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "two"
+            ],
+            "waiting" : [
+              "three"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "two",
+              "three"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one",
+              "two",
+              "three"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "submit",
+            "two"
+          ],
+          [
+            "submit",
+            "three"
+          ],
+          [
+            "remove",
+            "0"
+          ],
+          [
+            "finish"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: zurücknehmen",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two",
+              "three"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "three"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "three"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one",
+              "three"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "submit",
+            "two"
+          ],
+          [
+            "submit",
+            "three"
+          ],
+          [
+            "sendNow",
+            "1"
+          ],
+          [
+            "finish"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: Send now zieht vor und stoppt",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two",
+              "three"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "three"
+            ],
+            "waiting" : [
+              "two"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "three",
+              "two"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one",
+              "three",
+              "two"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "submit",
+            "two"
+          ],
+          [
+            "stop"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: Stopp: Wartende folgen",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "two"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one",
+              "two"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "submit",
+            "two"
+          ],
+          [
+            "submit",
+            "three"
+          ],
+          [
+            "clear"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: leeren",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two",
+              "three"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "submit",
+            "two"
+          ],
+          [
+            "detach"
+          ],
+          [
+            "submit",
+            "three"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: Chat gewechselt",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "two"
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "three"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one",
+              "three"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "submit",
+            "skip-a"
+          ],
+          [
+            "submit",
+            "two"
+          ],
+          [
+            "finish"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: nichts zu senden: weiter",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "skip-a"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+              "skip-a",
+              "two"
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one",
+              "two"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one",
+              "two"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "submit",
+            "skip-a"
+          ],
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: nichts zu senden im Leerlauf",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : false,
+            "started" : [
+
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "script" : [
+          [
+            "sendNow",
+            "0"
+          ],
+          [
+            "submit",
+            "one"
+          ],
+          [
+            "finish"
+          ]
+        ]
+      },
+      "name" : "queue: Send now im Leerlauf ohne Wartende",
+      "output" : {
+        "steps" : [
+          {
+            "busy" : false,
+            "started" : [
+
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : true,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          },
+          {
+            "busy" : false,
+            "started" : [
+              "one"
+            ],
+            "waiting" : [
+
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "module" : "agents-queue",
+  "note" : "Swift ChatPromptQueue mit gesteuerten Turns (finish beendet den zuletzt gestarteten Turn, stop/sendNow brechen ab). Erzeugt von AgentFixtureExport.swift (BSD-410 Teil 3)."
+}

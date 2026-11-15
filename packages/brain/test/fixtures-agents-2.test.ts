@@ -1,11 +1,11 @@
-// BSD-410: Golden Fixtures Agent Brain – LineDiff, Zitate (Teil 1), Kontextbudget (Teil 2). Die Fälle in
-// fixtures/agents/linediff.json, citations.json und context.json erzeugt der Swift-Export (legacy/Swift/BasedBrain/Tests/BasedBrainTests/AgentFixtureExport.swift);
+// BSD-410: Golden Fixtures Agent Brain – LineDiff, Zitate (Teil 1), Kontextbudget (Teil 2), Prompt-Queue (Teil 3),
+// SkillCodec (Teil 4). Die Fälle in fixtures/agents/{linediff,citations,context,queue,skills}.json erzeugt der Swift-Export (legacy/Swift/BasedBrain/Tests/BasedBrainTests/AgentFixtureExport.swift);
 // dieser Runner spielt sie gegen den TS-Port ab. Bewusste Abweichungen stehen in DEVIATIONS (mit Grund und dem, was
 // TS stattdessen liefert); jeder andere Unterschied ist ein Fehler.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { citationMarkers, compactionNotice, ContextBudget, lineCounts, lineOps, parseUnified, renderCitations, streamingSafe, unifiedDiff, type ChatMessage, type Citation } from "../src/index.js";
+import { checkSkillPath, citationMarkers, compactionNotice, ContextBudget, decodeSkill, encodeSkill, lineCounts, PromptQueue, skillFileLanguage, skillFolderName, yamlScalar, parseFrontmatter, type RunningTurn, lineOps, parseUnified, renderCitations, streamingSafe, unifiedDiff, type ChatMessage, type Citation } from "../src/index.js";
 
 interface Case<I = Record<string, unknown>, O = Record<string, unknown>> { name: string; input: I; output: O }
 const load = (f: string) => JSON.parse(readFileSync(fileURLToPath(new URL(`../../../fixtures/agents/${f}`, import.meta.url)), "utf8")) as { module: string; cases: Case[] };
@@ -108,6 +108,71 @@ describe("fixtures/agents/context.json", () => {
       const notice = compactionNotice(report);
       if (notice) r.notice = notice;
       check(file.module, c, { messages: messages.map((m) => ({ role: m.role, content: m.content })), report: r });
+    });
+  }
+});
+
+describe("fixtures/agents/queue.json", () => {
+  const file = load("queue.json");
+  const settle = () => new Promise((r) => setTimeout(r, 5));
+  for (const c of file.cases) {
+    it(c.name, async () => {
+      const script = (c.input as { script: string[][] }).script;
+      const started: string[] = [];
+      const turns: { finish: () => void }[] = [];
+      const q = new PromptQueue<string>((payload): RunningTurn | undefined => {
+        if (payload.startsWith("skip")) return undefined;
+        started.push(payload);
+        let finish!: () => void;
+        const done = new Promise<void>((r) => { finish = r; });
+        turns.push({ finish });
+        return { done, cancel: () => finish() };
+      });
+      const steps: unknown[] = [];
+      for (const [op, arg] of script) {
+        const at = Number(arg);
+        if (op === "submit") q.submit(arg!, arg!);
+        else if (op === "finish") turns.at(-1)?.finish();
+        else if (op === "sendNow") { const w = q.waiting[at]; if (w) q.sendNow(w.id); }
+        else if (op === "remove") { const w = q.waiting[at]; if (w) q.remove(w.id); }
+        else if (op === "stop") q.stopCurrent();
+        else if (op === "clear") q.clear();
+        else if (op === "detach") q.detach();
+        await settle();
+        steps.push({ started: [...started], waiting: q.waiting.map((w) => w.text), busy: q.isBusy });
+      }
+      check(file.module, c, { steps });
+    });
+  }
+});
+
+describe("fixtures/agents/skills.json", () => {
+  const file = load("skills.json");
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  for (const c of file.cases) {
+    it(c.name, () => {
+      const i = c.input as { kind: string; text?: string; folder?: string; name?: string; value?: string; path?: string };
+      switch (i.kind) {
+        case "frontmatter": return check(file.module, c, parseFrontmatter(i.text!));
+        case "folderName": return check(file.module, c, { folder: skillFolderName(i.name!) });
+        case "yaml": return check(file.module, c, { yaml: yamlScalar(i.value!) });
+        case "language": return check(file.module, c, { language: skillFileLanguage(i.path!) });
+        case "checkPath": {
+          let ok = true;
+          try { checkSkillPath(i.path!); } catch { ok = false; }
+          return check(file.module, c, { ok });
+        }
+        case "roundtrip": {
+          try {
+            const doc = decodeSkill({ name: i.folder!, files: { "SKILL.md": enc.encode(i.text!) } });
+            const out = encodeSkill(doc);
+            return check(file.module, c, { name: doc.name, description: doc.description, body: doc.body, extraFrontmatter: doc.extraFrontmatter,
+              encoded: dec.decode(out.files["SKILL.md"]!), folder: out.name });
+          } catch (e) {
+            return check(file.module, c, { error: e instanceof Error ? e.message : String(e) });
+          }
+        }
+      }
     });
   }
 });
