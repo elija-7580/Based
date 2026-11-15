@@ -1,19 +1,17 @@
 // BSD-319: Mitgelieferte Beispielbündel (bundles/*-<engine>.json, erzeugt mit record-sample.spec.ts) werden
 // wiedergegeben und ergeben denselben Endzustand wie beim Melden – über Tasten (input) und über Schritte (steps).
-// Block-Editor (ADR 0016): blocks-typing-basics-*; alter Editor (BlockNote, gepinnt): typing-basics-*.
+// Block-Editor (ADR 0016): blocks-typing-basics-*. Die ProseMirror-Bündel des alten Editors sind mit BSD-407 Teil 4 entfernt.
 // Vorlage für Tests aus echten Berichten: report.json aus ~/.config/based/reports/<id>/ (`based reports`) nach bundles/
 // kopieren und hier eintragen; wiedergegeben wird in der Engine, die aufgezeichnet hat (engineOf).
 import { readFileSync } from "node:fs";
 import { expect } from "@playwright/test";
-import { legacyTest, ready, test } from "./fixture.js";
+import { ready, test } from "./fixture.js";
 import { engineOf, replayReport } from "./replay.js";
 
 const load = (name: string) => JSON.parse(readFileSync(new URL(`./bundles/${name}.json`, import.meta.url), "utf8")) as unknown;
 const BUNDLES = [
   { name: "blocks-typing-basics-chromium", t: test, bold: '"b":true' },
   { name: "blocks-typing-basics-webkit", t: test, bold: '"b":true' },
-  { name: "typing-basics-chromium", t: legacyTest, bold: '"bold"' },
-  { name: "typing-basics-webkit", t: legacyTest, bold: '"bold"' },
 ];
 
 test.describe.configure({ timeout: 90_000 });

@@ -6,7 +6,7 @@ export const REGIONS = [
   { id: "sidebar", root: "nav.sidebar", prefer: ["[role=treeitem][aria-selected=true]", "[role=treeitem]"] },
   { id: "header", root: ".panel .topbar", prefer: [] },
   // BSD-407 Teil 3: im Block-Editor das erste Textfeld, im alten Editor das Dokument
-  { id: "page", root: ".panel", prefer: ["[data-testid=block-editor] [data-editable-id][contenteditable=true]", ".bn-editor[contenteditable=true]", "[role=grid]"], skip: ".topbar" },
+  { id: "page", root: ".panel", prefer: ["[data-testid=block-editor] [data-editable-id][contenteditable=true]", "[role=grid]"], skip: ".topbar" },
 ] as const;
 
 export type RegionID = (typeof REGIONS)[number]["id"];

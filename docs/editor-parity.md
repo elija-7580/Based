@@ -89,7 +89,9 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Meeting erledigt 14.11. (Teil 5, unten); Button erledigt (Teil 6.5); Whiteboard offen |
 | 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | Blockmenü erledigt (Teil 6.1: Icons aus dem Satz der App, Glas, Fläche/Zeilen wie `.menu`; alle `.bx2-menu` haben jetzt diese Fläche); Formatleiste offen |
 | 3 | Block-Editor ist Standard (neuer Schlüssel `based.legacyEditor`, alter Schalter `based.newEditor` wird einmalig entfernt); Specs auf `getByTestId("block-editor")`/`.bx2-*` umgestellt, Rest gepinnt (unten) | erledigt 14.11. |
-| 4 | BlockNote-Code (`ui/PageEditor.tsx`, `schema/`, `mapping/bn.ts`, y-prosemirror) und `@blocknote/*` löschen; Rundreise-Test Notion-Import | offen |
+| 4a | Alter Editor aus dem Client: `ui/PageEditor.tsx` und seine Helfer, Notausgang „Old editor (BlockNote)“, `@blocknote/ariakit`, Seiten-Dokument `page:` im Web-Client, ProseMirror-Sonde und -Bündel; gepinnte Specs umgeschrieben oder gelöscht; Lücken geschlossen (unten) | erledigt 15.11. |
+| 4b | Kopfloser Konverter ohne React (`schema/` nur noch `@blocknote/core`), `@blocknote/react` löschen | offen |
+| 4c | Server: Dokumente `page:` (DocSession, Konverter) abschalten, wenn keine alten Clients mehr schreiben; dann `@blocknote/core`, `mapping/bn.ts`, y-prosemirror löschen | offen (Schicht A, Server) |
 
 BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird gelöscht.
 
@@ -165,7 +167,30 @@ BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird ge
 - Tests: `packages/core/test/bug-report-blocks.test.ts`, `apps/web/e2e/report.spec.ts`, `apps/web/e2e/replay/replay.spec.ts`
   (Bündel `blocks-typing-basics-chromium|webkit`, erzeugt mit `record-sample.spec.ts`).
 
-### noch BlockNote (gepinnte Specs, Liste für Teil 4)
+## Teil 4a (15.11.2026): alter Editor aus dem Client entfernt
+
+- **Weg:** `packages/editor/src/ui/PageEditor.tsx`, `AIBox`, `mentions`, `paste`, `dragDrop`, `blockSelect`, `blockActions`,
+  die ProseMirror-Sonde in `ui/probe.ts`, die Vite-Testseite des Pakets (`testpage/`, `e2e/`), `@blocknote/ariakit`,
+  `@vitejs/plugin-react`. In der App: Notausgang (`based.legacyEditor` wird wie `based.newEditor` beim Start einmalig
+  gelöscht, `migrateEditorPref`), das Seiten-Dokument `page:` (Echtzeit läuft über `text:<seite>`), die
+  ProseMirror-Aufzeichnung („tr“/„yjs“) und ihre Wiedergabe-Bündel `typing-basics-*`. `styles.css` des Pakets enthält
+  nur noch die gemeinsamen `.bx-*`-Flächen (Gliederung, Emoji-Wähler, Bildansicht, Hinweis …) und hängt jetzt am
+  Block-Editor.
+- **Bleibt bis 4b/4c:** `schema/` (BlockNote-Schema) und `mapping/` nur für den kopflosen Konverter des Servers
+  (`@based/editor/headless`, alte `page:`-Dokumente von Geräten mit älterer App).
+- **Lücken geschlossen:** Synced Block – „Original in <Seite>“, „Unsync“ (Kern `unsyncCopy`), Hinweis bei Original im
+  Papierkorb, zweite Kopie auf derselben Seite abgelehnt mit Hinweis; Hinweis-Leiste am Editor (`editor-notice`, auch
+  „Moved to …“); Turn into → Block equation (Kern `turnIntoEquation`); Slash „PDF“; hochgeladene Dateien stehen
+  kanonisch in `asset` (Name, Typ, Größe) statt nur `url: based-asset:…` (`uploadedProps`; alte Blöcke werden weiter
+  gelesen).
+- **Specs:** `collab`, `editor-drag`, `editor-select`, `editor-callout-select` gelöscht (Block-Editor: `block-editor*.spec.ts`);
+  `editor-parity` (15 Abläufe) und `editor-notion` (Formatleiste) auf den Block-Editor umgeschrieben; `editor-default`
+  prüft beide alten Schlüssel; `report`, `replay/` nur noch Block-Editor; Meeting-Rundreise mit dem alten Editor entfällt.
+- **Alte Daten:** `apps/web/e2e/editor-corpus.spec.ts` legt den Swift-Korpus (`fixtures/records/corpus.jsonl`, jeder
+  Blocktyp, ein unbekannter Typ) unter eine Seite: jeder Block erscheint im Block-Editor, Öffnen und Neuladen ändern
+  keinen Record. Dazu `editor-passthrough.spec.ts` (Meeting, Button, Tabelle mit Formatierung, Notion-Import).
+
+### noch BlockNote (gepinnte Specs bis Teil 3 – mit Teil 4a erledigt)
 
 Gepinnt über `apps/web/e2e/legacy-editor.ts` (`useLegacyEditor`, `pinLegacyEditor`) bzw. `legacyTest` aus
 `e2e/replay/fixture.ts`. Teil 4 schreibt sie auf den Block-Editor um oder löscht sie mit der Funktion.

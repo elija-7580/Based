@@ -378,6 +378,19 @@ describe.each([false, true])("Block-Editor E1 (propertyRecords=%s)", (pr) => {
       expect(cmd.turnIntoPage(s, id)).toBeUndefined(); // eine Seite ist kein Textblock
     });
 
+    it("BSD-407 Teil 4: Turn into → Block equation – Text wird TeX, Kinder dahinter, Nicht-Text bleibt", () => {
+      const s = make(pr, [
+        blk("e", "text", "b:P", "a0", { text: "a^2 + b^2" }), blk("ek", "text", "b:e", "a0", { text: "kid" }), blk("d", "divider", "b:P", "a1"),
+      ]);
+      const f = step(s, () => cmd.turnIntoEquation(s, ["e", "d"]));
+      expect(f).toEqual({ blockId: "e", selected: true });
+      expect(s.blocks.get("e")!.type).toBe("equation");
+      expect(s.blocks.get("e")!.props?.expression).toBe("a^2 + b^2");
+      expect(s.blocks.get("e")!.text).toBeUndefined();
+      expect(outline(s)).toEqual(["equation: ", "text: kid", "divider: "]);
+      expect(cmd.turnIntoEquation(s, ["d"])).toBeUndefined();
+    });
+
     it("BSD-407: Copy and sync – Geschwister in einen Synced Block, an der Stelle des ersten", () => {
       const s = make(pr, [
         blk("a", "text", "b:P", "a0", { text: "a" }), blk("b", "text", "b:P", "a1", { text: "b" }), blk("bk", "text", "b:b", "a0", { text: "bk" }),
