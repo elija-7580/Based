@@ -680,11 +680,11 @@ export function BlockEditor(props: PageEditorProps) {
         return;
       }
       if (e.key === "Enter" || e.key === "Tab") {
-        e.preventDefault();
         const item = items[s.index];
-        if (item) chooseSlash(item);
-        else setSlash(undefined);
-        return;
+        if (item) { e.preventDefault(); chooseSlash(item); return; }
+        // BSD-305: ohne Treffer schließt das Menü; Enter wirkt dann wie sonst (neue Zeile), Tab bleibt im Feld
+        setSlash(undefined);
+        if (e.key === "Tab") { e.preventDefault(); return; }
       }
       if (e.key === "Escape") { e.preventDefault(); setSlash(undefined); return; }
     }
@@ -1272,7 +1272,7 @@ export function BlockEditor(props: PageEditorProps) {
         {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
       {props.outline === false ? null : <PageOutline store={store} pageID={pageID} container={rootEl} />}
-      {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
+      {slash && (slashItems.length || slash.query) ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
       {eqEdit ? <EquationPopover x={eqEdit.x} y={eqEdit.y} initial={eqEdit.value} onDone={commitEquation} /> : null}
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} view0={menu.view} onClose={closeMenu} onMove={props.pages ? setMoving : undefined} /> : null}
       {moving && props.pages ? (
@@ -2509,6 +2509,8 @@ function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; st
   let group = "";
   return (
     <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Blocks" data-testid="slash-menu" style={{ left: state.x, top: state.y }} onPointerDown={(e) => e.preventDefault()}>
+      {/* BSD-305: ohne Treffer ein Hinweis statt verschwindendem Menü (wie Notion) */}
+      {items.length === 0 ? <div className="bx2-menu-empty" role="status">No results</div> : null}
       {items.map((it, i) => {
         const head = it.group !== group ? (group = it.group) : undefined;
         return (

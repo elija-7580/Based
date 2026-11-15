@@ -130,5 +130,13 @@ for (const theme of ["light", "dark"] as const) {
     await page.getByTestId("page-cover").getByRole("button", { name: "Change cover" }).click();
     await page.waitForTimeout(250);
     await page.screenshot({ path: `../../docs/design/screens/web-cover-gallery-${theme}.png` });
+    // BSD-350 Teil 3: Knöpfe auf dem Cover sind Based-Knöpfe – Checkliste in drei Größen
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.mouse.move(10, h - 10);
+      await page.getByTestId("page-cover").hover();
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: `../../docs/design/screens/web-cover-actions-${theme}-${w}x${h}.png` });
+    }
   });
 }
