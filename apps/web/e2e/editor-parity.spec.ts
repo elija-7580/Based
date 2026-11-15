@@ -798,3 +798,25 @@ test("Fotos: Synced-Block-Kopie, Hinweis am Editor", async ({ page, browserName 
     await expect(copy.locator(".bx2-synced-note")).toBeVisible();
   });
 });
+
+// BSD-358: „Paste“ im Based-Kontextmenü fügt mit Formatierung ein (HTML aus der Zwischenablage) – wie ⌘V. In der
+// Mac-App liest der Befehl clipboard_html (NSPasteboard) das HTML; hier der Browser-Weg (nur Chromium darf lesen).
+test("Rechtsklick → Paste behält die Formatierung", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "WebKit lässt Tests die Zwischenablage nicht lesen");
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await createPage(page, "Context paste");
+  await openBlockPage(page, "Context paste");
+  await focusEditorEnd(page);
+  await page.keyboard.type("Start ");
+  await page.evaluate(async () => {
+    await navigator.clipboard.write([new ClipboardItem({
+      "text/plain": new Blob(["Bold and link"], { type: "text/plain" }),
+      "text/html": new Blob(['<b>Bold</b> and <a href="https://example.com/x">link</a>'], { type: "text/html" }),
+    })]);
+  });
+  const field = blockEditor(page).locator("[data-editable-id]").first();
+  await field.click({ button: "right" });
+  await page.getByRole("menuitem", { name: /^Paste/ }).click();
+  await expect(field.locator(".bx2-b")).toHaveText("Bold");
+  await expect(field.locator("a")).toHaveAttribute("href", "https://example.com/x");
+});

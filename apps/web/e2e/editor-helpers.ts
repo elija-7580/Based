@@ -25,7 +25,8 @@ export async function expectEditable(scope: Scope): Promise<void> {
  * landet sie dort, sonst entsteht ein neuer leerer Absatz. Danach tippt `page.keyboard` in dieses Feld.
  */
 export async function focusEditorEnd(scope: Scope): Promise<void> {
-  await blockEditor(scope).getByTestId("block-editor-tail").click();
+  // Oben in die Fläche klicken: ihre Höhe wächst auf langen Seiten (BSD-344), die Oberkante bleibt am letzten Block.
+  await blockEditor(scope).getByTestId("block-editor-tail").click({ position: { x: 40, y: 12 } });
   await expect(blockEditor(scope).locator("[data-editable-id]:focus")).toHaveCount(1);
 }
 

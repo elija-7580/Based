@@ -77,6 +77,43 @@ fn power_on_battery() -> Option<bool> {
     }
 }
 
+/// BSD-358: HTML der Zwischenablage (public.html) für „Paste“ im Based-Kontextmenü. Das Clipboard-Plugin liefert nur
+/// Text – ohne das kam per Rechtsklick nur unformatierter Text an, ⌘V (Systemweg) fügte mit Formatierung ein.
+/// Nur lesen, nur auf Anfrage aus dem Menü; None = kein HTML (oder nicht macOS).
+#[tauri::command]
+fn clipboard_html() -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        use objc2::runtime::AnyObject;
+        use objc2::{class, msg_send};
+        use std::ffi::{c_char, CStr, CString};
+        let kind = CString::new("public.html").ok()?;
+        unsafe {
+            let board: *mut AnyObject = msg_send![class!(NSPasteboard), generalPasteboard];
+            if board.is_null() {
+                return None;
+            }
+            let ns_kind: *mut AnyObject = msg_send![class!(NSString), stringWithUTF8String: kind.as_ptr()];
+            if ns_kind.is_null() {
+                return None;
+            }
+            let html: *mut AnyObject = msg_send![board, stringForType: ns_kind];
+            if html.is_null() {
+                return None;
+            }
+            let utf8: *const c_char = msg_send![html, UTF8String];
+            if utf8.is_null() {
+                return None;
+            }
+            Some(CStr::from_ptr(utf8).to_string_lossy().into_owned())
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        None
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .manage(FrontWindow(Mutex::new("main".to_string())))
@@ -88,7 +125,7 @@ pub fn run() {
         // BSD-319: Fehlerberichte nach ~/.config/based/reports (Rechte nur dort, capabilities/default.json) und im Finder zeigen.
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![power_on_battery])
+        .invoke_handler(tauri::generate_handler![power_on_battery, clipboard_html])
         .setup(|app| {
             create_main_window(app)?;
             Ok(())

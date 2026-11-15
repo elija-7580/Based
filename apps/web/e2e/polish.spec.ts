@@ -326,3 +326,50 @@ test("Unterseite, Erwähnung und Datei ohne Icon: Linien-Icon statt Emoji", asyn
     await page.evaluate(() => localStorage.removeItem("based.appearance"));
   }
 });
+
+// BSD-344: Lange Seiten haben Luft unter der letzten Zeile (die letzte Zeile klebt nach dem Rollen nicht am Fensterrand),
+// kurze Seiten rollen dadurch nicht.
+test("Luft unter der letzten Zeile nur auf langen Seiten", async ({ page }) => {
+  await fresh(page);
+  const cmd = (c: Record<string, unknown>) => page.evaluate((x) => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command(x), c);
+  const id = await cmd({ op: "createPage", title: "Air below" });
+  await page.goto(`/#page-${id}`);
+  const ed = blockEditor(page);
+  await focusEditorEnd(page);
+  await page.keyboard.type("Short page");
+  const panel = page.locator(".panel").first();
+  await page.waitForTimeout(300);
+  await expect(ed).not.toHaveAttribute("data-long", "");
+  expect(await panel.evaluate((p) => p.scrollHeight - p.clientHeight)).toBeLessThanOrEqual(1);
+  // lang: viele Absätze
+  await page.evaluate((t) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", t);
+    document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, Array.from({ length: 40 }, (_, i) => `Paragraph ${i + 1}`).join("\n\n"));
+  await expect(ed.locator("[data-editable-id]", { hasText: "Paragraph 40" })).toBeVisible();
+  await expect(ed).toHaveAttribute("data-long", "");
+  await panel.evaluate((p) => { p.scrollTop = p.scrollHeight; });
+  await page.waitForTimeout(200);
+  const gap = await page.evaluate(() => {
+    const last = [...document.querySelectorAll("[data-testid=block-editor] [data-editable-id]")].at(-1)!.getBoundingClientRect();
+    const panel = document.querySelector(".panel")!.getBoundingClientRect();
+    return (panel.bottom - last.bottom) / panel.height;
+  });
+  expect(gap).toBeGreaterThan(0.3);
+  if (process.env.BASED_SCREENSHOTS === "1" && test.info().project.name === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.reload();
+        await expect(ed.locator("[data-editable-id]", { hasText: "Paragraph 40" })).toBeAttached();
+        await page.waitForTimeout(300);
+        await panel.evaluate((p) => { p.scrollTop = p.scrollHeight; });
+        await page.waitForTimeout(200);
+        await page.screenshot({ path: `../../docs/design/screens/web-block-editor-air-below-${theme}-${w}x${h}.png` });
+      }
+    }
+    await page.evaluate(() => localStorage.removeItem("based.appearance"));
+  }
+});
