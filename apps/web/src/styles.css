@@ -524,14 +524,12 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .switch .knob { position: absolute; top: calc(var(--space-1) / 2 + 1px); left: calc(var(--space-1) - 1px); width: calc(var(--space-4) + 2px); height: calc(var(--space-4) + 2px); border-radius: var(--radius-pill); background: var(--button-ink); box-shadow: var(--shadow-control); transition: transform var(--duration-fast) var(--ease-out); }
 .switch[aria-checked="true"] .knob { transform: translateX(calc(var(--space-4) + 2px)); }
 
+/* BSD-309: schmales Fenster – die Seitenleiste klappt ein (Sidebar.tsx, schwebt bei Bedarf), Inhalt mit weniger Rand. */
 @media (max-width: 860px) {
-  .shell { flex-direction: column; }
-  .sidebar { position: static; width: 100%; height: auto; flex: none; flex-direction: row; flex-wrap: wrap; }
-  .sidebar-resize { display: none; }
-  .sidebar .nav-group, .sidebar .synced, .sidebar .tree { display: none; }
-  .nav-item { width: auto; }
-  .main { padding: 0 var(--space-2) var(--space-2); }
   .content { padding: var(--space-6) var(--space-4); }
+  /* Home-Kopf bleibt einzeilig: Knöpfe nur mit Icon (Name als Tooltip), Status nur als Punkt (home/home.css). */
+  .home .home-head { flex-wrap: nowrap; gap: var(--space-2); }
+  .home .home-head :is(.home-btn-label, .home-status-label) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 .composer-bar .details { flex: 1 1 0; min-width: 0; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

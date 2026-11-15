@@ -196,13 +196,13 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
           </SegmentedControl>
           {model && showCost(model, showDetails) ? <span className="home-mono" data-testid="home-cost">{costLine(model, frame)}</span> : null}
           <span className="grow" />
-          <span className="home-status t-meta" data-testid="home-server">
+          <span className="home-status t-meta" data-testid="home-server" title={synced ? "Server connected" : SYNC_LABEL[state.status.state]}>
             <span className={`dot ${synced ? "synced-dot" : state.status.state === "error" ? "error-dot" : ""}`} aria-hidden="true" />
-            {synced ? "Server connected" : SYNC_LABEL[state.status.state]}
+            <span className="home-status-label">{synced ? "Server connected" : SYNC_LABEL[state.status.state]}</span>
           </span>
-          <button type="button" className="btn ghost" onClick={() => onNavigate({ name: "tasks" })} data-testid="home-all-tasks"><Icon name="agent" size={16} />All tasks</button>
-          <button type="button" className="btn ghost" onClick={onNewPage}><Icon name="plus" size={16} />New page</button>
-          {onNewDatabase ? <button type="button" className="btn ghost" onClick={onNewDatabase}><Icon name="plus" size={16} />New database</button> : null}
+          <button type="button" className="btn ghost" onClick={() => onNavigate({ name: "tasks" })} data-testid="home-all-tasks" aria-label="All tasks" title="All tasks"><Icon name="agent" size={16} /><span className="home-btn-label">All tasks</span></button>
+          <button type="button" className="btn ghost" onClick={onNewPage} aria-label="New page" title="New page"><Icon name="plus" size={16} /><span className="home-btn-label">New page</span></button>
+          {onNewDatabase ? <button type="button" className="btn ghost" onClick={onNewDatabase} aria-label="New database" title="New database"><Icon name="database" size={16} /><span className="home-btn-label">New database</span></button> : null}
         </header>
 
         <section className="home-greet" aria-label="Greeting">
