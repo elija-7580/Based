@@ -169,6 +169,21 @@ export async function openPageWindow(hash: string, title: string): Promise<void>
   });
 }
 
+/** BSD-358: HTML der Zwischenablage aus der Hülle (nur macOS); ohne: undefined. */
+async function readClipboardHTML(): Promise<string | undefined> {
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    return (await invoke<string | null>("clipboard_html")) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Text und (nicht leeres) HTML für pasteInto; leerer Text bleibt "", damit HTML allein auch einfügt. */
+export function clipboardData(text: string | null | undefined, html: string | null | undefined): { text: string; html?: string } {
+  return html && html.trim() !== "" ? { text: text ?? "", html } : { text: text ?? "" };
+}
+
 /**
  * Zwischenablage für das Based-Kontextmenü („Paste“, „Copy link“). In der Hülle über das Tauri-Plugin: WKWebView
  * zeigt bei navigator.clipboard.readText() sonst die System-Blase „Einsetzen“. Im Browser: `undefined` (Standardweg).
@@ -177,7 +192,8 @@ export function desktopClipboard(): ClipboardAccess | undefined {
   if (!isTauri()) return undefined;
   const plugin = () => import("@tauri-apps/plugin-clipboard-manager");
   return {
-    read: async () => ({ text: (await (await plugin()).readText()) ?? "" }),
+    // BSD-358: dazu HTML (Fett, Links, Listen) über den Befehl clipboard_html (NSPasteboard public.html), wie bei ⌘V
+    read: async () => clipboardData(await (await plugin()).readText().catch(() => ""), await readClipboardHTML()),
     write: async (text) => (await plugin()).writeText(text),
   };
 }
