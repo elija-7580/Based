@@ -1,4 +1,4 @@
-failure b180e24791dd3cd1df161d19351e54b8c3bb08e4
+failure 8caa78bc3e203dd6b953a6ff2c13ebc49bb72f9c
     [webkit] › e2e/editor-notion.spec.ts:402:1 › Fotos: Codeblock-Leiste ───────────────────────────
     [webkit] › e2e/editor-notion.spec.ts:414:1 › Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI 
     [webkit] › e2e/editor-notion.spec.ts:451:1 › Fotos: Formatleiste und Farbe ─────────────────────
