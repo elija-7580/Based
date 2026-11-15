@@ -36,11 +36,13 @@ test("Seitenfenster (BSD-202): Rechte gelten auch für page-*, Fenster dürfen a
   assert.ok(cap.permissions.includes("core:webview:allow-create-webview-window"));
 });
 
-test("BSD-138: Bundle als Resource (keine Node-Laufzeit, kein externalBin); Shell-Plugin nur für zwei feste Aufrufe", () => {
+test("BSD-138/414: Bundle und Node als Resource (kein externalBin); Shell-Plugin nur für vier feste Aufrufe", () => {
   assert.equal(conf.bundle.externalBin, undefined);
   // BSD-314: node-pty (native Datei für das Terminal) liegt daneben in node_modules/, nicht im Bundle.
-  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/" });
+  // BSD-414: die mitgelieferte Node liegt als Resource node/ bei (fetch-node.mjs), weiter kein externalBin.
+  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/", "../dist-sidecar/node/": "node/" });
   assert.match(conf.build.beforeBuildCommand, /@based\/desktop sidecar/);
+  assert.match(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.sidecar, /fetch-node\.mjs/);
   assert.match(conf.build.beforeDevCommand, /@based\/desktop sidecar/);
   const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/local-server.json", import.meta.url), "utf8"));
   assert.deepEqual(cap.windows, ["main"]);
@@ -49,6 +51,8 @@ test("BSD-138: Bundle als Resource (keine Node-Laufzeit, kein externalBin); Shel
     assert.deepEqual(p.allow.map((a) => [a.name, a.cmd, a.args]), [
       ["based-node-probe", "/bin/zsh", ["-ilc", "command -v node && node --version"]],
       ["based-node-run", "/bin/zsh", ["-ilc", 'exec node "$BASED_BUNDLE" desktop']],
+      ["based-node-bundled-probe", "/bin/sh", ["-c", `printf '%s\\n' "$BASED_NODE" && exec "$BASED_NODE" --version`]],
+      ["based-node-bundled-run", "/bin/zsh", ["-ilc", 'exec "$BASED_NODE" "$BASED_BUNDLE" desktop']],
     ]);
     assert.ok(p.allow.every((a) => a.sidecar !== true && Array.isArray(a.args) && a.args.every((x) => typeof x === "string")));
   }
@@ -114,3 +118,36 @@ test("BSD-138: Bundle läuft mit Node; Starter anlegen, benutzen, entfernen (Tem
     rmSync(home, { recursive: true, force: true });
   }
 });
+
+test("BSD-414: Node-Laufzeit – Ziel, gepinnte Prüfsumme, nie ein Build-Abbruch", async () => {
+  const { NODE_SHA256, NODE_VERSION, archiveName, fetchNode, nodeTarget, verifyArchive } = await import("../scripts/fetch-node.mjs");
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  assert.match(NODE_VERSION, /^v2[2-9]\.\d+\.\d+$/);
+  assert.equal(nodeTarget({ triple: "universal-apple-darwin" }), "darwin-arm64");
+  assert.equal(nodeTarget({ triple: "aarch64-apple-darwin" }), "darwin-arm64");
+  assert.equal(nodeTarget({ triple: "x86_64-apple-darwin" }), "darwin-x64");
+  assert.equal(nodeTarget({ triple: "x86_64-pc-windows-msvc" }), undefined);
+  assert.equal(nodeTarget({ platform: "darwin", arch: "arm64" }), "darwin-arm64");
+  assert.equal(nodeTarget({ platform: "win32", arch: "x64" }), undefined);
+  for (const v of Object.values(NODE_SHA256)) assert.match(v, /^[0-9a-f]{64}$/);
+  assert.equal(archiveName("darwin-arm64"), `node-${NODE_VERSION}-darwin-arm64.tar.gz`);
+  assert.equal(verifyArchive("darwin-arm64", Buffer.from("not node")), false);
+  const dir = mkdtempSync(join(tmpdir(), "based-node-"));
+  try {
+    const logs = [];
+    // kein Netz / falsche Datei: kein Abbruch, nur README (die App nimmt dann die Node des Nutzers)
+    const offline = await fetchNode({ out: join(dir, "out"), cache: join(dir, "cache"), target: "darwin-arm64", fetcher: async () => { throw new Error("offline"); }, log: (m) => logs.push(m) });
+    assert.equal(offline, false);
+    const bad = await fetchNode({ out: join(dir, "out"), cache: join(dir, "cache"), target: "darwin-arm64", fetcher: async () => new Response("evil"), log: (m) => logs.push(m) });
+    assert.equal(bad, false);
+    assert.ok(logs.some((l) => l.includes("checksum mismatch")));
+    assert.equal(existsSync(join(dir, "out", "README.txt")), true);
+    assert.equal(existsSync(join(dir, "out", "bin", "node")), false);
+    assert.equal(await fetchNode({ out: join(dir, "out"), cache: join(dir, "cache"), target: undefined, log: () => {} }), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+

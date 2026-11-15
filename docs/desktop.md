@@ -126,12 +126,21 @@ das HTTP (`shell/notionTransport.ts`), geschrieben wird im Store-Worker wie beim
 
 ## Lokaler Server und Kommandozeile (BSD-138)
 
-Beides ist **Opt-in** (Settings → Sync & server → „Local server & command line“) und braucht **Node.js ≥ 22** auf
-dem Mac. Die App bringt keine eigene Node-Laufzeit mit, nur ein JavaScript-Bundle (`based-server.cjs`, ~8 MB, als
-Resource) und lädt nichts herunter. Fehlt Node oder ist es zu alt, sagt sie das mit Installationsbefehl.
+Beides ist **Opt-in** (Settings → Sync & server → „Local server & command line“). Der App liegen ein
+JavaScript-Bundle (`based-server.cjs`, ~8 MB) und – BSD-414 – eine eigene Node-Laufzeit bei (Resource `node/bin/node`,
+Node.js v24 LTS, MIT-Lizenz in `node/LICENSE`). Zur Laufzeit lädt die App nichts herunter.
 
-- **Node finden:** über die Login-Shell wie im Terminal (`/bin/zsh -ilc 'command -v node && node --version'`), damit
-  Homebrew/nvm gefunden werden.
+- **Node-Laufzeit mitliefern (BSD-414):** `apps/desktop/scripts/fetch-node.mjs` läuft im Sidecar-Schritt vor jedem
+  Build, lädt die gepinnte Version von nodejs.org, prüft die SHA-256-Summe (im Skript) und legt `bin/node` und
+  `LICENSE` nach `dist-sidecar/node/` (Cache in `apps/desktop/.cache/`). Ziel aus `TAURI_ENV_TARGET_TRIPLE`:
+  Universal- und arm64-Builds bekommen die arm64-Node (+≈ 40 MB im DMG), x86_64-Builds die x64-Node. Ohne Netz,
+  bei falscher Summe oder mit `BASED_SKIP_NODE=1` bricht nichts ab – dann fehlt die Laufzeit und die App nimmt die
+  Node des Nutzers. Version aktualisieren: `NODE_VERSION` und die drei Summen aus `SHASUMS256.txt` im Skript
+  ersetzen. Signieren/Notarisieren der Binärdatei gehört zu BSD-272 (heute ad hoc wie die App).
+- **Node finden:** zuerst die mitgelieferte (`/bin/sh -c '… exec "$BASED_NODE" --version'`, Pfad über
+  `resolveResource("node/bin/node")`); fehlt sie (z. B. Intel-Mac mit Universal-Build) oder läuft sie nicht, über die
+  Login-Shell wie im Terminal (`/bin/zsh -ilc 'command -v node && node --version'`, ≥ 22), damit Homebrew/nvm
+  gefunden werden. Fehlt beides, sagt die App das mit Installationsbefehl.
 - **Gespräche aus Claude Code und Codex (BSD-251):** läuft der lokale Server, zeigt der Chat sie als eigene Gruppe
   „Claude Code & Codex“ (lesen, „Continue in Based“, Terminal-Befehl kopieren), und Coding benutzt ihn ohne
   „Use for sync“. Im Chat und in Coding gibt es dafür einen Knopf, der den lokalen Server einschaltet. Der Server
@@ -146,8 +155,9 @@ Resource) und lädt nichts herunter. Fehlt Node oder ist es zu alt, sagt sie das
   wählbar; Hinweis, wenn der Ordner nicht im PATH ist), der das Bundle mit genau dieser Node startet. Überschreibt
   keine fremde Datei und entfernt nur den eigenen Starter (Kennzeichen-Zeile). `based` nimmt den lokalen Server,
   wenn kein anderer eingestellt ist, oder mit `--local`.
-- **Rust:** nur das offizielle Shell-Plugin. `capabilities/local-server.json` erlaubt im Hauptfenster genau zwei
-  feste Aufrufe (Node suchen; `exec node "$BASED_BUNDLE" desktop`), ohne freie Argumente; was zu tun ist, steht in
+- **Rust:** nur das offizielle Shell-Plugin. `capabilities/local-server.json` erlaubt im Hauptfenster genau vier
+  feste Aufrufe (mitgelieferte Node prüfen bzw. mit ihr `exec "$BASED_NODE" "$BASED_BUNDLE" desktop`; Node in der
+  Login-Shell suchen bzw. `exec node "$BASED_BUNDLE" desktop`), ohne freie Argumente; was zu tun ist, steht in
   `BASED_ACTION`. Das App-Menü „Install Command Line Tool…“ zeigt nur den Weg in die Einstellungen.
 
 Bauen: `pnpm --filter @based/desktop sidecar` (läuft vor `tauri dev`/`tauri build` automatisch, auch unter Linux)

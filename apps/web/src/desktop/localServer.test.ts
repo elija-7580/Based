@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { actionEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -74,5 +74,20 @@ describe("Tailnet (BSD-315)", () => {
     expect(parseFailed('BASED_LOCAL_FAILED {"message":"Port 47821 is already in use","code":"EADDRINUSE"}\n')).toBe("Port 47821 is already in use");
     expect(parseFailed("BASED_LOCAL_READY {}")).toBeUndefined();
     expect(parseFailed("BASED_LOCAL_FAILED {kaputt")).toBeUndefined();
+  });
+
+  it("BSD-414: mitgelieferte Node vor der Login-Shell, Rückfall ohne sie", async () => {
+    expect(BUNDLED_PROBE.args).toEqual(["-c", `printf '%s\\n' "$BASED_NODE" && exec "$BASED_NODE" --version`]);
+    expect(BUNDLED_RUN.args).toEqual(["-ilc", 'exec "$BASED_NODE" "$BASED_BUNDLE" desktop']);
+    expect(BUNDLED_RUN.args.join(" ")).not.toContain("TOKEN");
+    let asked = 0;
+    const shell = async () => { asked += 1; return parseNodeProbe("/opt/homebrew/bin/node\nv26.13.0\n", 0); };
+    const built = parseNodeProbe("/Applications/Based Next.app/Contents/Resources/node/bin/node\nv24.22.2\n", 0);
+    expect(await chooseNode(built, shell)).toMatchObject({ ok: true, bundled: true, version: "v24.22.2", message: "Node.js v24.22.2 (built in)" });
+    expect(asked).toBe(0);
+    // fehlt (Intel im Universal-Build) oder scheitert: Login-Shell
+    expect(await chooseNode(undefined, shell)).toMatchObject({ ok: true, path: "/opt/homebrew/bin/node" });
+    expect(await chooseNode(parseNodeProbe("", 127), shell)).toMatchObject({ ok: true, path: "/opt/homebrew/bin/node" });
+    expect(asked).toBe(2);
   });
 });
