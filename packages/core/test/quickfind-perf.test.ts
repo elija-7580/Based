@@ -6,7 +6,8 @@
 // Wortanfang ohne split 78–92, Volltext 9–21, kein Treffer 11–22, Änderung + Suche 11–22.
 import { describe, expect, it } from "vitest";
 import { cpuTime, expectWithinBudget } from "./perf-budget.js";
-import { SearchIndex, pv, type WireRecord } from "../src/index.js";
+import { ImportFiles, importNotionItems, MemoryPersistence, SearchIndex, WorkspaceStore, pv, type WireRecord } from "../src/index.js";
+import { bigWorld } from "./fixtures/hybrid-world.js";
 
 const stamp = { millis: 1, counter: 0, node: "x" };
 const WORDS = ["alpha", "budget", "meeting", "roadmap", "project", "launch", "design", "notes", "review", "travel"];
@@ -83,5 +84,39 @@ describe("Quick Find (BSD-280)", () => {
     const idx = SearchIndex.fromRecords(recs);
     const full = idx.run("item", { limit: 1000, now: 0 })!;
     for (const limit of [1, 5, 30, 100]) expect(idx.run("item", { limit, now: 0 })).toEqual(full.slice(0, limit));
+  });
+
+  // BSD-280 Teil 5: dieselbe Messung gegen einen Notion-Import statt gebauter Records – ein HTML-Export-ZIP (wie aus
+  // Notion: 5 000 Seiten, ~80 % Datenbankzeilen in 10 Datenbanken, Baum Area → Topic → Note, je 8 Absätze) wird über
+  // importNotionItems in einen Store geschrieben; der Index entsteht aus dessen Records (so wie der Worker ihn baut).
+  // Gemessen 15.11. (CPU-ms, 4 Kerne, Last ~10, 23 600 Records): Aufbau ~230, langsamste Taste ~85 („row“), Volltext ~6,
+  // kein Treffer ~16 – gleiche Grenzen wie oben (mindestens doppelte Luft).
+  it("Notion-Import (HTML-Export, 5 000 Seiten): Aufbau, Tastendruck, Volltext, kein Treffer", () => {
+    const QF = { limit: 30, extended: true } as const;
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "qf" });
+    const report = importNotionItems(store, [{ files: new ImportFiles([["Export.zip", bigWorld(5000).zip()]]), path: "Export.zip" }]);
+    expect(report.pages + report.rows).toBeGreaterThan(4000);
+    const records = store.allRecords();
+    const perKey: number[] = [];
+    const run = () => {
+      let index!: SearchIndex;
+      const build = cpuTime(() => { index = SearchIndex.fromRecords(records); });
+      let keystroke = 0;
+      perKey.length = 0;
+      for (const q of ["r", "ro", "row", "row 7", "row 7.1", "t", "to", "top", "topic"]) {
+        let hits = 0;
+        const ms = cpuTime(() => { hits = index.run(q, QF)?.length ?? 0; });
+        perKey.push(Math.round(ms));
+        keystroke = Math.max(keystroke, ms);
+        expect(hits, q).toBeGreaterThan(0);
+      }
+      let deep: { pageID: string }[] = [];
+      const body = cpuTime(() => { deep = index.run("paragraph 3 of page 123", QF) ?? []; });
+      expect(deep.length).toBeGreaterThan(0);
+      const miss = cpuTime(() => { expect(index.run("zzqx", QF)).toEqual([]); });
+      return { build, keystroke, body, miss };
+    };
+    const t = expectWithinBudget("Quick Find (Notion-Import)", { build: 1000, keystroke: 200, body: 60, miss: 60 }, run);
+    console.info("Quick Find Notion-Import (ms CPU):", Object.fromEntries(Object.entries(t).map(([k, v]) => [k, Math.round(v)])), "je Taste:", perKey.join(" "), "Records:", records.length);
   });
 });
