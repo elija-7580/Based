@@ -374,6 +374,29 @@ describe("Slash-Befehle, @Dateien, Modi (BSD-313)", () => {
     coding.closeAll();
   });
 
+  it("BSD-411: Sitzung in einer Sandbox – „Work freely“ lässt Shell-Befehle ohne Frage laufen, ohne Sandbox fragt es", async () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), "acp-411-")));
+    for (const sandboxed of [true, false]) {
+      let asked = 0;
+      const coding = new CodingSessions({ agents: () => [fakeAgent], roots: [root],
+        connect: async (agent, cwd, roots, permissions) => ({ ...(await start({ cwd, allowedRoots: roots, permissions })), sandboxed }) });
+      coding.inbox.subscribe((items) => { const it = items[0]; if (it) { asked += 1; queueMicrotask(() => coding.inbox.resolveKind(it.id, "reject_once")); } });
+      const v = await coding.create({ agentId: "fake", cwd: root, mode: "free" });
+      expect(v.sandboxed).toBe(sandboxed);
+      coding.prompt(v.id, "run make test");
+      const all: { type: string; text?: string }[] = [];
+      for (let i = 0, next = 0; i < 50 && !all.some((e) => e.type === "result"); i++) {
+        const r = await coding.events(v.id, next, 500);
+        all.push(...r.events);
+        next = r.next;
+      }
+      const said = all.filter((e) => e.type === "text" || e.type === "textDelta" || e.type === "result").map((e) => e.text ?? "").join(" ");
+      if (sandboxed) { expect(asked).toBe(0); expect(said).toContain("ran make test"); }
+      else { expect(asked).toBe(1); expect(said).toContain("not running"); }
+      coding.closeAll();
+    }
+  });
+
   it("rankFiles: Dateiname vor Pfad, fuzzy, kürzere Pfade zuerst; 50.000 Dateien schnell", () => {
     const paths = ["src/main.ts", "src/deep/x/main.test.ts", "README.md", "docs/maintenance.md", "lib/remain.ts", "src/domain/a.ts"];
     expect(rankFiles(paths, "main").map((f) => f.path)).toEqual(["src/main.ts", "docs/maintenance.md", "src/deep/x/main.test.ts", "lib/remain.ts", "src/domain/a.ts"]);
