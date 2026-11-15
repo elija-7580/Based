@@ -2,6 +2,7 @@
 // Suche ab; ohne Eingabe stehen die zuletzt geöffneten Seiten da. Pfeiltasten wählen, Enter öffnet, Esc schließt.
 // BSD-206: Filter wie in Notion – nur Titel, in der aktuellen Seite, Zeitraum, Sortierung (shell/quickFindFilters.ts).
 import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRestoreFocus } from "../shell/restoreFocus.js";
 import { Icon, type IconName } from "../icons.js";
 import { aiSetting } from "../shell/ai.js";
 import { matchCommands, type NavCommand } from "../shell/sidebarNav.js";
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose, onCommand }: Props) {
+  useRestoreFocus(); // BSD-421: Fokus (und Schreibmarke) zurück, wenn die Leiste zugeht
   const [filters, setFilters] = useState<QuickFindFilters>({ titleOnly: false, inPage: false, date: "any", sort: "bestMatch" });
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<QuickFindHit[] | undefined>();

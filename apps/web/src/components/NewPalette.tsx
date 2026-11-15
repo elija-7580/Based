@@ -3,6 +3,7 @@
 // BSD-256: Bei leerem Suchfeld führen die Ziffern 1–9 den Eintrag mit dieser Nummer sofort aus (Nummer rechts sichtbar);
 // beim Tippen filtern Ziffern wie jeder andere Buchstabe.
 import { useEffect, useId, useRef, useState } from "react";
+import { useRestoreFocus } from "../shell/restoreFocus.js";
 import { Icon, type IconName } from "../icons.js";
 
 export interface PaletteCommand {
@@ -24,6 +25,7 @@ export function filterCommands(commands: readonly PaletteCommand[], query: strin
 }
 
 export function NewPalette({ commands, onClose }: { commands: readonly PaletteCommand[]; onClose: () => void }) {
+  useRestoreFocus(); // BSD-421: Fokus (und Schreibmarke) zurück, wenn die Leiste zugeht
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const listID = useId();
