@@ -201,6 +201,7 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-move-item { display: flex; align-items: center; gap: var(--space-2); }
 .bx-move-item[data-active="true"] { background: var(--surface-raised); }
 .bx-move-icon { flex: none; width: var(--space-5); text-align: center; }
+.bx-move-icon .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); vertical-align: middle; color: var(--muted); }
 .bx-move-text { display: grid; min-width: 0; }
 .bx-move-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bx-move-path { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

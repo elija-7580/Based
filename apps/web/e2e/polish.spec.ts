@@ -283,3 +283,46 @@ test("Icon-Auswahl: Phosphor-Icon mit Farbe als Seiten-Icon", async ({ page }) =
   await expect(page.getByRole("tab", { name: "Icons" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("radio", { name: "blue" })).toHaveAttribute("aria-checked", "true");
 });
+
+// BSD-347: Unterseiten-Blöcke, Seiten-Erwähnungen und Datei-Blöcke ohne eigenes Icon zeigen das Linien-Icon des
+// Based-Satzes (wie die Seitenleiste), kein Emoji 📄/📎. Gesetzte Emoji-Icons bleiben.
+test("Unterseite, Erwähnung und Datei ohne Icon: Linien-Icon statt Emoji", async ({ page }) => {
+  await fresh(page);
+  const cmd = (c: Record<string, unknown>) => page.evaluate((x) => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command(x), c);
+  const host = await cmd({ op: "createPage", title: "Icon host" });
+  await cmd({ op: "createPage", title: "Plain child", parent: host });
+  await cmd({ op: "createPage", title: "Mention target" });
+  await page.goto(`/#page-${host}`);
+  const ed = blockEditor(page);
+  await expect(ed.locator(".bx2-pagelink", { hasText: "Plain child" })).toBeVisible();
+  await focusEditorEnd(page);
+  await page.keyboard.type("See @Mention targ");
+  await expect(page.getByTestId("mention-menu").getByRole("option", { name: /Mention target/ })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/File");
+  await page.keyboard.press("Enter");
+  await ed.locator("input[type=file]").last().setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("based") });
+  const link = ed.locator(".bx2-pagelink", { hasText: "Plain child" });
+  const mention = ed.locator(".bx2-mention[data-page]").first();
+  const file = ed.locator(".bx2-file", { hasText: "notes.txt" });
+  for (const el of [link, mention, file]) {
+    await expect(el.locator("svg").first()).toBeVisible();
+    await expect(el).not.toContainText(/📄|📎|📕|▦/u);
+  }
+  if (process.env.BASED_SCREENSHOTS === "1" && test.info().project.name === "chromium") {
+    await page.waitForTimeout(800);
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.reload();
+        await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+        await expect(file).toBeVisible();
+        await page.mouse.move(w - 10, h - 10);
+        await page.screenshot({ path: `../../docs/design/screens/web-block-editor-icons-${theme}-${w}x${h}.png` });
+      }
+    }
+    await page.evaluate(() => localStorage.removeItem("based.appearance"));
+  }
+});

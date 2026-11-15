@@ -12,7 +12,7 @@ import type { PageEditorProps } from "../ui/props.js";
 import { ASSET_URL_PREFIX, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
-import { MenuIcon, type MenuIconName } from "../ui/menuIcons.js";
+import { MenuIcon, menuIconMarkup, type MenuIconName } from "../ui/menuIcons.js";
 import { DateField, MenuGlyph, TimeField } from "@based/ui/native";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
@@ -1675,7 +1675,7 @@ function PageLink({ target }: { target: string | undefined }) {
   const icon = ref?.icon ?? (typeof local?.props?.icon === "string" ? local.props.icon : undefined);
   return (
     <button type="button" className="bx2-pagelink" data-embed="" contentEditable={false} onClick={() => target && props.onOpenPage?.(target)}>
-      <span className="bx2-pagelink-icon" aria-hidden="true"><IconView icon={icon} fallback="📄" /></span>
+      <span className="bx2-pagelink-icon" aria-hidden="true"><IconView icon={icon} fallback={<MenuIcon name="page" />} /></span>
       <span className="bx2-pagelink-title">{title || "Untitled"}</span>
     </button>
   );
@@ -1921,7 +1921,7 @@ function FileBlock({ block: b }: { block: Block }) {
   }
   return (
     <a className="bx2-embed bx2-file" data-embed="" contentEditable={false} data-url={raw} href={src} target="_blank" rel="noopener noreferrer" download={b.type === "file" ? name : undefined}>
-      <span aria-hidden="true">{b.type === "pdf" ? "📕" : "📎"}</span><span className="bx2-file-name">{name}</span>
+      <span className="bx2-file-icon" aria-hidden="true"><MenuIcon name={b.type === "pdf" ? "page" : "file"} /></span><span className="bx2-file-name">{name}</span>
     </a>
   );
 }
@@ -2107,9 +2107,15 @@ function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
     }
   };
   const running = useRef(false);
+  const lastStart = useRef(0);
   const run = async (from = 0, added: Record<number, string> = {}) => {
     // Ein Lauf auf einmal: run wartet ggf. auf fremde Datenbanken (include) – ein zweiter Klick in der Zeit lief sonst doppelt.
     if (running.current) return;
+    // BSD-419: Läuft der Knopf ohne Warten durch, ist `running` schon wieder frei, wenn ein zweites Klick-Ereignis derselben
+    // Betätigung ankommt (Knopf zeichnet sich mit „busy“ neu, Zeiger- und Klick-Ereignis lösen beide aus) – die Vorlage
+    // stand dann doppelt da. Ein neuer Lauf erst 400 ms nach dem letzten Start (Fortsetzen nach einer Rückfrage zählt nicht).
+    if (from === 0 && Date.now() - lastStart.current < 400) return;
+    if (from === 0) lastStart.current = Date.now();
     running.current = true;
     setPause(undefined);
     setNote(undefined);
@@ -2405,8 +2411,9 @@ function mentionInfo(props: PageEditorProps, id: string): MentionInfo | undefine
   const live = ref && !ref.missing ? ref : undefined;
   const raw = live ? live.icon : local ? (typeof local.props?.icon === "string" ? local.props.icon : undefined) : undefined;
   const svg = phosphorMarkup(raw);
-  const fallback = (live?.kind ?? (local?.type === "databasePage" ? "database" : "page")) === "database" ? "▦" : "📄";
-  const icon = svg ? { text: svg, svg: true } : { text: isEmojiIcon(raw) ? raw : fallback };
+  // BSD-347: ohne eigenes Icon das Linien-Icon „page“/„database“ wie in der Seitenleiste (kein Emoji)
+  const fallback = menuIconMarkup((live?.kind ?? (local?.type === "databasePage" ? "database" : "page")) === "database" ? "database" : "page");
+  const icon = svg ? { text: svg, svg: true } : isEmojiIcon(raw) ? { text: raw } : { text: fallback, svg: true };
   const title = live?.title || (local ? plainText(local.text).trim() || "Untitled" : undefined);
   return {
     title, icon,

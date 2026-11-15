@@ -2,6 +2,7 @@
 // (renderRich), nie per React-Kinder; Offsets (UTF-16) und DOM-Positionen werden hier ineinander umgerechnet.
 // Atomare Läufe (Erwähnung, Gleichung) sind `contenteditable=false`-Elemente mit `data-atom`; sie zählen so viele
 // Zeichen wie ihr Text im Modell (`data-len`), auch wenn sie etwas anderes anzeigen (aktueller Seitentitel).
+import { menuIconMarkup } from "../ui/menuIcons.js";
 import { blockCommands as cmd, plainText, type RichText } from "@based/core";
 
 type Run = cmd.Run;
@@ -9,7 +10,7 @@ type Run = cmd.Run;
 /** BSD-407 Teil 3: was eine Seiten-Erwähnung zeigt (wie im alten Editor: Icon, Titel, „in Trash“/„deleted“). */
 export interface MentionInfo {
   title?: string | undefined;
-  /** Fertiges Zeichen: Emoji, ▦/📄 – oder SVG-Markup eines Phosphor-Icons (`svg: true`). */
+  /** Fertiges Zeichen: Emoji – oder SVG-Markup (Phosphor-Icon bzw. Linien-Icon Seite/Datenbank, `svg: true`). */
   icon?: { text: string; svg?: boolean } | undefined;
   trashed?: boolean | undefined;
   missing?: boolean | undefined;
@@ -107,7 +108,8 @@ export function fillMention(el: HTMLElement, atoms: AtomRenderer, text = el.data
   icon.className = "bx2-mention-icon";
   icon.setAttribute("aria-hidden", "true");
   if (info?.icon?.svg) icon.innerHTML = info.icon.text;
-  else icon.textContent = info?.icon?.text ?? "📄";
+  else if (info?.icon) icon.textContent = info.icon.text;
+  else icon.innerHTML = menuIconMarkup("page"); // BSD-347: Linien-Icon statt Emoji
   const name = doc.createElement("span");
   name.className = "bx2-mention-title";
   name.textContent = title;
