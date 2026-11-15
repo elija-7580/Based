@@ -381,6 +381,29 @@ export function turnInto(store: WorkspaceStore, ids: readonly string[], type: st
   return at(first.id, runsLength(textOf(first)));
 }
 
+/**
+ * Turn into → Block equation (BSD-407 Teil 4, wie der alte Editor, BSD-249): Textblöcke werden Block-Gleichungen, der
+ * Text wird ihr TeX; Unterblöcke stehen danach direkt dahinter (eine Gleichung hat keine Kinder). Ein Undo-Schritt.
+ */
+export function turnIntoEquation(store: WorkspaceStore, ids: readonly string[]): Focus | undefined {
+  const targets = ids.filter((id) => isTextBlock(store.blocks.get(id)));
+  if (targets.length === 0) return undefined;
+  store.transact("Turn into", (tx) => {
+    for (const id of [...targets].reverse()) {
+      const b = store.blocks.get(id)!;
+      const tex = textOf(b).map((r) => r.t).join("");
+      tx.update(id, (x) => {
+        x.type = "equation";
+        x.props = { expression: tex };
+        delete x.text;
+      });
+      const kids = liveChildren(store, id);
+      if (kids.length > 0) place(store, tx, kids, b.parent, { kind: "after", id });
+    }
+  });
+  return { blockId: targets[0]!, selected: true };
+}
+
 /** Markdown-Kürzel am Blockanfang (Notion-Hilfe „Markdown & shortcuts“). Ergebnis: Typ, Props und die Länge des Kürzels. */
 export function markdownShortcut(prefix: string): { type: string; props?: BlockProps } | undefined {
   switch (prefix) {

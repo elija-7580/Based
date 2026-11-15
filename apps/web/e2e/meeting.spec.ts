@@ -130,7 +130,6 @@ test("/meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neul
   await expect(block(page).locator(".bx2-meet-doc")).toContainText("Agenda first");
   // Die Seite öffnet im Block-Editor (BSD-407 Teil 5: keine Ausnahme mehr für Meetings)
   await expect(blockEditor(page)).toBeVisible();
-  await expect(page.locator(".bn-editor")).toHaveCount(0);
 });
 
 test("Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen", async ({ page, browserName }) => {
@@ -285,7 +284,6 @@ test("⌘N → Meeting notes: Block-Editor, Notizen per Klick und Tastatur, Pfei
   await expect(page.getByLabel("Page title")).toHaveValue(/^Meeting/);
   await expectEditable(page);
   await expect(blockEditor(page).getByTestId("meeting-block")).toBeVisible();
-  await expect(page.locator(".bn-editor")).toHaveCount(0);
   await expect(block(page).getByRole("tab", { name: "Notes" })).toHaveAttribute("aria-selected", "true");
 
   // Leere Notizen: Platzhalter, ein Klick legt die erste Notiz an
@@ -323,63 +321,3 @@ test("⌘N → Meeting notes: Block-Editor, Notizen per Klick und Tastatur, Pfei
   expect((await layout()).page).toEqual(["meeting"]);
 });
 
-/** Alle Block-Records der Seite (Replik), ohne Zeiten, Schlüssel sortiert. */
-const pageRecords = (page: Page, pageID: string) => page.evaluate(async (pid) => {
-  const { store } = await (globalThis as unknown as W).__based.client.openPage(pid);
-  const stable = (v: unknown): unknown => Array.isArray(v) ? v.map(stable) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, stable(x)])) : v;
-  return [...store.blocks.values()].map((b) => JSON.stringify(stable({ id: b.id, type: b.type, parent: b.parent, sk: b.sk, text: b.text, props: b.props }))).sort();
-}, pageID);
-
-async function reloadWith(page: Page, legacy: boolean, title: string) {
-  await page.evaluate((on) => (on ? localStorage.setItem("based.legacyEditor", "true") : localStorage.removeItem("based.legacyEditor")), legacy);
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  await page.getByRole("treeitem", { name: title }).click();
-  await expect(page.getByLabel("Page title")).toHaveValue(title);
-  await expect(block(page)).toBeVisible();
-}
-
-// Rundreise: ein Meeting aus dem Block-Editor im alten Editor (Notausgang) öffnen, dort eine Notiz schreiben und
-// zurück – Titel, Notizen, Kontext und Abschnitte bleiben, Öffnen allein ändert in keinem Editor einen Record.
-test("Rundreise Block-Editor ↔ alter Editor: Meeting-Records bleiben erhalten", async ({ page }) => {
-  await newPageWithMeeting(page, "Roundtrip");
-  await block(page).getByLabel("Meeting title").fill("Roundtrip call");
-  await block(page).getByLabel("Meeting title").press("Enter");
-  await typeNote(page, "Written in the block editor");
-  await block(page).getByRole("button", { name: "Add context" }).click();
-  await page.getByRole("menuitem", { name: /Add a note/ }).click();
-  await block(page).getByLabel("Context note").fill("Agenda: release");
-  await block(page).getByLabel("Context note").press("Enter");
-  await expect(block(page).getByTestId("meeting-context-chip")).toContainText("Agenda: release");
-  await settled(page);
-  const pageID = await page.evaluate(() => location.hash.replace(/^#page-/, "").split("/")[0]!);
-  const before = await pageRecords(page, pageID);
-
-  // alter Editor: zeigt alles, Öffnen ändert nichts
-  await reloadWith(page, true, "Roundtrip");
-  await expect(page.locator(".bx-editor .bn-editor").first()).toBeVisible();
-  await expect(block(page).getByLabel("Meeting title")).toHaveValue("Roundtrip call");
-  await expect(block(page).locator(".bx-meet-doc")).toContainText("Written in the block editor");
-  await expect(block(page)).toContainText("Agenda: release");
-  await settled(page);
-  expect(await pageRecords(page, pageID)).toEqual(before);
-  // dort weiterschreiben
-  const notes = block(page).locator(".bx-meet-doc .bn-editor").first();
-  await notes.locator(".bn-block-content").last().click();
-  await page.keyboard.press("End");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("Written in the old editor");
-  await settled(page);
-  const middle = await pageRecords(page, pageID);
-  expect(middle.length).toBe(before.length + 1);
-
-  // zurück im Block-Editor: beide Notizen, Öffnen ändert nichts
-  await reloadWith(page, false, "Roundtrip");
-  await expect(blockEditor(page)).toBeVisible();
-  const doc = block(page).locator(".bx2-meet-doc");
-  await expect(doc.locator("[data-editable-id]")).toHaveText(["Written in the block editor", "Written in the old editor"]);
-  await expect(block(page).getByLabel("Meeting title")).toHaveValue("Roundtrip call");
-  await expect(block(page).getByTestId("meeting-context-chip")).toContainText("Agenda: release");
-  await settled(page);
-  expect(await pageRecords(page, pageID)).toEqual(middle);
-});

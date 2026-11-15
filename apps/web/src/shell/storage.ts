@@ -235,17 +235,14 @@ export const guestDeviceNode = (id: string) => ({
 });
 
 /**
- * BSD-407 Teil 3: Der Block-Editor (ADR 0016) ist Standard. Notausgang pro Gerät: der alte Editor (BlockNote) unter
- * Settings → Diagnostics → For developers, Standard aus; fällt mit Teil 4 weg. Der frühere Schalter `based.newEditor`
- * (Standard aus) gilt nicht mehr: `migrateEditorPref` entfernt ihn einmalig, damit auch Geräte, auf denen er bewusst
- * oder unbewusst auf „aus“ stand, den Block-Editor bekommen.
+ * BSD-407: Der Block-Editor (ADR 0016) ist der einzige Editor. Frühere Schalter: `based.newEditor` (bis Teil 2,
+ * `true` = neuer Editor) und `based.legacyEditor` (Teil 3, Notausgang „Old editor (BlockNote)“). Beide gelten nicht
+ * mehr; `migrateEditorPref` entfernt sie einmalig beim Start.
  */
-export const legacyEditorPref = devicePref<boolean>("based.legacyEditor", false, isBool);
-/** Alter Schlüssel bis BSD-407 Teil 2 (`true` = neuer Editor). Nur noch zum Aufräumen. */
-export const OLD_EDITOR_KEY = "based.newEditor";
+export const OLD_EDITOR_KEYS = ["based.newEditor", "based.legacyEditor"] as const;
 export function migrateEditorPref() {
   try {
-    storage()?.removeItem(OLD_EDITOR_KEY);
+    for (const key of OLD_EDITOR_KEYS) storage()?.removeItem(key);
   } catch {
     // ohne Speicher gilt ohnehin der Standard
   }

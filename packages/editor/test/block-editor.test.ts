@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { dropTarget, filterSlash, sectionColor, SLASH_ITEMS } from "../src/index.js";
 import { BLOCK_ICON_PATHS, isBlockIcon } from "../src/blocks/icons.js";
+import { uploadedProps } from "../src/blocks/BlockEditor.js";
 
 const row = (id: string, top: number, bottom: number, extra: Partial<{ left: number; right: number; nestable: boolean; columnable: boolean }> = {}) =>
   ({ id, top, bottom, wholeBottom: bottom, left: 100, right: 700, nestable: true, columnable: true, ...extra });
@@ -70,5 +71,16 @@ describe("Abschnitt", () => {
     expect(sectionColor({ type: "heading2", props: { toggleable: true, color: "blue" } })).toBeUndefined();
     expect(sectionColor({ type: "heading1", props: { color: "blueBackground" } })).toBeUndefined();
     expect(sectionColor({ type: "toggle", props: { toggleable: true, color: "redBackground" } })).toBeUndefined();
+  });
+});
+
+// BSD-407 Teil 4: Hochgeladene Dateien stehen kanonisch in `asset` (Name, Typ, Größe), andere Adressen in `url`.
+describe("uploadedProps", () => {
+  it("Asset aus der Ablage → asset mit Namen, url fällt weg", () => {
+    expect(uploadedProps("based-asset:abc", { name: "notes.txt", type: "text/plain", size: 12 })).toEqual({ asset: { id: "abc", name: "notes.txt", mime: "text/plain", size: 12 }, url: undefined });
+    expect(uploadedProps("based-asset:abc", { name: "x", type: "", size: 1.4 })).toEqual({ asset: { id: "abc", name: "x", size: 1 }, url: undefined });
+  });
+  it("andere Adresse bleibt url, ein älteres Asset fällt weg", () => {
+    expect(uploadedProps("https://example.com/a.png", { name: "a.png", type: "image/png", size: 3 })).toEqual({ url: "https://example.com/a.png", asset: undefined });
   });
 });

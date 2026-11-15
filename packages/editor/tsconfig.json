@@ -6,5 +6,5 @@
     // Die BlockNote-Typen sind nicht für exactOptionalPropertyTypes geschrieben.
     "exactOptionalPropertyTypes": false
   },
-  "include": ["src", "test", "testpage", "e2e", "vite.config.ts", "playwright.config.ts"]
+  "include": ["src", "test", "vitest.config.ts"]
 }

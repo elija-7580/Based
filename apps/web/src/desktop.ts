@@ -115,6 +115,9 @@ export async function startDesktop(tabs?: { close: () => void; count: () => numb
         }
       }
       const action = closeTabAction({ tabs: tabs.count(), pageWindow: !main, otherVisibleWindows: visible });
+      // Mac-Abnahme: in Settings → Diagnostics sichtbar, welches Fenster ⌘W bekam und was es tat.
+      const { diagnosticsLog } = await import("./shell/diagnostics.js");
+      diagnosticsLog.add("info", `⌘W in window ${win.label}: ${action} (tabs ${tabs.count()}, other windows ${visible})`);
       if (action === "close-window") await win.close().catch(() => tabs.close());
       else if (action === "hide-window") await win.hide().catch(() => tabs.close());
       else tabs.close();

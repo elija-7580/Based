@@ -78,6 +78,7 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "video", label: "Video", group: "Media", icon: "video", keywords: "movie clip upload" },
   { type: "audio", label: "Audio", group: "Media", icon: "audio", keywords: "sound music recording" },
   { type: "file", label: "File", group: "Media", icon: "file", keywords: "attachment upload document" },
+  { type: "pdf", label: "PDF", group: "Media", icon: "file", keywords: "pdf document viewer upload" },
   { type: "bookmark", label: "Web bookmark", group: "Media", icon: "bookmark", keywords: "link url preview" },
   { type: "embed", label: "Embed", group: "Media", icon: "embed", keywords: "iframe link url" },
   { type: "equation", label: "Block equation", group: "Advanced", icon: "equation", keywords: "math latex tex formula", props: { expression: "" } },

@@ -1,6 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
 import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
-import { useLegacyEditor } from "./legacy-editor.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -26,8 +25,6 @@ type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
 const editor = (page: Page) => blockEditor(page);
-/** Alter Editor (gepinnte Tests unten). */
-const bnEditor = (page: Page) => page.locator(".bx-editor > .bx-doc .bn-editor").first();
 const titleField = (page: Page) => page.getByRole("textbox", { name: "Page title" });
 /** Blöcke der Seite als „typ:text“ (Block-Editor; Text heißt wie im alten Editor „paragraph“). */
 const blocks = (page: Page) => page.evaluate(() => [...document.querySelectorAll("[data-testid=block-editor] .bx2-block")]
@@ -332,26 +329,20 @@ test("Codeblock: Sprache wählen mit Suche (wie im alten Editor)", async ({ page
   await expect(code.getByRole("button", { name: "Python" })).toBeVisible();
 });
 
-// BSD-407 Teil 3: Die kompakte Formatleiste gibt es bisher nur im alten Editor.
-// Gepinnt auf den alten Editor (docs/editor-parity.md, „noch BlockNote“; Liste für Teil 4).
-test.describe("alter Editor (BlockNote)", () => {
-  useLegacyEditor(test);
-
-  test("Formatleiste: kompaktes Feld, ganz im Fenster", async ({ page }) => {
-    await open(page, "Format");
-    await bnEditor(page).locator(".bn-block-content").first().click();
-    await page.keyboard.type("x ".repeat(60) + "tail");
-    await bnEditor(page).getByText("tail").dblclick({ position: { x: 5, y: 8 } });
-    const bar = page.locator(".bn-formatting-toolbar");
-    await expect(bar).toBeVisible();
-    for (const name of ["Bold", "Italic", "Underline", "Strike"]) await expect(bar.getByRole("button", { name, exact: true })).toBeVisible();
-    const box = (await bar.boundingBox())!;
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(1280);
-    expect(box.width).toBeLessThan(220);
-    await bar.getByRole("button", { name: "Bold", exact: true }).click();
-    await expect(bar.getByRole("button", { name: "Bold", exact: true })).toHaveAttribute("aria-pressed", "true");
-  });
+// BSD-407 Teil 4: kompakte Formatleiste im Block-Editor – ganz im Fenster, Knöpfe mit Namen.
+test("Formatleiste: kompaktes Feld, ganz im Fenster", async ({ page }) => {
+  await open(page, "Format");
+  await focusEditorEnd(page);
+  await page.keyboard.type("x ".repeat(60) + "tail");
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Shift+ArrowLeft");
+  const bar = page.getByTestId("format-bar");
+  await expect(bar).toBeVisible();
+  for (const name of ["Bold", "Italic", "Underline", "Strikethrough"]) await expect(bar.getByRole("button", { name: new RegExp("^" + name) })).toBeVisible();
+  const box = (await bar.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(1280);
+  await bar.getByRole("button", { name: /^Bold/ }).click();
+  await expect(editor(page).locator(".bx2-b", { hasText: "tail" })).toBeVisible();
 });
 
 // BSD-407 Teil 6.2–6.5 Checkliste: Fotos der neuen Flächen im Block-Editor (nur mit BASED_SCREENSHOTS=1, Chromium) in

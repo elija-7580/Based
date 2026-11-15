@@ -12,15 +12,12 @@
   },
   "scripts": {
     "typecheck": "tsc -p .",
-    "test": "vitest run",
-    "e2e": "playwright test",
-    "testpage": "vite"
+    "test": "vitest run"
   },
   "dependencies": {
     "@based/core": "workspace:*",
     "@based/design-tokens": "workspace:*",
     "@based/ui": "workspace:*",
-    "@blocknote/ariakit": "0.57.0",
     "@blocknote/core": "0.57.0",
     "@blocknote/react": "0.57.0",
     "mermaid": "11.17.2",
@@ -36,11 +33,8 @@
   },
   "devDependencies": {
     "@phosphor-icons/core": "2.1.1",
-    "@playwright/test": "^1.65.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "@vitejs/plugin-react": "^4.7.0",
-    "jsdom": "^31.0.0",
-    "vite": "^6.4.6"
+    "jsdom": "^31.0.0"
   }
 }
