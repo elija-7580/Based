@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isTauri, updatePrompt } from "./desktop.js";
+import { clipboardData, isTauri, updatePrompt } from "./desktop.js";
 
 describe("desktop (BSD-164)", () => {
   it("erkennt die Tauri-Hülle an __TAURI_INTERNALS__", () => {
@@ -26,5 +26,17 @@ describe("Update-Notizen (BSD-168)", () => {
     const long = updatePrompt("1", "0", Array.from({ length: 15 }, (_, i) => `• item ${i}`).join("\n"));
     expect(long).toContain("• item 11\n… and 3 more");
     expect(long).not.toContain("item 12");
+  });
+});
+
+// BSD-358: „Paste“ im Based-Kontextmenü der Mac-App bekommt Text und HTML (clipboard_html) – wie ⌘V.
+describe("clipboardData", () => {
+  it("HTML kommt mit, wenn vorhanden", () => {
+    expect(clipboardData("bold", "<b>bold</b>")).toEqual({ text: "bold", html: "<b>bold</b>" });
+  });
+  it("ohne oder leeres HTML: nur Text; fehlender Text wird leer", () => {
+    expect(clipboardData("plain", undefined)).toEqual({ text: "plain" });
+    expect(clipboardData("plain", "  ")).toEqual({ text: "plain" });
+    expect(clipboardData(null, "<p>x</p>")).toEqual({ text: "", html: "<p>x</p>" });
   });
 });
