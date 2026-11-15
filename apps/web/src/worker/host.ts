@@ -73,6 +73,7 @@ import {
   type SearchOptions,
   type SearchSort,
   compareStamps,
+  migrateAssetURLBlocks,
   type Stamp,
 } from "@based/core";
 import { AssetError, AssetSync, MemoryAssetBlobStore, MemoryYDocStorage, PUSHED_KEY, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence, type YDocStorage } from "@based/sync";
@@ -296,6 +297,9 @@ export class StoreHost {
     // Erststart ohne Daten und ohne Server: leerer Workspace mit einer Willkommensseite.
     const created = store.blocks.size === 0 && !sync?.url && !store.isReadOnly;
     if (created) homePageID = this.createWelcome();
+    // BSD-430: Uploads des Block-Editors vor 56bc6e4f standen nur als `url: based-asset:<id>` im Block – einmalig auf
+    // `asset` umstellen (Exporte, Archive und die Swift-App sehen die Datei sonst nicht).
+    if (!store.isReadOnly) migrateAssetURLBlocks(store);
     store.observe((c) => this.onChange(c));
     this.assets = new AssetSync(this.ws.assets ?? new MemoryAssetBlobStore(), this.ws.persistence, {
       ...(this.opts.fetch ? { fetch: this.opts.fetch } : {}),

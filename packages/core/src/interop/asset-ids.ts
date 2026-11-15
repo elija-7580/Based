@@ -65,3 +65,46 @@ export function remapStoreAssets(store: WorkspaceStore, map: ReadonlyMap<string,
   }, { undoable: false });
   return hits.length;
 }
+
+/** BSD-430: Präfix, mit dem die Web-App Dateien aus dem Speicher adressiert (`based-asset:<id>`). */
+export const ASSET_URL_SCHEME = "based-asset:";
+
+/** Ersatzname, wenn nichts Besseres bekannt ist (Archive und Exporte brauchen einen Namen). */
+function fallbackAssetName(type: string, id: string): string {
+  const base = type === "image" ? "image" : type === "video" ? "video" : type === "audio" ? "audio" : type === "pdf" ? "document" : "file";
+  return `${base}-${id.slice(0, 8)}${type === "pdf" ? ".pdf" : ""}`;
+}
+
+/**
+ * BSD-430: Der Block-Editor schrieb bis 56bc6e4f nach einem Upload nur `props.url = "based-asset:<id>"` statt des
+ * kanonischen `props.asset = {id, name, …}` (wie Swift, Importer, alter Editor). Exporte, Archive und die Swift-App
+ * sahen die Datei so nicht. Einmalige Migration (beim Start, idempotent): solche Blöcke bekommen `asset` (Name aus
+ * `info`, sonst ein Ersatzname nach Blockart), `url` fällt weg. Bearbeitungszeiten bleiben; wird gesynct.
+ * Gibt die Zahl umgestellter Blöcke zurück.
+ */
+export function migrateAssetURLBlocks(store: WorkspaceStore, info?: (id: string) => { name?: string; mime?: string; size?: number } | undefined): number {
+  const hits: string[] = [];
+  for (const b of store.blocks.values()) {
+    const url = b.props?.url;
+    if (typeof url === "string" && url.startsWith(ASSET_URL_SCHEME) && url.length > ASSET_URL_SCHEME.length && !b.props?.asset) hits.push(b.id);
+  }
+  if (hits.length === 0 || store.isReadOnly) return 0;
+  const rejected = store.writeFailure?.rejected ?? 0;
+  store.transact("Fix uploaded files", (tx) => {
+    tx.preserveTimestamps = true;
+    for (const id of hits) {
+      tx.update(id, (b) => {
+        const assetID = b.props!.url!.slice(ASSET_URL_SCHEME.length);
+        const known = info?.(assetID);
+        const asset: NonNullable<NonNullable<typeof b.props>["asset"]> = { id: assetID, name: known?.name || fallbackAssetName(b.type, assetID) };
+        if (known?.mime) asset.mime = known.mime;
+        if (known?.size !== undefined) asset.size = known.size;
+        b.props = { ...b.props, asset };
+        delete b.props.url;
+      });
+    }
+  }, { undoable: false });
+  // Nicht gespeichert (schreibgeschützt, Platte voll): im Speicher zurückgedreht, nichts umgestellt
+  if ((store.writeFailure?.rejected ?? 0) !== rejected || (store.writeFailure && rejected === 0)) return 0;
+  return hits.length;
+}
