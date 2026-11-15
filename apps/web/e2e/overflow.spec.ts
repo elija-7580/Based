@@ -28,7 +28,8 @@ type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
 
-const VIEWPORTS = [[1280, 820, ""], [900, 600, "-900"], [1728, 1000, "-1728"]] as const;
+// BSD-309: dazu schmale Fenster (halbe Bildschirmbreite am MacBook, Mindestbreite der Desktop-App 640 px).
+const VIEWPORTS = [[1280, 820, ""], [900, 600, "-900"], [1728, 1000, "-1728"], [720, 900, "-720"], [640, 800, "-640"]] as const;
 
 /**
  * Sucht Überläufe. Ein Fund: Element mit eigenem Text, dessen Inhalt breiter ist als sein Kasten, ohne dass das
@@ -300,4 +301,64 @@ test("Datenbank: 1.000 Zeilen, lange Spaltennamen und Optionen", async ({ page, 
   await expect(page.getByRole("gridcell", { name: /^A very long page title/ }).first()).toBeVisible(); // Werte angekommen
   const found = await check(page, [{ name: "database-long", hash: "#page-" + blockID }], "extreme", browserName);
   expect(found).toEqual([]);
+});
+
+// BSD-309: Schmales Fenster (halbe Bildschirmbreite am Mac, Mindestbreite 640 px): Die Seitenleiste klappt ein und
+// schwebt auf „Show sidebar“ (oder ⌘\) über der Seite – Seitenbaum erreichbar, nach dem Öffnen einer Seite wieder zu;
+// die gespeicherte Einstellung „ausgeblendet“ ändert sich dabei nicht. Kopf von Home und Seite bleiben einzeilig.
+test("Schmales Fenster: Seitenleiste schwebt bei Bedarf, Köpfe einzeilig", async ({ page }) => {
+  await page.goto("/");
+  await ready(page);
+  const id = (await command(page, { op: "createPage", title: "Narrow window page" })) as string;
+  for (const [w, h] of [[720, 900], [640, 800]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    await go(page, "#home");
+    await page.mouse.move(w / 2, h / 2); // nicht am linken Rand (dort schwebt die Leiste beim Überfahren herein)
+    const sidebar = page.getByRole("navigation", { name: "Workspace" });
+    await expect(sidebar).toBeHidden();
+    // Home-Kopf in einer Zeile: alle Knöpfe auf derselben Höhe
+    const tops = await page.locator(".home-head > *").evaluateAll((els) => els.filter((e) => (e as HTMLElement).offsetParent).map((e) => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2)));
+    expect(Math.max(...tops) - Math.min(...tops), `Home-Kopf ${w}`).toBeLessThan(6);
+    await expect(page.getByRole("button", { name: "New database" })).toBeVisible();
+    // Show sidebar → schwebend mit Seitenbaum; Seite öffnen schließt sie
+    await page.getByTestId("sidebar-show").click();
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toHaveClass(/peek/);
+    if (SHOTS && test.info().project.name === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-narrow-sidebar-light-${w}x${h}.png` });
+    await sidebar.getByRole("treeitem", { name: "Narrow window page" }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Narrow window page");
+    await page.mouse.move(w / 2, h / 2);
+    await expect(sidebar).toBeHidden();
+    // Kopfzeile der Seite einzeilig
+    const head = page.locator("header.topbar").first();
+    const box = (await head.boundingBox())!;
+    expect(box.height, `Kopfzeile ${w}`).toBeLessThan(64);
+    // ⌘\ öffnet und Escape schließt
+    await page.keyboard.press("ControlOrMeta+Backslash");
+    await expect(sidebar).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.mouse.move(w / 2, h / 2);
+    await expect(sidebar).toBeHidden();
+  }
+  if (SHOTS && test.info().project.name === "chromium") {
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "dark" })));
+    for (const [w, h] of [[720, 900], [640, 800]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.reload();
+      await ready(page);
+      await page.mouse.move(w / 2, h / 2);
+      await page.getByTestId("sidebar-show").click();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `../../docs/design/screens/web-narrow-sidebar-dark-${w}x${h}.png` });
+      await page.keyboard.press("Escape");
+    }
+    await page.evaluate(() => localStorage.removeItem("based.appearance"));
+    await page.reload();
+    await ready(page);
+  }
+  // Breit: Seitenleiste wieder fest, die Einstellung ist unverändert
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await go(page, "#page-" + id);
+  await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Workspace" })).not.toHaveClass(/peek/);
 });
