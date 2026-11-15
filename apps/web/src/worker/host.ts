@@ -940,7 +940,7 @@ export class StoreHost {
     const store = this.store;
     let found: ReturnType<SearchIndex["run"]> = [];
     if (query.trim()) {
-      const opts: SearchOptions = { limit };
+      const opts: SearchOptions = { limit, extended: true }; // BSD-425: Quick Find findet mehr als die Swift-Suche
       if (isCancelled) opts.isCancelled = isCancelled;
       if (filters) opts.filters = filters;
       if (sort) opts.sort = sort;

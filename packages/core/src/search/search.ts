@@ -42,7 +42,17 @@ export interface SearchOptions {
   now?: number;
   /** Wird regelmäßig gefragt; `true` bricht ab (Ergebnis `undefined`), z. B. bei einer neueren Eingabe. */
   isCancelled?: () => boolean;
+  /**
+   * BSD-425: Quick Find „findet mehr“ – zusätzlich zu den Treffern wie Swift (Fixtures unverändert): Begriffe über
+   * Titel und mehrere Blöcke einer Seite verteilt, Auswahl-/Status-Optionen, Zahlen und Dateinamen in Zeilen,
+   * Dateinamen und Links in Blöcken, ein Tippfehler bzw. Plural-s in Titelwörtern. Diese Treffer stehen hinter
+   * den genauen (niedrigere Punkte).
+   */
+  extended?: boolean;
 }
+
+/** BSD-425: Punkte der zusätzlichen Treffer (unter Inhalt 20 und Zeile 15 aus der Swift-Suche). */
+export const EXTENDED_SCORES = { spread: 12, extraContent: 18, extraRow: 14, fuzzyTitle: 8 } as const;
 
 /** Was die Suche aus dem Arbeitsbereich braucht (ein `WorkspaceStore` passt). */
 export interface SearchSource {
@@ -225,6 +235,48 @@ export function rowText(b: Block): string {
   }).join(" ");
 }
 
+/** BSD-425: weitere Zeilenwerte für Quick Find – Optionsnamen (Auswahl, Status, Mehrfachauswahl), Zahlen, Dateinamen. */
+export function rowExtraText(b: Block, db: Database | undefined): string {
+  const values = b.values ?? {};
+  const optionName = (prop: string, id: string) => db?.properties.find((p) => p.id === prop)?.options?.find((o) => o.id === id)?.name ?? "";
+  return Object.keys(values).sort().flatMap((k) => {
+    const v = values[k] as PropertyValue;
+    const [kind] = Object.keys(v);
+    const x = (v as Record<string, { _0: unknown }>)[kind!]?._0;
+    switch (kind) {
+      case "select": case "status": return typeof x === "string" ? [optionName(k, x)] : [];
+      case "multiSelect": return Array.isArray(x) ? x.map((id) => optionName(k, String(id))) : [];
+      case "number": return typeof x === "number" && Number.isFinite(x) ? [String(x)] : [];
+      case "files": return Array.isArray(x) ? x.map((f) => (f && typeof f === "object" && typeof (f as { name?: unknown }).name === "string" ? (f as { name: string }).name : "")) : [];
+      default: return [];
+    }
+  }).filter(Boolean).join(" ");
+}
+
+/** BSD-425: Dateiname und Link eines Blocks (Datei, Bild, Lesezeichen, Embed) – Swift sucht hier nicht. */
+export function blockExtraText(b: Block): string {
+  const parts: string[] = [];
+  if (b.props?.asset?.name) parts.push(b.props.asset.name);
+  if (b.props?.url) parts.push(b.props.url);
+  const title = (b.props as { title?: unknown } | undefined)?.title;
+  if (typeof title === "string") parts.push(title);
+  return parts.join(" ");
+}
+
+/** BSD-425: Wort ≈ Begriff – höchstens eine Änderung (fehlend, zusätzlich, falsch, vertauscht); kurze Begriffe genau. */
+export function nearWord(word: string, term: string): boolean {
+  if (word === term) return true;
+  const lw = word.length, lt = term.length;
+  if (lt < 4 || Math.abs(lw - lt) > 1) return false;
+  let i = 0;
+  while (i < lw && i < lt && word[i] === term[i]) i++;
+  if (lw === lt) {
+    if (word.slice(i + 1) === term.slice(i + 1)) return true; // ersetzt
+    return i + 1 < lw && word[i] === term[i + 1] && word[i + 1] === term[i] && word.slice(i + 2) === term.slice(i + 2); // vertauscht
+  }
+  return lw > lt ? word.slice(i + 1) === term.slice(i) : word.slice(i) === term.slice(i + 1);
+}
+
 // MARK: Index
 
 interface ContentEntry {
@@ -254,6 +306,9 @@ export class SearchIndex implements SearchSource {
   private readonly titles = new Map<string, string>();
   private readonly contentEntries = new Map<string, ContentEntry>();
   private readonly rows = new Map<string, string>();
+  /** BSD-425: Zusatztexte für `extended` (Dateinamen/Links in Blöcken, Optionen/Zahlen in Zeilen). */
+  private readonly extraEntries = new Map<string, ContentEntry>();
+  private readonly extraRows = new Map<string, string>();
   /** Zählt jede Änderung (wie Swift `revision`). */
   revision = 0;
 
@@ -273,7 +328,7 @@ export class SearchIndex implements SearchSource {
 
   /** Ersetzt den Inhalt durch einen vollständigen Stand. */
   load(src: SearchSource) {
-    for (const m of [this.blocks, this.databases, this.children, this.mentionedBy, this.mentionsOf, this.titles, this.contentEntries, this.rows]) m.clear();
+    for (const m of [this.blocks, this.databases, this.children, this.mentionedBy, this.mentionsOf, this.titles, this.contentEntries, this.rows, this.extraEntries, this.extraRows]) m.clear();
     for (const d of src.databases.values()) this.databases.set(d.id, d);
     for (const b of src.blocks.values()) this.putBlock(b);
     for (const id of this.blocks.keys()) this.recompute(id);
@@ -327,7 +382,8 @@ export class SearchIndex implements SearchSource {
           dirty.add(owner);
           mentioning(owner);
         }
-        if (!old || old.blockID !== d.blockID) databaseRows(d.id);
+        // BSD-425: Optionsnamen stehen in der Datenbank – ihre Zeilen neu (nur bei geänderten Properties)
+        if (!old || old.blockID !== d.blockID || old.properties !== d.properties) databaseRows(d.id);
       }
     }
     for (const key of delta.deletions) {
@@ -396,6 +452,8 @@ export class SearchIndex implements SearchSource {
     this.titles.delete(id);
     this.contentEntries.delete(id);
     this.rows.delete(id);
+    this.extraEntries.delete(id);
+    this.extraRows.delete(id);
     const b = this.blocks.get(id);
     if (!b) return;
     let live: boolean | undefined;
@@ -409,10 +467,17 @@ export class SearchIndex implements SearchSource {
       if (text && page !== undefined && this.blocks.has(page) && !isTrashedIn(this, page)) {
         this.contentEntries.set(id, { blockID: id, page, folded: fold(text), path: this.pathFromPage(id, page) });
       }
+      const extra = blockExtraText(b);
+      const extraPage = extra ? page ?? containingPage(this, id) : undefined;
+      if (extra && extraPage !== undefined && this.blocks.has(extraPage) && !isTrashedIn(this, extraPage)) {
+        this.extraEntries.set(id, { blockID: id, page: extraPage, folded: fold(extra), path: this.pathFromPage(id, extraPage) });
+      }
     }
     if (isRowBlock(b) && b.values && Object.keys(b.values).length > 0 && isLive()) {
       const text = rowText(b);
       if (text) this.rows.set(id, fold(text));
+      const extra = rowExtraText(b, this.databases.get(b.parent.slice(2)));
+      if (extra) this.extraRows.set(id, fold(extra));
     }
   }
 
@@ -476,6 +541,9 @@ export class SearchIndex implements SearchSource {
         snippetOf.set(id, () => snippet(rowText(b), folded, terms[0]!));
       }
     }
+    if (opts.extended && terms.length > 0 && terms.length <= 30) {
+      if (this.extendedHits(q, terms, hits, snippetOf, allowed, recency, filters.titleOnly === true, limit, tick) === undefined) return undefined;
+    }
     let out = [...hits.values()];
     // BSD-280: Bei vielen Treffern nur die Kandidaten voll sortieren, deren Punktzahl für die ersten `limit` reicht
     // (Gleichstände an der Grenze bleiben alle drin – das Ergebnis ist dasselbe wie bei voller Sortierung).
@@ -512,6 +580,76 @@ export class SearchIndex implements SearchSource {
       if (make) h.snippet = make();
     }
     return top;
+  }
+
+  /**
+   * BSD-425: zusätzliche Treffer (siehe `SearchOptions.extended`). Ergänzt `hits`, ändert vorhandene nicht.
+   * `undefined` = abgebrochen.
+   */
+  private extendedHits(q: string, terms: string[], hits: Map<string, SearchHit>, snippetOf: Map<string, () => string>, allowed: (b: Block) => boolean,
+    recency: (b: Block) => number, titleOnly: boolean, limit: number, tick: () => boolean): true | undefined {
+    const blocks = this.blocks;
+    const full = (1 << terms.length) - 1;
+    const maskOf = (folded: string) => { let m = 0; terms.forEach((t, i) => { if (folded.includes(t)) m |= 1 << i; }); return m; };
+    const add = (page: string, score: number, blockID?: string, snip?: () => string, withRecency = true) => {
+      if (hits.has(page)) return;
+      const pb = blocks.get(page);
+      if (!pb || !allowed(pb)) return;
+      hits.set(page, { pageID: page, score: score + (withRecency ? recency(pb) : 0), ...(blockID ? { blockID } : {}) });
+      if (snip) snippetOf.set(page, snip);
+    };
+    if (!titleOnly) {
+      // Dateinamen/Links in Blöcken und weitere Zeilenwerte, die alle Begriffe enthalten
+      for (const e of this.extraEntries.values()) {
+        if (tick()) return undefined;
+        if (!hits.has(e.page) && terms.every((t) => e.folded.includes(t))) {
+          const b = blocks.get(e.blockID);
+          add(e.page, EXTENDED_SCORES.extraContent, e.blockID, b ? () => snippet(blockExtraText(b), e.folded, terms[0]!) : undefined);
+        }
+      }
+      for (const [id, folded] of this.extraRows) {
+        if (tick()) return undefined;
+        if (hits.has(id)) continue;
+        const both = (this.rows.get(id) ?? "") + " " + folded;
+        if (terms.every((t) => both.includes(t))) {
+          const b = blocks.get(id);
+          // wie die Zeilen-Treffer der Swift-Suche ohne Aktualitäts-Punkte
+          if (b) add(id, EXTENDED_SCORES.extraRow, undefined, () => snippet(rowText(b) + " " + rowExtraText(b, this.databases.get(b.parent.slice(2))), both, terms[0]!), false);
+        }
+      }
+      // Begriffe über Titel, Blöcke und Zeilenwerte einer Seite verteilt
+      if (terms.length > 1) {
+        const masks = new Map<string, { m: number; entry?: ContentEntry }>();
+        const note = (page: string, m: number, entry?: ContentEntry) => {
+          if (m === 0 || hits.has(page)) return;
+          const cur = masks.get(page);
+          if (!cur) masks.set(page, { m, ...(entry ? { entry } : {}) });
+          else { cur.m |= m; if (entry && (!cur.entry || comparePaths(entry.path, cur.entry.path) < 0)) cur.entry = entry; }
+        };
+        for (const [id, folded] of this.titles) { if (tick()) return undefined; note(id, maskOf(folded)); }
+        for (const map of [this.contentEntries, this.extraEntries]) {
+          for (const e of map.values()) { if (tick()) return undefined; note(e.page, maskOf(e.folded), e); }
+        }
+        for (const [id, folded] of this.rows) { if (tick()) return undefined; note(id, maskOf(folded)); }
+        for (const [id, folded] of this.extraRows) { if (tick()) return undefined; note(id, maskOf(folded)); }
+        for (const [page, { m, entry }] of masks) {
+          if (m !== full) continue;
+          const b = entry ? blocks.get(entry.blockID) : undefined;
+          add(page, EXTENDED_SCORES.spread, entry?.blockID, entry && b ? () => snippet(this.extraEntries.get(b.id) === entry ? blockExtraText(b) : contentText(this, b), entry.folded, terms.find((t) => entry.folded.includes(t)) ?? terms[0]!) : undefined);
+        }
+      }
+    }
+    // Ein Tippfehler bzw. Plural-s in Titelwörtern – nur, solange die genauen Treffer die Liste nicht füllen
+    if (hits.size < limit && q.length >= 4) {
+      for (const [id, folded] of this.titles) {
+        if (tick()) return undefined;
+        if (hits.has(id)) continue;
+        const words = folded.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+        if (words.length && terms.every((t) => words.some((w) => w.startsWith(t) || nearWord(w, t) || (w.length > t.length && nearWord(w.slice(0, t.length + 1), t)))))
+          add(id, EXTENDED_SCORES.fuzzyTitle);
+      }
+    }
+    return true;
   }
 
   /** Wie `run`, ohne Abbruch (Signatur wie Swift `SearchCorpus.search`). */

@@ -33,7 +33,9 @@ function workspace(): WireRecord[] {
 }
 
 describe("Quick Find (BSD-280)", () => {
+  // BSD-425: Quick Find sucht erweitert (verteilte Begriffe, Optionen, Tippfehler) – gemessen wird, was die App ruft.
   it("Aufbau, Tastendruck, Volltext, kein Treffer, Änderung + Suche", () => {
+    const QF = { limit: 30, extended: true } as const;
     const records = workspace();
     const perKey: number[] = [];
     const run = () => {
@@ -45,18 +47,18 @@ describe("Quick Find (BSD-280)", () => {
       for (let n = 1; n <= typed.length; n++) {
         const q = typed.slice(0, n);
         let hits = 0;
-        const ms = cpuTime(() => { hits = index.run(q, { limit: 30 })?.length ?? 0; });
+        const ms = cpuTime(() => { hits = index.run(q, QF)?.length ?? 0; });
         perKey.push(Math.round(ms));
         keystroke = Math.max(keystroke, ms);
         expect(hits).toBeGreaterThan(0);
       }
       let deep = 0;
-      const body = cpuTime(() => { deep = index.run("other things number 29999", { limit: 30 })?.length ?? 0; });
+      const body = cpuTime(() => { deep = index.run("other things number 29999", QF)?.length ?? 0; });
       expect(deep).toBeGreaterThan(0);
-      const miss = cpuTime(() => { expect(index.run("zzqx", { limit: 30 })).toEqual([]); });
+      const miss = cpuTime(() => { expect(index.run("zzqx", QF)).toEqual([]); });
       const edit = cpuTime(() => {
         index.apply({ upserts: [{ kind: "block", data: { id: "p7b0", type: "text", parent: "b:p7", sk: "a0", text: "Quokka sighting", createdAt: 0, updatedAt: 1, stamp: { ...stamp, millis: 2 } } } as WireRecord], deletions: [] });
-        expect(index.run("quokka", { limit: 30 })?.[0]?.pageID).toBe("p7");
+        expect(index.run("quokka", QF)?.[0]?.pageID).toBe("p7");
       });
       return { build, keystroke, body, miss, edit };
     };
