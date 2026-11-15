@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 35 (Nachtlauf 2026-11-14, TS-Stack, Abschnitt direkt unten; Pass 33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 36 (Nachtlauf 2026-11-15, TS-Stack, Abschnitt direkt unten; Pass 35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,25 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-15 (Pass 36, TS-Stack)
+
+Zwölf Sammel-Merges 993e9f88 → 6f8746cb; jeweils run-ts --fast (typecheck, lint, Design-Wächter, Unit beider Formate, @smoke) und betroffene E2E in Chromium + WebKit grün. Beide Schichten um ~08:20 vom Ausgabelimit gestoppt; Reste gemergt um 11:00.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-423 (P0) Archiv-Import zeigt nichts | 🟡 | Import holt Papierkorb/Gelöschtes mit neuem Stempel zurück; Mac-Test |
+| BSD-416 WebKit: neue Seite nach sofortigem Neuladen weg | ✅ | Journal unbestätigter Änderungen beim Verlassen; persist-reload.spec |
+| BSD-424 Lokaler Server „exit 1 … Node v26“ | 🟡 | Ursache belegter Port 47821, jetzt verständliche Meldung; Mac-Test |
+| BSD-414 Node-Laufzeit mit der App ausliefern | 🟡 | Node v24 per fetch-node.mjs (SHA-256 gepinnt); Signatur = BSD-433; Mac-Test |
+| BSD-425 Quick Find findet zu wenig | 🟡 | verteilte Begriffe, Optionen, Dateinamen, Tippfehler; Mac-Test |
+| BSD-427, 431, 437 Sync (Zukunfts-Stempel, Ordner-Sync, verwaiste Blöcke) | ✅/🟡 | aus PRÜFEN Sync; 431 Mac-Test |
+| BSD-410 Fixtures Agent Brain Teil 2, 411 Teil 2, 430 Asset-Migration, 432, 435 | ✅ | 435: 100.000 Zeilen öffnen (Stack-Overflow behoben), Sync 1,6 → 0,7 s |
+| BSD-407 Teil 4a + 2g: BlockNote aus dem Client, Formatleiste aus Based-Bausteinen | 🟡 | offen: 4b/4c (kopfloser Konverter für alte page:-Dokumente) |
+| BSD-310 ⌘W, 309 schmale Fenster ab 640 px, 358 Rechtsklick-Einfügen, 422 Sync-Karte | 🟡 | Mac-Test |
+| BSD-341, 342, 344, 347/428, 340, 419, 421 | ✅ | Editor-/Shell-Feinschliff |
+| BSD-260 Teil 11 (Google Docs), 231 Teil 2c-Kern, 305 Teil 3, 350 Teil 3 | 🟡 | Teile gelandet, Einträge bleiben Bereit |
+| BSD-280 Teil 5 | ❌ | abgebrochen, WIP auf wip/2026-11-15-a-BSD-280 |
 
 ## Nachtlauf 2026-11-14 (Pass 35, TS-Stack)
 
