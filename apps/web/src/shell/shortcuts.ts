@@ -22,6 +22,16 @@ export type ShortcutAction =
   /** BSD-319: „Problem melden“ (⇧⌘B). */
   | { kind: "reportProblem" };
 
+/**
+ * BSD-310: In der Desktop-App gehört ⌘W dem Menü (lib.rs „Close Tab“ → `desktop://close-tab` an das Fenster vorn,
+ * dort entscheidet closeTabAction: Tab, Seitenfenster schließen, Hauptfenster ausblenden oder Startseite). WKWebView
+ * gibt eine Taste nur dann ans Menü weiter, wenn die Seite sie nicht mit preventDefault genommen hat – der eigene
+ * Handler schloss deshalb im Seitenfenster den letzten Tab (→ Startseite), und das Menü kam nie dran.
+ */
+export function menuOwnsShortcut(a: ShortcutAction, desktop: boolean): boolean {
+  return desktop && a.kind === "closeTab";
+}
+
 /** App → Seite: ⌘F/⌘G. Die Seite ruft `preventDefault()`, wenn sie die Taste nimmt. */
 export const FIND_EVENT = "based:find";
 
