@@ -6,6 +6,7 @@ import { openWasmDatabase } from "@based/sync/wasm";
 import { IDBAssetStore } from "./assets.js";
 import { StoreHost } from "./host.js";
 import { openOpfsAssets } from "./opfsAssets.js";
+import { openOpfsModels } from "./opfsModels.js";
 import type { Event, RequestMessage } from "./protocol.js";
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -14,6 +15,8 @@ const host = new StoreHost({
   post: (e: Event) => self.postMessage(e),
   online: () => self.navigator.onLine,
   importedAssets: new IDBAssetStore(),
+  // BSD-231: lokale Modelle im OPFS-Ordner `models` (geladen wird nur mit Einwilligung)
+  openModels: () => openOpfsModels(),
   async open({ device, opfs, propertyRecords }) {
     // BSD-30: nur einschalten, nie ausschalten – eine umgestellte Datei bleibt es (openWorkspace)
     const mode = propertyRecords ? { propertyRecords: true } : {};

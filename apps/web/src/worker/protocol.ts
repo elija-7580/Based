@@ -255,7 +255,24 @@ export type Request =
   /** BSD-252: hat die Seite lokale Änderungen, die noch nicht beim Server sind? */
   | { type: "pendingLocal"; rootID: string }
   /** BSD-220: Y-Zustand einer Dokument-Wurzel speichern (Antwort: true). */
-  | { type: "ydocSave"; rootID: string; state: Uint8Array };
+  | { type: "ydocSave"; rootID: string; state: Uint8Array }
+  /** BSD-231 Teil 2c: lokale Modelle (Status, laden, abbrechen, entfernen). `consent`: eingeschaltete Zwecke. */
+  | { type: "localModels"; action: LocalModelAction; consent: LocalModelPurpose[] };
+
+export type LocalModelPurpose = "transcription" | "embeddings" | "redact";
+export type LocalModelAction = { op: "status" } | { op: "download"; id: string } | { op: "cancel"; id: string } | { op: "remove"; id: string };
+
+/** BSD-231: ein Modell des Katalogs für die Einstellungen. */
+export interface LocalModelInfo {
+  id: string;
+  purpose: LocalModelPurpose;
+  name: string;
+  license: string;
+  /** Bytes aller Dateien. */
+  size: number;
+  installed: boolean;
+  downloading: boolean;
+}
 
 export interface GraphResult {
   graph: PageGraph;
@@ -319,7 +336,9 @@ export type Event =
   /** BSD-163: kurzer Hinweis für die Oberfläche (z. B. verweigertes Löschen des Agent Brain). */
   | { type: "notice"; message: string }
   /** Änderungen an einer offenen Seite (für die Replik im Hauptthread). */
-  | { type: "pageChanges"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] };
+  | { type: "pageChanges"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] }
+  /** BSD-231: Fortschritt beim Laden eines lokalen Modells; `done` am Ende, `error` beim Scheitern/Abbruch. */
+  | { type: "localModelProgress"; id: string; loaded: number; total: number; done?: boolean; error?: string };
 
 /** Was Worker und Hauptthread zum Reden brauchen (Worker, MessagePort oder ein Test-Kanal). */
 export interface Endpoint<In, Out> {

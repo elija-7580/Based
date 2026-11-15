@@ -24,4 +24,4 @@ export type { PageAccess, ShareLinkInfo, ShareLinkKind, SharePerson, ShareRole }
 export { MemoryYDocStorage, SqliteYDocStorage, YDOCS_SCHEMA } from "./ydocs.js";
 export type { YDocStorage } from "./ydocs.js";
 export { FolderAssets, FolderSync, parseSegment, segmentName, snapshotName } from "./folder.js";
-export type { FolderRoundResult, FolderSyncOptions, FolderSyncState, FolderTarget } from "./folder.js";
+export type { FolderChangeLog, FolderRoundResult, FolderSyncOptions, FolderSyncState, FolderTarget } from "./folder.js";

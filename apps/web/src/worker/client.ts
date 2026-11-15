@@ -20,7 +20,7 @@ import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } f
 import type { AgentAction } from "./agents.js";
 import type { HybridContentResult, HybridPageContent, HybridPendingPage, HybridStructureResult, HybridStructureWire, JSONValue, SearchFilters, SearchSort } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "./chat.js";
-import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, LocalModelAction, LocalModelInfo, LocalModelPurpose, DatabaseInfo, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
 export interface ShellState {
   ready: boolean;
@@ -228,6 +228,7 @@ export class StoreClient {
       case "agents": this.set({ agents: ev.snapshot }); return;
       case "notice": this.set({ notice: { id: (this.state.notice?.id ?? 0) + 1, message: ev.message } }); return;
       case "pageChanges": this.replicas.get(ev.pageID)?.receive(ev.upserts, ev.deletions); return;
+      case "localModelProgress": for (const f of this.modelProgress) f(ev); return;
     }
   };
 
@@ -471,6 +472,17 @@ export class StoreClient {
   /** Datei speichern (BSD-78): liegt danach auf diesem Gerät und wird zum Sync-Server hochgeladen. */
   /** BSD-220: gespeicherter Y-Zustand einer Dokument-Wurzel (Editor). */
   /** BSD-252: hat die Seite lokale Änderungen, die noch nicht beim Server sind? */
+  /** BSD-231: Fortschritt beim Laden lokaler Modelle (Einstellungen). */
+  readonly modelProgress = new Set<(p: Extract<Event, { type: "localModelProgress" }>) => void>();
+
+  /**
+   * BSD-231 Teil 2c: lokale Modelle – Status, laden (nur mit Einwilligung für den Zweck; sonst keine Anfrage und ein
+   * Fehler „… models are off“), abbrechen, entfernen. Antwort: Katalog mit Stand; Fortschritt über `modelProgress`.
+   */
+  localModels(action: LocalModelAction, consent: readonly LocalModelPurpose[]): Promise<LocalModelInfo[]> {
+    return this.request<LocalModelInfo[]>({ type: "localModels", action, consent: [...consent] });
+  }
+
   pendingLocal(rootID: string): Promise<boolean> {
     return this.request<boolean>({ type: "pendingLocal", rootID });
   }

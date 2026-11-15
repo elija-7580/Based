@@ -55,6 +55,19 @@ export interface FolderSyncOptions {
   exportRemote?: boolean;
   /** BSD-334: ab so vielen eigenen Segmenten versucht `round()` zu kompaktieren (Standard 200). */
   compactAfter?: number;
+  /**
+   * BSD-431: Change-Log der Persistenz (SqlitePersistence). Dann kommt, was in den Ordner muss, aus dem Log nach
+   * `pushedSeq` statt aus einer Liste im Speicher – nichts geht bei einem Absturz zwischen Änderung und Runde verloren.
+   */
+  changeLog?: FolderChangeLog;
+  /** BSD-431: Zustand sofort sichern (nach jedem geschriebenen Segment und jedem Lesen), nicht erst nach der Runde. */
+  saveState?: (state: FolderSyncState) => void;
+}
+
+/** BSD-431: der Teil von `SqlitePersistence`, den der Ordner-Sync liest. */
+export interface FolderChangeLog {
+  changes(after: number, limit: number): { seq: number; key: RecordKeyString; deleted: boolean; local: boolean; derived: boolean; deletedStamp: Stamp | undefined }[];
+  maxSeq(): number;
 }
 
 export interface FolderSyncState {
@@ -62,6 +75,10 @@ export interface FolderSyncState {
   nextSeq: number;
   /** Je fremdem Gerät: zuletzt gelesenes Segment. */
   seen: Record<string, number>;
+  /** BSD-431: Change-Log bis hier in den Ordner geschrieben (nur mit `changeLog`; fehlt = alles noch einmal). */
+  pushedSeq?: number;
+  /** BSD-431: Log-Bereiche, die aus dem Ordner kamen (nicht zurückschreiben), [von, bis] einschließlich. */
+  skip?: [number, number][];
 }
 
 export interface FolderRoundResult {
@@ -149,6 +166,8 @@ export class FolderSync {
   constructor(private readonly o: FolderSyncOptions) {
     if (!DEVICE.test(o.device)) throw new Error("device id: letters, digits, - and _ only");
     this.st = o.state ? { nextSeq: o.state.nextSeq, seen: { ...o.state.seen } } : { nextSeq: 1, seen: {} };
+    if (o.state?.pushedSeq !== undefined) this.st.pushedSeq = o.state.pushedSeq;
+    if (o.state?.skip?.length) this.st.skip = o.state.skip.map(([a, b]) => [a, b]);
     if (o.enabled) {
       this.unobserve = o.store.observe((c) => {
         // nur eigene Änderungen; was per Sync/Ordner kam, nicht zurückschreiben
@@ -161,13 +180,73 @@ export class FolderSync {
   }
 
   get enabled(): boolean { return this.o.enabled === true; }
-  state(): FolderSyncState { return { nextSeq: this.st.nextSeq, seen: { ...this.st.seen } }; }
+  state(): FolderSyncState {
+    const out: FolderSyncState = { nextSeq: this.st.nextSeq, seen: { ...this.st.seen } };
+    if (this.st.pushedSeq !== undefined) out.pushedSeq = this.st.pushedSeq;
+    if (this.st.skip?.length) out.skip = this.st.skip.map(([a, b]) => [a, b]);
+    return out;
+  }
+  private save() { try { this.o.saveState?.(this.state()); } catch (e) { this.o.log?.(`folder sync: couldn't save state (${e instanceof Error ? e.message : String(e)})`); } }
+
+  private seqChecked = false;
+  /**
+   * BSD-431: Nie ein vorhandenes eigenes Segment überschreiben – z. B. wenn der gespeicherte Zähler hinter dem Ordner
+   * liegt (Absturz nach dem Schreiben, vor dem Sichern). Einmal je Sitzung: höchste eigene Nummer im Ordner + 1.
+   */
+  private async ensureSeq() {
+    if (this.seqChecked) return;
+    const names = await this.o.target.list(`devices/${this.o.device}`).catch(() => []);
+    let max = 0;
+    for (const n of names) {
+      const m = SEGMENT.exec(n) ?? SNAPSHOT.exec(n);
+      if (m) max = Math.max(max, Number(m[1]));
+    }
+    if (max >= this.st.nextSeq) this.st.nextSeq = max + 1;
+    this.seqChecked = true;
+  }
+
+  /** BSD-431: eigene Änderungen aus dem Change-Log nach `pushedSeq` als ein Segment schreiben. */
+  private async pushFromLog(log: FolderChangeLog): Promise<number> {
+    await this.ensureSeq();
+    const from = this.st.pushedSeq ?? 0;
+    let cursor = from;
+    const lines: string[] = [];
+    const skipped = (seq: number) => (this.st.skip ?? []).some(([a, b]) => seq >= a && seq <= b);
+    for (let batch = log.changes(cursor, 2000); batch.length > 0; batch = log.changes(cursor, 2000)) {
+      for (const e of batch) {
+        cursor = e.seq;
+        if (e.derived || skipped(e.seq) || (!e.local && !this.o.exportRemote)) continue;
+        if (e.deleted) lines.push(JSON.stringify(e.deletedStamp ? { op: "del", key: e.key, stamp: e.deletedStamp } : { op: "del", key: e.key }));
+        else {
+          const r = this.o.store.record(e.key);
+          if (r) lines.push(JSON.stringify({ op: "put", record: r })); // ohne Record: unlesbare Zeile – nie als Löschung
+        }
+      }
+    }
+    if (lines.length > 0) {
+      const seq = this.st.nextSeq;
+      await this.o.target.write(`devices/${this.o.device}/${segmentName(seq)}`, enc.encode(segmentText(this.o.device, seq, lines)));
+      this.st.nextSeq = seq + 1;
+    }
+    if (cursor !== from || lines.length > 0) {
+      this.st.pushedSeq = cursor;
+      if (this.st.skip) { this.st.skip = this.st.skip.filter(([, b]) => b > cursor); if (this.st.skip.length === 0) delete this.st.skip; }
+      this.save();
+    }
+    this.pending.clear();
+    return lines.length;
+  }
   stop() { this.unobserve?.(); this.unobserve = undefined; }
 
   /** Eigene Änderungen als ein Segment schreiben. */
   async push(): Promise<number> {
-    if (!this.enabled || this.pending.size === 0) return 0;
+    if (!this.enabled) return 0;
+    if (this.o.changeLog) return this.pushFromLog(this.o.changeLog);
+    if (this.pending.size === 0) return 0;
+    await this.ensureSeq();
+    // BSD-431: vor dem Schreiben aus der Liste nehmen – eine Änderung während des Schreibens bleibt drin (nächstes Segment)
     const keys = [...this.pending];
+    for (const k of keys) this.pending.delete(k);
     const lines: string[] = [];
     for (const key of keys) {
       const r = this.o.store.record(key);
@@ -179,9 +258,14 @@ export class FolderSync {
     }
     const seq = this.st.nextSeq;
     const text = segmentText(this.o.device, seq, lines);
-    await this.o.target.write(`devices/${this.o.device}/${segmentName(seq)}`, enc.encode(text));
+    try {
+      await this.o.target.write(`devices/${this.o.device}/${segmentName(seq)}`, enc.encode(text));
+    } catch (e) {
+      for (const k of keys) this.pending.add(k);
+      throw e;
+    }
     this.st.nextSeq = seq + 1;
-    for (const k of keys) this.pending.delete(k);
+    this.save();
     return lines.length;
   }
 
@@ -228,15 +312,21 @@ export class FolderSync {
       }
     }
     await this.writeCursor();
+    this.save();
     return result;
   }
 
   private applyFromFolder(parsed: Parsed) {
     this.applying = true;
+    const log = this.o.changeLog;
+    const before = log?.maxSeq() ?? 0;
     try {
       this.o.store.applyRemote(parsed.puts, parsed.dels, parsed.stamps);
     } finally {
       this.applying = false;
+      // BSD-431: was aus dem Ordner kam, steht jetzt im Change-Log – nicht zurückschreiben
+      const after = log?.maxSeq() ?? 0;
+      if (log && after > before) (this.st.skip ??= []).push([before + 1, after]);
     }
   }
 
