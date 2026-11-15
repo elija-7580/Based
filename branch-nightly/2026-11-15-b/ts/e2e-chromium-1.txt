@@ -1,0 +1,61 @@
+failure 787c3d9fe87268a9558e31758ece0361a1d6afd7
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+    Expected: 1
+    Received: 2
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' }) with timeout 5000ms
+      - waiting for getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      259 |   // ein Klick = Undo-Schritt
+      260 |   await page.keyboard.press("ControlOrMeta+z");
+    > 261 |   await expect(outside()).toHaveCount(1);
+          |                           ^
+      262 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      263 |   await expect(outside()).toHaveCount(2);
+      264 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:261:27
+
+    Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+    Expected: 1
+    Received: 2
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' }) with timeout 5000ms
+      - waiting for getByTestId('block-editor').first().locator(':scope > .bx2-block [data-editable-id]').filter({ hasText: 'Template item' })
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      259 |   // ein Klick = Undo-Schritt
+      260 |   await page.keyboard.press("ControlOrMeta+z");
+    > 261 |   await expect(outside()).toHaveCount(1);
+          |                           ^
+      262 |   await page.keyboard.press("ControlOrMeta+Shift+z");
+      263 |   await expect(outside()).toHaveCount(2);
+      264 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:261:27
+
+    Error Context: test-results/editor-parity-Button-Block-d0584-n-Rückfrage-öffnen-BSD-210--chromium-retry1/error-context.md
+
+  1 failed
+    [chromium] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
+  10 skipped
+  182 passed (5.4m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
