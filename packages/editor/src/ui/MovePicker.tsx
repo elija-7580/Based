@@ -1,6 +1,7 @@
 // BSD-207: „Move to“ aus dem Blockmenü – Zielseite suchen (Seitenverzeichnis der Shell, leer = zuletzt benutzt) und
 // wählen; Pfeiltasten und Enter wie im @-Menü, Esc schließt. Das Verschieben selbst macht moveBlocksToPage.
 import { useEffect, useRef, useState } from "react";
+import { MenuIcon } from "./menuIcons.js";
 import { IconView } from "./phosphor.js";
 import type { PageDirectory, PageRef } from "./env.js";
 
@@ -53,7 +54,7 @@ export function MovePicker(props: MovePickerProps) {
           {results.map((p, i) => (
             <li key={p.id} role="option" aria-selected={i === active}>
               <button type="button" className="bx-move-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => props.onPick(p)}>
-                <span className="bx-move-icon" aria-hidden="true"><IconView icon={p.icon} fallback="📄" /></span>
+                <span className="bx-move-icon" aria-hidden="true"><IconView icon={p.icon} fallback={<MenuIcon name="page" />} /></span>
                 <span className="bx-move-text">
                   <span className="bx-move-title">{p.title || "Untitled"}</span>
                   {p.path ? <span className="bx-move-path">{p.path}</span> : null}
@@ -121,7 +122,7 @@ export function DatabasePicker(props: { source: DatabaseSource; onPick: (db: Dat
           {results.map((d, i) => (
             <li key={d.id} role="option" aria-selected={i === active}>
               <button type="button" className="bx-move-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => props.onPick(d)}>
-                <span className="bx-move-icon" aria-hidden="true">▦</span>
+                <span className="bx-move-icon" aria-hidden="true"><MenuIcon name="database" /></span>
                 <span className="bx-move-text">
                   <span className="bx-move-title">{d.title || "Untitled"}</span>
                   {d.path ? <span className="bx-move-path">{d.path}</span> : null}
@@ -175,7 +176,7 @@ export function PageTargetPicker(props: { pages: PageDirectory; onPick: (page: P
           {results.map((p, i) => (
             <li key={p.id} role="option" aria-selected={i === active}>
               <button type="button" className="bx-move-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => props.onPick(p)}>
-                <span className="bx-move-icon" aria-hidden="true"><IconView icon={p.icon} fallback="📄" /></span>
+                <span className="bx-move-icon" aria-hidden="true"><IconView icon={p.icon} fallback={<MenuIcon name="page" />} /></span>
                 <span className="bx-move-text">
                   <span className="bx-move-title">{p.title || "Untitled"}</span>
                   {p.path ? <span className="bx-move-path">{p.path}</span> : null}

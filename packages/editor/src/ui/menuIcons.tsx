@@ -41,11 +41,19 @@ const P = {
   strike: "M5 12h14M16 7.5c-.7-1.7-2.2-3-4.2-3-2.4 0-4.3 1.4-4.3 3.4 0 .9.4 1.6 1.1 2.1M8 16.5c.7 1.7 2.2 3 4.3 3 2.4 0 4.2-1.4 4.2-3.4 0-.6-.2-1.2-.5-1.6",
   sqrt: "M3.5 13h3l3 6 4.5-14.5h6.5",
   textColor: "M6.5 17 12 4.5 17.5 17M8.7 12.5h6.6M5 20.5h14",
+  // BSD-347: Ziele ohne eigenes Icon (Seite, Datenbank, Datei) – wie in der Seitenleiste, kein Emoji
+  database: "M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5zM4 10h16M10 10v9",
+  file: "M15.5 7.5 9.2 13.8a1.8 1.8 0 0 0 2.6 2.6l6.6-6.6a3.7 3.7 0 0 0-5.3-5.3l-6.6 6.6a5.6 5.6 0 0 0 7.9 7.9l5.6-5.6",
 } as const;
 
 export type MenuIconName = keyof typeof P;
 
 export const menuIconPath = (name: MenuIconName): string => P[name];
+
+/** Dasselbe Icon als SVG-Markup (für Inhalte, die nicht React zeichnet, z. B. Erwähnungen im Textfeld). */
+export function menuIconMarkup(name: MenuIconName): string {
+  return `<svg class="bx-menu-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="${P[name]}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
 
 export function MenuIcon({ name }: { name: MenuIconName }) {
   return (
