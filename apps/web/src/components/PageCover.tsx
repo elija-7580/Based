@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ASSET_URL_PREFIX } from "@based/editor";
 import { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight, pageCover, setCoverPosition, setPageCover, setPageIconImage, type CoverAsset, type PageCoverValue, type WorkspaceStore } from "@based/core";
 import { assets } from "../assetBridge.js";
+import { BasedButton } from "@based/ui/astryx";
 
 /** Farben fürs Cover: nur Töne, für die es Tokens gibt (Status-Tönungen); weitere Farben/Verläufe sind eine Designfrage. */
 export const COVER_COLORS: { id: string; label: string; css: string }[] = [
@@ -80,7 +81,7 @@ export function CoverPicker({ store, pageID, onClose, hasCover }: { store: Works
       }} />
       <form className="cover-link" onSubmit={(e) => { e.preventDefault(); if (/^https?:\/\//.test(link.trim())) set({ url: { _0: link.trim() } }); }}>
         <input className="field" aria-label="Image link" placeholder="Paste an image link…" value={link} onChange={(e) => setLink(e.target.value)} />
-        <button type="submit" className="btn ghost">Apply</button>
+        <BasedButton type="submit" variant="ghost" size="sm" label="Apply" />
       </form>
       {hasCover ? <button type="button" className="menu-item danger" onClick={() => set(undefined)}>Remove cover</button> : null}
     </div>
@@ -142,13 +143,13 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
         <div className="page-cover-actions" data-visible={editing ? "" : undefined}>
           {editing ? (
             <>
-              <button type="button" className="btn" onClick={save}>Save position</button>
-              <button type="button" className="btn ghost" onClick={cancel}>Cancel</button>
+              <BasedButton variant="secondary" size="sm" label="Save position" onClick={save} />
+              <BasedButton variant="ghost" size="sm" label="Cancel" onClick={cancel} />
             </>
           ) : (
             <>
-              <button type="button" className="btn" onClick={() => setPicker((o) => !o)}>Change cover</button>
-              <button type="button" className="btn" onClick={() => { setPicker(false); setEditing(true); }}>{image ? "Reposition" : "Resize"}</button>
+              <BasedButton variant="secondary" size="sm" label="Change cover" onClick={() => setPicker((o) => !o)} />
+              <BasedButton variant="secondary" size="sm" label={image ? "Reposition" : "Resize"} onClick={() => { setPicker(false); setEditing(true); }} />
             </>
           )}
         </div>
