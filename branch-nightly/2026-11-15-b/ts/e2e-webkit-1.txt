@@ -1,61 +1,61 @@
-success d5b1d758369c51ec787b19fdb5c5aea5e4b56ab6
-  ✓  163 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (3.0s)
-  ✓  164 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (6.1s)
-  ✓  162 [webkit] › e2e/editor-parity.spec.ts:703:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (13.0s)
-  -  166 [webkit] › e2e/editor-parity.spec.ts:745:1 › Fotos: Synced-Block-Kopie, Hinweis am Editor
-  ✓  167 [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (5.8s)
-  ✓  165 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (13.4s)
-  ✓  168 [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (6.3s)
-  ✓  170 [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (6.3s)
-  ✓  169 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (12.8s)
-  ✓  171 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (4.8s)
-  ✓  172 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (6.5s)
-  ✓  174 [webkit] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen (6.8s)
-  ✓  173 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (10.4s)
-(node:20241) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+success 90f74ed77f191f5e4256b5e5ab64071c6b4dd993
+  ✓  171 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (3.8s)
+  ✓  172 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (4.6s)
+  ✓  174 [webkit] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen (4.6s)
+  ✓  173 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (7.6s)
+(node:19933) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  176 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (6.0s)
-  ✓  175 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (5.8s)
-  ✓  178 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (5.1s)
-  ✓  179 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.3s)
-  ✓  180 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.1s)
-  ✓  177 [webkit] › e2e/hangs.spec.ts:94:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (14.2s)
-  ✓  181 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.1s)
-  ✓  182 [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (10.6s)
-  ✓  183 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (10.4s)
-  ✓  184 [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (5.4s)
-  ✓  185 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (8.0s)
-hang monitor idle: 96 ticks in 5012 ms, 0.00 ms busy (0.000 %)
-  ✓  186 [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (7.9s)
-  ✓  188 [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (9.7s)
-  ✓  189 [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (5.6s)
-  ✓  187 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (20.5s)
-  ✓  190 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.7s)
-  ✓  191 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.6s)
-  ✓  192 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.9s)
+  ✓  176 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (5.3s)
+  ✓  175 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (5.0s)
+  ✓  178 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (3.5s)
+  ✓  179 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (3.0s)
+  ✓  180 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (2.4s)
+  ✓  177 [webkit] › e2e/hangs.spec.ts:94:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (10.5s)
+  ✓  181 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.6s)
+  ✓  183 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (7.4s)
+  ✓  182 [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (9.8s)
+  ✓  185 [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (4.9s)
+  ✓  184 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (6.7s)
+hang monitor idle: 96 ticks in 5004 ms, 1.00 ms busy (0.020 %)
+  ✓  186 [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (7.5s)
+  ✓  188 [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (5.8s)
+  ✓  189 [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (4.5s)
+  ✓  187 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (17.5s)
+  ✓  190 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.2s)
+  ✓  191 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.9s)
+  ✓  192 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.5s)
   -  193 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
   -  194 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
 
 
-  1) [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ────────────────
+  1) [webkit] › e2e/block-editor.spec.ts:856:1 › @-Menü: Datum, Wochentag, getipptes Datum, Erinnerung; Wähler mit Ende und Uhrzeit 
 
-    Error: expect(received).toBe(expected) // Object.is equality
+    Error: expect(locator).toHaveCount(expected) failed
 
-    Expected: "dead"
-    Received: "ok"
+    Locator:  getByTestId('block-editor').locator('[data-editable-id]').first().locator('.bx2-mention[data-date][data-remind=true]')
+    Expected: 1
+    Received: 0
+    Timeout:  5000ms
 
-      260 |     document.querySelector("main.main")!.prepend(live);
-      261 |   });
-    > 262 |   expect(await probe(page, "main.main", { name: "Crawl dead probe", nth: 0 })).toBe("dead");
-          |                                                                                ^
-      263 |   expect(await probe(page, "main.main", { name: "Crawl live probe", nth: 0 })).toBe("ok");
-      264 | });
-      265 |
-        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:262:80
+    Call log:
+      - Expect "toHaveCount" getByTestId('block-editor').locator('[data-editable-id]').first().locator('.bx2-mention[data-date][data-remind=true]') with timeout 5000ms
+      - waiting for getByTestId('block-editor').locator('[data-editable-id]').first().locator('.bx2-mention[data-date][data-remind=true]')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
 
-    Error Context: test-results/crawl-Ein-eingeschleuster-toter-Knopf-fällt-auf-webkit/error-context.md
+
+      879 |   await expect(menu.getByRole("option", { name: /^Remind me · Tomorrow/ })).toBeVisible();
+      880 |   await page.keyboard.press("Enter");
+    > 881 |   await expect(fields(page).first().locator(".bx2-mention[data-date][data-remind=true]")).toHaveCount(1);
+          |                                                                                           ^
+      882 |   await expect(fields(page).first().getByRole("img", { name: "Reminder set" })).toHaveCount(1);
+      883 |
+      884 |   // Wähler: Klick auf das Datum, Ende und Uhrzeit, Erinnerung an; Undo nimmt einen Schritt zurück
+        at /home/runner/work/Based/Based/apps/web/e2e/block-editor.spec.ts:881:91
+
+    Error Context: test-results/block-editor---Menü-Datum--bc7d5-Wähler-mit-Ende-und-Uhrzeit-webkit/error-context.md
 
   1 flaky
-    [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ─────────────────
+    [webkit] › e2e/block-editor.spec.ts:856:1 › @-Menü: Datum, Wochentag, getipptes Datum, Erinnerung; Wähler mit Ende und Uhrzeit 
   18 skipped
-  174 passed (14.5m)
+  174 passed (11.1m)
