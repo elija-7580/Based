@@ -1,61 +1,61 @@
-success f8c5363e7474fa474a883409d15d5b6c6611f026
-  ✓  166 [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (5.4s)
-  ✓  168 [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (5.1s)
-  ✓  167 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (11.0s)
-  ✓  169 [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (5.3s)
-  ✓  171 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (3.8s)
-  ✓  170 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (10.3s)
-  ✓  173 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (4.7s)
-  ✓  172 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (7.8s)
-(node:20190) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+success 3ca802a0f4e05e0904885849c8834328b25f65de
+  ✓  143 [webkit] › e2e/editor-notion.spec.ts:293:1 › Codeblock: Standard ohne Umbruch, „Wrap code“ bricht um und bleibt nach dem Neuladen (7.4s)
+  ✓  142 [webkit] › e2e/editor-parity.spec.ts:340:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, Inhaltsverzeichnis, pro Seite abschaltbar (11.5s)
+  ✓  144 [webkit] › e2e/editor-notion.spec.ts:321:1 › Codeblock: Sprache wählen mit Suche (wie im alten Editor) (4.4s)
+  ✓  146 [webkit] › e2e/editor-notion.spec.ts:333:1 › Formatleiste: kompaktes Feld, ganz im Fenster (5.5s)
+  ✓  145 [webkit] › e2e/editor-parity.spec.ts:399:1 › Synced Block: zwei Seiten, Bearbeiten in beide Richtungen, zweite Kopie abgelehnt, Unsync, Hinweis bei Original im Papierkorb (13.7s)
+  ✓  147 [webkit] › e2e/editor-notion.spec.ts:350:1 › Formatleiste: Blocktyp „Text“ mit Turn into, gedrückte Knöpfe, Inline-Code und Gleichung (9.1s)
+  -  149 [webkit] › e2e/editor-notion.spec.ts:402:1 › Fotos: Codeblock-Leiste
+  -  150 [webkit] › e2e/editor-notion.spec.ts:414:1 › Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI
+  -  151 [webkit] › e2e/editor-notion.spec.ts:451:1 › Fotos: Formatleiste und Farbe
+  ✓  148 [webkit] › e2e/editor-parity.spec.ts:470:1 › Blockmenü: Turn into Heading 2 und Block equation, Duplicate, ⌘D (10.5s)
+  ✓  152 [webkit] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert (8.1s)
+  ✓  153 [webkit] › e2e/editor-parity.spec.ts:503:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (5.7s)
+  ✓  155 [webkit] › e2e/editor-parity.spec.ts:527:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (7.3s)
+  ✓  154 [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records (11.2s)
+  ✓  156 [webkit] › e2e/editor-parity.spec.ts:570:1 › Duplicate kopiert Unterseiten tief (9.9s)
+  ✓  158 [webkit] › e2e/editor-parity.spec.ts:599:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (6.7s)
+  ✓  159 [webkit] › e2e/editor-parity.spec.ts:642:1 › Callout-Icon aus dem Emoji-Picker mit Suche (6.9s)
+  ✓  157 [webkit] › e2e/editor-polish.spec.ts:55:1 › Editor in Ruhe und in seinen Zuständen (29.5s)
+  ✓  160 [webkit] › e2e/editor-parity.spec.ts:674:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (8.4s)
+  ✓  161 [webkit] › e2e/editor-polish.spec.ts:142:1 › Links und Häkchen im Editor ohne Browser-Blau (3.6s)
+  ✓  163 [webkit] › e2e/editor-polish.spec.ts:164:1 › Blockfarben im Dunkelmodus aus den Tokens (3.7s)
+  ✓  162 [webkit] › e2e/editor-parity.spec.ts:703:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (8.4s)
+  ✓  164 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (2.3s)
+  -  165 [webkit] › e2e/editor-parity.spec.ts:745:1 › Fotos: Synced-Block-Kopie, Hinweis am Editor
+  ✓  166 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (4.5s)
+  ✓  167 [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (4.9s)
+  ✓  169 [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl (4.3s)
+  ✓  168 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (9.4s)
+  ✓  170 [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (4.4s)
+  ✓  172 [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (3.0s)
+  ✓  171 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (8.2s)
+  ✓  173 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (6.7s)
+  ✓  174 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (4.0s)
+(node:20084) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  174 [webkit] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen (5.0s)
-  ✓  175 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (5.4s)
-  ✓  176 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (6.1s)
-  ✓  177 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (4.2s)
-  ✓  179 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (3.4s)
-  ✓  180 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (2.4s)
-  ✓  181 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.2s)
-  ✓  178 [webkit] › e2e/hangs.spec.ts:94:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (12.0s)
-  ✓  182 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (7.6s)
-  ✓  183 [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (10.1s)
-  ✓  184 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (8.3s)
-  ✓  185 [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (5.3s)
-hang monitor idle: 96 ticks in 5003 ms, 0.00 ms busy (0.000 %)
-  ✓  187 [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (7.6s)
-  ✓  188 [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (6.2s)
-  ✓  186 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (19.5s)
-  ✓  189 [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (6.6s)
-  ✓  190 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.1s)
-  ✓  191 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.1s)
-  ✓  192 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.6s)
-  -  193 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
-  -  194 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  176 [webkit] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen (3.9s)
+  ✓  175 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (5.5s)
+  ✓  178 [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (3.7s)
+  ✓  177 [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (6.0s)
+  ✓  179 [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (3.1s)
+  ✓  181 [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (2.0s)
+  ✓  182 [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.6s)
+  ✓  180 [webkit] › e2e/hangs.spec.ts:94:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (11.3s)
+  ✓  183 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (7.6s)
+  ✓  184 [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (9.4s)
+  ✓  185 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (6.4s)
+  ✓  186 [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (5.2s)
+hang monitor idle: 96 ticks in 5002 ms, 27.00 ms busy (0.540 %)
+  ✓  188 [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (7.3s)
+  ✓  187 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (17.8s)
+  ✓  189 [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (6.6s)
+  ✓  190 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.3s)
+  ✓  191 [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (6.1s)
+  ✓  192 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.4s)
+  ✓  193 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.4s)
+  -  194 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  195 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
 
-
-  1) [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "Row 23"
-    Received: null
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      26 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
-      27 |   await page.mouse.click(x, y);
-    > 28 |   await expect.poll(() => activeRow(page)).toBe(under);
-         |                                            ^
-      29 |   await page.keyboard.press("Escape"); // Zelleneditor zu
-      30 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
-      31 | }
-        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:28:44)
-        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:47:40
-
-    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
-
-  1 flaky
-    [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
-  18 skipped
-  174 passed (12.0m)
+  19 skipped
+  176 passed (10.3m)
