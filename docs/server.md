@@ -169,7 +169,11 @@ zusätzlich über einen geteilten Ordner synchronisieren, z. B. `~/Library/Mobil
 `--folder-device <id>` (Standard: der Knotenname) ist der Unterordner dieses Macs unter `devices/`. Alle 5 s eine Runde:
 Änderungen der Clients (per Sync v2) gehen als Segment in den Ordner, Segmente der anderen Macs kommen in den Store und
 damit per Pull zu den Clients; Anhänge unter `assets/<sha256>` (geprüft). Kompaktierung mit Cursor je Gerät, Zustand in
-der Datenbank (überlebt den Neustart). `GET /folder-sync` zeigt den Stand, `POST /folder-sync` startet eine Runde.
+der Datenbank (überlebt den Neustart). Was in den Ordner muss, liest der Server aus dem Change-Log der Datenbank
+(Cursor `pushedSeq`, BSD-431) – auch Änderungen kurz vor einem Absturz gehen nicht verloren; der Zustand wird nach
+jedem Segment gesichert, und ein vorhandenes eigenes Segment wird nie überschrieben (Zähler = höchste Nummer im Ordner
++ 1). Was aus dem Ordner kam, geht nicht zurück. `GET /folder-sync` zeigt den Stand, `POST /folder-sync` startet eine
+Runde.
 Einschalten aus der App (Einstellungen → Sync) und Ordner-Wahl der Hülle folgen.
 
 ## Zeitpläne (BSD-243)

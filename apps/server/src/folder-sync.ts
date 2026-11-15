@@ -79,7 +79,11 @@ export class FolderSyncService {
       if (raw) state = JSON.parse(raw) as FolderSyncState;
     } catch { state = undefined; }
     const target = nodeFolderTarget(o.dir);
-    this.sync = new FolderSync({ store: o.store, target, device: o.device, enabled: true, exportRemote: true, log: (m) => o.log.info(m), ...(state ? { state } : {}) });
+    // BSD-431: was in den Ordner muss, kommt aus dem Change-Log (übersteht Absturz/Neustart); Zustand sofort sichern.
+    this.sync = new FolderSync({
+      store: o.store, target, device: o.device, enabled: true, exportRemote: true, log: (m) => o.log.info(m), ...(state ? { state } : {}),
+      changeLog: o.persistence, saveState: (s) => o.persistence.setMeta(STATE_KEY, JSON.stringify(s)),
+    });
     this.assets = new FolderAssets(target, serverBlobs(o.assets), (m) => o.log.info(m));
   }
 
