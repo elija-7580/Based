@@ -34,3 +34,22 @@ export function canonicalStringify(value: unknown): string {
 export const SWIFT_REFERENCE_DATE_UNIX_MS = 978_307_200_000;
 export const dateFromSwift = (seconds: number): Date => new Date(SWIFT_REFERENCE_DATE_UNIX_MS + seconds * 1000);
 export const dateToSwift = (date: Date): number => (date.getTime() - SWIFT_REFERENCE_DATE_UNIX_MS) / 1000;
+
+/**
+ * Tiefe Kopie eines Records (BSD-435). Records sind reines JSON; Arrays und einfache Objekte werden hier direkt kopiert –
+ * rund dreimal schneller als `structuredClone`, das beim Einspielen von 100 000 Zeilen die halbe Zeit kostete. Alles
+ * andere (Date, Map, Uint8Array …) geht weiter über `structuredClone`, damit das Ergebnis gleich bleibt.
+ */
+export function cloneRecord<T>(value: T): T {
+  if (typeof value !== "object" || value === null) return value;
+  if (Array.isArray(value)) {
+    const out = new Array(value.length);
+    for (let i = 0; i < value.length; i++) out[i] = cloneRecord(value[i]);
+    return out as T;
+  }
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) return structuredClone(value);
+  const out: Record<string, unknown> = {};
+  for (const k in value) out[k] = cloneRecord((value as Record<string, unknown>)[k]);
+  return out as T;
+}

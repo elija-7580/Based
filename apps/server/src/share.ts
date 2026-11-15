@@ -458,7 +458,7 @@ export class ShareService {
         out.push(keyOf("database", db.id));
         for (const p of this.store.propertyRecordsOf(db.id)) out.push(keyOf("property", p.id));
         for (const v of this.store.views.values()) if (v.databaseID === db.id) out.push(keyOf("view", v.id));
-        stack.push(...this.store.children("d:" + db.id));
+        for (const r of this.store.children("d:" + db.id)) stack.push(r); // BSD-435: kein Spread bei 100 000 Zeilen
       }
     }
     return out;

@@ -2,7 +2,7 @@
 // Transaktionen mit Undo/Redo (prüft Remote-Änderungen, BSD-27), Last-Writer-Wins-Merge mit gestempelten
 // Tombstones (ADR 0002, BSD-24) und einer austauschbaren Persistenz. Verifiziert über fixtures/merge und
 // fixtures/undo-remote. Kein UI, keine Plattform-APIs.
-import { canonicalStringify } from "../json.js";
+import { canonicalStringify, cloneRecord } from "../json.js";
 import { compareStamps, StampClock, ZERO_STAMP, type Stamp } from "../hlc.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { diffProperties } from "../model/property-records.js";
@@ -49,15 +49,15 @@ export class MemoryPersistence implements Persistence {
   private records = new Map<RecordKeyString, WireRecord>();
   private tombs = new Map<RecordKeyString, Stamp | undefined>();
   constructor(initial: WireRecord[] = []) {
-    for (const r of initial) this.records.set(recordKey(r), structuredClone(r));
+    for (const r of initial) this.records.set(recordKey(r), cloneRecord(r));
   }
   loadAll(): WireRecord[] {
-    return [...this.records.values()].map((r) => structuredClone(r));
+    return [...this.records.values()].map((r) => cloneRecord(r));
   }
   write(upserts: WireRecord[], deletions: RecordKeyString[], tombstones: Map<RecordKeyString, Stamp>): void {
     for (const r of upserts) {
       const k = recordKey(r);
-      this.records.set(k, structuredClone(r));
+      this.records.set(k, cloneRecord(r));
       this.tombs.delete(k);
     }
     for (const k of deletions) {
@@ -164,7 +164,7 @@ export class Tx {
   }
   private putRaw(r: WireRecord) {
     this.touch(recordKey(r));
-    this.store._set(structuredClone(r));
+    this.store._set(cloneRecord(r));
   }
   remove(key: RecordKeyString) {
     if (!this.store.record(key)) return;
@@ -219,7 +219,7 @@ export class Tx {
   update(id: string, f: (b: Block) => void) {
     const b = this.store.blocks.get(id);
     if (!b) return;
-    const copy = structuredClone(b);
+    const copy = cloneRecord(b);
     f(copy);
     this.put({ kind: "block", data: copy });
   }

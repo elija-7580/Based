@@ -80,8 +80,9 @@ export function subtree(store: WorkspaceStore, id: string, includeRows = true): 
     let kids = [...store.children("b:" + cur)];
     const db = store.blocks.get(cur)?.props?.databaseID;
     if (includeRows && db && store.databases.get(db)?.blockID === cur) kids = kids.concat(store.children("d:" + db));
-    out.push(...kids);
-    stack.push(...kids.reverse());
+    // BSD-435: keine Spread-Aufrufe – bei 100 000 Datenbankzeilen sprengt `push(...kids)` in Chromium den Stack.
+    for (const k of kids) out.push(k);
+    for (let i = kids.length - 1; i >= 0; i--) stack.push(kids[i]!);
   }
   return out;
 }

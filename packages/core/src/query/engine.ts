@@ -233,13 +233,14 @@ export class QueryEngine {
   }
 
   value(row: Block, p: PropertySchema, db: Database): Value {
-    const cached = this.memo.get(row.id)?.get(p.id);
+    let memo = this.memo.get(p.id);
+    const cached = memo?.get(row.id);
     if (cached) return cached;
-    const key = row.id + "\u0001" + p.id;
     let v: Value;
     switch (p.type) {
       case "title": v = str(richPlain(row.text)); break;
       case "formula": case "rollup": {
+        const key = row.id + "\u0001" + p.id;
         if (this.onStack.has(key)) {
           const i = this.stack.lastIndexOf(key);
           for (const k of this.stack.slice(i)) this.fail(k, k.split("\u0001")[1]!, new FormulaError("Circular reference", "cycle"));
@@ -273,8 +274,10 @@ export class QueryEngine {
       }
       default: v = QueryEngine.valueOf(row.values?.[p.id], p);
     }
-    if (!this.memo.has(row.id)) this.memo.set(row.id, new Map());
-    this.memo.get(row.id)!.set(p.id, v);
+    // BSD-435: eine Map je Property statt je Zeile – bei 100 000 Zeilen sonst 100 000 kleine Maps (Speicherbereinigung).
+    memo ??= this.memo.get(p.id);
+    if (!memo) this.memo.set(p.id, (memo = new Map()));
+    memo.set(row.id, v);
     return v;
   }
 
