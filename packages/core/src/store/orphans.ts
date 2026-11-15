@@ -32,8 +32,8 @@ export function orphanCandidates(store: WorkspaceStore, records: readonly WireRe
   for (const k of deletions) {
     const i = k.indexOf(":");
     const kind = k.slice(0, i), id = k.slice(i + 1);
-    if (kind === "block") ids.push(...store.children("b:" + id));
-    else if (kind === "database") ids.push(...store.children("d:" + id));
+    if (kind === "block") for (const c of store.children("b:" + id)) ids.push(c);
+    else if (kind === "database") for (const c of store.children("d:" + id)) ids.push(c); // BSD-435: kein Spread bei 100 000 Zeilen
   }
   return ids;
 }

@@ -1,11 +1,11 @@
-// BSD-215: Datenbank mit 50 000 Zeilen – Laden, Einfügen, Abfrage (Filter, Sortierung, Gruppen), Treffer aus dem Cache,
+// BSD-215 / BSD-435: Datenbank mit 100 000 Zeilen (die Website verspricht „a hundred thousand rows stay instant“) – Laden, Einfügen, Abfrage (Filter, Sortierung, Gruppen), Treffer aus dem Cache,
 // eine Zelle ändern und neu abfragen. Grenzwerte großzügig (CI, geteilte Maschine); die gemessenen Zeiten stehen im
 // Testbericht (console.info) und im Backlog. Swift-Vergleich: 1,7 s Einfügen / 0,5 s Abfrage / 10 µs aus dem Cache.
 import { describe, expect, it } from "vitest";
 import { cpuTime, expectWithinBudget } from "./perf-budget.js";
-import { MemoryPersistence, QueryEngine, WorkspaceStore, addRow, pv, setValue, type WireRecord } from "../src/index.js";
+import { MemoryPersistence, QueryEngine, WorkspaceStore, addRow, pv, setValue, subtree, type WireRecord } from "../src/index.js";
 
-const N = 50_000;
+const N = Number(process.env.BIG_N ?? 100_000);
 const stamp = { millis: 1, counter: 0, node: "x" };
 const STATUSES = ["todo", "doing", "done", "blocked"];
 
@@ -50,8 +50,10 @@ const time = <T>(f: () => T): [T, number] => {
 
 describe("Große Datenbank (BSD-215)", () => {
   it(`${N.toLocaleString("de")} Zeilen: laden, abfragen, Cache, Zelle ändern`, () => {
-    const recs = records(N);
-    const [store, load] = time(() => new WorkspaceStore({ persistence: new MemoryPersistence(recs), node: "n" }));
+    // Die Kopien der Test-Persistenz (structuredClone) gehören nicht zur Messung: geladen wird wie aus SQLite eine fertige Liste.
+    const recs = new MemoryPersistence(records(N)).loadAll();
+    const persistence = Object.assign(new MemoryPersistence(), { loadAll: () => recs });
+    const [store, load] = time(() => new WorkspaceStore({ persistence, node: "n" }));
     expect(store.children("d:db").length).toBe(N);
 
     const engine = new QueryEngine(store);
@@ -72,10 +74,11 @@ describe("Große Datenbank (BSD-215)", () => {
     const [, search] = time(() => engine.run(view, "note 42"));
 
     console.info(`BSD-215 ${N} Zeilen: Laden ${load.toFixed(0)} ms, Abfrage ${query.toFixed(0)} ms, Cache ${cached.toFixed(2)} ms, Zelle ${edit.toFixed(1)} ms, neu abfragen ${requery.toFixed(0)} ms, Suche ${search.toFixed(0)} ms`);
-    expectWithinBudget("50.000 Zeilen", { load: 5000, query: 3000, cached: 50, edit: 200, requery: 3000, search: 3000 }, () => ({ load, query, cached, edit, requery, search }), 1);
+    // BSD-435: Grenzen aus drei Läufen (100 000 Zeilen, Last 3–15) mit doppelter Luft.
+    expectWithinBudget("100.000 Zeilen", { load: 1500, query: 1200, cached: 20, edit: 50, requery: 1500, search: 1000 }, () => ({ load, query, cached, edit, requery, search }), 1);
   }, 60_000);
 
-  it("Einfügen: 50 000 Zeilen per Sync einspielen, 1 000 einzeln per addRow", () => {
+  it(`Einfügen: ${N.toLocaleString("de")} Zeilen per Sync einspielen, 1 000 einzeln per addRow`, () => {
     const recs = records(N);
     const store = new WorkspaceStore({ node: "m" });
     const [, sync] = time(() => store.applyRemote(recs));
@@ -85,4 +88,17 @@ describe("Große Datenbank (BSD-215)", () => {
     console.info(`BSD-215 Einfügen: Sync ${N} Zeilen ${sync.toFixed(0)} ms, 1000 × addRow ${add.toFixed(0)} ms (${(add / 1000).toFixed(2)} ms je Zeile)`);
     expectWithinBudget("Einfügen", { sync: 5000, add: 10_000 }, () => ({ sync, add }), 1);
   }, 60_000);
+
+  it("BSD-435: subtree ohne Spread-Aufruf – 300 000 Zeilen sprengen den Stack nicht (Chromium: „Maximum call stack size exceeded“ beim Öffnen)", () => {
+    const rows = Array.from({ length: 300_000 }, (_, i) => "r" + i);
+    const fake = {
+      children: (p: string) => (p === "d:db" ? rows : []),
+      blocks: new Map([["dbblk", { props: { databaseID: "db" } }]]),
+      databases: new Map([["db", { blockID: "dbblk" }]]),
+    } as unknown as WorkspaceStore;
+    const out = subtree(fake, "dbblk");
+    expect(out.length).toBe(300_000);
+    expect(out[0]).toBe("r0");
+    expect(out.at(-1)).toBe("r299999");
+  });
 });

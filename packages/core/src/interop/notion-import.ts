@@ -153,8 +153,8 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
     const r = run();
     if (!prev) out.markdown = r;
     else {
-      prev.records.push(...r.records);
-      prev.rootKeys.push(...r.rootKeys);
+      for (const x of r.records) prev.records.push(x); // BSD-435: kein Spread (große Datenbanken)
+      for (const x of r.rootKeys) prev.rootKeys.push(x);
       const a = prev.report, b = r.report;
       a.pages += b.pages; a.databases += b.databases; a.rows += b.rows; a.assets += b.assets;
       a.warnings.push(...b.warnings); a.rootIDs.push(...b.rootIDs);

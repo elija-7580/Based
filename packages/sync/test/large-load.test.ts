@@ -1,12 +1,12 @@
-// BSD-215: 50 000 Datenbankzeilen in SQLite speichern und beim nächsten Start laden. Grenzwerte großzügig (CI).
+// BSD-215 / BSD-435: 100 000 Datenbankzeilen in SQLite speichern und beim nächsten Start laden. Grenzwerte großzügig (CI).
 import { describe, expect, it } from "vitest";
 import { createDatabase, keysBetween } from "@based/core";
 import { openWorkspace } from "../src/index.js";
 import { openNodeDatabase } from "../src/drivers/node.js";
 
 describe("Große Datenbank aus SQLite (BSD-215)", () => {
-  it("50 000 Zeilen speichern und neu laden", () => {
-    const N = 50_000;
+  it("100 000 Zeilen speichern und neu laden", () => {
+    const N = 100_000;
     const db = openNodeDatabase();
     const first = openWorkspace(db, { node: "AAAA" });
     const made = createDatabase(first.store, { parent: "w", title: "Big", sampleRows: 0 });

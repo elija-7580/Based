@@ -295,7 +295,7 @@ export class SyncClient {
         // Angekommenes wird als nicht-lokal geloggt und deshalb nie zurückgepusht.
         this.store.applyRemote(records, deletions.keys, deletions.stamps);
         result.received += records.length + deletions.keys.length;
-        candidates.push(...orphanCandidates(this.store, records, deletions.keys));
+        for (const c of orphanCandidates(this.store, records, deletions.keys)) candidates.push(c);
       }
       if (fullPull) for (const r of records) seen.add(keyOf(r.kind, r.data.id));
       if (typeof page.next !== "number") throw new Error("sync/v2/pull: reply without next");

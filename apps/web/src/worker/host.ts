@@ -676,7 +676,7 @@ export class StoreHost {
       if (!b) continue;
       out.push({ kind: "block", data: b });
       const db = b.props?.databaseID;
-      if (db && store.databases.get(db)?.blockID === id) out.push(...store.databaseRecords(db));
+      if (db && store.databases.get(db)?.blockID === id) for (const r of store.databaseRecords(db)) out.push(r);
     }
     for (const v of store.views.values()) if (blockSet.has(v.blockID)) out.push({ kind: "view", data: v });
     return out;
@@ -729,10 +729,10 @@ export class StoreHost {
     const out: WireRecord[] = [];
     for (const d of databaseIDs) {
       if (!store.databases.has(d)) continue;
-      out.push(...store.databaseRecords(d));
+      for (const r of store.databaseRecords(d)) out.push(r);
       const ids: string[] = [];
       for (const row of store.children("d:" + d)) ids.push(row, ...subtree(store, row));
-      out.push(...this.recordsFor(ids));
+      for (const r of this.recordsFor(ids)) out.push(r);
     }
     return out;
   }
@@ -818,14 +818,14 @@ export class StoreHost {
     const page = store.blocks.get(pageID);
     const deps = { roots: new Set<string>(), ancestors: new Set<string>(), databases: new Set<string>() };
     if (page) {
-      records.push(...this.recordsFor([pageID, ...subtree(store, pageID)]));
+      for (const r of this.recordsFor([pageID, ...subtree(store, pageID)])) records.push(r);
       // Synced-Kopien zeigen den Inhalt eines Originals, das auf einer anderen Seite liegen kann.
       const d = syncedDependencies(store, pageID, (id) => subtree(store, id));
       deps.roots = d.roots;
       deps.ancestors = d.ancestors;
-      records.push(...this.syncedRecords(d.roots, d.ancestors));
+      for (const r of this.syncedRecords(d.roots, d.ancestors)) records.push(r);
       deps.databases = this.linkedOf(pageID, d.roots);
-      records.push(...this.databaseRecords(deps.databases));
+      for (const r of this.databaseRecords(deps.databases)) records.push(r);
       for (const r of records) if (r.kind !== "workspace") keys.add(recordKey(r));
     }
     this.openPages.set(pageID, keys);
