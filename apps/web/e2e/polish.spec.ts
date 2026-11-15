@@ -74,7 +74,8 @@ test("Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmer
     expect(await width(), state).toBeLessThanOrEqual(1);
     await expect(status.locator(".dot")).toBeVisible();
     await expect(status).toHaveText(label); // bleibt für Screenreader lesbar
-    await expect(status).toHaveAttribute("data-tip", /.+/);
+    // BSD-422: statt Tooltip eine Karte mit Details (eigener Test unten); der Name bleibt für Screenreader
+    await expect(status).toHaveAttribute("aria-label", /^Sync status: /);
   }
   for (const [state, label] of [["memory", "Not saved"], ["offline", "Offline"], ["error", "Sync error"], ["readonly", "Read-only"], ["syncing", "Syncing…"], ["starting", "Opening…"]] as const) {
     await set(state, label);
@@ -372,4 +373,48 @@ test("Luft unter der letzten Zeile nur auf langen Seiten", async ({ page }) => {
     }
     await page.evaluate(() => localStorage.removeItem("based.appearance"));
   }
+});
+
+// BSD-422: Sync-Status in der Seitenleiste – Überfahren und Tastaturfokus zeigen die Karte mit Speicherort und
+// Zustand, Klick öffnet Einstellungen → Sync.
+test("Sync-Status: Karte beim Überfahren und mit der Tastatur, Klick öffnet die Sync-Einstellungen", async ({ page }) => {
+  await fresh(page);
+  const status = page.getByTestId("sync-status");
+  const card = page.getByTestId("sync-card");
+  await expect(card).toBeHidden();
+  await status.hover();
+  await expect(card).toBeVisible();
+  await expect(card).toContainText("Stored");
+  await expect(card).toContainText(/This device only|In memory only/); // WebKit: frisches Profil ohne OPFS
+  await expect(card).toContainText("Status");
+  // Karte ganz im Fenster und über dem Status
+  const box = (await card.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  if (process.env.BASED_SCREENSHOTS === "1" && test.info().project.name === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.reload();
+        await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+        await status.hover();
+        await page.waitForTimeout(250);
+        await page.screenshot({ path: `../../docs/design/screens/web-sync-card-${theme}-${w}x${h}.png` });
+      }
+    }
+    await page.evaluate(() => localStorage.removeItem("based.appearance"));
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  }
+  await page.mouse.move(700, 400);
+  await expect(card).toBeHidden();
+  await status.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(status).toBeFocused();
+  await expect(card).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/#prefs-sync/);
 });

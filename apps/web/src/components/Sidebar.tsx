@@ -16,7 +16,7 @@ import { asNewTabs } from "../shell/newTabIntent.js";
 import { download } from "./ImportExport.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { isGuest } from "../shell/guest.js";
-import { collapsedSections, expandedPages, sidebarNavPrefs, startPage } from "../shell/storage.js";
+import { collapsedSections, expandedPages, sidebarNavPrefs, startPage, syncConfig } from "../shell/storage.js";
 import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navAvailable, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
@@ -457,13 +457,28 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
       {n.key ? <span className="key-badge above" aria-hidden="true">{n.key}</span> : null}
     </button>
   );
+  // BSD-422: Überfahren oder Tastaturfokus zeigt, was genau los ist (Speicherort, Zustand, Dateien, Uhr, Warnungen);
+  // Klick öffnet Einstellungen → Sync.
+  const syncLines = syncDetails(status, syncConfig.get()?.url, isGuest());
   const syncStatus = (
-    <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-sync={status.sync ?? status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
+    <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-sync={status.sync ?? status.state} data-assets={assetsLabel(status.assets) || undefined}
+      role="link" tabIndex={0} aria-describedby="sync-card" aria-label={`Sync status: ${SYNC_LABEL[status.state]}`}
+      onClick={() => onNavigate({ name: "settings", page: "sync" })}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNavigate({ name: "settings", page: "sync" }); } }}>
       <span className={`dot ${status.state === "synced" ? "synced-dot" : status.state === "error" || status.state === "readonly" ? "error-dot" : ""}`} aria-hidden="true" />
       <span className="synced-text">
         {isGuest() && status.state === "memory" ? "Shared link" : SYNC_LABEL[status.state]}
         {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
       </span>
+    </div>
+  );
+  // Karte neben (nicht in) dem Status: der Status kürzt seinen Text (overflow hidden), Tests lesen seinen Text.
+  const syncCard = (
+    <div className="sync-card" id="sync-card" role="tooltip" data-testid="sync-card">
+      {syncLines.map((l) => (
+        <div key={l.label} className="sync-card-row"><span className="sync-card-label">{l.label}</span><span className="sync-card-value">{l.value}</span></div>
+      ))}
+      <div className="sync-card-hint">Click for sync settings</div>
     </div>
   );
   const menuSection = menu ? outline?.nodes[menu.id]?.section : undefined;
@@ -517,12 +532,13 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
       {FOOTER_STYLE === "icons" ? (
         <div className="sidebar-footer icons" role="group" aria-label="Workspace tools">
           {syncStatus}
+          {syncCard}
           <span className="nav-icons">{layout.footer.map((id) => iconButton(entries[id]))}</span>
         </div>
       ) : (
         <>
           <div className="sidebar-footer" role="group" aria-label="Workspace tools">{layout.footer.map((id) => navButton(entries[id]))}</div>
-          {syncStatus}
+          <div className="synced-row">{syncStatus}{syncCard}</div>
         </>
       )}
       {navMenu ? (
@@ -976,4 +992,18 @@ function useNarrowWindow(): boolean {
     return () => m.removeEventListener("change", f);
   }, []);
   return narrow;
+}
+
+/** BSD-422: Zeilen der Sync-Karte am Status in der Seitenleiste – nur, was der Zustand wirklich weiß. */
+export function syncDetails(status: ShellState["status"], serverURL: string | undefined, guest = false): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = [];
+  let host: string | undefined;
+  try { host = serverURL ? new URL(serverURL).host : undefined; } catch { host = serverURL; }
+  out.push({ label: "Stored", value: status.state === "memory" ? (guest ? "Shared link, in memory" : "In memory only (not saved)") : host ? `This device and ${host}` : "This device only" });
+  out.push({ label: "Status", value: status.detail ? `${SYNC_LABEL[status.state]} · ${status.detail}` : SYNC_LABEL[status.state] });
+  if (status.sync && status.sync !== status.state) out.push({ label: "Sync", value: SYNC_LABEL[status.sync] });
+  if (status.assets) out.push({ label: "Files", value: assetsLabel(status.assets) || "Up to date" });
+  if (status.clockSkew) out.push({ label: "Clock", value: `This device is ${Math.abs(Math.round(status.clockSkew))} s ${status.clockSkew > 0 ? "behind" : "ahead of"} the server` });
+  for (const w of status.storageWarnings ?? []) out.push({ label: "Warning", value: w });
+  return out;
 }
