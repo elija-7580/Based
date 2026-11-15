@@ -1,5 +1,6 @@
 // BSD-206: Suchleiste „Find in page“ (⌘F) oben rechts in der Seite. Enter/⌘G weiter, ⇧Enter/⇧⌘G zurück, Esc schließt.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRestoreFocus } from "../shell/restoreFocus.js";
 import { Icon } from "../icons.js";
 import { clearMatches, findRanges, firstVisibleIndex, MAX_MATCHES, paintMatches, revealRange } from "../shell/findInPage.js";
 
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function FindBar({ root, focusSignal, step, onClose }: Props) {
+  useRestoreFocus(); // BSD-421: Fokus (und Schreibmarke) zurück, wenn die Leiste zugeht
   const [query, setQuery] = useState("");
   const [count, setCount] = useState(0);
   const [current, setCurrent] = useState(0);
