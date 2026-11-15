@@ -1,1 +1,26 @@
-cancelled fd9328867320d4f51c99a205e05d234e91663bac (nicht blockierend)
+failure 727692091e28a32311a7c7ef6bc0e2d5b9795573 (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[188],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3827,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":9.25,"peekLong":[],"formSubmitMs":79,"formLong":[]}
+BSD-215 chromium: 50 000 Zeilen öffnen 716 ms, ans Ende scrollen 63 ms, Zelle ändern 165 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 22.9, 25.4, 32.1, 39.5, 50.4
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (4.7s)
+  ✘   8 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (6.9s)
+BSD-215 webkit: 50 000 Zeilen öffnen 1257 ms, ans Ende scrollen 1108 ms, Zelle ändern 276 ms
+  ✘  10 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (retry #1) (9.2s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 14, 26, 26, 39, 146
+  ✘  14 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (5.4s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 15, 20, 34, 42, 49
+  ✓  16 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (retry #1) (5.5s)
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium/error-context.md
+    Error: expect(received).toBeLessThan(expected)
+    Error Context: test-results/startup-perf-Seitenwechsel-18bc8-oßen-Seiten-bleiben-flüssig-chromium-retry1/error-context.md
+  2) [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf ──
+    Error: expect(received).toBeLessThan(expected)
+      121 |   console.log(`[${info.project.name}] Quick Find (Hin und zurück zum Worker, ms):`, took.join(", "));
+      126 |   await expect(page.getByRole("dialog", { name: "Quick Find" })).toHaveCount(0);
+    Error Context: test-results/shell-Quick-Find-über-5-000-Seiten-antwortet-in-50-ms-webkit/error-context.md
+  1 failed
+  1 flaky
+    [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf ───
+  13 passed (2.0m)
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --grep @perf
