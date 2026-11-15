@@ -241,6 +241,110 @@ import Testing
         ])
     }
 
+    // MARK: BSD-410 Teil 1: LineDiff und Zitate
+
+    func opJSON(_ op: LineDiff.Op) -> JSONValue {
+        switch op {
+        case .same(let s): return .array(["same", .string(s)])
+        case .removed(let s): return .array(["removed", .string(s)])
+        case .added(let s): return .array(["added", .string(s)])
+        }
+    }
+
+    func lineDiff() -> JSONValue {
+        var cases: [JSONValue] = []
+        let pairs: [(String, String, String, Int, Int)] = [
+            ("gleich", "a\nb\nc", "a\nb\nc", 3, 1),
+            ("leer → Text", "", "eins\nzwei", 3, 1),
+            ("Text → leer", "eins\nzwei", "", 3, 1),
+            ("eine Zeile geändert", "a\nb\nc\nd\ne", "a\nb\nX\nd\ne", 3, 1),
+            ("Kontext 1, zwei Hunks", "1\n2\n3\n4\n5\n6\n7\n8\n9\n10", "1\nzwei\n3\n4\n5\n6\n7\n8\nneun\n10", 1, 1),
+            ("Kontext 3 verbindet Hunks", "1\n2\n3\n4\n5\n6\n7\n8", "1\nB\n3\n4\n5\n6\nG\n8", 3, 1),
+            ("Zeilen eingefügt und entfernt", "func a() {\n  x\n}\n", "func a() {\n  y\n  z\n}\n", 2, 40),
+            ("firstLine 0 → 1", "a", "b", 3, 0),
+            ("Wiederholungen (LCS)", "a\nb\na\nb\na", "b\na\nb\na\nb", 3, 1),
+            ("Leerzeilen am Ende", "a\n\n", "a\n\n\n", 3, 1),
+            ("Unicode", "Grüße\n👋🏽 hallo\nEnde", "Grüße\n👋 hallo\nEnde", 3, 1),
+            ("CRLF bleibt in der Zeile", "a\r\nb", "a\r\nc", 3, 1),
+        ]
+        for (name, old, new, ctx, first) in pairs {
+            let ops = LineDiff.ops(old: old, new: new)
+            let c = LineDiff.counts(ops)
+            let unified = LineDiff.unified(old: old, new: new, context: ctx, firstLine: first)
+            let parsed = LineDiff.parse(unified).map { l -> JSONValue in
+                var o: [String: JSONValue] = ["kind": .string("\(l.kind)"), "text": .string(l.text)]
+                if let n = l.oldNumber { o["old"] = .number(Double(n)) }
+                if let n = l.newNumber { o["new"] = .number(Double(n)) }
+                return .object(o)
+            }
+            cases.append(CoreFixtures.testCase("LineDiff: \(name)",
+                ["old": .string(old), "new": .string(new), "context": .number(Double(ctx)), "firstLine": .number(Double(first))],
+                ["ops": .array(ops.map(opJSON)), "added": .number(Double(c.added)), "removed": .number(Double(c.removed)),
+                 "unified": .string(unified), "parsed": .array(parsed)]))
+        }
+        // Große Eingaben: alles entfernt, alles hinzugefügt (über 2 Mio. Zellen)
+        let big = (0..<1500).map { "a\($0)" }.joined(separator: "\n"), big2 = (0..<1500).map { "b\($0)" }.joined(separator: "\n")
+        let bigOps = LineDiff.ops(old: big, new: big2)
+        cases.append(CoreFixtures.testCase("LineDiff: große Eingabe ohne LCS",
+            ["oldGen": .array(["a", .number(1500)]), "newGen": .array(["b", .number(1500)])],
+            ["firstOps": .array(bigOps.prefix(3).map(opJSON)), "count": .number(Double(bigOps.count)),
+             "added": .number(Double(LineDiff.counts(bigOps).added)), "removed": .number(Double(LineDiff.counts(bigOps).removed))]))
+        return CoreFixtures.file("agents-linediff", cases, meta: [
+            "note": "Swift LineDiff (ops, counts, unified, parse). Erzeugt von AgentFixtureExport.swift (BSD-410); TS: packages/brain/src/linediff.ts, Runner packages/brain/test/fixtures-agents-2.test.ts.",
+        ])
+    }
+
+    func citationJSON(_ c: Citation) -> JSONValue {
+        var o: [String: JSONValue] = ["number": .number(Double(c.number)), "pageID": .string(c.pageID), "title": .string(c.title), "snippet": .string(c.snippet)]
+        if let b = c.blockID { o["blockID"] = .string(b) }
+        return .object(o)
+    }
+
+    func citations() -> JSONValue {
+        var cases: [JSONValue] = []
+        // Bekannte Quellen: (kind:id) → Zitat
+        let known: [String: Citation] = [
+            "block:b1": Citation(number: 0, pageID: "p1", blockID: "b1", title: "Budget 2027", snippet: "Marketing gets 40 %"),
+            "block:b2": Citation(number: 0, pageID: "p1", blockID: "b2", title: "Budget 2027", snippet: ""),
+            "page:p2": Citation(number: 0, pageID: "p2", blockID: nil, title: "", snippet: ""),
+            "block:b3": Citation(number: 0, pageID: "p3", blockID: "b3", title: "Notes [draft]", snippet: "Ship it"),
+            "page:p1": Citation(number: 0, pageID: "p1", blockID: nil, title: "Budget 2027", snippet: ""),
+        ]
+        let resolve: (String, String) -> Citation? = { kind, id in known["\(kind):\(id)"] }
+        let knownJSON: JSONValue = .object(known.mapValues(citationJSON))
+        let texts: [(String, String, Bool)] = [
+            ("ohne Marker", "Just text.", false),
+            ("ein Block", "Marketing gets 40 % [[block:b1]].", false),
+            ("gleiche Quelle zweimal", "A [[block:b1]] and again [[block:b1]].", false),
+            ("Seite und Blöcke", "See [[page:p2]], [[block:b2]] and [[block:b3]].", false),
+            ("unbekannte ID fällt weg", "Gone [[block:zz]] here.", false),
+            ("Leerraum im Marker", "Spaced [[ block: b1 ]] and [[page:  p1]].", false),
+            ("ohne Leerzeichen davor", "Tight[[block:b1]]", false),
+            ("Streaming: abgeschnittener Marker", "Answer so far [[blo", true),
+            ("Streaming: angefangene ID", "Answer [[block:b1]] and [[block:12ab", true),
+            ("Streaming: einzelne Klammer", "Answer [", true),
+            ("Streaming: fertiger Marker", "Answer [[block:b1]]", true),
+            ("Streaming: andere Klammern bleiben", "Array [[1, 2]", true),
+            ("Titel mit ]", "From notes [[block:b3]].", false),
+            ("ID zu lang", "Long [[block:\(String(repeating: "x", count: 65))]]", false),
+        ]
+        for (name, text, streaming) in texts {
+            let r = Citations.render(text, streaming: streaming, resolve: resolve)
+            cases.append(CoreFixtures.testCase("render: \(name)",
+                ["kind": "render", "text": .string(text), "streaming": .bool(streaming), "known": knownJSON],
+                ["markdown": .string(r.markdown), "citations": .array(r.citations.map(citationJSON))]))
+            cases.append(CoreFixtures.testCase("markers: \(name)", ["kind": "markers", "text": .string(text)],
+                ["markers": .array(Citations.markers(in: text).map { .array([.string($0.kind), .string($0.id)]) })]))
+        }
+        for t in ["", "plain", "end [", "x [[", "x [[b", "x [[block", "x [[block:", "x [[page:ab", "x [[pa", "x [[other", "x  [[block:1", "[[block:a]] y [[pag"] {
+            cases.append(CoreFixtures.testCase("streamingSafe: \(t.isEmpty ? "(leer)" : t)", ["kind": "streamingSafe", "text": .string(t)],
+                ["text": .string(Citations.streamingSafe(t))]))
+        }
+        return CoreFixtures.file("agents-citations", cases, meta: [
+            "note": .string("Swift Citations (render mit festem resolve, markers, streamingSafe); Links im Swift-Format \(PageLink.url("ID"))?block=… – der TS-Runner übergibt dieselbe Link-Funktion. Erzeugt von AgentFixtureExport.swift (BSD-410)."),
+        ])
+    }
+
     func check(_ value: JSONValue, _ name: String) throws {
         let text = try ImportFixtures.prettyForExport(value)
         let file = Self.dir.appendingPathComponent(name)
@@ -256,5 +360,7 @@ import Testing
     @Test func agentFixturesAreCurrent() throws {
         try check(permissions(), "permissions.json")
         try check(budget(), "budget.utc.json")
+        try check(lineDiff(), "linediff.json")
+        try check(citations(), "citations.json")
     }
 }
