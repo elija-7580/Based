@@ -394,6 +394,122 @@ import Testing
         ])
     }
 
+    // MARK: BSD-410 Teil 3: Prompt-Queue
+
+    /// Ein Turn, der läuft, bis der Test ihn beendet („finish“) oder er abgebrochen wird.
+    final class ScriptTurn: @unchecked Sendable {
+        var done = false
+        func handle() -> ChatTurnHandle {
+            let (stream, cont) = AsyncStream<ChatEvent>.makeStream()
+            let task = Task { [self] in
+                while !done && !Task.isCancelled { try? await Task.sleep(nanoseconds: 2_000_000) }
+                cont.finish()
+            }
+            return ChatTurnHandle(events: stream, task: task)
+        }
+    }
+
+    func settle() async { for _ in 0..<5 { try? await Task.sleep(nanoseconds: 15_000_000) } }
+
+    func promptQueue() async -> JSONValue {
+        var cases: [JSONValue] = []
+        // Skripte: submit <text> (Text „skip…“ = start liefert nichts), finish (laufenden Turn beenden), sendNow/remove <Index
+        // in der Warteliste>, stop, clear, detach. Nach jedem Schritt: gestartete Payloads, Warteliste, busy.
+        let scripts: [(String, [[String]])] = [
+            ("drei schnell hintereinander", [["submit", "one"], ["submit", "two"], ["submit", "three"], ["finish"], ["finish"], ["finish"]]),
+            ("zurücknehmen", [["submit", "one"], ["submit", "two"], ["submit", "three"], ["remove", "0"], ["finish"], ["finish"]]),
+            ("Send now zieht vor und stoppt", [["submit", "one"], ["submit", "two"], ["submit", "three"], ["sendNow", "1"], ["finish"], ["finish"]]),
+            ("Stopp: Wartende folgen", [["submit", "one"], ["submit", "two"], ["stop"], ["finish"]]),
+            ("leeren", [["submit", "one"], ["submit", "two"], ["submit", "three"], ["clear"], ["finish"]]),
+            ("Chat gewechselt", [["submit", "one"], ["submit", "two"], ["detach"], ["submit", "three"], ["finish"]]),
+            ("nichts zu senden: weiter", [["submit", "one"], ["submit", "skip-a"], ["submit", "two"], ["finish"], ["finish"]]),
+            ("nichts zu senden im Leerlauf", [["submit", "skip-a"], ["submit", "one"], ["finish"]]),
+            ("Send now im Leerlauf ohne Wartende", [["sendNow", "0"], ["submit", "one"], ["finish"]]),
+        ]
+        for (name, script) in scripts {
+            var turns: [ScriptTurn] = []
+            var started: [String] = []
+            let q = ChatPromptQueue<String> { payload in
+                if payload.hasPrefix("skip") { return nil }
+                started.append(payload)
+                let t = ScriptTurn()
+                turns.append(t)
+                return t.handle()
+            }
+            var steps: [JSONValue] = []
+            for op in script {
+                switch op[0] {
+                case "submit": q.submit(op[1], op[1])
+                case "finish": turns.last?.done = true
+                case "sendNow": if let i = Int(op[1]), i < q.waiting.count { q.sendNow(q.waiting[i].id) }
+                case "remove": if let i = Int(op[1]), i < q.waiting.count { q.remove(q.waiting[i].id) }
+                case "stop": q.stopCurrent()
+                case "clear": q.clear()
+                case "detach": q.detach()
+                default: break
+                }
+                await settle()
+                steps.append(["started": .array(started.map(JSONValue.string)), "waiting": .array(q.waiting.map { .string($0.text) }), "busy": .bool(q.isBusy)])
+            }
+            for t in turns { t.done = true }
+            cases.append(CoreFixtures.testCase("queue: \(name)", ["script": .array(script.map { .array($0.map(JSONValue.string)) })], ["steps": .array(steps)]))
+        }
+        return CoreFixtures.file("agents-queue", cases, meta: [
+            "note": .string("Swift ChatPromptQueue mit gesteuerten Turns (finish beendet den zuletzt gestarteten Turn, stop/sendNow brechen ab). Erzeugt von AgentFixtureExport.swift (BSD-410 Teil 3)."),
+        ])
+    }
+
+    // MARK: BSD-410 Teil 4: SkillCodec (Text-Teil)
+
+    func skillCodec() -> JSONValue {
+        var cases: [JSONValue] = []
+        let mds: [(String, String)] = [
+            ("einfach", "---\nname: pdf-tools\ndescription: Work with PDF files\n---\n\n# PDF\nUse pdftotext.\n"),
+            ("Zusatzfelder bleiben wörtlich", "---\nname: x\ndescription: d\nlicense: MIT\nallowed-tools: Bash, Read\nmetadata:\n  version: 2\n  tags: [a, b]\n---\nBody"),
+            ("Anführungszeichen", "---\nname: \"quoted: name\"\ndescription: 'it''s fine'\n---\nBody"),
+            ("gefaltete Beschreibung >", "---\nname: fold\ndescription: >\n  first line\n  second line\n\n  third\n---\nB"),
+            ("Literal |", "---\nname: lit\ndescription: |\n  one\n  two\n---\nB"),
+            ("Fortsetzungszeilen", "---\nname: cont\ndescription: starts here\n  and goes on\n---\nB"),
+            ("CRLF", "---\r\nname: crlf\r\ndescription: windows\r\n---\r\n\r\nBody\r\nline 2"),
+            ("ohne Frontmatter", "# Just markdown\nno header"),
+            ("nicht geschlossen", "---\nname: open\ndescription: never closed\nBody"),
+            ("Leerzeichen um ---", "  ---  \nname: sp\ndescription: spaces\n --- \nBody"),
+            ("Kommentar und Einrückung", "---\n# comment\nname: c\n  indented: x\ndescription: d\n---\nB"),
+            ("Escape \\n und \\\"", "---\nname: esc\ndescription: \"a \\\"q\\\" b\\nc\"\n---\nB"),
+        ]
+        for (name, md) in mds {
+            let r = SkillCodec.parseFrontmatter(md)
+            cases.append(CoreFixtures.testCase("frontmatter: \(name)", ["kind": "frontmatter", "text": .string(md)],
+                ["fields": .object(r.fields.mapValues(JSONValue.string)), "extra": .string(r.extra), "body": .string(r.body)]))
+            let folder = SkillFolder(name: "folder-name", files: [SkillCodec.mainFile: Data(md.utf8)])
+            var out: [String: JSONValue]
+            do {
+                let doc = try SkillCodec.decode(folder)
+                out = ["name": .string(doc.name), "description": .string(doc.description), "body": .string(doc.body), "extraFrontmatter": .string(doc.extraFrontmatter),
+                       "encoded": .string(String(decoding: SkillCodec.encode(doc).files[SkillCodec.mainFile] ?? Data(), as: UTF8.self)),
+                       "folder": .string(SkillCodec.encode(doc).name)]
+            } catch { out = ["error": .string("\(error)")] }
+            cases.append(CoreFixtures.testCase("decode+encode: \(name)", ["kind": "roundtrip", "text": .string(md), "folder": "folder-name"], .object(out)))
+        }
+        for n in ["PDF Tools", "  über-Größe  ", "a--b__c", "Émile's Skill!", "", "日本語", String(repeating: "x", count: 80), "--x--", "Café 2"] {
+            cases.append(CoreFixtures.testCase("folderName: \(n.isEmpty ? "(leer)" : n)", ["kind": "folderName", "name": .string(n)], ["folder": .string(SkillCodec.folderName(n))]))
+        }
+        for n in ["plain", "with: colon", "-dash", " lead", "trail ", "", "quote \"x\"", "back\\slash", "multi\nline", "hash # x", "percent %", "ümlaut"] {
+            cases.append(CoreFixtures.testCase("yaml: \(n.isEmpty ? "(leer)" : n)", ["kind": "yaml", "value": .string(n)], ["yaml": .string(SkillCodec.yaml(n))]))
+        }
+        for p in ["scripts/run.py", "a/b/c.txt", "/abs", "../up", "a/../b", "a//b", "./x", "back\\slash", "", ".hidden/x", "x/.."] {
+            var ok = true
+            do { try SkillCodec.checkPath(p) } catch { ok = false }
+            cases.append(CoreFixtures.testCase("checkPath: \(p.isEmpty ? "(leer)" : p)", ["kind": "checkPath", "path": .string(p)], ["ok": .bool(ok)]))
+        }
+        for p in ["run.py", "x.MJS", "a.ts", "s.zsh", "README.md", "c.yaml", "page.htm", "notes.txt", "Makefile", "data.csv", "dir.v2/file"] {
+            cases.append(CoreFixtures.testCase("language: \(p)", ["kind": "language", "path": .string(p)], ["language": .string(SkillCodec.language(for: p))]))
+        }
+        return CoreFixtures.file("agents-skills", cases, meta: [
+            "note": .string("Swift SkillCodec: parseFrontmatter, decode/encode (SKILL.md), folderName, yaml, checkPath, language. Dateisystem/ZIP/Sync nicht. Erzeugt von AgentFixtureExport.swift (BSD-410 Teil 4)."),
+        ])
+    }
+
     func check(_ value: JSONValue, _ name: String) throws {
         let text = try ImportFixtures.prettyForExport(value)
         let file = Self.dir.appendingPathComponent(name)
@@ -408,12 +524,14 @@ import Testing
 
     @Test func contextFixturesAreCurrent() async throws {
         try check(await contextBudget(), "context.json")
+        try check(await promptQueue(), "queue.json")
     }
 
     @Test func agentFixturesAreCurrent() throws {
         try check(permissions(), "permissions.json")
         try check(budget(), "budget.utc.json")
         try check(lineDiff(), "linediff.json")
+        try check(skillCodec(), "skills.json")
         try check(citations(), "citations.json")
     }
 }

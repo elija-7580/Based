@@ -1,0 +1,799 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: pdf-tools\ndescription: Work with PDF files\n---\n\n# PDF\nUse pdftotext.\n"
+      },
+      "name" : "frontmatter: einfach",
+      "output" : {
+        "body" : "# PDF\nUse pdftotext.\n",
+        "extra" : "",
+        "fields" : {
+          "description" : "Work with PDF files",
+          "name" : "pdf-tools"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: pdf-tools\ndescription: Work with PDF files\n---\n\n# PDF\nUse pdftotext.\n"
+      },
+      "name" : "decode+encode: einfach",
+      "output" : {
+        "body" : "# PDF\nUse pdftotext.",
+        "description" : "Work with PDF files",
+        "encoded" : "---\nname: pdf-tools\ndescription: Work with PDF files\n---\n\n# PDF\nUse pdftotext.\n",
+        "extraFrontmatter" : "",
+        "folder" : "pdf-tools",
+        "name" : "pdf-tools"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: x\ndescription: d\nlicense: MIT\nallowed-tools: Bash, Read\nmetadata:\n  version: 2\n  tags: [a, b]\n---\nBody"
+      },
+      "name" : "frontmatter: Zusatzfelder bleiben wörtlich",
+      "output" : {
+        "body" : "Body",
+        "extra" : "license: MIT\nallowed-tools: Bash, Read\nmetadata:\n  version: 2\n  tags: [a, b]",
+        "fields" : {
+          "allowed-tools" : "Bash, Read",
+          "description" : "d",
+          "license" : "MIT",
+          "metadata" : "",
+          "name" : "x"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: x\ndescription: d\nlicense: MIT\nallowed-tools: Bash, Read\nmetadata:\n  version: 2\n  tags: [a, b]\n---\nBody"
+      },
+      "name" : "decode+encode: Zusatzfelder bleiben wörtlich",
+      "output" : {
+        "body" : "Body",
+        "description" : "d",
+        "encoded" : "---\nname: x\ndescription: d\nlicense: MIT\nallowed-tools: Bash, Read\nmetadata:\n  version: 2\n  tags: [a, b]\n---\n\nBody\n",
+        "extraFrontmatter" : "license: MIT\nallowed-tools: Bash, Read\nmetadata:\n  version: 2\n  tags: [a, b]",
+        "folder" : "x",
+        "name" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: \"quoted: name\"\ndescription: 'it''s fine'\n---\nBody"
+      },
+      "name" : "frontmatter: Anführungszeichen",
+      "output" : {
+        "body" : "Body",
+        "extra" : "",
+        "fields" : {
+          "description" : "it's fine",
+          "name" : "quoted: name"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: \"quoted: name\"\ndescription: 'it''s fine'\n---\nBody"
+      },
+      "name" : "decode+encode: Anführungszeichen",
+      "output" : {
+        "body" : "Body",
+        "description" : "it's fine",
+        "encoded" : "---\nname: \"quoted: name\"\ndescription: \"it's fine\"\n---\n\nBody\n",
+        "extraFrontmatter" : "",
+        "folder" : "quoted-name",
+        "name" : "quoted: name"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: fold\ndescription: >\n  first line\n  second line\n\n  third\n---\nB"
+      },
+      "name" : "frontmatter: gefaltete Beschreibung >",
+      "output" : {
+        "body" : "B",
+        "extra" : "",
+        "fields" : {
+          "description" : "first line second line third",
+          "name" : "fold"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: fold\ndescription: >\n  first line\n  second line\n\n  third\n---\nB"
+      },
+      "name" : "decode+encode: gefaltete Beschreibung >",
+      "output" : {
+        "body" : "B",
+        "description" : "first line second line third",
+        "encoded" : "---\nname: fold\ndescription: first line second line third\n---\n\nB\n",
+        "extraFrontmatter" : "",
+        "folder" : "fold",
+        "name" : "fold"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: lit\ndescription: |\n  one\n  two\n---\nB"
+      },
+      "name" : "frontmatter: Literal |",
+      "output" : {
+        "body" : "B",
+        "extra" : "",
+        "fields" : {
+          "description" : "one\ntwo",
+          "name" : "lit"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: lit\ndescription: |\n  one\n  two\n---\nB"
+      },
+      "name" : "decode+encode: Literal |",
+      "output" : {
+        "body" : "B",
+        "description" : "one\ntwo",
+        "encoded" : "---\nname: lit\ndescription: one two\n---\n\nB\n",
+        "extraFrontmatter" : "",
+        "folder" : "lit",
+        "name" : "lit"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: cont\ndescription: starts here\n  and goes on\n---\nB"
+      },
+      "name" : "frontmatter: Fortsetzungszeilen",
+      "output" : {
+        "body" : "B",
+        "extra" : "",
+        "fields" : {
+          "description" : "starts here and goes on",
+          "name" : "cont"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: cont\ndescription: starts here\n  and goes on\n---\nB"
+      },
+      "name" : "decode+encode: Fortsetzungszeilen",
+      "output" : {
+        "body" : "B",
+        "description" : "starts here and goes on",
+        "encoded" : "---\nname: cont\ndescription: starts here and goes on\n---\n\nB\n",
+        "extraFrontmatter" : "",
+        "folder" : "cont",
+        "name" : "cont"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\r\nname: crlf\r\ndescription: windows\r\n---\r\n\r\nBody\r\nline 2"
+      },
+      "name" : "frontmatter: CRLF",
+      "output" : {
+        "body" : "Body\nline 2",
+        "extra" : "",
+        "fields" : {
+          "description" : "windows",
+          "name" : "crlf"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\r\nname: crlf\r\ndescription: windows\r\n---\r\n\r\nBody\r\nline 2"
+      },
+      "name" : "decode+encode: CRLF",
+      "output" : {
+        "body" : "Body\nline 2",
+        "description" : "windows",
+        "encoded" : "---\nname: crlf\ndescription: windows\n---\n\nBody\nline 2\n",
+        "extraFrontmatter" : "",
+        "folder" : "crlf",
+        "name" : "crlf"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "# Just markdown\nno header"
+      },
+      "name" : "frontmatter: ohne Frontmatter",
+      "output" : {
+        "body" : "# Just markdown\nno header",
+        "extra" : "",
+        "fields" : {
+
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "# Just markdown\nno header"
+      },
+      "name" : "decode+encode: ohne Frontmatter",
+      "output" : {
+        "error" : "SKILL.md has no description in its frontmatter."
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: open\ndescription: never closed\nBody"
+      },
+      "name" : "frontmatter: nicht geschlossen",
+      "output" : {
+        "body" : "---\nname: open\ndescription: never closed\nBody",
+        "extra" : "",
+        "fields" : {
+
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: open\ndescription: never closed\nBody"
+      },
+      "name" : "decode+encode: nicht geschlossen",
+      "output" : {
+        "error" : "SKILL.md has no description in its frontmatter."
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "  ---  \nname: sp\ndescription: spaces\n --- \nBody"
+      },
+      "name" : "frontmatter: Leerzeichen um ---",
+      "output" : {
+        "body" : "Body",
+        "extra" : "",
+        "fields" : {
+          "description" : "spaces",
+          "name" : "sp"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "  ---  \nname: sp\ndescription: spaces\n --- \nBody"
+      },
+      "name" : "decode+encode: Leerzeichen um ---",
+      "output" : {
+        "body" : "Body",
+        "description" : "spaces",
+        "encoded" : "---\nname: sp\ndescription: spaces\n---\n\nBody\n",
+        "extraFrontmatter" : "",
+        "folder" : "sp",
+        "name" : "sp"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\n# comment\nname: c\n  indented: x\ndescription: d\n---\nB"
+      },
+      "name" : "frontmatter: Kommentar und Einrückung",
+      "output" : {
+        "body" : "B",
+        "extra" : "# comment",
+        "fields" : {
+          "description" : "d",
+          "name" : "c indented: x"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\n# comment\nname: c\n  indented: x\ndescription: d\n---\nB"
+      },
+      "name" : "decode+encode: Kommentar und Einrückung",
+      "output" : {
+        "body" : "B",
+        "description" : "d",
+        "encoded" : "---\nname: \"c indented: x\"\ndescription: d\n# comment\n---\n\nB\n",
+        "extraFrontmatter" : "# comment",
+        "folder" : "c-indented-x",
+        "name" : "c indented: x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "frontmatter",
+        "text" : "---\nname: esc\ndescription: \"a \\\"q\\\" b\\nc\"\n---\nB"
+      },
+      "name" : "frontmatter: Escape \\n und \\\"",
+      "output" : {
+        "body" : "B",
+        "extra" : "",
+        "fields" : {
+          "description" : "a \"q\" b\nc",
+          "name" : "esc"
+        }
+      }
+    },
+    {
+      "input" : {
+        "folder" : "folder-name",
+        "kind" : "roundtrip",
+        "text" : "---\nname: esc\ndescription: \"a \\\"q\\\" b\\nc\"\n---\nB"
+      },
+      "name" : "decode+encode: Escape \\n und \\\"",
+      "output" : {
+        "body" : "B",
+        "description" : "a \"q\" b\nc",
+        "encoded" : "---\nname: esc\ndescription: \"a \\\"q\\\" b c\"\n---\n\nB\n",
+        "extraFrontmatter" : "",
+        "folder" : "esc",
+        "name" : "esc"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "PDF Tools"
+      },
+      "name" : "folderName: PDF Tools",
+      "output" : {
+        "folder" : "pdf-tools"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "  über-Größe  "
+      },
+      "name" : "folderName:   über-Größe  ",
+      "output" : {
+        "folder" : "ber-gr-e"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "a--b__c"
+      },
+      "name" : "folderName: a--b__c",
+      "output" : {
+        "folder" : "a-b-c"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "Émile's Skill!"
+      },
+      "name" : "folderName: Émile's Skill!",
+      "output" : {
+        "folder" : "mile-s-skill"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : ""
+      },
+      "name" : "folderName: (leer)",
+      "output" : {
+        "folder" : "skill"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "日本語"
+      },
+      "name" : "folderName: 日本語",
+      "output" : {
+        "folder" : "skill"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "name" : "folderName: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "output" : {
+        "folder" : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "--x--"
+      },
+      "name" : "folderName: --x--",
+      "output" : {
+        "folder" : "x"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "folderName",
+        "name" : "Café 2"
+      },
+      "name" : "folderName: Café 2",
+      "output" : {
+        "folder" : "caf-2"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "plain"
+      },
+      "name" : "yaml: plain",
+      "output" : {
+        "yaml" : "plain"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "with: colon"
+      },
+      "name" : "yaml: with: colon",
+      "output" : {
+        "yaml" : "\"with: colon\""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "-dash"
+      },
+      "name" : "yaml: -dash",
+      "output" : {
+        "yaml" : "\"-dash\""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : " lead"
+      },
+      "name" : "yaml:  lead",
+      "output" : {
+        "yaml" : "\" lead\""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "trail "
+      },
+      "name" : "yaml: trail ",
+      "output" : {
+        "yaml" : "\"trail \""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : ""
+      },
+      "name" : "yaml: (leer)",
+      "output" : {
+        "yaml" : "\"\""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "quote \"x\""
+      },
+      "name" : "yaml: quote \"x\"",
+      "output" : {
+        "yaml" : "\"quote \\\"x\\\"\""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "back\\slash"
+      },
+      "name" : "yaml: back\\slash",
+      "output" : {
+        "yaml" : "back\\slash"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "multi\nline"
+      },
+      "name" : "yaml: multi\nline",
+      "output" : {
+        "yaml" : "multi line"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "hash # x"
+      },
+      "name" : "yaml: hash # x",
+      "output" : {
+        "yaml" : "\"hash # x\""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "percent %"
+      },
+      "name" : "yaml: percent %",
+      "output" : {
+        "yaml" : "\"percent %\""
+      }
+    },
+    {
+      "input" : {
+        "kind" : "yaml",
+        "value" : "ümlaut"
+      },
+      "name" : "yaml: ümlaut",
+      "output" : {
+        "yaml" : "ümlaut"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "scripts/run.py"
+      },
+      "name" : "checkPath: scripts/run.py",
+      "output" : {
+        "ok" : true
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "a/b/c.txt"
+      },
+      "name" : "checkPath: a/b/c.txt",
+      "output" : {
+        "ok" : true
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "/abs"
+      },
+      "name" : "checkPath: /abs",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "../up"
+      },
+      "name" : "checkPath: ../up",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "a/../b"
+      },
+      "name" : "checkPath: a/../b",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "a//b"
+      },
+      "name" : "checkPath: a//b",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "./x"
+      },
+      "name" : "checkPath: ./x",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "back\\slash"
+      },
+      "name" : "checkPath: back\\slash",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : ""
+      },
+      "name" : "checkPath: (leer)",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : ".hidden/x"
+      },
+      "name" : "checkPath: .hidden/x",
+      "output" : {
+        "ok" : true
+      }
+    },
+    {
+      "input" : {
+        "kind" : "checkPath",
+        "path" : "x/.."
+      },
+      "name" : "checkPath: x/..",
+      "output" : {
+        "ok" : false
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "run.py"
+      },
+      "name" : "language: run.py",
+      "output" : {
+        "language" : "python"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "x.MJS"
+      },
+      "name" : "language: x.MJS",
+      "output" : {
+        "language" : "javascript"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "a.ts"
+      },
+      "name" : "language: a.ts",
+      "output" : {
+        "language" : "typescript"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "s.zsh"
+      },
+      "name" : "language: s.zsh",
+      "output" : {
+        "language" : "bash"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "README.md"
+      },
+      "name" : "language: README.md",
+      "output" : {
+        "language" : "markdown"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "c.yaml"
+      },
+      "name" : "language: c.yaml",
+      "output" : {
+        "language" : "yaml"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "page.htm"
+      },
+      "name" : "language: page.htm",
+      "output" : {
+        "language" : "html"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "notes.txt"
+      },
+      "name" : "language: notes.txt",
+      "output" : {
+        "language" : "plain text"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "Makefile"
+      },
+      "name" : "language: Makefile",
+      "output" : {
+        "language" : "plain text"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "data.csv"
+      },
+      "name" : "language: data.csv",
+      "output" : {
+        "language" : "csv"
+      }
+    },
+    {
+      "input" : {
+        "kind" : "language",
+        "path" : "dir.v2/file"
+      },
+      "name" : "language: dir.v2/file",
+      "output" : {
+        "language" : "plain text"
+      }
+    }
+  ],
+  "module" : "agents-skills",
+  "note" : "Swift SkillCodec: parseFrontmatter, decode/encode (SKILL.md), folderName, yaml, checkPath, language. Dateisystem/ZIP/Sync nicht. Erzeugt von AgentFixtureExport.swift (BSD-410 Teil 4)."
+}

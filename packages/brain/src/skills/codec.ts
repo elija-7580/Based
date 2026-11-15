@@ -172,7 +172,10 @@ export function skillFoldersToZip(folders: readonly SkillFolder[], when?: Date):
 
 /** Codeblock-Sprache einer Skill-Datei (für die Unterseite). */
 export function skillFileLanguage(path: string): string {
-  const ext = path.includes(".") ? path.split(".").pop()!.toLowerCase() : "";
+  // BSD-410: Endung nur aus dem letzten Pfadteil (wie Swift `pathExtension`; „dir.v2/file“ hat keine)
+  const base = path.split("/").pop() ?? path;
+  const dot = base.lastIndexOf(".");
+  const ext = dot > 0 ? base.slice(dot + 1).toLowerCase() : "";
   const map: Record<string, string> = { py: "python", js: "javascript", mjs: "javascript", cjs: "javascript", ts: "typescript", sh: "bash", bash: "bash", zsh: "bash", md: "markdown", markdown: "markdown", json: "json", yml: "yaml", yaml: "yaml", html: "html", htm: "html", swift: "swift", rb: "ruby", txt: "plain text", "": "plain text" };
   return map[ext] ?? ext;
 }
