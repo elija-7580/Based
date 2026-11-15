@@ -2107,9 +2107,15 @@ function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
     }
   };
   const running = useRef(false);
+  const lastStart = useRef(0);
   const run = async (from = 0, added: Record<number, string> = {}) => {
     // Ein Lauf auf einmal: run wartet ggf. auf fremde Datenbanken (include) – ein zweiter Klick in der Zeit lief sonst doppelt.
     if (running.current) return;
+    // BSD-419: Läuft der Knopf ohne Warten durch, ist `running` schon wieder frei, wenn ein zweites Klick-Ereignis derselben
+    // Betätigung ankommt (Knopf zeichnet sich mit „busy“ neu, Zeiger- und Klick-Ereignis lösen beide aus) – die Vorlage
+    // stand dann doppelt da. Ein neuer Lauf erst 400 ms nach dem letzten Start (Fortsetzen nach einer Rückfrage zählt nicht).
+    if (from === 0 && Date.now() - lastStart.current < 400) return;
+    if (from === 0) lastStart.current = Date.now();
     running.current = true;
     setPause(undefined);
     setNote(undefined);

@@ -254,7 +254,16 @@ test("Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, �
   const outside = () => blockEditor(page).locator(":scope > .bx2-block [data-editable-id]", { hasText: "Template item" });
   await blockEditor(page).getByRole("button", { name: "Add checklist" }).click();
   await expect(outside()).toHaveCount(1);
+  await page.waitForTimeout(450);
   await blockEditor(page).getByRole("button", { name: "Add checklist" }).click();
+  await expect(outside()).toHaveCount(2);
+  // BSD-419: zwei Klick-Ereignisse derselben Betätigung (kurz hintereinander) laufen nur einmal
+  await page.waitForTimeout(450);
+  await blockEditor(page).getByRole("button", { name: "Add checklist" }).evaluate((el) => { (el as HTMLElement).click(); (el as HTMLElement).click(); });
+  await expect(outside()).toHaveCount(3);
+  await page.waitForTimeout(500);
+  await expect(outside()).toHaveCount(3);
+  await page.keyboard.press("ControlOrMeta+z");
   await expect(outside()).toHaveCount(2);
   // ein Klick = Undo-Schritt
   await page.keyboard.press("ControlOrMeta+z");
