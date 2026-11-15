@@ -104,6 +104,8 @@ test("Editor in Ruhe und in seinen Zuständen", async ({ page, browserName }) =>
       const empty = await page.getByTestId("slash-menu").evaluate((m) => [...m.querySelectorAll(".bx2-menu-label")].filter((l) => !l.parentElement?.querySelector("[role=option]")).map((c) => c.textContent));
       expect(empty).toEqual([]);
       await page.keyboard.type("zzzz");
+      // BSD-305 Teil 3: ohne Treffer bleibt das Menü mit „No results“ stehen (wie Notion), statt zu verschwinden
+      await expect(page.getByTestId("slash-menu").getByRole("status")).toHaveText("No results");
       await page.waitForTimeout(200);
       await shoot("slash-empty", theme, w);
       // Zurück: „/heazzzz“ und die leere Zeile wieder weg
@@ -188,4 +190,23 @@ test("Blockfarben im Dunkelmodus aus den Tokens", async ({ page, browserName }) 
   expect(inner).toBe("rgba(0, 0, 0, 0)");
   if (SHOTS && browserName === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-editor-polish-block-colors-dark.png" });
   await page.evaluate(() => localStorage.removeItem("based.appearance"));
+});
+
+// BSD-305 Teil 3: Slash ohne Treffer – „No results“; Enter schließt das Menü und macht wie sonst eine neue Zeile.
+test("Slash ohne Treffer: „No results“, Enter macht eine neue Zeile", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const id = await page.evaluate(() => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command({ op: "createPage", title: "Slash empty" }));
+  await page.goto(`/#page-${id}`);
+  await expectEditable(page);
+  await focusEditorEnd(page);
+  await page.keyboard.type("/qqqxyz");
+  const menu = page.getByTestId("slash-menu");
+  await expect(menu.getByRole("status")).toHaveText("No results");
+  await expect(menu.getByRole("option")).toHaveCount(0);
+  await page.keyboard.press("Enter");
+  await expect(menu).toHaveCount(0);
+  await page.keyboard.type("next line");
+  const fields = blockEditor(page).locator("[data-editable-id]");
+  await expect(fields).toHaveText(["/qqqxyz", "next line"]);
 });
