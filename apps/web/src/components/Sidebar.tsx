@@ -108,13 +108,37 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     peekTimer.current = setTimeout(() => setPeek(false), 240);
   };
   useEffect(() => () => { if (peekTimer.current) clearTimeout(peekTimer.current); }, []);
-  useEffect(() => { if (!hidden) setPeek(false); }, [hidden]);
+  // BSD-309: schmales Fenster (unter 860 px, z. B. halbe Bildschirmbreite am Mac): Die Seitenleiste ist eingeklappt wie
+  // mit ⌘\ und schwebt bei Bedarf über der Seite („Show sidebar“, ⌘\, Rand links); die Einstellung „ausgeblendet“
+  // bleibt unberührt und gilt wieder, sobald das Fenster breiter ist.
+  const narrow = useNarrowWindow();
+  const [pinned, setPinned] = useState(false);
+  const folded = hidden || narrow;
+  const floating = folded && (peek || pinned);
+  const narrowRef = useRef(narrow);
+  narrowRef.current = narrow;
+  useEffect(() => { if (!folded) { setPeek(false); setPinned(false); } }, [folded]);
+  // Schwebende Leiste schließt nach dem Öffnen einer Seite, mit Escape und bei Klick daneben.
+  useEffect(() => setPinned(false), [route]);
+  useEffect(() => {
+    if (!pinned) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Element | null;
+      if (t?.closest(".sidebar, .sidebar-show, [role=menu], [role=dialog]")) return;
+      setPinned(false);
+    };
+    const onEsc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector("[role=menu], [role=dialog]")) setPinned(false); };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onEsc);
+    return () => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("keydown", onEsc); };
+  }, [pinned]);
   const drag = useRef<{ x: number; w: number } | undefined>(undefined);
-  useEffect(() => applySidebar(width, hidden), [width, hidden]);
+  useEffect(() => applySidebar(width, folded), [width, folded]);
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (!isSidebarToggle(e)) return;
       e.preventDefault();
+      if (narrowRef.current) { setPinned((p) => !p); return; }
       setHidden((h) => {
         sidebarSize.setHidden(!h);
         return !h;
@@ -446,11 +470,13 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
 
   return (
     <>
-    {hidden ? (
+    {folded ? (
       <>
         <div className="sidebar-peek-zone" aria-hidden="true" data-testid="sidebar-peek-zone" onMouseEnter={peekOpen} onMouseLeave={peekClose} />
         <button type="button" className="sidebar-show icon-btn ghost" aria-label="Show sidebar" title={`Show sidebar (${keyLabel("\\")})`} data-testid="sidebar-show"
+          aria-expanded={narrow ? pinned : undefined}
           onMouseEnter={peekOpen} onMouseLeave={peekClose} onClick={() => {
+            if (narrow) { setPinned((p) => !p); return; }
             sidebarSize.setHidden(false);
             setHidden(false);
           }}>
@@ -458,8 +484,8 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
         </button>
       </>
     ) : null}
-    <nav className={"sidebar" + (hidden && peek ? " peek" : "")} aria-label="Workspace" hidden={hidden && !peek} data-picked={picked.size || undefined}
-      onMouseEnter={hidden ? peekOpen : undefined} onMouseLeave={hidden ? peekClose : undefined}>
+    <nav className={"sidebar" + (floating ? " peek" : "")} aria-label="Workspace" hidden={folded && !floating} data-picked={picked.size || undefined}
+      onMouseEnter={folded ? peekOpen : undefined} onMouseLeave={folded ? peekClose : undefined}>
       <div className="brand">
         <img className="on-light" src={markLight} alt="" />
         <img className="on-dark" src={markDark} alt="" />
@@ -934,4 +960,20 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
       {item("Move to Trash", "trash", onTrash)}
     </div>
   );
+}
+
+/** BSD-309: Fenster schmaler als 860 px (dort klappt die Seitenleiste ein). */
+export const NARROW_WINDOW = "(max-width: 860px)";
+function useNarrowWindow(): boolean {
+  const query = () => globalThis.matchMedia?.(NARROW_WINDOW);
+  const [narrow, setNarrow] = useState(() => query()?.matches ?? false);
+  useEffect(() => {
+    const m = query();
+    if (!m) return;
+    const f = () => setNarrow(m.matches);
+    f();
+    m.addEventListener("change", f);
+    return () => m.removeEventListener("change", f);
+  }, []);
+  return narrow;
 }
