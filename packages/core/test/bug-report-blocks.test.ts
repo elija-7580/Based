@@ -91,9 +91,10 @@ describe("Bündel und Wiedergabe", () => {
     cmd.replaceText(s, { blockId: "B", from: 0, to: 0 }, "Neu: ");
     off();
     const b = bundleOf(rec.snapshot(), s);
-    // Zeitstempel (Millisekunden) ausnehmen: „4711“ steckte zeitweise in der Uhrzeit (1794711…) – Test war uhrzeitabhängig.
-    const json = JSON.stringify(b).replace(/"(t|millis|updatedAt|createdAt)":[\d.]+/g, "");
-    for (const w of ["Gehalt", "Ada", "4711", "Plan", "fett", "Neu"]) expect(json).not.toContain(w);
+    const json = JSON.stringify(b);
+    // Zahlenwerte (Zeitstempel wie 1794711024279) ausblenden: Sie enthalten je nach Uhrzeit „4711“; geprüft wird nur Text.
+    const textOnly = json.replace(/("[^"]*"):-?\d+(\.\d+)?/g, "$1:0");
+    for (const w of ["Gehalt", "Ada", "4711", "Plan", "fett", "Neu"]) expect(textOnly).not.toContain(w);
     const change = b.recording.events.find((e) => (e as { kind: string }).kind === "change") as { changes: { id: string; block: Block }[] };
     expect(change.changes[0]!.id).toBe("B");
     expect(change.changes[0]!.block).toMatchObject({ id: "B", type: "bulletedList", parent: "b:P", sk: "a1" });

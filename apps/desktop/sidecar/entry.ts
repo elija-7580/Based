@@ -32,6 +32,18 @@ async function desktop(): Promise<void> {
   process.stdout.write(`BASED_RESULT ${JSON.stringify(result)}\n`);
 }
 
+// BSD-424: Ein Startfehler war ein unbehandelter Promise-Fehler – Node druckt den Stacktrace und als letzte Zeile
+// „Node.js v26.x“, und genau die zeigte die App an. Jetzt eine Zeile mit der Ursache (stdout für die Hülle, stderr fürs
+// Protokoll) und Exit 1.
+function fail(e: unknown): void {
+  const message = (e instanceof Error ? e.message : String(e)).split("\n")[0]!.slice(0, 500);
+  const code = (e as NodeJS.ErrnoException | undefined)?.code;
+  process.exitCode = 1;
+  // erst beenden, wenn beide Zeilen draußen sind (Pipes sind auf macOS asynchron)
+  process.stdout.write(`BASED_LOCAL_FAILED ${JSON.stringify({ message, ...(code ? { code } : {}) })}\n`, () =>
+    process.stderr.write(`based-server: ${message}\n`, () => process.exit(1)));
+}
+
 void (async () => {
   if (argv[0] === "cli") {
     const { main } = await import("../../cli/src/main.js");
@@ -42,4 +54,4 @@ void (async () => {
     const { main } = await import("../../server/src/main.js");
     await main(argv);
   }
-})();
+})().catch(fail);

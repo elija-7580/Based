@@ -17,7 +17,7 @@ import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./s
 import { createLogger, parseLogLevel, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
-import { loginShellPath, mergePath, newLocalToken, removeLocalDiscovery, writeLocalDiscovery } from "./local.js";
+import { loginShellPath, mergePath, newLocalToken, portInUseMessage, removeLocalDiscovery, replaceStaleLocal, writeLocalDiscovery } from "./local.js";
 import { tailnetAddresses, urlFor } from "./tailnet.js";
 import { SyncService } from "./sync.js";
 
@@ -289,7 +289,21 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
     ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log, selfMcp), codingHost: { home: homedir(), env: process.env, approvedEnv: opts.codingEnv } } : {}),
   });
-  const { port } = await app.listen(opts.port, opts.host);
+  // BSD-424: belegter Port (z. B. ein nach einem Absturz übrig gebliebener lokaler Server) war ein Absturz mit
+  // Stacktrace – die App zeigte nur „exit 1 … Node.js v26“. Jetzt: eigenen alten Server ablösen, sonst klare Meldung.
+  const listen = () => app.listen(opts.port, opts.host);
+  const inUse = (e: unknown) => (e as NodeJS.ErrnoException | undefined)?.code === "EADDRINUSE";
+  let listening: { port: number };
+  try {
+    listening = await listen();
+  } catch (e) {
+    if (!inUse(e) || !opts.local) throw inUse(e) ? new Error(portInUseMessage(opts.port)) : e;
+    const r = await replaceStaleLocal(homedir(), opts.port, process.env.BASED_LOCAL_OWNER ?? "based-server --local");
+    if (r !== "replaced") throw new Error(portInUseMessage(opts.port));
+    log.warning("replaced a stale local server on the same port", { port: opts.port });
+    try { listening = await listen(); } catch (e2) { throw inUse(e2) ? new Error(portInUseMessage(opts.port)) : e2; }
+  }
+  const { port } = listening;
   bound.port = port;
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });
   if (opts.local) {

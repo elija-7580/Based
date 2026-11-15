@@ -105,6 +105,30 @@ export function parseReady(line: string): { url: string; pid: number; tailnet?: 
   }
 }
 
+/** BSD-424: `BASED_LOCAL_FAILED {"message":…}` – der Server konnte nicht starten (Ursache in einer Zeile). */
+export function parseFailed(line: string): string | undefined {
+  const m = /^BASED_LOCAL_FAILED (\{.*\})\s*$/.exec(line.trim());
+  if (!m) return undefined;
+  try {
+    const v = JSON.parse(m[1]!) as { message?: unknown };
+    return typeof v.message === "string" && v.message !== "" ? v.message : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * BSD-424: die aussagekräftigste Zeile aus stderr. Bei einem Absturz druckt Node den Stacktrace und zuletzt
+ * „Node.js v26.13.0“ – das stand als Fehler in den Einstellungen und sah aus wie ein Problem mit der Node-Version.
+ * Gesucht wird von hinten die letzte Zeile, die kein Stack-Rahmen, keine Versionszeile und kein Objektrest ist.
+ */
+export function failureLine(log: readonly string[]): string {
+  const lines = log.flatMap((l) => l.split("\n")).map((l) => l.trim()).filter(Boolean);
+  const noise = (l: string) => /^Node\.js v\d/.test(l) || /^at\s/.test(l) || /^[{}[\]]$/.test(l) || /^\w+:\s.*,$/.test(l) || /^\^+$/.test(l) || /^node:/.test(l) || /^\(Use `node --trace/.test(l);
+  const error = [...lines].reverse().find((l) => /^(\w*Error|based-server:)/.test(l));
+  return error ?? [...lines].reverse().find((l) => !noise(l)) ?? "";
+}
+
 /** Umgebung für einen Aufruf des Bundles (nur BASED_*; PATH usw. liefert die Login-Shell). */
 export function actionEnv(bundle: string, action: "local" | "install-cli" | "uninstall-cli" | "cli-status", extra: Record<string, string> = {}): Record<string, string> {
   return { BASED_BUNDLE: bundle, BASED_ACTION: action, ...extra };
@@ -339,14 +363,17 @@ class LocalServer {
         BASED_BACKUP_DIR: await path.join(await path.documentDir(), "Based Backups"),
       });
       const cmd = Command.create(RUN.name, [...RUN.args], { env });
+      let failure: string | undefined;
       cmd.stdout.on("data", (line: string) => {
         const r = parseReady(line);
         if (r) this.set({ status: "running", url: r.url, tailnetUrls: r.tailnet });
+        const failed = parseFailed(line);
+        if (failed) failure = failed;
       });
       cmd.stderr.on("data", (line: string) => this.set({ log: [...this.state.log, line].slice(-20) }));
       cmd.on("close", (e: { code: number | null }) => {
         this.child = undefined;
-        if (this.state.status !== "off") this.set({ status: e.code === 0 ? "off" : "failed", url: undefined, error: e.code === 0 ? undefined : `The local server stopped (exit ${e.code ?? "?"}). ${this.state.log.at(-1) ?? ""}`.trim() });
+        if (this.state.status !== "off") this.set({ status: e.code === 0 ? "off" : "failed", url: undefined, error: e.code === 0 ? undefined : `The local server stopped (exit ${e.code ?? "?"}). ${failure ?? failureLine(this.state.log)}`.trim() });
       });
       cmd.on("error", (e: string) => this.set({ status: "failed", error: e }));
       this.child = await cmd.spawn();

@@ -14,6 +14,9 @@ import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
 import { installWheelLatch } from "./shell/wheelLatch.js";
 import { StoreClient } from "./worker/client.js";
+
+/** BSD-416: Journal unbestätigter Editor-Änderungen (localStorage; gesperrt → ohne). */
+const journalStorage = () => { try { return globalThis.localStorage ?? undefined; } catch { return undefined; } };
 import { browserLinkOptions, StoreLink } from "./worker/leader.js";
 import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
 // Astryx (meta/astryx): fertig gebaute Styles in eigenen Layern (reset → astryx-base → astryx-theme).
@@ -168,6 +171,8 @@ function start(guest: GuestBoot | undefined) {
   client.onDevice = devices.set;
   connectAssets(client);
   addEventListener("pagehide", (e: PageTransitionEvent) => {
+    // BSD-416: noch unbestätigte Editor-Änderungen sichern (der nächste Start holt sie nach, nur wo neuer)
+    if (!guest) client.journalUnsaved(journalStorage());
     // nicht beim Wechsel in den Back-Forward-Cache: dann kommt der Tab ggf. zurück
     if (!e.persisted) link.leave();
   });
@@ -197,6 +202,7 @@ function start(guest: GuestBoot | undefined) {
   void client
     .init({})
     .then((r) => {
+      if (!guest) void client.replayJournal(journalStorage()).then((n) => { if (n > 0) diagnosticsLog.add("info", `restored ${n} unsaved change${n === 1 ? "" : "s"} from the last session`); }, () => undefined);
       if (r.created && r.homePageID) recentPages.touch(r.homePageID);
       // BSD-275: frischer Workspace → Willkommensbildschirm an Stelle von Home (nicht für Gäste, nicht in E2E-Browsern)
       if (!guest) firstRun.noteInit(r);
