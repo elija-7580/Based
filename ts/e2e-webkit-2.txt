@@ -1,61 +1,61 @@
-cancelled 2723d2581d00389d88b9c7e26e822b5b06fd15a9
-  ✓    6 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (5.4s)
-  ✓    7 [webkit] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (4.9s)
-  ✓    8 [webkit] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (5.2s)
-  ✓   10 [webkit] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (4.1s)
-  ✓   11 [webkit] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (4.2s)
-  ✓   12 [webkit] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (3.3s)
-  ✓    9 [webkit] › e2e/kit-states.spec.ts:153:3 › Zustands-Galerie: Farben der Zustände sind Tokens (light) (19.7s)
-  ✓   13 [webkit] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (3.8s)
-  ✓   15 [webkit] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (3.5s)
-  ✓   14 [webkit] › e2e/kit-states.spec.ts:174:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (light) (9.4s)
-  ✓   16 [webkit] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (6.0s)
-  ✓   18 [webkit] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (3.7s)
-  ✓   19 [webkit] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (3.3s)
-  ✓   20 [webkit] › e2e/interop.spec.ts:309:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.1s)
-  ✓   21 [webkit] › e2e/interop.spec.ts:328:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (4.8s)
-  ✓   17 [webkit] › e2e/kit-states.spec.ts:153:3 › Zustands-Galerie: Farben der Zustände sind Tokens (dark) (15.9s)
-  ✓   22 [webkit] › e2e/interop.spec.ts:354:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (3.8s)
-  ✓   24 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (3.2s)
-  ✓   23 [webkit] › e2e/kit-states.spec.ts:174:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (dark) (6.9s)
-  ✓   26 [webkit] › e2e/kit-states.spec.ts:224:1 › Zustands-Galerie erkennt eine fremde Überfahren-Farbe (2.1s)
-  ✓   27 [webkit] › e2e/motion.spec.ts:17:1 › Einblenden nutzt die Motion-Tokens (Quick Find) (1.2s)
-  ✓   25 [webkit] › e2e/meeting.spec.ts:110:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (7.2s)
-  ✓   28 [webkit] › e2e/motion.spec.ts:34:3 › Bewegung reduzieren › keine Animation und kein Übergang beim Öffnen und Schließen (4.0s)
-  -   29 [webkit] › e2e/meeting.spec.ts:135:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen
-  ✓   30 [webkit] › e2e/native-free.spec.ts:26:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (2.1s)
-  -   31 [webkit] › e2e/meeting.spec.ts:225:1 › Feedback 14. 11.: auf Akku nur aufnehmen – Transkript wartet, kommt am Strom bzw. mit „Transcribe now“
-  ✓   32 [webkit] › e2e/native-free.spec.ts:42:1 › Rechtsklick an vielen Stellen: überall unterdrückt, Escape und Klick daneben schließen (2.6s)
-  ✓   34 [webkit] › e2e/native-free.spec.ts:65:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (4.5s)
-  ✓   33 [webkit] › e2e/meeting.spec.ts:264:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (6.5s)
-  ✓   35 [webkit] › e2e/native-free.spec.ts:86:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (1.9s)
-  ✓   36 [webkit] › e2e/meeting.spec.ts:281:1 › ⌘N → Meeting notes: Block-Editor, Notizen per Klick und Tastatur, Pfeile bleiben in den Notizen (3.6s)
-  ✓   37 [webkit] › e2e/native-free.spec.ts:93:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (4.4s)
-  ✓   39 [webkit] › e2e/native-free.spec.ts:131:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (3.3s)
-  ✓   40 [webkit] › e2e/native-free.spec.ts:151:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (1.8s)
-  ✓   41 [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (2.7s)
-  ✓   42 [webkit] › e2e/native-free.spec.ts:187:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (3.7s)
-  ✓   43 [webkit] › e2e/native-free.spec.ts:218:1 › Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfung bleibt (2.1s)
-  ✓   44 [webkit] › e2e/native-free.spec.ts:241:1 › Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unverändert (2.1s)
-  ✓   38 [webkit] › e2e/notion-api.spec.ts:53:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (25.5s)
-  ✓   46 [webkit] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (5.2s)
-  ✓   45 [webkit] › e2e/notion-hybrid.spec.ts:44:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (14.7s)
-  ✓   48 [webkit] › e2e/notion-hybrid.spec.ts:130:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (3.5s)
-  -   49 [webkit] › e2e/notion-hybrid.spec.ts:148:1 › Hybrid-Import: Bildschirmfotos
-  ✓   50 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (9.7s)
-  ✓   51 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (2.3s)
-  ✓   52 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (2.0s)
-  -   53 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
-  ✓   47 [webkit] › e2e/overflow.spec.ts:85:1 › Leerer Workspace: nichts läuft über (20.1s)
-  -   54 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
-  ✓   56 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (6.5s)
-  ✓   57 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (900 px) (3.4s)
-  ✓   58 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1100 px) (3.3s)
-  ✓   59 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1280 px) (3.7s)
-  ✓   55 [webkit] › e2e/overflow.spec.ts:99:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (21.5s)
-  ✓   60 [webkit] › e2e/panel-still.spec.ts:37:1 › schräges Wischen und Code verschieben die Fläche nicht seitlich (4.9s)
-  ✓   62 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (900 px) (1.2s)
-  ✓   61 [webkit] › e2e/overflow.spec.ts:119:1 › Gliederung überdeckt nie den Text (3.2s)
-  ✓   63 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (1100 px) (1.6s)
-  ✓   65 [webkit] › e2e/peek-resize.spec.ts:29:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (5.6s)
-  ✓   64 [webkit] › e2e/overflow.spec.ts:151:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (10.0s)
+cancelled 9ac742c90166dee29b8eec08ebec6abf165fd547
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 201 tests using 2 workers, shard 2 of 2
+
+  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (6.4s)
+  -    3 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓    5 [webkit] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (4.9s)
+  ✓    2 [webkit] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (12.5s)
+  ✓    6 [webkit] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (8.9s)
+  ✓    7 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (9.7s)
