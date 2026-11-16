@@ -32,6 +32,74 @@ const PAGES = [
 const LINKS = Object.fromEntries(PAGES.map((p) => [p.file, p.path]));
 LINKS["Mobile.dc.html"] = "/";
 
+// Search titles and descriptions (BSD-457). The artboards keep their own; these win on the site.
+// Descriptions stay ≤ 155 characters and only promise what the Mac beta can do (docs/website-claims.md).
+const META = {
+  "/": {
+    title: "Based · The local-first Notion alternative for Mac",
+    description: "Pages and fast databases that stay on your Mac. Import your Notion workspace, no account needed. Join the free Mac beta."
+  },
+  "/workspace": {
+    title: "Based Workspace · Big databases, zero waiting",
+    description: "Tables, boards, timelines and calendars with relations, rollups and formulas. Offline on your Mac, fast with tens of thousands of rows."
+  },
+  "/agents": {
+    title: "Based Agents · Opt-in AI for your workspace",
+    description: "Opt-in agents that work inside your Based workspace with your own keys. Planned after the Mac beta; the beta ships without AI."
+  },
+  "/leaving-notion": {
+    title: "Leaving Notion? Import your workspace into Based",
+    description: "Move from Notion to Based: drop in your export ZIP and pages, databases, relations and nesting are rebuilt on your Mac."
+  },
+  "/roadmap": {
+    title: "Based Roadmap · What ships next",
+    description: "What is in the Based Mac beta, what comes next and what you can vote on. Generated from our public backlog."
+  },
+  "/manifesto": {
+    title: "Based Manifesto · Rebuilding knowledge work",
+    description: "Why we are rebuilding knowledge work, starting with what Notion got right: your data on your devices, open source, built in Europe."
+  }
+};
+
+// Structured data for the home page: the app itself.
+const APP_LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Based",
+  alternateName: "Based notes",
+  url: SITE + "/",
+  applicationCategory: "ProductivityApplication",
+  operatingSystem: "macOS 13 or later",
+  description: META["/"].description,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+  license: "https://opensource.org/licenses/MIT"
+};
+const ldScript = (data) => `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
+
+// Plain English pages next to the artboards (same header, footer and styles as the legal pages).
+// download stays out of search and the sitemap until Elija links it from the invitations.
+const INFO = [
+  { name: "faq", path: "/faq", index: true,
+    title: "Based FAQ · Questions about the Mac beta",
+    description: "Is the Based beta free, where is my data, can I import from Notion, what is not in the beta yet? Short answers." },
+  { name: "download", path: "/download", index: false,
+    title: "Download the Based beta for Mac",
+    description: "Download Based Beta for macOS, install it and send feedback." }
+];
+
+const stripTags = (s) => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()
+  .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+
+// FAQPage data from the page itself: every <h2> is a question, the text up to the next <h2> its answer.
+function faqLd(html) {
+  const parts = html.split(/<h2>/).slice(1).map((chunk) => {
+    const [q, rest] = chunk.split("</h2>");
+    return { "@type": "Question", name: stripTags(q),
+      acceptedAnswer: { "@type": "Answer", text: stripTags(rest.replace(/<p class="meta">[\s\S]*$/, "")) } };
+  });
+  return { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: parts };
+}
+
 const read = (p) => readFileSync(p, "utf8");
 const hash = (s) => createHash("sha256").update(s).digest("hex").slice(0, 10);
 
@@ -110,7 +178,7 @@ function scriptFor(id, p, mobile) {
   return `{template:${JSON.stringify(id)},mobile:${mobile},props:${JSON.stringify(p.props)},make:function(DCLogic){\n${p.code}\nreturn Component;}}`;
 }
 
-function htmlPage({ title, description, path, cssHref, assets, root, templates, pages }) {
+function htmlPage({ title, description, path, cssHref, assets, root, templates, pages, extraHead = "" }) {
   const url = SITE + path;
   return `<!doctype html>
 <html lang="en">
@@ -136,7 +204,7 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${cssHref}">
-</head>
+${extraHead}</head>
 <body>
 <div id="dc-root">${root}</div>
 ${templates}
@@ -216,7 +284,9 @@ function main() {
     }
     const out = join(OUT, page.out);
     mkdirSync(dirname(out), { recursive: true });
-    const args = { title: main.title, description: main.description, path: page.path, cssHref, assets, templates, pages };
+    const meta = META[page.path] ?? { title: main.title, description: main.description };
+    const extraHead = page.path === "/" ? ldScript(APP_LD) + "\n" : "";
+    const args = { title: meta.title, description: meta.description, path: page.path, cssHref, assets, templates, pages, extraHead };
     writeFileSync(out, htmlPage({ ...args, root: "" }));
     if (chrome) writeFileSync(out, htmlPage({ ...args, root: prerender(chrome, out) }));
     console.log("built", page.path);
@@ -232,6 +302,8 @@ function main() {
     const src = read(join(SRC, "legal", name + ".html"));
     const title = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(src)[1].replace(/<[^>]+>/g, "");
     const html = shell
+      .replace("%LANG%", "de")
+      .replace("%HEAD%", "")
       .replace(/%TITLE%/g, title + " · Based")
       .replace("%CANONICAL%", SITE + path)
       .replace("%CSS%", cssHref)
@@ -243,7 +315,30 @@ function main() {
     console.log("built", path);
   }
 
-  const urls = PAGES.map((p) => p.path).concat(["/imprint", "/privacy"]);
+  for (const info of INFO) {
+    const src = read(join(SRC, "info", info.name + ".html"));
+    const head = [
+      `<meta name="description" content="${info.description}">`,
+      `<meta property="og:title" content="${info.title}">`,
+      `<meta property="og:description" content="${info.description}">`,
+      info.index ? "" : '<meta name="robots" content="noindex">',
+      info.name === "faq" ? ldScript(faqLd(src)) : ""
+    ].filter(Boolean).join("\n");
+    const html = shell
+      .replace("%LANG%", "en")
+      .replace("%HEAD%", head)
+      .replace(/%TITLE%/g, info.title)
+      .replace("%CANONICAL%", SITE + info.path)
+      .replace("%CSS%", cssHref)
+      .replace("%HEADER%", header)
+      .replace("%MAIN%", src)
+      .replace("%FOOTER%", footer);
+    mkdirSync(join(OUT, info.name), { recursive: true });
+    writeFileSync(join(OUT, info.name, "index.html"), html);
+    console.log("built", info.path);
+  }
+
+  const urls = PAGES.map((p) => p.path).concat(INFO.filter((i) => i.index).map((i) => i.path), ["/imprint", "/privacy"]);
   writeFileSync(join(OUT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join("\n")}

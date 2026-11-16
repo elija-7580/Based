@@ -42,6 +42,47 @@ test("build: every page exists, nothing points back to the design canvas or to G
   assert.match(imprint, /hello@basednotes\.app/);
 });
 
+test("seo (BSD-457): short descriptions, structured data, FAQ indexed, download page hidden from search", () => {
+  const out = mkdtempSync(join(tmpdir(), "based-site-seo-"));
+  execFileSync(process.execPath, [join(ROOT, "scripts", "build.mjs")], { env: { ...process.env, WEBSITE_OUT: out, NO_PRERENDER: "1" }, stdio: "pipe" });
+  const pages = ["index.html", "workspace/index.html", "agents/index.html", "leaving-notion/index.html", "roadmap/index.html",
+    "manifesto/index.html", "faq/index.html", "download/index.html"];
+  const titles = new Set();
+  for (const p of pages) {
+    const s = readFileSync(join(out, p), "utf8");
+    const d = /<meta name="description" content="([^"]*)">/.exec(s);
+    assert.ok(d, `${p}: description`);
+    assert.ok(d[1].length >= 50 && d[1].length <= 155, `${p}: description has ${d[1].length} characters`);
+    const t = /<title>([^<]*)<\/title>/.exec(s)[1];
+    assert.ok(t.length <= 65, `${p}: title has ${t.length} characters`);
+    titles.add(t);
+    for (const m of s.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) JSON.parse(m[1]);
+  }
+  assert.equal(titles.size, pages.length, "every page has its own title");
+
+  const home = readFileSync(join(out, "index.html"), "utf8");
+  const app = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(home)[1]);
+  assert.equal(app["@type"], "SoftwareApplication");
+  assert.equal(app.offers.price, "0");
+
+  const faq = readFileSync(join(out, "faq", "index.html"), "utf8");
+  assert.match(faq, /<html lang="en">/);
+  const ld = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(faq)[1]);
+  assert.equal(ld["@type"], "FAQPage");
+  assert.ok(ld.mainEntity.length >= 8);
+  for (const q of ld.mainEntity) assert.ok(q.name.endsWith("?") && q.acceptedAnswer.text.length > 10, q.name);
+  assert.doesNotMatch(faq, /noindex/);
+
+  const download = readFileSync(join(out, "download", "index.html"), "utf8");
+  assert.match(download, /<meta name="robots" content="noindex">/);
+  assert.match(download, /releases\/download\/beta-latest\/Based-Beta\.dmg/);
+
+  const sitemap = readFileSync(join(out, "sitemap.xml"), "utf8");
+  assert.match(sitemap, /basednotes\.app\/faq</);
+  assert.doesNotMatch(sitemap, /download/);
+  assert.match(readFileSync(join(out, "imprint", "index.html"), "utf8"), /<html lang="de">/);
+});
+
 async function withServer(fn) {
   const dir = mkdtempSync(join(tmpdir(), "based-wl-"));
   const port = 20000 + Math.floor(Math.random() * 20000);
