@@ -1,7 +1,7 @@
 # Based
 
 Local-first notes, databases and opt-in agents — everything Notion can do and a bit more, with your data on your
-device. Built clean-room from public documentation.
+device. Built clean-room from public documentation. Website: **[basednotes.app](https://basednotes.app)**.
 
 **Based Next** is the app: a TypeScript stack (ADR [0011](docs/adr/0011-typescript-stack.md)) with one interface
 for every platform — a web client, a Tauri 2 desktop app for the Mac (Windows, Linux and mobile later) and a
@@ -10,7 +10,10 @@ TypeScript `based-server` for sync, real-time text, MCP and sharing. The origina
 
 ## Download for Mac
 
-**[Download Based-Next.dmg](https://github.com/elija-7580/Based/releases/download/next-latest/Based-Next.dmg)** →
+**Beta for testers:** [Download Based-Beta.dmg](https://github.com/elija-7580/Based/releases/download/beta-latest/Based-Beta.dmg)
+(join the waitlist on [basednotes.app](https://basednotes.app) to get invited; guide: [`docs/beta/README.md`](docs/beta/README.md)).
+
+**Development build:** **[Download Based-Next.dmg](https://github.com/elija-7580/Based/releases/download/next-latest/Based-Next.dmg)** →
 open it → drag *Based Next* into Applications. macOS 13 or later, Apple silicon and Intel. First launch and updates:
 [`docs/desktop.md`](docs/desktop.md).
 
@@ -20,7 +23,7 @@ open it → drag *Based Next* into Applications. macOS 13 or later, Apple silico
 |---|---|
 | `packages/core` | Model, store, editing, databases, formulas, import/export, search (platform-free) |
 | `packages/sync` | Sync v2 client, SQLite persistence |
-| `packages/editor` | Block editor (BlockNote + Yjs), whiteboard |
+| `packages/editor` | Block editor (own block layer on Yjs, ADR 0016), whiteboard |
 | `packages/database-ui`, `packages/ui`, `packages/design-tokens` | Database views, shared UI, design language „Based Default“ |
 | `packages/brain` | Chat engines, agents, runs, permissions, skills, MCP connections |
 | `apps/web` | The app (React + Vite); Playwright on WebKit and Chromium |
