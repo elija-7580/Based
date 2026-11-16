@@ -1,7 +1,7 @@
-failure 5f667e0a6bb2b45fb816f3fc24dfeb38c1347041
-    [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘P zweimal: Quick Find zu, Schreibmarke zurück ──
-    [webkit] › e2e/shortcut-toggle.spec.ts:52:1 › ⌘N zweimal: Neu-Palette zu, Schreibmarke zurück ──
+failure b60b6b1c26aad6b503987c53a1eff60f2ab30f37
     [webkit] › e2e/shortcut-toggle.spec.ts:62:1 › ⌘, zweimal: Einstellungen auf und zurück zur Seite 
+    [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen 
+    [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen 
     [webkit] › e2e/shortcuts.spec.ts:13:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite 
     [webkit] › e2e/shortcuts.spec.ts:34:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) 
     [webkit] › e2e/shortcuts.spec.ts:63:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs ──
