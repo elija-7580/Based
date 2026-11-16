@@ -21,7 +21,7 @@ import { cleanTitle, NotionHTMLImporter } from "./notion-html.js";
 import { toRichText } from "./runs.js";
 import { extractZip, ImportCancelled, isZip, type ZipLimits } from "./zip.js";
 import { markdownFileName } from "./markdown-export.js";
-import { findObsidianVault, ObsidianImporter } from "./obsidian-import.js";
+import { findObsidianVault, ObsidianImporter, splitFrontmatter } from "./obsidian-import.js";
 import { EnexImporter } from "./enex-import.js";
 import { importOPML } from "./opml.js";
 import { planJSONImport, type JSONImportPlan } from "./json-import.js";
@@ -386,18 +386,23 @@ class MarkdownNotionImporter {
 
   private importPage(p: string, parent: string, sortKey: string, values: Record<string, PropertyValue> = {}, db?: Database): string | undefined {
     if (this.consumed.has(p)) return undefined;
-    // BSD-260 Teil 13: CSV aus Excel unter Windows ist oft Windows-1252 (oder UTF-16) – vorher fiel die Datei still weg.
-    const raw = this.files.readStrictText(p) ?? this.legacyText(p);
-    if (raw === undefined) return undefined;
+    // BSD-260 Teil 13: alte Markdown-Dateien sind oft Windows-1252 (oder UTF-16) – vorher fiel die Datei still weg.
+    const text = this.files.readStrictText(p) ?? this.legacyText(p);
+    if (text === undefined) return undefined;
     this.consumed.add(p);
     if (this.opts.isCancelled?.()) throw new ImportCancelled();
+    // Prüfung Pass 37: YAML-Frontmatter (unser Export mit „Frontmatter“, Obsidian & Co.) nicht als Text übernehmen;
+    // der Titel daraus zählt (die „# Titel“-Zeile danach fällt dann wie sonst weg).
+    const fm = splitFrontmatter(text);
+    const raw = fm.yaml !== undefined ? fm.body : text;
+    const fmTitle = fm.yaml !== undefined ? yamlTitle(fm.yaml) : undefined;
     const id = this.ids.get(p) ?? makeRecordID();
     const dir = dirname(p);
     const split = MarkdownImporter.splitTitle(raw);
     let body = split.body;
     if (db) body = stripPropertyLines(body, db);
     const importer = new MarkdownImporter({ resolveLink: this.resolver(dir), resolveAsset: (src) => this.asset(src, dir) });
-    let title = split.title ?? cleanTitle(basename(p));
+    let title = split.title ?? fmTitle ?? cleanTitle(basename(p));
     const props: BlockProps = {};
     const lead = leadingEmoji(title);
     if (lead && !db && lead[1] !== "") { props.icon = lead[0]; title = lead[1]; }
@@ -611,3 +616,13 @@ export function parseCSVValue(raw: string, p: PropertySchema): PropertyValue | u
 }
 
 export type { Block };
+
+/** `title:` aus YAML-Frontmatter (einfacher Wert oder in Anführungszeichen, wie unser Export ihn schreibt). */
+function yamlTitle(yaml: string): string | undefined {
+  const m = /^title:[ \t]*(.*)$/m.exec(yaml);
+  if (!m) return undefined;
+  const v = m[1]!.trim();
+  if (v.startsWith('"')) { try { return JSON.parse(v) as string; } catch { return v.slice(1, -1); } }
+  if (v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1).replaceAll("''", "'");
+  return v === "" ? undefined : v;
+}
