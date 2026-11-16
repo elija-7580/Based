@@ -54,6 +54,15 @@ function ensureBoldFonts() {
   void import("./boldFonts.js").catch(() => undefined);
 }
 
+/** Ziel nimmt Text auf (Eingabefeld, Textbereich, bearbeitbarer Inhalt)? Dann gehört ⌫ dem Feld. */
+function isTextTarget(t: EventTarget | null): boolean {
+  if (!(t instanceof HTMLElement)) return false;
+  if (t.isContentEditable) return true;
+  if (t instanceof HTMLTextAreaElement) return !t.readOnly;
+  if (t instanceof HTMLInputElement) return !t.readOnly && !["checkbox", "radio", "button", "submit", "reset", "range", "color", "file"].includes(t.type);
+  return false;
+}
+
 export function App({ client, history }: { client: StoreClient; history: History }) {
   const appearance = useSyncExternalStore(appearanceStore.subscribe, appearanceStore.get);
   const setAppearance = appearanceStore.set;
@@ -161,6 +170,9 @@ export function App({ client, history }: { client: StoreClient; history: History
   useEffect(() => { if (state.ready) void hybridImport.restore(client); }, [client, state.ready]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // WebKit (Mac-App) navigiert bei ⌫/Entf ohne Textfeld im Fokus zurück – unser Router hängt an der
+      // Browser-Historie, also sprang man nach dem Löschen von Blöcken/Zeilen auf die vorige Seite.
+      if ((e.key === "Backspace" || e.key === "Delete") && !isTextTarget(e.target)) { e.preventDefault(); return; }
       if (e.key === "F6" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         // BSD-238: Bereiche per Tastatur (Seitenleiste → Kopfzeile → Seite).
         if (cycleRegion(document, e.shiftKey ? -1 : 1)) e.preventDefault();

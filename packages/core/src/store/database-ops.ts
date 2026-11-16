@@ -514,6 +514,31 @@ export function setValue(store: WorkspaceStore, rowID: string, propertyID: strin
   store.transact("Edit property", (tx) => tx.update(rowID, (x) => setRowValue(x, propertyID, value)), coalesce ? { coalesce } : {});
 }
 
+/** Mehrere Zellen in einem Schritt setzen (Einfügen/Leeren eines Zellbereichs, ein Undo-Schritt). */
+export function setValues(store: WorkspaceStore, edits: readonly { rowID: string; propertyID: string; value: PropertyValue | null }[], name = "Edit cells") {
+  const live = edits.filter((e) => {
+    const b = store.blocks.get(e.rowID);
+    if (!b) return false;
+    const db = databaseOfRow(store, e.rowID);
+    if (e.propertyID === TITLE_PROPERTY_ID || db?.properties.find((p) => p.id === e.propertyID)?.type === "title") {
+      const c = caseOf(e.value);
+      return JSON.stringify(b.text ?? "") !== JSON.stringify(c?.[0] === "text" ? (c[1] as RichText) : "");
+    }
+    return JSON.stringify(b.values?.[e.propertyID] ?? null) !== JSON.stringify(e.value ?? null);
+  });
+  if (!live.length) return;
+  store.transact(name, (tx) => {
+    for (const e of live) {
+      const db = databaseOfRow(store, e.rowID);
+      if (e.propertyID === TITLE_PROPERTY_ID || db?.properties.find((p) => p.id === e.propertyID)?.type === "title") {
+        const c = caseOf(e.value);
+        const text = c?.[0] === "text" ? (c[1] as RichText) : "";
+        tx.update(e.rowID, (x) => { if (text === "" || (Array.isArray(text) && text.length === 0)) delete x.text; else x.text = text; });
+      } else tx.update(e.rowID, (x) => setRowValue(x, e.propertyID, e.value));
+    }
+  });
+}
+
 /** Titel einer Zeile (wie `setText`, ein Undo-Schritt beim Tippen). */
 export function setRowTitle(store: WorkspaceStore, rowID: string, title: string) {
   store.setText(rowID, title);
