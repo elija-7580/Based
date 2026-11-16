@@ -109,4 +109,16 @@ describe("Rundreisen Word und Markdown-Workspace (Prüfung Pass 37)", () => {
       if (format === "html") expect(kids[3]!.props).toMatchObject({ url: "https://example.com/artikel", bookmark: { title: "Ein Artikel" } });
     }
   });
+
+  it("Markdown mit Frontmatter: das YAML wird nicht zu Text, der Titel bleibt (auch mit Doppelpunkt und Anführungszeichen)", () => {
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+    const page = createPage(store, { title: "Plan: \"Q4\" 2026" });
+    const now = store.now();
+    store.transact("t", (tx) => tx.put({ kind: "block", data: { id: "x1", type: "text", parent: "b:" + page, sk: "a0", text: "Inhalt", createdAt: now, updatedAt: now } as Block }));
+    const { zip } = writeExportZip(planWorkspaceExport(store, topLevelPages(store), "markdown", { frontmatter: true }), () => undefined);
+    const { dst, report } = importInto("Export.zip", zip);
+    const root = report.rootIDs[0]!;
+    expect(titleOf(dst, root)).toBe("Plan: \"Q4\" 2026");
+    expect(dst.children("b:" + root).map((k) => [dst.blocks.get(k)!.type, plainText(dst.blocks.get(k)!.text)])).toEqual([["text", "Inhalt"]]);
+  });
 });
