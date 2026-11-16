@@ -70,7 +70,42 @@ const PLACEHOLDER: Record<string, string> = {
 
 // MARK: Editor
 
-export function BlockEditor(props: PageEditorProps) {
+/**
+ * BSD-400: Die Hülle (PageView) zeichnet bei jeder Taste neu und reicht dabei neue Rückruf-Funktionen. Ohne Ausgleich
+ * hing damit der Editor-Kontext an jeder Taste neu – alle Blöcke zeichneten sich neu und jedes Textfeld baute sein DOM
+ * neu auf (WebKit: p95 ~250 ms je Taste bei 300 Blöcken). Funktionen werden deshalb durch beständige Stellvertreter
+ * ersetzt (rufen immer die neueste auf); das Objekt bleibt dasselbe, solange sich kein anderer Wert ändert.
+ */
+function useStableProps<T extends object>(props: T): T {
+  const latest = useRef(props);
+  latest.current = props;
+  const wrappers = useRef(new Map<string, (...a: unknown[]) => unknown>());
+  const prev = useRef<T | undefined>(undefined);
+  const keys = Object.keys(props) as (keyof T & string)[];
+  const p = prev.current;
+  const same = p !== undefined && Object.keys(p).length === keys.length && keys.every((k) => {
+    const v = props[k], o = p[k];
+    return typeof v === "function" ? typeof o === "function" : v === o;
+  });
+  if (same) return p;
+  const out = {} as T;
+  for (const k of keys) {
+    const v = props[k];
+    if (typeof v === "function") {
+      let w = wrappers.current.get(k);
+      if (!w) {
+        w = (...a: unknown[]) => (latest.current[k] as (...x: unknown[]) => unknown)(...a);
+        wrappers.current.set(k, w);
+      }
+      (out as Record<string, unknown>)[k] = w;
+    } else (out as Record<string, unknown>)[k] = v;
+  }
+  prev.current = out;
+  return out;
+}
+
+export function BlockEditor(rawProps: PageEditorProps) {
+  const props = useStableProps(rawProps);
   const { store, pageID } = props;
   const editable = props.editable ?? true;
   const ctrl = useMemo(() => new EditorController(store, pageID), [store, pageID]);
@@ -1422,6 +1457,8 @@ function isColumnable(store: WorkspaceStore, id: string, pageID: string): boolea
 const BlockList = memo(function BlockList({ parent, depth }: { parent: string; depth: number }) {
   const { store } = useCtx();
   const kids = useKids(store, parent);
+  // BSD-400: Nummerierung hängt am Typ der Geschwister – als Abo, nicht nur beim Neuzeichnen von oben
+  useSyncExternalStore(storeSubscribe(store), () => kids.map((k) => store.blocks.get(k)?.type).join(","));
   let num = 0;
   return (
     <>
@@ -1438,10 +1475,12 @@ const BlockView = memo(function BlockView({ id, depth, number }: { id: string; d
   const { store, ctrl } = useCtx();
   const b = useBlock(store, id);
   const selected = useSelected(ctrl, id);
+  // BSD-400: ob Kinder da sind, als eigenes Abo (Einrücken mit Tab hängt einen Block hier an, ohne diesen zu ändern)
+  const hasKids = useSyncExternalStore(storeSubscribe(store), () => { const x = store.blocks.get(id); return x ? cmd.visibleChildren(store, x).length > 0 : false; });
   if (!b || b.trashedAt !== undefined) return null;
   if (b.type === "columnList") return <Columns block={b} depth={depth} />;
   // Kinder eines Buttons sind seine Vorlage („Insert blocks“) – sie stehen in der Einrichtung, nicht unter dem Button
-  const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table" && b.type !== "button";
+  const showKids = hasKids && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table" && b.type !== "button";
   const color = typeof b.props?.color === "string" && b.props.color !== "default" ? b.props.color : undefined;
   // Abschnitt (Entscheidung 14. 11.): Toggle-Überschrift mit Hintergrundfarbe färbt den ganzen Block samt Inhalt als Fläche.
   const section = sectionColor(b);
