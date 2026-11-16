@@ -276,7 +276,10 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
         ? { label: "New teamspace", run: () => setEditTeamspace({ name: "" }) }
         : row.section ? { label: `New page in ${row.label}`, run: () => void onNewPage({ section: row.section! }) } : undefined;
       return (
-        <div className={"tree-header t-meta" + dropClass} style={style} onDragOver={row.section ? (e) => onDragOver(e, row) : undefined} onDrop={row.section ? (e) => onDrop(e, row) : undefined} onDragLeave={() => setDrop(undefined)}>
+        // BSD-443: im role=tree sind nur Treeitems erlaubt – der Abschnittskopf ist selbst ein (aufklappbarer) Eintrag,
+        // ohne aria-level, damit er nicht zwischen den Seiten der obersten Ebene mitgezählt wird.
+        <div role="treeitem" aria-expanded={!row.collapsed} aria-selected={false} aria-label={row.label}
+          className={"tree-header t-meta" + dropClass} style={style} onDragOver={row.section ? (e) => onDragOver(e, row) : undefined} onDrop={row.section ? (e) => onDrop(e, row) : undefined} onDragLeave={() => setDrop(undefined)}>
           <button type="button" className="tree-header-label" aria-expanded={!row.collapsed} onClick={() => toggleSection(row.group)}>{row.label}</button>
           {add ? (
             <button type="button" className="tree-action" aria-label={add.label} title={add.label} onClick={add.run}>
@@ -288,10 +291,12 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     }
     if (row.kind === "action") {
       return (
-        <button type="button" className="tree-row tree-create t-desc" style={{ ...style, paddingLeft: indent(1) }} onClick={() => setEditTeamspace({ name: "" })}>
-          <Icon name="plus" size={16} />
-          {row.label}
-        </button>
+        <div role="treeitem" aria-selected={false} aria-label={row.label} className="tree-action-row" style={style}>
+          <button type="button" className="tree-row tree-create t-desc" style={{ ...style, paddingLeft: indent(1) }} onClick={() => setEditTeamspace({ name: "" })}>
+            <Icon name="plus" size={16} />
+            {row.label}
+          </button>
+        </div>
       );
     }
     if (row.kind === "teamspace") {

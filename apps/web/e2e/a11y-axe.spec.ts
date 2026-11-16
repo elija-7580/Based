@@ -11,8 +11,6 @@ const command = (page: Page, c: Record<string, unknown>) =>
 
 /** Bekannte Funde mit eigenem Backlog-Eintrag – fällt einer weg, Ausnahme hier löschen. */
 const KNOWN: { why: string; match: (screen: string, rule: string, target: string) => boolean }[] = [
-  // BSD-443: Abschnittsköpfe und „Create a teamspace“ sind Knöpfe im role=tree der Seitenleiste
-  { why: "BSD-443", match: (_s, rule, target) => rule === "aria-required-children" && target === ".tree" },
   // BSD-444: ARIA-Struktur der Datenbank-Tabelle (Gutter/„Add property“ ohne Zelle, Fuß außerhalb des Grids, „Add view“ im Tablist)
   { why: "BSD-444", match: (s, rule, target) => s === "database" && /^aria-required-(children|parent)$/.test(rule) && /dbui-|data-index/.test(target) },
 ];
