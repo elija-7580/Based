@@ -25,6 +25,7 @@ pnpm --filter @based/server start -- --stdio --db ./based.sqlite     # MCP für 
 | `--sandbox` | `BASED_SANDBOX` | aus | `docker` oder `local`: Sandbox pro Lauf, Routen `/sandbox/*` |
 | `--sandbox-dir` | `BASED_SANDBOX_DIR` | `<db>.sandbox` | Snapshot-Archive |
 | | `BASED_LOG_LEVEL` | `info` | `debug` loggt jede Anfrage |
+| | `BASED_WHISPER_BIN`, `BASED_WHISPER_MODEL` | – | BSD-231: `whisper-cli` (whisper.cpp ≥ 1.7) und ein ggml-Modell (Katalog: `ggml-base.bin`) → Route `/local/transcribe` für Meeting Notes; optional `BASED_WHISPER_THREADS` |
 
 Neben der Datenbank legt der Server `<db>.collab.sqlite` an (Y-Zustände für `/collab`).
 
@@ -38,6 +39,7 @@ verweigert den Start.
 | GET | `/health`, `/` | öffentlich | | `{ok, name, impl: "ts", protocol: 2, time}` |
 | GET | `/sync/v2/info` | Owner, Gast | | `{protocol, seq, oldestSeq}` |
 | POST | `/sync/v2/push` | Owner, Gast | 32 MiB | `{records, deletions}` → `{newer, seq, deleted}`; Gäste nach Rolle geprüft |
+| GET, POST | `/local/transcribe` | Owner | 16 MiB | Nur mit `BASED_WHISPER_*`. GET → `{engine, ready}`; POST: WAV 16 kHz mono 16 Bit (`?language=de\|auto&prompt=…`) → JSON von `whisper-cli -oj`; ein Lauf nach dem anderen |
 | GET | `/sync/v2/pull?after&limit` | Owner, Gast | | Seiten, `limit` 1…5000 (Standard 500); Gäste gefiltert |
 | GET | `/sync/v2/wait?after&timeout` | Owner, Gast | | Long-Poll, 1…55 s (Standard 25) |
 | GET | `/p/<id>[/<page>]`, `/s/<secret>` | öffentlich | | Publish to web, Link-Landeseiten ([sharing.md](sharing.md)) |
@@ -46,7 +48,7 @@ verweigert den Start.
 | POST | `/sync/push`, GET `/sync/pull?since` | Owner | 32 MiB | v1 für sehr alte Apps (Stempel-Cursor) |
 | POST | `/mcp` | Owner | 32 MiB | MCP Streamable HTTP (zustandslos, JSON-Antworten) |
 | GET/DELETE | `/mcp` | Owner | | 405 (kein SSE) |
-| WS | `/collab` | Token in der Auth-Nachricht | 16 MiB/Nachricht | Hocuspocus, Dokument `page:<id>` |
+| WS | `/collab` | Token in der Auth-Nachricht | 16 MiB/Nachricht | Hocuspocus, Dokument `text:<id>` (`page:<id>` seit BSD-407 Teil 4c abgewiesen) |
 
 „Gast“ = Geräte-Token (`bdu_…`) oder Access-Link-Geheimnis (`bdl_…`); ein gültiger Gast-Token an einer Owner-Route
 bekommt 403. Router-Kette wie Swift `ServerRouter` (ADR 0006): CORS-Preflight → Route (404, 405 mit `Allow`) →
@@ -112,7 +114,11 @@ Sync v2. Werkzeugfehler (unbekannte Seite, Seite im Papierkorb) kommen als `isEr
 ## Echtzeit-Text (`/collab`)
 
 `src/collab.ts`: `@hocuspocus/server` (v4) hinter dem eigenen HTTP-Server (`ws`, `noServer`). Ein Y.Doc je Seite,
-Name `page:<id>`, XML-Fragment `blocks` wie `packages/editor` (`DocSession`). Auth über die Hocuspocus-Auth-
+Name `text:<id>`, Y.Map `texts` mit einem Y.Text je Textblock (`TextSession`, ADR 0016). **BSD-407 Teil 4c
+(16.11.2026):** Die alten Seiten-Dokumente `page:<id>` (BlockNote, XML-Fragment `blocks`, `DocSession`) weist der
+Server ab; ihr Inhalt steht in den Records, gespeicherte alte Zustände bleiben in `yjs_documents` unangetastet. Die
+Absätze unten zur `DocSession` beschreiben die frühere Brücke; für `text:` gelten dieselben Regeln mit der
+`TextSession`. Auth über die Hocuspocus-Auth-
 Nachricht (Provider-Option `token`), unbekannte Seiten werden abgewiesen. Speichern 2 s nach der letzten Änderung
 (spätestens 10 s) in `<db>.collab.sqlite`, Tabelle `yjs_documents(name, state, updated)`.
 
@@ -159,8 +165,8 @@ Gilt für Seiten, die danach geöffnet werden. Regeln (`packages/editor/src/yjs/
 Bekannte Grenzen: Eine neue Seite bekommt Echtzeit-Text erst beim nächsten Öffnen (der Server kennt sie vorher
 nicht). Hat eine Seite lokale, noch nicht gepushte Änderungen und noch keinen Stand vom Server, öffnet sie ohne
 Echtzeit-Text (BSD-252, `CollabBinder.unsynced`, Worker `pendingLocal`); nach dem Push verbindet das nächste Öffnen –
-so überschreibt der Server-Stand nichts. Synced-Block-Originale (eigene Wurzeln, `syncedBlock` ohne `syncSource`) haben
-ein eigenes `/collab`-Dokument (`page:<id>`, BSD-252); Kopien nicht.
+so überschreibt der Server-Stand nichts. Synced-Block-Originale hatten ein eigenes `/collab`-Dokument (`page:<id>`,
+BSD-252) – entfallen mit BSD-407 Teil 4c; ihr Text läuft über die Records.
 
 ## Ordner-Sync über iCloud Drive (BSD-334, ADR 0015)
 

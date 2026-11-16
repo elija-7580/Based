@@ -5,6 +5,12 @@
 // hineingereicht (Worker: fetch + OPFS, Tests: Doppel). Die Modelle selbst hängen sich später hinter `Transcriber`,
 // `TextEmbedder` und `RedactModel` ein.
 
+// BSD-231 Teil 3a: Tokenizer und Embeddings (multilingual-e5-small) – Laufzeit wird hineingereicht.
+export { PrecompiledCharsmap, UnigramTokenizer, type Encoding } from "./unigram.js";
+export { E5Embedder, dot, type E5Options, type OnnxFeeds, type OnnxRunner } from "./e5.js";
+// BSD-231 Teil 3c: Transkription mit whisper.cpp auf dem eigenen Server.
+export { CHUNK_SECONDS, WHISPER_RATE, WhisperServerTranscriber, encodeWav, parseWhisperJSON, splitAtQuiet, toMono16k, type WhisperJSON, type WhisperTranscriberOptions } from "./whisper.js";
+
 // BSD-399: Typen in types.ts (catalog.ts braucht sie, ohne index.ts zu importieren).
 export type { LocalModelFile, LocalModelPurpose, LocalModelSpec } from "./types.js";
 import type { LocalModelFile, LocalModelPurpose, LocalModelSpec } from "./types.js";

@@ -71,6 +71,20 @@ describe("BSD-423 Archiv-Import nach „alles löschen“", () => {
     expect(r.restored).toBeUndefined();
   });
 
+  it("Nach dem Export bearbeitet und dann in den Papierkorb gelegt: die neuere Fassung kommt zurück", () => {
+    const { s } = sample();
+    const archive = roundTrip(s);
+    const beta = topLevelPages(s).find((b) => b.text === "Beta")!;
+    s.transact("Rename", (tx) => tx.update(beta.id, (b) => { b.text = "Beta (edited)"; }));
+    trashPages(s, [beta.id]);
+    const r = importArchiveRecords(s, archive);
+    const back = s.blocks.get(beta.id);
+    expect(back?.trashedAt).toBeUndefined();
+    expect(back?.text).toBe("Beta (edited)");
+    expect(titles(s)).toContain("Beta (edited)");
+    expect(r.restored).toBe(1);
+  });
+
   it("Auf einem anderen Gerät gelöscht, hier importiert: der Sync bringt die Seiten zurück", () => {
     const { s } = sample();
     const archive = roundTrip(s);
