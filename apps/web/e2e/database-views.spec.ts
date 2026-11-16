@@ -466,9 +466,9 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
     views: [{ id: "v-table", name: "Table", type: "table" }],
   });
   const row = page.getByRole("row", { name: /Alpha/ });
-  await row.getByRole("gridcell").nth(1).click();
+  await row.getByRole("gridcell").nth(2).click();
   const editor = page.getByLabel("Edit Files");
-  if (!(await editor.isVisible())) await row.getByRole("gridcell").nth(1).dblclick();
+  if (!(await editor.isVisible())) await row.getByRole("gridcell").nth(2).dblclick();
   await expect(editor).toBeVisible();
   await editor.locator("input[type=file][aria-label='Upload file']").setInputFiles({ name: "report.txt", mimeType: "text/plain", buffer: Buffer.from("quarterly numbers") });
   await expect(editor.getByText("report.txt")).toBeVisible();

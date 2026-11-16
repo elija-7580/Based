@@ -122,14 +122,15 @@ function Tabs({ views, active, onSelect, blockID, inline, onEdit }: { views: Vie
   // Inline mit nur einer Ansicht: kein einzelner Tab („Table“) – wie Notion; „+“ bleibt beim Überfahren erreichbar.
   const single = inline && views.length === 1;
   return (
-    <div className={"dbui-tabs" + (single ? " single" : "")} role="tablist" aria-label="Views">
-      {!single && views.map((v) => (
+    <div className={"dbui-tabs" + (single ? " single" : "")}>
+      {/* BSD-444: nur die Tabs im Tablist; „Add view“ steht daneben (display: contents hält das Layout) */}
+      {!single && <div className="dbui-contents" role="tablist" aria-label="Views">{views.map((v) => (
         <button key={v.id} type="button" role="tab" className="dbui-tab" aria-selected={v.id === active.id} aria-haspopup="menu" data-view-id={v.id}
           onClick={(e) => { if (v.id === active.id) setMenu({ view: v, anchor: e.currentTarget }); else onSelect(v.id); }}
           onContextMenu={(e) => { e.preventDefault(); onSelect(v.id); setMenu({ view: v, anchor: e.currentTarget }); }}>
           <Icon name={VIEW_ICONS[v.type] ?? "table"} size={14} />{v.name}
         </button>
-      ))}
+      ))}</div>}
       {!locked && <button type="button" className="dbui-icon-btn" aria-label="Add view" onClick={(e) => setAdd(e.currentTarget)}><Icon name="plus" size={14} /></button>}
       {menu && <ViewMenu view={menu.view} anchor={menu.anchor} onClose={() => setMenu(null)} onEdit={onEdit} canDelete={views.length > 1} onSelect={onSelect} />}
       {add && (

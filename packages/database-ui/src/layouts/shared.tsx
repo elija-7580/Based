@@ -75,6 +75,8 @@ export function GroupHeader({ group, prop, collapsed, onToggle }: { group: RowGr
   const emoji = typeof icon === "string" ? icon : (icon as { emoji?: string } | undefined)?.emoji;
   return (
     <div className="dbui-group-head" role="row" aria-expanded={!collapsed}>
+      {/* BSD-444: Inhalt in einer Zelle (display: contents), damit role=row nur Zellen enthält */}
+      <div className="dbui-contents" role="gridcell">
       <button type="button" className="dbui-icon-btn dbui-group-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.title}`} onClick={onToggle}>
         <Icon name={collapsed ? "chevronRight" : "chevronDown"} size={14} />
       </button>
@@ -86,6 +88,7 @@ export function GroupHeader({ group, prop, collapsed, onToggle }: { group: RowGr
           </span>
         ) : <span className="dbui-group-title">{group.title}</span>}
       <span className="dbui-count">{group.rows.length}</span>
+      </div>
     </div>
   );
 }

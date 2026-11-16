@@ -156,6 +156,8 @@
 .dbui-th-btn:hover { background: var(--surface-soft); color: var(--ink); }
 .dbui-resize { position: absolute; right: -3px; top: 0; bottom: 0; width: calc(var(--space-1) + 2px); cursor: col-resize; z-index: 1; touch-action: none; }
 .dbui-resize:hover { background: var(--line); }
+/* BSD-444: Hülle nur für die ARIA-Rolle (Zelle, Tablist) – nimmt nicht am Layout teil */
+.dbui-contents { display: contents; }
 .dbui-th-add { border: 0; background: transparent; color: var(--muted); width: var(--space-7); display: inline-flex; align-items: center; justify-content: center; }
 .dbui-th-add:hover { background: var(--surface-soft); color: var(--ink); }
 .dbui-gutter { flex: none; width: var(--dbui-gutter); position: relative; display: flex; align-items: center; justify-content: center; }

@@ -45,7 +45,8 @@ interface RowProps {
 const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, agent, wrap, onCell, onMenu, onOpen, onToggle, selected, onSelect }: RowProps) {
   return (
     <>
-      <div className="dbui-gutter" role="presentation">
+      {/* BSD-444: Rand mit Kästchen und Zeilenmenü ist eine eigene Zelle – Knöpfe liegen nie direkt in role=row */}
+      <div className="dbui-gutter" role="gridcell" aria-label="Row controls">
         {agent && <span className="dbui-agent-bar" role="img" aria-label="Changed by Based" />}
         {onSelect && (
           <input type="checkbox" className="dbui-row-check" tabIndex={-1} checked={selected} aria-label={`Select ${plainText(row.text) || "Untitled"}`}
@@ -381,7 +382,7 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
           if (document.activeElement !== e.currentTarget) { focusByPointer.current = true; e.currentTarget.focus({ preventScroll: true }); focusByPointer.current = false; }
         }} style={{ width: total, height: virtualizer.getTotalSize() + ROW_HEIGHT }}>
         <div className="dbui-thead" role="row" style={{ width: total }}>
-          <div className="dbui-gutter">
+          <div className="dbui-gutter" role="columnheader">
             {!locked && rowOrder.length > 0 && (
               <input type="checkbox" className={"dbui-row-check" + (selected.size ? " shown" : "")} tabIndex={-1} aria-label="Select all"
                 checked={allSelected} ref={(el) => { if (el) el.indeterminate = selected.size > 0 && !allSelected; }}
@@ -389,7 +390,7 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
             )}
           </div>
           {props.map((p, i) => <HeaderCell key={p.id} p={p} width={widths[i]!} view={view} onResize={resize(p.id)} />)}
-          {!locked && <button type="button" className="dbui-th-add" aria-label="Add property" onClick={(e) => setAddProp(e.currentTarget)}><Icon name="plus" size={14} /></button>}
+          {!locked && <div className="dbui-contents" role="columnheader"><button type="button" className="dbui-th-add" aria-label="Add property" onClick={(e) => setAddProp(e.currentTarget)}><Icon name="plus" size={14} /></button></div>}
         </div>
         {vItems.map((vi) => {
           const it = items[vi.index] as FlatItem;
@@ -403,8 +404,10 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
           }
           if (it.kind === "new") {
             return (
-              <div key={vi.key} className="dbui-vrow new" style={style} data-index={vi.index}>
-                <button type="button" className="dbui-new-row" onClick={() => newRow(it.groupID)}><Icon name="plus" size={14} />New</button>
+              <div key={vi.key} className="dbui-vrow new" role="row" style={style} data-index={vi.index}>
+                <div className="dbui-contents" role="gridcell">
+                  <button type="button" className="dbui-new-row" onClick={() => newRow(it.groupID)}><Icon name="plus" size={14} />New</button>
+                </div>
               </div>
             );
           }
@@ -424,7 +427,8 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
         </button>
       )}
       {result.rows.length === 0 && <EmptyState>{view.filter?.items.length ? "No pages match the filters." : "No pages yet."}</EmptyState>}
-      <div className="dbui-tfoot" style={{ width: total }} role="row" aria-label="Calculations">
+      {/* BSD-444: Fuß liegt außerhalb des Grids – also keine Zeile, sondern eine benannte Gruppe */}
+      <div className="dbui-tfoot" style={{ width: total }} role="group" aria-label="Calculations">
         <div className="dbui-gutter" />
         {props.map((p, i) => <CalcCell key={p.id} p={p} width={widths[i]!} view={view} rows={result.rows} />)}
       </div>
