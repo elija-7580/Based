@@ -105,3 +105,21 @@ test("⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen",
   await page.waitForTimeout(150);
   await expect(hide).not.toBeFocused();
 });
+
+// BSD-439: Befehle fallen beim Tippen sofort weg – die Auswahl springt auf den ersten Eintrag, Enter öffnet ihn.
+test("Quick Find: nach Weitertippen ist der erste Eintrag ausgewählt, Enter öffnet ihn", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.keyboard.press("ControlOrMeta+k");
+  const qf = page.getByRole("dialog", { name: "Quick Find" });
+  await expect(qf).toBeVisible();
+  await page.keyboard.type("set");
+  await expect(qf.getByTestId("qf-command").first()).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  // Sofort Enter – bevor die Suche antwortet (die setzte die Auswahl früher erst zurück)
+  await page.keyboard.type("tings");
+  await page.keyboard.press("Enter");
+  await expect(qf).toHaveCount(0);
+  await expect(page).toHaveURL(/#prefs|#appearance/);
+});
