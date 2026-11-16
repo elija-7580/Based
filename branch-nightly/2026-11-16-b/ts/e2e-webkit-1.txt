@@ -1,8 +1,4 @@
-failure c0a20a819c5293f0a4793a2a9dc6b999a6d49e90
-    [webkit] › e2e/editor-notion.spec.ts:402:1 › Fotos: Codeblock-Leiste ───────────────────────────
-    [webkit] › e2e/editor-notion.spec.ts:414:1 › Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI 
-    [webkit] › e2e/editor-notion.spec.ts:451:1 › Fotos: Formatleiste und Farbe ─────────────────────
-    [webkit] › e2e/editor-parity.spec.ts:113:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
+failure 47b7e1456b9ba31104ce48cb01e02eb80a79d9f1
     [webkit] › e2e/editor-parity.spec.ts:169:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz 
     [webkit] › e2e/editor-parity.spec.ts:212:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) 
     [webkit] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
@@ -56,6 +52,10 @@ failure c0a20a819c5293f0a4793a2a9dc6b999a6d49e90
     [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile 
     [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) ─────────────────────────────
     [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) ──────────────────────────────
+    [webkit] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite 
+    [webkit] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles 
+    [webkit] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen 
+    [webkit] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild ─
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
