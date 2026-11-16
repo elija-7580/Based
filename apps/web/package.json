@@ -44,6 +44,7 @@
   },
   "devDependencies": {
     "@astryxdesign/cli": "^0.7.11",
+    "@axe-core/playwright": "4.14.0",
     "@playwright/test": "^1.49.1",
     "@types/node": "^22.20.5",
     "@types/react": "^19.2.0",
