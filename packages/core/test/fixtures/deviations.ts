@@ -16,6 +16,13 @@ const withBlocks = (swift: unknown, blocks: Block[]) => ({ ...(swift as object),
 
 /** Datei (relativ zu fixtures/) → Fallname → Abweichung. */
 export const DEVIATIONS: Record<string, Record<string, Deviation>> = {
+  "export/export.utc.json": {
+    // Swift schreibt „<tag>“ aus dem Text unverändert ins Markdown – ein Leser (und der Import) nimmt es als HTML.
+    "Markdown: p-root": {
+      reason: "Prüfung Pass 37 (Markdown-Export escapt HTML-artige Tags): „<tag>“ im Text wird „\\<tag>“",
+      output: (swift) => (swift as string).replace(/(\*\*fett\*\*.*?) <tag>/, "$1 \\<tag>"),
+    },
+  },
   "import/markdown.utc.json": {
     // Swift entnimmt mit `out.popLast()` den Vorgänger einer eingerückten Zeile auch dann, wenn er keine Kinder
     // haben kann – der Block geht verloren (Datenverlust beim Import).

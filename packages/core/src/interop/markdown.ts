@@ -119,7 +119,9 @@ export class MarkdownImporter {
       }
 
       // Code-Block
-      if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
+      // CommonMark: nach einem Backtick-Zaun darf kein Backtick mehr kommen – sonst ist es ein Code-Span im Absatz
+      // (Prüfung Pass 37: „``` `x`` ```“ aus dem Export).
+      if ((trimmed.startsWith("```") && !trimmed.replace(/^`{3,}/, "").includes("`")) || trimmed.startsWith("~~~")) {
         // Zaun mit ``` oder ~~~ (Einfügen aus anderen Editoren); geschlossen wird mit demselben Zeichen.
         const fence = trimmed.slice(0, 3);
         const lang = trimSpaces(trimmed.replace(/^(`{3,}|~{3,})/, "")).split(/\s+/)[0] ?? "";
@@ -343,6 +345,28 @@ export function escapeMarkdown(s: string): string {
   return out;
 }
 
+/**
+ * Prüfung Pass 37: „<b>“, „</i>“ … im Text würde ein Leser (und unser Import) als HTML nehmen – „<“ vor einem Buchstaben,
+ * „/“, „!“ oder „?“ escapen. Ein einzelnes „<“ (z. B. „a < b“) bleibt.
+ */
+export function escapeTagLike(s: string): string {
+  return s.replace(/<(?=[A-Za-z/!?])/g, "\\<");
+}
+
+/** Code-Span nach CommonMark: so viele Backticks, dass der Inhalt keine gleich lange Folge enthält; Rand-Backtick mit Leerzeichen. */
+export function codeSpan(s: string): string {
+  let longest = 0;
+  for (const m of s.matchAll(/`+/g)) longest = Math.max(longest, m[0].length);
+  const fence = "`".repeat(longest + 1);
+  const pad = s.startsWith("`") || s.endsWith("`") ? " " : "";
+  return fence + pad + s + pad + fence;
+}
+
+/** Linkziel ohne Zeichen, die das Markdown-Link-Ende verwechseln lassen (Klammern, Leerzeichen, Zeilenumbruch). */
+export function linkTarget(url: string): string {
+  return url.replace(/[()\s<>]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0"));
+}
+
 /** Swift `DateParsing.format`: „2024-05-04“ bzw. „2024-05-04 15:30“, mit Ende „ → …“ (lokale Zeitzone). */
 export function formatDateValue(d: DateValue): string {
   const f = d.includeTime ? "yyyy-MM-dd HH:mm" : "yyyy-MM-dd";
@@ -364,24 +388,24 @@ export function encodeInlineMarkdown(text: RichText | undefined, pageLink: (id: 
         case "page": { const l = pageLink(v as string); out += l ? `[${escapeMarkdown(l.title)}](${l.url})` : run.t; break; }
         case "date": out += "@" + formatDateValue(v as DateValue); break;
         case "user": out += "@" + (v as string); break;
-        case "link": out += `[${escapeMarkdown(run.t)}](${v as string})`; break;
+        case "link": out += `[${escapeMarkdown(run.t)}](${linkTarget(v as string)})`; break;
         default: out += run.t;
       }
       continue;
     }
-    let s = run.m.c ? run.t : escapeMarkdown(run.t);
+    let s = run.m.c ? run.t : escapeTagLike(escapeMarkdown(run.t));
     if (s === "") continue;
     // Leerzeichen außen vor den Markierungen lassen.
     const lead = /^ */.exec(s)![0], trail = / *$/.exec(s)![0];
     if (lead.length === s.length) { out += s; continue; }
     s = s.slice(lead.length, s.length - trail.length);
     const m = run.m;
-    if (m.c) s = "`" + s + "`";
+    if (m.c) s = codeSpan(s);
     if (m.b) s = "**" + s + "**";
     if (m.i) s = "*" + s + "*";
     if (m.s) s = "~~" + s + "~~";
     if (m.u) s = "<u>" + s + "</u>";
-    if (m.link !== undefined) s = `[${s}](${m.link})`;
+    if (m.link !== undefined) s = `[${s}](${linkTarget(m.link)})`;
     out += lead + s + trail;
   }
   return out;
@@ -428,6 +452,31 @@ class InlineParser {
       const c = chars[i]!;
       if (c === "\\" && i + 1 < chars.length) { buf += chars[i + 1]; this.i += 2; continue; }
       if (c === "`") {
+        let n = 1;
+        while (chars[i + n] === "`") n++;
+        if (n > 1) {
+          // Prüfung Pass 37: Code-Span mit mehreren Backticks (CommonMark) – endet an einer gleich langen Folge.
+          let k = i + n, close: number | undefined;
+          while (k < chars.length) {
+            if (chars[k] === "`") {
+              let m = 1;
+              while (chars[k + m] === "`") m++;
+              if (m === n) { close = k; break; }
+              k += m;
+            } else k++;
+          }
+          if (close !== undefined) {
+            flush();
+            let t = chars.slice(i + n, close).join("");
+            if (t.length > 2 && t.startsWith(" ") && t.endsWith(" ") && t.trim() !== "") t = t.slice(1, -1);
+            runs.push({ t, m: { ...marks, c: true } });
+            this.i = close + n;
+            continue;
+          }
+          buf += chars.slice(i, i + n).join("");
+          this.i = i + n;
+          continue;
+        }
         const close = this.find("`", i + 1);
         if (close !== undefined && close > i + 1) {
           flush();

@@ -152,7 +152,9 @@ export class MarkdownExporter {
       const p = b.props ?? {};
       let line: string;
       switch (b.type) {
-        case "text": line = text; break;
+        // Prüfung Pass 37: Ein Absatz, der wie ein Blockmarker beginnt („# “, „- “, „1. “, „> “ …), wäre beim Lesen
+        // eine Überschrift/Liste/ein Zitat – das erste Zeichen escapen.
+        case "text": line = escapeBlockStart(text); break;
         case "heading1": line = "# " + text; break;
         case "heading2": line = "## " + text; break;
         case "heading3": line = "### " + text; break;
@@ -299,4 +301,12 @@ export class MarkdownExporter {
     }
     return encodeCSV(table, { guardFormulas: true });
   }
+}
+
+/** Prüfung Pass 37: Blockmarker am Zeilenanfang eines Absatzes escapen (Zeichen bleiben, nur ein „\\“ davor). */
+export function escapeBlockStart(line: string): string {
+  if (/^(#{1,6}(\s|$)|[-+*](\s|$)|>|-{3,}\s*$|={3,}\s*$)/.test(line)) return "\\" + line;
+  const num = /^(\d{1,9})([.)])(\s|$)/.exec(line);
+  if (num) return num[1] + "\\" + line.slice(num[1]!.length);
+  return line;
 }
