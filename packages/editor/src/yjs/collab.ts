@@ -9,13 +9,12 @@
 //   arbeitet der Editor wie ohne /collab (Records + Sync v2) und versucht es beim nächsten Öffnen wieder.
 // Die Verbindung selbst (Hocuspocus-Provider, Token) baut die Hülle (`connect`); hier liegt nur die Regel.
 import * as Y from "yjs";
-import { LOAD_ORIGIN, type YDocStore } from "./session.js";
+import { textDocName } from "./text-session.js";
+import { LOAD_ORIGIN, type YDocStore } from "./ydoc-store.js";
 
 /** Y.Map mit Metadaten im Dokument (wie apps/server/src/collab.ts). */
 export const COLLAB_META_MAP = "based";
 export const COLLAB_META_ORIGIN = "origin";
-/** Dokumentname auf dem Server. */
-export const collabDocName = (rootID: string) => `page:${rootID}`;
 
 /**
  * ADR 0016 (E7): Präsenz über die Awareness des Providers (y-protocols): wer gerade wo in der Seite ist. Nur die
@@ -54,7 +53,7 @@ export interface CollabBinderOptions {
   connect: (name: string, doc: Y.Doc) => CollabConnection | undefined;
   /** Gespeicherte Y-Zustände (dieselbe Ablage wie der Editor). */
   docStore: YDocStore;
-  /** ADR 0016 (E7): Dokumentname je Wurzel (Standard `page:<id>`; der neue Editor nutzt `text:<id>`). */
+  /** ADR 0016 (E7): Dokumentname je Wurzel (Standard `text:<id>`; `page:<id>` weist der Server seit BSD-407 Teil 4c ab). */
   docName?: (rootID: string) => string;
   /** Nur diese Wurzeln (der Server kennt nur Seiten). Standard: alle. */
   accepts?: (rootID: string) => boolean;
@@ -99,7 +98,7 @@ export class CollabBinder implements CollabSource {
       return this.handle(rootID, have);
     }
     if (this.opts.accepts && !this.opts.accepts(rootID)) return undefined;
-    const name = (this.opts.docName ?? collabDocName)(rootID);
+    const name = (this.opts.docName ?? textDocName)(rootID);
     try {
       await this.opts.docStore.prepare?.(rootID);
     } catch {
