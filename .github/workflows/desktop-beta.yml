@@ -129,7 +129,12 @@ jobs:
           ditto "$BUNDLE/$APP_NAME.app" "$RUNNER_TEMP/dmg/$APP_NAME.app"
           ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
           hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Beta.dmg
-          hdiutil verify dist/Based-Beta.dmg
+          # Frisch geschriebene DMG ist kurz gesperrt („Resource temporarily unavailable“): bis zu 5 Versuche.
+          for i in 1 2 3 4 5; do
+            hdiutil verify dist/Based-Beta.dmg && break
+            [ "$i" = 5 ] && exit 1
+            sleep 5
+          done
           if [ -f "$BUNDLE/$APP_NAME.app.tar.gz" ]; then
             cp "$BUNDLE/$APP_NAME.app.tar.gz" dist/Based-Beta.app.tar.gz
             cp "$BUNDLE/$APP_NAME.app.tar.gz.sig" dist/Based-Beta.app.tar.gz.sig
