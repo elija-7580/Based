@@ -56,7 +56,9 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, maxHeight, 
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const width = fitArcWidth(space, maxHeight, SIZES.done, SIZES.apex, SIZES.ring);
+  // BSD-301 Teil 4: Ohne Karten darf der Bogen schmaler werden (nur der Hinweistext braucht Platz), damit der Composer
+  // auch in 900 × 600 mit Tab-Leiste im Startfenster bleibt; mit Karten bleibt die Mindestbreite (sonst zu dicht).
+  const width = fitArcWidth(space, maxHeight, SIZES.done, SIZES.apex, SIZES.ring, model.empty ? 420 : undefined);
 
   // Pixel → Einheiten (Bogen ist 1000 Einheiten breit)
   const k = 1000 / width;
@@ -73,7 +75,10 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, maxHeight, 
     const planned = placeSide(model.planned.map((c) => ({ id: c.id, t: timeToT(c.atMs, nowMs, frame) })), "planned", g, u(SIZES.planned), [...blocked, ...ringBoxes, ...done.placed.map((p) => p.box)], { minT });
     const all = [...blocked, ...ringBoxes, ...done.placed.map((p) => p.box), ...planned.placed.map((p) => p.box)];
     const endOffset = u(SIZES.done).h / 2 + 14 * k;
-    const ticks = visibleTicks(arcTicks(g, frame, endOffset), all, { w: 44 * k, h: 16 * k });
+    // BSD-301 Teil 4: Im Leerzustand steht der Hinweistext im Bogen (höchstens 380 px breit, rund 175 px hoch) –
+    // Beschriftungen, die darauf lägen („now“, ±3 h bei schmalem Bogen), entfallen.
+    const emptyBox: Box[] = model.empty ? [{ x: g.cx, y: g.cy - g.innerR * 0.9 + 87.5 * k, w: 380 * k, h: 175 * k }] : [];
+    const ticks = visibleTicks(arcTicks(g, frame, endOffset), [...all, ...emptyBox], { w: 44 * k, h: 16 * k });
     // „Running“ am Fuß des inneren Rings, wenn dort keine Karte liegt.
     const ringFoot = { x: g.cx - g.innerR, y: g.cy + endOffset };
     const ringCaption = model.running.length > 0 && visibleTicks([{ t: -1, label: "Running", at: ringFoot, now: false }], all, { w: 64 * k, h: 16 * k }).length > 0 ? ringFoot : undefined;

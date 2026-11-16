@@ -94,6 +94,69 @@ async function overflows(page: Page): Promise<string[]> {
   });
 }
 
+/**
+ * BSD-301 Teil 4: Sucht Textzeilen zweier verschiedener Elemente, die sich sichtbar überdecken (z. B. ein Etikett, das
+ * unter einen Knopf rutscht, oder zwei absolut gesetzte Beschriftungen). Gemessen werden die Zeilenkästen der
+ * Textknoten (Range.getClientRects), beschnitten auf die sichtbaren Bereiche ihrer Vorfahren.
+ */
+async function overlaps(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    interface Box { l: number; t: number; r: number; b: number; el: Element; text: string }
+    const boxes: Box[] = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    const clipOf = (el: Element) => {
+      let c = { l: 0, t: 0, r: innerWidth, b: innerHeight };
+      for (let p: Element | null = el; p && p !== document.body; p = p.parentElement) {
+        const cs = getComputedStyle(p);
+        if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
+        const r = p.getBoundingClientRect();
+        c = { l: Math.max(c.l, r.left), t: Math.max(c.t, r.top), r: Math.min(c.r, r.right), b: Math.min(c.b, r.bottom) };
+      }
+      return c;
+    };
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const text = (n.textContent ?? "").trim();
+      const el = n.parentElement;
+      if (!text || !el) continue;
+      if (el.closest(".sr-only, [aria-hidden=true], script, style, svg, [hidden], noscript, [data-tooltip], [role=tooltip]")) continue;
+      if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
+      const cs = getComputedStyle(el);
+      if (cs.clipPath !== "none" || (cs.clip !== "auto" && cs.clip !== "")) continue;
+      const clip = clipOf(el);
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) {
+        const b = { l: Math.max(r.left, clip.l), t: Math.max(r.top, clip.t), r: Math.min(r.right, clip.r), b: Math.min(r.bottom, clip.b) };
+        if (b.r - b.l > 2 && b.b - b.t > 2) boxes.push({ ...b, el, text });
+      }
+    }
+    boxes.sort((a, b) => a.t - b.t);
+    const out = new Set<string>();
+    const name = (x: Box) => `${x.el.tagName.toLowerCase()}${typeof x.el.className === "string" && x.el.className ? "." + x.el.className.split(/\s+/)[0] : ""} „${x.text.slice(0, 30)}“`;
+    for (let i = 0; i < boxes.length; i++) {
+      const a = boxes[i]!;
+      for (let j = i + 1; j < boxes.length && boxes[j]!.t < a.b; j++) {
+        const b = boxes[j]!;
+        if (a.el === b.el || a.el.contains(b.el) || b.el.contains(a.el)) continue;
+        const w = Math.min(a.r, b.r) - Math.max(a.l, b.l);
+        const h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
+        // Benachbarte Zeilen mit knappem Zeilenabstand berühren sich: erst ab einem Drittel der Zeilenhöhe zählt es.
+        if (w > 4 && h > Math.min(a.b - a.t, b.b - b.t) / 3) out.add(`überdeckt sich: ${name(a)} ↔ ${name(b)}`);
+      }
+    }
+    return [...out];
+  });
+}
+
+/** BSD-301 Teil 4: Die wichtigste Bedienung eines Screens liegt ohne Scrollen ganz im Fenster. */
+async function primaryVisible(page: Page, sel: string): Promise<string | undefined> {
+  const box = await page.locator(sel).first().boundingBox();
+  const vp = page.viewportSize()!;
+  if (!box) return `wichtigste Bedienung fehlt: ${sel}`;
+  if (box.x < -1 || box.y < -1 || box.x + box.width > vp.width + 1 || box.y + box.height > vp.height + 1) return `wichtigste Bedienung nicht im Startfenster: ${sel} (${Math.round(box.x)},${Math.round(box.y)} ${Math.round(box.width)}×${Math.round(box.height)})`;
+  return undefined;
+}
+
 async function ready(page: Page) {
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
 }
@@ -103,7 +166,9 @@ async function go(page: Page, hash: string) {
   await page.waitForTimeout(400);
 }
 
-async function check(page: Page, screens: { name: string; hash: string }[], shotPrefix: string, browserName: string) {
+interface Screen { name: string; hash: string; /** CSS-Auswahl der wichtigsten Bedienung (BSD-301 Teil 4) */ primary?: string }
+
+async function check(page: Page, screens: Screen[], shotPrefix: string, browserName: string) {
   const found: string[] = [];
   for (const [w, h, suffix] of VIEWPORTS) {
     await page.setViewportSize({ width: w, height: h });
@@ -112,6 +177,9 @@ async function check(page: Page, screens: { name: string; hash: string }[], shot
       await page.mouse.move(w / 2, h - 5);
       await page.waitForTimeout(200);
       for (const f of await overflows(page)) found.push(`${s.name} ${w}×${h}: ${f}`);
+      for (const f of await overlaps(page)) found.push(`${s.name} ${w}×${h}: ${f}`);
+      const p = s.primary ? await primaryVisible(page, s.primary) : undefined;
+      if (p) found.push(`${s.name} ${w}×${h}: ${p}`);
       if (SHOTS && browserName === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-overflow-${shotPrefix}-${s.name}-light${suffix}.png` });
     }
   }
@@ -134,12 +202,17 @@ async function check(page: Page, screens: { name: string; hash: string }[], shot
 
 test.describe.configure({ timeout: 180_000 });
 
+// BSD-301 Teil 4: wichtigste Bedienung je Screen – muss ohne Scrollen ganz im Fenster liegen.
+const HOME_COMPOSER = ".home-dock .composer";
+const LIBRARY_SEARCH = "[data-testid=library] input[type=search]";
+const PAGE_TITLE = "[aria-label='Page title']";
+
 test("Leerer Workspace: nichts läuft über", async ({ page, browserName }) => {
   await page.goto("/");
   await ready(page);
   const found = await check(page, [
-    { name: "home", hash: "#home" }, { name: "library", hash: "#library" }, { name: "trash", hash: "#trash" },
-    { name: "chat", hash: "#chat" }, { name: "settings", hash: "#prefs-my-settings" },
+    { name: "home", hash: "#home", primary: HOME_COMPOSER }, { name: "library", hash: "#library", primary: LIBRARY_SEARCH }, { name: "trash", hash: "#trash" },
+    { name: "chat", hash: "#chat", primary: ".chat-composer" }, { name: "settings", hash: "#prefs-my-settings" },
   ], "empty", browserName);
   expect(found).toEqual([]);
 });
@@ -160,7 +233,8 @@ test("Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung", async 
   await page.keyboard.type(`Word: ${LONG_WORD} end.`);
   await page.waitForTimeout(600);
   const found = await check(page, [
-    { name: "page", hash: "#page-" + long }, { name: "deep", hash: "#page-" + parent }, { name: "home", hash: "#home" }, { name: "library", hash: "#library" },
+    { name: "page", hash: "#page-" + long, primary: PAGE_TITLE }, { name: "deep", hash: "#page-" + parent, primary: PAGE_TITLE },
+    { name: "home", hash: "#home", primary: HOME_COMPOSER }, { name: "library", hash: "#library", primary: LIBRARY_SEARCH },
   ], "extreme", browserName);
   expect(found).toEqual([]);
 });
@@ -212,7 +286,7 @@ test("30 Tabs und eine breite Datenbank: nichts läuft über", async ({ page, br
   const db = "#page-" + dbID;
   await go(page, db);
   await expect(page.locator(".dbui-table").first()).toBeVisible();
-  const found = await check(page, [{ name: "tabs-db", hash: db }, { name: "tabs-home", hash: "#home" }], "tabs", browserName);
+  const found = await check(page, [{ name: "tabs-db", hash: db, primary: ".dbui-toolbar" }, { name: "tabs-home", hash: "#home", primary: HOME_COMPOSER }], "tabs", browserName);
   expect(found).toEqual([]);
   // Die Tab-Leiste rollt waagrecht statt das Fenster zu verbreitern
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
@@ -299,7 +373,7 @@ test("Datenbank: 1.000 Zeilen, lange Spaltennamen und Optionen", async ({ page, 
   }, { id: blockID, long: LONG_TITLE });
   await expect(page.getByRole("columnheader", { name: /Status of the review/ })).toBeVisible();
   await expect(page.getByRole("gridcell", { name: /^A very long page title/ }).first()).toBeVisible(); // Werte angekommen
-  const found = await check(page, [{ name: "database-long", hash: "#page-" + blockID }], "extreme", browserName);
+  const found = await check(page, [{ name: "database-long", hash: "#page-" + blockID, primary: ".dbui-toolbar" }], "extreme", browserName);
   expect(found).toEqual([]);
 });
 
