@@ -1,5 +1,4 @@
-failure 6987706d7a709dcad0b77c267cbe8eae2e1bdd7d
-    [webkit] › e2e/editor-parity.spec.ts:169:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz 
+failure be3d8fd0341402b0beb6f9571ea99fe542b13de3
     [webkit] › e2e/editor-parity.spec.ts:212:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) 
     [webkit] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
     [webkit] › e2e/editor-parity.spec.ts:312:1 › @ erwähnt Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
@@ -17,10 +16,11 @@ failure 6987706d7a709dcad0b77c267cbe8eae2e1bdd7d
     [webkit] › e2e/editor-parity.spec.ts:804:1 › Rechtsklick → Paste behält die Formatierung ───────
     [webkit] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert 
     [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
-    [webkit] › e2e/editor-polish.spec.ts:55:1 › Editor in Ruhe und in seinen Zuständen ─────────────
-    [webkit] › e2e/editor-polish.spec.ts:144:1 › Links und Häkchen im Editor ohne Browser-Blau ─────
-    [webkit] › e2e/editor-polish.spec.ts:166:1 › Blockfarben im Dunkelmodus aus den Tokens ─────────
-    [webkit] › e2e/editor-polish.spec.ts:196:1 › Slash ohne Treffer: „No results“, Enter macht eine neue Zeile 
+    [webkit] › e2e/editor-polish.spec.ts:56:1 › Editor in Ruhe und in seinen Zuständen ─────────────
+    [webkit] › e2e/editor-polish.spec.ts:145:1 › Links und Häkchen im Editor ohne Browser-Blau ─────
+    [webkit] › e2e/editor-polish.spec.ts:167:1 › Blockfarben im Dunkelmodus aus den Tokens ─────────
+    [webkit] › e2e/editor-polish.spec.ts:197:1 › Slash ohne Treffer: „No results“, Enter macht eine neue Zeile 
+    [webkit] › e2e/editor-polish.spec.ts:236:1 › Rest-Zustände: alle Blocktypen, Suche in der Seite, Link-Dialog 
     [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt 
     [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ 
     [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen 
