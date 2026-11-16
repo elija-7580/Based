@@ -1,5 +1,5 @@
 // BSD-210: Spaltenbreiten wie in Notion/Swift – je Spalte ein Anteil an der Zeile (`ratio`, Summe 1). Fehlende
-// Anteile (0) teilen sich den Rest gleichmäßig. Reine Funktionen, die Ansicht (schema/blocks.tsx) zieht nur.
+// Anteile (0) teilen sich den Rest gleichmäßig. Reine Funktionen (die alte BlockNote-Ansicht ist mit BSD-407 Teil 4b weg; für Spaltenbreiten im Block-Editor).
 
 /** Kleinster Anteil einer Spalte beim Ziehen. */
 export const MIN_COLUMN = 0.1;

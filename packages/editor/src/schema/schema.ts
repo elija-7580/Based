@@ -7,10 +7,8 @@ import type { BNBlock } from "../mapping/bn.js";
 import type { BlockConverter } from "../yjs/session.js";
 import {
   breadcrumbBlock, buttonBlock, calloutBlock, columnBlock, columnListBlock, databaseBlock, embedBlock, equationBlock,
-  linkToPageBlock, opaqueBlock, pageBlock, syncedBlock, tocBlock,
-} from "./blocks.js";
-import { inlineEquation, mentionInline } from "./inline.js";
-import { meetingBlock } from "./meeting.js";
+  inlineEquation, linkToPageBlock, meetingBlock, mentionInline, opaqueBlock, pageBlock, syncedBlock, tocBlock,
+} from "./specs.js";
 import { codeBlockSpec } from "./code.js";
 
 export function createBasedSchema() {
