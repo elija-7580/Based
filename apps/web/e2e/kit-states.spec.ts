@@ -143,6 +143,9 @@ const KIT: Item[] = [
   { name: "Tab", loc: (p) => p.getByTestId("astryx-kit").getByRole("tab", { name: "Summary" }), states: ["rest", "hover", "focus"] },
   { name: "Tab selected", loc: (p) => p.getByTestId("astryx-kit").getByRole("tab", { name: "Notes" }), states: ["rest", "hover"] },
   { name: "Token", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: /Ada/ }), states: ["rest", "hover", "pressed", "focus"] },
+  { name: "Chip", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "In this page" }), states: ["rest", "hover", "pressed", "focus"] },
+  { name: "Chip pressed", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Title only" }), states: ["rest", "hover"] },
+  { name: "Chip disabled", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Shared only" }), states: ["disabled"] },
   { name: "Menu trigger", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Page menu" }), states: ["rest", "hover", "focus"] },
 ];
 
