@@ -20,6 +20,7 @@ import { OwnerDevices } from "./devices.js";
 import { Backups } from "./backups.js";
 import { FolderSyncService } from "./folder-sync.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
+import { registerTranscribeRoutes, type WhisperConfig } from "./transcribe.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
 import { Scheduler } from "./scheduler.js";
@@ -64,6 +65,8 @@ export interface AppOptions extends SyncServiceOptions {
   scheduleEvery?: number | false;
   /** BSD-243 Teil 2: Modell für Läufe auf dem Server (ohne: Läufe warten auf eine offene App). */
   agentEngine?: ((store: WorkspaceStore) => AgentRunnerOptions["engine"]) | undefined;
+  /** BSD-231 Teil 3c: whisper.cpp für POST /local/transcribe (Meeting Notes); ohne: keine Route. */
+  whisper?: WhisperConfig | undefined;
 }
 
 export interface App {
@@ -264,6 +267,7 @@ export function createApp(opts: AppOptions): App {
   // MARK: Teilen (docs/sharing.md)
   registerShareRoutes(router, { share, sync, assets, log, webURL: opts.webURL });
   if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
+  if (opts.whisper) registerTranscribeRoutes(router, opts.whisper, log);
   if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs, opts.codingHost);
 
   // MARK: Backups (BSD-274)

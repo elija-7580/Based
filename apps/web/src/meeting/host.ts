@@ -13,7 +13,8 @@ import type { PageReplica, StoreClient } from "../worker/client.js";
 import { canCaptureSystemAudio, canRecordAudio, startBrowserCapture } from "./capture.js";
 import { MeetingPlayer } from "./player.js";
 import { onBattery, watchPower } from "./power.js";
-import { meetingTranscribePref, pendingTranscripts } from "../shell/storage.js";
+import { meetingTranscribePref, pendingTranscripts, syncConfig } from "../shell/storage.js";
+import { serverWhisper, whisperReady } from "./whisper.js";
 
 export interface MeetingTestHooks {
   /** Fester Transcriber (Zeilen mit Zeiten in Sekunden ab Aufnahmebeginn); `undefined` = keiner. */
@@ -31,6 +32,19 @@ export interface WebMeetingHost extends MeetingHost {
 
 export function createMeetingHost(client: StoreClient): WebMeetingHost {
   let transcriber: Transcriber | undefined;
+  // BSD-231 Teil 3c: whisper.cpp auf dem verbundenen based-server, wenn er es anbietet (Test-Transcriber geht vor).
+  let serverTranscriber: Transcriber | undefined;
+  let probedFor = "";
+  const probeServer = async () => {
+    const cfg = syncConfig.get();
+    const key = cfg ? `${cfg.url}\n${cfg.token}` : "";
+    if (key === probedFor) return;
+    probedFor = key;
+    const ready = await whisperReady(cfg);
+    serverTranscriber = ready && cfg ? serverWhisper(cfg) : undefined;
+    notify();
+  };
+  const activeTranscriber = () => transcriber ?? serverTranscriber;
   let script: ScriptStep[] | undefined;
   const urls = new Map<string, string>();
   const listeners = new Set<() => void>();
@@ -57,7 +71,7 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
       if (!r.ok) throw new Error(r.message);
       return new Blob([r.bytes], { type: asset.mime ?? "audio/webm" });
     },
-    transcriber: () => transcriber,
+    transcriber: () => { void probeServer(); return activeTranscriber(); },
     // Feedback 14. 11.: auf Akku nur aufnehmen, am Strom transkribieren (Einstellung „When plugged in“).
     deferTranscription: async () => meetingTranscribePref.get() === "plugged-in" && (await battery()) === true,
     async engine(): Promise<ChatEngine | undefined> {
@@ -82,7 +96,7 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
   const drain = async (force = false) => {
     if (draining || recorder.getState().recording) return;
     const list = pendingTranscripts.get();
-    if (!list.length || !transcriber) return;
+    if (!list.length || !activeTranscriber()) return;
     if (!force && meetingTranscribePref.get() === "plugged-in" && (await battery()) !== false) return;
     draining = true;
     try {
@@ -179,7 +193,7 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
     recordingPage: () => (recorder.getState().recording ? heldPage : undefined),
     canRecord: canRecordAudio,
     canCaptureSystemAudio,
-    hasTranscriber: () => transcriber !== undefined,
+    hasTranscriber: () => { void probeServer(); return activeTranscriber() !== undefined; },
     hasSummaryEngine: () => script !== undefined || config.activeModel() !== undefined,
     errorFor: (id) => recorder.errorFor(id),
     async start(store, meetingID, opts) {
