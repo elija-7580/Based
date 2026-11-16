@@ -1,1 +1,1 @@
-cancelled 3b200614363042f6f6ad7c6b582559565802a05e nightly/2026-11-16-b
+success 3bcad972ea2e19d52228dcae6027aae3cff5971c nightly/2026-11-16-b
