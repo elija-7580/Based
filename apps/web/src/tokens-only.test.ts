@@ -53,6 +53,16 @@ describe("nur Tokens", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("BSD-417: Bewegung im Code aus Tokens, sanftes Rollen nur ohne „Bewegung reduzieren“", () => {
+    const offenders = lines((f) => /\.tsx?$/.test(f)).filter(([, , l]) => {
+      const c = code(l);
+      if (/\.animate\(/.test(c) && /duration:\s*\d|cubic-bezier|easing:\s*"/.test(c)) return true;
+      if (/behavior:\s*"smooth"/.test(c) && !/reduce/.test(c)) return true;
+      return false;
+    });
+    expect(offenders).toEqual([]);
+  });
+
   it("SVG-Icons nur aus den Icon-Dateien", () => {
     // Ausnahmen mit Grund: die Icon-Sätze selbst; der Zeitbogen auf Home und Diagramme sind Grafiken, keine Icons;
     // @based/database-ui und @based/editor sind Pakete ohne Zugriff auf apps/web und haben je einen eigenen Satz auf demselben Raster

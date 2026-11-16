@@ -6,7 +6,7 @@ import { join } from "node:path";
 
 // BSD-304: Tastatur- und Zugänglichkeits-Durchlauf. Auf jedem Screen per Tab durch alles Bedienbare: jedes fokussierte
 // Element ist sichtbar, hat einen sichtbaren Fokusrahmen, einen Namen und eine Klickfläche von mindestens 24 × 24 px.
-// Maßstab: docs/quality/checklist.md, Abschnitt 3 und 5. (axe-core für Kontrast und Rollen: offen, siehe Backlog.)
+// Maßstab: docs/quality/checklist.md, Abschnitt 3 und 5. axe-core für Kontrast und Rollen: a11y-axe.spec.ts.
 
 const test = base.extend<{ page: Page }>({
   page: async ({ playwright, browserName, baseURL }, use) => {
@@ -25,7 +25,7 @@ type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
 const command = (page: Page, c: Record<string, unknown>) =>
   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
 
-interface Stop { name: string; tag: string; problems: string[] }
+interface Stop { name: string; tag: string; problems: string[]; x: number; y: number; h: number; region: string }
 
 /** Prüft das gerade fokussierte Element. */
 async function inspect(page: Page): Promise<Stop | undefined> {
@@ -80,7 +80,10 @@ async function inspect(page: Page): Promise<Stop | undefined> {
       if (crowded) problems.push(`Klickfläche ${Math.round(area.width)}×${Math.round(area.height)} und zu nah am Nachbarn`);
     }
     const cls = typeof el.className === "string" ? el.className.split(/\s+/).filter((c) => c && !/^x[0-9a-z]{5,8}$/.test(c)).slice(0, 2).join(".") : "";
-    return { name: name.slice(0, 40), tag: `${el.tagName.toLowerCase()}${cls ? "." + cls : ""}`, problems };
+    // BSD-304 Teil 4: Lage und Bereich (Landmarke) für die Leserichtung
+    const region = el.closest("nav, main, aside, header, footer, [role=dialog], [role=navigation], [role=complementary], [role=group][aria-label], [role=toolbar]");
+    const regionName = region ? `${region.tagName.toLowerCase()}${region.getAttribute("aria-label") ? "[" + region.getAttribute("aria-label") + "]" : ""}` : "body";
+    return { name: name.slice(0, 40), tag: `${el.tagName.toLowerCase()}${cls ? "." + cls : ""}`, problems, x: r.left, y: r.top, h: r.height, region: regionName };
   });
 }
 
@@ -92,6 +95,7 @@ async function walk(page: Page, screen: string, max = 60, within?: string): Prom
     await page.locator("body").click({ position: { x: 1, y: 1 } }).catch(() => undefined);
   }
   const seen = new Set<string>();
+  let prev: Stop | undefined;
   for (let i = 0; i < max; i++) {
     await page.keyboard.press("Tab");
     await page.waitForTimeout(140); // Fokus-Übergänge (--duration-fast) abwarten
@@ -105,6 +109,14 @@ async function walk(page: Page, screen: string, max = 60, within?: string): Prom
     if (seen.has(key) && seen.size > 3) break;
     seen.add(key);
     for (const p of s.problems) found.push(`${screen}: ${s.tag} „${s.name}“ – ${p}`);
+    // Leserichtung: im selben Bereich geht Tab nach unten oder in derselben Zeile nach rechts – nie zurück nach oben
+    // oder in derselben Zeile nach links (Ausnahme: ein neuer Bereich beginnt).
+    if (prev && prev.region === s.region) {
+      const sameLine = Math.abs(s.y - prev.y) < Math.max(8, Math.min(s.h, prev.h) / 2);
+      if (!sameLine && s.y < prev.y) found.push(`${screen}: Leserichtung – „${s.name}“ (${s.tag}) liegt über „${prev.name}“ (${s.region})`);
+      else if (sameLine && s.x < prev.x - 4) found.push(`${screen}: Leserichtung – „${s.name}“ (${s.tag}) liegt links von „${prev.name}“ (${s.region})`);
+    }
+    prev = s;
   }
   return [...new Set(found)];
 }

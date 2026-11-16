@@ -531,7 +531,12 @@ button.row:hover, a.row:hover { background: var(--bg); }
   .home .home-head { flex-wrap: nowrap; gap: var(--space-2); }
   .home .home-head :is(.home-btn-label, .home-status-label) { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* BSD-417: „Bewegung reduzieren“ gilt überall – Übergänge und Animationen (auch Pulse, Einblenden, Pseudo-Elemente)
+   entfallen, Rollen springen. Einzelne Regeln je Baustein sind damit nur noch Doppelung. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  :root, * { scroll-behavior: auto !important; }
+}
 .composer-bar .details { flex: 1 1 0; min-width: 0; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .composer-bar .details + .send { margin-left: 0; }
 
