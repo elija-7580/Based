@@ -69,4 +69,25 @@ describe("HTML-Rundreise (Prüfung Pass 37)", () => {
     const { dst, report } = importInto("N 11111111111141118111111111111111.html", new TextEncoder().encode(html));
     expect(dst.children("b:" + report.rootIDs[0]!).map((k) => dst.blocks.get(k)!.type)).toEqual(["heading2", "text"]);
   });
+
+  it("Unterseiten, Seitenlinks und Erwähnungen bleiben Seiten bzw. Verweise (nicht „📄 Titel“-Absätze)", () => {
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+    const page = createPage(store, { title: "Wurzel" });
+    const sub = createPage(store, { title: "Unter", parent: page });
+    const other = createPage(store, { title: "Andere" });
+    const now = store.now();
+    store.transact("t", (tx) => {
+      tx.put({ kind: "block", data: { id: "m1", type: "text", parent: "b:" + page, sk: "a0", text: [{ t: "Siehe " }, { t: "Andere", mention: { page: { _0: other } } }, { t: " und " }, { t: "Unter", mention: { page: { _0: sub } } }], createdAt: now, updatedAt: now } as Block });
+      tx.put({ kind: "block", data: { id: "l1", type: "linkToPage", parent: "b:" + page, sk: "a1", props: { linkTarget: other }, createdAt: now, updatedAt: now } as Block });
+    });
+    const zip = exportWorkspaceHTML(store);
+    const { dst } = importInto(zip.name, zip.data);
+    const byTitle = (t: string) => [...dst.blocks.values()].find((b) => b.type === "page" && titleOf(dst, b.id) === t)!;
+    const root = byTitle("Wurzel"), unter = byTitle("Unter"), andere = byTitle("Andere");
+    const kids = dst.children("b:" + root.id).map((k) => dst.blocks.get(k)!);
+    expect(kids.map((b) => b.type)).toEqual(["page", "text", "linkToPage"]);
+    expect(kids[0]!.id).toBe(unter.id);
+    expect(runsOf(kids[1]!.text as never).filter((r) => r.mention).map((r) => (r.mention as { page: { _0: string } }).page._0)).toEqual([andere.id, unter.id]);
+    expect(kids[2]!.props?.linkTarget).toBe(andere.id);
+  });
 });

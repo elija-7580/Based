@@ -563,6 +563,12 @@ export class NotionHTMLImporter {
   emit(n: HTMLNode, parent: string, ctx: Ctx): string | undefined {
     switch (n.tag) {
       case "p": {
+        // Prüfung Pass 37: Based-Export schreibt Unterseiten und Seitenlinks als <p class="page-link"><a …>📄 Titel</a></p>.
+        if (ctx.based && n.has("page-link")) {
+          const a = n.first((x) => x.tag === "a");
+          const href = a?.attr("href");
+          if (a && href) return this.pageLink(href, a, this.blockID(n, ctx), parent, ctx);
+        }
         const p: BlockProps = { color: this.color(n) };
         if (n.elements.some((e) => !INLINE_TAGS.has(e.tag))) {
           const id = this.append("text", parent, this.blockID(n, ctx), trimRuns(this.richText(n.children.filter((c) => INLINE_TAGS.has(c.tag)), ctx)), p);
