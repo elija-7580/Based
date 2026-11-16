@@ -1,4 +1,4 @@
-failure 9614eb09c887fdb61a0761162d5dfe0be7f29faa
+failure 8e3bb5ea55d27c03ecc8217c86291f803e78d5bc
     [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen 
     [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen 
     [webkit] › e2e/shortcut-toggle.spec.ts:110:1 › Quick Find: nach Weitertippen ist der erste Eintrag ausgewählt, Enter öffnet ihn 
