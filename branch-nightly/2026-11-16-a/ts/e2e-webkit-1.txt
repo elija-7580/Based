@@ -1,4 +1,4 @@
-failure 20c20e677caf41f66b10611503b265c808c9c7b3
+failure 725b05e104de674e9127227a2b723639f3e16d25
     [webkit] › e2e/editor-parity.spec.ts:212:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) 
     [webkit] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
     [webkit] › e2e/editor-parity.spec.ts:312:1 › @ erwähnt Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
@@ -13,7 +13,7 @@ failure 20c20e677caf41f66b10611503b265c808c9c7b3
     [webkit] › e2e/editor-parity.spec.ts:683:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline 
     [webkit] › e2e/editor-parity.spec.ts:712:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre 
     [webkit] › e2e/editor-parity.spec.ts:754:1 › Fotos: Synced-Block-Kopie, Hinweis am Editor ──────
-    [webkit] › e2e/editor-parity.spec.ts:804:1 › Rechtsklick → Paste behält die Formatierung ───────
+    [webkit] › e2e/editor-parity.spec.ts:805:1 › Rechtsklick → Paste behält die Formatierung ───────
     [webkit] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert 
     [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
     [webkit] › e2e/editor-polish.spec.ts:56:1 › Editor in Ruhe und in seinen Zuständen ─────────────
