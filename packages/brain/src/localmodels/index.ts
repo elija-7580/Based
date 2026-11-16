@@ -75,7 +75,8 @@ export function validateSpec(spec: LocalModelSpec): string[] {
   return errors;
 }
 
-const storePath = (spec: LocalModelSpec, f: LocalModelFile) => `${spec.id}/${spec.version}/${f.path}`;
+/** Pfad einer Modelldatei im Speicher (`<modell>/<version>/<datei>`; der Server legt sie so auf die Platte). */
+export const storePath = (spec: LocalModelSpec, f: Pick<LocalModelFile, "path">) => `${spec.id}/${spec.version}/${f.path}`;
 
 export class LocalModelManager {
   constructor(private readonly o: LocalModelManagerOptions) {}
