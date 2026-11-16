@@ -541,7 +541,8 @@ export class NotionHTMLImporter {
     };
     for (const n of nodes) {
       if (SKIP_TAGS.has(n.tag)) continue;
-      if (INLINE_TAGS.has(n.tag) && !(n.tag === "span" && n.elements.some((e) => !INLINE_TAGS.has(e.tag)))) {
+      const basedBlockLink = ctx.based === true && n.tag === "a" && n.has("bookmark");
+      if (!basedBlockLink && INLINE_TAGS.has(n.tag) && !(n.tag === "span" && n.elements.some((e) => !INLINE_TAGS.has(e.tag)))) {
         if (n.isText && inline.length === 0 && trimWS(n.text) === "") continue;
         inline.push(n);
         continue;
@@ -561,6 +562,21 @@ export class NotionHTMLImporter {
 
   /** Ein Block-Element → Block(e); liefert die ID des (letzten) Blocks. */
   emit(n: HTMLNode, parent: string, ctx: Ctx): string | undefined {
+    // Prüfung Pass 37: Based-Export schreibt Datei-, PDF- und Lesezeichen-Blöcke als <a class="bookmark">.
+    if (ctx.based && n.tag === "a" && n.has("bookmark")) {
+      const href = n.attr("href") ?? "";
+      const label = trimWS(n.first((x) => x.has("bookmark-title"))?.textContent ?? "");
+      const desc = n.first((x) => x.has("bookmark-desc"))?.textContent;
+      if (href.includes("://")) {
+        const bm: NonNullable<BlockProps["bookmark"]> = {};
+        if (label !== "" && label !== href) bm.title = label;
+        if (desc) bm.summary = trimWS(desc);
+        return this.append("bookmark", parent, this.blockID(n, ctx), [], Object.keys(bm).length ? { url: href, bookmark: bm } : { url: href });
+      }
+      const file = basename(removingPercentEncoding(href) ?? href);
+      const caption = label !== "" && label !== file && label !== href ? textRuns(label) : undefined;
+      return this.mediaBlock(undefined, href, caption, this.blockID(n, ctx), parent, ctx, label);
+    }
     switch (n.tag) {
       case "p": {
         // Prüfung Pass 37: Based-Export schreibt Unterseiten und Seitenlinks als <p class="page-link"><a …>📄 Titel</a></p>.

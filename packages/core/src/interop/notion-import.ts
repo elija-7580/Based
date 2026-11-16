@@ -27,6 +27,11 @@ import { importOPML } from "./opml.js";
 import { planJSONImport, type JSONImportPlan } from "./json-import.js";
 import { DocxImporter } from "./docx-import.js";
 
+/** Prüfung Pass 37: Dateiendung → Blockart für alleinstehende Datei-Links im Markdown. */
+const FILE_BLOCK_BY_EXT: Record<string, string> = {
+  pdf: "pdf", mp4: "video", m4v: "video", mov: "video", webm: "video", mp3: "audio", m4a: "audio", wav: "audio", ogg: "audio", aac: "audio", flac: "audio",
+};
+
 export interface NotionImportOptions {
   /** Wohin Bilder und Dateien kommen; ohne Speicher bleiben nur externe URLs. */
   assets?: AssetSink | undefined;
@@ -422,6 +427,16 @@ class MarkdownNotionImporter {
           const all = joinPath(dirname(u), basename(stripExtension(u)) + "_all.csv");
           const pick = this.files.isFile(all) ? all : u;
           if (this.files.isFile(pick) && !this.consumed.has(pick)) { this.importDatabase(pick, "b:" + id, k, true); return; }
+        }
+        // Prüfung Pass 37: ein Absatz, der nur auf eine Datei im Import zeigt (so schreibt der Markdown-Export PDF- und
+        // Datei-Blöcke), wird wieder ein Datei-Block mit der Datei – vorher blieb ein Link ins Leere.
+        const kind = FILE_BLOCK_BY_EXT[ext] ?? (ext !== "" && !["md", "csv", "html", "htm"].includes(ext) ? "file" : undefined);
+        if (kind && this.files.isFile(u) && !this.consumed.has(u)) {
+          const label = b.text.map((r) => r.t).join("").trim();
+          const props: BlockProps = { ...this.asset(decoded, dir) };
+          if (label !== "" && label !== basename(u) && label !== decoded && label !== target) props.caption = label;
+          this.putImported({ type: kind, text: [], props, children: [] }, "b:" + id, k);
+          return;
         }
       }
       this.putImported(b, "b:" + id, k);
