@@ -67,6 +67,8 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   const commands: NavCommand[] = onCommand ? matchCommands(query, { ai }) : [];
   // Befehle stehen vor den Seiten; die Auswahl läuft über beide
   const items: (QuickFindHit | { command: NavCommand })[] = [...commands.map((c) => ({ command: c })), ...pages];
+  // BSD-439: Befehle fallen beim Tippen sofort weg, Treffer kommen später – die Auswahl bleibt nie hinter dem Listenende.
+  const cur = Math.min(selected, Math.max(0, items.length - 1));
   const open = (i: number) => {
     const it = items[i];
     if (!it) return;
@@ -96,21 +98,21 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             role="combobox"
             aria-expanded="true"
             aria-controls={listID}
-            aria-activedescendant={items[selected] ? `${listID}-${selected}` : undefined}
+            aria-activedescendant={items[cur] ? `${listID}-${cur}` : undefined}
             aria-label="Search pages"
             placeholder="Search pages and content…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
                 e.preventDefault();
-                setSelected((s) => Math.min(items.length - 1, s + 1));
+                setSelected(Math.min(items.length - 1, cur + 1));
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
-                setSelected((s) => Math.max(0, s - 1));
+                setSelected(Math.max(0, cur - 1));
               } else if (e.key === "Enter") {
                 e.preventDefault();
-                open(selected);
+                open(cur);
               } else if (e.key === "Escape") {
                 e.preventDefault();
                 onClose();
@@ -141,7 +143,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
         <div className="qf-head t-meta">{hits ? (items.length ? "Best matches" : "") : pages.length ? "Recent" : ""}</div>
         <ul id={listID} role="listbox" aria-label="Results" className="qf-list" data-took={took === undefined ? undefined : took.toFixed(1)}>
           {items.map((h, i) => "command" in h ? (
-            <li key={"cmd:" + h.command.id} id={`${listID}-${i}`} role="option" aria-selected={i === selected} className="qf-item" data-testid="qf-command"
+            <li key={"cmd:" + h.command.id} id={`${listID}-${i}`} role="option" aria-selected={i === cur} className="qf-item" data-testid="qf-command"
               onMouseMove={() => setSelected(i)} onClick={() => open(i)}>
               <span className="tile"><Icon name={COMMAND_ICON[h.command.id] ?? "right"} size={18} /></span>
               <span className="grow"><strong>{h.command.label}</strong><span className="t-desc qf-path"> — {h.command.id === "meeting" ? "Command" : "Go to"}</span></span>
@@ -151,7 +153,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
               key={h.pageID}
               id={`${listID}-${i}`}
               role="option"
-              aria-selected={i === selected}
+              aria-selected={i === cur}
               className="qf-item"
               onMouseMove={() => setSelected(i)}
               onClick={() => open(i)}
