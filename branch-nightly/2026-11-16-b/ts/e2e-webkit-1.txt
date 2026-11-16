@@ -1,61 +1,61 @@
-failure 6f70e1066728d42a62d4d5fb3977a4406ad7d683
-    [webkit] › e2e/editor-parity.spec.ts:212:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) 
-    [webkit] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
-    [webkit] › e2e/editor-parity.spec.ts:312:1 › @ erwähnt Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
-    [webkit] › e2e/editor-parity.spec.ts:349:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, Inhaltsverzeichnis, pro Seite abschaltbar 
-    [webkit] › e2e/editor-parity.spec.ts:408:1 › Synced Block: zwei Seiten, Bearbeiten in beide Richtungen, zweite Kopie abgelehnt, Unsync, Hinweis bei Original im Papierkorb 
-    [webkit] › e2e/editor-parity.spec.ts:479:1 › Blockmenü: Turn into Heading 2 und Block equation, Duplicate, ⌘D 
-    [webkit] › e2e/editor-parity.spec.ts:512:1 › ⌘⌥T klappt alle Toggles auf und wieder zu ─────────
-    [webkit] › e2e/editor-parity.spec.ts:536:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter 
-    [webkit] › e2e/editor-parity.spec.ts:579:1 › Duplicate kopiert Unterseiten tief ────────────────
-    [webkit] › e2e/editor-parity.spec.ts:608:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite 
-    [webkit] › e2e/editor-parity.spec.ts:651:1 › Callout-Icon aus dem Emoji-Picker mit Suche ───────
-    [webkit] › e2e/editor-parity.spec.ts:683:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline 
-    [webkit] › e2e/editor-parity.spec.ts:712:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre 
-    [webkit] › e2e/editor-parity.spec.ts:754:1 › Fotos: Synced-Block-Kopie, Hinweis am Editor ──────
-    [webkit] › e2e/editor-parity.spec.ts:804:1 › Rechtsklick → Paste behält die Formatierung ───────
-    [webkit] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert 
-    [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
-    [webkit] › e2e/editor-polish.spec.ts:56:1 › Editor in Ruhe und in seinen Zuständen ─────────────
-    [webkit] › e2e/editor-polish.spec.ts:145:1 › Links und Häkchen im Editor ohne Browser-Blau ─────
-    [webkit] › e2e/editor-polish.spec.ts:167:1 › Blockfarben im Dunkelmodus aus den Tokens ─────────
-    [webkit] › e2e/editor-polish.spec.ts:197:1 › Slash ohne Treffer: „No results“, Enter macht eine neue Zeile 
-    [webkit] › e2e/editor-polish.spec.ts:236:1 › Rest-Zustände: alle Blocktypen, Suche in der Seite, Link-Dialog 
-    [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt 
-    [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ 
-    [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen 
-    [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz 
-    [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon 
-    [webkit] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen 
-    [webkit] › e2e/find.spec.ts:27:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke 
-    [webkit] › e2e/find.spec.ts:62:1 › •••-Menü: Find in page und Wortzahl ─────────────────────────
-    [webkit] › e2e/find.spec.ts:71:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke 
-    [webkit] › e2e/find.spec.ts:99:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis 
-    [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf 
-    [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an 
-    [webkit] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) 
-    [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs 
-    [webkit] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) 
-    [webkit] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten 
-    [webkit] › e2e/hangs.spec.ts:28:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten 
-    [webkit] › e2e/hangs.spec.ts:94:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten 
-    [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing 
-    [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt 
-    [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) 
-    [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen 
-    [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger 
-    [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke 
-    [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten 
-    [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke 
-    [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail 
-    [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records ──────────────────────────
-    [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile 
-    [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) ─────────────────────────────
-    [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) ──────────────────────────────
-    [webkit] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite 
-    [webkit] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles 
-    [webkit] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen 
-    [webkit] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild ─
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
+cancelled 7846dd3f15c6cc23c5ac2abf72b3ee0471f51379
+  ✘   37 [webkit] › e2e/brain.spec.ts:102:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (retry #1) (7ms)
+  ✘   38 [webkit] › e2e/block-editor.spec.ts:86:1 › Tab rückt ein, ⇧Tab aus; Pfeile wechseln zwischen Blöcken (retry #1) (5ms)
+  ✘   39 [webkit] › e2e/brain.spec.ts:107:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (4ms)
+  ✘   40 [webkit] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (6ms)
+  ✘   41 [webkit] › e2e/brain.spec.ts:107:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (retry #1) (4ms)
+  ✘   42 [webkit] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (retry #1) (5ms)
+  ✘   43 [webkit] › e2e/brain.spec.ts:162:1 › workspace answer with sources: the citation jumps to the block (5ms)
+  ✘   44 [webkit] › e2e/block-editor.spec.ts:155:1 › Ziehen am Griff: davor/danach, Spalte rechts daneben und wieder heraus (5ms)
+  ✘   45 [webkit] › e2e/brain.spec.ts:162:1 › workspace answer with sources: the citation jumps to the block (retry #1) (4ms)
+  ✘   46 [webkit] › e2e/block-editor.spec.ts:155:1 › Ziehen am Griff: davor/danach, Spalte rechts daneben und wieder heraus (retry #1) (4ms)
+  ✘   47 [webkit] › e2e/brain.spec.ts:167:1 › memory suggestions are saved only after Save (5ms)
+  ✘   48 [webkit] › e2e/block-editor.spec.ts:182:1 › Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, ⌫ löscht (5ms)
+  ✘   49 [webkit] › e2e/brain.spec.ts:167:1 › memory suggestions are saved only after Save (retry #1) (5ms)
+  ✘   50 [webkit] › e2e/block-editor.spec.ts:182:1 › Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, ⌫ löscht (retry #1) (4ms)
+  ✘   51 [webkit] › e2e/brain.spec.ts:189:1 › Screenshots web-brain-* (4ms)
+  ✘   52 [webkit] › e2e/block-editor.spec.ts:220:1 › Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift (4ms)
+  ✘   53 [webkit] › e2e/brain.spec.ts:189:1 › Screenshots web-brain-* (retry #1) (4ms)
+  ✘   54 [webkit] › e2e/block-editor.spec.ts:220:1 › Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift (retry #1) (4ms)
+  ✘   55 [webkit] › e2e/brain.spec.ts:223:1 › trashing the Agent Brain shows why it stays (5ms)
+  ✘   56 [webkit] › e2e/block-editor.spec.ts:250:1 › Formatierung: ⌘B auf Auswahl, Formatleiste erscheint (5ms)
+  ✘   57 [webkit] › e2e/brain.spec.ts:223:1 › trashing the Agent Brain shows why it stays (retry #1) (4ms)
+  ✘   58 [webkit] › e2e/block-editor.spec.ts:250:1 › Formatierung: ⌘B auf Auswahl, Formatleiste erscheint (retry #1) (7ms)
+  ✘   59 [webkit] › e2e/brain.spec.ts:234:1 › Screenshots web-brain-refused-* (4ms)
+  ✘   60 [webkit] › e2e/block-editor.spec.ts:277:1 › Einfügen aus dem Web: HTML wird zu Blöcken, URL über Auswahl wird Link; ⌘K setzt Link (6ms)
+  ✘   61 [webkit] › e2e/brain.spec.ts:234:1 › Screenshots web-brain-refused-* (retry #1) (4ms)
+  ✘   62 [webkit] › e2e/block-editor.spec.ts:277:1 › Einfügen aus dem Web: HTML wird zu Blöcken, URL über Auswahl wird Link; ⌘K setzt Link (retry #1) (5ms)
+  ✘   63 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (4ms)
+  ✘   64 [webkit] › e2e/block-editor.spec.ts:300:1 › @ erwähnt eine Seite (5ms)
+  ✘   65 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (retry #1) (4ms)
+  ✘   66 [webkit] › e2e/block-editor.spec.ts:300:1 › @ erwähnt eine Seite (retry #1) (5ms)
+  ✘   67 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (5ms)
+  ✘   68 [webkit] › e2e/block-editor.spec.ts:321:1 › Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel (5ms)
+  ✘   69 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (retry #1) (5ms)
+  ✘   70 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (5ms)
+  ✘   71 [webkit] › e2e/block-editor.spec.ts:321:1 › Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel (retry #1) (5ms)
+  ✘   73 [webkit] › e2e/block-editor.spec.ts:335:1 › Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per @ (4ms)
+  ✘   72 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (retry #1) (6ms)
+  ✘   74 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (4ms)
+  ✘   75 [webkit] › e2e/block-editor.spec.ts:335:1 › Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per @ (retry #1) (6ms)
+  ✘   76 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (retry #1) (4ms)
+  ✘   77 [webkit] › e2e/block-editor.spec.ts:389:1 › ⌘⌥-Kürzel, Textfarbe, Spalten per Slash, Toggle-Überschrift, Syntax-Hervorhebung (4ms)
+  ✘   78 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (4ms)
+  ✘   79 [webkit] › e2e/block-editor.spec.ts:389:1 › ⌘⌥-Kürzel, Textfarbe, Spalten per Slash, Toggle-Überschrift, Syntax-Hervorhebung (retry #1) (4ms)
+  ✘   80 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (retry #1) (4ms)
+  ✘   81 [webkit] › e2e/block-editor.spec.ts:437:1 › Spaltenbreite ziehen (4ms)
+  ✘   82 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-* (6ms)
+  ✘   83 [webkit] › e2e/block-editor.spec.ts:437:1 › Spaltenbreite ziehen (retry #1) (4ms)
+  ✘   84 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-* (retry #1) (5ms)
+  ✘   85 [webkit] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (light) (5ms)
+  ✘   87 [webkit] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (light) (retry #1) (6ms)
+  ✘   88 [webkit] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (dark) (5ms)
+(node:6705) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   86 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (3ms)
+  ✘   89 [webkit] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (dark) (retry #1) (5ms)
+  ✘   91 [webkit] › e2e/block-editor.spec.ts:493:1 › Blockmenü: Suchfeld filtert, Enter führt aus, Copy as Markdown (4ms)
+  ✘   92 [webkit] › e2e/block-editor.spec.ts:493:1 › Blockmenü: Suchfeld filtert, Enter führt aus, Copy as Markdown (retry #1) (4ms)
+(node:6832) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   93 [webkit] › e2e/block-editor.spec.ts:540:1 › Blockmenü-Fotos: Suchfeld, gefiltert, leer (5ms)
