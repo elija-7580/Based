@@ -642,6 +642,8 @@
 .bx2-embed-frame-wrap figcaption a { color: inherit; }
 .bx2-pdf { display: flex; flex-direction: column; gap: var(--space-1); }
 .bx2-pdf-frame { width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+/* BSD-305 Teil 4: kann der Browser das PDF nicht zeigen, steht der Ersatz-Link ruhig in der Mitte statt roh oben links */
+.bx2-pdf-frame > a { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-family: var(--font-ui); font-size: var(--type-meta-size); text-decoration: none; }
 .bx2-blockmenu { max-height: calc(100vh - var(--space-4)); }
 
 /* BSD-407 Teil 6.4: Datums-Erwähnung (Klick öffnet den Wähler), Erinnerung als Glocke */

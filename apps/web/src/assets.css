@@ -21,3 +21,16 @@
   font-size: var(--type-meta-size);
   line-height: 1.4;
 }
+
+/* BSD-305 Teil 4: Datei-Zeile (Anhang, PDF-Link) ist eine Textzeile – der Hinweis steht als leise Zeile unter dem
+   Namen, nicht als Bild-Kasten daneben. */
+.shell-editor a.bx2-file[data-url^="based-asset:"][data-asset-notice] { flex-wrap: wrap; row-gap: 0; }
+.shell-editor a.bx2-file[data-url^="based-asset:"][data-asset-notice]::after {
+  flex-basis: 100%;
+  width: auto;
+  max-width: none;
+  min-height: 0;
+  padding: 0 0 0 calc(var(--icon-sm) + var(--space-2));
+  border: 0;
+  background: none;
+}
