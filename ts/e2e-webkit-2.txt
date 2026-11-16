@@ -1,61 +1,61 @@
-failure 6e1d39dd3440da970c565fa145dfbfb1d94d0e78
-    [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen 
-    [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen 
-    [webkit] › e2e/shortcut-toggle.spec.ts:110:1 › Quick Find: nach Weitertippen ist der erste Eintrag ausgewählt, Enter öffnet ihn 
-    [webkit] › e2e/shortcuts.spec.ts:13:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite 
-    [webkit] › e2e/shortcuts.spec.ts:34:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) 
-    [webkit] › e2e/shortcuts.spec.ts:63:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs ──
-    [webkit] › e2e/shortcuts.spec.ts:86:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
-    [webkit] › e2e/sidebar-inline-db.spec.ts:9:1 › Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich als ganze Seite 
-    [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown 
-    [webkit] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links ────
-    [webkit] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar 
-    [webkit] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb 
-    [webkit] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf ───────
-    [webkit] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend 
-    [webkit] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke 
-    [webkit] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke 
-    [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light) ──────────────────────
-    [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark) ───────────────────────
-    [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
-    [webkit] › e2e/sidebar-scroll.spec.ts:10:1 › Aufklappen oberhalb der aktiven Seite: Liste bleibt stehen, Zeile bleibt unter der Maus 
-    [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke ─────────────────────
-    [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke 
-    [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke 
-    [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke 
-    [webkit] › e2e/storage.spec.ts:51:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung 
-    [webkit] › e2e/storage.spec.ts:72:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole 
-    [webkit] › e2e/storage.spec.ts:88:1 › Screenshots web-storage-warning-* ────────────────────────
-    [webkit] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) 
-    [webkit] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts 
-    [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank 
-    [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus 
-    [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen 
-    [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht 
-    [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist 
-    [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter 
-    [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke 
-    [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen 
-    [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen 
-    [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen 
-    [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag 
-    [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) ──────────────────────────
-    [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) ───────────────────────────
-    [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) ─────────
-    [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) ──────────
-    [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil 
-    [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light 
-    [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark 
-    [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem ───────────────────
-    [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) 
-    [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) 
-    [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken ──────────────
-    [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) 
-    [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke 
-    [webkit] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ 
-    [webkit] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) 
-    [webkit] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt 
-  2 skipped
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+cancelled 2723d2581d00389d88b9c7e26e822b5b06fd15a9
+  ✓    6 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (5.4s)
+  ✓    7 [webkit] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (4.9s)
+  ✓    8 [webkit] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (5.2s)
+  ✓   10 [webkit] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (4.1s)
+  ✓   11 [webkit] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (4.2s)
+  ✓   12 [webkit] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (3.3s)
+  ✓    9 [webkit] › e2e/kit-states.spec.ts:153:3 › Zustands-Galerie: Farben der Zustände sind Tokens (light) (19.7s)
+  ✓   13 [webkit] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (3.8s)
+  ✓   15 [webkit] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (3.5s)
+  ✓   14 [webkit] › e2e/kit-states.spec.ts:174:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (light) (9.4s)
+  ✓   16 [webkit] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (6.0s)
+  ✓   18 [webkit] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (3.7s)
+  ✓   19 [webkit] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (3.3s)
+  ✓   20 [webkit] › e2e/interop.spec.ts:309:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.1s)
+  ✓   21 [webkit] › e2e/interop.spec.ts:328:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (4.8s)
+  ✓   17 [webkit] › e2e/kit-states.spec.ts:153:3 › Zustands-Galerie: Farben der Zustände sind Tokens (dark) (15.9s)
+  ✓   22 [webkit] › e2e/interop.spec.ts:354:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (3.8s)
+  ✓   24 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (3.2s)
+  ✓   23 [webkit] › e2e/kit-states.spec.ts:174:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (dark) (6.9s)
+  ✓   26 [webkit] › e2e/kit-states.spec.ts:224:1 › Zustands-Galerie erkennt eine fremde Überfahren-Farbe (2.1s)
+  ✓   27 [webkit] › e2e/motion.spec.ts:17:1 › Einblenden nutzt die Motion-Tokens (Quick Find) (1.2s)
+  ✓   25 [webkit] › e2e/meeting.spec.ts:110:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (7.2s)
+  ✓   28 [webkit] › e2e/motion.spec.ts:34:3 › Bewegung reduzieren › keine Animation und kein Übergang beim Öffnen und Schließen (4.0s)
+  -   29 [webkit] › e2e/meeting.spec.ts:135:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen
+  ✓   30 [webkit] › e2e/native-free.spec.ts:26:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (2.1s)
+  -   31 [webkit] › e2e/meeting.spec.ts:225:1 › Feedback 14. 11.: auf Akku nur aufnehmen – Transkript wartet, kommt am Strom bzw. mit „Transcribe now“
+  ✓   32 [webkit] › e2e/native-free.spec.ts:42:1 › Rechtsklick an vielen Stellen: überall unterdrückt, Escape und Klick daneben schließen (2.6s)
+  ✓   34 [webkit] › e2e/native-free.spec.ts:65:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (4.5s)
+  ✓   33 [webkit] › e2e/meeting.spec.ts:264:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (6.5s)
+  ✓   35 [webkit] › e2e/native-free.spec.ts:86:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (1.9s)
+  ✓   36 [webkit] › e2e/meeting.spec.ts:281:1 › ⌘N → Meeting notes: Block-Editor, Notizen per Klick und Tastatur, Pfeile bleiben in den Notizen (3.6s)
+  ✓   37 [webkit] › e2e/native-free.spec.ts:93:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (4.4s)
+  ✓   39 [webkit] › e2e/native-free.spec.ts:131:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (3.3s)
+  ✓   40 [webkit] › e2e/native-free.spec.ts:151:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (1.8s)
+  ✓   41 [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (2.7s)
+  ✓   42 [webkit] › e2e/native-free.spec.ts:187:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (3.7s)
+  ✓   43 [webkit] › e2e/native-free.spec.ts:218:1 › Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfung bleibt (2.1s)
+  ✓   44 [webkit] › e2e/native-free.spec.ts:241:1 › Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unverändert (2.1s)
+  ✓   38 [webkit] › e2e/notion-api.spec.ts:53:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (25.5s)
+  ✓   46 [webkit] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (5.2s)
+  ✓   45 [webkit] › e2e/notion-hybrid.spec.ts:44:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (14.7s)
+  ✓   48 [webkit] › e2e/notion-hybrid.spec.ts:130:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (3.5s)
+  -   49 [webkit] › e2e/notion-hybrid.spec.ts:148:1 › Hybrid-Import: Bildschirmfotos
+  ✓   50 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (9.7s)
+  ✓   51 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (2.3s)
+  ✓   52 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (2.0s)
+  -   53 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  ✓   47 [webkit] › e2e/overflow.spec.ts:85:1 › Leerer Workspace: nichts läuft über (20.1s)
+  -   54 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   56 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (6.5s)
+  ✓   57 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (900 px) (3.4s)
+  ✓   58 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1100 px) (3.3s)
+  ✓   59 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1280 px) (3.7s)
+  ✓   55 [webkit] › e2e/overflow.spec.ts:99:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (21.5s)
+  ✓   60 [webkit] › e2e/panel-still.spec.ts:37:1 › schräges Wischen und Code verschieben die Fläche nicht seitlich (4.9s)
+  ✓   62 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (900 px) (1.2s)
+  ✓   61 [webkit] › e2e/overflow.spec.ts:119:1 › Gliederung überdeckt nie den Text (3.2s)
+  ✓   63 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (1100 px) (1.6s)
+  ✓   65 [webkit] › e2e/peek-resize.spec.ts:29:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (5.6s)
+  ✓   64 [webkit] › e2e/overflow.spec.ts:151:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (10.0s)
