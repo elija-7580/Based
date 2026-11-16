@@ -577,6 +577,11 @@ export function guardCSVFormula(cell: string): string {
   return "'" + cell;
 }
 
+/** Prüfung Pass 37: Umkehrung von `guardCSVFormula` beim Import (sonst stand nach Export → Import „'=…“ in der Zelle). */
+export function unguardCSVFormula(cell: string): string {
+  return /^'[=+\-@\t\r]/.test(cell) && guardCSVFormula(cell.slice(1)) === cell ? cell.slice(1) : cell;
+}
+
 export function decodeCSV(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];

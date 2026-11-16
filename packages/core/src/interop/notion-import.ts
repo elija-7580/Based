@@ -15,7 +15,7 @@ import { AssetRejected, commitImport, importAssetFrom, emptyReport, ImportBuilde
 import { basename, comparePaths, dirname, extname, ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { graphemes, trimSpaces } from "./html.js";
 import { removingPercentEncoding } from "./importids.js";
-import { decodeCSV, MarkdownImporter, type MarkdownBlock } from "./markdown.js";
+import { decodeCSV, MarkdownImporter, unguardCSVFormula, type MarkdownBlock } from "./markdown.js";
 import { decodeTextBytes, parseDelimited, sniffDelimiter } from "./file-preview.js";
 import { cleanTitle, NotionHTMLImporter } from "./notion-html.js";
 import { toRichText } from "./runs.js";
@@ -461,6 +461,8 @@ class MarkdownNotionImporter {
       const d = sniffDelimiter(raw);
       if (d !== ",") table = parseDelimited(raw, d).rows;
     }
+    // Prüfung Pass 37: von unserem Export gegen Formel-Injection geschützte Zellen („'=…“) wieder wie im Original.
+    table = table.map((r) => r.map(unguardCSVFormula));
     const header = table[0];
     if (!header || header.length === 0) return undefined;
     const rows = table.slice(1);
