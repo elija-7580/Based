@@ -24,7 +24,6 @@ interface Props {
 }
 
 export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose, onCommand }: Props) {
-  useRestoreFocus(); // BSD-421: Fokus (und Schreibmarke) zurück, wenn die Leiste zugeht
   const [filters, setFilters] = useState<QuickFindFilters>({ titleOnly: false, inPage: false, date: "any", sort: "bestMatch" });
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<QuickFindHit[] | undefined>();
@@ -33,16 +32,11 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   const listID = useId();
   const input = useRef<HTMLInputElement>(null);
 
-  // BSD-304: Fokus beim Schließen dorthin zurück, wo er vorher war (Seitenleiste, Editor …) – außer man hat eine
-  // Seite geöffnet, dann bestimmt die neue Seite den Fokus.
+  // BSD-304/421/438: Fokus (samt Schreibmarke) beim Schließen dorthin zurück, wo er vorher war (Seitenleiste,
+  // Editor …) – außer man hat eine Seite oder einen Befehl geöffnet, dann bestimmt das Ziel den Fokus.
   const opened = useRef(false);
-  useLayoutEffect(() => {
-    const before = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-    input.current?.focus();
-    return () => {
-      if (!opened.current && before?.isConnected) before.focus({ preventScroll: true });
-    };
-  }, []);
+  useRestoreFocus(() => opened.current);
+  useLayoutEffect(() => { input.current?.focus(); }, []);
   useEffect(() => {
     void client.warmSearch().catch(() => undefined);
     return () => client.cancelSearch();
