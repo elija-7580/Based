@@ -18,7 +18,12 @@ const KNOWN: { why: string; match: (screen: string, rule: string, target: string
 ];
 
 async function scan(page: Page, name: string): Promise<string[]> {
-  await page.waitForTimeout(400); // Einblend-Übergänge fertig, sonst misst axe Zwischenfarben
+  // Messen erst im Ruhezustand: Maus weg (sonst blendet ein Tooltip ein), kein Tooltip mehr sichtbar, keine laufende
+  // Animation und kein Übergang – sonst misst axe Zwischenfarben (WebKit: .nf-tip mitten im Einblenden).
+  await page.mouse.move(1, 1);
+  await expect(page.locator(".nf-tip")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.playState === "running").length)).toBe(0);
+  await page.waitForTimeout(100);
   const res = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   return res.violations.flatMap((v) => v.nodes
     .filter((n) => !KNOWN.some((k) => k.match(name, v.id, n.target.join(" "))))
