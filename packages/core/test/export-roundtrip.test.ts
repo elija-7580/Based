@@ -3,7 +3,7 @@
 // Import liest sie jetzt wieder als Aufgaben (vorher Absatz mit „☑ …“). Spaltentypen einer Datenbank leitet der
 // CSV-Import neu ab (hier: Tags → Text) – bewusst, CSV trägt keine Typen.
 import { describe, expect, it } from "vitest";
-import { createDatabase, createPage, exportDocx, ImportFiles, importNotionItems, MemoryPersistence, planWorkspaceExport, runsOf, titleOf, topLevelPages, writeExportZip, WorkspaceStore, type Block } from "../src/index.js";
+import { addProperty, addRow, cellText, createDatabase, createPage, pv, QueryEngine, rowsOf, setValue, plainText, exportDocx, ImportFiles, importNotionItems, MemoryPersistence, planWorkspaceExport, runsOf, titleOf, topLevelPages, writeExportZip, WorkspaceStore, type Block } from "../src/index.js";
 
 const CASES: [string, unknown, Record<string, unknown>?][] = [
   ["text", "Plain *star* <b>x</b> & \"q\""], ["text", "line1\nline2"],
@@ -58,5 +58,25 @@ describe("Rundreisen Word und Markdown-Workspace (Prüfung Pass 37)", () => {
     const subPage = [...dst.blocks.values()].find((b) => b.type === "page" && titleOf(dst, b.id) === "Unterseite")!;
     expect(subPage.parent).toBe("b:" + root);
     expectSame(dst, subPage.id);
+  });
+
+  it("Datenbank als CSV: Zellen mit Formel-Zeichen, Kommas, Anführungszeichen, Umbrüchen kommen gleich zurück", () => {
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+    const page = createPage(store, { title: "Mit Tabelle" });
+    const { databaseID } = createDatabase(store, { parent: "b:" + page, title: "Werte", sampleRows: 0 } as never);
+    const note = addProperty(store, databaseID, "Notiz", "text")!;
+    const cells = ["=SUM(A1:A3)", "-Gedankenstrich", "@jemand", "+49 30 1234", "-5", "a, b; \"c\"", "zwei\nZeilen"];
+    for (const [i, c] of cells.entries()) {
+      const row = addRow(store, databaseID)!;
+      store.transact("t", (tx) => tx.update(row, (b) => { b.text = "Zeile " + i; }));
+      setValue(store, row, note, pv("text", c) as never);
+    }
+    const { zip } = writeExportZip(planWorkspaceExport(store, topLevelPages(store), "markdown"), () => undefined);
+    const { dst } = importInto("Export.zip", zip);
+    const db = [...dst.databases.values()][0]!;
+    const col = db.properties.find((p) => p.name === "Notiz")!;
+    const q = new QueryEngine(dst);
+    const got = rowsOf(dst, db.id).sort((a, b) => plainText(a.text).localeCompare(plainText(b.text))).map((r) => cellText(dst, q.value(r, col, db)));
+    expect(got).toEqual(cells);
   });
 });
