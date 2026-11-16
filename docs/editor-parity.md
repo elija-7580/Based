@@ -90,7 +90,7 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | Blockmenü erledigt (Teil 6.1); Formatleiste erledigt 15.11. (BasedIconButton mit aria-pressed, Blocktyp mit Turn into wie im Blockmenü, Inline-Code, Inline-Gleichung, Link, Textfarbe als Menüzeilen; BSD-341/342) |
 | 3 | Block-Editor ist Standard (neuer Schlüssel `based.legacyEditor`, alter Schalter `based.newEditor` wird einmalig entfernt); Specs auf `getByTestId("block-editor")`/`.bx2-*` umgestellt, Rest gepinnt (unten) | erledigt 14.11. |
 | 4a | Alter Editor aus dem Client: `ui/PageEditor.tsx` und seine Helfer, Notausgang „Old editor (BlockNote)“, `@blocknote/ariakit`, Seiten-Dokument `page:` im Web-Client, ProseMirror-Sonde und -Bündel; gepinnte Specs umgeschrieben oder gelöscht; Lücken geschlossen (unten) | erledigt 15.11. |
-| 4b | Kopfloser Konverter ohne React (`schema/` nur noch `@blocknote/core`), `@blocknote/react` löschen | offen |
+| 4b | Kopfloser Konverter ohne React (`schema/` nur noch `@blocknote/core`), `@blocknote/react` löschen | erledigt 16.11. (`schema/specs.ts` mit `createBlockSpec`/`createInlineContentSpec` und Platzhalter-DOM; alte React-Ansichten `blocks.tsx`, `inline.tsx`, `meeting.tsx`, `ui/ButtonBlock.tsx` gelöscht; `test/converter-golden.test.ts` hält das Y-XML jedes Blocktyps und des Swift-Korpus fest – gleich wie mit dem React-Schema) |
 | 4c | Server: Dokumente `page:` (DocSession, Konverter) abschalten, wenn keine alten Clients mehr schreiben; dann `@blocknote/core`, `mapping/bn.ts`, y-prosemirror löschen | offen (Schicht A, Server) |
 
 BSD-364 (PageEditor.tsx aufteilen) wird mit Teil 4 hinfällig: die Datei wird gelöscht.
