@@ -25,7 +25,7 @@ pnpm --filter @based/server start -- --stdio --db ./based.sqlite     # MCP für 
 | `--sandbox` | `BASED_SANDBOX` | aus | `docker` oder `local`: Sandbox pro Lauf, Routen `/sandbox/*` |
 | `--sandbox-dir` | `BASED_SANDBOX_DIR` | `<db>.sandbox` | Snapshot-Archive |
 | | `BASED_LOG_LEVEL` | `info` | `debug` loggt jede Anfrage |
-| | `BASED_WHISPER_BIN`, `BASED_WHISPER_MODEL` | – | BSD-231: `whisper-cli` (whisper.cpp ≥ 1.7) und ein ggml-Modell (Katalog: `ggml-base.bin`) → Route `/local/transcribe` für Meeting Notes; optional `BASED_WHISPER_THREADS` |
+| | `BASED_WHISPER_BIN`, `BASED_WHISPER_MODEL` | – | BSD-231: `whisper-cli` (whisper.cpp ≥ 1.7) → Route `/local/transcribe` für Meeting Notes. Modell: eigene Datei (`BASED_WHISPER_MODEL`) oder whisper-base aus dem Katalog, erst nach `POST /local/transcribe/model {"action":"download"}` geladen (Ordner `<db>.models`, Größe + SHA-256 geprüft); optional `BASED_WHISPER_THREADS` |
 
 Neben der Datenbank legt der Server `<db>.collab.sqlite` an (Y-Zustände für `/collab`).
 
@@ -40,6 +40,7 @@ verweigert den Start.
 | GET | `/sync/v2/info` | Owner, Gast | | `{protocol, seq, oldestSeq}` |
 | POST | `/sync/v2/push` | Owner, Gast | 32 MiB | `{records, deletions}` → `{newer, seq, deleted}`; Gäste nach Rolle geprüft |
 | GET, POST | `/local/transcribe` | Owner | 16 MiB | Nur mit `BASED_WHISPER_*`. GET → `{engine, ready}`; POST: WAV 16 kHz mono 16 Bit (`?language=de\|auto&prompt=…`) → JSON von `whisper-cli -oj`; ein Lauf nach dem anderen |
+| POST | `/local/transcribe/model` | Owner | 1 KiB | `{action: download\|cancel\|remove}` für whisper-base aus dem Katalog; GET `/local/transcribe` zeigt `model` (installed, downloading, loaded, error) |
 | GET | `/sync/v2/pull?after&limit` | Owner, Gast | | Seiten, `limit` 1…5000 (Standard 500); Gäste gefiltert |
 | GET | `/sync/v2/wait?after&timeout` | Owner, Gast | | Long-Poll, 1…55 s (Standard 25) |
 | GET | `/p/<id>[/<page>]`, `/s/<secret>` | öffentlich | | Publish to web, Link-Landeseiten ([sharing.md](sharing.md)) |

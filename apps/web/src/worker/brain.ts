@@ -4,7 +4,7 @@
 import { isPageLike, isTrashed, parseKey, plainText, titleOf, type StoreChange, type WorkspaceStore } from "@based/core";
 import {
   AgentBrain, BrainTools, CHAT_TYPE, chunkTexts, deletableIDs, LocalSemanticIndex, SkillCodecError, skillFoldersFromZip, skillFoldersToZip, SkillRouter,
-  type Citation, type MemoryKind, type MemoryRecord, type SemanticHit, type SkillCorrection, type SkillFolder, type SkillRecord, type SkillRouting, type ToolResult, type ToolSpec,
+  type Citation, type MemoryKind, type MemoryRecord, type SemanticHit, type SkillCorrection, type SkillFolder, type SkillRecord, type SkillRouting, type TextEmbedder, type ToolResult, type ToolSpec,
 } from "@based/brain";
 import type { JSONValue } from "@based/core";
 
@@ -52,13 +52,14 @@ export class BrainHost {
   private active = false;
   readonly tools: BrainTools;
 
-  constructor(private readonly store: WorkspaceStore) {
+  /** `embedder` (BSD-231 Teil 3b): lokales Embedding-Modell, falls per Opt-in geladen (Suche nach Bedeutung). */
+  constructor(private readonly store: WorkspaceStore, embedder?: () => Promise<TextEmbedder | undefined>) {
     this.brain = new AgentBrain(store);
     if (this.brain.exists) {
       this.brain.protect();
       this.active = true;
     }
-    this.tools = new BrainTools(store, this.brain, () => this.semantic());
+    this.tools = new BrainTools(store, this.brain, () => this.semantic(), embedder);
   }
 
   handle(a: BrainAction): unknown {
@@ -87,7 +88,8 @@ export class BrainHost {
       case "resolveCitations": return this.resolveCitations(a.markers);
       case "related": return this.related(a.pageID, a.limit ?? 5);
       case "toolSpecs": return this.tools.specs satisfies ToolSpec[];
-      case "tool": return this.tools.call(a.name, a.input) satisfies ToolResult;
+      // BSD-231 Teil 3b: asynchron (semantic_search mit lokalem Modell); der Worker wartet auf die Antwort.
+      case "tool": return this.tools.callAsync(a.name, a.input) satisfies Promise<ToolResult>;
     }
   }
 

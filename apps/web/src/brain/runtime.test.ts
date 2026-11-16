@@ -153,7 +153,7 @@ describe("Agent Brain in the chat", () => {
     const r = brainHost.handle({ op: "resolveCitations", markers: [{ kind: "block", id: block }, { kind: "block", id: "nope" }] }) as Record<string, unknown>;
     expect(r[`block:${block}`]).toEqual({ pageID: page, blockID: block, title: "Budget", snippet: "The budget is 5k." });
     expect(r["block:nope"]).toBeNull();
-    const tool = brainHost.handle({ op: "tool", name: "read_page_blocks", input: { page_id: page } }) as { text: string };
+    const tool = (await brainHost.handle({ op: "tool", name: "read_page_blocks", input: { page_id: page } })) as { text: string };
     expect(tool.text).toContain(`[block:${block}]`);
     expect((brainHost.handle({ op: "related", pageID: page }) as unknown[]).length).toBe(0);
   });

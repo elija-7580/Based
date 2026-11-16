@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { localModels } from "@based/brain";
+import { defaultModelsDir, FileModelStore } from "../src/models.js";
 import { checkWav, whisperFromEnv } from "../src/transcribe.js";
 import { startApp, TOKEN } from "./helpers.js";
 
@@ -50,7 +51,7 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     expect(args[args.indexOf("--prompt") + 1]).toBe("Based, Elijá; $(rm -rf /)");
     expect(args).toContain("-oj");
     expect(readdirSync(tmpdir()).filter((f) => f.startsWith("based-whisper-") && !f.startsWith("based-whisper-test-")).length).toBe(before);
-    expect((await (await fetch(`${app.url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json())).toEqual({ engine: "whisper.cpp", ready: true });
+    expect((await (await fetch(`${app.url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json())).toEqual({ engine: "whisper.cpp", ready: true, model: { source: "file", installed: true } });
   });
 
   it("Falsches Format, falsche Sprache, ohne Token, Fehler von whisper-cli", async () => {
@@ -80,9 +81,43 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     expect((await post(`${plain.url}/local/transcribe`, wav(1))).status).toBe(404);
   });
 
+  it("Teil 3d: Modell aus dem Katalog erst auf ausdrücklichen Aufruf laden (geprüft), dann transkribieren, entfernen", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "based-whisper-test-"));
+    const { bin } = fakeWhisper(dir);
+    const bytes = new TextEncoder().encode("ggml fake model bytes");
+    const spec: localModels.LocalModelSpec = { id: "whisper-test", purpose: "transcription", name: "Whisper test", version: "v1", license: "MIT",
+      files: [{ path: "ggml-test.bin", url: "https://example.invalid/ggml-test.bin", size: bytes.length, sha256: await localModels.sha256Hex(bytes) }] };
+    const requested: string[] = [];
+    const fakeFetch = (async (u: string | URL | Request) => { requested.push(String(u)); return new Response(bytes); }) as typeof fetch;
+    const modelsDir = join(dir, "models");
+    const app = await startApp({ whisper: { bin, modelsDir, spec, fetch: fakeFetch } });
+    apps.push(app);
+    const state = async () => (await (await fetch(`${app.url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json()) as { ready: boolean; model: { installed: boolean; downloading: boolean; source: string } };
+    expect(await state()).toMatchObject({ ready: false, model: { source: "catalog", installed: false, downloading: false } });
+    expect(requested).toEqual([]); // ohne Aufruf keine Anfrage
+    expect((await post(`${app.url}/local/transcribe`, wav(1))).status).toBe(503);
+    const model = (action: string) => fetch(`${app.url}/local/transcribe/model`, { method: "POST", body: JSON.stringify({ action }), headers: { Authorization: `Bearer ${TOKEN}` } });
+    expect((await model("download")).status).toBe(202);
+    await expect.poll(async () => (await state()).ready, { timeout: 5000 }).toBe(true);
+    expect(requested).toEqual(["https://example.invalid/ggml-test.bin"]);
+    expect(readFileSync(join(modelsDir, "whisper-test", "v1", "ggml-test.bin"), "utf8")).toBe("ggml fake model bytes");
+    expect((await post(`${app.url}/local/transcribe`, wav(1))).status).toBe(200);
+    const args = JSON.parse(readFileSync(join(dir, "calls.jsonl"), "utf8").trim()) as string[];
+    expect(args[args.indexOf("-m") + 1]).toBe(join(modelsDir, "whisper-test", "v1", "ggml-test.bin"));
+    expect((await model("remove")).status).toBe(200);
+    expect((await state()).ready).toBe(false);
+    expect((await model("explode")).status).toBe(400);
+  });
+
   it("Einrichtung aus der Umgebung, WAV-Kopf", () => {
     expect(whisperFromEnv({})).toBeUndefined();
     expect(whisperFromEnv({ BASED_WHISPER_BIN: "/x/whisper-cli", BASED_WHISPER_MODEL: "/m.bin", BASED_WHISPER_THREADS: "4" })).toEqual({ bin: "/x/whisper-cli", model: "/m.bin", threads: 4 });
+    expect(whisperFromEnv({ BASED_WHISPER_BIN: "/x/whisper-cli" })).toEqual({ bin: "/x/whisper-cli" });
+    expect(defaultModelsDir("/data/based.sqlite")).toBe("/data/based.models");
+    expect(defaultModelsDir(":memory:")).toBeUndefined();
+    const store = new FileModelStore(mkdtempSync(join(tmpdir(), "based-models-")));
+    expect(() => store.pathOf("../x")).toThrow(/invalid/);
+    expect(() => store.pathOf("a//b")).toThrow(/invalid/);
     expect(checkWav(wav(1))).toBeUndefined();
     expect(checkWav(localModels.encodeWav(new Float32Array(10), 44_100))).toMatch(/16 kHz/);
     expect(existsSync("/definitely/not/here")).toBe(false);
