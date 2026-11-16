@@ -16,6 +16,7 @@ import { basename, comparePaths, dirname, extname, ImportFiles, joinPath, normal
 import { graphemes, trimSpaces } from "./html.js";
 import { removingPercentEncoding } from "./importids.js";
 import { decodeCSV, MarkdownImporter, type MarkdownBlock } from "./markdown.js";
+import { decodeTextBytes, parseDelimited, sniffDelimiter } from "./file-preview.js";
 import { cleanTitle, NotionHTMLImporter } from "./notion-html.js";
 import { toRichText } from "./runs.js";
 import { extractZip, ImportCancelled, isZip, type ZipLimits } from "./zip.js";
@@ -380,7 +381,8 @@ class MarkdownNotionImporter {
 
   private importPage(p: string, parent: string, sortKey: string, values: Record<string, PropertyValue> = {}, db?: Database): string | undefined {
     if (this.consumed.has(p)) return undefined;
-    const raw = this.files.readStrictText(p);
+    // BSD-260 Teil 13: CSV aus Excel unter Windows ist oft Windows-1252 (oder UTF-16) – vorher fiel die Datei still weg.
+    const raw = this.files.readStrictText(p) ?? this.legacyText(p);
     if (raw === undefined) return undefined;
     this.consumed.add(p);
     if (this.opts.isCancelled?.()) throw new ImportCancelled();
@@ -437,15 +439,28 @@ class MarkdownNotionImporter {
     return id;
   }
 
+  /** Nicht-UTF-8-Text (UTF-16 mit BOM, Windows-1252); Binärdaten → undefined. */
+  private legacyText(p: string): string | undefined {
+    const d = this.files.read(p);
+    return d === undefined ? undefined : decodeTextBytes(d)?.text;
+  }
+
   private importDatabase(p: string, parent: string, sortKey: string, inline: boolean): string | undefined {
     if (this.consumed.has(p)) return undefined;
-    const raw = this.files.readStrictText(p);
+    // BSD-260 Teil 13: CSV aus Excel unter Windows ist oft Windows-1252 (oder UTF-16) – vorher fiel die Datei still weg.
+    const raw = this.files.readStrictText(p) ?? this.legacyText(p);
     if (raw === undefined) return undefined;
     this.consumed.add(p);
     // „X.csv“ neben „X_all.csv“ ist dieselbe Datenbank.
     const base = basename(stripExtension(p));
     if (base.endsWith("_all")) this.consumed.add(joinPath(dirname(p), base.slice(0, -4) + ".csv"));
-    const table = decodeCSV(raw);
+    let table = decodeCSV(raw);
+    // BSD-260 Teil 13: nur eine Spalte mit Komma → anderes Trennzeichen (Semikolon aus deutschem Excel, Tab, |)?
+    // Notion-Exporte haben immer Kommas und mehr als eine Spalte; die bleiben unverändert.
+    if ((table[0]?.length ?? 0) === 1) {
+      const d = sniffDelimiter(raw);
+      if (d !== ",") table = parseDelimited(raw, d).rows;
+    }
     const header = table[0];
     if (!header || header.length === 0) return undefined;
     const rows = table.slice(1);
