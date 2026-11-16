@@ -155,7 +155,7 @@ describe("Agent Brain in the chat", () => {
     expect(r["block:nope"]).toBeNull();
     const tool = (await brainHost.handle({ op: "tool", name: "read_page_blocks", input: { page_id: page } })) as { text: string };
     expect(tool.text).toContain(`[block:${block}]`);
-    expect((brainHost.handle({ op: "related", pageID: page }) as unknown[]).length).toBe(0);
+    expect(((await brainHost.handle({ op: "related", pageID: page })) as unknown[]).length).toBe(0);
   });
 
   it("the Agent Brain can't be trashed through the host guard and repairs itself", async () => {

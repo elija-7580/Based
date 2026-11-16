@@ -5,7 +5,7 @@
 import { isPageLike, isTrashed, MarkdownExporter, titleOf, type Block, type JSONValue, type WorkspaceStore } from "@based/core";
 import type { ToolHost, ToolResult } from "../engine.js";
 import type { ToolSpec } from "../messages.js";
-import { EmbeddingCache, rerankByMeaning, type LocalSemanticIndex, type TextEmbedder } from "../semantic/index.js";
+import { EmbeddingCache, relatedByMeaning, rerankByMeaning, type LocalSemanticIndex, type SemanticHit, type TextEmbedder } from "../semantic/index.js";
 import type { AgentBrain } from "./store.js";
 
 const obj = (properties: Record<string, JSONValue>, required: string[] = []): JSONValue => ({ type: "object", properties, required, additionalProperties: false });
@@ -36,8 +36,32 @@ export class BrainTools {
   constructor(private readonly store: WorkspaceStore, private readonly brain: AgentBrain, private readonly semantic: () => LocalSemanticIndex,
     private readonly embedder?: () => Promise<TextEmbedder | undefined>) {}
 
-  /** Wie `call`, aber semantic_search mit dem Embedding-Modell (falls vorhanden; bei Fehlern TF-IDF). */
+  /**
+   * Verwandte Seiten (BSD-231 Teil 3b): mit Modell nach Bedeutung neu geordnet (Kandidaten aus TF-IDF), sonst bzw. bei
+   * einem Fehler TF-IDF. Für das Werkzeug related_pages und die Anzeige „Related pages“.
+   */
+  async relatedPages(pageID: string, limit = 5): Promise<SemanticHit[]> {
+    const index = this.semantic();
+    const plain = () => index.related(pageID, limit).filter((h) => this.live(h.pageID));
+    if (!this.embedder) return plain();
+    try {
+      const embedder = await this.embedder();
+      if (!embedder) return plain();
+      const candidates = index.related(pageID, Math.max(30, limit * 4), 0).filter((h) => this.live(h.pageID)).map((h) => ({ pageID: h.pageID, chunks: index.chunks(h.pageID) }));
+      if (this.vectors.model !== embedder.id) this.vectors = new EmbeddingCache(4000, embedder.id);
+      return await relatedByMeaning(embedder, index.chunks(pageID), candidates, { limit, cache: this.vectors });
+    } catch {
+      return plain();
+    }
+  }
+
+  /** Wie `call`, aber semantic_search/related_pages mit dem Embedding-Modell (falls vorhanden; bei Fehlern TF-IDF). */
   async callAsync(name: string, input: JSONValue): Promise<ToolResult> {
+    if (name === "related_pages" && this.embedder) {
+      const a = (input !== null && typeof input === "object" && !Array.isArray(input) ? input : {}) as Record<string, JSONValue>;
+      const hits = await this.relatedPages(typeof a.page_id === "string" ? a.page_id : "", typeof a.limit === "number" ? Math.max(1, Math.floor(a.limit)) : 5);
+      return { text: hits.length ? hits.map((h) => `- ${titleOf(this.store, h.pageID)} (id: ${h.pageID})`).join("\n") : "No related pages found.", isError: false };
+    }
     if (name !== "semantic_search" || !this.embedder) return this.call(name, input);
     const a = (input !== null && typeof input === "object" && !Array.isArray(input) ? input : {}) as Record<string, JSONValue>;
     const query = typeof a.query === "string" ? a.query : "";
