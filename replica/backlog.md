@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 36 (Nachtlauf 2026-11-15, TS-Stack, Abschnitt direkt unten; Pass 35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 37 (Nachtlauf 2026-11-16, TS-Stack, Abschnitt direkt unten; Pass 36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,28 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-16 (Pass 37, TS-Stack)
+
+Sammel-Merges 83606236 → a738bc1e; jeweils run-ts --fast (typecheck, lint, Design-Wächter, Unit beider Formate, @smoke) und betroffene E2E in Chromium + WebKit grün. Schicht A 03:12–07:40, Schicht B 03:12–07:48, Nachlauf A2/B2 07:50–08:45.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-440 (P0) Voller CI-Lauf rot: WebKit startet nicht | 🟡 | ubuntu-latest = Ubuntu 26.04, Playwright-WebKit braucht ICU 74; Vorlage ci/github-actions-ci.yml auf ubuntu-24.04 – Elija muss sie nach .github/ kopieren |
+| BSD-442, BSD-448 (P0) Zeitmessungen in Unit-Tests rot unter Last | ✅ | logic.test und acp.test messen CPU-Zeit wie BSD-432; Schwellen unverändert |
+| BSD-407 Teil 4b/4c: BlockNote ganz entfernt | ✅ | Server nimmt keine page:-Dokumente mehr an (alte Y-Zustände bleiben gespeichert); BlockNote, y-prosemirror, prosemirror-* aus packages/editor |
+| BSD-438 Quick Find: Fokus springt zurück in die Seitenleiste | ✅ | auch Neu-Palette; 2 e2e-Tests |
+| BSD-439 Quick Find: Auswahl hinter Listenende | ✅ | |
+| BSD-280 Teil 5 Quick Find gegen Notion-Import messen | ✅ | |
+| BSD-260 Teil 12–16 Dateiformate | 🟡 | Vorschau Text/Code/CSV (Kern), Excel-CSV, Word ☐/☑, CSV-Formelschutz, YAML-Frontmatter; offen: Anzeige im Datei-Block |
+| BSD-231 Teil 3a–3e lokale Modelle | 🟡 | E5-Embeddings im Worker (onnxruntime-web, MIT), Suche + verwandte Seiten nach Bedeutung, whisper.cpp auf dem based-server; Mac-Test; offen: Einstellungs-Schalter |
+| BSD-441, 445, 446, 451 Import/Export-Rundreisen (PRÜFEN Import/Export) | ✅ | Archiv-Papierkorb, Markdown-Escapes, eigener HTML-Export, Dateien im Workspace-Export |
+| BSD-400 Teil 1/2 Tippen auf großen Seiten | 🟡 | Modell < 1 ms je Taste; Render-Fix auf wip/2026-11-16-b-BSD-400 (Chromium p95 50→21 ms, WebKit unter Last unklar) – Mac-Messung |
+| BSD-301 Teil 4, 304 Teil 4 Überlauf, axe | ✅ | Home-Überdeckung behoben; axe auf 8 Screens; neue Test-Abhängigkeit @axe-core/playwright (MPL-2.0) |
+| BSD-302 Teil 1, 305 Teil 4, 350 Teil 4, 417 Teil 1 | 🟡 | Token-Farben in allen Zuständen; Editor-Rest-Zustände; BasedChip; „Bewegung reduzieren“ überall |
+| BSD-429 Synced Block Griff, BSD-443 Seitenbaum-ARIA, BSD-444 Tabellen-ARIA, BSD-346 Gliederung (Test) | ✅ | Nachlauf A2/B2; axe ohne Ausnahmen |
+| BSD-260 Teil 17 Vorschau im Datei-Block (Text, CSV) | 🟡 | offen: Syntax-Hervorhebung, HTML-Varianten |
+| Neu offen: 447 (Video/Audio-Steuerleiste), 450 (wackelige E2E unter Last) | ❌ | |
 
 ## Nachtlauf 2026-11-15 (Pass 36, TS-Stack)
 
