@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -1940,11 +1940,45 @@ function FileBlock({ block: b }: { block: Block }) {
       </div>
     );
   }
-  return (
+  const link = (
     <a className="bx2-embed bx2-file" data-embed="" contentEditable={false} data-url={raw} href={src} target="_blank" rel="noopener noreferrer" download={b.type === "file" ? name : undefined}>
       <span className="bx2-file-icon" aria-hidden="true"><MenuIcon name={b.type === "pdf" ? "page" : "file"} /></span><span className="bx2-file-name">{name}</span>
     </a>
   );
+  // BSD-260 Teil 17: Text-, Code- und CSV-Dateien aus der Ablage zeigen unter dem Link eine Vorschau (Kern previewFile);
+  // fremde Adressen werden nicht abgerufen.
+  const previewable = b.type === "file" && b.props?.asset !== undefined && (previewKind(name, b.props.asset.mime) === "text" || previewKind(name, b.props.asset.mime) === "csv");
+  if (!previewable || !src) return link;
+  return <div className="bx2-embed bx2-file-wrap" data-embed="" contentEditable={false}>{link}<FilePreviewView name={name} mime={b.props?.asset?.mime} src={src} /></div>;
+}
+
+/** Vorschau-Grenzen im Block: klein halten, die ganze Datei öffnet der Link. */
+const BLOCK_PREVIEW = { maxBytes: 64 * 1024, maxRows: 20, maxColumns: 12 } as const;
+
+function FilePreviewView({ name, mime, src }: { name: string; mime: string | undefined; src: string }) {
+  const [preview, setPreview] = useState<FilePreview>();
+  useEffect(() => {
+    let alive = true;
+    void fetch(src).then((r) => r.arrayBuffer()).then((buf) => {
+      if (alive) setPreview(previewFile({ name, ...(mime ? { mime } : {}), bytes: new Uint8Array(buf) }, BLOCK_PREVIEW));
+    }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [src, name, mime]);
+  if (preview?.kind === "text") {
+    return <pre className="bx2-file-preview" data-testid="file-preview" data-kind="text">{preview.text}{preview.truncated ? "\n…" : ""}</pre>;
+  }
+  if (preview?.kind === "csv") {
+    return (
+      <div className="bx2-file-preview" data-testid="file-preview" data-kind="csv">
+        <table className="bx2-file-table">
+          <thead><tr>{preview.header.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
+          <tbody>{preview.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody>
+        </table>
+        {preview.truncated ? <span className="bx2-file-more">Preview shows the first rows. Open the file for everything.</span> : null}
+      </div>
+    );
+  }
+  return null;
 }
 
 function TableBlock({ block: b }: { block: Block }) {

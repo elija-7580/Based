@@ -420,7 +420,7 @@ test("Sync-Status: Karte beim Überfahren und mit der Tastatur, Klick öffnet di
 });
 
 // BSD-429: In einem Synced Block liegen „+“ und Griff der Kinder links neben der Randlinie, nicht auf ihr –
-// in allen drei Fenstergrößen, hell und dunkel; auch für ein eingerücktes Kind.
+// in allen drei Fenstergrößen; auch für ein eingerücktes Kind.
 test("Synced Block: Griff und Plus der Kinder schneiden die Randlinie nicht", async ({ page }) => {
   await fresh(page);
   const cmd = (c: Record<string, unknown>) => page.evaluate((x) => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command(x), c);
@@ -439,23 +439,67 @@ test("Synced Block: Griff und Plus der Kinder schneiden die Randlinie nicht", as
   await page.keyboard.press("Enter");
   const synced = ed.locator(".bx2-synced");
   await expect(synced).toContainText("Nested line");
-  // ohne Neuladen: WebKit speichert in den Tests nur im Speicher
-  for (const theme of ["light", "dark"] as const) {
-    await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
-    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
-      await page.setViewportSize({ width: w, height: h });
-      for (const text of ["Shared line", "Nested line"]) {
-        const child = synced.locator(".bx2-block", { has: page.locator(":scope > .bx2-row", { hasText: text }) });
-        await child.locator(":scope > .bx2-row").hover();
-        const gutter = child.locator(":scope > .bx2-gutter");
-        await expect(gutter).toHaveCSS("opacity", "1");
-        const plus = (await gutter.getByRole("button", { name: "Add block below" }).boundingBox())!;
-        const grip = (await gutter.locator("[data-handle]").boundingBox())!;
-        const g = { x: Math.min(plus.x, grip.x), width: Math.max(plus.x + plus.width, grip.x + grip.width) - Math.min(plus.x, grip.x) };
-        const line = await synced.evaluate((el) => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.left + parseFloat(getComputedStyle(el).borderLeftWidth) }; });
-        const clear = g.x + g.width <= line.left || g.x >= line.right;
-        expect(clear, `${text} ${theme} ${w}×${h}: Griff ${g.x}–${g.x + g.width}, Linie ${line.left}–${line.right}`).toBe(true);
+  // ohne Neuladen (WebKit speichert in den Tests nur im Speicher); das Theme ändert die Geometrie nicht, die Fotos
+  // hell/dunkel macht editor-parity.spec.ts „Fotos: Synced-Block-Kopie“
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    for (const text of ["Shared line", "Nested line"]) {
+      const child = synced.locator(".bx2-block", { has: page.locator(":scope > .bx2-row", { hasText: text }) });
+      await child.locator(":scope > .bx2-row").hover();
+      const gutter = child.locator(":scope > .bx2-gutter");
+      await expect(gutter).toHaveCSS("opacity", "1");
+      const plus = (await gutter.getByRole("button", { name: "Add block below" }).boundingBox())!;
+      const grip = (await gutter.locator("[data-handle]").boundingBox())!;
+      const g = { x: Math.min(plus.x, grip.x), width: Math.max(plus.x + plus.width, grip.x + grip.width) - Math.min(plus.x, grip.x) };
+      const line = await synced.evaluate((el) => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.left + parseFloat(getComputedStyle(el).borderLeftWidth) }; });
+      const clear = g.x + g.width <= line.left || g.x >= line.right;
+      expect(clear, `${text} ${w}×${h}: Griff ${g.x}–${g.x + g.width}, Linie ${line.left}–${line.right}`).toBe(true);
+    }
+  }
+});
+
+// BSD-260 Teil 17: Text- und CSV-Dateien aus der Ablage zeigen im Datei-Block eine Vorschau (Text in Monospace, CSV als
+// Tabelle mit erkanntem Trennzeichen); andere Dateien bleiben ein Link. Fotos mit BASED_SCREENSHOTS=1 (Chromium).
+test("Datei-Block: Vorschau für Text und CSV", async ({ page }) => {
+  await fresh(page);
+  const cmd = (c: Record<string, unknown>) => page.evaluate((x) => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command(x), c);
+  const host = await cmd({ op: "createPage", title: "File preview" });
+  await page.goto(`/#page-${host}`);
+  const ed = blockEditor(page);
+  await focusEditorEnd(page);
+  const upload = async (name: string, mimeType: string, body: string) => {
+    await page.keyboard.type("/File");
+    await page.keyboard.press("Enter");
+    await ed.locator("input[type=file]").last().setInputFiles({ name, mimeType, buffer: Buffer.from(body) });
+    await expect(ed.locator(".bx2-file", { hasText: name })).toBeVisible();
+    await focusEditorEnd(page);
+  };
+  await upload("notes.txt", "text/plain", "First line\nSecond line");
+  await upload("prices.csv", "text/csv", "Item;Price\nApple;1,20\nPear;0,90\n");
+  await upload("blob.bin", "application/octet-stream", "\u0000\u0001");
+  const previews = ed.getByTestId("file-preview");
+  await expect(previews).toHaveCount(2);
+  await expect(previews.nth(0)).toHaveAttribute("data-kind", "text");
+  await expect(previews.nth(0)).toContainText("Second line");
+  const table = previews.nth(1).locator("table");
+  await expect(table.locator("th")).toHaveText(["Item", "Price"]);
+  await expect(table.locator("tbody tr")).toHaveCount(2);
+  await expect(table.locator("tbody tr").first().locator("td")).toHaveText(["Apple", "1,20"]);
+  // Vorschau ist Inhalt: markierbar
+  await expect(previews.nth(0)).toHaveCSS("user-select", "text");
+  if (process.env.BASED_SCREENSHOTS === "1" && test.info().project.name === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.reload();
+        await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+        await expect(previews).toHaveCount(2);
+        await page.mouse.move(w - 10, h - 10);
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: `../../docs/design/screens/web-block-editor-file-preview-${theme}-${w}x${h}.png` });
       }
     }
+    await page.evaluate(() => localStorage.removeItem("based.appearance"));
   }
 });
