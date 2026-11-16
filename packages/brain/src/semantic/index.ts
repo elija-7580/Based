@@ -74,6 +74,11 @@ export class LocalSemanticIndex {
     this.chunkCount += chunks.length;
   }
 
+  /** Abschnitte einer Seite (für das Neuordnen mit einem Embedding-Modell, BSD-231 Teil 3b). */
+  chunks(pageID: string): string[] {
+    return (this.pages.get(pageID) ?? []).map((c) => c.text);
+  }
+
   removePage(pageID: string) {
     const old = this.pages.get(pageID);
     if (!old) return;
@@ -158,3 +163,5 @@ const snippetOf = (s: string) => {
   const flat = s.replace(/\s+/g, " ").trim();
   return flat.length > 160 ? flat.slice(0, 159) + "…" : flat;
 };
+
+export { EmbeddingCache, rerankByMeaning, type RerankCandidate } from "./rerank.js";

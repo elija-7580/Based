@@ -87,6 +87,7 @@ import { AgentHost } from "./agents.js";
 import { BrainHost } from "./brain.js";
 import { dueItems } from "@based/brain/home";
 import { localModels } from "@based/brain";
+import { localEmbedderLoader } from "./embedder.js";
 import type { MeetingListItem } from "./protocol.js";
 import type { AssetGetResult, AssetInfo, Command, LocalModelAction, LocalModelInfo, LocalModelPurpose, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
@@ -194,7 +195,7 @@ export class StoreHost {
   }
 
   private get brain(): BrainHost {
-    return (this.brainHost ??= new BrainHost(this.store));
+    return (this.brainHost ??= new BrainHost(this.store, this.embedder));
   }
 
   /** Eine Anfrage der UI. Antworten gehen als `reply` mit derselben ID zurück. */
@@ -242,7 +243,7 @@ export class StoreHost {
           break;
         case "chat": reply(this.chat.handle(msg.action)); break;
         case "agents": reply(this.agents.handle(msg.action)); break;
-        case "brain": reply(this.brain.handle(msg.action)); break;
+        case "brain": reply(await this.brain.handle(msg.action)); break;
         case "ydocLoad": reply(this.ydocs.get(msg.rootID) ?? null); break;
         case "pendingLocal": reply(this.pendingLocal(msg.rootID)); break;
         case "ydocSave": this.ydocs.put(msg.rootID, msg.state); reply(true); break;
@@ -919,6 +920,22 @@ export class StoreHost {
   private modelManager: localModels.LocalModelManager | undefined;
   private modelInstalled = new Map<string, boolean>();
   private modelDownloads = new Map<string, AbortController>();
+
+  /** BSD-231 Teil 3b: Embedding-Modell für die Suche nach Bedeutung, sobald es installiert ist. */
+  private readonly embedder = localEmbedderLoader({
+    manager: () => this.models(),
+    catalog: () => this.modelCatalog(),
+    installed: async (id) => {
+      if (this.modelDownloads.has(id)) return false;
+      let ok = this.modelInstalled.get(id);
+      if (ok === undefined) {
+        const spec = this.modelCatalog().find((s) => s.id === id);
+        ok = spec ? await (await this.models()).installed(spec) : false;
+        this.modelInstalled.set(id, ok);
+      }
+      return ok;
+    },
+  });
 
   private async models(): Promise<localModels.LocalModelManager> {
     if (!this.modelManager) {
