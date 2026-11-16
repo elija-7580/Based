@@ -67,3 +67,41 @@ test("⌘, zweimal: Einstellungen auf und zurück zur Seite", async ({ page }) =
   await page.keyboard.press("ControlOrMeta+Comma");
   await expect(page.getByLabel("Page title")).toHaveValue("Toggle keys");
 });
+
+// BSD-438: Wer aus Quick Find eine Seite öffnet, behält den Fokus in der neuen Seite – er springt nicht in die Seitenleiste
+// zurück (Rückfall durch BSD-421: der Hook gab den Fokus immer zurück und überstimmte BSD-304).
+test("Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.evaluate(() => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command({ op: "createPage", title: "Zebra target" }));
+  const hide = page.getByTestId("sidebar-hide");
+  await hide.focus();
+  await expect(hide).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+k");
+  const qf = page.getByRole("dialog", { name: "Quick Find" });
+  await expect(qf).toBeVisible();
+  await page.keyboard.type("Zebra target");
+  await expect(qf.locator('[role="option"][aria-selected="true"]')).toContainText("Zebra target");
+  await page.keyboard.press("Enter");
+  await expect(qf).toHaveCount(0);
+  await expect(page).toHaveURL(/#page-/);
+  await expect(page.getByLabel("Page title")).toHaveValue("Zebra target");
+  await page.waitForTimeout(150); // ein Mikrotask/Frame später käme die falsche Rückgabe
+  await expect(hide).not.toBeFocused();
+});
+
+test("⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const hide = page.getByTestId("sidebar-hide");
+  await hide.focus();
+  await page.keyboard.press("ControlOrMeta+n");
+  const palette = page.getByTestId("new-palette");
+  await expect(palette).toBeVisible();
+  await expect(palette.getByRole("option").first()).toHaveAccessibleName(/^New page/);
+  await page.keyboard.press("Enter");
+  await expect(palette).toHaveCount(0);
+  await expect(page).toHaveURL(/#page-/);
+  await page.waitForTimeout(150);
+  await expect(hide).not.toBeFocused();
+});
