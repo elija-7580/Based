@@ -84,7 +84,8 @@ jobs:
 
   e2e:
     name: Playwright ${{ matrix.browser }} ${{ matrix.shard }}/2
-    runs-on: ubuntu-latest
+    # BSD-440: ubuntu-latest ist seit 15.11. Ubuntu 26.04 (ICU 78); Playwright 1.65 bringt WebKit für 24.04 mit (braucht libicudata.so.74)
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     strategy:
       fail-fast: false
@@ -126,7 +127,8 @@ jobs:
 
   perf:
     name: Zeitmessungen (@perf, nicht blockierend)
-    runs-on: ubuntu-latest
+    # BSD-440: ubuntu-latest ist seit 15.11. Ubuntu 26.04 (ICU 78); Playwright 1.65 bringt WebKit für 24.04 mit (braucht libicudata.so.74)
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     continue-on-error: true
     steps:
