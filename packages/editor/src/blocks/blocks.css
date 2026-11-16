@@ -429,6 +429,15 @@
 .bx2-file:hover { background: var(--selected); }
 .bx2-file-name { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
 .bx2-media { display: block; max-width: 100%; border-radius: var(--radius-sm); }
+/* BSD-260 Teil 17: Vorschau von Text- und CSV-Dateien unter dem Datei-Link (Inhalt markierbar, eigene Rollfläche) */
+.bx2-file-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+.bx2-file-preview { box-sizing: border-box; width: 100%; max-height: calc(var(--space-8) * 6); margin: 0; overflow: auto; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--ink); -webkit-user-select: text; user-select: text; }
+pre.bx2-file-preview { font-family: var(--font-mono); font-size: var(--type-data-size); line-height: var(--type-data-leading); white-space: pre-wrap; overflow-wrap: anywhere; }
+.bx2-file-table { border-collapse: collapse; font-family: var(--font-ui); font-size: var(--type-data-size); line-height: var(--type-data-leading); }
+.bx2-file-table th, .bx2-file-table td { padding: var(--space-half) var(--space-2); text-align: left; vertical-align: top; white-space: nowrap; }
+.bx2-file-table th { color: var(--muted); font-weight: 600; }
+.bx2-file-table td { border-top: 1px solid var(--line); }
+.bx2-file-more { display: block; margin-top: var(--space-1); color: var(--muted); font-family: var(--font-ui); font-size: var(--type-meta-size); user-select: none; -webkit-user-select: none; }
 
 /* Einfache Tabelle (nur Anzeige) */
 .bx2-table-wrap { overflow-x: auto; }
