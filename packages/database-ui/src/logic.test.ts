@@ -100,10 +100,21 @@ describe("Layout-Logik", () => {
 
   it("10.000 Zeilen flach in wenigen Millisekunden", () => {
     const many = Array.from({ length: 10_000 }, (_, i) => row(String(i)));
-    const t = performance.now();
-    const items = flatten({ rows: many, groups: [{ id: "g", title: "G", color: null, rows: many }] }, { newRow: true });
+    // BSD-442: CPU-Zeit statt Wanduhr, bester von 3 Läufen; in der CI nur Warnung (wie map.test.ts, BSD-432). Unter Last
+    // maß die Wanduhr 128 ms für eine Arbeit, die allein ~20 ms braucht.
+    const proc = (globalThis as { process?: { env?: Record<string, string | undefined>; cpuUsage?: (p?: { user: number; system: number }) => { user: number; system: number } } }).process;
+    const cpu = (f: () => void) => {
+      if (!proc?.cpuUsage) { const t = performance.now(); f(); return performance.now() - t; }
+      const s = proc.cpuUsage(); f(); const d = proc.cpuUsage(s); return (d.user + d.system) / 1000;
+    };
+    const run = () => flatten({ rows: many, groups: [{ id: "g", title: "G", color: null, rows: many }] }, { newRow: true });
+    let items = run();
+    let best = Infinity;
+    for (let i = 0; i < 3 && best >= 100; i++) best = Math.min(best, cpu(() => { items = run(); }));
     expect(items).toHaveLength(10_002);
-    expect(performance.now() - t).toBeLessThan(100);
+    const ci = !!proc?.env?.CI && proc.env.CI !== "0" && proc.env.CI !== "false" && proc.env.BASED_PERF_STRICT !== "1";
+    if (ci && best >= 100) console.warn(`::warning title=Zeitmessung::Tabelle flach: ${best.toFixed(0)} ms ≥ 100 ms`);
+    else expect(best).toBeLessThan(100);
   });
 
   it("Galerie-Spalten und Spaltenbreiten", () => {
