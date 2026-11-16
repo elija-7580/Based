@@ -1,4 +1,4 @@
-failure b60b6b1c26aad6b503987c53a1eff60f2ab30f37
+failure c09b68446a2eba5d559d56a2dec489ecf85f3dc9
     [webkit] › e2e/shortcut-toggle.spec.ts:62:1 › ⌘, zweimal: Einstellungen auf und zurück zur Seite 
     [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen 
     [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen 
