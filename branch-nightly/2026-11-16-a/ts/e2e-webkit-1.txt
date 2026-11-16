@@ -1,4 +1,4 @@
-failure 2f54d2001f0c6d1fb65ae0878a95021d27d7797e
+failure 5884ed1a2cecc3a98191a3468dec207c6d2d196b
     [webkit] › e2e/editor-parity.spec.ts:169:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz 
     [webkit] › e2e/editor-parity.spec.ts:212:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) 
     [webkit] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) 
