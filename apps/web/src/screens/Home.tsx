@@ -13,6 +13,7 @@ import { chatController, openChatPanel } from "../chat/runtime.js";
 import { Composer } from "../components/Composer.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { dismissedCards, reducedMotion, useDismissed, useNow } from "../home/hooks.js";
+import { MOTION } from "../shell/motion.js";
 import { TaskCard } from "../home/TaskCard.js";
 import { TimeArc } from "../home/TimeArc.js";
 import "../home/home.css";
@@ -123,7 +124,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
     const to = target.getBoundingClientRect();
     const dx = prev.rect.left + prev.rect.width / 2 - (to.left + to.width / 2);
     const dy = prev.rect.top + prev.rect.height / 2 - (to.top + to.height / 2);
-    target.animate([{ transform: `translate(${dx}px, ${dy}px)`, opacity: 0.2 }, { transform: "translate(0, 0)", opacity: 1 }], { duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+    target.animate([{ transform: `translate(${dx}px, ${dy}px)`, opacity: 0.2 }, { transform: "translate(0, 0)", opacity: 1 }], { duration: MOTION.base, easing: MOTION.ease });
   });
 
   const act = (f: () => Promise<unknown> | unknown) => {

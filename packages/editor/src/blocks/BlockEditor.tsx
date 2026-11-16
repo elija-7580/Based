@@ -2001,7 +2001,7 @@ function TableOfContents() {
   return (
     <nav className="bx2-embed bx2-toc" data-embed="" contentEditable={false} aria-label="Table of contents">
       {heads.length ? heads.map((h) => (
-        <button key={h.id} type="button" className={"bx2-toc-item bx2-toc-" + h.type} onClick={() => ctrl.root?.querySelector(`[data-block-id="${CSS.escape(h.id)}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" })}>
+        <button key={h.id} type="button" className={"bx2-toc-item bx2-toc-" + h.type} onClick={() => ctrl.root?.querySelector(`[data-block-id="${CSS.escape(h.id)}"]`)?.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}>
           {plainText(h.text) || "Untitled"}
         </button>
       )) : <span className="bx2-muted">Add headings to build a table of contents.</span>}
