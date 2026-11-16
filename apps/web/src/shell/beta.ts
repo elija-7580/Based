@@ -1,0 +1,56 @@
+// Beta-Gate (Beta-Release-Agent, 16.11.2026): eine zentrale Stelle, die sagt, was ein Build des Kanals „beta“ zeigt.
+// Die Beta (Branch `beta`) bekommt nur stabile Funktionen: fertig gebaut und ohne bekannten Bug. Alles andere bleibt im
+// Code, ist auf beta aber nirgends sichtbar – nicht in der Seitenleiste, nicht in ⌘K, nicht im Slash-Menü, nicht im
+// New-Menü, nicht in den Einstellungen und nicht über alte Links/Tabs. Daten bleiben unberührt: ein vorhandener
+// Meeting-Block wird weiter angezeigt, nur neue lassen sich nicht anlegen.
+//
+// Build-Schalter (vite.config.ts): BASED_CHANNEL=beta → __BASED_CHANNEL__ = "beta". AI hängt zusätzlich am AI-Schalter
+// (shell/ai.ts), der auf beta ganz fehlt.
+//
+// Eine Funktion wieder in die Beta nehmen: Eintrag aus BETA_HIDDEN entfernen (Begründung steht daneben und auf der
+// Notion-Seite „Based — Beta-Release“ unter „Entscheidungen“).
+
+declare const __BASED_CHANNEL__: string | undefined;
+
+export type Channel = "dev" | "beta";
+
+/** Kanal dieses Builds. Ohne Build-Schalter (Tests, Entwicklung): "dev". */
+export const CHANNEL: Channel = typeof __BASED_CHANNEL__ === "string" && __BASED_CHANNEL__ === "beta" ? "beta" : "dev";
+
+/** Funktionen, die ein Kanal ausblenden kann. */
+export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding";
+
+/** Auf beta ausgeblendet, mit Grund (für Menschen; wird nicht angezeigt). */
+export const BETA_HIDDEN: Readonly<Record<GatedFeature, string>> = {
+  meetings: "Labs (features.csv) und offener Bug BSD-453 (Aufnahme in der Mac-App)",
+  graph: "BSD-420: Graph laut Mac-Abnahme buggy und langsam",
+  realtimeText: "Echtzeit-Text ist „after“ (features.csv), braucht einen Server",
+  coding: "Labs, hängt an AI",
+};
+
+/** Reine Regel (getestet): Ist die Funktion in diesem Kanal sichtbar? */
+export function featureVisible(feature: GatedFeature, channel: Channel = CHANNEL): boolean {
+  return channel !== "beta" || !(feature in BETA_HIDDEN);
+}
+
+/** ⌘K-/Navigationsbefehle und Routen, die an einer Funktion hängen. */
+const COMMAND_FEATURE: Readonly<Record<string, GatedFeature>> = {
+  meetings: "meetings",
+  meeting: "meetings",
+  graph: "graph",
+  coding: "coding",
+};
+
+/** Darf ein ⌘K-Befehl bzw. eine Route mit dieser ID in diesem Kanal erscheinen? */
+export function commandVisible(id: string, channel: Channel = CHANNEL): boolean {
+  const f = COMMAND_FEATURE[id];
+  return f === undefined || featureVisible(f, channel);
+}
+
+/** Blocktypen, die man in diesem Kanal nicht neu anlegen kann (Slash-Menü). */
+export function hiddenBlockTypes(channel: Channel = CHANNEL): ReadonlySet<string> {
+  return new Set(featureVisible("meetings", channel) ? [] : ["meeting"]);
+}
+
+/** Name der App im Kanal (Fenstertitel, Über-Seite, Problem melden). */
+export const APP_NAME = CHANNEL === "beta" ? "Based Beta" : "Based";

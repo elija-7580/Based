@@ -97,6 +97,12 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
 /** „Ask AI“ steht nur im Menü, wenn die Hülle AI anbietet (AI-Schalter an). */
 export const ASK_AI_ITEM: SlashItem = { type: "ai", label: "Ask AI", group: "AI", icon: "askAI", keywords: "ai write assistant generate", ai: true };
 
+/** Einträge des Slash-Menüs: „Ask AI“ nur mit AI, ohne die Blocktypen, die die Hülle ausblendet (Beta-Gate). */
+export function slashItemsFor(ai: boolean, hidden?: ReadonlySet<string>): readonly SlashItem[] {
+  const base = hidden?.size ? SLASH_ITEMS.filter((s) => !hidden.has(s.type)) : SLASH_ITEMS;
+  return ai ? [ASK_AI_ITEM, ...base] : base;
+}
+
 /**
  * Feedback 14. 11.: Weitere Namen je Eintrag (Synonyme, Notion-/Markdown-Begriffe, Deutsch), damit man findet, was man
  * meint, auch ohne den genauen Namen. Schlüssel = Name im Menü.

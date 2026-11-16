@@ -25,6 +25,7 @@ import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { clockSkewText } from "./clockSkew.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
+import { featureVisible } from "../../shell/beta.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
 import { AI_OPTION, aiSetting } from "../../shell/ai.js";
 
@@ -152,8 +153,8 @@ function SyncSection({ client, state }: SettingsSectionProps) {
               <BasedButton label="Connect" variant="primary" type="submit" disabled={!url.trim()} />
             )}
           </HStack>
-          <Switch label="Real-time text (beta)" description="Merge edits to the same paragraph from your devices instead of keeping only the latest. Applies to pages you open next."
-            value={collab} onChange={changeCollab} labelPosition="start" labelSpacing="spread" width="100%" />
+          {featureVisible("realtimeText") ? <Switch label="Real-time text (beta)" description="Merge edits to the same paragraph from your devices instead of keeping only the latest. Applies to pages you open next."
+            value={collab} onChange={changeCollab} labelPosition="start" labelSpacing="spread" width="100%" /> : null}
         </VStack>
       </form>
       <Row label="Database columns" hint={status.propertyRecords
@@ -432,7 +433,7 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "appearance", page: "my-settings", title: "Appearance", order: 10, component: AppearanceSection });
   registerSettingsSection({ id: "start-page", page: "my-settings", title: "Home", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
   registerSettingsSection({ id: "writing", page: "my-settings", title: "Writing", order: 30, component: WritingSection, provides: ["Default font, small text and full width for new pages", "Spell-check"] });
-  registerSettingsSection({ id: "meetings", page: "my-settings", title: "Meeting notes", order: 40, component: MeetingsSection });
+  if (featureVisible("meetings")) registerSettingsSection({ id: "meetings", page: "my-settings", title: "Meeting notes", order: 40, component: MeetingsSection });
   registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection, provides: ["Workspace icon"] });
   registerSettingsSection({ id: "language", page: "language", title: "Week", order: 10, component: LanguageSection, provides: ["Start week on Monday"] });
   registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection });

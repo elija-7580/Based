@@ -20,6 +20,8 @@ export default defineConfig({
     // AI-Schalter (shell/ai.ts): Beta-Builds bieten AI nicht an; E2E/Entwicklung kann den Standard auf „an“ setzen.
     __BASED_AI_OPTION__: JSON.stringify(process.env.BASED_CHANNEL !== "beta"),
     __BASED_AI_DEFAULT__: JSON.stringify(process.env.BASED_AI_DEFAULT === "on"),
+    // Beta-Gate (shell/beta.ts): was ein Beta-Build ausblendet.
+    __BASED_CHANNEL__: JSON.stringify(process.env.BASED_CHANNEL === "beta" ? "beta" : "dev"),
   },
   server: { port: 5173, strictPort: true },
   preview: { port: 4173, strictPort: true },

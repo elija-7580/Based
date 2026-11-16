@@ -4,6 +4,8 @@
 // Agenten-Modus = „Show agent details“). Jeder Eintrag lässt sich per Rechtsklick oben anpinnen oder ausblenden und per
 // Ziehen umsortieren oder zwischen oben und Fuß verschieben (moveNav); das gilt pro Gerät (localStorage). Alles bleibt über ⌘K erreichbar (NAV_COMMANDS). Rein, ohne DOM.
 
+import { CHANNEL, commandVisible, type Channel } from "./beta.js";
+
 export type NavID = "search" | "home" | "chat" | "tasks" | "coding" | "graph" | "library" | "trash" | "settings";
 
 export interface NavDef {
@@ -60,13 +62,14 @@ export function cleanNavPrefs(v: unknown): NavPrefs {
 }
 
 /** Optionen: erweiterter Agenten-Modus und AI-Schalter (shell/ai.ts; fehlt `ai`, gilt an). */
-export interface NavOpts { advanced: boolean; ai?: boolean }
+export interface NavOpts { advanced: boolean; ai?: boolean; /** Build-Kanal (shell/beta.ts); fehlt er, gilt der des Builds. */ channel?: Channel }
 
 /** Einträge, die nur mit eingeschalteter AI erscheinen. */
 export const AI_NAV: ReadonlySet<NavID> = new Set<NavID>(["chat", "tasks", "coding"]);
 
 /** Darf der Eintrag überhaupt erscheinen? Coding nur im erweiterten Agenten-Modus; Chat, Tasks, Coding nur mit AI. */
-export const navAvailable = (id: NavID, opts: NavOpts) => (opts.ai !== false || !AI_NAV.has(id)) && (id !== "coding" || opts.advanced);
+export const navAvailable = (id: NavID, opts: NavOpts) =>
+  (opts.ai !== false || !AI_NAV.has(id)) && (id !== "coding" || opts.advanced) && commandVisible(id, opts.channel ?? CHANNEL);
 
 export interface NavLayout {
   top: NavID[];
@@ -177,9 +180,10 @@ const AI_COMMANDS = new Set(["chat", "tasks", "coding", "dashboard"]);
  * Befehle passend zur Eingabe (Wortanfang in Name oder Suchwort); leere Eingabe: keine. Coding gibt es hier immer,
  * solange AI an ist; mit `ai: false` fallen Chat, Tasks, Coding und Dashboard weg.
  */
-export function matchCommands(query: string, opts: { ai?: boolean } = {}): NavCommand[] {
+export function matchCommands(query: string, opts: { ai?: boolean; channel?: Channel } = {}): NavCommand[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const starts = (s: string) => s.toLowerCase().split(/\s+/).some((w) => w.startsWith(q)) || s.toLowerCase().startsWith(q);
-  return NAV_COMMANDS.filter((c) => (opts.ai !== false || !AI_COMMANDS.has(c.id)) && (starts(c.label) || c.keywords.some(starts)));
+  const channel = opts.channel ?? CHANNEL;
+  return NAV_COMMANDS.filter((c) => (opts.ai !== false || !AI_COMMANDS.has(c.id)) && commandVisible(c.id, channel) && (starts(c.label) || c.keywords.some(starts)));
 }

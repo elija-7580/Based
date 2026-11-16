@@ -157,3 +157,16 @@ test("Info.plist: Mikrofon für Meeting Notes (macOS verweigert getUserMedia ohn
   assert.match(plist, /<key>NSMicrophoneUsageDescription<\/key>\s*<string>[^<]{20,}<\/string>/);
   assert.match(plist, /<key>NSAudioCaptureUsageDescription<\/key>\s*<string>[^<]{20,}<\/string>/);
 });
+
+// Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.
+test("Beta-Overlay: eigener Name, eigene Bundle-ID, Updater auf beta-latest", () => {
+  const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
+  assert.equal(beta.productName, "Based Beta");
+  assert.equal(beta.identifier, "com.friedrich-ulrich.based.beta");
+  assert.notEqual(beta.identifier, conf.identifier);
+  assert.equal(beta.app.windows[0].title, "Based Beta");
+  // Das Overlay ersetzt das Fenster-Array ganz (JSON Merge Patch): alles außer dem Titel muss gleich bleiben.
+  assert.deepEqual({ ...beta.app.windows[0], title: conf.app.windows[0].title }, conf.app.windows[0]);
+  assert.equal(beta.plugins.updater.pubkey, conf.plugins.updater.pubkey);
+  assert.deepEqual(beta.plugins.updater.endpoints, ["https://github.com/elija-7580/Based/releases/download/beta-latest/latest.json"]);
+});

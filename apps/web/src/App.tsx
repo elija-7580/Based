@@ -32,6 +32,7 @@ import { FIND_EVENT, matchShortcut, menuOwnsShortcut, parentPage } from "./shell
 import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
+import { commandVisible } from "./shell/beta.js";
 import { homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
@@ -231,7 +232,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   const commands: PaletteCommand[] = [
     { id: "page", title: "New page", hint: "⌥⌘N", icon: "page", keywords: "document note", run: () => void newPage() },
     ...(ai ? [{ id: "chat", title: "New AI chat", hint: "⌘J", icon: "chat", keywords: "ai agent ask", run: () => history.navigate({ name: "chat" }) } satisfies PaletteCommand] : []),
-    { id: "meeting", title: "New meeting notes", icon: "mic", keywords: "meeting record transcribe notes", run: () => void newMeeting() },
+    ...(commandVisible("meeting") ? [{ id: "meeting", title: "New meeting notes", icon: "mic", keywords: "meeting record transcribe notes", run: () => void newMeeting() } satisfies PaletteCommand] : []),
     { id: "database", title: "New database", icon: "database", keywords: "table board", run: () => void newDatabase() },
     { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting("pick") },
   ];
@@ -253,6 +254,9 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = homePage
       ? <PageView key={homePage} client={client} state={state} pageID={homePage} history={history} onOpenPage={openPage} onNavigate={navigate} />
       : <div className="screen-loading" role="status" aria-label="Loading" />;
+  } else if (!commandVisible(route.name) && (route.name === "graph" || route.name === "meetings" || route.name === "coding")) {
+    // Beta-Gate: ausgeblendete Ansichten (alte Tabs, Links) landen in der Library.
+    screen = <Library client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} />;
   } else if (route.name === "chat") {
     screen = <ChatPage client={client} history={history} />;
   } else if (route.name === "tasks") {
@@ -298,6 +302,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}
         onCommand={(id) => {
           setQuickFind(false);
+          if (!commandVisible(id)) return;
           if (id === "meeting") void newMeeting();
           else if (id === "home") goHome();
           else if (id === "dashboard") navigate({ name: "home" });

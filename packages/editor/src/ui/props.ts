@@ -64,4 +64,6 @@ export interface PageEditorProps {
   databases?: DatabaseSource;
   /** BSD-225: „Ask AI“ (leere Zeile + Leertaste, /AI, Formatleiste). Ohne: keine AI-Einträge. */
   ai?: EditorAI;
+  /** Beta-Gate: Blocktypen, die das Slash-Menü nicht anbietet (vorhandene Blöcke bleiben sichtbar). */
+  hiddenBlocks?: ReadonlySet<string>;
 }

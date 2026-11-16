@@ -2,7 +2,7 @@
 // zuletzt 4c: kopfloser Konverter, BlockNote-Abbildung und DocSession für die alten `page:`-Dokumente).
 export { BlockEditor, dropTarget, sectionColor } from "./blocks/BlockEditor.js";
 export { EditorController } from "./blocks/controller.js";
-export { SLASH_ITEMS, filterSlash } from "./blocks/slash.js";
+export { SLASH_ITEMS, filterSlash, slashItemsFor } from "./blocks/slash.js";
 export type { MeetingHost, MeetingHostState, MeetingPlayback } from "./ui/meetingHost.js";
 export type { PageEditorProps } from "./ui/props.js";
 export type { DatabaseRenderProps, EquationRenderProps, PageDirectory, PageRef, Person } from "./ui/env.js";

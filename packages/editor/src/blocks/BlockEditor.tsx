@@ -23,7 +23,7 @@ import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
-import { ASK_AI_ITEM, SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
+import { SLASH_ITEMS, filterSlash, slashItemsFor, type SlashItem } from "./slash.js";
 import { BlockIcon } from "./icons.js";
 import { SELECTION_ACTIONS, type EditorAI } from "../ui/ai.js";
 import { PresenceLayer, useRealtime } from "./realtime.js";
@@ -104,7 +104,7 @@ export function BlockEditor(props: PageEditorProps) {
   const [toolbar, setToolbar] = useState<{ x: number; y: number } | undefined>();
   // BSD-407 Teil 6.6: „Ask AI“ (Leertaste auf leerer Zeile, Slash, Formatleiste) – nur mit `props.ai` (AI-Schalter an)
   const [aiReq, setAIReq] = useState<AIState | undefined>();
-  const slashItems_ = useMemo(() => (props.ai ? [ASK_AI_ITEM, ...SLASH_ITEMS] : SLASH_ITEMS), [props.ai]);
+  const slashItems_ = useMemo(() => slashItemsFor(props.ai !== undefined, props.hiddenBlocks), [props.ai, props.hiddenBlocks]);
   const slashAll = useRef(slashItems_);
   slashAll.current = slashItems_;
   const openAI = (anchor: string, selection?: Caret) => {

@@ -12,6 +12,9 @@ import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
 import { Equation, loadTeX, renderTeX, texReady } from "./equation.js";
 import { createMeetingHost, type WebMeetingHost } from "./meeting/host.js";
+import { featureVisible, hiddenBlockTypes } from "./shell/beta.js";
+
+const HIDDEN_BLOCKS = hiddenBlockTypes();
 import { chatController } from "./chat/runtime.js";
 import { editorAI } from "./editorAI.js";
 import { linkPreviewFetcher } from "./linkPreview.js";
@@ -41,7 +44,8 @@ export function connectEditor(client: StoreClient) {
   migrateEditorPref();
   shellClient = client;
   directory = new ShellPageDirectory(client);
-  meeting = createMeetingHost(client);
+  // Beta-Gate: ohne Host lassen sich vorhandene Meeting-Blöcke lesen, aber nicht aufnehmen (BSD-453).
+  meeting = featureVisible("meetings") ? createMeetingHost(client) : undefined;
   docStore = new WorkerYDocStore(client);
   // BSD-252: Seiten mit noch nicht gepushten Änderungen erst nach dem Push mit /collab öffnen (kein Verlust).
   textCollab = createCollab(prefixedDocStore(docStore, "text:"), () => syncConfig.get(), (rootID) => client.pendingLocal(rootID), textDocName);
@@ -101,7 +105,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   return (
     <div className="shell-editor">
       <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} renderEquationHTML={renderEquationHTML}
-        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
+        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(HIDDEN_BLOCKS.size ? { hiddenBlocks: HIDDEN_BLOCKS } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>
