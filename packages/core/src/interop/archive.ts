@@ -226,6 +226,11 @@ export function mergeWorkspace(local: Workspace, incoming: Workspace): Workspace
 
 const stampOf = (r: WireRecord): Stamp => (r.data.stamp as Stamp | undefined) ?? ZERO_STAMP;
 const trashed = (r: WireRecord | undefined) => r?.kind === "block" && r.data.trashedAt !== undefined;
+const untrashed = (r: WireRecord): WireRecord => {
+  const data = { ...r.data };
+  delete data.trashedAt;
+  return { ...r, data } as WireRecord;
+};
 
 export interface ApplyImportedOptions {
   /**
@@ -269,7 +274,9 @@ export function applyImportedRecords(store: WorkspaceStore, records: WireRecord[
     if (local) {
       if (canonicalStringify(local) === canonicalStringify(r)) continue;
       if (compareStamps(stampOf(local), stampOf(r)) > 0) {
-        if (opts.restoreDeleted && trashed(local) && !trashed(r)) revive.push(r);
+        // Lokal neuer, aber im Papierkorb: die lokale Fassung ohne Papierkorb-Markierung zurückholen – nicht die ältere
+        // Archivfassung, sonst gingen Änderungen nach dem Export verloren (Prüfung Pass 37).
+        if (opts.restoreDeleted && trashed(local) && !trashed(r)) revive.push(untrashed(local));
         else stale.push(key);
         continue;
       }
