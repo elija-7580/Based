@@ -168,8 +168,10 @@ export class BrainHost {
     this.index!.setPage(id, titleOf(s, id), chunkTexts(texts));
   }
 
-  private related(pageID: string, limit: number): (SemanticHit & { title: string })[] {
-    return this.semantic().related(pageID, limit).filter((h) => !isTrashed(this.store, h.pageID)).map((h) => ({ ...h, title: titleOf(this.store, h.pageID) }));
+  /** BSD-231 Teil 3b: mit lokalem Embedding-Modell nach Bedeutung, sonst TF-IDF. */
+  private async related(pageID: string, limit: number): Promise<(SemanticHit & { title: string })[]> {
+    this.semantic(); // Index aktuell halten
+    return (await this.tools.relatedPages(pageID, limit)).filter((h) => !isTrashed(this.store, h.pageID)).map((h) => ({ ...h, title: titleOf(this.store, h.pageID) }));
   }
 
   // MARK: Änderungen, Schutz
