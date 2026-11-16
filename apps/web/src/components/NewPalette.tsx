@@ -25,7 +25,9 @@ export function filterCommands(commands: readonly PaletteCommand[], query: strin
 }
 
 export function NewPalette({ commands, onClose }: { commands: readonly PaletteCommand[]; onClose: () => void }) {
-  useRestoreFocus(); // BSD-421: Fokus (und Schreibmarke) zurück, wenn die Leiste zugeht
+  // BSD-421/438: Fokus (und Schreibmarke) zurück, wenn die Leiste zugeht – nicht, wenn ein Befehl lief (neue Seite …)
+  const ran = useRef(false);
+  useRestoreFocus(() => ran.current);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const listID = useId();
@@ -35,6 +37,7 @@ export function NewPalette({ commands, onClose }: { commands: readonly PaletteCo
   const run = (i: number) => {
     const c = items[i];
     if (!c) return;
+    ran.current = true;
     onClose();
     c.run();
   };

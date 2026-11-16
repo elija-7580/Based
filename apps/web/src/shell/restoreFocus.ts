@@ -1,7 +1,7 @@
 // BSD-421: Leisten und Fenster, die ein Kurzbefehl öffnet (⌘F, ⌘K/⌘P, ⌘N), geben beim Schließen – auch über denselben
 // Kurzbefehl – den Fokus dorthin zurück, wo er vorher war; im Editor samt Schreibmarke/Markierung (ein bloßes focus()
 // setzte sie an den Anfang des Blocks).
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Saved { el: HTMLElement; range: Range | undefined }
 
@@ -27,8 +27,15 @@ export function restoreFocus(saved: Saved | undefined, doc: Document = document)
   }
 }
 
-/** Beim ersten Zeichnen merken (vor dem Fokus ins eigene Feld), nach dem Aushängen zurückgeben. */
-export function useRestoreFocus(): void {
+/** Beim ersten Zeichnen merken (vor dem Fokus ins eigene Feld), nach dem Aushängen zurückgeben.
+ *  BSD-438: `skip()` → true beim Aushängen (z. B. eine Seite wurde geöffnet) → nichts zurückgeben, das Ziel bestimmt den
+ *  Fokus (BSD-304). */
+export function useRestoreFocus(skip?: () => boolean): void {
   const [saved] = useState(() => (typeof document === "undefined" ? undefined : saveFocus()));
-  useEffect(() => () => { queueMicrotask(() => restoreFocus(saved)); }, [saved]);
+  const skipRef = useRef(skip);
+  skipRef.current = skip;
+  useEffect(() => () => {
+    if (skipRef.current?.()) return;
+    queueMicrotask(() => restoreFocus(saved));
+  }, [saved]);
 }
