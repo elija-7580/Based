@@ -418,3 +418,44 @@ test("Sync-Status: Karte beim Überfahren und mit der Tastatur, Klick öffnet di
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#prefs-sync/);
 });
+
+// BSD-429: In einem Synced Block liegen „+“ und Griff der Kinder links neben der Randlinie, nicht auf ihr –
+// in allen drei Fenstergrößen, hell und dunkel; auch für ein eingerücktes Kind.
+test("Synced Block: Griff und Plus der Kinder schneiden die Randlinie nicht", async ({ page }) => {
+  await fresh(page);
+  const cmd = (c: Record<string, unknown>) => page.evaluate((x) => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based.client.command(x), c);
+  const host = await cmd({ op: "createPage", title: "Synced host" });
+  await page.goto(`/#page-${host}`);
+  const ed = blockEditor(page);
+  await focusEditorEnd(page);
+  await page.keyboard.type("Shared line");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Tab");
+  await page.keyboard.type("Nested line");
+  const first = ed.locator(".bx2-block").first();
+  await first.locator(".bx2-row").first().hover();
+  await first.locator(":scope > .bx2-gutter [data-handle]").click();
+  await page.keyboard.type("copy and sync");
+  await page.keyboard.press("Enter");
+  const synced = ed.locator(".bx2-synced");
+  await expect(synced).toContainText("Nested line");
+  // ohne Neuladen: WebKit speichert in den Tests nur im Speicher
+  for (const theme of ["light", "dark"] as const) {
+    await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      for (const text of ["Shared line", "Nested line"]) {
+        const child = synced.locator(".bx2-block", { has: page.locator(":scope > .bx2-row", { hasText: text }) });
+        await child.locator(":scope > .bx2-row").hover();
+        const gutter = child.locator(":scope > .bx2-gutter");
+        await expect(gutter).toHaveCSS("opacity", "1");
+        const plus = (await gutter.getByRole("button", { name: "Add block below" }).boundingBox())!;
+        const grip = (await gutter.locator("[data-handle]").boundingBox())!;
+        const g = { x: Math.min(plus.x, grip.x), width: Math.max(plus.x + plus.width, grip.x + grip.width) - Math.min(plus.x, grip.x) };
+        const line = await synced.evaluate((el) => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.left + parseFloat(getComputedStyle(el).borderLeftWidth) }; });
+        const clear = g.x + g.width <= line.left || g.x >= line.right;
+        expect(clear, `${text} ${theme} ${w}×${h}: Griff ${g.x}–${g.x + g.width}, Linie ${line.left}–${line.right}`).toBe(true);
+      }
+    }
+  }
+});
