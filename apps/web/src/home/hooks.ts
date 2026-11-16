@@ -58,7 +58,7 @@ export const dismissedCards = {
 
 export const useDismissed = () => useSyncExternalStore(dismissedCards.subscribe, dismissedCards.get);
 
-export const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+export { reducedMotion } from "../shell/motion.js";
 
 /** „14:02“. */
 export function clock(ms: number): string {
