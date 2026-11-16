@@ -58,7 +58,7 @@ export { decodeTextBytes, parseDelimited, previewFile, previewKind, previewLangu
 export type { FilePreview, PreviewKind, PreviewLimits, TextEncoding } from "./interop/file-preview.js";
 export { classRules, cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter, parseNotionNumber, rowType, svgType, trimRuns, unwrapRedirect } from "./interop/notion-html.js";
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
-export { codeSpan, decodeCSV, decodeInlineMarkdown, escapeTagLike, linkTarget, encodeCSV, guardCSVFormula, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
+export { codeSpan, decodeCSV, decodeInlineMarkdown, escapeTagLike, linkTarget, encodeCSV, guardCSVFormula, unguardCSVFormula, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
 export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";

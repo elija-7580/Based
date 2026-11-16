@@ -164,4 +164,4 @@ const snippetOf = (s: string) => {
   return flat.length > 160 ? flat.slice(0, 159) + "…" : flat;
 };
 
-export { EmbeddingCache, rerankByMeaning, type RerankCandidate } from "./rerank.js";
+export { EmbeddingCache, relatedByMeaning, rerankByMeaning, type RerankCandidate } from "./rerank.js";

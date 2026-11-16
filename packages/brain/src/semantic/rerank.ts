@@ -59,3 +59,44 @@ export async function rerankByMeaning(embedder: TextEmbedder, query: string, can
   }
   return out.sort((a, b) => b.score - a.score || (a.pageID < b.pageID ? -1 : 1)).slice(0, opts.limit ?? 10);
 }
+
+/** Vektoren für Texte, aus dem Cache oder neu (ein Aufruf für alle fehlenden). */
+async function vectorsOf(embedder: TextEmbedder, texts: readonly string[], cache: EmbeddingCache | undefined, signal?: AbortSignal): Promise<Map<string, Float32Array>> {
+  const out = new Map<string, Float32Array>();
+  const missing: string[] = [];
+  for (const t of new Set(texts)) {
+    if (!t.trim()) continue;
+    const v = cache?.get(t);
+    if (v) out.set(t, v); else missing.push(t);
+  }
+  if (missing.length) {
+    const vs = await embedder.embed(missing, signal, "passage");
+    missing.forEach((t, i) => { out.set(t, vs[i]!); cache?.set(t, vs[i]!); });
+  }
+  return out;
+}
+
+/**
+ * BSD-231 Teil 3b: verwandte Seiten nach Bedeutung – Mittel der Abschnittsvektoren der Seite gegen den besten Abschnitt
+ * jedes Kandidaten (Kandidaten aus TF-IDF). Ohne Text auf der Seite → [].
+ */
+export async function relatedByMeaning(embedder: TextEmbedder, pageChunks: readonly string[], candidates: readonly RerankCandidate[], opts: { limit?: number; cache?: EmbeddingCache; signal?: AbortSignal; minScore?: number } = {}): Promise<SemanticHit[]> {
+  const cache = opts.cache?.model === embedder.id ? opts.cache : undefined;
+  const vs = await vectorsOf(embedder, [...pageChunks, ...candidates.flatMap((c) => c.chunks)], cache, opts.signal);
+  const own = pageChunks.map((t) => vs.get(t)).filter((v): v is Float32Array => v !== undefined);
+  if (own.length === 0) return [];
+  const mean = new Float32Array(own[0]!.length);
+  for (const v of own) for (let i = 0; i < v.length; i++) mean[i] = mean[i]! + v[i]!;
+  const out: SemanticHit[] = [];
+  for (const c of candidates) {
+    let best: { score: number; text: string } | undefined;
+    for (const t of c.chunks) {
+      const v = vs.get(t);
+      if (!v) continue;
+      const s = cosine(mean, v);
+      if (!best || s > best.score) best = { score: s, text: t };
+    }
+    if (best && best.score >= (opts.minScore ?? 0)) out.push({ pageID: c.pageID, score: best.score, snippet: snippetOf(best.text) });
+  }
+  return out.sort((a, b) => b.score - a.score || (a.pageID < b.pageID ? -1 : 1)).slice(0, opts.limit ?? 5);
+}

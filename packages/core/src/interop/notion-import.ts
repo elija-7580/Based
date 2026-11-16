@@ -15,7 +15,7 @@ import { AssetRejected, commitImport, importAssetFrom, emptyReport, ImportBuilde
 import { basename, comparePaths, dirname, extname, ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { graphemes, trimSpaces } from "./html.js";
 import { removingPercentEncoding } from "./importids.js";
-import { decodeCSV, MarkdownImporter, type MarkdownBlock } from "./markdown.js";
+import { decodeCSV, MarkdownImporter, unguardCSVFormula, type MarkdownBlock } from "./markdown.js";
 import { decodeTextBytes, parseDelimited, sniffDelimiter } from "./file-preview.js";
 import { cleanTitle, NotionHTMLImporter } from "./notion-html.js";
 import { toRichText } from "./runs.js";
@@ -26,6 +26,11 @@ import { EnexImporter } from "./enex-import.js";
 import { importOPML } from "./opml.js";
 import { planJSONImport, type JSONImportPlan } from "./json-import.js";
 import { DocxImporter } from "./docx-import.js";
+
+/** Prüfung Pass 37: Dateiendung → Blockart für alleinstehende Datei-Links im Markdown. */
+const FILE_BLOCK_BY_EXT: Record<string, string> = {
+  pdf: "pdf", mp4: "video", m4v: "video", mov: "video", webm: "video", mp3: "audio", m4a: "audio", wav: "audio", ogg: "audio", aac: "audio", flac: "audio",
+};
 
 export interface NotionImportOptions {
   /** Wohin Bilder und Dateien kommen; ohne Speicher bleiben nur externe URLs. */
@@ -423,6 +428,16 @@ class MarkdownNotionImporter {
           const pick = this.files.isFile(all) ? all : u;
           if (this.files.isFile(pick) && !this.consumed.has(pick)) { this.importDatabase(pick, "b:" + id, k, true); return; }
         }
+        // Prüfung Pass 37: ein Absatz, der nur auf eine Datei im Import zeigt (so schreibt der Markdown-Export PDF- und
+        // Datei-Blöcke), wird wieder ein Datei-Block mit der Datei – vorher blieb ein Link ins Leere.
+        const kind = FILE_BLOCK_BY_EXT[ext] ?? (ext !== "" && !["md", "csv", "html", "htm"].includes(ext) ? "file" : undefined);
+        if (kind && this.files.isFile(u) && !this.consumed.has(u)) {
+          const label = b.text.map((r) => r.t).join("").trim();
+          const props: BlockProps = { ...this.asset(decoded, dir) };
+          if (label !== "" && label !== basename(u) && label !== decoded && label !== target) props.caption = label;
+          this.putImported({ type: kind, text: [], props, children: [] }, "b:" + id, k);
+          return;
+        }
       }
       this.putImported(b, "b:" + id, k);
     });
@@ -461,6 +476,8 @@ class MarkdownNotionImporter {
       const d = sniffDelimiter(raw);
       if (d !== ",") table = parseDelimited(raw, d).rows;
     }
+    // Prüfung Pass 37: von unserem Export gegen Formel-Injection geschützte Zellen („'=…“) wieder wie im Original.
+    table = table.map((r) => r.map(unguardCSVFormula));
     const header = table[0];
     if (!header || header.length === 0) return undefined;
     const rows = table.slice(1);

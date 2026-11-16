@@ -2,7 +2,7 @@
 // Abschnitt je Seite); Vektoren werden zwischengespeichert; ohne Modell oder bei Fehlern bleibt es bei TF-IDF.
 import { describe, expect, it } from "vitest";
 import { createPage, type WorkspaceStore } from "@based/core";
-import { AgentBrain, BrainTools, chunkTexts, EmbeddingCache, LocalSemanticIndex, rerankByMeaning, type TextEmbedder } from "../src/index.js";
+import { AgentBrain, BrainTools, chunkTexts, EmbeddingCache, LocalSemanticIndex, relatedByMeaning, rerankByMeaning, type TextEmbedder } from "../src/index.js";
 import { memoryStore } from "./helpers.js";
 
 /** Doppel: Vektor = [Anteil „Reise“-Wörter, Anteil „Geld“-Wörter, 1 − beide]; zählt Aufrufe. */
@@ -76,5 +76,16 @@ describe("Neuordnen nach Bedeutung (BSD-231 Teil 3b)", () => {
     expect((await broken.callAsync("semantic_search", query)).text).toBe(before);
     const none = new BrainTools(store, brain, () => index, async () => undefined);
     expect((await none.callAsync("semantic_search", query)).text).toBe(before);
+  });
+
+  it("verwandte Seiten nach Bedeutung: Mittel der eigenen Abschnitte gegen den besten Abschnitt der Kandidaten", async () => {
+    const e = fakeEmbedder();
+    const hits = await relatedByMeaning(e, ["Reise nach Wien", "Zug und Urlaub"], [
+      { pageID: "geld", chunks: ["Kosten Euro Budget"] },
+      { pageID: "reise", chunks: ["Packliste", "Flug Reise Urlaub"] },
+    ], { cache: new EmbeddingCache(100, e.id) });
+    expect(hits.map((h) => h.pageID)).toEqual(["reise", "geld"]);
+    expect(hits[0]!.snippet).toBe("Flug Reise Urlaub");
+    expect(await relatedByMeaning(e, [], [{ pageID: "x", chunks: ["a"] }])).toEqual([]);
   });
 });
