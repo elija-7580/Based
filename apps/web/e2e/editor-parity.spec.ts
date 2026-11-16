@@ -785,7 +785,8 @@ test("Fotos: Synced-Block-Kopie, Hinweis am Editor", async ({ page, browserName 
     await page.evaluate(() => localStorage.removeItem("based.appearance"));
   };
   await shoot("synced-copy", async () => {
-    await copy.hover();
+    // BSD-429: über dem Kind, damit „+“ und Griff neben der Randlinie im Foto stehen
+    await copy.locator(".bx2-block > .bx2-row").first().hover();
     await expect(copy.getByRole("button", { name: "Unsync" })).toBeVisible();
   });
   await shoot("notice", async () => {
