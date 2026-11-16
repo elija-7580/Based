@@ -83,7 +83,7 @@ describe("Word-Export (.docx)", () => {
     expect(by("numberedList")).toEqual(["Step one", "Step two"]);
     expect(by("quote")).toEqual(["Simplicity is prerequisite for reliability."]);
     expect(by("code")).toEqual(["const x = 1;\nconsole.log(x);"]);
-    expect(b.some((x) => plainText(x.text) === "☑ Ship it")).toBe(true);
+    expect(b.some((x) => x.type === "todo" && plainText(x.text) === "Ship it" && x.props?.checked === true)).toBe(true); // Prüfung Pass 37: ☑ wird wieder eine Aufgabe
     const table = b.find((x) => x.type === "table")!;
     expect(kids(t, "b:" + table.id).map((row) => (row.props!.cells as unknown[]).map((c) => plainText(c as never)))).toEqual([["Name", "Value"], ["Alpha", "1"]]);
     const image = b.find((x) => x.type === "image")!;

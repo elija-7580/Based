@@ -213,7 +213,10 @@ export class DocxImporter {
         if (prev && prev.type === "code" && prev.level === undefined) prev.text = normalize([...prev.text, { t: "\n" + plainText, m: PLAIN }]);
         else out.push({ type: "code", text: [{ t: plainText, m: PLAIN }], props: {}, children: [] });
       } else if (plainText.trim() !== "") {
-        out.push({ type: kind ?? "text", text, props: {}, children: [] });
+        // Prüfung Pass 37: Aufgaben – unser Word-Export (und viele Word-Vorlagen) schreibt ☐/☑ vor den Text.
+        const box = kind === undefined ? /^([☐☑☒])[ \u00a0]/.exec(plainText) : null;
+        if (box) out.push({ type: "todo", text: dropChars(text, 2), props: { checked: box[1] !== "☐" }, children: [] });
+        else out.push({ type: kind ?? "text", text, props: {}, children: [] });
       }
     }
     for (const a of images) out.push({ type: "image", text: [], props: { asset: a }, children: [] });
@@ -282,4 +285,16 @@ export class DocxImporter {
     this.report.rootIDs.push(pageID);
     return { records, rootKeys: [key], report: this.report };
   }
+}
+
+/** Die ersten `n` Zeichen (UTF-16) der Läufe weglassen. */
+function dropChars(runs: Run[], n: number): Run[] {
+  const out: Run[] = [];
+  let rest = n;
+  for (const r of runs) {
+    if (rest >= r.t.length) { rest -= r.t.length; continue; }
+    out.push(rest > 0 ? { ...r, t: r.t.slice(rest) } : r);
+    rest = 0;
+  }
+  return out;
 }
