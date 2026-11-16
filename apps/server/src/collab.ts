@@ -1,19 +1,21 @@
-// Echtzeit-Text (BSD-158, BSD-220): Hocuspocus (Yjs) unter `GET /collab` (WebSocket). Ein Y.Doc je Seite,
-// Dokumentname `page:<id>`, XML-Fragment „blocks“ wie packages/editor (DocSession/FRAGMENT). Der Server leitet
-// Yjs-Updates zwischen Geräten weiter und speichert den Zustand in SQLite (eigene Datei neben dem Workspace, das
-// Workspace-Format bleibt unverändert).
-// BSD-220: Der Server ist die Brücke Y.Doc ↔ Records. Je geladenem Dokument läuft eine DocSession (kopfloser
-// Konverter aus @based/editor/headless): Beim ersten Laden füllt sie das Y.Doc aus den Records (nur der Server
-// füllt – zwei Geräte, die jeweils selbst füllten, hätten doppelten Inhalt), markiert es mit `based.origin =
-// "server"` und schreibt Y-Änderungen der Geräte als eine Store-Transaktion (Records → Sync v2 → Swift-Client).
-// Record-Änderungen von außen (Sync-Push, MCP) übernimmt sie per Diff ins Y.Doc; die Geräte bekommen sie über Yjs.
-// Damit kein Y-Zustand verloren geht, den Geräte schon kennen, speichert der Server nach jedem Diff sofort.
+// Echtzeit-Text (BSD-158, BSD-220, ADR 0016 E7): Hocuspocus (Yjs) unter `GET /collab` (WebSocket). Ein Y.Doc je Seite,
+// Dokumentname `text:<id>`, Y.Map „texts“ mit einem Y.Text je Textblock (TextSession aus @based/editor/headless).
+// Der Server leitet Yjs-Updates zwischen Geräten weiter und speichert den Zustand in SQLite (eigene Datei neben dem
+// Workspace, das Workspace-Format bleibt unverändert).
+// BSD-220: Der Server ist die Brücke Y.Doc ↔ Records: Beim ersten Laden füllt er das Y.Doc aus den Records (nur der
+// Server füllt – zwei Geräte, die jeweils selbst füllten, hätten doppelten Inhalt), markiert es mit `based.origin =
+// "server"` und schreibt Y-Änderungen der Geräte als Records (Sync v2 → Swift-Client). Record-Änderungen von außen
+// (Sync-Push, MCP) übernimmt er per Diff ins Y.Doc; die Geräte bekommen sie über Yjs.
+// BSD-407 Teil 4c: Die alten Seiten-Dokumente `page:<id>` (BlockNote/y-prosemirror) nimmt der Server nicht mehr an –
+// seit 15.11. gibt es keinen Client mehr dafür. Ihr Inhalt steht in den Records (die alte Brücke schrieb jede Änderung
+// nach 120 ms und beim Entladen, und beim Laden gewannen ohnehin die Records); die gespeicherten Y-Zustände bleiben in
+// der Datenbank unangetastet.
 // Auth: Bearer-Token im Hocuspocus-Auth-Nachricht (Provider-Option `token`), nie in der URL.
 import type { IncomingMessage, Server } from "node:http";
 import type { Duplex } from "node:stream";
 import { Hocuspocus } from "@hocuspocus/server";
 import { isPageLike, type WorkspaceStore } from "@based/core";
-import { createConverter, DocSession, STORE_ORIGIN, TEXT_STORE_ORIGIN, TextSession, type BlockConverter } from "@based/editor/headless";
+import { TEXT_STORE_ORIGIN, TextSession } from "@based/editor/headless";
 import type { SqlDatabase } from "@based/sync";
 import { WebSocketServer, type WebSocket } from "ws";
 import * as Y from "yjs";
@@ -21,7 +23,9 @@ import type { Logger } from "./log.js";
 import { tokenEquals } from "./router.js";
 
 export const COLLAB_PATH = "/collab";
+/** Alte Seiten-Dokumente (BlockNote) – abgewiesen seit BSD-407 Teil 4c. */
 export const DOC_PREFIX = "page:";
+export const RETIRED_DOC_MESSAGE = "This page document format is no longer supported. Update Based.";
 /** ADR 0016 (E7): Dokumente des neuen Block-Editors – ein Y.Text je Textblock (TextSession), Name `text:<seite>`. */
 export const TEXT_DOC_PREFIX = "text:";
 /** Größte WebSocket-Nachricht (ein Yjs-Update). */
@@ -29,12 +33,6 @@ export const MAX_MESSAGE = 16 << 20;
 /** Y.Map mit Metadaten im Dokument; `origin: "server"` = vom Server aus den Records gefüllt (Abstammung). */
 export const META_MAP = "based";
 export const META_ORIGIN = "origin";
-
-let converter: BlockConverter | undefined;
-/** Ein Konverter je Prozess (erzeugt ein unsichtbares BlockNote-Schema, ~50 ms). */
-export function sharedConverter(): BlockConverter {
-  return (converter ??= createConverter());
-}
 
 /** Y-Zustände je Dokument (`yjs_documents(name, state, updated)`). */
 export class YStateStore {
@@ -61,16 +59,14 @@ export interface CollabOptions {
   materializeDelay?: number;
   /** BSD-315: weitere gültige Tokens (Geräte des Besitzers); ohne: nur `token`. */
   acceptToken?: (token: string) => boolean;
-  /** Konverter BlockNote ⇄ Y-XML (Standard: `sharedConverter()`). */
-  converter?: BlockConverter;
 }
 
 export class Collab {
   readonly hocuspocus: Hocuspocus;
   private readonly wss = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE });
 
-  /** Geladene Dokumente mit ihrer Brücke zum Store (alter Editor: DocSession, neuer: TextSession). */
-  readonly sessions = new Map<string, DocSession | TextSession>();
+  /** Geladene Dokumente mit ihrer Brücke zum Store. */
+  readonly sessions = new Map<string, TextSession>();
 
   constructor(readonly opts: CollabOptions) {
     const { store, states, token, log } = opts;
@@ -82,55 +78,29 @@ export class Collab {
       maxDebounce: 10_000,
       async onAuthenticate({ token: given, documentName }) {
         if (!(opts.acceptToken ? opts.acceptToken(given) : tokenEquals(given, token))) throw new Error("unauthorized");
-        const text = documentName.startsWith(TEXT_DOC_PREFIX);
-        const id = documentName.startsWith(DOC_PREFIX) ? documentName.slice(DOC_PREFIX.length) : text ? documentName.slice(TEXT_DOC_PREFIX.length) : "";
-        const root = store.blocks.get(id);
-        // Seiten und (BSD-252) Synced-Block-Originale sind eigene Dokument-Wurzeln; Kopien zeigen nur aufs Original.
-        const syncedOriginal = root?.type === "syncedBlock" && !root.props?.syncSource;
-        if (!isPageLike(root) && (text || !syncedOriginal)) throw new Error("no such page");
+        if (documentName.startsWith(DOC_PREFIX)) throw new Error(RETIRED_DOC_MESSAGE);
+        const id = documentName.startsWith(TEXT_DOC_PREFIX) ? documentName.slice(TEXT_DOC_PREFIX.length) : "";
+        if (!isPageLike(store.blocks.get(id))) throw new Error("no such page");
         return { page: id };
       },
       async onLoadDocument({ document, documentName }) {
         const state = states.load(documentName);
         if (state) Y.applyUpdate(document, state);
         const save = () => states.save(documentName, Y.encodeStateAsUpdate(document));
-        if (documentName.startsWith(TEXT_DOC_PREFIX)) {
-          // ADR 0016 (E7): Migration vom alten Seiten-Dokument – ist es geladen, erst seine Änderungen als Records
-          // schreiben; das neue Dokument wird aus den Records gefüllt (beide Brücken laufen über die Records).
-          const pageID = documentName.slice(TEXT_DOC_PREFIX.length);
-          sessions.get(DOC_PREFIX + pageID)?.flush();
-          document.on("update", (_u: Uint8Array, origin: unknown) => {
-            if (origin === TEXT_STORE_ORIGIN) save();
-          });
-          const session = new TextSession(store, pageID, {
-            doc: document,
-            role: "server",
-            debounceMs: opts.materializeDelay ?? 120,
-            // Geräte, die an diesem Dokument hängen (Awareness `node`): ihr Text kommt über Yjs, nicht über Records.
-            participants: () => participantNodes(document),
-            onError: (e) => log.warning("collab text materialize failed", { error: e instanceof Error ? e.name : "unknown" }),
-          });
-          if (!state) document.transact(() => document.getMap(META_MAP).set(META_ORIGIN, "server"), TEXT_STORE_ORIGIN);
-          save();
-          sessions.set(documentName, session);
-          return document;
-        }
-        // Diffs aus dem Store sofort sichern (vor dem Verteilen an die Geräte): ginge so ein Zustand verloren,
-        // erzeugte der nächste Diff denselben Text mit neuen Items, und Geräte hätten ihn doppelt.
+        // Nur `text:`-Dokumente kommen bis hierher (onAuthenticate).
+        const pageID = documentName.slice(TEXT_DOC_PREFIX.length);
         document.on("update", (_u: Uint8Array, origin: unknown) => {
-          if (origin === STORE_ORIGIN) save();
+          if (origin === TEXT_STORE_ORIGIN) save();
         });
-        const session = new DocSession(store, documentName.slice(DOC_PREFIX.length), {
-          converter: opts.converter ?? sharedConverter(),
+        const session = new TextSession(store, pageID, {
           doc: document,
+          role: "server",
           debounceMs: opts.materializeDelay ?? 120,
-          // Y-Zustand vor dem Materialisieren sichern (sonst nach einem Absturz: Records neuer als der Y-Zustand).
-          docStore: { load: () => undefined, save: () => save() },
-          saveDelayMs: 0,
-          // Ein Update, das nicht zum Schema passt, darf den Server nicht beenden; die Records bleiben dann stehen.
-          onError: (e) => log.warning("collab materialize failed", { error: e instanceof Error ? e.name : "unknown" }),
+          // Geräte, die an diesem Dokument hängen (Awareness `node`): ihr Text kommt über Yjs, nicht über Records.
+          participants: () => participantNodes(document),
+          onError: (e) => log.warning("collab text materialize failed", { error: e instanceof Error ? e.name : "unknown" }),
         });
-        if (!state) document.transact(() => document.getMap(META_MAP).set(META_ORIGIN, "server"), STORE_ORIGIN);
+        if (!state) document.transact(() => document.getMap(META_MAP).set(META_ORIGIN, "server"), TEXT_STORE_ORIGIN);
         save();
         sessions.set(documentName, session);
         return document;
@@ -143,8 +113,7 @@ export class Collab {
         // Ausstehende Änderungen als Records schreiben, Zustand sichern.
         const session = sessions.get(documentName);
         session?.flush();
-        if (session instanceof DocSession) session.save();
-        else if (session) states.save(documentName, Y.encodeStateAsUpdate(document));
+        if (session) states.save(documentName, Y.encodeStateAsUpdate(document));
       },
       async afterUnloadDocument({ documentName }) {
         const session = sessions.get(documentName);

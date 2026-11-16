@@ -1,11 +1,12 @@
-// BSD-220 Teil 3: Geräte-Seite von /collab gegen den echten Server – CollabBinder (Abstammung), DocSession im
-// Collab-Modus (Records aus dem Y.Doc ableiten, „derived“ = nicht pushen, veraltete Server-Records nicht ins Y.Doc).
+// BSD-220 Teil 3: Geräte-Seite von /collab gegen den echten Server – CollabBinder (Abstammung), TextSession als Gerät
+// (Records aus dem Y.Doc ableiten, „derived“ = nicht pushen, veraltete Server-Records nicht ins Y.Doc).
+// BSD-407 Teil 4c: auf `text:`-Dokumente umgestellt (die alten `page:`-Dokumente nimmt der Server nicht mehr an; der
+// Test „Synced-Block-Original als eigene Wurzel“ gehörte zu ihnen und ist entfallen).
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import { afterEach, describe, expect, it } from "vitest";
 import { createPage, MemoryPersistence, plainText, WorkspaceStore, type Block, type RecordKeyString, type Stamp, type WireRecord } from "@based/core";
-import { CollabBinder, DocSession, FRAGMENT, MemoryYDocStore, type CollabConnection } from "@based/editor/headless";
+import { CollabBinder, MemoryYDocStore, TEXTS, textDocName, TextSession, type CollabConnection } from "@based/editor/headless";
 import * as Y from "yjs";
-import { sharedConverter } from "../src/collab.js";
 import { startApp, TOKEN } from "./helpers.js";
 
 let cleanup: (() => Promise<void> | void)[] = [];
@@ -37,20 +38,13 @@ function device(url: string, records: WireRecord[], docs = new MemoryYDocStore()
     cleanup.push(() => p.destroy());
     return { synced, destroy: () => p.destroy() };
   };
-  const binder = new CollabBinder({ connect, docStore: docs, syncTimeoutMs: 3000 });
+  const binder = new CollabBinder({ connect, docStore: docs, syncTimeoutMs: 3000, docName: textDocName });
   return { store, persistence, binder, docs };
 }
 
 const texts = (store: WorkspaceStore, page: string) => store.children("b:" + page).map((id) => plainText(store.blocks.get(id)?.text));
 
-function firstText(node: Y.XmlFragment | Y.XmlElement): Y.XmlText | undefined {
-  for (const child of node.toArray()) {
-    if (child instanceof Y.XmlText) return child;
-    const found = child instanceof Y.XmlElement ? firstText(child) : undefined;
-    if (found) return found;
-  }
-  return undefined;
-}
+const ytext = (doc: Y.Doc, id: string) => doc.getMap<Y.Text>(TEXTS).get(id);
 
 describe("BSD-220 Teil 3: Gerät an /collab", () => {
   it("lokaler Stand ohne Server-Abstammung wird verworfen; Tippen → derived Records hier, Records auf dem Server; nichts doppelt", async () => {
@@ -62,65 +56,41 @@ describe("BSD-220 Teil 3: Gerät an /collab", () => {
     store.transact("t", (tx) => tx.put({ kind: "block", data: { id: "h", type: "text", parent: "b:" + page, sk: "a0", text: "Hallo", createdAt: now, updatedAt: now } as Block }));
     const records = store.allRecords();
 
-    // Gerät A hat schon einen lokal gefüllten Y-Stand (vor Echtzeit-Text): andere Items für denselben Text.
+    // Gerät A hat schon einen lokal gefüllten Y-Stand ohne Server-Abstammung: andere Items für denselben Text.
     const a = device(app.url, records);
-    const local = new DocSession(a.store, page, { converter: sharedConverter(), docStore: a.docs, debounceMs: 0 });
-    local.close();
-    expect(a.docs.load(page)).toBeDefined();
+    const own = new Y.Doc();
+    own.getMap<Y.Text>(TEXTS).set("h", new Y.Text("Hallo"));
+    a.docs.save(page, Y.encodeStateAsUpdate(own));
 
     const ha = (await a.binder.open(page))!;
     expect(ha).toBeDefined();
-    const sa = new DocSession(a.store, page, { converter: sharedConverter(), doc: ha.doc, collab: true, debounceMs: 0, docStore: { load: () => undefined, save: (id, st) => a.docs.save(id, st) } });
+    const sa = new TextSession(a.store, page, { doc: ha.doc, role: "device" });
     cleanup.push(() => { sa.close(); ha.release(); });
-    expect(sharedConverter().fromFragment(ha.doc.getXmlFragment(FRAGMENT)).map((b) => b.id)).toEqual(["h"]);
+    expect([...ha.doc.getMap(TEXTS).keys()]).toEqual(["h"]);
+    expect(ytext(ha.doc, "h")!.toString()).toBe("Hallo");
 
     const b = device(app.url, records);
     const hb = (await b.binder.open(page))!;
-    const sb = new DocSession(b.store, page, { converter: sharedConverter(), doc: hb.doc, collab: true, debounceMs: 0 });
+    const sb = new TextSession(b.store, page, { doc: hb.doc, role: "device" });
     cleanup.push(() => { sb.close(); hb.release(); });
 
-    // A tippt.
-    ha.doc.transact(() => firstText(ha.doc.getXmlFragment(FRAGMENT))!.insert(5, " Welt"));
-    expect(texts(a.store, page)).toEqual(["Hallo Welt"]);
+    // B tippt (Y.Text) → Server-Record; A leitet ab („derived“, nicht gepusht).
+    hb.doc.transact(() => ytext(hb.doc, "h")!.insert(5, " Welt"));
+    await expect.poll(() => texts(store, page), { timeout: 5000 }).toEqual(["Hallo Welt"]);
+    await expect.poll(() => texts(a.store, page), { timeout: 5000 }).toEqual(["Hallo Welt"]);
     expect(a.persistence.derived).toContain("h");
     expect(a.persistence.pushed).not.toContain("h");
-    await expect.poll(() => texts(store, page), { timeout: 5000 }).toEqual(["Hallo Welt"]);
-    await expect.poll(() => texts(b.store, page), { timeout: 5000 }).toEqual(["Hallo Welt"]);
-    expect(b.persistence.pushed).toEqual([]);
-    expect(sharedConverter().fromFragment(hb.doc.getXmlFragment(FRAGMENT)).length).toBe(1);
+    expect(ytext(ha.doc, "h")!.toString()).toBe("Hallo Welt");
 
     // Ein veralteter Record per Sync (älterer Text, neuerer Stempel) dreht das Y.Doc nicht zurück.
     const stale = structuredClone(records.find((r) => r.data.id === "h")!) as WireRecord;
     (stale.data as { stamp: Stamp }).stamp = { millis: Date.now() + 60_000, counter: 0, node: "server" };
-    b.store.applyRemote([stale], []);
-    expect(firstText(hb.doc.getXmlFragment(FRAGMENT))!.toString()).toBe("Hallo Welt");
-    expect(texts(b.store, page)).toEqual(["Hallo Welt"]);
+    a.store.applyRemote([stale], []);
+    expect(ytext(ha.doc, "h")!.toString()).toBe("Hallo Welt");
+    await expect.poll(() => texts(a.store, page), { timeout: 5000 }).toEqual(["Hallo Welt"]);
     await new Promise((r) => setTimeout(r, 300));
     expect(texts(store, page)).toEqual(["Hallo Welt"]);
   });
-
-  it("BSD-252: Synced-Block-Original ist eine eigene Wurzel auf /collab; eine Kopie nicht", async () => {
-    const app = await startApp({ collabDebounce: 50 });
-    cleanup.push(() => app.close());
-    const store = app.sync.store;
-    const page = createPage(store, { title: "Mit Synced Block" });
-    const now = store.now();
-    store.transact("t", (tx) => {
-      tx.put({ kind: "block", data: { id: "orig", type: "syncedBlock", parent: "b:" + page, sk: "a0", createdAt: now, updatedAt: now } as Block });
-      tx.put({ kind: "block", data: { id: "inner", type: "text", parent: "b:orig", sk: "a0", text: "Geteilt", createdAt: now, updatedAt: now } as Block });
-      tx.put({ kind: "block", data: { id: "copy", type: "syncedBlock", parent: "b:" + page, sk: "a1", props: { syncSource: "orig" }, createdAt: now, updatedAt: now } as Block });
-    });
-    const records = store.allRecords();
-    const a = device(app.url, records);
-    const h = (await a.binder.open("orig"))!;
-    expect(h).toBeDefined();
-    const s = new DocSession(a.store, "orig", { converter: sharedConverter(), doc: h.doc, collab: true, debounceMs: 0 });
-    cleanup.push(() => { s.close(); h.release(); });
-    expect(sharedConverter().fromFragment(h.doc.getXmlFragment(FRAGMENT)).map((b) => b.id)).toEqual(["inner"]);
-    h.doc.transact(() => firstText(h.doc.getXmlFragment(FRAGMENT))!.insert(7, " live"));
-    await expect.poll(() => texts(store, "orig"), { timeout: 5000 }).toEqual(["Geteilt live"]);
-    expect(await device(app.url, records).binder.open("copy")).toBeUndefined();
-  }, 15_000);
 
   it("ohne Verbindung (aus) oder ohne Abgleich: kein Collab-Dokument, der Editor arbeitet wie bisher", async () => {
     const off = new CollabBinder({ connect: () => undefined, docStore: new MemoryYDocStore() });
