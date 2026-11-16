@@ -190,7 +190,7 @@ for (const theme of ["light", "dark"] as const) {
     const nav = page.getByRole("navigation", { name: "Workspace" });
     await look("Seitenleiste: Nav-Eintrag", nav.getByRole("button", { name: "Search" }).first(), ["rest", "hover", "pressed", "focus"]);
     await look("Seitenleiste: Nav-Eintrag aktiv", nav.getByRole("button", { name: "Home" }).first(), ["rest", "hover"]);
-    await look("Seitenleiste: Baumzeile", nav.getByRole("treeitem").first(), ["rest", "hover", "focus"]);
+    await look("Seitenleiste: Baumzeile", nav.locator(".tree-row[role=treeitem]").first(), ["rest", "hover", "focus"]);
     await look("Home: Segmentwahl", page.getByRole("radio", { name: "Week" }).or(page.getByRole("tab", { name: "Week" })).or(page.getByRole("button", { name: "Week" })).first(), ["rest", "hover", "focus"]);
     await look("Home: Knopf", page.getByRole("button", { name: "New page" }).first(), ["rest", "hover", "pressed", "focus"]);
 
