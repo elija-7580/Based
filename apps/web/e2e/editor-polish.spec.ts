@@ -1,6 +1,7 @@
 import { expect, test as base, type Page } from "@playwright/test";
 import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { overflows, overlaps } from "./layout-checks.js";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -209,4 +210,91 @@ test("Slash ohne Treffer: „No results“, Enter macht eine neue Zeile", async 
   await page.keyboard.type("next line");
   const fields = blockEditor(page).locator("[data-editable-id]");
   await expect(fields).toHaveText(["/qqqxyz", "next line"]);
+});
+
+// BSD-305 Teil 4: Rest-Zustände. Jeder Blocktyp (Swift-Korpus: Gleichung, Bild, Spalten, Bookmark, Embed, Inline-
+// Datenbank, Synced Block, Datei, Meeting …) in drei Größen hell und dunkel: nichts läuft über, keine Texte überdecken
+// sich; dazu Suche in der Seite mit Treffern und der Link-Dialog. Fotos: web-editor-polish-corpus-*, -find-*, -link-*.
+interface Wire { kind: string; data: Record<string, unknown> & { id: string; parent?: string } }
+const CORPUS = readFileSync(new URL("../../../fixtures/records/corpus.jsonl", import.meta.url), "utf8").trim().split("\n").map((l) => JSON.parse(l) as Wire);
+
+function corpusBlocks(root = "p-root"): Wire[] {
+  const blocks = CORPUS.filter((r) => r.kind === "block");
+  const keep = new Set<string>();
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const b of blocks) {
+      const p = b.data.parent ?? "";
+      if (!keep.has(b.data.id) && (p === "b:" + root || keep.has(p.slice(2)))) { keep.add(b.data.id); grew = true; }
+    }
+  }
+  return blocks.filter((b) => keep.has(b.data.id));
+}
+
+type Seeder = { __based: { client: { openPage(id: string): Promise<{ store: { transact(n: string, f: (tx: { put(r: unknown): void }) => void): void } }> } } };
+
+test("Rest-Zustände: alle Blocktypen, Suche in der Seite, Link-Dialog", async ({ page, browserName }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const pid = (await command(page, { op: "createPage", title: "Every block" })) as string;
+  await page.evaluate(async ([id, blocks]) => {
+    const { store } = await (globalThis as unknown as Seeder).__based.client.openPage(id);
+    store.transact("Seed corpus", (tx) => { for (const b of blocks) tx.put({ kind: "block", data: { ...b.data, parent: b.data.parent === "b:p-root" ? "b:" + id : b.data.parent } }); });
+  }, [pid, corpusBlocks()] as const);
+  const shots = SHOTS && browserName === "chromium";
+  const found: string[] = [];
+  for (const theme of shots ? (["light", "dark"] as const) : (["light"] as const)) {
+    await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.goto("/#page-" + pid);
+    await page.reload(); // nur der Hash ändert sich: neu laden, damit das Thema greift
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expectEditable(page);
+    // Datei ohne Bytes auf diesem Gerät: Hinweis als leise Zeile unter dem Namen, kein Bild-Kasten daneben
+    const file = editor(page).locator('a.bx2-file[data-asset-notice]').first();
+    await expect(file).toBeVisible();
+    const note = await file.evaluate((el) => { const a = getComputedStyle(el, "::after"); return { border: a.borderTopStyle, minHeight: a.minHeight, h: el.getBoundingClientRect().height }; });
+    expect(note.border).toBe("none");
+    expect(note.h).toBeLessThan(80);
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.mouse.move(w - 5, h / 2);
+      await page.waitForTimeout(500);
+      const suffix = `${theme}${w === 1280 ? "" : "-" + w}`;
+      // ganze Seite abrollen: jede Bildschirmhöhe einzeln prüfen
+      const scroller = page.locator(".panel").first();
+      const total = await scroller.evaluate((el) => el.scrollHeight);
+      for (let y = 0, i = 0; y < total && i < 12; y += h - 120, i++) {
+        await scroller.evaluate((el, top) => { el.scrollTop = top; }, y);
+        await page.waitForTimeout(250);
+        for (const f of [...(await overflows(page)), ...(await overlaps(page))]) found.push(`${w}×${h} @${y}: ${f}`);
+        if (shots && i < 3) await page.screenshot({ path: `../../docs/design/screens/web-editor-polish-corpus-${i}-${suffix}.png` });
+      }
+      await scroller.evaluate((el) => { el.scrollTop = 0; });
+      // Suche in der Seite mit Treffern
+      await editor(page).locator("[data-editable-id]").first().click();
+      await page.keyboard.press("ControlOrMeta+f");
+      await expect(page.getByTestId("find-bar")).toBeVisible();
+      await page.keyboard.type("Text");
+      await expect(page.getByTestId("find-count")).not.toHaveText("");
+      await page.waitForTimeout(300);
+      for (const f of [...(await overflows(page)), ...(await overlaps(page))]) found.push(`find ${w}×${h}: ${f}`);
+      if (shots) await page.screenshot({ path: `../../docs/design/screens/web-editor-polish-find-${suffix}.png` });
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("find-bar")).toHaveCount(0);
+      // Link-Dialog über einem markierten Wort
+      await editor(page).getByText("Einfacher Text", { exact: true }).first().click();
+      await page.keyboard.press("End");
+      await page.keyboard.press("Shift+Home");
+      await expect(page.getByTestId("format-bar")).toBeVisible();
+      await page.getByTestId("format-link").click();
+      await expect(page.getByTestId("link-popover")).toBeVisible();
+      await page.waitForTimeout(300);
+      for (const f of [...(await overflows(page)), ...(await overlaps(page))]) found.push(`link ${w}×${h}: ${f}`);
+      if (shots) await page.screenshot({ path: `../../docs/design/screens/web-editor-polish-link-${suffix}.png` });
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("Escape");
+    }
+  }
+  await page.evaluate(() => localStorage.removeItem("based.appearance"));
+  expect([...new Set(found)]).toEqual([]);
 });
