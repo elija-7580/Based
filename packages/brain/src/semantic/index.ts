@@ -8,8 +8,11 @@ import { termCounts, tokenize } from "./text.js";
 export interface TextEmbedder {
   /** Name des Modells: Vektoren verschiedener Modelle sind nicht vergleichbar. */
   readonly id: string;
-  embed(texts: readonly string[], signal?: AbortSignal): Promise<Float32Array[]>;
+  /** `kind`: Abschnitte („passage“, Standard) oder Suchanfragen („query“) – manche Modelle (E5) unterscheiden das. */
+  embed(texts: readonly string[], signal?: AbortSignal, kind?: EmbedKind): Promise<Float32Array[]>;
 }
+
+export type EmbedKind = "query" | "passage";
 
 export interface SemanticHit {
   pageID: string;
