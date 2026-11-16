@@ -20,6 +20,8 @@ export interface CellEditorProps {
   onClose: () => void;
   /** Text-Editoren: nach Enter zur nächsten Zeile (Tabelle). */
   onCommitNext?: () => void;
+  /** Text-Editoren: Tab/⇧Tab übernimmt und geht zur nächsten/vorigen Zelle (Tabelle). */
+  onTab?: (dir: 1 | -1) => void;
   /** Erstes getipptes Zeichen, das den Editor geöffnet hat. */
   initialText?: string | undefined;
 }
@@ -42,7 +44,7 @@ export function CellEditor(props: CellEditorProps) {
   }
 }
 
-function TextEditor({ row, prop, anchor, onClose, onCommitNext, initialText }: CellEditorProps) {
+function TextEditor({ row, prop, anchor, onClose, onCommitNext, onTab, initialText }: CellEditorProps) {
   const { store } = useDB();
   const [text, setText] = useState(initialText ?? editText(row, prop));
   const [invalid, setInvalid] = useState(false);
@@ -71,6 +73,11 @@ function TextEditor({ row, prop, anchor, onClose, onCommitNext, initialText }: C
       if (e.key === "Enter" && !(multiline && e.shiftKey)) {
         e.preventDefault();
         if (commit()) { onClose(); onCommitNext?.(); }
+        return;
+      }
+      if (e.key === "Tab" && onTab && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        if (commit()) { onClose(); onTab(e.shiftKey ? -1 : 1); }
       }
     },
     ref: (el: HTMLInputElement | HTMLTextAreaElement | null) => { field.current = el; },

@@ -95,7 +95,7 @@ export {
   movePropertyInView, moveDashboardWidget, moveRow, moveRowToGroup, moveView, propertyNamed, propertyOf, pv, removeDashboardWidget,
   renameProperty, renameView, renamingFormulaReferences, renamingRelatedReferences, setAllPropertiesVisible, setCalculation,
   setColumnWidth, setDashboardRowHeight, setDashboardWidgetWidth, setDatabaseLocked, setDatabaseTitle, setFilter, setGroupBy,
-  setGroupHidden, setPropertyVisible, setRelationLimitOne, setRelationTarget, setRollup, setRowTitle, setSorts, setValue, setViewType,
+  setGroupHidden, setPropertyVisible, setRelationLimitOne, setRelationTarget, setRollup, setRowTitle, setSorts, setValue, setValues, setViewType,
   uniquePropertyName, updateChart, updateOption, updateProperty, updateView, valueCase, valueForGroup, viewsForBlock, visiblePropertyIDs,
   wouldCreateRollupCycle, DASHBOARD_COLUMNS, DASHBOARD_MAX_WIDGETS_PER_ROW, WIDGET_TYPES,
   databasesNeedingIDCheck, repairUniqueIDs, uniqueIDRepair, valuesMatchingSchema,

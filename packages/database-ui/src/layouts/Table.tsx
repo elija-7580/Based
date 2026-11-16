@@ -5,8 +5,9 @@ import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState, ty
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { dbops, deleteRows, plainText,
   CALCULATION_LABELS, calculationOptions, calculationText, propertyOf, pv, setCalculation, setColumnWidth, setValue, valueCase,
-  visiblePropertyIDs, type Block, type DatabaseView, type PropertySchema, type QueryResult,
+  setValues, visiblePropertyIDs, type Block, type DatabaseView, type PropertySchema, type QueryResult,
 } from "@based/core";
+import { cellString, decodeTSV, encodeTSV, isMulti, pasteable, planPaste, rangeRect, type CellRange } from "../logic/cellRange.js";
 import { CellEditor, isEditable } from "../cells/CellEditor.js";
 import { CellView } from "../cells/CellView.js";
 import { InlineView, useDB } from "../context.js";
@@ -31,6 +32,8 @@ interface RowProps {
   props: PropertySchema[];
   widths: number[];
   activeCol: number;
+  /** Spalten des Zellbereichs in dieser Zeile („c0:c1“), sonst leer. Als Text, damit `memo` greift. */
+  range: string;
   agent: boolean;
   wrap: boolean;
   onCell: (row: Block, col: number, el: HTMLElement) => void;
@@ -42,7 +45,8 @@ interface RowProps {
   onSelect: ((row: Block, shift: boolean) => void) | undefined;
 }
 
-const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, agent, wrap, onCell, onMenu, onOpen, onToggle, selected, onSelect }: RowProps) {
+const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, range, agent, wrap, onCell, onMenu, onOpen, onToggle, selected, onSelect }: RowProps) {
+  const [c0, c1] = range ? range.split(":").map(Number) as [number, number] : [-1, -2];
   return (
     <>
       {/* BSD-444: Rand mit Kästchen und Zeilenmenü ist eine eigene Zelle – Knöpfe liegen nie direkt in role=row */}
@@ -58,8 +62,8 @@ const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, ac
       </div>
       {lead > 0 && <div className="dbui-col-spacer" style={{ width: lead }} aria-hidden />}
       {props.slice(from, to).map((p, i) => { const col = from + i; return (
-        <div key={p.id} role="gridcell" className={"dbui-cell" + (col === activeCol ? " active" : "") + (p.type === "title" ? " title" : "")} style={{ width: widths[col] }}
-          data-cell={`${row.id}:${col}`} aria-selected={col === activeCol} onClick={(e) => onCell(row, col, e.currentTarget)}>
+        <div key={p.id} role="gridcell" className={"dbui-cell" + (col === activeCol ? " active" : "") + (col >= c0 && col <= c1 ? " in-range" : "") + (p.type === "title" ? " title" : "")} style={{ width: widths[col] }}
+          data-cell={`${row.id}:${col}`} aria-selected={col === activeCol || (col >= c0 && col <= c1)} onClick={(e) => onCell(row, col, e.currentTarget)}>
           <CellView row={row} prop={p} wrap={wrap} blankEmptyTitle onToggleCheckbox={() => onToggle(row, p)} />
           {p.type === "title" && onOpen && (
             <button type="button" className="dbui-open-btn" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onOpen(row.id); }} aria-label={`Open ${plainText(row.text) || "Untitled"}`}>
@@ -138,12 +142,14 @@ function CalcCell({ p, width, view, rows }: { p: PropertySchema; width: number; 
 }
 
 export function TableLayout({ view, result, requestEdit }: { view: DatabaseView; result: QueryResult; requestEdit?: { rowID: string } | undefined }) {
-  const { store, db, locked, onOpenPage, isAgentEdit } = useDB();
+  const { store, db, engine, locked, onOpenPage, isAgentEdit } = useDB();
   const scrollRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const [active, setActive] = useState<Active | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
+  // Zellbereich (⇧-Pfeile, Ziehen, ⇧-Klick): Kopieren, Einfügen, Leeren wie in Notion.
+  const [range, setRange] = useState<CellRange | null>(null);
   const [menu, setMenu] = useState<{ row: Block; anchor: Anchor } | null>(null);
   const [addProp, setAddProp] = useState<Anchor | null>(null);
   const [liveWidths, setLiveWidths] = useState<Record<string, number>>({});
@@ -234,7 +240,10 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   // setzen – sein `active` ist noch der alte Stand (nach Escape leer), und die Auswahl sprang an den Anfang statt auf
   // die Zeile unter der Maus.
   const focusByPointer = useRef(false);
+  const suppressClick = useRef(false);
   const onCell = useCallback((row: Block, col: number, el: HTMLElement) => {
+    if (suppressClick.current) { suppressClick.current = false; return; }
+    setRange(null);
     setActive({ rowID: row.id, col });
     focusByPointer.current = true;
     gridRef.current?.focus({ preventScroll: true });
@@ -277,6 +286,41 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
     return it?.kind === "row" ? { rowID: it.row.id, col: 0 } : null;
   };
 
+  /** Zeilen-IDs in Anzeigereihenfolge (ohne Gruppenköpfe und „+ New“) – Grundlage für Bereiche. */
+  const visibleOrder = useMemo(() => items.flatMap((it) => (it.kind === "row" ? [it.row.id] : [])), [items]);
+
+  /** Nächste Zelle für Tab/⇧Tab: am Rand weiter in die nächste/vorige Zeile; `null` am Ende des Rasters. */
+  const tabFrom = (cell: Active, dir: 1 | -1): { cell: Active; index: number } | null => {
+    const col = cell.col + dir;
+    const i = rowIndex(cell.rowID);
+    if (col >= 0 && col < props.length) return { cell: { rowID: cell.rowID, col }, index: i };
+    const n = nextRowIndex(items, i, dir);
+    const it = n >= 0 ? items[n] : undefined;
+    return it?.kind === "row" ? { cell: { rowID: it.row.id, col: dir > 0 ? 0 : props.length - 1 }, index: n } : null;
+  };
+
+  const goTo = (cell: Active, extend: boolean) => {
+    const idx = rowIndex(cell.rowID);
+    if (idx >= 0) virtualizer.scrollToIndex(idx, { align: "auto" });
+    revealCol(cell.col);
+    if (extend && active) setRange((r) => ({ anchor: r?.anchor ?? active, head: cell }));
+    else { setRange(null); setActive(cell); }
+  };
+
+  /** Zellen im Bereich leeren (ein Undo-Schritt); Spalten ohne Eingabe (Formel, Rollup …) bleiben. */
+  const clearRange = (r: CellRange) => {
+    // über `clip` lesen: wird auch aus dem Ausschneiden-Handler (einmal gebunden) aufgerufen
+    const { visibleOrder: order, props: ps, locked: ro } = clip.current;
+    const rect = rangeRect(r, order);
+    if (!rect || ro) return;
+    const edits = [];
+    for (let i = rect.r0; i <= rect.r1; i++) for (let j = rect.c0; j <= rect.c1; j++) {
+      const p = ps[j];
+      if (p && pasteable(p)) edits.push({ rowID: order[i]!, propertyID: p.id, value: p.type === "checkbox" ? pv("checkbox", false) : null });
+    }
+    setValues(store, edits, "Clear cells");
+  };
+
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (editing) return;
     if (!active) {
@@ -286,32 +330,39 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
       }
       return;
     }
-    const i = rowIndex(active.rowID);
-    const move = (rowIdx: number, col: number) => {
-      const it = items[rowIdx];
-      if (!it || it.kind !== "row") return;
-      setActive({ rowID: it.row.id, col });
-      virtualizer.scrollToIndex(rowIdx, { align: "auto" });
-    };
+    const mod = e.metaKey || e.ctrlKey;
+    // Bei ⇧ bewegt sich das freie Ende des Bereichs, sonst die aktive Zelle.
+    const from = e.shiftKey && range ? range.head : active;
+    const fi = rowIndex(from.rowID);
+    const firstRow = nextRowIndex(items, -1, 1), lastRow = nextRowIndex(items, items.length, -1);
+    const rowAt = (idx: number) => { const it = items[idx]; return it?.kind === "row" ? it.row.id : undefined; };
+    const vertical = (target: number) => { const id = target >= 0 ? rowAt(target) : undefined; if (id) goTo({ rowID: id, col: from.col }, e.shiftKey); };
     switch (e.key) {
-      case "ArrowDown": e.preventDefault(); { const n = nextRowIndex(items, i, 1); if (n >= 0) move(n, active.col); } break;
-      case "ArrowUp": e.preventDefault(); { const n = nextRowIndex(items, i, -1); if (n >= 0) move(n, active.col); } break;
-      case "ArrowRight": e.preventDefault(); setActive({ ...active, col: Math.min(props.length - 1, active.col + 1) }); break;
-      case "ArrowLeft": e.preventDefault(); setActive({ ...active, col: Math.max(0, active.col - 1) }); break;
-      case "Enter": e.preventDefault(); beginEdit(active.rowID, active.col); break;
+      case "ArrowDown": e.preventDefault(); vertical(mod ? lastRow : nextRowIndex(items, fi, 1)); break;
+      case "ArrowUp": e.preventDefault(); vertical(mod ? firstRow : nextRowIndex(items, fi, -1)); break;
+      case "ArrowRight": e.preventDefault(); goTo({ rowID: from.rowID, col: mod ? props.length - 1 : Math.min(props.length - 1, from.col + 1) }, e.shiftKey); break;
+      case "ArrowLeft": e.preventDefault(); goTo({ rowID: from.rowID, col: mod ? 0 : Math.max(0, from.col - 1) }, e.shiftKey); break;
+      case "Home": e.preventDefault(); if (mod) vertical(firstRow); else goTo({ rowID: from.rowID, col: 0 }, e.shiftKey); break;
+      case "End": e.preventDefault(); if (mod) vertical(lastRow); else goTo({ rowID: from.rowID, col: props.length - 1 }, e.shiftKey); break;
+      case "PageDown": case "PageUp": {
+        e.preventDefault();
+        const dir = e.key === "PageDown" ? 1 : -1;
+        let n = fi;
+        for (let k = 0; k < 10; k++) { const m = nextRowIndex(items, n, dir); if (m < 0) break; n = m; }
+        vertical(n);
+        break;
+      }
+      case "Enter": e.preventDefault(); setRange(null); beginEdit(active.rowID, active.col); break;
       // BSD-238: Tab/⇧Tab wandern durch die Zellen (am Rand weiter in die nächste Zeile, am Ende raus aus dem Raster).
       case "Tab": {
-        if (e.metaKey || e.ctrlKey || e.altKey) break;
-        const dir = e.shiftKey ? -1 : 1;
-        const col = active.col + dir;
-        if (col >= 0 && col < props.length) { e.preventDefault(); setActive({ ...active, col }); break; }
-        const n = nextRowIndex(items, i, dir);
-        if (n >= 0) { e.preventDefault(); move(n, dir > 0 ? 0 : props.length - 1); } else setActive(null);
+        if (mod || e.altKey) break;
+        const next = tabFrom(active, e.shiftKey ? -1 : 1);
+        if (next) { e.preventDefault(); goTo(next.cell, false); } else { setRange(null); setActive(null); }
         break;
       }
       // Leertaste öffnet die Zeile (Peek bzw. Seite), wie in Notion.
-      case " ": if (onOpenPage && !e.metaKey && !e.ctrlKey) { e.preventDefault(); onOpenPage(active.rowID); } break;
-      case "Escape": setActive(null); break;
+      case " ": if (onOpenPage && !mod) { e.preventDefault(); onOpenPage(active.rowID); } break;
+      case "Escape": if (isMulti(range)) setRange(null); else setActive(null); break;
       // BSD-238: ⇧F10 / Menütaste öffnet das Zeilenmenü der aktiven Zeile.
       case "F10": case "ContextMenu": {
         if (e.key === "F10" && !e.shiftKey) break;
@@ -320,18 +371,148 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
         break;
       }
       case "Backspace": case "Delete": {
+        e.preventDefault();
+        if (isMulti(range)) { clearRange(range); break; }
         const p = props[active.col];
-        if (p && !locked && isEditable(p.type)) { e.preventDefault(); setValue(store, active.rowID, p.id, null); }
+        if (p && !locked && isEditable(p.type)) setValue(store, active.rowID, p.id, null);
         break;
       }
       default: {
-        const p = props[active.col];
-        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey && p && ["title", "text", "number", "url", "email", "phone", "place"].includes(p.type)) {
+        if (mod && !e.altKey && e.key.toLowerCase() === "a" && !locked) {
+          // ⌘A: alle Zeilen wählen (wie Notion), für Sammelaktionen
           e.preventDefault();
+          setSelected(new Set(rowOrder));
+          break;
+        }
+        const p = props[active.col];
+        if (e.key.length === 1 && !mod && !e.altKey && p && ["title", "text", "number", "url", "email", "phone", "place"].includes(p.type)) {
+          e.preventDefault();
+          setRange(null);
           beginEdit(active.rowID, active.col, e.key);
         }
       }
     }
+  };
+
+  // ⌘C/⌘X/⌘V auf dem Raster: Kopieren/Einfügen von Zellen als TSV (verträgt sich mit Excel, Numbers, Sheets, Notion).
+  // Das Raster hat keine Textauswahl – das Ereignis geht an body, also auf dem Dokument hören und den Fokus prüfen.
+  const clip = useRef({ active, range, visibleOrder, props, locked });
+  clip.current = { active, range, visibleOrder, props, locked };
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const doc = grid.ownerDocument;
+    const rectNow = () => {
+      const { active: a, range: r, visibleOrder: order } = clip.current;
+      if (r && isMulti(r)) return rangeRect(r, order);
+      if (!a) return undefined;
+      const k = order.indexOf(a.rowID);
+      return k < 0 ? undefined : { r0: k, r1: k, c0: a.col, c1: a.col };
+    };
+    const copy = (e: ClipboardEvent, cut: boolean) => {
+      if (doc.activeElement !== grid || !e.clipboardData) return;
+      const rect = rectNow();
+      if (!rect) return;
+      const { visibleOrder: order, props: ps } = clip.current;
+      const table: string[][] = [];
+      for (let r = rect.r0; r <= rect.r1; r++) {
+        const row = store.blocks.get(order[r]!);
+        if (!row) continue;
+        const line: string[] = [];
+        for (let c = rect.c0; c <= rect.c1; c++) { const p = ps[c]; line.push(p ? cellString(store, engine, db, row, p) : ""); }
+        table.push(line);
+      }
+      e.preventDefault();
+      e.clipboardData.setData("text/plain", encodeTSV(table));
+      if (cut && !clip.current.locked) {
+        const a = { rowID: order[rect.r0]!, col: rect.c0 }, b = { rowID: order[rect.r1]!, col: rect.c1 };
+        clearRange({ anchor: a, head: b });
+      }
+    };
+    const onCopy = (e: ClipboardEvent) => copy(e, false);
+    const onCut = (e: ClipboardEvent) => copy(e, true);
+    const onPaste = (e: ClipboardEvent) => {
+      if (doc.activeElement !== grid || clip.current.locked) return;
+      const text = e.clipboardData?.getData("text/plain");
+      const rect = rectNow();
+      if (!text || !rect) return;
+      e.preventDefault();
+      const grid_ = decodeTSV(text);
+      setValues(store, planPaste(grid_, rect, clip.current.visibleOrder, clip.current.props), "Paste");
+      // Eingefügten Bereich markieren (wie Tabellenprogramme)
+      const single = grid_.length === 1 && grid_[0]!.length === 1;
+      if (!single) {
+        const order = clip.current.visibleOrder, ps = clip.current.props;
+        const r1 = Math.min(order.length - 1, rect.r0 + grid_.length - 1);
+        const c1 = Math.min(ps.length - 1, rect.c0 + Math.max(...grid_.map((r) => r.length)) - 1);
+        if (r1 > rect.r0 || c1 > rect.c0) setRange({ anchor: { rowID: order[rect.r0]!, col: rect.c0 }, head: { rowID: order[r1]!, col: c1 } });
+      }
+    };
+    doc.addEventListener("copy", onCopy);
+    doc.addEventListener("cut", onCut);
+    doc.addEventListener("paste", onPaste);
+    return () => { doc.removeEventListener("copy", onCopy); doc.removeEventListener("cut", onCut); doc.removeEventListener("paste", onPaste); };
+  // clearRange liest nur Store/Props über `clip`; neu binden, wenn sich Datenbank oder Store ändern
+  }, [store, engine, db]);
+
+  // Mit der Maus über Zellen ziehen wählt einen Bereich; ⇧-Klick erweitert vom aktiven Feld aus.
+  const cellAt = (x: number, y: number): Active | null => {
+    const el = gridRef.current?.ownerDocument.elementFromPoint(x, y)?.closest<HTMLElement>("[data-cell]");
+    if (!el || !gridRef.current?.contains(el)) return null;
+    const v = el.dataset.cell!, k = v.lastIndexOf(":");
+    return { rowID: v.slice(0, k), col: Number(v.slice(k + 1)) };
+  };
+  const onGridPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || editing) return;
+    const t = e.target as HTMLElement;
+    if (t.closest("input, textarea, select, button, a, [contenteditable]")) return;
+    const start = cellAt(e.clientX, e.clientY);
+    if (!start) return;
+    if (e.shiftKey && active) {
+      e.preventDefault();
+      suppressClick.current = true;
+      setRange({ anchor: active, head: start });
+      return;
+    }
+    const doc = e.currentTarget.ownerDocument;
+    const scroller = scrollRef.current;
+    let moved = false;
+    let last = { x: e.clientX, y: e.clientY };
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const c = cellAt(last.x, last.y);
+      if (c && (moved || c.rowID !== start.rowID || c.col !== start.col)) {
+        if (!moved) { moved = true; setActive(start); }
+        setRange((r) => (r && r.head.rowID === c.rowID && r.head.col === c.col && r.anchor === start ? r : { anchor: start, head: c }));
+      }
+      // Am Rand des eigenen Scrollbereichs weiterrollen
+      if (moved && scroller) {
+        const b = scroller.getBoundingClientRect(), edge = 40;
+        const dx = last.x > b.right - edge ? 12 : last.x < b.left + edge ? -12 : 0;
+        const dy = last.y > b.bottom - edge && scroller.scrollHeight > scroller.clientHeight ? 12 : last.y < b.top + edge + ROW_HEIGHT && scroller.scrollTop > 0 ? -12 : 0;
+        if (dx || dy) { scroller.scrollBy(dx, dy); frame = requestAnimationFrame(update); }
+      }
+    };
+    const onMove = (ev: PointerEvent) => { last = { x: ev.clientX, y: ev.clientY }; if (!frame) frame = requestAnimationFrame(update); };
+    const onUp = (ev: PointerEvent) => {
+      doc.removeEventListener("pointermove", onMove);
+      doc.removeEventListener("pointerup", onUp);
+      doc.removeEventListener("pointercancel", onUp);
+      if (frame) cancelAnimationFrame(frame);
+      // letzte Position sicher auswerten (schnelle Bewegung, rAF noch nicht gelaufen)
+      last = { x: ev.clientX, y: ev.clientY };
+      update();
+      if (frame) cancelAnimationFrame(frame);
+      if (moved) {
+        // Der folgende Klick (falls er auf einer Zelle landet) öffnet keinen Editor.
+        suppressClick.current = true;
+        setTimeout(() => { suppressClick.current = false; }, 0);
+      }
+    };
+    doc.addEventListener("pointermove", onMove);
+    doc.addEventListener("pointerup", onUp);
+    doc.addEventListener("pointercancel", onUp);
   };
 
   const resize = useCallback((id: string) => (w: number, done: boolean) => {
@@ -367,12 +548,18 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   const editingProp = editing ? props[editing.col] : undefined;
   const menuRow = menu ? store.blocks.get(menu.row.id) : undefined;
   const vItems = virtualizer.getVirtualItems();
+  const rect = isMulti(range) ? rangeRect(range, visibleOrder) : undefined;
+  const rangeOf = (rowID: string) => {
+    if (!rect) return "";
+    const k = visibleOrder.indexOf(rowID);
+    return k >= rect.r0 && k <= rect.r1 ? `${rect.c0}:${rect.c1}` : "";
+  };
 
   return (
     <div className="dbui-scroll" ref={scrollRef} data-testid="table-scroll" onKeyDown={(e) => { if (e.key === "Escape" && selected.size && !editing) { setSelected(new Set()); } }}>
       {selected.size > 0 && <SelectionBar ids={[...selected]} onClear={() => setSelected(new Set())} />}
       <div className="dbui-table" role="grid" aria-label={view.name} aria-rowcount={result.rows.length + 1} aria-colcount={props.length}
-        tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} onFocus={(e) => { if (e.target === e.currentTarget && !focusByPointer.current && !editing) setActive((a) => a ?? firstCell()); }}
+        tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} onPointerDown={onGridPointerDown} data-range={rect ? "" : undefined} onFocus={(e) => { if (e.target === e.currentTarget && !focusByPointer.current && !editing) setActive((a) => a ?? firstCell()); }}
         onMouseDown={(e) => {
           // BSD-372: Nativer Fokus beim Drücken würde die (sehr hohe) Tabelle „in Sicht“ rollen – WebKit verschiebt
           // dabei den Inhalt zwischen mousedown und click, der Klick traf die Zeile darüber. Fokus ohne Rollen.
@@ -415,7 +602,7 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
           return (
             <div key={vi.key} role="row" className={"dbui-vrow" + (wrap ? " wrap" : "") + (selected.has(it.row.id) ? " selected" : "")} aria-selected={selected.has(it.row.id) || undefined} style={style} data-index={vi.index} data-row-id={it.row.id}
               aria-rowindex={vi.index + 2} ref={wrap ? virtualizer.measureElement : undefined}>
-              <TableRow row={it.row} from={from} to={to} lead={lead} props={props} widths={widths} activeCol={active?.rowID === it.row.id ? active.col : -1} agent={isAgentEdit(it.row)} wrap={wrap}
+              <TableRow row={it.row} from={from} to={to} lead={lead} props={props} widths={widths} activeCol={active?.rowID === it.row.id ? active.col : -1} range={rangeOf(it.row.id)} agent={isAgentEdit(it.row)} wrap={wrap}
                 onCell={onCell} onMenu={onMenu} onOpen={onOpenPage} onToggle={onToggle} selected={selected.has(it.row.id)} onSelect={locked ? undefined : onSelect} />
             </div>
           );
@@ -435,7 +622,12 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
       {editing && editingRow && editingProp && (
         <CellEditor row={editingRow} prop={editingProp} anchor={editing.anchor} initialText={editing.initialText}
           onClose={() => { setEditing(null); gridRef.current?.focus({ preventScroll: true }); }}
+          onTab={(dir) => {
+            const next = tabFrom({ rowID: editing.rowID, col: editing.col }, dir);
+            if (next) goTo(next.cell, false);
+          }}
           onCommitNext={() => {
+            setRange(null);
             const n = nextRowIndex(items, rowIndex(editing.rowID), 1);
             const it = n >= 0 ? items[n] : undefined;
             if (it?.kind === "row") { setActive({ rowID: it.row.id, col: editing.col }); virtualizer.scrollToIndex(n, { align: "auto" }); }

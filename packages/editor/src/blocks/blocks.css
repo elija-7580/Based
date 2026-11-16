@@ -282,6 +282,8 @@
   border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
   pointer-events: none;
 }
+/* Während der Rechteck-Auswahl keine Textmarkierung (auch nicht im Seitenrand) */
+.bx2-is-selecting, .bx2-is-selecting * { user-select: none !important; -webkit-user-select: none !important; }
 .bx2-flash { animation: bx2-flash var(--duration-pulse) var(--ease-out); }
 @keyframes bx2-flash { 0%, 40% { background: var(--selected); } 100% { background: transparent; } }
 

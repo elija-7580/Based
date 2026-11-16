@@ -978,6 +978,19 @@ export function BlockEditor(props: PageEditorProps) {
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     const t = e.target as HTMLElement;
+    // Wie Notion: Sind Blöcke gewählt, erweitert ⇧-Klick die Auswahl bis zum geklickten Block, ⌘-Klick nimmt ihn
+    // dazu oder heraus.
+    const mod = e.metaKey || e.ctrlKey;
+    if (ctrl.selected.length && (e.shiftKey || mod) && !t.closest("button, a, input, select, textarea, [data-embed], .bx2-menu")) {
+      const id = t.closest<HTMLElement>(".bx2-block")?.dataset.blockId;
+      if (id && rootRef.current?.contains(t)) {
+        e.preventDefault();
+        if (e.shiftKey) ctrl.selectRange(ctrl.anchor ?? ctrl.selected[0]!, id);
+        else ctrl.select(ctrl.isSelected(id) ? ctrl.selected.filter((x) => x !== id) : [...ctrl.selected, id], ctrl.anchor);
+        rootRef.current?.focus({ preventScroll: true });
+        return;
+      }
+    }
     const handle = t.closest<HTMLElement>("[data-handle]");
     if (handle) return startHandle(e, handle.dataset.handle!);
     const field = t.closest<HTMLElement>("[data-editable-id]");
@@ -1032,7 +1045,7 @@ export function BlockEditor(props: PageEditorProps) {
       ctrl.setCaret(endCaret(store, rowField.dataset.editableId!));
       return;
     }
-    startMarquee(e);
+    startMarquee(e, { additive: e.shiftKey || mod });
   };
 
   /** Zeilen aller Blöcke einmal vermessen (Inhalts-Koordinaten des Scrollbereichs). */
@@ -1177,20 +1190,29 @@ export function BlockEditor(props: PageEditorProps) {
     doc.addEventListener("pointerup", done);
   };
 
-  const startMarquee = (e: React.PointerEvent) => {
+  /**
+   * Rechteck-Auswahl. `additive` (⇧/⌘): zur bestehenden Auswahl hinzu. `fromMargin`: im Seitenrand begonnen – dann
+   * zählt nur die Höhe (wie Notion, man muss nicht bis in die Textspalte ziehen). Rollt am Rand des Fensters weiter.
+   */
+  const startMarquee = (e: { clientX: number; clientY: number }, opts: { additive?: boolean; fromMargin?: boolean; outside?: boolean } = {}) => {
     const root = rootRef.current!;
     const doc = root.ownerDocument;
     const scroller = scrollParent(root) ?? doc.documentElement;
     const startY = e.clientY - scroller.getBoundingClientRect().top + scroller.scrollTop;
     const startX = e.clientX;
+    const base = opts.additive ? [...ctrl.selected] : [];
+    const baseAnchor = ctrl.anchor;
     let rows: Measured[] | undefined;
     let box: HTMLDivElement | undefined;
     let frame = 0;
     let last = { x: e.clientX, y: e.clientY };
-    ctrl.clearSelection();
+    if (!opts.additive) ctrl.clearSelection();
     const update = () => {
       frame = 0;
       const sb = scroller.getBoundingClientRect();
+      const edge = 48;
+      if (last.y < sb.top + edge) scroller.scrollTop -= Math.ceil((sb.top + edge - last.y) / 3);
+      else if (last.y > sb.bottom - edge) scroller.scrollTop += Math.ceil((last.y - (sb.bottom - edge)) / 3);
       const y = last.y - sb.top + scroller.scrollTop;
       const top = Math.min(startY, y), bottom = Math.max(startY, y);
       const left = Math.min(startX, last.x), right = Math.max(startX, last.x);
@@ -1198,9 +1220,11 @@ export function BlockEditor(props: PageEditorProps) {
       box!.style.width = `${right - left}px`;
       box!.style.top = `${top - scroller.scrollTop + sb.top}px`;
       box!.style.height = `${bottom - top}px`;
-      const hit = rows!.filter((r) => r.bottom > top && r.top < bottom && r.right > left - 400 && r.left < right + 400).map((r) => r.id);
-      if (hit.length) ctrl.select(hit);
+      const hit = rows!.filter((r) => r.bottom > top && r.top < bottom && (opts.fromMargin || (r.right > left - 400 && r.left < right + 400))).map((r) => r.id);
+      const all = base.length ? [...base, ...hit.filter((x) => !base.includes(x))] : hit;
+      if (all.length) ctrl.select(all, base.length ? baseAnchor : undefined);
       else ctrl.clearSelection();
+      if (last.y < sb.top + edge || last.y > sb.bottom - edge) frame = requestAnimationFrame(update);
     };
     const onMove = (ev: PointerEvent) => {
       last = { x: ev.clientX, y: ev.clientY };
@@ -1211,20 +1235,52 @@ export function BlockEditor(props: PageEditorProps) {
         box.className = "bx2-marquee";
         doc.body.append(box);
         doc.getSelection()?.removeAllRanges();
+        doc.documentElement.classList.add("bx2-is-selecting");
       }
       if (!frame) frame = requestAnimationFrame(update);
     };
     const done = (ev: PointerEvent) => {
       doc.removeEventListener("pointermove", onMove);
       doc.removeEventListener("pointerup", done);
+      doc.removeEventListener("pointercancel", done);
       if (frame) cancelAnimationFrame(frame);
-      if (box) { last = { x: ev.clientX, y: ev.clientY }; update(); }
+      if (box) { last = { x: ev.clientX, y: ev.clientY }; update(); if (frame) cancelAnimationFrame(frame); }
       box?.remove();
-      if (!box && !ctrl.selected.length) root.focus({ preventScroll: true });
+      doc.documentElement.classList.remove("bx2-is-selecting");
+      // Ein bloßer Klick im Seitenrand gehört der Seite (z. B. „Klick unter den Inhalt schreibt am Ende weiter“).
+      if (!box && !ctrl.selected.length && !opts.outside) root.focus({ preventScroll: true });
+      if (box && ctrl.selected.length) root.focus({ preventScroll: true });
     };
     doc.addEventListener("pointermove", onMove);
     doc.addEventListener("pointerup", done);
+    doc.addEventListener("pointercancel", done);
   };
+
+  // Rechteck-Auswahl auch aus dem Seitenrand (links/rechts neben der Textspalte und darunter), wie in Notion.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    // nächster Scrollbereich (auch wenn die Seite gerade kurz ist und nichts rollt)
+    let scroller = root.parentElement;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!scroller) return;
+    const onDown = (e: PointerEvent) => {
+      if (e.button !== 0 || e.defaultPrevented) return;
+      const t = e.target instanceof Element ? e.target : null;
+      if (!t || root.contains(t) || !scroller.contains(t)) return;
+      if (t.closest("button, a, input, textarea, select, label, [contenteditable], [role=menu], [role=dialog], [role=toolbar], [data-embed], [data-no-marquee], .bx2-menu")) return;
+      // Nur auf Höhe des Editors oder darunter – der Seitenkopf (Titel, Icon, Cover) behält seine Klicks.
+      const r = root.getBoundingClientRect();
+      if (e.clientY < r.top - 24) return;
+      // Text außerhalb des Editors (z. B. Hinweise) bleibt markierbar.
+      if (t !== scroller && t.childNodes.length && [...t.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())) return;
+      // kein preventDefault: der Klick selbst (ohne Ziehen) bleibt für die Seite
+      startMarquee(e, { additive: e.shiftKey || e.metaKey || e.ctrlKey, fromMargin: e.clientX < r.left || e.clientX > r.right, outside: true });
+    };
+    scroller.addEventListener("pointerdown", onDown);
+    return () => scroller.removeEventListener("pointerdown", onDown);
+  // startMarquee liest nur Refs und den Controller
+  }, [ctrl]);
 
   /** Klick unter den letzten Block (der Seite oder einer Spalte): in einen leeren Absatz am Ende, sonst einen anlegen. */
   const focusEndOf = (parent: string) => {
@@ -1982,7 +2038,7 @@ function FilePreviewView({ name, mime, src }: { name: string; mime: string | und
 }
 
 function TableBlock({ block: b }: { block: Block }) {
-  const { store, editable } = useCtx();
+  const { store, editable, ctrl } = useCtx();
   // BSD-407 Teil 3: gemeinsames Format – Zeilen sind Kind-Blöcke `tableRow` mit `cells` (Kern `tableModel`); neu zeichnen,
   // wenn sich eine Zeile ändert
   useSyncExternalStore(storeSubscribe(store), () => store.revision);
@@ -1997,17 +2053,78 @@ function TableBlock({ block: b }: { block: Block }) {
   const [at, setAt] = useState<{ i: number; j: number } | undefined>();
   const deleteRow = () => { if (at) cmd.deleteTableRow(store, b.id, at.i); setAt(undefined); };
   const deleteColumn = () => { if (at) cmd.deleteTableColumn(store, b.id, at.j); setAt(undefined); };
+  // Tastatur wie Notion: Tab/⇧Tab zur nächsten/vorigen Zelle (Tab in der letzten Zelle legt eine Zeile an),
+  // ↑/↓ eine Zeile, ←/→ am Textrand in die Nachbarzelle, Enter eine Zeile tiefer, Escape wählt den Tabellenblock.
+  const tableRef = useRef<HTMLTableElement>(null);
+  const focusCell = (i: number, j: number, where: "start" | "end") => {
+    requestAnimationFrame(() => {
+      const el = tableRef.current?.querySelector<HTMLElement>(`[data-cell="${i}:${j}"]`);
+      if (!el) return;
+      el.focus({ preventScroll: true });
+      el.scrollIntoView({ block: "nearest", inline: "nearest" });
+      const doc = el.ownerDocument;
+      const r = doc.createRange();
+      r.selectNodeContents(el);
+      r.collapse(where === "start");
+      doc.getSelection()?.removeAllRanges();
+      doc.getSelection()?.addRange(r);
+    });
+  };
+  const cellKey = (e: React.KeyboardEvent<HTMLElement>, i: number, j: number) => {
+    const el = e.currentTarget;
+    const cols = m.cols, last = rows.length - 1;
+    const mod = e.metaKey || e.ctrlKey;
+    if (e.key === "Tab" && !mod && !e.altKey) {
+      e.preventDefault();
+      const flat = i * cols + j + (e.shiftKey ? -1 : 1);
+      if (flat < 0) return;
+      if (flat >= rows.length * cols) {
+        el.blur();
+        cmd.addTableRow(store, b.id);
+        focusCell(rows.length, 0, "start");
+        return;
+      }
+      focusCell(Math.floor(flat / cols), flat % cols, "end");
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      el.blur();
+      ctrl.select([b.id]);
+      ctrl.root?.focus({ preventScroll: true });
+      return;
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (i < last) focusCell(i + 1, j, "end");
+      else el.blur();
+      return;
+    }
+    if (e.shiftKey || e.altKey || mod) return;
+    if (e.key === "ArrowUp" && i > 0) { e.preventDefault(); focusCell(i - 1, j, "end"); return; }
+    if (e.key === "ArrowDown" && i < last) { e.preventDefault(); focusCell(i + 1, j, "end"); return; }
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      const s = el.ownerDocument.getSelection();
+      if (!s?.rangeCount || !s.isCollapsed) return;
+      const pre = el.ownerDocument.createRange();
+      pre.selectNodeContents(el);
+      pre.setEnd(s.getRangeAt(0).endContainer, s.getRangeAt(0).endOffset);
+      const at_ = pre.toString().length, len = (el.textContent ?? "").length;
+      if (e.key === "ArrowLeft" && at_ === 0 && (j > 0 || i > 0)) { e.preventDefault(); focusCell(j > 0 ? i : i - 1, j > 0 ? j - 1 : cols - 1, "end"); }
+      if (e.key === "ArrowRight" && at_ === len && (j < cols - 1 || i < last)) { e.preventDefault(); focusCell(j < cols - 1 ? i : i + 1, j < cols - 1 ? j + 1 : 0, "start"); }
+    }
+  };
   const cell = (c: RichText | undefined, i: number, j: number) => {
     const content = editable ? (
-      <span className="bx2-cell" contentEditable="plaintext-only" suppressContentEditableWarning role="textbox" aria-label={`Row ${i + 1}, column ${j + 1}`}
+      <span className="bx2-cell" contentEditable="plaintext-only" suppressContentEditableWarning role="textbox" aria-label={`Row ${i + 1}, column ${j + 1}`} data-cell={`${i}:${j}`}
         onFocus={() => setAt({ i, j })} onBlur={(e) => setCell(i, j, e.currentTarget.textContent ?? "")}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); (e.currentTarget as HTMLElement).blur(); } }}>{plainText(c)}</span>
+        onKeyDown={(e) => cellKey(e, i, j)}>{plainText(c)}</span>
     ) : plainText(c);
     return m.header && i === 0 ? <th key={j}>{content}</th> : <td key={j}>{content}</td>;
   };
   return (
     <div className="bx2-embed bx2-table-wrap" data-embed="" contentEditable={false}>
-      <table className="bx2-table">
+      <table className="bx2-table" ref={tableRef}>
         <tbody>
           {rows.map((r, i) => <tr key={"id" in r && r.id ? r.id : i}>{r.cells.map((c, j) => cell(c, i, j))}</tr>)}
         </tbody>

@@ -182,6 +182,9 @@
 .dbui-cell:last-child { border-right: 0; }
 .dbui-cell.title { font-weight: var(--type-meta-weight); }
 .dbui-cell.active { box-shadow: inset 0 0 0 2px var(--control-border); border-radius: var(--radius-xs); }
+/* Zellbereich (⇧-Pfeile, Ziehen): getönt; die aktive Zelle behält ihren Rahmen. */
+.dbui-cell.in-range { background: var(--selected); }
+.dbui-table[data-range] { user-select: none; -webkit-user-select: none; }
 .dbui-open-btn {
   position: absolute; right: var(--space-1); top: 50%; transform: translateY(-50%); display: none; align-items: center; gap: var(--space-1);
   border: 0; border-radius: var(--radius-sm); background: var(--bg); box-shadow: var(--shadow-control), 0 0 0 1px var(--line); color: var(--muted);
