@@ -16,9 +16,8 @@
 //    ohne Y.Text (gerade neu angelegt) läuft über Records, bis der Server sein Y.Text anlegt; was man bis dahin
 //    tippt, geht beim ersten Binden ins Y.Text.
 //
-// Migration vom Seiten-Y.Doc (`page:<id>`, y-prosemirror): Das alte Dokument bleibt für den alten Editor; der
-// Server materialisiert es in Records, und das neue Dokument wird aus genau diesen Records gefüllt. Beide Brücken
-// laufen über die Records nebeneinander, bis E8 den alten Editor entfernt.
+// Das alte Seiten-Y.Doc (`page:<id>`, y-prosemirror) gibt es nicht mehr (BSD-407 Teil 4c): sein Inhalt stand immer in
+// den Records, aus denen dieses Dokument gefüllt wird.
 import { blockCommands, isPageLike, runsOf, toRichText, type Block, type RichText, type WorkspaceStore } from "@based/core";
 import * as Y from "yjs";
 
