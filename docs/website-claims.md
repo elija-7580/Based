@@ -1,5 +1,10 @@
 # Website-Aussagen gegen den Beta-Umfang (BSD-415)
 
+> **Erledigt 16.11.2026 (BSD-434):** Alle Punkte „ohne Grundlage“ und die Vorschläge zu „teilweise“ sind als benannte
+> Patches in `apps/website/scripts/build.mjs` (`CLAIMS`) umgesetzt; `apps/website/test/site.test.mjs` prüft, dass keine der
+> alten Aussagen zurückkommt. Bleiben laut Elija: „100,000 rows“ (BSD-435 belegt). Funktionszahlen: 236 / 185
+> (features.csv). „A drive you choose“ kommt mit BSD-449 zurück.
+
 Stand: Website-Branch `site/basednotes-app` @ 1dda22c (14.11.2026, 01:50), Seiten Start (Desktop + Handy),
 Workspace, Agents, Leaving Notion, Roadmap, Manifesto. Abgleich mit `replica/features.csv` (Spalten `beta` und `ts`)
 und dem Backlog. Geprüft von der Nachtschicht (Schicht A, 14.11.); die Texte selbst ändert nur Elija, auf dem

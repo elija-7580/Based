@@ -167,6 +167,92 @@ const PAGE_PATCHES = {
   }
 };
 
+// ---- claims: only promise what the Mac beta can do (BSD-434, docs/website-claims.md) ----
+// Decided by Elija on 16.11.: agents and offline transcription move from "Beta" to "Release",
+// iCloud is a preview, 100,000 rows stay (BSD-435), feature numbers follow replica/features.csv,
+// "a drive you choose" waits for BSD-449. Each entry: [text on the artboard, text on the site].
+// Strings inside the page scripts are single-quoted JavaScript: no plain apostrophes in replacements.
+const BETA_LIST_OLD = ["Sync between your Apple devices through iCloud", "Agents with your own keys, opt-in", "Meeting notes transcribed on your Mac, offline"];
+const CLAIMS = {
+  "Main.dc.html": [
+    ["<li>Sync between your Apple devices through iCloud</li><li>Databases, pages, import from Notion</li><li>Agents with your own keys, opt-in</li><li>Meeting notes transcribed on your Mac, offline</li>",
+      "<li>Databases, pages, import from Notion</li><li>Every version of every page, backups to a folder on your Mac</li><li>Sync between your Macs through iCloud Drive (preview)</li>"],
+    ["<li>MCP for every AI you use</li>",
+      "<li>Opt-in agents with your own keys, MCP for every AI you use</li><li>Meeting notes transcribed on your device</li>"],
+    ["<span>Built in Vienna, EU servers</span>", "<span>Built in Vienna, EU cloud at release</span>"],
+    ["Bring your own keys, or run models locally.", "Bring your own keys when agents arrive after the beta."],
+    ["Every version is kept and snapshots go to a drive you choose.", "Every version is kept and snapshots go to a folder on your Mac."],
+    ["fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.'",
+      "fixTitle: 'Only when you ask', fix: 'Meeting notes only when you start them. On-device transcription comes after the beta, and the audio stays on your Mac.'"],
+    ["foot: 'Agents never delete or share anything without asking.'",
+      "foot: 'Agents never delete for good or send anything out without asking, unless you allow it.'"],
+    ["Math.round(221 * ease)", "Math.round(236 * ease)"],
+    ["Math.round(178 * ease)", "Math.round(185 * ease)"]
+  ],
+  "Mobile.dc.html": [
+    ["['Mac app, data stored locally', 'Sync between your Apple devices through iCloud', 'Databases, pages, import from Notion', 'Agents with your own keys, opt-in', 'Meeting notes transcribed on your Mac, offline']",
+      "['Mac app, data stored locally', 'Databases, pages, import from Notion', 'Every version of every page, backups to a folder on your Mac', 'Sync between your Macs through iCloud Drive (preview)']"],
+    ["'MCP for every AI you use',", "'Opt-in agents with your own keys, MCP for every AI you use', 'Meeting notes transcribed on your device',"],
+    ["<span>EU servers</span>", "<span>EU cloud at release</span>"],
+    ["Your device, your encrypted cloud and snapshots in a folder you choose. Restore is one click.",
+      "Your Mac and a backup folder today, an encrypted cloud copy at release. Restore from any snapshot."],
+    ["Every version is kept and snapshots go to a drive you choose.", "Every version is kept and snapshots go to a folder on your Mac."],
+    ["fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.'",
+      "fixTitle: 'Only when you ask', fix: 'Meeting notes only when you start them. On-device transcription comes after the beta, and the audio stays on your Mac.'"],
+    ["foot: 'Agents never delete or share anything without asking.'",
+      "foot: 'Agents never delete for good or send anything out without asking, unless you allow it.'"],
+    ["One session across laptop, cloud sandbox and phone. Any AI can join through MCP.",
+      "At release: one session across laptop, cloud sandbox and phone. Any AI can join through MCP."]
+  ],
+  "Workspace.dc.html": [
+    ["The beta syncs your Apple devices through iCloud.", "In the beta, your Macs can sync through iCloud Drive as a preview."],
+    ["by release. iCloud in the beta.</span>", "by release. iCloud Drive sync as a preview in the beta.</span>"],
+    ["d: 'iCloud in the beta. At release, Based Cloud on EU servers, end-to-end encrypted. Lose your laptop, keep your work.'",
+      "d: 'At release: Based Cloud on EU servers, end-to-end encrypted. Lose your laptop, keep your work. In the beta, iCloud Drive sync as a preview.'"],
+    ["d: 'Automatic snapshots to a drive or folder you choose, as a readable archive.'",
+      "d: 'Automatic snapshots to a folder on your Mac, as a readable archive.'"],
+    ["it lives in three places, nothing gets deleted behind your back, and restoring is a click.",
+      "it lives on your Mac and in a backup folder, with an encrypted cloud copy at release. Nothing gets deleted behind your back, and restoring is a click."],
+    ["Agents write to it through the CLI or MCP.", "Agents write to it through MCP (CLI coming)."],
+    ["Yellow ticks are agent edits. Each one can be undone on its own.", "Yellow ticks are agent edits. Restore any earlier version."],
+    ["d: 'Every row opens as a full page with blocks, sub-pages and comments.'", "d: 'Every row opens as a full page with blocks and sub-pages.'"]
+  ],
+  "Switch.dc.html": [
+    ["b: [3, 'Every version kept, three copies, restore in one click.']",
+      "b: [3, 'Every version kept, automatic backups on your Mac, the encrypted cloud copy at release.']"],
+    ["b: [1, 'Beta is Mac only with iCloud. Phone, web and Based Cloud come with the release.']",
+      "b: [1, 'Beta is Mac only, iCloud Drive sync as a preview. Phone, web and Based Cloud come with the release.']"],
+    ["based: 'Three copies: your device, your encrypted cloud and automatic snapshots to a folder you choose. Restore is one click.'",
+      "based: 'Your Mac and automatic snapshots to a backup folder today, an encrypted cloud copy at release. Restore from any snapshot.'"],
+    ["Agent edits can be undone one by one.", "Agent edits are marked, and any earlier version can be restored."],
+    ["based: 'Connect the ChatGPT or Claude account you already pay for, an API key or a local model. Or switch AI off entirely.'",
+      "based: 'After the beta: the ChatGPT login or Claude Code CLI you already have, or an API key. Local models later. Or keep AI off entirely.'"]
+  ],
+  "Agents.dc.html": [
+    ["Connect the ChatGPT or Claude account you already pay for, plug in an API key, or drive the coding CLIs you already use.",
+      "Use the ChatGPT login or the Claude Code CLI you already have, plug in an API key, or drive the coding CLIs you already use."],
+    ["Pick per task: Auto, Fast, Deep or a specific model. Or run one locally.", "Pick per task: Auto, Fast, Deep or a specific model. Local models come after the beta."],
+    ["On your Mac, on your phone, in your inbox.</p>", "On your Mac first; phone and email later.</p>"],
+    ["Four positions, per task. Change it any time, even mid-run.", "Four positions, per agent or chat. Change them any time."],
+    ["Every edit is marked and can be undone in one step.", "Every edit is marked, and any earlier version can be restored."],
+    ["d: 'Run a model on your own machine for anything sensitive. Nothing leaves the device.'",
+      "d: 'After the beta: run a model on your own machine for anything sensitive. Nothing leaves the device.'"],
+    ["d: 'Talk to your workspace from the CLI. Works offline against your local copy.'",
+      "d: 'Talk to your workspace from the CLI (labs). Works offline against your local copy.'"]
+  ]
+};
+
+function applyClaims(file, p) {
+  for (const [find, replace] of CLAIMS[file] ?? []) {
+    const label = `claim ${file}: ${find.slice(0, 40)}`;
+    if (p.body.includes(find)) p.body = must(p.body, find, replace, label);
+    else p.code = must(p.code, find, replace, label);
+  }
+  for (const old of BETA_LIST_OLD) {
+    if ((p.body + p.code).includes(old)) throw new Error(`${file}: beta list still says "${old}"`);
+  }
+}
+
 // ---- assemble ----------------------------------------------------------------------
 const FONT_CSS = `@font-face{font-family:"Schibsted Grotesk";font-style:normal;font-display:swap;font-weight:400 900;src:url(/fonts/schibsted-grotesk-latin-ext-wght-normal.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"Schibsted Grotesk";font-style:normal;font-display:swap;font-weight:400 900;src:url(/fonts/schibsted-grotesk-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -261,6 +347,7 @@ function main() {
     p.body = patchAssets(patchLinks(p.body));
     p.code = patchAssets(p.code);
     if (PAGE_PATCHES[f]) PAGE_PATCHES[f](p);
+    applyClaims(f, p);
     cssSet.add(p.css);
     parsed[f] = p;
   }

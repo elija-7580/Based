@@ -83,6 +83,27 @@ test("seo (BSD-457): short descriptions, structured data, FAQ indexed, download 
   assert.match(readFileSync(join(out, "imprint", "index.html"), "utf8"), /<html lang="de">/);
 });
 
+test("claims (BSD-434): no promise the Mac beta can't keep", () => {
+  const out = mkdtempSync(join(tmpdir(), "based-site-claims-"));
+  execFileSync(process.execPath, [join(ROOT, "scripts", "build.mjs")], { env: { ...process.env, WEBSITE_OUT: out, NO_PRERENDER: "1" }, stdio: "pipe" });
+  const banned = [
+    "Meeting notes transcribed on your Mac, offline", "Agents with your own keys, opt-in",
+    "Sync between your Apple devices through iCloud", "The beta syncs your Apple devices", "Or run one locally",
+    "or run models locally", "on your phone, in your inbox", "snapshots go to a drive you choose",
+    "a drive or folder you choose", "sub-pages and comments", "Built in Vienna, EU servers", "<span>EU servers</span>",
+    "Each one can be undone on its own", "undone one by one", "undone in one step", "three copies, restore in one click",
+    "your encrypted cloud and snapshots in a folder", "Beta is Mac only with iCloud.", "never delete or share anything",
+    "221 * ease", "178 * ease", "through the CLI or MCP"
+  ];
+  for (const p of ["index.html", "workspace/index.html", "agents/index.html", "leaving-notion/index.html", "roadmap/index.html", "manifesto/index.html"]) {
+    const s = readFileSync(join(out, p), "utf8");
+    for (const b of banned) assert.ok(!s.includes(b), `${p}: "${b}"`);
+  }
+  const home = readFileSync(join(out, "index.html"), "utf8");
+  assert.match(home, /Sync between your Macs through iCloud Drive \(preview\)/);
+  assert.match(home, /Math\.round\(236 \* ease\)/);
+});
+
 async function withServer(fn) {
   const dir = mkdtempSync(join(tmpdir(), "based-wl-"));
   const port = 20000 + Math.floor(Math.random() * 20000);
