@@ -14,6 +14,7 @@ import { ZERO_STAMP } from "../hlc.js";
 import { firstGrapheme } from "../graphemes.js";
 import { type AssetRef, type ImportBuilder, looksLikeLocalFile, makeBlock } from "./builder.js";
 import { notionColor } from "./clipboard.js";
+import { ENUMS } from "../model/schema.js";
 import { basename, comparePaths, dirname, extname, type ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { collapse, HTMLNode, parseHTML, trimSpaces, trimWS } from "./html.js";
 import { derivedID, notionIDInName, notionUUID, removingPercentEncoding } from "./importids.js";
@@ -110,6 +111,8 @@ interface Ctx {
   counter: number;
   /** Notion-Markup (pre-wrap) statt allgemeinem HTML (Leerraum fällt zusammen). */
   notion: boolean;
+  /** Prüfung Pass 37: HTML-Export von Based (Überschriften eine Ebene tiefer, Klassen color-*, todo, equation). */
+  based?: boolean;
   /** BSD-260 Teil 11: Klassen-Regeln aus `<style>` (Google Docs: `.c3{font-weight:700}`), nur allgemeines HTML. */
   classCSS?: Map<string, Map<string, string>>;
 }
@@ -176,6 +179,8 @@ function applyCSSMarks(n: HTMLNode, ctx: Ctx, m: Marks) {
     if (td.includes("line-through")) m.s = true;
   }
 }
+
+const BASED_COLORS = new Set<string>(ENUMS.TColor);
 
 const newCtx = (dir: string, file: string, pageID: string): Ctx => ({ dir, file, pageID, counter: 0, notion: true });
 
@@ -385,7 +390,12 @@ export class NotionHTMLImporter {
     if (basename(k).toLowerCase() === "index.html" && !article.has("page") && parent === undefined) return undefined;
     const id = this.pageFiles.get(k) ?? derivedID("html", k);
     const ctx = newCtx(dirname(k), k, id);
-    ctx.notion = article.has("page");
+    // Prüfung Pass 37: Based schreibt im HTML-Export auch <article class="page">, aber ohne Notions Kopf/page-body –
+    // als Notion-Seite gelesen blieb sie leer. Erkennbar am <meta name="generator" content="Based">.
+    const generator = doc.first((n) => n.tag === "meta" && n.attrs.get("name") === "generator")?.attrs.get("content");
+    const basedExport = generator === "Based";
+    ctx.notion = article.has("page") && !basedExport;
+    if (basedExport) ctx.based = true;
     if (!ctx.notion) {
       const css = doc.all((n) => n.tag === "style").map((n) => n.innerHTML).join("\n");
       if (css) ctx.classCSS = classRules(css);
@@ -435,7 +445,7 @@ export class NotionHTMLImporter {
     }
     if (bodyNode) {
       this.convert(bodyNode.children, "b:" + id, ctx);
-    } else if (!article.has("page")) {
+    } else if (!ctx.notion) {
       // Jede andere HTML-Datei: ihren Inhalt behalten.
       this.convert(withoutTitleLine(article.children.filter((c) => c.tag !== "header"), plain(title)), "b:" + id, ctx);
     }
@@ -508,6 +518,8 @@ export class NotionHTMLImporter {
 
   private color(n: HTMLNode): string | undefined {
     for (const c of n.classList) if (c.startsWith("block-color-")) return notionColor(c.slice("block-color-".length));
+    // Based-HTML-Export: class="color-<Farbe>" mit den eigenen Farbnamen
+    for (const c of n.classList) if (c.startsWith("color-") && BASED_COLORS.has(c.slice(6))) return c.slice(6);
     return undefined;
   }
 
@@ -561,7 +573,10 @@ export class NotionHTMLImporter {
       }
       case "h1": case "h2": case "h3": case "h4": case "h5": case "h6": {
         if (n.has("page-title") || n.has("collection-title")) return undefined;
-        const type = n.tag === "h1" ? "heading1" : n.tag === "h2" ? "heading2" : n.tag === "h3" ? "heading3" : "heading4";
+        // Based-Export: h1 ist der Seitentitel, Überschriften stehen eine Ebene tiefer (h2 = Überschrift 1).
+        const level = Number(n.tag.slice(1)) - (ctx.based ? 1 : 0);
+        if (level < 1) return undefined;
+        const type = level === 1 ? "heading1" : level === 2 ? "heading2" : level === 3 ? "heading3" : "heading4";
         return this.append(type, parent, this.blockID(n, ctx), trimRuns(this.richText(n.children, ctx)), { color: this.color(n) });
       }
       case "ul": case "ol": return this.list(n, parent, ctx);
@@ -596,6 +611,9 @@ export class NotionHTMLImporter {
         return this.mediaBlock(n.tag, src, undefined, this.blockID(n, ctx), parent, ctx);
       }
       case "div": case "section": case "main": case "article": case "body": case "html": case "aside": case "footer": case "center": case "span":
+        if (ctx.based && n.tag === "div" && n.has("equation")) {
+          return this.append("equation", parent, this.blockID(n, ctx), [], { expression: trimWS(n.textContent).replace(/^\\\[|\\\]$/g, "").trim() });
+        }
         return this.div(n, parent, ctx);
       case "header": return undefined;
       case "dl":
@@ -664,12 +682,14 @@ export class NotionHTMLImporter {
         if (d) { last = this.toggle(d, id, col, parent, ctx); return; }
       }
       const checkbox = li.first((x) => x.has("checkbox"));
-      const type = cls.includes("to-do-list") || checkbox ? "todo" : n.tag === "ol" || cls.includes("numbered-list") ? "numberedList" : "bulletedList";
+      const basedTodo = ctx.based === true && cls.includes("todo");
+      const type = cls.includes("to-do-list") || checkbox || basedTodo ? "todo" : n.tag === "ol" || cls.includes("numbered-list") ? "numberedList" : "bulletedList";
       const p: BlockProps = { color: col };
-      if (type === "todo") p.checked = checkbox?.has("checkbox-on") ?? false;
+      if (type === "todo") p.checked = basedTodo ? li.has("checked") : (checkbox?.has("checkbox-on") ?? false);
       let inlineNodes: HTMLNode[] = [], blockNodes: HTMLNode[] = [];
       for (const c of li.children) {
         if (c.has("checkbox")) continue;
+        if (basedTodo && c.tag === "input") continue;
         if (c.tag === "span" && c.classList.some((x) => x.startsWith("to-do-children"))) { inlineNodes.push(...c.children); continue; }
         if (blockNodes.length === 0 && INLINE_TAGS.has(c.tag)) inlineNodes.push(c);
         else if (!SKIP_TAGS.has(c.tag)) blockNodes.push(c);
@@ -1015,6 +1035,15 @@ export class NotionHTMLImporter {
           if (n.has("icon") && inLink) return;
           if ((n.attrs.get("style") ?? "").includes("border-bottom")) m.u = true;
           if (!ctx.notion) applyCSSMarks(n, ctx, m);
+          if (ctx.based) {
+            if (n.has("equation")) {
+              const tex = trimWS(n.textContent).replace(/^\\\(|\\\)$/g, "").trim();
+              runs.push({ t: tex, m, eq: tex });
+              return;
+            }
+            const col = n.classList.find((c) => c.startsWith("color-") && BASED_COLORS.has(c.slice(6)));
+            if (col) m.color = col.slice(6) as Marks["color"];
+          }
           const h = n.classList.find((c) => c.startsWith("highlight-"));
           if (h !== undefined) {
             const c = notionColor(h.slice(10));
