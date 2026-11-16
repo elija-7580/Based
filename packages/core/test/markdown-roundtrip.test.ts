@@ -3,7 +3,7 @@
 // Backtick zerfiel und Links mit Klammern wurden abgeschnitten. Grenzen (bewusst): führende Leerzeichen und zwei
 // Leerzeichen am Zeilenende gehen verloren (Markdown-Leerraum); Klammern im Linkziel kommen prozent-kodiert zurück.
 import { describe, expect, it } from "vitest";
-import { codeSpan, createPage, decodeInlineMarkdown, escapeBlockStart, linkTarget, MarkdownExporter, MarkdownImporter, MemoryPersistence, runsOf, WorkspaceStore, type Block } from "../src/index.js";
+import { blocksToMarkdown, codeSpan, createPage, decodeInlineMarkdown, escapeBlockStart, linkTarget, MarkdownExporter, MarkdownImporter, MemoryPersistence, runsOf, WorkspaceStore, type Block } from "../src/index.js";
 
 const CASES: [string, unknown][] = [
   ["text", "Plain *star* _under_ `tick` # hash [br] | pipe \\ backslash"],
@@ -53,5 +53,19 @@ describe("Markdown-Rundreise (Prüfung Pass 37)", () => {
     expect(decodeInlineMarkdown("`` `x ``")).toEqual([{ t: "`x", m: { c: true } }]);
     expect(decodeInlineMarkdown("``ohne Ende")).toEqual([{ t: "``ohne Ende", m: {} }]);
     expect(linkTarget("https://x.org/a(b) c")).toBe("https://x.org/a%28b%29%20c");
+  });
+
+  it("Blockauswahl als Markdown (Zwischenablage): Formatierung, Verschachtelung, Escapes, Seiten als based://", () => {
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+    const page = createPage(store, { title: "Quelle" });
+    const other = createPage(store, { title: "Ziel" });
+    const now = store.now();
+    const put = (id: string, type: string, text: unknown, parent = "b:" + page, sk = "a0", extra: Record<string, unknown> = {}) =>
+      store.transact("t", (tx) => tx.put({ kind: "block", data: { id, type, parent, sk, text, createdAt: now, updatedAt: now, ...extra } as Block }));
+    put("p1", "text", "1. kein Listenpunkt", "b:" + page, "a0");
+    put("p2", "bulletedList", [{ t: "fett", m: { b: true } }, { t: " und " }, { t: "Ziel", m: {}, mention: { page: { _0: other } } }], "b:" + page, "a1");
+    put("p3", "bulletedList", "Kind", "b:p2", "a0");
+    put("p4", "text", "weg", "b:" + page, "a2", { trashedAt: now });
+    expect(blocksToMarkdown(store, ["p1", "p2", "p3", "p4"])).toBe(`1\\. kein Listenpunkt\n\n- **fett** und [Ziel](based://page/${other})\n    - Kind`);
   });
 });

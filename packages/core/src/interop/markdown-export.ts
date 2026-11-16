@@ -7,6 +7,7 @@ import { encodeCSV, encodeInlineMarkdown } from "./markdown.js";
 import { plain, runsOf } from "./runs.js";
 import { graphemes } from "../graphemes.js";
 import { iconAsText } from "../editor/icon-ref.js";
+import { topLevel } from "../editor/commands/tree.js";
 
 type AssetRef = NonNullable<BlockProps["asset"]>;
 export type PageLink = (id: string) => { title: string; url: string } | undefined;
@@ -309,4 +310,15 @@ export function escapeBlockStart(line: string): string {
   const num = /^(\d{1,9})([.)])(\s|$)/.exec(line);
   if (num) return num[1] + "\\" + line.slice(num[1]!.length);
   return line;
+}
+
+/**
+ * Prüfung Pass 37: Blockauswahl als Markdown (⌘C, „Copy as Markdown“, Seitenkontext für AI) – mit Formatierung,
+ * Verschachtelung und denselben Escapes wie der Export (vorher nur Klartext, und „1. …“ wurde beim Einfügen woanders
+ * eine Liste). Seiten-Erwähnungen als `based://page/<id>`.
+ */
+export function blocksToMarkdown(store: WorkspaceStore, ids: readonly string[]): string {
+  const blocks = topLevel(store, ids).map((id) => store.blocks.get(id)).filter((b): b is Block => b !== undefined && b.trashedAt === undefined);
+  const exporter = new MarkdownExporter(store, { pageLink: (id) => ({ title: titleOf(store, id), url: `based://page/${id}` }) });
+  return exporter.exportBlocks(blocks, 0);
 }

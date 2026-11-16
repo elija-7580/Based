@@ -72,7 +72,7 @@ export { DocxImporter, parseXML, type XNode } from "./interop/docx-import.js";
 export { exportDocx, imageSize, type DocxExportOptions } from "./interop/docx-export.js";
 export { parseJSONFile, planJSONImport, type JSONImportPlan } from "./interop/json-import.js";
 export { exportPageJSON } from "./interop/json-export.js";
-export { encodeURLPath, escapeBlockStart, MarkdownExporter, markdownFileName, visiblePropertyIDs as exportVisiblePropertyIDs } from "./interop/markdown-export.js";
+export { blocksToMarkdown, encodeURLPath, escapeBlockStart, MarkdownExporter, markdownFileName, visiblePropertyIDs as exportVisiblePropertyIDs } from "./interop/markdown-export.js";
 export type { MarkdownExporterOptions, PageLink } from "./interop/markdown-export.js";
 export { toRichText, runsOf, replaceInRichText } from "./interop/runs.js";
 export { EXPORT_CSS, PRINT_CSS, exportHTMLPage } from "./interop/html-document.js";

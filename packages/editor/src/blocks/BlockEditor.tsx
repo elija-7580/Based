@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -2969,35 +2969,8 @@ function duplicate(store: WorkspaceStore, ids: readonly string[]): string[] {
 
 // MARK: Zwischenablage
 
-function markdownLine(b: Block, depth: number): string {
-  const t = plainText(b.text);
-  const pad = "  ".repeat(depth);
-  switch (b.type) {
-    case "heading1": return "# " + t;
-    case "heading2": return "## " + t;
-    case "heading3": return "### " + t;
-    case "bulletedList": return pad + "- " + t;
-    case "numberedList": return pad + "1. " + t;
-    case "todo": return pad + (b.props?.checked ? "- [x] " : "- [ ] ") + t;
-    case "quote": return "> " + t;
-    case "code": return "```\n" + t + "\n```";
-    case "divider": return "---";
-    default: return pad + t;
-  }
-}
-
-/** Blöcke (mit Kindern) als Markdown – für ⌘C bei Blockauswahl und „Copy as Markdown“ im Blockmenü. */
-function blocksMarkdown(store: WorkspaceStore, ids: readonly string[]): string {
-  const lines: string[] = [];
-  const walk = (id: string, depth: number) => {
-    const b = store.blocks.get(id);
-    if (!b || b.trashedAt !== undefined) return;
-    if (b.type !== "columnList" && b.type !== "column") lines.push(markdownLine(b, depth));
-    for (const k of store.children("b:" + id)) walk(k, b.type === "columnList" || b.type === "column" ? depth : depth + 1);
-  };
-  for (const id of cmd.topLevel(store, ids)) walk(id, 0);
-  return lines.join("\n");
-}
+/** Blöcke (mit Kindern) als Markdown – für ⌘C bei Blockauswahl und „Copy as Markdown“ im Blockmenü (Kern, mit Formatierung). */
+const blocksMarkdown = (store: WorkspaceStore, ids: readonly string[]) => blocksToMarkdown(store, ids);
 
 /** Blockauswahl kopieren: Based-intern (Records mit allem darin) und Markdown als Klartext. */
 function writeBlocksClipboard(store: WorkspaceStore, ids: readonly string[], data: DataTransfer) {
