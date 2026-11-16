@@ -151,3 +151,9 @@ test("BSD-414: Node-Laufzeit – Ziel, gepinnte Prüfsumme, nie ein Build-Abbruc
   }
 });
 
+
+test("Info.plist: Mikrofon für Meeting Notes (macOS verweigert getUserMedia ohne Usage-Description)", async () => {
+  const plist = readFileSync(new URL("../src-tauri/Info.plist", import.meta.url), "utf8");
+  assert.match(plist, /<key>NSMicrophoneUsageDescription<\/key>\s*<string>[^<]{20,}<\/string>/);
+  assert.match(plist, /<key>NSAudioCaptureUsageDescription<\/key>\s*<string>[^<]{20,}<\/string>/);
+});

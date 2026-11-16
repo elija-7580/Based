@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Tauri führt diese Datei beim Bundeln in die Info.plist der App zusammen. Ohne Usage-Description verweigert
+     macOS der WebView Mikrofon und Bildschirm-/Systemton (Meeting Notes, BSD-226). -->
+<plist version="1.0">
+<dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Based records your microphone for meeting notes. Audio stays on your Mac unless you transcribe it on your own server.</string>
+  <key>NSAudioCaptureUsageDescription</key>
+  <string>Based records the other participants of a call for meeting notes when you choose to include system audio.</string>
+</dict>
+</plist>
