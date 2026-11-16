@@ -363,6 +363,14 @@ test("Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, Inha
   expect(await outline.locator("li").evaluateAll((els) => els.map((e) => e.getAttribute("data-depth")))).toEqual(["0", "1", "2", "1", "0"]);
   await page.mouse.move(10, 10);
   await expect(outline.locator(".bx-outline-label").first()).toBeHidden();
+  // BSD-346 (wie Notion): ein Balken je Überschrift, kürzer je tiefer die Ebene; der aktuelle hebt sich ab
+  const bars = await outline.locator(".bx-outline-bar").evaluateAll((els) => els.map((e) => ({ w: e.getBoundingClientRect().width, bg: getComputedStyle(e).backgroundColor })));
+  expect(bars.map((b) => b.w).every((w) => w > 0)).toBe(true);
+  expect(bars[0]!.w).toBeGreaterThan(bars[1]!.w);
+  expect(bars[1]!.w).toBeGreaterThan(bars[2]!.w);
+  expect(bars[4]!.w).toBe(bars[0]!.w);
+  const current = await outline.locator("[aria-current] .bx-outline-bar").evaluate((e) => getComputedStyle(e).backgroundColor);
+  expect(bars.filter((b) => b.bg === current)).toHaveLength(1);
   await outline.hover();
   await expect(outline.locator(".bx-outline-label")).toHaveText(["Opening", "Background", "Details", "Results", "Closing"]);
   await shots(page, browserName, "outline");
