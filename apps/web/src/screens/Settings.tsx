@@ -10,6 +10,7 @@ import { useSyncExternalStore } from "react";
 import type { Appearance } from "../appearance.js";
 import type { Route } from "../shell/router.js";
 import { aiSetting } from "../shell/ai.js";
+import { settingsPageVisible } from "../shell/beta.js";
 import { devViewPref } from "../shell/storage.js";
 import { resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages } from "../shell/settings.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
@@ -37,7 +38,7 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
   useSyncExternalStore(settingsRegistry.subscribe, settingsRegistry.getVersion);
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const view = { ai };
-  const pages = visibleSettingsPages(SETTINGS_PAGES, view);
+  const pages = visibleSettingsPages(SETTINGS_PAGES, view).filter((p) => settingsPageVisible(p.id));
   const kit = pageID === "kit";
   const page = resolveSettingsPage(pageID, pages);
   const sections = settingsRegistry.sectionsFor(page.id, view);

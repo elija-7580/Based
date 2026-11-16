@@ -1,7 +1,7 @@
 // Beta-Gate: was der Kanal „beta“ ausblendet – in ⌘K, Seitenleiste, Slash-Menü und Routen.
 import { describe, expect, it } from "vitest";
 import { slashItemsFor } from "@based/editor";
-import { BETA_HIDDEN, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes } from "./beta.js";
+import { BETA_HIDDEN, BETA_HIDDEN_SETTINGS, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes, settingsPageVisible } from "./beta.js";
 import { matchCommands, navAvailable, NAV_COMMANDS } from "./sidebarNav.js";
 
 describe("Beta-Gate", () => {
@@ -45,5 +45,16 @@ describe("Beta-Gate", () => {
     expect(beta).not.toContain("Meeting notes");
     expect(beta.length).toBe(dev.length - 1);
     expect(slashItemsFor(true, hiddenBlockTypes("beta"))[0]?.label).toBe("Ask AI");
+  });
+});
+
+describe("Beta-Gate: Einstellungen", () => {
+  it("blendet AI-/Agenten-Seiten nur auf beta aus", () => {
+    for (const id of ["agents", "connections", "notifications"]) {
+      expect(settingsPageVisible(id, "beta"), id).toBe(false);
+      expect(settingsPageVisible(id, "dev"), id).toBe(true);
+    }
+    for (const id of ["my-settings", "import", "sync", "updates", "diagnostics", "about"]) expect(settingsPageVisible(id, "beta"), id).toBe(true);
+    expect(BETA_HIDDEN_SETTINGS.size).toBe(3);
   });
 });

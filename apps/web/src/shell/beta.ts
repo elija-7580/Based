@@ -52,5 +52,16 @@ export function hiddenBlockTypes(channel: Channel = CHANNEL): ReadonlySet<string
   return new Set(featureVisible("meetings", channel) ? [] : ["meeting"]);
 }
 
+/**
+ * Einstellungsseiten, die auf beta fehlen (Review 16.11.2026, BSD-458): Agents & AI und Connections gehören zu
+ * AI/Agenten, My notifications handelt nur von Agenten. Alte Links (#settings/agents) fallen auf My settings zurück.
+ */
+export const BETA_HIDDEN_SETTINGS: ReadonlySet<string> = new Set(["agents", "connections", "notifications"]);
+
+/** Darf die Einstellungsseite mit dieser ID in diesem Kanal erscheinen? */
+export function settingsPageVisible(id: string, channel: Channel = CHANNEL): boolean {
+  return channel !== "beta" || !BETA_HIDDEN_SETTINGS.has(id);
+}
+
 /** Name der App im Kanal (Fenstertitel, Über-Seite, Problem melden). */
 export const APP_NAME = CHANNEL === "beta" ? "Based Beta" : "Based";
