@@ -291,14 +291,16 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-field { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--line); color: var(--muted); }
 .qf-field input { flex: 1; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: var(--size-body); outline: none; min-height: var(--space-6); }
 .qf-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--line); }
+/* BSD-350: Filter-Umschalter sind BasedChip (Astryx ToggleButton); die beiden Auswahl-Pillen daneben sehen genauso aus:
+   ruhig ohne Fläche, Überfahren und aktiv (≠ Standard) mit der Auswahlfläche wie ein gedrückter Chip. */
 .qf-chip {
-  display: inline-flex; align-items: center; gap: var(--space-1); min-height: calc(var(--space-5) + var(--space-1)); padding: 0 var(--space-3);
-  border: 0; border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--muted); font: inherit;
-  font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); cursor: pointer;
+  display: inline-flex; align-items: center; gap: var(--space-1); min-height: calc(var(--space-5) + var(--space-1)); padding: 0 var(--space-3); line-height: 1;
+  border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--ink); font: inherit;
+  font-size: var(--type-ui-size); cursor: pointer;
   transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
 }
-.qf-chip:hover { color: var(--ink); background: var(--selected); }
-.qf-chip[aria-pressed="true"], .qf-chip[data-active] { background: var(--button); color: var(--button-ink); }
+.qf-chip:hover { background: var(--selected); }
+.qf-chip[aria-pressed="true"], .qf-chip[data-active] { background: var(--selected); color: var(--ink); }
 .qf-select { position: relative; padding-right: var(--space-2); }
 .qf-select select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; outline: none; padding: 0; }
 /* Eigener Pfeil der Pille (unten): der allgemeine Based-Pfeil für Auswahlfelder (@based/ui/native.css) entfällt hier. */

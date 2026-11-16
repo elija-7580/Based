@@ -2,6 +2,7 @@
 // Suche ab; ohne Eingabe stehen die zuletzt geöffneten Seiten da. Pfeiltasten wählen, Enter öffnet, Esc schließt.
 // BSD-206: Filter wie in Notion – nur Titel, in der aktuellen Seite, Zeitraum, Sortierung (shell/quickFindFilters.ts).
 import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { BasedChip } from "@based/ui/astryx";
 import { useRestoreFocus } from "../shell/restoreFocus.js";
 import { Icon, type IconName } from "../icons.js";
 import { aiSetting } from "../shell/ai.js";
@@ -118,9 +119,9 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
           />
         </div>
         <div className="qf-filters" role="group" aria-label="Filters">
-          <button type="button" className="qf-chip" aria-pressed={filters.titleOnly} onClick={() => setFilters((f) => ({ ...f, titleOnly: !f.titleOnly }))}>Title only</button>
+          <BasedChip label="Title only" pressed={filters.titleOnly} onChange={(on) => setFilters((f) => ({ ...f, titleOnly: on }))} />
           {currentPage ? (
-            <button type="button" className="qf-chip" aria-pressed={filters.inPage} title={`Only “${currentPage.title}” and its sub-pages`} onClick={() => setFilters((f) => ({ ...f, inPage: !f.inPage }))}>In this page</button>
+            <BasedChip label="In this page" pressed={filters.inPage} tooltip={`Only “${currentPage.title}” and its sub-pages`} onChange={(on) => setFilters((f) => ({ ...f, inPage: on }))} />
           ) : null}
           <label className="qf-chip qf-select" data-active={filters.date !== "any" ? "" : undefined}>
             <span className="sr-only">Edited</span>

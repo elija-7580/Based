@@ -4,7 +4,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedButton, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
+import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
 import { useState } from "react";
 import { Icon } from "../../icons.js";
 
@@ -15,6 +15,7 @@ export function AstryxKit() {
   const [url, setURL] = useState("based.example");
   const [picked, setPicked] = useState("nothing yet");
   const [tab, setTab] = useState("notes");
+  const [chip, setChip] = useState(true);
   return (
     <VStack gap={6} className="kit" data-testid="astryx-kit">
       <VStack gap={1}>
@@ -85,6 +86,11 @@ export function AstryxKit() {
               <BasedToken label="Ada" color="blue" onClick={() => setPicked("Ada")} />
               <BasedToken label="1:05" mono onClick={() => setPicked("1:05")} description="Play from here" />
               <BasedToken label="0:00" mono disabled />
+            </HStack>
+            <HStack gap={2} wrap="wrap" vAlign="center">
+              <BasedChip label="Title only" pressed={chip} onChange={setChip} />
+              <BasedChip label="In this page" pressed={!chip} onChange={(on) => setChip(!on)} tooltip="Only this page and its sub-pages" />
+              <BasedChip label="Shared only" pressed={false} onChange={() => undefined} disabled />
             </HStack>
           </VStack>
         </Card>
