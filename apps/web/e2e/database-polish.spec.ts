@@ -44,3 +44,31 @@ test("Inline-Tabelle: leere Titel bleiben leer, Zelleneditor ist ein BasedField,
   await page.keyboard.press("Enter");
   await expect(db.locator(".dbui-cell.title").first()).toHaveText(/Hello/);
 });
+
+// Element-System (docs/design/elements.md, Abschnitt 3): beim Tippen in einer Textzelle ist genau ein Rahmen zu sehen –
+// der Editor liegt deckungsgleich auf der Zelle, das Feld darin hat weder Fläche noch Rahmen noch Kontur.
+test("Textzelle bearbeiten zeigt genau einen Rahmen", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "New page" }).first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
+  await page.keyboard.type("/database");
+  await page.getByRole("option", { name: "Database", exact: true }).click();
+  const db = page.locator(".shell-database.inline");
+  const cell = db.locator(".dbui-cell").first();
+  await cell.dblclick();
+  const editor = page.locator(".dbui-cell-editor");
+  await expect(editor).toBeVisible();
+  const input = editor.locator("input");
+  await expect(input).toBeFocused();
+  await expect(input).toHaveCSS("outline-style", "none");
+  const field = editor.locator(".astryx-text-input");
+  await expect(field).toHaveCSS("box-shadow", "none");
+  await expect(field).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  expect(await editor.evaluate((e) => getComputedStyle(e).boxShadow)).toContain("inset");
+  const [c, e] = [await cell.boundingBox(), await editor.boundingBox()];
+  expect(Math.abs(e!.y - c!.y)).toBeLessThanOrEqual(1);
+  expect(Math.abs(e!.height - c!.height)).toBeLessThanOrEqual(1);
+});

@@ -323,7 +323,17 @@
   font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading);
 }
 [data-material="glass"] .dbui-popover { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
-.dbui-cell-editor { padding: var(--space-1); border-radius: var(--radius-md); }
+/* Element-System, Abschnitt 3: Der Texteditor einer Zelle IST die Zelle im Bearbeiten – keine schwebende Karte, kein
+   zweites Feld. Ein Rahmen (focus-ring), sonst nichts. */
+.dbui-popover.dbui-cell-editor, [data-material="glass"] .dbui-popover.dbui-cell-editor {
+  padding: 0; gap: 0; justify-content: center; min-height: calc(var(--space-7) - var(--space-1) - 1px); border-radius: var(--radius-xs); background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none;
+  box-shadow: inset 0 0 0 var(--space-half) var(--focus-ring);
+}
+.dbui-cell-editor .astryx-text-input, .dbui-cell-editor .astryx-text-input:focus-within {
+  background: transparent; box-shadow: none; border-color: transparent; border-radius: 0; padding-inline: var(--cell-pad);
+}
+.dbui-cell-editor textarea { border: 0; background: transparent; padding: var(--cell-pad); font: inherit; color: var(--ink); resize: vertical; width: 100%; }
+.dbui-cell-editor :is(input, textarea):focus-visible { outline: none; }
 .dbui-menu-item {
   width: 100%; display: flex; align-items: center; gap: var(--space-2); min-height: calc(var(--space-7) - var(--space-1)); padding: 0 var(--space-2);
   border: 0; border-radius: var(--radius-md); background: transparent; text-align: left;

@@ -812,5 +812,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .astryx-text-input { background: var(--surface-raised); border-color: transparent; border-radius: var(--radius-md); box-shadow: none; }
 .astryx-text-input:hover { border-color: transparent; }
 .astryx-text-input:focus-within { outline: none; box-shadow: inset 0 0 0 var(--space-half) var(--focus-ring); }
+/* Den Rahmen zeichnet die Fläche des Feldes – das <input> darin bekommt keinen zweiten. */
+.astryx-text-input :is(input, textarea):focus-visible { outline: none; }
 /* Auf einer grauen Fläche (Gruppe, Karte) wäre das Feld unsichtbar: dort eine Stufe dunkler. */
 :is(.astryx-card, .astryx-section:not([data-variant="transparent"]), .settings-group, .lib-bulk) .astryx-text-input { background: var(--selected); }
