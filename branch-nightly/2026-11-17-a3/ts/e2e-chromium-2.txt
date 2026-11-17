@@ -1,4 +1,4 @@
-failure 92f6d174415d17ee3ad5cf21dbacbeaee80ec10c
+failure e7153541b3488fb7f55eed5052c546b674338d19
 
     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -34,14 +34,14 @@ failure 92f6d174415d17ee3ad5cf21dbacbeaee80ec10c
       - 5904 pixels (ratio 0.02 of all image pixels) are different.
 
 
-      490 |     const menuShot = (name: string) => overlays.locator(`[data-overlay="${name}"]`).screenshot({ animations: "disabled" });
-      491 |     expect((await menuShot("Menu")).equals(await menuShot("Menu item hover")), "Menüzeile überfahren erzwungen").toBe(false);
-    > 492 |     await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+      504 |     const menuShot = (name: string) => overlays.locator(`[data-overlay="${name}"]`).screenshot({ animations: "disabled" });
+      505 |     expect((await menuShot("Menu")).equals(await menuShot("Menu item hover")), "Menüzeile überfahren erzwungen").toBe(false);
+    > 506 |     await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
           |                            ^
-      493 |     if (style === "default") await overlays.screenshot({ path: `../../docs/design/screens/web-kit-overlays-${theme}.png`, animations: "disabled" });
-      494 |   });
-      495 | }
-        at /home/runner/work/Based/Based/apps/web/e2e/kit-states.spec.ts:492:28
+      507 |     if (style === "default") await overlays.screenshot({ path: `../../docs/design/screens/web-kit-overlays-${theme}.png`, animations: "disabled" });
+      508 |   });
+      509 | }
+        at /home/runner/work/Based/Based/apps/web/e2e/kit-states.spec.ts:506:28
 
     attachment #1: kit-overlays-default-dark (image/png) ───────────────────────────────────────────
     Expected: e2e/kit-states.spec.ts-snapshots/kit-overlays-default-dark-chromium-linux.png
@@ -52,10 +52,10 @@ failure 92f6d174415d17ee3ad5cf21dbacbeaee80ec10c
     Error Context: test-results/kit-states-Zustands-Galeri-06e59-Bildvergleich-default-dark--chromium-retry1/error-context.md
 
   2 failed
-    [chromium] › e2e/kit-states.spec.ts:446:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, light) 
-    [chromium] › e2e/kit-states.spec.ts:446:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark) 
+    [chromium] › e2e/kit-states.spec.ts:460:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:460:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark) 
   10 skipped
-  190 passed (4.9m)
+  196 passed (4.9m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
