@@ -1,0 +1,61 @@
+failure 63bde3d54f632e412eb589e4b02aed49a61db0d3
+    Call log:
+      - Expect "toHaveScreenshot(slash-menu-bold-dark.png)" getByRole('listbox').filter({ has: getByRole('option').first() }).first() with timeout 5000ms
+        - verifying given screenshot expectation
+      - waiting for getByRole('listbox').filter({ has: getByRole('option').first() }).first()
+        - locator resolved to <div role="listbox" aria-label="Blocks" data-testid="slash-menu" class="bx2-menu bx2-slash">…</div>
+      - taking element screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - attempting scroll into view action
+        - waiting for element to be stable
+      - 1379 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - waiting for getByRole('listbox').filter({ has: getByRole('option').first() }).first()
+        - locator resolved to <div role="listbox" aria-label="Blocks" data-testid="slash-menu" class="bx2-menu bx2-slash">…</div>
+      - taking element screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - attempting scroll into view action
+        - waiting for element to be stable
+      - captured a stable screenshot
+      - 1379 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      600 |     await settle(slash);
+      601 |     await check("Slash-Menü", slash);
+    > 602 |     await expect(slash).toHaveScreenshot(`slash-menu-${style}-${theme}.png`, SHOT);
+          |                         ^
+      603 |     await page.keyboard.press("Escape");
+      604 |
+      605 |     await page.mouse.move(1279, 819);
+        at /home/runner/work/Based/Based/apps/web/e2e/kit-states.spec.ts:602:25
+
+    attachment #1: slash-menu-bold-dark (image/png) ────────────────────────────────────────────────
+    Expected: e2e/kit-states.spec.ts-snapshots/slash-menu-bold-dark-chromium-linux.png
+    Received: test-results/kit-states-Zustands-Galeri-3d72e-im-Bildvergleich-bold-dark--chromium-retry1/slash-menu-bold-dark-actual.png
+    Diff:     test-results/kit-states-Zustands-Galeri-3d72e-im-Bildvergleich-bold-dark--chromium-retry1/slash-menu-bold-dark-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/kit-states-Zustands-Galeri-3d72e-im-Bildvergleich-bold-dark--chromium-retry1/error-context.md
+
+  12 failed
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (bold, light) 
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark) 
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (bold, dark) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (bold, light) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (default, dark) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (bold, dark) 
+    [chromium] › e2e/kit-states.spec.ts:576:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:576:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (bold, light) 
+    [chromium] › e2e/kit-states.spec.ts:576:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (default, dark) 
+    [chromium] › e2e/kit-states.spec.ts:576:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (bold, dark) 
+  10 skipped
+  191 passed (4.6m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
