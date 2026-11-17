@@ -81,8 +81,9 @@ function Basemap({ vp, size }: { vp: Viewport; size: Size }) {
     const first = Math.floor(-tx / w);
     ctx.fillStyle = token("--bg");
     ctx.strokeStyle = token("--line");
-    for (let k = first - 1; k <= first + 2; k++) {
-      if (tx + (k + 1) * w <= 0 || tx + k * w >= size.width) continue;
+    for (let k = first - 2; k <= first + 3; k++) {
+      // eine Weltbreite Rand: Ringe über die Datumsgrenze ragen in die Nachbarkopie (ringsToPath, BSD-492)
+      if (tx + (k + 2) * w <= 0 || tx + (k - 1) * w >= size.width) continue;
       ctx.setTransform(dpr * w, 0, 0, dpr * w, dpr * (tx + k * w), dpr * ty);
       ctx.fill(landShape);
       ctx.lineWidth = 1 / w;
@@ -235,7 +236,7 @@ export function MapLayout({ view, result }: { view: DatabaseView; result: QueryR
     <div className="dbui-map" data-testid="map-view">
       <div className="dbui-map-stage" style={{ height: `calc(var(--space-8) * ${heightUnits})` }}>
         <div className="dbui-map-canvas" ref={box} role="application" aria-roledescription="map" aria-label={`Map of ${prop.name}`} tabIndex={0}
-          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onKeyDown={onKey} data-zoom={vp?.zoom.toFixed(2)}>
+          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onKeyDown={onKey} data-zoom={vp?.zoom.toFixed(2)} data-center={vp ? `${vp.cx.toFixed(6)} ${vp.cy.toFixed(6)}` : undefined}>
           {vp && size && <Basemap vp={vp} size={size} />}
           {vp && size && clusters.map((c) => {
             const one = c.items.length === 1 ? c.items[0]! : undefined;

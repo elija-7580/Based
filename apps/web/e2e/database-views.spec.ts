@@ -375,6 +375,55 @@ test("Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort
 });
 
 // 5.000 Zeilen: Karte (Pins/Cluster, Ziehen, Zoomen), Peek (Blättern) und Formular (Absenden) dürfen nicht ruckeln.
+// BSD-492: Ringe über die Datumsgrenze (Russland, Fidschi) zogen ein Land-Band über die ganze Welt (≈ 65–72° N).
+// In der oberen Kartenhälfte darf keine Pixelzeile fast ganz Land sein.
+test("Karte: kein Land-Band über die ganze Welt (Datumsgrenze)", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await seedDatabase(page, {
+    title: "World",
+    properties: [title, { id: "where", name: "Where", type: "place" }],
+    rows: [{ id: "none", title: "Nowhere yet" }],
+    views: [{ id: "v-map", name: "Map", type: "map", extra: { mapPropertyID: "where", mapHeight: "large" } }],
+  });
+  const map = page.getByTestId("map-view");
+  await expect(map).toBeVisible();
+  const canvas = page.getByRole("application", { name: "Map of Where" });
+  // ganz herauszoomen: die ganze Welt, mehrfach nebeneinander
+  const out = map.getByRole("button", { name: "Zoom out" });
+  for (let i = 0; i < 12 && (await out.isEnabled()); i++) await out.click();
+  await page.waitForTimeout(300);
+  // Farbe an bekannten Orten: Nordmeer (0°, 67° N) ist Meer wie der Atlantik, Sibirien (100° O, 65° N) Land wie Afrika.
+  // Vorher lag dort ein Band über die ganze Welt – Meer wurde Land und Sibirien Meer.
+  const [zoom, center] = [Number(await canvas.getAttribute("data-zoom")), (await canvas.getAttribute("data-center"))!.split(" ").map(Number)];
+  const colors = await page.getByTestId("map-basemap").evaluate((c: HTMLCanvasElement, [z, cx, cy]) => {
+    const w = 256 * 2 ** z!;
+    const r = c.getBoundingClientRect();
+    const dpr = c.width / r.width;
+    const at = (lon: number, lat: number) => {
+      const φ = (lat * Math.PI) / 180;
+      let px = (lon + 180) / 360 - cx!;
+      px -= Math.round(px); // nächste Kopie der Welt
+      const py = 0.5 - Math.log(Math.tan(Math.PI / 4 + φ / 2)) / (2 * Math.PI) - cy!;
+      const x = Math.round((r.width / 2 + px * w) * dpr), y = Math.round((r.height / 2 + py * w) * dpr);
+      return [...c.getContext("2d")!.getImageData(x, y, 1, 1).data].slice(0, 3).join(",");
+    };
+    return { norwegianSea: at(5, 67), atlantic: at(-40, 33), siberia: at(100, 65), africa: at(20, 10) };
+  }, [zoom, center[0], center[1]] as const);
+  expect(colors.norwegianSea, "Nordmeer ist Meer").toBe(colors.atlantic);
+  expect(colors.siberia, "Sibirien ist Land").toBe(colors.africa);
+  expect(colors.atlantic).not.toBe(colors.africa);
+  await expect(canvas).toBeVisible();
+  if (browserName === "chromium") {
+    await page.mouse.move(0, 0);
+    await page.screenshot({ path: `${SHOTS}map-dateline-light.png` });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${SHOTS}map-dateline-dark.png` });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+  }
+});
+
 test("5.000 Zeilen: Karte, Peek und Formular bleiben flüssig", { tag: "@perf" }, async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "Zeitmessung nur in Chromium");
   test.setTimeout(180_000);
