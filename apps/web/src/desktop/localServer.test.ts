@@ -94,9 +94,13 @@ describe("Tailnet (BSD-315)", () => {
     const built = parseNodeProbe("/Applications/Based Next.app/Contents/Resources/node/bin/node\nv24.22.2\n", 0);
     expect(await chooseNode(built, shell)).toMatchObject({ ok: true, bundled: true, version: "v24.22.2", message: "Node.js v24.22.2 (built in)" });
     expect(asked).toBe(0);
-    // fehlt (Intel im Universal-Build) oder scheitert: Login-Shell
+    // fehlt (Entwickler-Build ohne Netz) oder scheitert: Login-Shell
     expect(await chooseNode(undefined, shell)).toMatchObject({ ok: true, path: "/opt/homebrew/bin/node" });
     expect(await chooseNode(parseNodeProbe("", 127), shell)).toMatchObject({ ok: true, path: "/opt/homebrew/bin/node" });
     expect(asked).toBe(2);
+    // BSD-452: Rückfall sichtbar (Einstellungen zeigen die Meldung, wenn nicht die eingebaute läuft)
+    expect((await chooseNode(undefined, shell)).message).toContain("uses the one installed on this Mac");
+    expect((await chooseNode(undefined, shell)).bundled).toBeUndefined();
+    expect(await chooseNode(undefined, async () => parseNodeProbe("", 1))).toMatchObject({ ok: false, message: expect.stringContaining("wasn't found") });
   });
 });

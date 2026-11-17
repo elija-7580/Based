@@ -133,14 +133,18 @@ Node.js v24 LTS, MIT-Lizenz in `node/LICENSE`). Zur Laufzeit lädt die App nicht
 - **Node-Laufzeit mitliefern (BSD-414):** `apps/desktop/scripts/fetch-node.mjs` läuft im Sidecar-Schritt vor jedem
   Build, lädt die gepinnte Version von nodejs.org, prüft die SHA-256-Summe (im Skript) und legt `bin/node` und
   `LICENSE` nach `dist-sidecar/node/` (Cache in `apps/desktop/.cache/`). Ziel aus `TAURI_ENV_TARGET_TRIPLE`:
-  Universal- und arm64-Builds bekommen die arm64-Node (+≈ 40 MB im DMG), x86_64-Builds die x64-Node. Ohne Netz,
+  BSD-452: Universal-Builds bekommen arm64- und x64-Node als EINE universelle Datei (`scripts/macho.mjs`, wie
+  `lipo -create`; macOS startet die passende Slice; ≈ 248 MB entpackt, ≈ +80 MB im DMG statt +40 MB nur arm64),
+  arm64-Builds die arm64-Node, x86_64-Builds die x64-Node. Prüfschritt nach dem Build:
+  `node apps/desktop/scripts/check-node.mjs "…/Based Beta.app"` (Exit 1, wenn eine Architektur fehlt). Ohne Netz,
   bei falscher Summe oder mit `BASED_SKIP_NODE=1` bricht nichts ab – dann fehlt die Laufzeit und die App nimmt die
   Node des Nutzers. Version aktualisieren: `NODE_VERSION` und die drei Summen aus `SHASUMS256.txt` im Skript
   ersetzen. Signieren/Notarisieren der Binärdatei gehört zu BSD-272 (heute ad hoc wie die App).
 - **Node finden:** zuerst die mitgelieferte (`/bin/sh -c '… exec "$BASED_NODE" --version'`, Pfad über
-  `resolveResource("node/bin/node")`); fehlt sie (z. B. Intel-Mac mit Universal-Build) oder läuft sie nicht, über die
+  `resolveResource("node/bin/node")`); fehlt sie (Entwickler-Build ohne Netz) oder läuft sie nicht, über die
   Login-Shell wie im Terminal (`/bin/zsh -ilc 'command -v node && node --version'`, ≥ 22), damit Homebrew/nvm
-  gefunden werden. Fehlt beides, sagt die App das mit Installationsbefehl.
+  gefunden werden – das zeigen die Einstellungen dann als Hinweis an (BSD-452). Fehlt beides, sagt die App das mit
+  Installationsbefehl.
 - **Gespräche aus Claude Code und Codex (BSD-251):** läuft der lokale Server, zeigt der Chat sie als eigene Gruppe
   „Claude Code & Codex“ (lesen, „Continue in Based“, Terminal-Befehl kopieren), und Coding benutzt ihn ohne
   „Use for sync“. Im Chat und in Coding gibt es dafür einen Knopf, der den lokalen Server einschaltet. Der Server

@@ -1,7 +1,7 @@
 // BSD-138: lokaler based-server und die Kommandozeile `based` aus der Desktop-App – beides nur per Opt-in. Der App
 // liegt ein JavaScript-Bundle bei (Resource `based-server.cjs`). BSD-414: es läuft mit der mitgelieferten Node
-// (Resource `node/bin/node`, siehe apps/desktop/scripts/fetch-node.mjs); fehlt sie (Intel-Mac im Universal-Build,
-// Entwickler-Build ohne Netz), mit der Node des Nutzers (≥ 22), gefunden über die Login-Shell wie im Terminal.
+// (Resource `node/bin/node`, siehe apps/desktop/scripts/fetch-node.mjs); fehlt sie (Entwickler-Build ohne Netz; seit
+// BSD-452 ist sie universell für arm64 + x86_64), mit der Node des Nutzers (≥ 22), gefunden über die Login-Shell wie im Terminal.
 // Die Hülle hat keine eigene Rust-Logik: das offizielle Shell-Plugin darf genau vier feste Aufrufe
 // (capabilities/local-server.json):
 //   based-node-bundled-probe  /bin/sh -c 'printf … "$BASED_NODE" && exec "$BASED_NODE" --version'   (BSD-414)
@@ -34,10 +34,14 @@ export const BUNDLED_PROBE = { name: "based-node-bundled-probe", args: ["-c", `p
 export const BUNDLED_RUN = { name: "based-node-bundled-run", args: ["-ilc", 'exec "$BASED_NODE" "$BASED_BUNDLE" desktop'] } as const;
 export const BUNDLED_NODE_RESOURCE = "node/bin/node";
 
-/** BSD-414: Welche Node? Die mitgelieferte, wenn sie läuft (≥ 22); sonst die aus der Login-Shell. */
+/**
+ * BSD-414: Welche Node? Die mitgelieferte, wenn sie läuft (≥ 22); sonst die aus der Login-Shell. BSD-452: Die
+ * mitgelieferte ist universell (arm64 + x86_64), macOS wählt die Slice selbst. Der Rückfall auf die Node des Nutzers
+ * sagt es in der Meldung (die Einstellungen zeigen sie dann an).
+ */
 export function chooseNode(bundled: NodeInfo | undefined, shell: () => Promise<NodeInfo>): Promise<NodeInfo> {
   if (bundled?.ok) return Promise.resolve({ ...bundled, bundled: true, message: `Node.js ${bundled.version} (built in)` });
-  return shell();
+  return shell().then((info) => (info.ok ? { ...info, message: `${info.message} — the Node.js built into Based didn't start, so Based uses the one installed on this Mac.` } : info));
 }
 const SETTINGS_KEY = "based.localServer";
 const TOKEN_SECRET = "local-server-token";

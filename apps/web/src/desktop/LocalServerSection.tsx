@@ -47,7 +47,7 @@ function LocalServerSection({ client }: SettingsSectionProps) {
   const chosen = target.trim() === "" || target === s.cli.target ? undefined : target.trim();
   return (
     <VStack gap={4}>
-      {s.node && !s.node.ok ? <Text type="supporting" color="secondary" role="status" data-testid="node-status">{s.node.message}</Text> : null}
+      {s.node && (!s.node.ok || !s.node.bundled) ? <Text type="supporting" color="secondary" role="status" data-testid="node-status">{s.node.message}</Text> : null}
       <Group>
         <Switch
           label="Local server"

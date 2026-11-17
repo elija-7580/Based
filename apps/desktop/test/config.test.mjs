@@ -120,12 +120,15 @@ test("BSD-138: Bundle läuft mit Node; Starter anlegen, benutzen, entfernen (Tem
 });
 
 test("BSD-414: Node-Laufzeit – Ziel, gepinnte Prüfsumme, nie ein Build-Abbruch", async () => {
-  const { NODE_SHA256, NODE_VERSION, archiveName, fetchNode, nodeTarget, verifyArchive } = await import("../scripts/fetch-node.mjs");
+  const { NODE_SHA256, NODE_VERSION, archiveName, fetchNode, nodeTarget, nodeTargets, verifyArchive } = await import("../scripts/fetch-node.mjs");
   const { mkdtempSync, rmSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   assert.match(NODE_VERSION, /^v2[2-9]\.\d+\.\d+$/);
-  assert.equal(nodeTarget({ triple: "universal-apple-darwin" }), "darwin-arm64");
+  // BSD-452: Universal-Build = beide Mac-Architekturen (eine universelle Datei)
+  assert.deepEqual(nodeTargets({ triple: "universal-apple-darwin" }), ["darwin-arm64", "darwin-x64"]);
+  assert.deepEqual(nodeTargets({ triple: "x86_64-apple-darwin" }), ["darwin-x64"]);
+  assert.deepEqual(nodeTargets({ triple: "x86_64-pc-windows-msvc" }), []);
   assert.equal(nodeTarget({ triple: "aarch64-apple-darwin" }), "darwin-arm64");
   assert.equal(nodeTarget({ triple: "x86_64-apple-darwin" }), "darwin-x64");
   assert.equal(nodeTarget({ triple: "x86_64-pc-windows-msvc" }), undefined);
@@ -146,6 +149,9 @@ test("BSD-414: Node-Laufzeit – Ziel, gepinnte Prüfsumme, nie ein Build-Abbruc
     assert.equal(existsSync(join(dir, "out", "README.txt")), true);
     assert.equal(existsSync(join(dir, "out", "bin", "node")), false);
     assert.equal(await fetchNode({ out: join(dir, "out"), cache: join(dir, "cache"), target: undefined, log: () => {} }), false);
+    // universal: fehlt eine Architektur, liegt gar keine Node bei (alles oder nichts)
+    assert.equal(await fetchNode({ out: join(dir, "out"), cache: join(dir, "cache"), targets: ["darwin-arm64", "darwin-x64"], fetcher: async () => new Response("evil"), log: () => {} }), false);
+    assert.equal(existsSync(join(dir, "out", "bin", "node")), false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -169,4 +175,38 @@ test("Beta-Overlay: eigener Name, eigene Bundle-ID, Updater auf beta-latest", ()
   assert.deepEqual({ ...beta.app.windows[0], title: conf.app.windows[0].title }, conf.app.windows[0]);
   assert.equal(beta.plugins.updater.pubkey, conf.plugins.updater.pubkey);
   assert.deepEqual(beta.plugins.updater.endpoints, ["https://github.com/elija-7580/Based/releases/download/beta-latest/latest.json"]);
+});
+
+// BSD-452: universelle Node (arm64 + x86_64) ohne Xcode bauen und prüfen – wie lipo -create / lipo -info.
+test("BSD-452: Mach-O universal – zusammenfügen, Slices ausgerichtet, Prüfschritt findet beide Architekturen", async () => {
+  const { CPU_TYPE_ARM64, CPU_TYPE_X86_64, fatArchs, makeFat, thinArch } = await import("../scripts/macho.mjs");
+  const { checkNode, nodePath } = await import("../scripts/check-node.mjs");
+  const thin = (cputype, cpusubtype, size, fill) => {
+    const b = Buffer.alloc(size, fill);
+    b.writeUInt32LE(0xfeedfacf, 0);
+    b.writeInt32LE(cputype, 4);
+    b.writeInt32LE(cpusubtype, 8);
+    return b;
+  };
+  const arm = thin(CPU_TYPE_ARM64, 0, 5000, 1), x64 = thin(CPU_TYPE_X86_64, 3, 7000, 2);
+  assert.deepEqual(thinArch(arm), { cputype: CPU_TYPE_ARM64, cpusubtype: 0, name: "arm64" });
+  assert.equal(thinArch(Buffer.from("#!/bin/sh\n")), undefined);
+  const fat = makeFat([arm, x64]);
+  const archs = fatArchs(fat);
+  assert.deepEqual(archs.map((a) => [a.name, a.align, a.valid]), [["x86_64", 12, true], ["arm64", 14, true]]);
+  assert.equal(archs[0].offset % 4096, 0);
+  assert.equal(archs[1].offset % 16384, 0);
+  assert.equal(archs[0].cpusubtype, 3);
+  // jede Slice unverändert an ihrem Platz
+  assert.ok(fat.subarray(archs[1].offset, archs[1].offset + archs[1].size).equals(arm));
+  assert.ok(fat.subarray(archs[0].offset, archs[0].offset + archs[0].size).equals(x64));
+  assert.throws(() => makeFat([arm, arm]), /duplicate/);
+  assert.throws(() => makeFat([Buffer.from("nope")]), /Mach-O/);
+  // Prüfschritt
+  assert.deepEqual(checkNode(fat), { ok: true, archs: ["x86_64", "arm64"], missing: [], broken: [] });
+  assert.deepEqual(checkNode(arm), { ok: false, archs: ["arm64"], missing: ["x86_64"], broken: [] });
+  assert.equal(checkNode(arm, ["arm64"]).ok, true);
+  const cut = fat.subarray(0, archs[1].offset + 10);
+  assert.deepEqual(checkNode(cut).broken, ["arm64"]);
+  assert.equal(nodePath("/nonexistent/Based Beta.app/x"), "/nonexistent/Based Beta.app/x");
 });
