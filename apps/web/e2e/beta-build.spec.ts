@@ -178,7 +178,12 @@ test("Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home", asyn
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
     await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
     await expect(page.getByLabel("Page title")).toBeVisible();
-    for (const hash of ["meetings", "graph", "coding", "chat", "tasks", "agents", "ai"]) {
+    // BSD-507: Meetings sind seit BSD-231 in der Beta – #meetings bleibt und zeigt die Meetings-Liste
+    await page.goto("/#meetings");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(page).toHaveURL(/#meetings$/);
+    await expect(page.getByTestId("meetings")).toBeVisible();
+    for (const hash of ["graph", "coding", "chat", "tasks", "agents", "ai"]) {
       await page.goto("/#" + hash);
       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
       await expect(page, hash).toHaveURL(/#home$/);
