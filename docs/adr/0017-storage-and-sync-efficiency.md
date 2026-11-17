@@ -160,7 +160,7 @@ auf seinem echten Workspace nach main.
 | A1 Vorbereitete Anweisungen im WASM-Treiber, Laden in Stücken | auf main (17.11.) | 100 000 Records schreiben: Chromium 6,2 s → 4,3 s, WebKit 6,0 s → 4,0 s (1,5×, nicht die erwarteten 3×); Start unverändert 2,1 s / 2,4–3,0 s |
 | A3 Pull nach Größe, gzip für Push und Antworten | auf main (17.11.) | 12 000 Records: 24 Pull-Anfragen → höchstens 4; Seiten und Push auf rund ein Fünftel. Nur gegen einen Server mit diesem Stand; ein älterer bekommt unveränderte Anfragen |
 | A4 Dauerhafter Web-Speicher, Zeile „Browser storage“ | auf main (17.11.) | – |
-| A7 Zeitmessung `@perf` mit 100 000 Records | auf main (17.11.) | Schwellen: Schreiben 12 s, Start 6 s |
+| A7 Zeitmessung `@perf` mit 100 000 Records | auf main (17.11., BSD-495: `scale-perf`) | Schwellen: Start 5 s (WebKit 7 s), Schreiben 9 s; Unit: erster Sync 6 s, Start 4 s, Heap 150 MB |
 | A2 Zod beim Laden überspringen | gestrichen | Prüfung beim Laden bleibt (Sicherheit vor Tempo); der Gewinn kommt mit Stufe B |
 | A5 Gliederung als Änderung, A6 Ordner-Segmente komprimiert | offen | A6 zuerst nur lesen beider Formen |
 | B, C, D, Bereiche | offen | – |
