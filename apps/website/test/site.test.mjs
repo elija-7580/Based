@@ -121,7 +121,10 @@ async function withServer(fn) {
   try {
     await fn(post, dir);
   } finally {
+    // BSD-476: wait until the service has closed the database before the next process opens it
+    const exited = child.exitCode !== null || child.signalCode !== null ? Promise.resolve() : new Promise((resolve) => child.once("exit", resolve));
     child.kill();
+    await exited;
   }
   return dir;
 }
