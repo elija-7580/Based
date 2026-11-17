@@ -31,7 +31,7 @@ async function newTopLevelPage(page: Page, title: string) {
 
 test.beforeEach(async ({ page }) => fresh(page));
 
-test("Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen", { tag: "@smoke" }, async ({ page }) => {
+test("Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen", { tag: "@smoke" }, async ({ page, browserName }) => {
   await newTopLevelPage(page, "Project notes");
 
   // Umbenennen in der Seitenleiste (Kontextmenü)
@@ -67,7 +67,29 @@ test("Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig
   await page.getByRole("treeitem", { name: "Project plan" }).click({ button: "right" });
   await page.getByRole("menuitem", { name: "Move to Trash" }).click();
   await page.getByRole("button", { name: /^Trash/ }).click();
-  await page.getByRole("listitem", { name: "Project plan" }).getByRole("button", { name: "Delete forever" }).click();
+  // BSD-505: ein Klick fragt in der Zeile nach; Cancel und Esc lassen die Seite im Papierkorb
+  const trashRow = page.getByRole("listitem", { name: "Project plan" });
+  await trashRow.getByRole("button", { name: "Delete forever" }).click();
+  await expect(trashRow).toBeVisible();
+  await expect(trashRow.getByRole("button", { name: "Restore" })).toHaveCount(0);
+  await expect(trashRow.getByRole("button", { name: "Delete “Project plan” forever" })).toBeFocused();
+  await trashRow.getByRole("button", { name: "Cancel" }).click();
+  await expect(trashRow.getByRole("button", { name: "Restore" })).toBeVisible();
+  await trashRow.getByRole("button", { name: "Delete forever" }).click();
+  await page.keyboard.press("Escape");
+  await expect(trashRow.getByRole("button", { name: "Restore" })).toBeVisible();
+  await trashRow.getByRole("button", { name: "Delete forever" }).click();
+  if (browserName === "chromium") {
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.mouse.move(0, 0);
+    await page.screenshot({ path: "../../docs/design/screens/trash-delete-forever-ask-light.png" });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: "../../docs/design/screens/trash-delete-forever-ask-dark.png" });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+  }
+  await trashRow.getByRole("button", { name: "Delete “Project plan” forever" }).click();
   await expect(page.getByText("The Trash is empty.")).toBeVisible();
   await expect(page.getByRole("treeitem", { name: "Project plan" })).toHaveCount(0);
 });
