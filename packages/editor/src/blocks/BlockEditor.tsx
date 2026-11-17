@@ -490,7 +490,7 @@ export function BlockEditor(props: PageEditorProps) {
     if (!el) return;
     const r = el.ownerDocument.getSelection()?.getRangeAt(0).getBoundingClientRect();
     const box = r && (r.width || r.height) ? r : el.getBoundingClientRect();
-    setSlash({ id, at, query: "", index: 0, x: box.left, y: box.bottom + 6 });
+    setSlash({ id, at, query: "", index: 0, x: box.left, y: box.bottom + 6, above: box.top - 6 });
   };
   const updateSlash = (id: string) => {
     const s = slashRef.current;
@@ -575,7 +575,7 @@ export function BlockEditor(props: PageEditorProps) {
     if (!el) return;
     const r = el.ownerDocument.getSelection()?.getRangeAt(0).getBoundingClientRect();
     const box = r && (r.width || r.height) ? r : el.getBoundingClientRect();
-    const st: MentionState = { id, at, trigger, query: "", index: 0, x: box.left, y: box.bottom + 6, items: [] };
+    const st: MentionState = { id, at, trigger, query: "", index: 0, x: box.left, y: box.bottom + 6, above: box.top - 6, items: [] };
     setMention(st);
     void searchMention(st);
   };
@@ -2643,18 +2643,34 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
 
 // MARK: Menüs
 
-interface SlashState { id: string; at: number; query: string; index: number; x: number; y: number }
+interface SlashState { id: string; at: number; query: string; index: number; x: number; y: number; above?: number }
 
-/** Hält ein Menü am Cursor ganz im Fenster (gemessen, nicht geschätzt): rückt nach oben/links, wenn unten/rechts kein Platz ist. */
-function useFitInWindow(ref: { current: HTMLElement | null }, x: number, y: number, count: number) {
+/**
+ * Hält ein Menü am Cursor ganz im Fenster (gemessen, nicht geschätzt): rückt nach links, wenn rechts kein Platz ist.
+ * BSD-491: Mit `above` (Oberkante der Zeile) klappt es über die Zeile, wenn unten zu wenig und oben mehr Platz ist –
+ * statt sich über die Zeile zu legen, in der man tippt. Die gewählte Seite bleibt beim Filtern gleich.
+ */
+function useFitInWindow(ref: { current: HTMLElement | null }, x: number, y: number, count: number, above?: number) {
+  const side = useRef<{ y: number; up: boolean } | undefined>(undefined);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const pad = 8;
+    el.style.maxHeight = "";
     const r = el.getBoundingClientRect();
     el.style.left = `${Math.max(pad, Math.min(x, window.innerWidth - r.width - pad))}px`;
-    el.style.top = `${Math.max(pad, Math.min(y, window.innerHeight - r.height - pad))}px`;
-  }, [ref, x, y, count]);
+    if (above === undefined) {
+      el.style.top = `${Math.max(pad, Math.min(y, window.innerHeight - r.height - pad))}px`;
+      return;
+    }
+    const roomBelow = window.innerHeight - pad - y;
+    const roomAbove = above - pad;
+    if (side.current?.y !== y) side.current = { y, up: r.height > roomBelow && roomAbove > roomBelow };
+    const room = side.current.up ? roomAbove : roomBelow;
+    const height = Math.min(r.height, room);
+    if (height < r.height) el.style.maxHeight = `${Math.max(0, room)}px`;
+    el.style.top = `${side.current.up ? above - height : y}px`;
+  }, [ref, x, y, count, above]);
 }
 
 function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; state: SlashState; onChoose: (i: SlashItem) => void; onHover: (i: number) => void }) {
@@ -2662,7 +2678,7 @@ function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; st
   useLayoutEffect(() => {
     ref.current?.querySelector(`[data-index="${state.index}"]`)?.scrollIntoView({ block: "nearest" });
   }, [state.index]);
-  useFitInWindow(ref, state.x, state.y, items.length);
+  useFitInWindow(ref, state.x, state.y, items.length, state.above);
   let group = "";
   return (
     <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Blocks" data-testid="slash-menu" style={{ left: state.x, top: state.y }} onPointerDown={(e) => e.preventDefault()}>
@@ -3037,12 +3053,12 @@ function DatePopover({ state, onChange, onClose }: { state: { id: string; from: 
   );
 }
 // `trigger`: „@“ (Seiten und Daten) oder „[[“ (nur Seiten, wie im alten Editor).
-interface MentionState { id: string; at: number; trigger: "@" | "[["; query: string; index: number; x: number; y: number; items: MentionItem[] }
+interface MentionState { id: string; at: number; trigger: "@" | "[["; query: string; index: number; x: number; y: number; above?: number; items: MentionItem[] }
 
 function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoose: (r: MentionItem) => void; onHover: (i: number) => void }) {
   const firstDate = state.items.findIndex((x) => x.kind === "date");
   const ref = useRef<HTMLDivElement>(null);
-  useFitInWindow(ref, state.x, state.y, state.items.length);
+  useFitInWindow(ref, state.x, state.y, state.items.length, state.above);
   return (
     <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Mention a page" data-testid="mention-menu" style={{ left: state.x, top: state.y }} onPointerDown={(e) => e.preventDefault()}>
       {state.items.length && state.items[0]!.kind === "page" ? <div className="bx2-menu-label">Link to page</div> : null}
