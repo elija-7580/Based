@@ -64,7 +64,6 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
     const f = blockCommands.insertTable(store, after, replace);
     return f && "blockId" in f ? f.blockId : undefined;
   } },
-  ...[2, 3, 4, 5].map((n): SlashItem => ({ type: "columnList", label: `${n} columns`, group: "Advanced", icon: "columns", keywords: `columns layout side ${n}`, columns: n })),
   { type: "page", label: "Page", group: "Pages", icon: "page", keywords: "subpage new page", page: subPage },
   { type: "databaseInline", label: "Database", group: "Pages", icon: "database", keywords: "table inline database grid", create: (store, after, replace) => {
     const a = store.blocks.get(after);
@@ -81,6 +80,8 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "pdf", label: "PDF", group: "Media", icon: "file", keywords: "pdf document viewer upload" },
   { type: "bookmark", label: "Web bookmark", group: "Media", icon: "bookmark", keywords: "link url preview" },
   { type: "embed", label: "Embed", group: "Media", icon: "embed", keywords: "iframe link url" },
+  // BSD-484: Spalten stehen im Advanced-Block (vorher davor → „Advanced“ erschien zweimal)
+  ...[2, 3, 4, 5].map((n): SlashItem => ({ type: "columnList", label: `${n} columns`, group: "Advanced", icon: "columns", keywords: `columns layout side ${n}`, columns: n })),
   { type: "equation", label: "Block equation", group: "Advanced", icon: "equation", keywords: "math latex tex formula", props: { expression: "" } },
   { type: "inlineEquation", label: "Inline equation", group: "Advanced", icon: "inlineEquation", keywords: "math latex tex formula inline", inline: "equation" },
   // BSD-407 Teil 3: wie im alten Editor eigene Einträge für Codeblöcke mit Vorschau
@@ -163,5 +164,19 @@ function indexOf(items: readonly SlashItem[]): FuzzyIndex<SlashItem> {
  */
 export function filterSlash(items: readonly SlashItem[], query: string): SlashItem[] {
   if (!query.trim()) return [...items];
-  return indexOf(items).search(query);
+  return groupedByFirstHit(indexOf(items).search(query));
+}
+
+/**
+ * BSD-484: Das Menü setzt bei jedem Gruppenwechsel einen Kopf. Treffer daher nach Gruppe zusammenfassen – die Gruppen
+ * in der Reihenfolge ihres besten Treffers, darin die Treffer-Reihenfolge. Der beste Treffer bleibt oben.
+ */
+function groupedByFirstHit(hits: readonly SlashItem[]): SlashItem[] {
+  const groups = new Map<string, SlashItem[]>();
+  for (const it of hits) {
+    const g = groups.get(it.group);
+    if (g) g.push(it);
+    else groups.set(it.group, [it]);
+  }
+  return [...groups.values()].flat();
 }
