@@ -106,7 +106,18 @@ if (isMain) {
       for (const args of commands) {
         if (dry) console.log(`  codesign ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(" ")}`);
         else {
-          execFileSync("codesign", [...keychainArgs, ...args], { stdio: "inherit" });
+          // Apples Zeitstempel-Dienst antwortet gelegentlich nicht („A timestamp was expected but was not found“,
+          // Desktop-Lauf 17.11.): bis zu fünf Versuche mit wachsender Pause, erst dann scheitert der Build.
+          for (let attempt = 1; ; attempt++) {
+            try {
+              execFileSync("codesign", [...keychainArgs, ...args], { stdio: "inherit" });
+              break;
+            } catch (e) {
+              if (attempt >= 5) throw e;
+              console.log(`sign-node: codesign failed (attempt ${attempt} of 5), retrying…`);
+              execFileSync("sleep", [String(attempt * 10)]);
+            }
+          }
           execFileSync("codesign", ["--verify", "--strict", args.at(-1)], { stdio: "inherit" });
         }
       }

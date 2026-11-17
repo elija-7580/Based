@@ -135,6 +135,40 @@ function patchLinks(s) {
 }
 const patchAssets = (s) => s.split(MARK_LIGHT).join("/mark.svg").split(MARK_DARK).join("/mark-dark.svg");
 
+// ---- logo intro (Elija 17.11.): the mark in the header "types" itself once on every page ----
+// Same order as in the app (apps/web/src/components/logoTimeline.ts): the base line draws in one stroke, a caret
+// blinks, the stem lands, then the bowl; the line gives a little and the blocks rock and settle. Done in CSS because
+// dc-lite morphs the DOM on every state change and only CSS animations survive that. `html.lg-intro` starts it;
+// site.js removes the class when the intro is over and the mark rests. Hovering then gives one "keystroke" (the line
+// gives, the blocks rock). The canvas's own pop animations (bsdStem, bsdBowl) are switched off everywhere: typing,
+// not bouncing. Sizes are tuned for the 34 px mark (a little stronger than in the app).
+const LOGO_SVG_OLD = '<svg class="logo-svg" aria-hidden="true" width="34" height="34" viewBox="0 0 100 100"><rect x="10" y="80" width="80" height="9" rx="4.5" fill="#E7CE6A"></rect><rect class="lg-stem" x="20" y="7" width="16" height="68" rx="8" fill="var(--ink)"></rect><rect class="lg-bowl" x="40" y="37" width="38" height="38" rx="14" fill="var(--ink)"></rect></svg>';
+const LOGO_SVG_NEW = '<svg class="logo-svg" aria-hidden="true" width="34" height="34" viewBox="0 0 100 100"><g class="lg-dip"><g class="lg-dip2"><line class="lg-base" x1="14.5" y1="84.5" x2="85.5" y2="84.5" pathLength="100" stroke="#E7CE6A" stroke-width="9" stroke-linecap="round"></line><rect class="lg-stem" x="20" y="7" width="16" height="68" rx="8" fill="var(--ink)"></rect><rect class="lg-bowl" x="40" y="37" width="38" height="38" rx="14" fill="var(--ink)"></rect><rect class="lg-caret" x="20" y="9" width="3.2" height="66" rx="1.6" fill="var(--ink)"></rect></g></g></svg>';
+const LOGO_INTRO_MS = 3600; // stem key 1500 + bowl 360 later + settling; site.js waits a little longer
+const LOGO_INTRO_CSS = `
+.bsd .logo-svg{overflow:visible}
+.bsd .logo-svg .lg-caret{opacity:0}
+.bsd .logo-svg .lg-stem,.bsd .logo-svg .lg-bowl,.bsd .logo-link:hover .lg-stem,.bsd .logo-link:hover .lg-bowl{animation:none}
+@media (prefers-reduced-motion: no-preference){
+.bsd .logo-link:hover .lg-stem{animation:bsdLgTapStem 800ms ease-in-out both}
+.bsd .logo-link:hover .lg-bowl{animation:bsdLgTapBowl 800ms ease-in-out 90ms both}
+.bsd .logo-link:hover .lg-dip{animation:bsdLgDip 520ms ease-in-out both}
+html.lg-intro .bsd .logo-svg .lg-base{stroke-dasharray:100;animation:bsdLgLine 600ms cubic-bezier(.17,.84,.44,1) 150ms both}
+html.lg-intro .bsd .logo-svg .lg-stem,html.lg-intro .bsd .logo-link:hover .lg-stem{animation:bsdLgStem 1700ms ease-in-out 1500ms both}
+html.lg-intro .bsd .logo-svg .lg-bowl,html.lg-intro .bsd .logo-link:hover .lg-bowl{animation:bsdLgBowl 1700ms ease-in-out 1860ms both}
+html.lg-intro .bsd .logo-svg .lg-caret{animation:bsdLgCaret 2440ms linear 760ms both}
+html.lg-intro .bsd .logo-svg .lg-dip,html.lg-intro .bsd .logo-link:hover .lg-dip{animation:bsdLgDip 520ms ease-in-out 1610ms both}
+html.lg-intro .bsd .logo-svg .lg-dip2{animation:bsdLgDip 520ms ease-in-out 1970ms both}
+}
+@keyframes bsdLgLine{from{stroke-dashoffset:99.9}to{stroke-dashoffset:0}}
+@keyframes bsdLgStem{0%{opacity:0;transform:translateY(-8px)}.1%{opacity:1;transform:translateY(-8px);animation-timing-function:ease-in}6.5%{opacity:1;transform:none}11.3%{transform:rotate(5deg)}20.9%{transform:rotate(-2.9deg)}30.5%{transform:rotate(1.6deg)}40.1%{transform:rotate(-.9deg)}49.7%{transform:rotate(.5deg)}59.4%{transform:rotate(-.25deg)}70.6%,100%{opacity:1;transform:none}}
+@keyframes bsdLgBowl{0%{opacity:0;transform:translateY(-8px)}.1%{opacity:1;transform:translateY(-8px);animation-timing-function:ease-in}6.5%{opacity:1;transform:none}11.3%{transform:rotate(3.5deg)}20.9%{transform:rotate(-2deg)}30.5%{transform:rotate(1.1deg)}40.1%{transform:rotate(-.6deg)}49.7%{transform:rotate(.35deg)}59.4%{transform:rotate(-.2deg)}70.6%,100%{opacity:1;transform:none}}
+@keyframes bsdLgTapStem{0%{transform:none}14%{transform:rotate(4deg)}32%{transform:rotate(-2.3deg)}50%{transform:rotate(1.3deg)}68%{transform:rotate(-.7deg)}84%{transform:rotate(.3deg)}100%{transform:none}}
+@keyframes bsdLgTapBowl{0%{transform:none}14%{transform:rotate(2.8deg)}32%{transform:rotate(-1.6deg)}50%{transform:rotate(.9deg)}68%{transform:rotate(-.5deg)}84%{transform:rotate(.2deg)}100%{transform:none}}
+@keyframes bsdLgDip{0%{transform:none}17%{transform:translateY(3px)}45%{transform:translateY(-1px)}70%{transform:translateY(.4px)}100%{transform:none}}
+@keyframes bsdLgCaret{0%{opacity:0;transform:none}.1%{opacity:1}15.6%{opacity:1}26%{opacity:0}30.2%{opacity:0;transform:none}30.3%{opacity:1;transform:translateX(20px)}45%{opacity:1;transform:translateX(20px)}45.1%{opacity:1;transform:translateX(62px)}60.7%{opacity:1}73%{opacity:0}82%{opacity:0}90%{opacity:.7}100%{opacity:0;transform:translateX(62px)}}
+`;
+
 // ---- page-specific patches ----------------------------------------------------------
 const CONSENT_DESKTOP =
   '<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr">' +
@@ -267,7 +301,7 @@ function scriptFor(id, p, mobile) {
 function htmlPage({ title, description, path, cssHref, assets, root, templates, pages, extraHead = "" }) {
   const url = SITE + path;
   return `<!doctype html>
-<html lang="en">
+<html lang="en" class="lg-intro" data-lg-intro-ms="${LOGO_INTRO_MS}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -348,13 +382,14 @@ function main() {
     p.body = patchAssets(patchLinks(p.body));
     p.code = patchAssets(p.code);
     if (PAGE_PATCHES[f]) PAGE_PATCHES[f](p);
+    p.body = must(p.body, LOGO_SVG_OLD, LOGO_SVG_NEW, "logo intro " + f);
     applyClaims(f, p);
     cssSet.add(p.css);
     parsed[f] = p;
   }
   if (cssSet.size !== 1) console.warn(`note: ${cssSet.size} different stylesheets, using the home page's`);
   const legalCss = read(join(SRC, "legal.css"));
-  const css = FONT_CSS + parsed["Main.dc.html"].css + "\n" + legalCss;
+  const css = FONT_CSS + parsed["Main.dc.html"].css + "\n" + legalCss + LOGO_INTRO_CSS;
   const cssHref = `/assets/site.${hash(css)}.css`;
   writeFileSync(join(OUT, cssHref), css);
 

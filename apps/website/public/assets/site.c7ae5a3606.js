@@ -27,6 +27,14 @@
 
   var FAILED = "Sorry, that didn't go through, so your address is not saved yet. Please try again in a minute, or write to hello@basednotes.app and I'll add you by hand.";
 
+  // Logo intro: the mark in the header types itself once per page load, in CSS (see scripts/build.mjs). When it is
+  // over, drop the class so the mark rests and hovering gives one keystroke. Nothing is stored or sent.
+  var root = document.documentElement;
+  if (root.classList.contains("lg-intro")) {
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setTimeout(function () { root.classList.remove("lg-intro"); }, still ? 0 : Number(root.getAttribute("data-lg-intro-ms") || 3600) + 400);
+  }
+
   window.basedSite = {
     waitlist: function (inst, e) {
       var s = inst.state;

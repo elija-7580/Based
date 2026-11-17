@@ -133,3 +133,6 @@ Das ist der einzige Ort mit Federn und Drehung – ein Markenmoment, kein UI-Üb
 einmal (rund 2 s bis das Zeichen steht), nie in Schleife, nie als Ladeanzeige im Alltag; mit „Bewegung
 reduzieren“ steht sofort das fertige Zeichen; das letzte Bild ist das ruhende Zeichen. Die Basis nutzt das
 feste `logo-base` (bleibt gelb, auch wenn eine andere Marker-Farbe gewählt ist).
+
+Auf basednotes.app läuft derselbe Ablauf beim Laden jeder Seite einmal im Kopf, dort als CSS
+(`apps/website/scripts/build.mjs`); Hover gibt einen einzelnen „Anschlag“. Gehüpft wird nirgends mehr.
