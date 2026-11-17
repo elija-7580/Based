@@ -73,6 +73,16 @@ export function subpages(store: WorkspaceStore, id: string): Block[] {
   return out;
 }
 
+/**
+ * BSD-472: Zeilen einer Datenbank mit eigenem Inhalt (Text oder Unterseiten unter den Properties). Der Markdown-Export
+ * legt sie wie Notion als `<Datenbank>/<Zeile>.md` neben die CSV; Zeilen ohne Inhalt stehen nur in der CSV.
+ */
+export function rowsWithContent(store: WorkspaceStore, db: Block): Block[] {
+  if (!ownsDatabase(store, db)) return [];
+  return store.children("d:" + db.props!.databaseID!).map((id) => store.blocks.get(id))
+    .filter((r): r is Block => r !== undefined && r.trashedAt === undefined && r.type === "page" && contentBlocks(store, r.id).length > 0);
+}
+
 /** Seiten der obersten Ebene (ohne Papierkorb). */
 export function topLevelPages(store: WorkspaceStore): Block[] {
   const seen = new Set<string>();
@@ -114,7 +124,7 @@ export function planWorkspaceExport(store: WorkspaceStore, pages: Block[], forma
     const base = uniqueExportName(markdownFileName(titleOf(store, page.id)), set);
     paths.set(page.id, join(dir, base + "." + ext));
     order.push(page.id);
-    const kids = opts.subpages === false ? [] : subpages(store, page.id);
+    const kids = opts.subpages === false ? [] : isDB ? (format === "markdown" ? rowsWithContent(store, page) : []) : subpages(store, page.id);
     if (kids.length === 0) return;
     const sub = join(dir, base);
     directories.push(sub);
@@ -146,8 +156,8 @@ export function planWorkspaceExport(store: WorkspaceStore, pages: Block[], forma
     const pageLink = (target: string) => {
       const t = titleOf(store, target);
       const to = paths.get(target);
-      // Nicht Teil des Exports: der schlichte Notion-Name.
-      if (to === undefined) return { title: t, url: encodeExportPath(markdownFileName(t) + (format === "html" ? ".html" : ".md")) };
+      // Nicht Teil des Exports: der schlichte Notion-Name (eingebettete Datenbank: „.csv“ wie bisher, BSD-473).
+      if (to === undefined) return { title: t, url: encodeExportPath(markdownFileName(t) + (format === "html" ? ".html" : store.blocks.get(target)?.type === "databaseInline" ? ".csv" : ".md")) };
       return { title: t, url: encodeExportPath(relativeExportPath(dir, to)) };
     };
     const assetLink = (ref: AssetRef) => opts.embedAsset?.(ref, titleOf(store, id)) ?? encodeExportPath(relativeExportPath(dir, assetPath(ref, titleOf(store, id))));

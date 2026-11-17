@@ -74,6 +74,8 @@ const isoDate = (swiftSeconds: number, withTime: boolean) => {
 
 export class MarkdownExporter {
   readonly pageLink: PageLink;
+  /** BSD-473: eigener Link-Rechner (Workspace-Export) – dann gilt er auch für eingebettete Datenbanken. */
+  private readonly customPageLink: boolean;
   readonly assetLink: (a: AssetRef) => string;
   readonly frontmatter: boolean;
   private engine: QueryEngine | undefined;
@@ -83,6 +85,7 @@ export class MarkdownExporter {
       const t = titleOf(store, id);
       return { title: t, url: encodeURLPath(markdownFileName(t) + ".md") };
     });
+    this.customPageLink = opts.pageLink !== undefined;
     this.assetLink = opts.assetLink ?? ((a) => "assets/" + a.name);
     this.frontmatter = opts.frontmatter === true;
   }
@@ -195,8 +198,10 @@ export class MarkdownExporter {
           break;
         }
         case "databaseInline": {
+          // BSD-473: mit eigenem pageLink (Workspace-Export) auf die CSV im Unterordner der Seite, sonst wie bisher
           const title = titleOf(this.store, b.id);
-          line = `[${title}](${encodeURLPath(markdownFileName(title) + ".csv")})`;
+          const l = this.customPageLink ? this.pageLink(b.id) : { title, url: encodeURLPath(markdownFileName(title) + ".csv") };
+          line = l ? `[${l.title}](${l.url})` : title;
           break;
         }
         case "table": line = this.table(b); break;
