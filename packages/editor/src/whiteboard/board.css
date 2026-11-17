@@ -3,7 +3,7 @@
    sonst eine feste Fläche – wie Menüs und Popover der App. Maße aus Tokens, keine freien px. */
 .wb-root {
   position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; background: var(--bg); outline: none;
-  user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: contain; container-type: size;
+  user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: contain; container-type: size; contain: paint;
   --wb-pill: calc(var(--space-7) + var(--space-2));
 }
 .wb-root:focus-visible { box-shadow: inset 0 0 0 var(--space-half) var(--focus-ring); }

@@ -131,7 +131,11 @@ test("Tastatur: N + Enter legt an, Tab wählt in Leserichtung und sagt es an, Pf
   await expect(board).toHaveAttribute("data-objects", "2");
   await page.keyboard.press("ControlOrMeta+a");
   await expect(board).toHaveAttribute("data-selected", "2");
-  // ⌘K gehört weiter der App
+  // Nach einem Klick auf eine Pille wirken die Tasten sofort weiter (Fokus zurück auf der Fläche).
+  await page.getByTestId("board-zoom-in").click();
+  await page.keyboard.press("Escape");
+  await expect(board).toHaveAttribute("data-selected", "0");
+  // ⌘K gehört weiter der App (⌘1–9 ebenso: Controller-Test)
   await page.keyboard.press("ControlOrMeta+k");
   await expect(page.getByRole("dialog", { name: /Search|Quick Find/i }).or(page.locator(".qf"))).toBeVisible();
 });
@@ -170,6 +174,63 @@ test("Zoom: Knöpfe, ⌘+Rad um den Zeiger, Fit; waagrechtes Wischen auf der Fl�
   // der Zettel ist mitgewandert: in der Mitte liegt nichts mehr
   await page.mouse.click(c.x, c.y);
   await expect(board).toHaveAttribute("data-selected", "0");
+});
+
+test("Seitenaktionen auf einem Board: ⌘F, •••-Menü, Verlauf und Export öffnen ohne Fehler", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await fresh(page);
+  const board = await newBoard(page);
+  await placeNote(page);
+  await board.focus();
+  await page.keyboard.press("ControlOrMeta+f");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Page menu" }).click();
+  const menu = page.getByRole("menu").last();
+  await expect(menu).toBeVisible();
+  await expect(menu).not.toContainText("Small text"); // Schrift-Optionen gelten für Textseiten
+  await menu.getByText("Version history").click();
+  await expect(page.getByRole("dialog").first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Export" }).click();
+  await expect(page.getByRole("dialog").first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(board).toHaveAttribute("data-objects", "1");
+  expect(errors).toEqual([]);
+});
+
+test("Viele Objekte: 4 096 Zettel weit herausgezoomt, Verschieben der Fläche bleibt flüssig", { tag: "@perf" }, async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  await fresh(page);
+  const board = await newBoard(page);
+  await board.focus();
+  await page.keyboard.press("n");
+  await page.keyboard.press("Enter");
+  // ⌘A + ⌘D verdoppelt: 1 → 4096
+  for (let i = 0; i < 12; i++) {
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.press("ControlOrMeta+d");
+    await expect(board).toHaveAttribute("data-objects", String(2 ** (i + 1)), { timeout: 60_000 });
+  }
+  await page.keyboard.press("Escape");
+  for (let i = 0; i < 4; i++) await page.getByTestId("board-zoom-out").click();
+  await expect(page.getByTestId("board-zoom")).toHaveText("10 %");
+  const frames = await page.evaluate(async () => {
+    const el = document.querySelector<HTMLElement>("[data-testid=board] canvas")!;
+    const times: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      const t0 = performance.now();
+      el.dispatchEvent(new WheelEvent("wheel", { deltaX: 12, deltaY: 9, bubbles: true, cancelable: true, clientX: 600, clientY: 400 }));
+      await new Promise((r) => requestAnimationFrame(() => r(0)));
+      await new Promise((r) => setTimeout(r, 0));
+      times.push(performance.now() - t0);
+    }
+    times.sort((a, b) => a - b);
+    return { p50: times[10]!, p95: times[18]! };
+  });
+  console.log(`board pan ${browserName}, 4096 objects at 10 %: p50 ${frames.p50.toFixed(0)} ms, p95 ${frames.p95.toFixed(0)} ms`);
+  // Gemessen 17.11. (Linux, Software-Canvas): Chromium ~20 ms, WebKit ~90 ms; vor der Fernsicht 40 bzw. 360 ms.
+  expect(frames.p95).toBeLessThan(400);
 });
 
 test("Rechtsklick auf der Fläche: Based-Menü für die Auswahl, kein Systemmenü", async ({ page }) => {

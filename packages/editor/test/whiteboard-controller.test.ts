@@ -167,6 +167,7 @@ describe("Board-Bedienung", () => {
     }
     expect(ctl.keyDown({ key: "x" })).toBe(false);
     expect(ctl.keyDown({ key: "k", mod: true })).toBe(false); // ⌘K gehört der App
+    expect(ctl.keyDown({ key: "1", mod: true })).toBe(false); // ⌘1–9 wählen Tabs
   });
 
   it("Tab läuft in Leserichtung durch die Objekte, holt sie ins Bild und gibt den Fokus am Ende frei", () => {
@@ -199,6 +200,7 @@ describe("Board-Bedienung", () => {
     expect(v.x).toBeLessThan(2000);
     expect(v.x + v.w).toBeGreaterThan(4100);
     expect(ctl.camera.zoom).toBeLessThan(1);
+    expect(ctl.laidOut).toBe(true);
     ctl.zoomReset();
     expect(ctl.camera.zoom).toBe(1);
     const before = ctl.camera;

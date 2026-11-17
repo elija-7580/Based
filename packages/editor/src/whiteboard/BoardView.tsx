@@ -34,7 +34,8 @@ export function BoardView({ store, pageID, readOnly }: BoardViewProps) {
     const controller = new BoardController(session, { camera: cameras.get(pageID) });
     setCtl(controller);
     return () => {
-      cameras.set(pageID, controller.camera);
+      // Nur merken, wenn die Fläche je eine Größe hatte (StrictMode räumt einmal ab, bevor es ein Layout gab).
+      if (controller.laidOut) cameras.set(pageID, controller.camera);
       controller.destroy();
       session.destroy();
       setCtl(undefined);
@@ -217,6 +218,8 @@ function BoardSurface({ ctl }: { ctl: BoardController }) {
     ctl.centerOn({ x: (e.clientX - r.left - t.x) / t.scale, y: (e.clientY - r.top - t.y) / t.scale });
   };
 
+  // Nach einem Klick auf eine Pille geht der Fokus zurück auf die Fläche: V, N, ⌘Z wirken sofort weiter.
+  const act = (run: () => void) => { run(); root.current?.focus({ preventScroll: true }); };
   const empty = session.objects.length === 0;
   return (
     <div ref={root} className="wb-root" tabIndex={0} role="application" aria-label="Board" aria-roledescription="whiteboard" data-testid="board"
@@ -242,12 +245,12 @@ function BoardSurface({ ctl }: { ctl: BoardController }) {
         {BOARD_TOOLS.map((t) => (
           <BasedIconButton key={t.id} label={t.label} tooltip={`${t.label} (${t.key})`} size="md" pressed={ctl.tool === t.id} testID={`board-tool-${t.id}`}
             disabled={readOnly && (t.id === "note" || t.id === "shape")} icon={<BlockIcon name={TOOL_ICONS[t.id]} />}
-            onClick={() => { ctl.setTool(t.id); root.current?.focus({ preventScroll: true }); }} />
+            onClick={() => act(() => ctl.setTool(t.id))} />
         ))}
       </div>
       <div className="wb-pill wb-history" role="group" aria-label="History">
-        <BasedIconButton label="Undo" tooltip={`Undo (${modKey("Z")})`} disabled={readOnly || !session.canUndo} icon={<BlockIcon name="boardUndo" />} testID="board-undo" onClick={() => ctl.undo()} />
-        <BasedIconButton label="Redo" tooltip={`Redo (${isApple() ? "⇧⌘Z" : "Ctrl+Y"})`} disabled={readOnly || !session.canRedo} icon={<BlockIcon name="boardRedo" />} testID="board-redo" onClick={() => ctl.redo()} />
+        <BasedIconButton label="Undo" tooltip={`Undo (${modKey("Z")})`} disabled={readOnly || !session.canUndo} icon={<BlockIcon name="boardUndo" />} testID="board-undo" onClick={() => act(() => ctl.undo())} />
+        <BasedIconButton label="Redo" tooltip={`Redo (${isApple() ? "⇧⌘Z" : "Ctrl+Y"})`} disabled={readOnly || !session.canRedo} icon={<BlockIcon name="boardRedo" />} testID="board-redo" onClick={() => act(() => ctl.redo())} />
       </div>
       <div className="wb-corner">
         <div className="wb-minimap" data-testid="board-minimap"
@@ -256,11 +259,11 @@ function BoardSurface({ ctl }: { ctl: BoardController }) {
           <canvas ref={minimap} className="wb-minimap-canvas" role="img" aria-label="Minimap of the board" />
         </div>
         <div className="wb-pill wb-zoom" role="group" aria-label="Zoom">
-          <BasedIconButton label="Zoom out" tooltip={`Zoom out (${modKey("−")})`} icon={<BlockIcon name="boardZoomOut" />} testID="board-zoom-out" onClick={() => ctl.zoomOut()} />
+          <BasedIconButton label="Zoom out" tooltip={`Zoom out (${modKey("−")})`} icon={<BlockIcon name="boardZoomOut" />} testID="board-zoom-out" onClick={() => act(() => ctl.zoomOut())} />
           <span className="wb-zoom-label" data-testid="board-zoom">{zoomLabel(ctl.camera.zoom)}</span>
-          <BasedIconButton label="Zoom in" tooltip={`Zoom in (${modKey("+")})`} icon={<BlockIcon name="boardZoomIn" />} testID="board-zoom-in" onClick={() => ctl.zoomIn()} />
+          <BasedIconButton label="Zoom in" tooltip={`Zoom in (${modKey("+")})`} icon={<BlockIcon name="boardZoomIn" />} testID="board-zoom-in" onClick={() => act(() => ctl.zoomIn())} />
           <span className="wb-sep" aria-hidden="true" />
-          <BasedButton label="Fit" variant="ghost" size="sm" ariaLabel="Zoom to fit" onClick={() => ctl.fit()} />
+          <BasedButton label="Fit" variant="ghost" size="sm" ariaLabel="Zoom to fit" onClick={() => act(() => ctl.fit())} />
         </div>
       </div>
       <div className="wb-live" role="status" aria-live="polite">{ctl.announcement}</div>

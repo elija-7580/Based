@@ -120,9 +120,23 @@ function inkPoints(bytes: Uint8Array): InkPoint[] {
   return pts;
 }
 
+/** Füllfarbe eines Objekts in der Fernsicht (ohne Rundung, Rand und Text). */
+function farFill(theme: BoardTheme, o: WBShape): string {
+  if (o.kind === "note") return theme.notes[String(o.style?.color ?? "blue")] || theme.raised;
+  if (o.kind === "frame") return theme.raised;
+  return o.kind === "ink" || o.kind === "text" ? theme.muted : theme.border;
+}
+
 function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number) {
-  ctx.save();
+  // Fernsicht: ein Objekt, das auf dem Bildschirm nur wenige px groß ist, wird ein Rechteck – bei Tausenden
+  // sichtbaren Objekten (weit herausgezoomt) kostet sonst jeder Pfad mit Rundung und Rand.
+  if (Math.max(o.w, o.h) * zoom < 8 || (zoom < 0.2 && !o.rot && o.kind !== "ink" && o.kind !== "text" && !(o.kind === "shape" && o.style?.shape && o.style.shape !== "rect"))) {
+    ctx.fillStyle = farFill(theme, o);
+    ctx.fillRect(o.x, o.y, Math.max(o.w, 1 / zoom), Math.max(o.h, 1 / zoom));
+    return;
+  }
   if (o.rot) {
+    ctx.save();
     ctx.translate(o.x + o.w / 2, o.y + o.h / 2);
     ctx.rotate((o.rot * Math.PI) / 180);
     ctx.translate(-(o.x + o.w / 2), -(o.y + o.h / 2));
@@ -190,7 +204,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number) {
       if (legible(12)) drawText(ctx, theme, o.text || (o.kind === "page" ? "Page" : "Image"), { x: o.x + 14, y: o.y + 12, w: o.w - 28, h: o.h - 24 }, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.35 });
     }
   }
-  ctx.restore();
+  if (o.rot) ctx.restore();
 }
 
 function drawConnector(ctx: Ctx, theme: BoardTheme, c: WBConnector, byID: ReadonlyMap<string, WBObject>, zoom: number) {
@@ -342,14 +356,15 @@ export function drawMinimap(ctx: Ctx, objects: readonly WBObject[], extent: Rect
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size.w, size.h);
   const t = minimapTransform(extent, visible, size);
+  // Ein Pfad für alle Objekte (ein Füllen): bei Tausenden Objekten zählt jeder einzelne Aufruf.
   ctx.fillStyle = theme.muted;
   ctx.globalAlpha = 0.35;
+  ctx.beginPath();
   for (const o of objects) {
     if (isConnector(o)) continue;
-    const w = Math.max(2, o.w * t.scale), h = Math.max(2, o.h * t.scale);
-    roundRect(ctx, o.x * t.scale + t.x, o.y * t.scale + t.y, w, h, Math.min(3, w / 2, h / 2));
-    ctx.fill();
+    ctx.rect(o.x * t.scale + t.x, o.y * t.scale + t.y, Math.max(2, o.w * t.scale), Math.max(2, o.h * t.scale));
   }
+  ctx.fill();
   ctx.globalAlpha = 1;
   ctx.lineWidth = 1.5;
   ctx.strokeStyle = theme.ink;

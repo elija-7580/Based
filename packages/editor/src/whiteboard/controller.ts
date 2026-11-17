@@ -104,6 +104,8 @@ export class BoardController {
   private gesture: Gesture | undefined;
   private space = false;
   private fitted: boolean;
+  /** Die Fläche hatte schon eine Größe (erst dann lohnt es, die Kamera zu merken). */
+  get laidOut(): boolean { return this.fitted; }
   private readonly index = new BoardIndex();
   private indexVersion = -1;
   private readonly listeners = new Set<() => void>();
@@ -502,7 +504,6 @@ export class BoardController {
       if (k === "=" || k === "+") { this.zoomIn(); return true; }
       if (k === "-") { this.zoomOut(); return true; }
       if (k === "0") { this.fit(); return true; }
-      if (k === "1") { this.zoomReset(); return true; }
       if (k === "]") { return e.alt ? this.reorder("front") : false; }
       if (k === "[") { return e.alt ? this.reorder("back") : false; }
       return false;
