@@ -14,6 +14,7 @@ import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
 import { installBrowserKeep } from "./shell/storagePersist.js";
+import { installSelectAll } from "./shell/selectAll.js";
 import { installWheelLatch } from "./shell/wheelLatch.js";
 import { StoreClient } from "./worker/client.js";
 
@@ -169,6 +170,7 @@ function start(guest: GuestBoot | undefined) {
   }
   // BSD-336: Neuladen/Schließen fragt nur nach, solange eine Änderung noch nicht beim Store-Tab gespeichert ist.
   installUnloadGuard(window, () => client.unsavedWrites);
+  installSelectAll(window);
   connectEditor(client);
   link.onReconnect = () => void client.resync();
   client.onDevice = devices.set;

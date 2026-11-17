@@ -712,10 +712,11 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .screen-loading { flex: 1; min-height: var(--space-8); }
 
 /* Die Oberfläche ist kein Text: Beschriftungen von Seitenleiste, Tabs, Menüs, Knöpfen und Schaltern lassen sich nicht
-   markieren oder kopieren (Ziehen, Doppelklick, ⌘A). Inhalte bleiben markierbar – Seiten, Datenbankzellen, Chat,
+   markieren oder kopieren (Ziehen, Doppelklick, ⌘A) – auch nicht die Kopfzeile der Seite, die Zeile „Edited … Created …“
+   und die Backlinks darunter: auf einer Seite gehört nur ihr Inhalt dir. Inhalte bleiben markierbar – Seiten, Datenbankzellen, Chat,
    Fehlermeldungen, Code – ebenso alles, worin man tippt. Bewusst als Ausschlussliste der Bedienelemente statt als
    „alles aus, Inhalte an“: so kann kein Inhalt versehentlich unkopierbar werden. */
-:is(.sidebar, .tabbar, .settings-nav, .qf, .sidebar-footer, .key-badge, nav, button, summary, label,
+:is(.sidebar, .tabbar, .settings-nav, .qf, .sidebar-footer, .key-badge, .topbar, .meta-line, .page-locked, .backlinks, nav, button, summary, label,
   [role="navigation"], [role="button"], [role="tab"], [role="tablist"], [role="toolbar"], [role="menu"], [role="menubar"],
   [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="listbox"], [role="option"],
   [role="radiogroup"], [role="radio"], [role="switch"], [role="tree"], [role="treeitem"], [role="tooltip"]) {
