@@ -379,6 +379,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
 /* BSD-301: Seitentitel bricht um (mehrzeiliges Feld, Höhe aus dem Inhalt), statt rechts abgeschnitten zu werden. */
 .title-wrap { display: block; resize: none; overflow: hidden; line-height: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
 .page-body { min-width: 0; }
+/* BSD-264: Board-Seite – die Fläche füllt das Panel unter der Kopfzeile (kein Seitenkopf, kein Rollen der Seite). */
+.page-board { flex: 1; min-width: 0; min-height: 0; display: flex; }
 .blocks { display: flex; flex-direction: column; gap: var(--space-2); }
 .blocks p { min-height: 1em; }
 .block-h1 { margin-top: var(--space-4); }

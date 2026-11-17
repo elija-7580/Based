@@ -57,6 +57,15 @@ export const BLOCK_ICON_PATHS = {
   moveDown: "M12 5v14M6 13l6 6 6-6",
   palette: "M12 3.5c3 3.6 6 7 6 10.2a6 6 0 0 1-12 0C6 10.5 9 7.1 12 3.5z",
   chevronRight: "M10 7l5 5-5 5",
+  // BSD-264: Werkzeuge der Board-Fläche (Entwurf „Based – Whiteboard“)
+  boardSelect: "M5 3.5l13 7-5.6 1.6L10.8 18z",
+  boardHand: "M8 12V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7.5a6.5 6.5 0 0 1-6.5 6.5h-.6a6 6 0 0 1-4.6-2.2L3.6 15a1.5 1.5 0 0 1 2.3-1.9L8 15",
+  boardNote: "M5 5.5A1.5 1.5 0 0 1 6.5 4h11A1.5 1.5 0 0 1 19 5.5V14l-5 6H6.5A1.5 1.5 0 0 1 5 18.5zM19 14h-3.5a1.5 1.5 0 0 0-1.5 1.5V20",
+  boardShape: "M4 13.5A1.5 1.5 0 0 1 5.5 12h5a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 18.5zM16.5 4a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z",
+  boardUndo: "M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11",
+  boardRedo: "M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13",
+  boardZoomIn: "M12 5.5v13M5.5 12h13",
+  boardZoomOut: "M5.5 12h13",
 } as const;
 
 export type BlockIconName = keyof typeof BLOCK_ICON_PATHS;

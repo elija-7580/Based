@@ -6,6 +6,7 @@ import {
   addStarterTemplate,
   buildOutline,
   buildPageGraph,
+  createBoardPage,
   createPage,
   createTeamspace,
   deleteForever,
@@ -389,6 +390,10 @@ export class StoreHost {
       case "createMeetingPage": {
         const id = createPage(store, { title: meetingTitleFor(new Date()) });
         createMeeting(store, { parent: "b:" + id });
+        return store.blocks.has(id) ? id : undefined;
+      }
+      case "createBoard": {
+        const id = createBoardPage(store, { ...(c.parent ? { parent: c.parent } : {}), title: c.title ?? "Untitled board" });
         return store.blocks.has(id) ? id : undefined;
       }
       case "createDatabase": {

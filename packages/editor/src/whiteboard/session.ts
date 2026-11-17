@@ -56,6 +56,7 @@ export class BoardSession {
   private readonly listeners = new Set<() => void>();
   private readonly parent: string;
   private writing = false;
+  private locked = false;
   private destroyed = false;
   private readonly stopStore: () => void;
   private readonly presence: PresenceChannel | undefined;
@@ -92,8 +93,16 @@ export class BoardSession {
   get(id: string): WBObject | undefined {
     return this.cache.get(id);
   }
+  /** Schreibgeschützt: der Store (Speichern gescheitert) oder die Seite (Papierkorb, gesperrt, Gast mit Leserecht). */
   get readOnly(): boolean {
-    return this.store.isReadOnly;
+    return this.locked || this.store.isReadOnly;
+  }
+  /** Die Seite ist nur lesbar (setzt die Ansicht). */
+  setLocked(locked: boolean) {
+    if (this.locked === locked) return;
+    this.locked = locked;
+    this.version += 1;
+    this.notify();
   }
   subscribe = (fn: () => void): (() => void) => {
     this.listeners.add(fn);

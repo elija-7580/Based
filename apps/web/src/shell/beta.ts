@@ -18,7 +18,7 @@ export type Channel = "dev" | "beta";
 export const CHANNEL: Channel = typeof __BASED_CHANNEL__ === "string" && __BASED_CHANNEL__ === "beta" ? "beta" : "dev";
 
 /** Funktionen, die ein Kanal ausblenden kann. */
-export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing" | "agentMarks";
+export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing" | "agentMarks" | "whiteboard";
 
 /** Auf beta ausgeblendet, mit Grund (für Menschen; wird nicht angezeigt). */
 export const BETA_HIDDEN: Readonly<Record<GatedFeature, string>> = {
@@ -27,6 +27,7 @@ export const BETA_HIDDEN: Readonly<Record<GatedFeature, string>> = {
   realtimeText: "Echtzeit-Text ist „after“ (features.csv), braucht einen Server",
   coding: "Labs, hängt an AI",
   agentMarks: "BSD-459: Marker-Farbe und Calm mode erklären sich nur über Agenten, die es auf beta nicht gibt",
+  whiteboard: "BSD-264: bisher nur die Fläche (auswählen, verschieben, zoomen); Stift, Text und Objekte folgen (BSD-265–269). Vorhandene Boards werden angezeigt, neue lassen sich auf beta nicht anlegen",
   sharing: "BSD-460: Teilen ist „after“ (features.csv „Sharing and permissions“), braucht einen Server; docs/beta/README.md",
 };
 
@@ -41,6 +42,7 @@ const COMMAND_FEATURE: Readonly<Record<string, GatedFeature>> = {
   meeting: "meetings",
   graph: "graph",
   coding: "coding",
+  board: "whiteboard",
 };
 
 /** Darf ein ⌘K-Befehl bzw. eine Route mit dieser ID in diesem Kanal erscheinen? */

@@ -79,6 +79,8 @@ export type Command =
   | { op: "createDatabase"; parent?: string; title?: string }
   /** BSD-256: neue Seite „Meeting …“ mit einem Meeting-Block darin (⌘N → Meeting notes). */
   | { op: "createMeetingPage" }
+  /** BSD-264: neue Board-Seite (Whiteboard) oben unter Private bzw. unter `parent`. */
+  | { op: "createBoard"; parent?: string; title?: string }
   /** BSD-275: Willkommensseiten (Basics, Databases, Keyboard, Your data) unter der Willkommensseite; gibt neue IDs zurück. */
   | { op: "addWelcomeGuides"; parent: string }
   /** BSD-436: Startvorlage (Tasks, Notes, Journal, Wiki) oben unter Private anlegen; Antwort: ID der Seite. */

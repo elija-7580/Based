@@ -154,6 +154,11 @@ export function App({ client, history }: { client: StoreClient; history: History
     if (id) openPage(id);
   }, [client, openPage]);
 
+  const newBoard = useCallback(async () => {
+    const id = await client.command<string | undefined>({ op: "createBoard" });
+    if (id) openPage(id);
+  }, [client, openPage]);
+
   const newMeeting = useCallback(async () => {
     const id = await client.command<string | undefined>({ op: "createMeetingPage" });
     if (id) openPage(id);
@@ -260,6 +265,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     ...(commandVisible("meeting") ? [{ id: "meeting", title: "New meeting notes", icon: "mic", keywords: "meeting record transcribe notes", run: () => void newMeeting() } satisfies PaletteCommand] : []),
     { id: "database", title: "New database", icon: "database", keywords: "table board", run: () => void newDatabase() },
     { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting("pick") },
+    // BSD-264: Board-Seite (auf beta ausgeblendet, solange es nur die Fläche gibt); nach „Import…“, damit die Ziffern 1–5 bleiben
+    ...(commandVisible("board") ? [{ id: "board", title: "New board", icon: "board", keywords: "whiteboard canvas draw sticky", run: () => void newBoard() } satisfies PaletteCommand] : []),
     // BSD-436: Startvorlagen auch später (wie im Willkommensbildschirm), oben unter Private
     ...STARTER_TEMPLATES.map((t) => ({ id: "template-" + t.id, title: `${t.title} template`, icon: t.icon as IconName, keywords: "template starter", run: () => void newFromTemplate(t.id) }) satisfies PaletteCommand),
   ];

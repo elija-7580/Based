@@ -2,8 +2,8 @@
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
-import { importPendingSource, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
-import { EmojiPicker, IconView, isDrawableIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
+import { importPendingSource, isBoardPage, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
+import { BoardView, EmojiPicker, IconView, isDrawableIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
@@ -173,12 +173,16 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
   const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
 
+  const board = isBoardPage(page);
   const loading = !store && !failed;
   let body;
   if (failed) body = <p className="t-desc">Couldn't open this page: {failed}</p>;
   else if (!store) body = <p className="t-desc page-opening" aria-busy="true">Opening…</p>;
   else if (!page) body = <p className="t-desc">This page was deleted.</p>;
-  else if (dbID) {
+  else if (board) {
+    // BSD-264: Board-Seite – die Fläche füllt das Panel (kein Seitenkopf; umbenennen über die Seitenleiste).
+    body = <BoardView store={store} pageID={pageID} readOnly={readOnly} />;
+  } else if (dbID) {
     const View = slots.DatabaseView;
     body = View
       ? <View store={store} blockID={pageID} databaseID={dbID} readOnly={readOnly} onOpenPage={onOpenPage} asPage />
@@ -250,8 +254,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       {crumbMenu && outline ? <CrumbMenu menu={crumbMenu} outline={outline} titles={state.titles} current={pageID} onClose={() => setCrumbMenu(undefined)} onOpen={(id) => { setCrumbMenu(undefined); onOpenPage(id); }} /> : null}
       {menu ? (
         <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }}
-          outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
-          options={store && page && !storeReadOnly && !guestReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
+          outline={store && page && !dbID && !board && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
+          options={store && page && !storeReadOnly && !guestReadOnly ? { format, isDatabase: dbID !== undefined || board, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
           actions={page && !trashed ? {
             copyLink: () => void copyPageLink(pageID),
             openWindow: () => void openPageWindow(routeToHash({ name: "page", id: pageID }), title),
@@ -297,6 +301,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         </div>
       ) : null}
       {find ? <FindBar root={findRoot} focusSignal={find.focus} step={find.step} onClose={() => setFind(undefined)} /> : null}
+      {board ? <div className="page-board" data-testid="page-content">{body}</div> : (
       <article ref={article} className={dbID ? "page page-database" : "page"} onMouseDown={(e) => {
         // Wie Notion: Klick in die leere Fläche unter dem Inhalt setzt die Schreibmarke ans Ende (neue Zeile, wenn
         // die letzte nicht leer ist).
@@ -366,6 +371,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           <div className="page-body" data-testid="page-content">{body}</div>
         </div>
       </article>
+      )}
       {exporting ? <ExportDialog client={client} pageID={pageID} onClose={() => setExporting(false)} /> : null}
     </>
   );
