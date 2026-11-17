@@ -339,7 +339,7 @@ async function stroke(page: Page, pts: [number, number][]) {
 }
 const curve = (x: number, y: number, n = 14): [number, number][] => Array.from({ length: n }, (_, i) => [x + i * 14, y + Math.sin(i / 2.2) * 26]);
 
-test("Stift, Textmarker, Radierer: zeichnen, Farbe wählen, radieren, Undo; nach dem Neuladen ist die Tinte da", async ({ page }) => {
+test("Stift, Textmarker, Radierer: zeichnen, Farbe wählen, radieren, Undo; nach dem Neuladen ist die Tinte da", async ({ page, browserName }) => {
   await fresh(page);
   const board = await newBoard(page);
   const c = await center(page);
@@ -362,6 +362,8 @@ test("Stift, Textmarker, Radierer: zeichnen, Farbe wählen, radieren, Undo; nach
   await expect(board).toHaveAttribute("data-objects", "2");
   await page.keyboard.press("ControlOrMeta+z");
   await expect(board).toHaveAttribute("data-objects", "3");
+  // Neuladen: WebKit behält den lokalen Speicher nur in einem dauerhaften Profil (siehe Test oben), darum hier Chromium.
+  if (browserName !== "chromium") return;
   await page.waitForTimeout(600);
   await page.reload();
   await expect(page.getByTestId("board")).toHaveAttribute("data-objects", "3");
@@ -461,7 +463,8 @@ test("Dateien: Bild und HTML-Datei ablegen – Bild als Bild, Datei als Karte; b
   await page.mouse.move(0, 0);
   expect(await overflows(page)).toEqual([]);
   await page.waitForTimeout(600);
-  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-files-light.png` });
+  if (browserName !== "chromium") return;
+  await page.screenshot({ path: `${SHOTS}board-files-light.png` });
   await page.reload();
   await expect(page.getByTestId("board")).toHaveAttribute("data-objects", "2");
   // Die Datei läuft nie in der App: der Titel bleibt der der Seite.
