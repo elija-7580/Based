@@ -39,7 +39,7 @@ describe("Records aus Swift", () => {
 describe("Drift-Check gegen Swift", () => {
   it.each(Object.keys(swift.keys))("bekannte Schlüssel von %s", (name) => {
     // Felder, die nur der TS-Stack kennt (Swift ist eingefroren und behält sie als unbekannte Felder).
-    const tsOnly: Record<string, string[]> = { DatabaseView: ["showTitle"] };
+    const tsOnly: Record<string, string[]> = { DatabaseView: ["showTitle"], BlockProps: ["codeView"] };
     const ts = [...KNOWN_KEYS[name as keyof typeof KNOWN_KEYS]].filter((k) => !tsOnly[name]?.includes(k));
     expect(ts.sort()).toEqual(swift.keys[name]);
   });

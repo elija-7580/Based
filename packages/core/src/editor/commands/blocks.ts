@@ -59,7 +59,7 @@ function writeText(tx: Tx, id: string, runs: readonly Run[]) {
 function propsFor(type: string, props: BlockProps | undefined, keep: BlockProps = {}): BlockProps | undefined {
   const p: BlockProps = { ...(props ?? {}) };
   if (type !== "todo") delete p.checked;
-  if (type !== "code") { delete p.language; delete p.wrap; }
+  if (type !== "code") { delete p.language; delete p.wrap; delete p.codeView; }
   if (!isHeading(type)) delete p.toggleable;
   if (type !== "callout") delete p.icon;
   if (!isToggle({ type, props: { ...p, ...keep } } as Block)) delete p.isOpen;

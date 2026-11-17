@@ -1,7 +1,7 @@
 {
   "note": "BSD-348: Bestand, darf nur schrumpfen (node ci/design-guard.mjs --shrink)",
   "totals": {
-    "px": 138,
+    "px": 137,
     "button": 261,
     "astryx": 183
   },
@@ -201,7 +201,7 @@
       "astryx": 3
     },
     "apps/web/src/styles.css": {
-      "px": 22
+      "px": 21
     },
     "apps/web/src/tasks/AgentSettingsSection.tsx": {
       "astryx": 9
