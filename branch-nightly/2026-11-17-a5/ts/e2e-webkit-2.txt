@@ -1,61 +1,61 @@
-success f02f7ad1f3360a37822d9c31725c536982011ee1
-  ✓  186 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (10.6s)
-  ✓  187 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (10.7s)
+success 1f0a5270d67a613c81dedb712258b7e5894994c7
+  ✓  183 [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (2.8s)
+  ✓  186 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (7.6s)
+  ✓  187 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (8.8s)
   -  188 [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓  185 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (26.6s)
-(node:19818) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+  ✓  185 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (21.4s)
+(node:19447) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  189 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.9s)
-  ✓  190 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (6.9s)
-  ✓  191 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (20.7s)
-  ✓  192 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (19.4s)
-  ✓  193 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (5.1s)
-  ✓  194 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (7.7s)
-  -  196 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  197 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  195 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (7.1s)
-  ✓  199 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (4.3s)
-  ✓  198 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (9.2s)
-  ✓  200 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (5.8s)
-  ✓  201 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (5.4s)
-  ✓  202 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (3.0s)
-  ✓  204 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (3.7s)
-  ✓  205 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.5s)
-  ✓  203 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (12.4s)
-  ✓  206 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (5.6s)
-  ✓  207 [webkit] › e2e/welcome.spec.ts:71:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (6.2s)
-  ✓  208 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (5.4s)
-  ✓  209 [webkit] › e2e/welcome.spec.ts:95:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.9s)
-  ✓  210 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.8s)
-  ✓  212 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.8s)
-  ✓  211 [webkit] › e2e/welcome.spec.ts:107:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.5s)
-  -  214 [webkit] › e2e/welcome.spec.ts:126:1 › Willkommen: Bildschirmfotos
-  ✓  213 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.8s)
-  ✓  216 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (7.6s)
-  ✓  215 [webkit] › e2e/welcome.spec.ts:167:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (10.3s)
-  ✓  217 [webkit] › e2e/welcome.spec.ts:201:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (6.8s)
-  ✓  218 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (2.0s)
+  ✓  189 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (7.1s)
+  ✓  190 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (5.4s)
+  ✓  191 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (16.4s)
+  ✓  193 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.6s)
+  ✓  192 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (18.3s)
+  ✓  194 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.4s)
+  ✓  195 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (6.3s)
+  -  197 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  198 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  196 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.1s)
+  ✓  200 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.1s)
+  ✓  199 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (6.7s)
+  ✓  201 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (2.0s)
+  ✓  203 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.5s)
+  ✓  202 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (5.2s)
+  ✓  204 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.0s)
+  ✓  206 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.6s)
+  ✓  207 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (4.6s)
+  ✓  205 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (9.7s)
+  ✓  208 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.3s)
+  ✓  210 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.4s)
+  ✓  211 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.4s)
+  ✓  209 [webkit] › e2e/welcome.spec.ts:71:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (5.0s)
+  ✓  213 [webkit] › e2e/welcome.spec.ts:95:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.7s)
+  ✓  212 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (5.3s)
+  ✓  214 [webkit] › e2e/welcome.spec.ts:107:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (2.9s)
+  -  215 [webkit] › e2e/welcome.spec.ts:126:1 › Willkommen: Bildschirmfotos
+  ✓  216 [webkit] › e2e/welcome.spec.ts:167:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (5.2s)
+  ✓  217 [webkit] › e2e/welcome.spec.ts:201:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (5.8s)
+  ✓  218 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (2.1s)
 
 
-  1) [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen 
+  1) [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
 
     Error: expect(received).toBe(expected) // Object.is equality
 
-    Expected: true
-    Received: false
+    Expected: 320
+    Received: 360
 
-      204 |   await page.goto(`/#page-${other}`);
-      205 |   await expect(editor(page)).toBeVisible();
-    > 206 |   expect(await page.evaluate(([r, d, s, rr]) => (globalThis as unknown as { __basedReport: H }).__basedReport.load(r as string, d, s, rr as string), [other, b.state.doc, { type: "text", anchor: 1, head: 1, block: b.state.doc.blocks[1]!.id }, id] as const)).toBe(true);
-          |                                                                                                                                                                                                                                                                  ^
-      207 |   await expect(editor(page).locator("[data-editable-id]")).toHaveText(["One", "Two"]);
-      208 |   await expect(editor(page).locator("[data-editable-id]").nth(1)).toBeFocused();
-      209 |   await page.keyboard.type("!");
-        at /home/runner/work/Based/Based/apps/web/e2e/report.spec.ts:206:258
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
 
-    Error Context: test-results/report-Wiedergabe-Haken-im-a0a86-nwenden-Schreibmarke-setzen-webkit/error-context.md
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit/error-context.md
 
   1 flaky
-    [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen 
+    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
   32 skipped
-  184 passed (13.0m)
+  184 passed (10.3m)
