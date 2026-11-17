@@ -18,7 +18,7 @@ export type Channel = "dev" | "beta";
 export const CHANNEL: Channel = typeof __BASED_CHANNEL__ === "string" && __BASED_CHANNEL__ === "beta" ? "beta" : "dev";
 
 /** Funktionen, die ein Kanal ausblenden kann. */
-export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing" | "agentMarks" | "whiteboard";
+export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing" | "agentMarks" | "whiteboard" | "fastStart";
 
 /** Auf beta ausgeblendet, mit Grund (für Menschen; wird nicht angezeigt). */
 // Elija 17.11.: Meeting-Notizen sind in der Beta – Aufnahme, Notizen mit Zeit, Transkript auf dem Mac (BSD-453 behoben,
@@ -30,6 +30,7 @@ export const BETA_HIDDEN: Readonly<Partial<Record<GatedFeature, string>>> = {
   coding: "Labs, hängt an AI",
   agentMarks: "BSD-459: Marker-Farbe und Calm mode erklären sich nur über Agenten, die es auf beta nicht gibt",
   whiteboard: "BSD-264: bisher nur die Fläche (auswählen, verschieben, zoomen); Stift, Text und Objekte folgen (BSD-265–269). Vorhandene Boards werden angezeigt, neue lassen sich auf beta nicht anlegen",
+  fastStart: "ADR 0017 Stufe B: Laden nach Bedarf ist ein Versuch; die erste Suche lädt noch den ganzen Workspace",
   sharing: "BSD-460: Teilen ist „after“ (features.csv „Sharing and permissions“), braucht einen Server; docs/beta/README.md",
 };
 

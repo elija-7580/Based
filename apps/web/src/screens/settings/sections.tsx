@@ -19,7 +19,7 @@ import { appIdentity, checkForUpdates, isTauri, type AppIdentity } from "../../d
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { HangsSection } from "./hangs.js";
-import { autoUpdatePref, deviceNode, fallbackHomePage, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, fallbackHomePage, lazyStoreSetting, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { browserKeep, keepRow } from "../../shell/storagePersist.js";
 import { weekStartForLocale } from "@based/core";
@@ -88,6 +88,7 @@ function SyncSection({ client, state }: SettingsSectionProps) {
   const [token, setToken] = useState(saved?.token ?? "");
   const [connected, setConnected] = useState(!!saved);
   const [collab, setCollab] = useState(saved?.collab === true);
+  const [fastStart, setFastStart] = useState(lazyStoreSetting.get());
   const [error, setError] = useState<string | undefined>();
   // BSD-220: Echtzeit-Text (Beta). Gilt für Seiten, die danach geöffnet werden.
   const changeCollab = (on: boolean) => {
@@ -173,6 +174,8 @@ function SyncSection({ client, state }: SettingsSectionProps) {
           ? <Value testID="property-records-status">Synced one by one</Value>
           : <BasedButton label="Convert…" onClick={() => setConvert(true)} />}
       </Row>
+      {featureVisible("fastStart") && status.persistent ? <Switch label="Fast start (beta)" description="Open with pages and databases only and load a page's content when you open it. Better for very large workspaces. Applies after you restart Based."
+        value={fastStart} onChange={(on: boolean) => { setFastStart(on); lazyStoreSetting.set(on); }} labelPosition="start" labelSpacing="spread" width="100%" data-testid="fast-start" /> : null}
       <BasedConfirm open={convert} onClose={() => setConvert(false)} title="Store each column on its own?"
         description="Based converts this workspace once and reloads. Rows and pages are not touched, and a copy of every database is kept. After this, older versions of Based and a server that has not been converted can't sync with this device. Convert the server first."
         actionLabel="Convert and reload" onConfirm={() => { propertyRecordsSetting.set(true); location.reload(); }} />

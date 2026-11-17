@@ -42,6 +42,8 @@ export interface InitParams {
   opfs?: string;
   /** BSD-30: Workspace auf Properties als eigene Records umstellen bzw. so öffnen. */
   propertyRecords?: boolean;
+  /** ADR 0017 Stufe B: nur das Gerüst laden, Inhalt nach Bedarf. */
+  lazy?: boolean;
 }
 
 export interface StoreLinkOptions {
@@ -105,6 +107,7 @@ export class Relay {
       if (params.sync) req.sync = params.sync;
       if (params.opfs) req.opfs = params.opfs;
       if (params.propertyRecords) req.propertyRecords = true;
+      if (params.lazy) req.lazy = true;
       this.forward(RELAY, { ...req, id: 0 } as RequestMessage);
     }
     return this.init;

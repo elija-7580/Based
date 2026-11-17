@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectFaster } from "./perf.js";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,6 +16,8 @@ test("Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden", {
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
   try {
     const page = ctx.pages()[0] ?? (await ctx.newPage());
+    // ADR 0017 Stufe B: mit Laden nach Bedarf (Einstellung „Fast start“), sonst misst der Test nur das alte Laden.
+    await page.addInitScript(() => localStorage.setItem("based.lazyStore", "true"));
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
     // ADR 0017 A1: Schreiben in einem Zug (wie erster Sync oder Import) – bis alles auf der Platte liegt.
@@ -41,6 +44,30 @@ test("Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden", {
     console.log(`[${info.project.name}] Start mit 100 000 Records: ${runs.map((r) => `${r.ready}/${r.sidebar}`).join(", ")} ms (bereit/Seitenleiste)`);
     // Ausgangswerte 17.11. (bester von 3): Chromium 2,0 s, WebKit 2,3 s. Schwellen mit Luft für langsamere Macs und Last.
     expectFaster(info, "Start 100 000 Records bis Seitenleiste", best.sidebar, browserName === "chromium" ? 5000 : 7000);
+    // ADR 0017 Stufe B: Nach dem Start liegt nur das Gerüst im Speicher (50 000 Seiten, nicht ihre 50 000 Absätze),
+    // und Alltagswege holen nicht doch alles: Seite öffnen, tippen, Seite wechseln, neue Seite.
+    type Info = { partial: boolean; loadedBlocks: number; totalBlocks: number; fullLoads: string[] };
+    const info0 = () => page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<unknown> } } }).__based.client.command({ op: "storeInfo" })) as Promise<Info>;
+    const booted = await info0();
+    expect(booted.fullLoads, "beim Start nicht alles geladen").toEqual([]);
+    expect(booted.partial).toBe(true);
+    expect(booted.totalBlocks).toBeGreaterThanOrEqual(100_000);
+    expect(booted.loadedBlocks).toBeLessThan(51_000);
+    await page.getByRole("treeitem", { name: "Page 00001" }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Page 00001");
+    await expectEditable(page);
+    await focusEditorEnd(page);
+    await page.keyboard.type(" typed after lazy start");
+    await page.getByRole("treeitem", { name: "Page 00002" }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Page 00002");
+    await page.evaluate(() => (globalThis as unknown as { __based: { client: { settled(): Promise<void> } } }).__based.client.settled());
+    const used = await info0();
+    expect(used.fullLoads, "Alltagswege laden nicht alles").toEqual([]);
+    expect(used.loadedBlocks).toBeLessThan(51_000);
+    // Der getippte Text ist gespeichert und nach einem Neustart da.
+    await page.reload();
+    await page.getByRole("treeitem", { name: "Page 00001" }).click();
+    await expect(blockEditor(page)).toContainText("typed after lazy start");
     // Nichts verloren: nach dem Neustart sind alle Seiten da.
     const count = await page.evaluate(() => (globalThis as unknown as { __based: { client: { getState(): { titles: Map<string, string> } } } }).__based.client.getState().titles.size);
     expect(count).toBeGreaterThanOrEqual(50_000);

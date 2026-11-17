@@ -21,6 +21,7 @@ describe("Beta-Gate", () => {
     expect(featureVisible("coding", "beta")).toBe(false);
     expect(featureVisible("sharing", "beta")).toBe(false);
     expect(featureVisible("whiteboard", "beta")).toBe(false);
+    expect(featureVisible("fastStart", "beta")).toBe(false);
     for (const id of ["graph", "coding", "board"]) expect(commandVisible(id, "beta")).toBe(false);
     expect(commandVisible("board", "dev")).toBe(true);
     for (const id of ["home", "library", "trash", "settings", "report"]) expect(commandVisible(id, "beta")).toBe(true);

@@ -90,7 +90,7 @@ import { BrainHost } from "./brain.js";
 import { dueItems } from "@based/brain/home";
 import { localModels } from "@based/brain";
 import { localEmbedderLoader } from "./embedder.js";
-import type { MeetingListItem } from "./protocol.js";
+import type { MeetingListItem, StoreInfo } from "./protocol.js";
 import type { AssetGetResult, AssetInfo, Command, LocalModelAction, LocalModelInfo, LocalModelPurpose, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -114,7 +114,7 @@ export interface OpenedWorkspace {
 }
 
 export interface HostOptions {
-  open: (opts: { device: DeviceNodeStore; opfs?: string; propertyRecords?: boolean }) => Promise<OpenedWorkspace>;
+  open: (opts: { device: DeviceNodeStore; opfs?: string; propertyRecords?: boolean; lazy?: boolean }) => Promise<OpenedWorkspace>;
   post: (e: Event) => void;
   fetch?: typeof fetch;
   online?: () => boolean;
@@ -137,6 +137,8 @@ export interface HostOptions {
 
 const WELCOME = "Welcome to Based";
 
+const ASSET_URL_MIGRATED = "migration.assetURLBlocks";
+
 export class StoreHost {
   ws: OpenedWorkspace | undefined;
   private device: string | undefined;
@@ -146,7 +148,6 @@ export class StoreHost {
   private syncState: SyncState = "starting";
   private syncDetail: string | undefined;
   private signatures = new Map<string, string>();
-  private parents = new Map<string, string>();
   private titles = new Map<string, string>();
   private structureDirty = false;
   private titleDelta = new Map<string, string>();
@@ -203,12 +204,15 @@ export class StoreHost {
   /** Eine Anfrage der UI. Antworten gehen als `reply` mit derselben ID zurück. */
   async handle(msg: RequestMessage): Promise<void> {
     const reply = (result: unknown) => this.opts.post({ type: "reply", id: msg.id, ok: true, result });
+    this.currentRequest = msg.type === "command" ? `command ${msg.command.op}` : msg.type;
     try {
       switch (msg.type) {
-        case "init": reply(await this.init(msg.device, msg.sync, msg.opfs, msg.propertyRecords)); break;
+        case "init": reply(await this.init(msg.device, msg.sync, msg.opfs, msg.propertyRecords, msg.lazy)); break;
         case "command": reply(this.command(msg.command)); break;
         case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30, msg.filters, msg.sort); break;
-        case "warmSearch": this.searchIndex(); reply(true); break;
+        // ADR 0017 Stufe B: Der Suchindex braucht heute den ganzen Inhalt im Speicher. Mit Laden nach Bedarf wird er
+        // deshalb nicht vorab gebaut, sondern erst bei der ersten Suche (bis die Suche über SQLite läuft).
+        case "warmSearch": if (!this.store.isPartial) this.searchIndex(); reply(true); break;
         case "openPage": reply(this.openPage(msg.pageID)); break;
         case "closePage": this.openPages.delete(msg.pageID); this.pageDelta.delete(msg.pageID); this.syncedDeps.delete(msg.pageID); this.syncedDirty.delete(msg.pageID); this.history?.pageClosed(msg.pageID); reply(true); break;
         case "pageInfo": reply(this.pageInfos(msg.ids)); break;
@@ -294,9 +298,13 @@ export class StoreHost {
     }
   }
 
+  /** Auslöser, die den ganzen Workspace geladen haben (`storeInfo`). */
+  private fullLoads: string[] = [];
+  private currentRequest: string | undefined;
+
   // MARK: Start
 
-  async init(device: string | undefined, sync: SyncConfig | undefined, opfs: string | undefined, propertyRecords?: boolean): Promise<InitResult> {
+  async init(device: string | undefined, sync: SyncConfig | undefined, opfs: string | undefined, propertyRecords?: boolean, lazy?: boolean): Promise<InitResult> {
     if (this.ws) return { node: this.store.clock.node, persistent: this.ws.persistent, created: false };
     this.device = device;
     const deviceStore: DeviceNodeStore = {
@@ -306,15 +314,25 @@ export class StoreHost {
         this.opts.post({ type: "device", node });
       },
     };
-    this.ws = await this.opts.open({ device: deviceStore, ...(opfs === undefined ? {} : { opfs }), ...(propertyRecords ? { propertyRecords: true } : {}) });
+    this.ws = await this.opts.open({ device: deviceStore, ...(opfs === undefined ? {} : { opfs }), ...(propertyRecords ? { propertyRecords: true } : {}), ...(lazy ? { lazy: true } : {}) });
     const store = this.ws.store;
+    // ADR 0017 Stufe B: festhalten, wer doch den ganzen Workspace in den Speicher holt (Diagnose, Zeitmess-Test).
+    store.onFullLoad = (why) => {
+      const at = (new Error().stack ?? "").split("\n").slice(3, 9).map((l) => l.trim().replace(/^at /, "").replace(/\s*\(.*$/, "")).join(" < ");
+      this.fullLoads.push(`${this.currentRequest ?? "–"} · ${why}: ${at}`);
+    };
     let homePageID: string | undefined;
     // Erststart ohne Daten und ohne Server: leerer Workspace mit einer Willkommensseite.
     const created = store.blocks.size === 0 && !sync?.url && !store.isReadOnly;
     if (created) homePageID = this.createWelcome();
     // BSD-430: Uploads des Block-Editors vor 56bc6e4f standen nur als `url: based-asset:<id>` im Block – einmalig auf
     // `asset` umstellen (Exporte, Archive und die Swift-App sehen die Datei sonst nicht).
-    if (!store.isReadOnly) migrateAssetURLBlocks(store);
+    // Einmal je Datei (ADR 0017 Stufe B: der Durchlauf über alle Blöcke lüde sonst bei jedem Start den ganzen Workspace).
+    // Neue Blöcke in der alten Form entstehen nicht mehr; kommen sie von einem alten Gerät, stellt dessen Update sie um.
+    if (!store.isReadOnly && this.ws.persistence.meta(ASSET_URL_MIGRATED) !== "1") {
+      migrateAssetURLBlocks(store);
+      if (!store.isReadOnly) this.ws.persistence.setMeta(ASSET_URL_MIGRATED, "1");
+    }
     store.observe((c) => this.onChange(c));
     this.assets = new AssetSync(this.ws.assets ?? new MemoryAssetBlobStore(), this.ws.persistence, {
       ...(this.opts.fetch ? { fetch: this.opts.fetch } : {}),
@@ -425,6 +443,7 @@ export class StoreHost {
       case "seed": return this.seed(c.count, c.prefix ?? "Page");
       case "seedDatabase": return this.seedDatabase(c.count);
       case "seedDueTasks": return this.seedDueTasks();
+      case "storeInfo": return { partial: store.isPartial, loadedBlocks: store.blocks.loadedSize, totalBlocks: store.blocks.size, fullLoads: [...this.fullLoads] } satisfies StoreInfo;
     }
   }
 
@@ -550,10 +569,10 @@ export class StoreHost {
 
   private rebuildTracking() {
     this.signatures.clear();
-    this.parents.clear();
     this.titles.clear();
-    for (const b of this.store.blocks.values()) {
-      this.parents.set(b.id, b.parent);
+    // Nur das Gerüst (ADR 0017 Stufe B): Signaturen und Titel gibt es nur für Seiten; ob ein anderer Block umgezogen
+    // ist, sagt die Änderung selbst (`StoreChange.moved`).
+    for (const b of this.store.skeletonBlocks()) {
       if (isPageLike(b)) this.signatures.set(b.id, structureSignature(b));
       if (hasPageTitle(b)) this.titles.set(b.id, titleOf(this.store, b.id));
     }
@@ -561,12 +580,13 @@ export class StoreHost {
 
   private onChange(change: StoreChange) {
     const store = this.store;
+    const moved = change.moved ? new Set(change.moved) : undefined;
     for (const key of change.keys) {
       const { kind, id } = parseKey(key);
       if (this.index && (kind === "block" || kind === "database")) this.indexDirty.add(key);
       if (this.links && kind === "block") this.linksDirty.add(key);
       if (kind === "workspace") this.structureDirty = true;
-      else if (kind === "block") this.trackBlock(id);
+      else if (kind === "block") this.trackBlock(id, moved?.has(key) === true);
       else if (kind === "database") {
         const owner = store.databases.get(id)?.blockID;
         if (owner) this.trackTitle(owner);
@@ -585,19 +605,18 @@ export class StoreHost {
     this.scheduleFlush();
   }
 
-  private trackBlock(id: string) {
+  private trackBlock(id: string, moved: boolean) {
     const store = this.store;
     const b = store.blocks.get(id);
-    const oldParent = this.parents.get(id);
-    if (b) this.parents.set(id, b.parent);
-    else this.parents.delete(id);
     if (isPageLike(b) || this.signatures.has(id)) {
       const sig = structureSignature(b);
       if (sig !== (this.signatures.get(id) ?? "")) this.structureDirty = true;
       if (b && isPageLike(b)) this.signatures.set(id, sig);
       else this.signatures.delete(id);
       this.trackTitle(id);
-    } else if ((oldParent !== undefined && b && oldParent !== b.parent) || (!b && store.children("b:" + id).length > 0)) {
+    } else if (this.structureDirty) {
+      // schon vermerkt: nicht noch je Block nach Kindern fragen
+    } else if ((b && moved) || (!b && store.children("b:" + id).length > 0)) {
       // ein Toggle o. Ä. mit Seiten darin ist umgezogen oder verschwunden
       this.structureDirty = true;
     }

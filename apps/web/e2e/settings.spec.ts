@@ -229,3 +229,41 @@ for (const theme of ["light", "dark"] as const) {
     });
   }
 }
+
+// ADR 0017 Stufe B: „Fast start (beta)“ – Schalter in Sync & server; gilt nach dem Neustart, der Inhalt bleibt derselbe.
+for (const theme of ["light", "dark"] as const) {
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    test(`Fast start: ${w}×${h} ${theme} – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf`, async ({ page, browserName }) => {
+      test.skip(browserName === "webkit", "WebKit hat im flüchtigen Testprofil kein OPFS (kein Workspace im Browser)");
+      await page.setViewportSize({ width: w, height: h });
+      await page.addInitScript((t) => { if (!localStorage.getItem("based.appearance")) localStorage.setItem("based.appearance", JSON.stringify({ theme: t })); }, theme);
+      await page.goto("/#prefs-sync");
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      const info = () => page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<{ partial: boolean; totalBlocks: number; fullLoads: string[] }> } } }).__based.client.command({ op: "storeInfo" }));
+      expect((await info()).partial).toBe(false);
+      const toggle = page.getByRole("switch", { name: "Fast start (beta)" });
+      await toggle.scrollIntoViewIfNeeded();
+      await expect(toggle).not.toBeChecked();
+      const hint = page.getByText("Applies after you restart Based.", { exact: false });
+      await expect(hint).toBeVisible();
+      expect(await hint.evaluate((e) => e.scrollWidth <= e.clientWidth + 1), "Hinweis nicht abgeschnitten").toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "kein waagrechter Rollbalken").toBe(true);
+      await toggle.click();
+      await expect(toggle).toBeChecked();
+      if (process.env.BASED_SCREENSHOTS) await page.screenshot({ path: `../../docs/design/screens/web-settings-fast-start-${theme}-${w}x${h}.png` });
+      const before = (await info()).totalBlocks;
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      const after = await info();
+      expect(after.partial).toBe(true);
+      expect(after.totalBlocks).toBe(before);
+      expect(after.fullLoads).toEqual([]);
+      await expect(page.getByRole("switch", { name: "Fast start (beta)" })).toBeChecked();
+      // und wieder aus: nach dem Neustart wie früher
+      await page.getByRole("switch", { name: "Fast start (beta)" }).click();
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      expect((await info()).partial).toBe(false);
+    });
+  }
+}

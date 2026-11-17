@@ -116,7 +116,18 @@ export type Command =
   /** BSD-215 (Tests): Datenbankseite mit `count` Zeilen. */
   | { op: "seedDatabase"; count: number }
   /** BSD-278 (Tests): Datenbank „Due tasks“ (Status + Datum) mit offenen und erledigten Zeilen für heute. */
-  | { op: "seedDueTasks" };
+  | { op: "seedDueTasks" }
+  /** ADR 0017 Stufe B (Tests, Diagnose): wie viel des Workspaces im Speicher liegt und was alles nachgeladen hat. */
+  | { op: "storeInfo" };
+
+export interface StoreInfo {
+  /** Lädt der Store noch nach Bedarf? */
+  partial: boolean;
+  loadedBlocks: number;
+  totalBlocks: number;
+  /** Auslöser, die doch alles geladen haben (leer = nie). */
+  fullLoads: string[];
+}
 
 export interface QuickFindHit {
   pageID: string;
@@ -195,7 +206,7 @@ export interface DatabaseInfo {
 }
 
 export type Request =
-  | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string; propertyRecords?: boolean }
+  | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string; propertyRecords?: boolean; lazy?: boolean }
   | { type: "command"; command: Command }
   | { type: "search"; query: string; limit?: number; filters?: SearchFilters; sort?: SearchSort }
   | { type: "warmSearch" }
