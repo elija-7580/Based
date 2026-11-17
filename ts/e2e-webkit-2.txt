@@ -1,5 +1,5 @@
-failure 01ed953baa566c434137de0f0c5621cf6aa6a2f9
-  ✓  246 [webkit] › e2e/welcome.spec.ts:256:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.7s)
+failure 2ffd7ca6748c6dfa404edd87bc3bfa74b63cf960
+  ✓  246 [webkit] › e2e/welcome.spec.ts:256:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.2s)
 
 
   1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
@@ -55,7 +55,7 @@ failure 01ed953baa566c434137de0f0c5621cf6aa6a2f9
   1 failed
     [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
   45 skipped
-  199 passed (11.1m)
+  199 passed (8.7m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
