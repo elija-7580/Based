@@ -547,6 +547,51 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
   });
 }
 
+// BSD-302 Teil 6: Slash-Menü (erste Zeile ausgewählt, zweite mit echtem Zeiger überfahren) und Quick Find im
+// Bildvergleich – die zwei Menüs, die Tester am häufigsten sehen.
+for (const theme of ["light", "dark"] as const) for (const style of ["default", "bold"] as const) {
+  test(`Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (${style}, ${theme})`, async ({ page, browserName }) => {
+    test.skip(browserName !== "chromium" || process.platform !== "linux", "Bildvergleich nur Chromium unter Linux (Grundbilder wie in der CI)");
+    await page.addInitScript(({ t, s }) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t, style: s })), { t: theme, s: style });
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    const allowed = await tokenColors(page);
+    await page.addStyleTag({ content: `${fontFaces()}
+      [role=listbox], [role=listbox] *, [role=dialog], [role=dialog] * { font-family: KitMatrix, sans-serif !important; }` });
+    await loadFont(page);
+    const found: string[] = [];
+    const check = async (name: string, loc: Locator) => {
+      for (const [k, c] of Object.entries(await colorsOf(loc))) if (!transparent(c) && !isToken(c, allowed)) found.push(`${name} ${k}: ${c}`);
+    };
+
+    await page.getByRole("button", { name: "New page" }).first().click();
+    await expectEditable(page);
+    await focusEditorEnd(page);
+    await page.keyboard.type("/");
+    const options = page.getByRole("option");
+    await expect(options.nth(1)).toBeVisible();
+    await options.nth(1).hover();
+    await settle(options.nth(1));
+    const slash = page.getByRole("listbox").filter({ has: options.first() }).first();
+    await settle(slash);
+    await check("Slash-Menü", slash);
+    await expect(slash).toHaveScreenshot(`slash-menu-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    await page.keyboard.press("Escape");
+
+    await page.mouse.move(1279, 819);
+    await page.keyboard.press("ControlOrMeta+k");
+    const qf = page.getByRole("dialog", { name: "Quick Find" });
+    await expect(qf.locator('[role="option"][aria-selected="true"]').first()).toBeVisible();
+    await settle(qf);
+    await check("Quick Find", qf);
+    await expect(qf).toHaveScreenshot(`quick-find-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    if (style === "default") await qf.screenshot({ path: `../../docs/design/screens/web-kit-quick-find-${theme}.png`, animations: "disabled" });
+    await page.keyboard.press("Escape");
+    expect(found).toEqual([]);
+  });
+}
+
 // Die Prüfung selbst: ein fremdes Blau beim Überfahren fällt auf.
 test("Zustands-Galerie erkennt eine fremde Überfahren-Farbe", async ({ page }) => {
   await page.goto("/#prefs-kit");
