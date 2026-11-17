@@ -282,9 +282,9 @@ export class BoardIndex {
   }
 
   /** Vorderstes Objekt unter dem Punkt. */
-  hit(p: Point, tolerance = 0): string | undefined {
+  hit(p: Point, tolerance = 0, skip?: (o: WBObject) => boolean): string | undefined {
     const near = this.search({ x: p.x - tolerance - 4, y: p.y - tolerance - 4, w: tolerance * 2 + 8, h: tolerance * 2 + 8 });
-    for (let i = near.length - 1; i >= 0; i--) if (hitsObject(near[i]!, p, this.byID, tolerance)) return near[i]!.id;
+    for (let i = near.length - 1; i >= 0; i--) if (!skip?.(near[i]!) && hitsObject(near[i]!, p, this.byID, tolerance)) return near[i]!.id;
     return undefined;
   }
 

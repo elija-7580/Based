@@ -3,7 +3,8 @@
 // und Tasten weiterreichen, die schwebenden Pillen (Werkzeuge, Hinweis, Zoom, Undo) und die Minimap.
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { registerContextItems } from "@based/ui/native";
-import { BasedButton, BasedIconButton } from "@based/ui/astryx";
+import { BasedButton, BasedField, BasedIconButton } from "@based/ui/astryx";
+import { BOARD_BACKGROUNDS } from "./session.js";
 import { boardFileView, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
 import { BlockIcon, type BlockIconName } from "../blocks/icons.js";
 import { BOARD_TOOLS, BoardController, HIGHLIGHT_COLORS, isEditTool, minimapTransform, PEN_COLORS, type BoardEdit, type BoardFile, type BoardTool } from "./controller.js";
@@ -26,9 +27,25 @@ export interface BoardViewProps {
   resolveFileUrl?: (url: string) => Promise<string>;
   /** Seitenkarte öffnen (Doppelklick, Enter). */
   onOpenPage?: (pageID: string) => void;
+  /** Titel aller Seiten (ID → Titel): Seitenkarten zeigen den heutigen Titel, und @ sucht darin. */
+  pageTitles?: ReadonlyMap<string, string>;
 }
 
-interface FileHost { upload: ((file: File) => Promise<string>) | undefined; resolve: ((url: string) => Promise<string>) | undefined }
+/** Gemerkte Stifte je Gerät (höchstens so viele). */
+interface InkPreset { tool: "pen" | "highlighter"; color: string; width: number }
+const PRESETS_KEY = "based.board.pens";
+const PRESETS_MAX = 5;
+function loadPresets(): InkPreset[] {
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(PRESETS_KEY) ?? "[]");
+    return Array.isArray(raw) ? raw.filter((p): p is InkPreset => !!p && (p.tool === "pen" || p.tool === "highlighter") && typeof p.color === "string" && typeof p.width === "number").slice(0, PRESETS_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+const samePreset = (a: InkPreset, b: InkPreset) => a.tool === b.tool && a.color === b.color && a.width === b.width;
+
+interface FileHost { upload: ((file: File) => Promise<string>) | undefined; resolve: ((url: string) => Promise<string>) | undefined; titles?: ReadonlyMap<string, string> | undefined }
 
 /** Höchstens so viel HTML wird für die Vorschau gelesen, und so viele eingebettete Vorschauen laufen gleichzeitig. */
 const HTML_PREVIEW_BYTES = 2 * 1024 * 1024;
@@ -110,12 +127,12 @@ const modKey = (key: string) => (isApple() ? `⌘${key}` : `Ctrl+${key}`);
 /** Safari meldet Pinch als eigene Gesten-Ereignisse (kein Strg+Rad). */
 interface GestureEvent extends UIEvent { scale: number; clientX: number; clientY: number }
 
-export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl, onOpenPage }: BoardViewProps) {
+export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl, onOpenPage, pageTitles }: BoardViewProps) {
   const openPage = useRef(onOpenPage);
   openPage.current = onOpenPage;
   const [ctl, setCtl] = useState<BoardController>();
-  const host = useRef<FileHost>({ upload: uploadFile, resolve: resolveFileUrl });
-  host.current = { upload: uploadFile, resolve: resolveFileUrl };
+  const host = useRef<FileHost>({ upload: uploadFile, resolve: resolveFileUrl, titles: pageTitles });
+  host.current = { upload: uploadFile, resolve: resolveFileUrl, titles: pageTitles };
   useEffect(() => {
     const session = new BoardSession(store, pageID);
     const controller = new BoardController(session, {
@@ -144,10 +161,29 @@ export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl,
   }, [store, pageID]);
   // Seite nur lesbar (Papierkorb, gesperrt, Gast): die Sitzung nimmt dann keine Änderungen an.
   useEffect(() => { ctl?.session.setLocked(readOnly); }, [ctl, readOnly]);
-  return ctl ? <BoardSurface key={pageID} ctl={ctl} host={host} /> : <div className="wb-root" aria-busy="true" />;
+  return ctl ? <BoardSurface key={pageID} ctl={ctl} host={host} pageID={pageID} titles={pageTitles} /> : <div className="wb-root" aria-busy="true" />;
 }
 
-function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: FileHost } }) {
+function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; host: { current: FileHost }; pageID: string; titles: ReadonlyMap<string, string> | undefined }) {
+  // Seitenkarte: Suche in den Titeln (lokal, ohne Anfrage), höchstens ein paar Treffer.
+  const [pagePick, setPagePick] = useState<string>();
+  const pickInput = useRef<HTMLInputElement>(null);
+  const pickOpen = pagePick !== undefined;
+  useEffect(() => { if (pickOpen) pickInput.current?.focus(); }, [pickOpen]);
+  const pageHits = pagePick === undefined || !titles ? [] : (() => {
+    const q = pagePick.trim().toLowerCase();
+    const out: { id: string; title: string }[] = [];
+    for (const [id, title] of titles) {
+      if (id === pageID || (q !== "" && !title.toLowerCase().includes(q))) continue;
+      out.push({ id, title });
+      if (out.length >= 6) break;
+    }
+    return out;
+  })();
+  // Ein umbenannter Seitentitel soll auf seiner Karte gleich stimmen.
+  useEffect(() => { ctl.refresh(); }, [ctl, titles]);
+  const [presets, setPresets] = useState<InkPreset[]>(loadPresets);
+  const savePresets = (next: InkPreset[]) => { setPresets(next); try { localStorage.setItem(PRESETS_KEY, JSON.stringify(next)); } catch { /* Speicher voll oder gesperrt: gilt dann nur für diese Sitzung */ } };
   const picker = useRef<HTMLInputElement>(null);
   // Gleichbleibende Funktion für die eingebetteten Vorschauen (die App reicht bei jedem Zeichnen eine neue herein).
   const resolveFile = useRef((url: string) => host.current.resolve?.(url) ?? Promise.reject(new Error("no file store"))).current;
@@ -222,7 +258,7 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
     const imageCache = new BoardImageCache((ref) => host.current.resolve?.(ref), loaded);
     const textCache = new BoardTextCache((ref) => host.current.resolve?.(ref), loaded);
     const pdfCache = new BoardPdfCache((ref) => host.current.resolve?.(ref), loaded);
-    const images = { get: { image: imageCache.get, text: textCache.get, pdf: pdfCache.get }, destroy: () => { imageCache.destroy(); textCache.destroy(); pdfCache.destroy(); } };
+    const images = { get: { image: imageCache.get, text: textCache.get, pdf: pdfCache.get, title: (id: string) => host.current.titles?.get(id) }, destroy: () => { imageCache.destroy(); textCache.destroy(); pdfCache.destroy(); } };
 
     const draw = () => {
       frame = 0;
@@ -468,6 +504,9 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
         { label: "Delete", icon: "trash", danger: true, run: () => void ctl.deleteSelection() },
         { separator: true as const },
       ] : []),
+      ...(edit && some ? [{ label: ctl.selectionLocked ? "Unlock" : "Lock in place", run: () => void ctl.setLocked(!ctl.selectionLocked) }, { separator: true as const }] : []),
+      ...(edit ? BOARD_BACKGROUNDS.filter((b) => b.id !== ctl.session.background).map((b) => ({ label: `Background: ${b.label}`, run: () => void ctl.session.setBackground(b.id) })) : []),
+      { separator: true as const },
       { label: "Select all", icon: "selectAll", hint: modKey("A"), run: () => ctl.selectAll() },
       { label: "Zoom to fit", hint: modKey("0"), run: () => ctl.fit() },
       { separator: true as const },
@@ -487,6 +526,7 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
   const canFiles = !readOnly && host.current.upload !== undefined;
   const inkTool = ctl.tool === "pen" || ctl.tool === "highlighter";
   const inkStyle = ctl.tool === "highlighter" ? ctl.highlighter : ctl.pen;
+  const current: InkPreset = { tool: ctl.tool === "highlighter" ? "highlighter" : "pen", color: inkStyle.color, width: inkStyle.width };
   const edit = ctl.editing;
   const editType = edit ? EDIT_TYPE[edit.kind] : undefined;
   const commit = (el: HTMLTextAreaElement, next = false) => { ctl.commitEdit(el.value, { height: el.scrollHeight, next }); if (!next) root.current?.focus({ preventScroll: true }); };
@@ -499,6 +539,9 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
         if (ctl.keyDown({ key: e.key, code: e.code, shift: e.shiftKey, alt: e.altKey, mod: e.metaKey || e.ctrlKey, repeat: e.repeat })) {
           e.preventDefault();
           e.stopPropagation();
+        } else if (e.key === "@" && titles && !readOnly) {
+          e.preventDefault();
+          setPagePick("");
         } else if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === "i" && canFiles) {
           e.preventDefault();
           picker.current?.click();
@@ -532,6 +575,17 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
         <BoardEmbed key={o.id} obj={o} camera={ctl.camera} resolve={resolveFile}
           active={ctl.tool === "select" && ctl.selection.size === 1 && ctl.selection.has(o.id) && !ctl.busy} />
       ))}
+      {pagePick !== undefined && !readOnly ? (
+        <div className="wb-pagepick" role="dialog" aria-label="Add a page card" data-testid="board-pagepick"
+          onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Escape") { setPagePick(undefined); root.current?.focus({ preventScroll: true }); } }}>
+          <BasedField label="Find a page" labelHidden type="search" placeholder="Find a page…" value={pagePick} onChange={setPagePick} inputRef={pickInput}
+            onEnter={() => { const first = pageHits[0]; if (first) { ctl.addPage(first.id, first.title); setPagePick(undefined); root.current?.focus({ preventScroll: true }); } }} />
+          {pageHits.length === 0 ? <p className="wb-embed-note">No page with that title.</p> : pageHits.map((p) => (
+            <BasedButton key={p.id} label={p.title || "Untitled"} variant="ghost" size="sm"
+              onClick={() => { ctl.addPage(p.id, p.title); setPagePick(undefined); root.current?.focus({ preventScroll: true }); }} />
+          ))}
+        </div>
+      ) : null}
       {inkTool && !readOnly ? (
         <div className="wb-pill wb-options" role="toolbar" aria-label={ctl.tool === "pen" ? "Pen options" : "Highlighter options"} data-testid="board-options">
           {(ctl.tool === "pen" ? PEN_COLORS : HIGHLIGHT_COLORS).map((c) => (
@@ -544,6 +598,21 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
             <BasedIconButton key={name} label={`${name} stroke`} pressed={inkStyle.width === i} testID={`board-width-${i}`}
               icon={<span className="wb-dot" data-size={i} />} onClick={() => act(() => ctl.setInkStyle({ width: i }))} />
           ))}
+          <span className="wb-sep" aria-hidden="true" />
+          {presets.map((p, i) => {
+            const on = samePreset(p, current);
+            return (
+              <BasedIconButton key={`${p.tool}-${p.color}-${p.width}`} pressed={on} testID={`board-preset-${i}`}
+                label={`Saved ${p.tool === "pen" ? "pen" : "highlighter"}: ${COLOR_NAMES[p.color] ?? p.color}, ${WIDTH_NAMES[p.width] ?? "Medium"}`}
+                tooltip={on ? "Saved · click again to remove" : `${COLOR_NAMES[p.color] ?? p.color} ${p.tool === "pen" ? "pen" : "highlighter"}, ${(WIDTH_NAMES[p.width] ?? "Medium").toLowerCase()}`}
+                icon={<span className="wb-swatch wb-preset" data-tool={p.tool} data-size={p.width} style={{ background: `var(${p.tool === "pen" ? penToken(p.color) : highlightToken(p.color)})` }} />}
+                onClick={() => act(() => (on ? savePresets(presets.filter((q) => !samePreset(q, p))) : ctl.useInk(p)))} />
+            );
+          })}
+          {presets.length < PRESETS_MAX && !presets.some((p) => samePreset(p, current)) ? (
+            <BasedIconButton label="Save this pen" tooltip="Save this colour and stroke as a favourite" testID="board-preset-save" icon={<BlockIcon name="boardZoomIn" />}
+              onClick={() => act(() => savePresets([...presets, current]))} />
+          ) : null}
         </div>
       ) : null}
       <div className="wb-hint" aria-hidden="true" data-testid="board-hint">{ctl.hint}</div>
@@ -554,9 +623,16 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
             disabled={readOnly && isEditTool(t.id)} icon={<BlockIcon name={TOOL_ICONS[t.id]} />}
             onClick={() => act(() => ctl.setTool(t.id))} />,
         ])}
-        {host.current.upload ? (
+        {titles ? (
           <>
             <span className="wb-sep" aria-hidden="true" />
+            <BasedIconButton label="Page" tooltip="Page card (@)" size="md" pressed={pagePick !== undefined} disabled={readOnly} testID="board-tool-page"
+              icon={<BlockIcon name="page" />} onClick={() => setPagePick((v) => (v === undefined ? "" : undefined))} />
+          </>
+        ) : null}
+        {host.current.upload ? (
+          <>
+            {titles ? null : <span className="wb-sep" aria-hidden="true" />}
             <BasedIconButton label={busyFiles > 0 ? "Adding files…" : "Image or file"} tooltip="Image or file (⇧I) · or drop files on the board" size="md" disabled={!canFiles || busyFiles > 0}
               testID="board-tool-file" icon={<BlockIcon name="boardImage" />} onClick={() => picker.current?.click()} />
             <input ref={picker} type="file" multiple hidden aria-label="Add files to the board" data-testid="board-file-input"

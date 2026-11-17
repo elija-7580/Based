@@ -319,3 +319,36 @@ describe("Dateien in drei Stufen", () => {
     expect(shapes(session)[0]).toMatchObject({ kind: "text", text: "line one\nline two", h: 52, x: 340 });
   });
 });
+
+describe("Sperren, Untergrund, Seitenkarte", () => {
+  it("PDF-Seiten liegen fest: Klick und Aufziehen greifen hindurch; ⌘A wählt sie, Entsperren macht sie greifbar", () => {
+    const { ctl, session } = setup();
+    ctl.addFiles([{ ref: "p", name: "a.pdf", mime: "application/pdf", size: 1, pages: [{ width: 300, height: 300 }] }], { x: 500, y: 350 });
+    ctl.clearSelection();
+    click(ctl, 500, 350);
+    expect(ctl.selection.size).toBe(0);
+    drag(ctl, [[100, 20], [600, 300], [900, 680]]);
+    expect(ctl.selection.size).toBe(0);
+    ctl.selectAll();
+    expect(ctl.selectionLocked).toBe(true);
+    expect(ctl.setLocked(false)).toBe(true);
+    ctl.clearSelection();
+    click(ctl, 500, 350);
+    expect(ctl.selection.size).toBe(1);
+    expect(shapes(session)[0]!.style?.locked).toBe(false);
+  });
+  it("Untergrund steht an der Seite und überlebt eine neue Sitzung", () => {
+    const { store, page, session, ctl } = setup();
+    expect(ctl.scene().background).toBe("dots");
+    expect(session.setBackground("lines")).toBe(true);
+    expect(ctl.scene().background).toBe("lines");
+    expect(new BoardSession(store, page).background).toBe("lines");
+    session.setLocked(true);
+    expect(session.setBackground("grid")).toBe(false);
+  });
+  it("Seitenkarte trägt die Seite und ihren Titel", () => {
+    const { ctl, session } = setup();
+    const id = ctl.addPage("page-1", "Lecture 5")!;
+    expect(session.get(id)).toMatchObject({ kind: "page", ref: "page-1", text: "Lecture 5", w: 240 });
+  });
+});

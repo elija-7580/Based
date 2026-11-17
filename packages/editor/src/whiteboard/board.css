@@ -41,12 +41,26 @@
 .wb-dot[data-size="0"] { width: var(--space-1); height: var(--space-1); }
 .wb-dot[data-size="2"] { width: var(--space-3); height: var(--space-3); }
 
+/* Gemerkter Stift: Farbpunkt in der Größe seiner Stärke; der Textmarker eckig. */
+.wb-preset[data-size="0"] { transform: scale(0.6); }
+.wb-preset[data-size="2"] { transform: scale(1.15); }
+.wb-preset[data-tool="highlighter"] { border-radius: var(--radius-sm); }
+
+/* Seitenkarte wählen: Suchfeld und Treffer über der Werkzeugleiste. */
+.wb-pagepick {
+  position: absolute; z-index: 3; left: 50%; bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-4)); transform: translateX(-50%);
+  width: min(calc(var(--space-8) * 5), calc(100% - var(--space-4) * 2)); display: flex; flex-direction: column; align-items: stretch; gap: var(--space-1);
+  padding: var(--space-2); border-radius: var(--radius-lg); background: var(--bg); box-shadow: var(--shadow-float);
+}
+[data-material="glass"] .wb-pagepick { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-float), var(--chrome-edge); }
+.wb-pagepick .wb-embed-note { padding: var(--space-2); }
+
 /* Eingabefeld für Text auf der Fläche: liegt genau über dem Objekt, in dessen Schrift (Maße setzt die Ansicht). */
 .wb-edit {
   position: absolute; z-index: 1; box-sizing: border-box; margin: 0; border: 0; outline: none; resize: none; overflow: hidden; background: transparent;
   color: var(--ink); font-family: inherit; transform-origin: 0 0; user-select: text; -webkit-user-select: text; caret-color: var(--ink);
 }
-.wb-edit[data-kind="note"] { color: var(--ink-on-tint, var(--ink)); }
+.wb-edit[data-kind="note"] { color: var(--board-note-ink); caret-color: var(--board-note-ink); }
 .wb-edit[data-kind="shape"] { text-align: center; }
 .wb-edit[data-kind="frame"], .wb-edit[data-kind="connector"] { white-space: nowrap; }
 .wb-edit[data-kind="connector"] { text-align: center; border-radius: var(--radius-pill); background: var(--surface-raised); }

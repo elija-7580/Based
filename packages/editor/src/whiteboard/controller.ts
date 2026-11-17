@@ -8,7 +8,7 @@ import {
   visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
   type BoardPoint as Point, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
 } from "@based/core";
-import type { BoardSession } from "./session.js";
+import type { BoardBackground, BoardSession } from "./session.js";
 
 // BSD-265–267 (Whiteboard 3–5): Werkzeuge in der Reihenfolge des Entwurfs „Based – Whiteboard“ (Board „Mac“).
 // `group`: vor diesem Werkzeug steht in der Leiste ein Trenner.
@@ -52,7 +52,7 @@ export const FRAME_SIZE: Size = { w: 480, h: 320 };
 export const NOTE_SIZE: Size = { w: 168, h: 150 };
 export const SHAPE_SIZE: Size = { w: 160, h: 100 };
 /** Farben der Zettel der Reihe nach (kein Gelb: Gelb heißt „von einem Agenten“). */
-export const NOTE_COLORS = ["blue", "pink", "green", "purple", "orange", "gray"] as const;
+export const NOTE_COLORS = ["blue", "pink", "green", "purple", "gray"] as const;
 /** Ab diesem Weg (Bildschirm-px) ist ein Druck ein Ziehen. */
 export const DRAG_THRESHOLD = 4;
 /** Halbe Trefferbreite eines Griffs (Bildschirm-px). */
@@ -115,6 +115,7 @@ export interface BoardScene {
   connecting: { from: Rect; to: Point; target: Rect | undefined } | undefined;
   /** Objekt, dessen Text gerade im Eingabefeld steht (die Fläche zeichnet ihn dann nicht). */
   editing: string | undefined;
+  background: BoardBackground;
 }
 
 const sizeOf = (tool: BoxTool) => (tool === "note" ? NOTE_SIZE : tool === "frame" ? FRAME_SIZE : SHAPE_SIZE);
@@ -157,6 +158,8 @@ export interface BoardFile {
   pages?: readonly { width: number; height: number }[];
 }
 export const FILE_CARD: Size = { w: 264, h: 72 };
+export const PAGE_CARD: Size = { w: 240, h: 72 };
+const isLocked = (o: WBObject) => o.style?.locked === true;
 /** Größe der Vorschau je Stufe-2-Art und Breite einer PDF-Seite (Welt-px). */
 export const PREVIEW_SIZE: Record<"text" | "html" | "video" | "audio", Size> = { text: { w: 440, h: 320 }, html: { w: 560, h: 400 }, video: { w: 480, h: 310 }, audio: { w: 360, h: 104 } };
 export const PDF_WIDTH = 560;
@@ -340,6 +343,14 @@ export class BoardController {
     else this.changed();
   }
   /** Farbe bzw. Stärke des gewählten Zeichenwerkzeugs. */
+  /** Etwas außerhalb hat sich geändert (Seitentitel): die Fläche neu zeichnen. */
+  refresh() { this.changed(); }
+  /** Gemerkte Stifte (Werkzeug, Farbe, Stärke) – die Ansicht hält sie je Gerät fest. */
+  useInk(preset: { tool: "pen" | "highlighter"; color: string; width: number }) {
+    if (this.readOnly) return;
+    if (preset.tool === "pen") this.pen = { color: preset.color, width: preset.width }; else this.highlighter = { color: preset.color, width: preset.width };
+    if (this.tool !== preset.tool) this.setTool(preset.tool); else this.changed();
+  }
   setInkStyle(patch: { color?: string; width?: number }) {
     if (this.tool === "highlighter") this.highlighter = { ...this.highlighter, ...patch };
     else this.pen = { ...this.pen, ...patch };
@@ -446,6 +457,37 @@ export class BoardController {
     return id;
   }
 
+  // MARK: Sperren und Seitenkarten
+
+  /** Gesperrte Objekte bleiben liegen: nur Rechtsklick und ⌘A wählen sie. */
+  private pick(world: Point, tolerance: number): string | undefined {
+    return this.spatial.hit(world, tolerance, isLocked);
+  }
+  /** Ist in der Auswahl etwas gesperrt (für das Menü)? */
+  get selectionLocked(): boolean {
+    return [...this.selection].some((id) => { const o = this.session.get(id); return o !== undefined && isLocked(o); });
+  }
+  setLocked(locked: boolean): boolean {
+    const patches = new Map<string, Record<string, unknown>>();
+    for (const id of this.selection) {
+      const o = this.session.get(id);
+      if (o && isShape(o) && isLocked(o) !== locked) patches.set(id, { style: { ...(o.style ?? {}), locked } });
+    }
+    if (patches.size === 0 || !this.session.patch(patches)) return false;
+    if (locked) this.select([]);
+    return true;
+  }
+  /** Seitenkarte ablegen (Auswahl über die Werkzeugleiste). `title`: Stand jetzt, für Suche und Geräte ohne Titel-Liste. */
+  addPage(pageID: string, title: string, at?: Point): string | undefined {
+    if (this.readOnly) return undefined;
+    const c = at ?? screenToWorld(this.camera, { x: this.viewport.w / 2, y: this.viewport.h / 2 });
+    const id = this.newID();
+    if (!this.session.add([{ id, kind: "page", z: frontZs(this.session.objects, 1)[0]!, x: Math.round(c.x - PAGE_CARD.w / 2), y: Math.round(c.y - PAGE_CARD.h / 2), ...PAGE_CARD, rot: 0, ref: pageID, text: title || "Untitled" }])) return undefined;
+    this.tool = "select";
+    this.select([id]);
+    return id;
+  }
+
   // MARK: Dateien
 
   /**
@@ -456,7 +498,7 @@ export class BoardController {
     if (this.readOnly || files.length === 0) return [];
     const c = at ?? screenToWorld(this.camera, { x: this.viewport.w / 2, y: this.viewport.h / 2 });
     // Je Datei ein Objekt – bei einem PDF eines je Seite (der „Ausdruck“: Seiten untereinander, zum Draufschreiben).
-    const parts: { f: BoardFile; kind: "image" | "file"; size: Size; style: Record<string, string | number> }[] = [];
+    const parts: { f: BoardFile; kind: "image" | "file"; size: Size; style: Record<string, string | number | boolean> }[] = [];
     for (const f of files) {
       const view = boardFileView(f.name, f.mime);
       const base = { name: f.name, mime: f.mime, size: f.size };
@@ -464,7 +506,8 @@ export class BoardController {
         const k = Math.min(1, IMAGE_MAX / Math.max(f.width!, f.height!));
         parts.push({ f, kind: "image", size: { w: Math.max(8, Math.round(f.width! * k)), h: Math.max(8, Math.round(f.height! * k)) }, style: base });
       } else if (view === "pdf" && f.pages?.length) {
-        f.pages.forEach((p, i) => parts.push({ f, kind: "file", size: { w: PDF_WIDTH, h: Math.max(8, Math.round((PDF_WIDTH * p.height) / Math.max(1, p.width))) }, style: { ...base, view: "pdf", page: i + 1, pages: f.pages!.length } }));
+        // Seiten eines Ausdrucks liegen fest (wie in OneNote): Zeiger und Aufziehen greifen durch sie hindurch.
+        f.pages.forEach((p, i) => parts.push({ f, kind: "file", size: { w: PDF_WIDTH, h: Math.max(8, Math.round((PDF_WIDTH * p.height) / Math.max(1, p.width))) }, style: { ...base, view: "pdf", page: i + 1, pages: f.pages!.length, locked: true } }));
       } else if (view === "text" || view === "html" || view === "video" || view === "audio") parts.push({ f, kind: "file", size: PREVIEW_SIZE[view], style: { ...base, view } });
       else parts.push({ f, kind: "file", size: FILE_CARD, style: base });
     }
@@ -578,7 +621,7 @@ export class BoardController {
     if (this.gesture?.kind === "move") return "move";
     const h = this.handleAt(p);
     if (h) return HANDLE_CURSORS[h];
-    return this.spatial.hit(screenToWorld(this.camera, p), 2 / this.camera.zoom) ? "move" : "default";
+    return this.pick(screenToWorld(this.camera, p), 2 / this.camera.zoom) ? "move" : "default";
   }
 
   private handleAt(p: Point): Handle | undefined {
@@ -672,7 +715,7 @@ export class BoardController {
       this.gesture = { kind: "resize", world, handle, from, start };
       return;
     }
-    const hit = this.spatial.hit(world, 2 / this.camera.zoom);
+    const hit = this.pick(world, 2 / this.camera.zoom);
     this.gesture = { kind: "press", start: p, world, hit, wasSelected: hit !== undefined && this.selection.has(hit), shift: e.shift === true, alt: e.alt === true };
     if (hit && !this.selection.has(hit)) this.select(e.shift ? [...this.selection, hit] : [hit]);
     else if (this.focused) { this.focused = undefined; this.changed(); }
@@ -697,7 +740,7 @@ export class BoardController {
           for (const id of ids) {
             const f = this.session.get(id);
             if (!f || f.kind !== "frame") continue;
-            for (const o of this.spatial.search(f)) if (isShape(o) && !chosen.has(o.id) && o.kind !== "frame" && rectContains(f, objectBounds(o, this.session.byID)!)) { chosen.add(o.id); ids.push(o.id); }
+            for (const o of this.spatial.search(f)) if (isShape(o) && !chosen.has(o.id) && o.kind !== "frame" && !isLocked(o) && rectContains(f, objectBounds(o, this.session.byID)!)) { chosen.add(o.id); ids.push(o.id); }
           }
           const start = new Map(ids.map((id) => [id, rectOf(this.session.get(id) as WBShape)]));
           this.gesture = { kind: "move", world: g.world, ids, start, duplicate: g.alt };
@@ -721,7 +764,7 @@ export class BoardController {
       case "marquee": {
         const rect = rectFromPoints(g.world, world);
         this.marquee = rect;
-        this.selection = new Set([...g.base, ...objectsInRect(this.session.objects, rect, this.session.byID)]);
+        this.selection = new Set([...g.base, ...objectsInRect(this.session.objects, rect, this.session.byID).filter((id) => !isLocked(this.session.get(id)!))]);
         break;
       }
       case "create":
@@ -800,7 +843,7 @@ export class BoardController {
               const bw = Number(o.style?.bw) || o.w || 1, bh = Number(o.style?.bh) || o.h || 1;
               const pts = inkPointsOf(o.ink).map((q) => ({ x: o.x + (q.x * o.w) / bw, y: o.y + (q.y * o.h) / bh }));
               if (shareInside(pts, poly) >= 0.6) ids.push(o.id);
-            } else if (o.kind !== "frame" && o.style?.view !== "pdf" && pointInPolygon({ x: o.x + o.w / 2, y: o.y + o.h / 2 }, poly)) ids.push(o.id);
+            } else if (o.kind !== "frame" && !isLocked(o) && pointInPolygon({ x: o.x + o.w / 2, y: o.y + o.h / 2 }, poly)) ids.push(o.id);
           }
         }
         // Mit der Auswahl geht es beim Auswahl-Werkzeug weiter: verschieben, duplizieren, löschen.
@@ -993,6 +1036,7 @@ export class BoardController {
       lasso: g?.kind === "lasso" ? g.points : undefined,
       connecting: g?.kind === "connect" && fromObj && isShape(fromObj) ? { from: fromObj, to: g.to, target: targetObj && isShape(targetObj) ? targetObj : undefined } : undefined,
       editing: this.editing?.id,
+      background: this.session.background,
     };
     this.sceneCache = { key, scene };
     return scene;
