@@ -382,6 +382,32 @@ footer a{display:inline-block;padding:6px 0}
 <p class="mb-p" style="margin-top: 4px;">Based is open source and made by one person in Vienna. The roadmap is public, so you can see what is next, vote on it and add what you are missing. What testers run into decides the order.</p>
 <a href="Roadmap.dc.html" class="btn2 mb-full" style="margin-top: 14px;">See the roadmap →</a>
 </section>
+<section class="mb-sec" aria-labelledby="mb-later">
+<p class="eyebrow">After the beta</p>
+<h2 id="mb-later" class="mb-h2">Later, if you want them: agents.</h2>
+<p class="mb-p" style="margin: 4px 0 14px;">Opt-in agents that work inside your pages, mark every line they write and use the AI you already pay for. Off until you switch them on.</p>
+<div class="mb-card" style="padding: 18px 16px 16px;">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+<p style="margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">Today</p>
+<span class="mono" style="padding: 2px 8px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600;">{{nowTxt}}</span>
+</div>
+<div class="mb-scroll" style="margin: 12px -16px 6px; padding: 0 16px; gap: 6px;"><sc-for list="{{legend}}" as="g" hint-placeholder-count="4"><span style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{g.dot}};"></span>{{g.t}}</span></sc-for></div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;">
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="6"><li style="padding: 11px 0; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px;">
+<span aria-hidden="true" style="flex: 0 0 10px; height: 10px; border-radius: 50%; background: {{l.dot}}; transition: background-color 500ms ease;"></span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+<span style="display: flex; justify-content: space-between; gap: 8px;"><b style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.t}}</b><span class="mono" style="flex: 0 0 auto; font-size: 12px; color: var(--muted);">{{l.when}}</span></span>
+<span style="font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.who}}</span>
+<span aria-hidden="true" style="display: block; height: 4px; border-radius: 4px; background: var(--surface-raised); overflow: hidden;"><span style="display: block; height: 100%; width: {{l.fill}}; background: {{l.barBg}}; transition: width 900ms linear, background-color 500ms ease;"></span></span>
+</span>
+<span style="flex: 0 0 auto; padding: 4px 9px; border-radius: 999px; background: {{l.chipBg}}; color: {{l.chipFg}}; font-size: 12px; font-weight: 600; min-width: 64px; text-align: center; box-sizing: border-box;">{{l.status}}</span>
+</li></sc-for>
+</ul>
+</div>
+
+<p style="margin: 10px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Planned after the beta: your day and your agents. Sample data.</p>
+<a href="Agents.dc.html" class="btn2 mb-full" style="margin-top: 14px;">Where this is going →</a>
+</section>
 <section id="waitlist" class="mb-sec" aria-labelledby="mb-join">
 <div class="ink-panel" style="padding: 26px 20px; border-radius: 26px; display: flex; flex-direction: column; gap: 16px;">
 <h2 id="mb-join" class="disp" style="margin: 0; font-size: 30px; line-height: 1.08;">Based on your Mac. Based in Europe. <span class="hl">Based on your feedback.</span></h2>
@@ -461,12 +487,12 @@ footer a{display:inline-block;padding:6px 0}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flapI: 0, when: 'beta' };
+    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flapI: 0, when: 'beta', clock: 0 };
     this.timers = { reply: [], loop: [] };
     this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'reading list'];
   }
   componentDidMount() {
-    this.tick = setInterval(() => this.setState({ flapI: this.state.flapI + 1 }), 2600);
+    this.tick = setInterval(() => this.setState({ flapI: this.state.flapI + 1, clock: (this.state.clock + 1) % 60 }), 2600);
   }
   componentWillUnmount() { clearInterval(this.tick); this.clearTimers(); }
   clearTimers(g) { (g ? [g] : ['reply', 'loop']).forEach((k) => { this.timers[k].forEach((t) => clearTimeout(t)); this.timers[k] = []; }); }
@@ -538,8 +564,32 @@ class Component extends DCLogic {
       { title: 'Page 3f9a2c…e81.md', joke: 'Export your workspace and you get thousands of files with a 32-character ID glued to every name. Good luck finding anything.', fixTitle: 'Real file names', fix: 'Markdown export with the names you gave your pages, plus a lossless archive that brings everything back. Leaving takes one click.', src: 'Notion help center on exports.' },
       { title: 'Ask AI → “Upgrade”', joke: 'Full Notion AI lives on Business at $20 a seat. Custom agents run on credits. Your OpenAI plan? Irrelevant, apparently.', fixTitle: 'Bring the AI you pay for', fix: 'After the beta, AI is opt-in: use the ChatGPT or Claude Code login you already have, or an API key. No second subscription, no credits.', src: 'Notion pricing, November 2026.' }
     ];
+    const hNow = 12.4 + (s.clock / 59) * 4.2;
+    const hm = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0');
+    const ST = {
+      sched: { status: 'Scheduled', dot: '#7C9BD6', chipBg: 'var(--status-ready)', chipFg: 'var(--ink)' },
+      work: { status: 'Working', dot: 'var(--marker-strong)', chipBg: 'var(--marker)', chipFg: 'var(--ink)' },
+      done: { status: 'Done', dot: 'var(--synced)', chipBg: '#DCEFE3', chipFg: '#2F6B47' },
+      need: { status: 'Needs you', dot: '#D9739A', chipBg: 'var(--status-review)', chipFg: '#8A2F52' }
+    };
+    const lanes = [
+      { t: 'Morning briefing', who: 'Main agent', a: 7.5, b: 8.25 },
+      { t: 'Thesis sources', who: 'Researcher, Claude', a: 8, b: 11.5 },
+      { t: 'Acme proposal draft', who: 'Writer, Claude', a: 9.5, b: 13, ask: true },
+      { t: 'Q4 metrics', who: 'Coder, GPT', a: 12, b: 15.5 },
+      { t: 'Northwind call notes', who: 'Transcribed on your Mac', a: 14, b: 15 },
+      { t: 'Night shift', who: 'Backlog, tests, build log', a: 23, b: 24 }
+    ].map((l) => {
+      const k = hNow < l.a ? 'sched' : hNow < l.b ? 'work' : l.ask ? 'need' : 'done';
+      const st = ST[k];
+      const f = k === 'work' ? Math.round(((hNow - l.a) / (l.b - l.a)) * 100) : k === 'sched' ? 0 : 100;
+      return { t: l.t, who: l.who, when: hm(l.a), dot: st.dot, status: k === 'work' ? f + ' %' : st.status, chipBg: st.chipBg, chipFg: st.chipFg, fill: f + '%', barBg: st.dot };
+    });
     return {
       theme,
+      nowTxt: hm(hNow),
+      lanes,
+      legend: [['Done', 'var(--synced)'], ['Working', 'var(--marker-strong)'], ['Needs you', '#D9739A'], ['Scheduled', '#7C9BD6']].map(([t, dot]) => ({ t, dot })),
       markSrc: '/_blob/c3ccc021887376abcf7fe08d0002d913',
       markDarkSrc: '/_blob/60426240b69c9dab9372c2741257d898',
       flapWord: this.flapWords[s.flapI % this.flapWords.length],

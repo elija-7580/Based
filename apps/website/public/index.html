@@ -344,17 +344,131 @@
 </section>
 
 <section aria-labelledby="later-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
-<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center;">
-<div class="reveal-l" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
 <p class="eyebrow">After the beta</p>
 <h2 id="later-title" class="h2">Later, if you want them: agents.</h2>
-<p class="lead">Once the notes app is solid, opt-in agents come next. They work inside your pages, mark every line they write and use the AI you already pay for. Based stays a complete workspace without them, and they stay off until you switch them on.</p>
+<p class="lead">Once the notes app is solid, opt-in agents come next. One main agent plans, hands work to specialists and checks back with you. They work inside your pages, mark every line they write and use the AI you already pay for. Based stays a complete workspace without them, and they stay off until you switch them on.</p>
 <a href="/agents" class="btn2" style="align-self: flex-start;">Where this is going →</a>
 </div>
-<div class="reveal-r ink-panel" style="flex: 1 1 440px; min-width: 0; padding: 28px; border-radius: 28px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;">
-<p class="mono" style="margin: 0 0 4px; font-size: 12px; color: var(--muted);">Sample, opt-in after the beta</p>
-<div class="fadein" style="padding: 14px 16px 14px 12px; border-radius: 18px; background: var(--surface-raised); display: flex; gap: 12px; color: var(--ink);"><span class="bar" style="flex: 0 0 3px;"></span><span style="display: flex; flex-direction: column; gap: 3px;"><span class="mono" style="font-size: 11px; color: var(--muted);">07:30 Main agent</span><span style="font-size: 14px; line-height: 1.45;">Your morning briefing is ready: 2 deadlines, 1 approval, 3 pages changed overnight.</span></span></div><div class="fadein" style="padding: 14px 16px 14px 12px; border-radius: 18px; background: var(--surface-raised); display: flex; gap: 12px; color: var(--ink);"><span class="bar" style="flex: 0 0 3px;"></span><span style="display: flex; flex-direction: column; gap: 3px;"><span class="mono" style="font-size: 11px; color: var(--muted);">11:02 Researcher</span><span style="font-size: 14px; line-height: 1.45;">Done. Competitor table added to Projects/Launch, 14 sources linked.</span></span></div><div class="fadein" style="padding: 14px 16px 14px 12px; border-radius: 18px; background: var(--surface-raised); display: flex; gap: 12px; color: var(--ink);"><span class="bar" style="flex: 0 0 3px;"></span><span style="display: flex; flex-direction: column; gap: 3px;"><span class="mono" style="font-size: 11px; color: var(--muted);">16:58 Main agent</span><span style="font-size: 14px; line-height: 1.45;">One thing needs you: approve the proposal draft for Acme.</span></span></div>
+<div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: 12px; box-shadow: var(--shadow-big);">
+<div style="position: relative; overflow: hidden; border-radius: 22px; background: var(--bg); padding: clamp(28px, 5vw, 56px) clamp(14px, 4vw, 48px) 40px; min-height: 620px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 26px;">
+<div class="sun" aria-hidden="true"></div>
+<div style="position: relative; width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px;">
+<p style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Today <span class="mono" style="font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--muted);">Tuesday 12:24</span></p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px;"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #DCEFE3; font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--synced);"></span>Done</span><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--marker); font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--marker-strong);"></span>Working</span><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--status-review); font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #D9739A;"></span>Needs you</span><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--status-ready); font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #7C9BD6;"></span>Scheduled</span></div>
 </div>
+<div class="tl" style="position: relative; padding: 14px; border-radius: 20px; background: var(--surface-soft); display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; gap: 12px;"><span class="tl-name"></span><div class="mono" style="flex: 1 1 auto; display: flex; justify-content: space-between; font-size: 11px; color: var(--muted);"><span>06<span class="hr-m">:00</span></span><span>12<span class="hr-m">:00</span></span><span>18<span class="hr-m">:00</span></span><span>24<span class="hr-m">:00</span></span></div><span class="tl-chip" style="visibility: hidden;"></span></div>
+<div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Morning briefing</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Main agent, Fast</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="07:30 to 08:15" style="position: absolute; left: 8.33%; width: 4.17%; top: 4px; height: 20px; border-radius: 8px; background: #A9D6B8; overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: transparent; transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: #DCEFE3; color: #2F6B47; font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">Done</span>
+</div><div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Thesis sources</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Researcher, Claude</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="08:00 to 11:30" style="position: absolute; left: 11.11%; width: 19.44%; top: 4px; height: 20px; border-radius: 8px; background: #A9D6B8; overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: transparent; transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: #DCEFE3; color: #2F6B47; font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">Done</span>
+</div><div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Acme proposal draft</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Writer, Claude</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="09:30 to 13:00" style="position: absolute; left: 19.44%; width: 19.44%; top: 4px; height: 20px; border-radius: 8px; background: var(--marker); overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 83%; background: var(--marker-strong); transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: var(--marker); color: var(--ink); font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">83 %</span>
+</div><div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Q4 metrics</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Coder, GPT</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="12:00 to 15:30" style="position: absolute; left: 33.33%; width: 19.44%; top: 4px; height: 20px; border-radius: 8px; background: var(--marker); overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 11%; background: var(--marker-strong); transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: var(--marker); color: var(--ink); font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">11 %</span>
+</div><div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Northwind call notes</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Transcribed on your Mac</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="14:00 to 15:00" style="position: absolute; left: 44.44%; width: 5.56%; top: 4px; height: 20px; border-radius: 8px; background: #C3D4F2; overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: transparent; transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: var(--status-ready); color: var(--ink); font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">Scheduled</span>
+</div><div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Night shift</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Backlog, tests, build log</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="23:00 to 24:00" style="position: absolute; left: 94.44%; width: 5.56%; top: 4px; height: 20px; border-radius: 8px; background: #C3D4F2; overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: transparent; transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: var(--status-ready); color: var(--ink); font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">Scheduled</span>
+</div>
+<div class="tl-now" aria-hidden="true" style="position: absolute; top: 14px; bottom: 10px; left: calc(25px + var(--tl-name) + (100% - 40px - var(--tl-name) - var(--tl-chipgap)) * 0.3556); width: 2px; background: var(--ink); transition: left 2200ms linear;"><span class="mono" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding: 1px 6px; border-radius: 6px; background: var(--ink); color: var(--bg); font-size: 11px; font-weight: 600; white-space: nowrap;">12:24</span></div>
+</div>
+</div>
+<div style="position: relative; margin-top: 6px; text-align: center; display: flex; flex-direction: column; gap: 6px;">
+<p style="margin: 0; font-family: var(--display); font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; letter-spacing: -0.03em;">Good morning. What should we do today?</p>
+</div>
+<div style="position: relative; width: 100%; max-width: 780px;">
+<div style="padding: 8px; border-radius: 24px; background: var(--surface-raised); box-shadow: var(--shadow-float);">
+<div style="padding: 16px 16px 12px; border-radius: 18px; background: var(--bg); display: flex; flex-direction: column; gap: 14px;">
+<p class="prompt-box" style="margin: 0; font-size: clamp(16px, 1.8vw, 19px); line-height: 1.5; text-align: left;"><span class="caret" aria-hidden="true"></span></p>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+<span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 50%; background: var(--surface-raised); display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">+</span>
+<span style="display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--button); color: var(--button-ink); font-size: 13px; font-weight: 600; transition: background-color 200ms ease, color 200ms ease;"><span style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.15); display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">●</span><span class="hide-sm" style="font-weight: 500; opacity: .7;">Agent</span>Main <span aria-hidden="true" style="opacity: .6;">▾</span></span><span style="display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--surface-raised); color: var(--ink); font-size: 13px; font-weight: 600; transition: background-color 200ms ease, color 200ms ease;"><span style="width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">◆</span><span class="hide-sm" style="font-weight: 500; opacity: .7;">Model</span>Auto <span aria-hidden="true" style="opacity: .6;">▾</span></span><span style="display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--surface-raised); color: var(--ink); font-size: 13px; font-weight: 600; transition: background-color 200ms ease, color 200ms ease;"><span style="width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">▲</span><span class="hide-sm" style="font-weight: 500; opacity: .7;">Permission</span>Ask before edits <span aria-hidden="true" style="opacity: .6;">▾</span></span><span style="display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--surface-raised); color: var(--ink); font-size: 13px; font-weight: 600; transition: background-color 200ms ease, color 200ms ease;"><span style="width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">■</span><span class="hide-sm" style="font-weight: 500; opacity: .7;">Tools</span>4 on <span aria-hidden="true" style="opacity: .6;">▾</span></span><span style="display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--surface-raised); color: var(--ink); font-size: 13px; font-weight: 600; transition: background-color 200ms ease, color 200ms ease;"><span style="width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">✦</span><span class="hide-sm" style="font-weight: 500; opacity: .7;">Privacy</span>Check on <span aria-hidden="true" style="opacity: .6;">▾</span></span>
+<span aria-hidden="true" style="margin-left: auto; width: 38px; height: 38px; border-radius: 50%; background: var(--button); color: var(--button-ink); display: inline-flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></span>
+</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: calc(100% + 10px); z-index: 5; display: flex; justify-content: center; pointer-events: none;">
+<div class="menu-in" style="position: relative; width: min(460px, 100%); padding: 8px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-menu, var(--shadow-float)); text-align: left; transform-origin: 50% 100%;">
+<p style="margin: 6px 10px 8px; display: flex; justify-content: space-between; gap: 10px; font-size: 13px;"><b>Agent</b><span style="color: var(--muted);">who takes this</span></p>
+<div style="padding: 9px 10px; border-radius: 14px; background: var(--surface-raised); display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: var(--button); color: var(--button-ink); display: flex; align-items: center; justify-content: center; font-size: 14px;">M</span><span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">Main</span><span style="font-size: 12.5px; color: var(--muted);">Plans, delegates, writes updates</span></span><span style="font-size: 14px;">✓</span></div><div style="padding: 9px 10px; border-radius: 14px; background: transparent; display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: var(--surface-raised); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 14px;">T</span><span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">Tutor</span><span style="font-size: 12.5px; color: var(--muted);">Explains and quizzes you</span></span><span style="font-size: 14px;"></span></div><div style="padding: 9px 10px; border-radius: 14px; background: transparent; display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: var(--surface-raised); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 14px;">R</span><span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">Researcher</span><span style="font-size: 12.5px; color: var(--muted);">Reads sources, cites them</span></span><span style="font-size: 14px;"></span></div><div style="padding: 9px 10px; border-radius: 14px; background: transparent; display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: var(--surface-raised); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 14px;">N</span><span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">Night shift</span><span style="font-size: 12.5px; color: var(--muted);">Works through your backlog at night</span></span><span style="font-size: 14px;"></span></div>
+<p style="margin: 8px 10px 4px; font-size: 12px; color: var(--muted);">The main agent can hand work to the others.</p>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+<p style="margin: -24px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Planned after the beta: one box for everything, your day and your agents around it. Sample data.</p>
+<div class="reveal" style="max-width: 860px; margin-top: 56px; display: flex; flex-direction: column; gap: 12px;">
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3.4vw, 44px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">Start in your terminal. Finish on your phone.</h3>
+<p class="lead">At release, the same workspace and the same agents on your laptop, in a cloud sandbox and in your pocket. Reachable through MCP from any AI you use.</p>
+</div>
+<div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: clamp(24px, 4vw, 48px); display: flex; flex-direction: column; gap: 32px;">
+<div style="position: relative; height: 150px;">
+<div aria-hidden="true" style="position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--control-border); opacity: .4;"></div>
+<span class="track-dot" aria-hidden="true" style="left: 8%;"></span>
+
+<div style="position: absolute; left: 8%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 12px;">
+<div class="evn" style="width: 76px; height: 76px; border-radius: 18px; background: var(--button); color: var(--button-ink); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 18px; font-weight: 700; transform: scale(1.12); transition: transform 300ms cubic-bezier(.2,1.4,.4,1), background-color 300ms ease;">&gt;_</div>
+<span class="evl" style="font-size: 13px; font-weight: 600; white-space: nowrap;">Terminal</span>
+</div>
+
+<div style="position: absolute; left: 36%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 12px;">
+<div class="evn" style="width: 76px; height: 76px; border-radius: 50%; background: var(--bg); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 18px; font-weight: 700; transform: scale(1); transition: transform 300ms cubic-bezier(.2,1.4,.4,1), background-color 300ms ease;">◌</div>
+<span class="evl" style="font-size: 13px; font-weight: 600; white-space: nowrap;">Cloud sandbox</span>
+</div>
+
+<div style="position: absolute; left: 64%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 12px;">
+<div class="evn" style="width: 76px; height: 76px; border-radius: 26px; background: var(--bg); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 18px; font-weight: 700; transform: scale(1); transition: transform 300ms cubic-bezier(.2,1.4,.4,1), background-color 300ms ease;">▢</div>
+<span class="evl" style="font-size: 13px; font-weight: 600; white-space: nowrap;">Phone</span>
+</div>
+
+<div style="position: absolute; left: 92%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 12px;">
+<div class="evn" style="width: 76px; height: 76px; border-radius: 22px; background: var(--bg); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 18px; font-weight: 700; transform: scale(1); transition: transform 300ms cubic-bezier(.2,1.4,.4,1), background-color 300ms ease;">b</div>
+<span class="evl" style="font-size: 13px; font-weight: 600; white-space: nowrap;">Workspace</span>
+</div>
+
+</div>
+<div style="min-height: 64px; display: flex; justify-content: center;">
+<p class="fadein" style="margin: 0; max-width: 620px; padding: 14px 18px 14px 14px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); display: flex; gap: 12px; font-size: 15px; line-height: 1.5;"><span class="bar" style="flex: 0 0 3px;"></span><span><span class="mono" style="font-size: 11.5px; color: var(--muted);">Terminal, 09:14</span><br>based ask “summarise the Acme call and update the deal”</span></p>
+</div>
+</div>
+<p class="reveal" style="margin: 0; font-size: 14px; color: var(--muted);">Cloud agents are opt-in and only see the pages you hand them, while they work. Based Cloud runs on EU servers and is end-to-end encrypted by release.</p>
 </div>
 </section>
 
@@ -642,17 +756,81 @@
 </section>
 
 <section aria-labelledby="later-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
-<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center;">
-<div class="reveal-l" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
 <p class="eyebrow">After the beta</p>
 <h2 id="later-title" class="h2">Later, if you want them: agents.</h2>
-<p class="lead">Once the notes app is solid, opt-in agents come next. They work inside your pages, mark every line they write and use the AI you already pay for. Based stays a complete workspace without them, and they stay off until you switch them on.</p>
+<p class="lead">Once the notes app is solid, opt-in agents come next. One main agent plans, hands work to specialists and checks back with you. They work inside your pages, mark every line they write and use the AI you already pay for. Based stays a complete workspace without them, and they stay off until you switch them on.</p>
 <a href="/agents" class="btn2" style="align-self: flex-start;">Where this is going →</a>
 </div>
-<div class="reveal-r ink-panel" style="flex: 1 1 440px; min-width: 0; padding: 28px; border-radius: 28px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;">
-<p class="mono" style="margin: 0 0 4px; font-size: 12px; color: var(--muted);">Sample, opt-in after the beta</p>
-<sc-for list="{{pings}}" as="p" hint-placeholder-count="3"><div class="fadein" style="padding: 14px 16px 14px 12px; border-radius: 18px; background: var(--surface-raised); display: flex; gap: 12px; color: var(--ink);"><span class="bar" style="flex: 0 0 3px;"></span><span style="display: flex; flex-direction: column; gap: 3px;"><span class="mono" style="font-size: 11px; color: var(--muted);">{{p.time}} {{p.who}}</span><span style="font-size: 14px; line-height: 1.45;">{{p.t}}</span></span></div></sc-for>
+<div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: 12px; box-shadow: var(--shadow-big);">
+<div style="position: relative; overflow: hidden; border-radius: 22px; background: var(--bg); padding: clamp(28px, 5vw, 56px) clamp(14px, 4vw, 48px) 40px; min-height: 620px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 26px;">
+<div class="sun" aria-hidden="true"></div>
+<div style="position: relative; width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px;">
+<p style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Today <span class="mono" style="font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--muted);">Tuesday {{nowTxt}}</span></p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{legend}}" as="g" hint-placeholder-count="4"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: {{g.bg}}; font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{g.dot}};"></span>{{g.t}}</span></sc-for></div>
 </div>
+<div class="tl" style="position: relative; padding: 14px; border-radius: 20px; background: var(--surface-soft); display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; gap: 12px;"><span class="tl-name"></span><div class="mono" style="flex: 1 1 auto; display: flex; justify-content: space-between; font-size: 11px; color: var(--muted);"><span>06<span class="hr-m">:00</span></span><span>12<span class="hr-m">:00</span></span><span>18<span class="hr-m">:00</span></span><span>24<span class="hr-m">:00</span></span></div><span class="tl-chip" style="visibility: hidden;"></span></div>
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="5"><div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.t}}</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.who}}</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="{{l.label}}" style="position: absolute; left: {{l.x}}; width: {{l.w}}; top: 4px; height: 20px; border-radius: 8px; background: {{l.bg}}; overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{l.fill}}; background: {{l.fillBg}}; transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: {{l.chipBg}}; color: {{l.chipFg}}; font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">{{l.status}}</span>
+</div></sc-for>
+<div class="tl-now" aria-hidden="true" style="position: absolute; top: 14px; bottom: 10px; left: {{nowLeft}}; width: 2px; background: var(--ink); transition: left 2200ms linear;"><span class="mono" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding: 1px 6px; border-radius: 6px; background: var(--ink); color: var(--bg); font-size: 11px; font-weight: 600; white-space: nowrap;">{{nowTxt}}</span></div>
+</div>
+</div>
+<div style="position: relative; margin-top: 6px; text-align: center; display: flex; flex-direction: column; gap: 6px;">
+<p style="margin: 0; font-family: var(--display); font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; letter-spacing: -0.03em;">Good morning. What should we do today?</p>
+</div>
+<div style="position: relative; width: 100%; max-width: 780px;">
+<div style="padding: 8px; border-radius: 24px; background: var(--surface-raised); box-shadow: var(--shadow-float);">
+<div style="padding: 16px 16px 12px; border-radius: 18px; background: var(--bg); display: flex; flex-direction: column; gap: 14px;">
+<p class="prompt-box" style="margin: 0; font-size: clamp(16px, 1.8vw, 19px); line-height: 1.5; text-align: left;">{{promptShown}}<span class="caret" aria-hidden="true"></span></p>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+<span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 50%; background: var(--surface-raised); display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">+</span>
+<sc-for list="{{pills}}" as="p" hint-placeholder-count="5"><span style="display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; background: {{p.bg}}; color: {{p.fg}}; font-size: 13px; font-weight: 600; transition: background-color 200ms ease, color 200ms ease;"><span style="width: 24px; height: 24px; border-radius: 50%; background: {{p.dotBg}}; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">{{p.icon}}</span><span class="hide-sm" style="font-weight: 500; opacity: .7;">{{p.k}}</span>{{p.v}} <span aria-hidden="true" style="opacity: .6;">▾</span></span></sc-for>
+<span aria-hidden="true" style="margin-left: auto; width: 38px; height: 38px; border-radius: 50%; background: var(--button); color: var(--button-ink); display: inline-flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></span>
+</div>
+</div>
+</div>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 0; right: 0; bottom: calc(100% + 10px); z-index: 5; display: flex; justify-content: center; pointer-events: none;">
+<div class="menu-in" style="position: relative; width: min(460px, 100%); padding: 8px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-menu, var(--shadow-float)); text-align: left; transform-origin: 50% 100%;">
+<p style="margin: 6px 10px 8px; display: flex; justify-content: space-between; gap: 10px; font-size: 13px;"><b>{{menu.title}}</b><span style="color: var(--muted);">{{menu.hint}}</span></p>
+<sc-for list="{{menu.options}}" as="o" hint-placeholder-count="4"><div style="padding: 9px 10px; border-radius: 14px; background: {{o.bg}}; display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: {{o.tileBg}}; color: {{o.tileFg}}; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{o.icon}}</span><span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">{{o.n}}</span><span style="font-size: 12.5px; color: var(--muted);">{{o.d}}</span></span><span style="font-size: 14px;">{{o.check}}</span></div></sc-for>
+<p style="margin: 8px 10px 4px; font-size: 12px; color: var(--muted);">{{menu.foot}}</p>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+<p style="margin: -24px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Planned after the beta: one box for everything, your day and your agents around it. Sample data.</p>
+<div class="reveal" style="max-width: 860px; margin-top: 56px; display: flex; flex-direction: column; gap: 12px;">
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3.4vw, 44px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">Start in your terminal. Finish on your phone.</h3>
+<p class="lead">At release, the same workspace and the same agents on your laptop, in a cloud sandbox and in your pocket. Reachable through MCP from any AI you use.</p>
+</div>
+<div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: clamp(24px, 4vw, 48px); display: flex; flex-direction: column; gap: 32px;">
+<div style="position: relative; height: 150px;">
+<div aria-hidden="true" style="position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--control-border); opacity: .4;"></div>
+<span class="track-dot" aria-hidden="true" style="left: {{evDot}};"></span>
+<sc-for list="{{evNodes}}" as="n" hint-placeholder-count="4">
+<div style="position: absolute; left: {{n.x}}; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 12px;">
+<div class="evn" style="width: 76px; height: 76px; border-radius: {{n.r}}; background: {{n.bg}}; color: {{n.fg}}; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 18px; font-weight: 700; transform: scale({{n.s}}); transition: transform 300ms cubic-bezier(.2,1.4,.4,1), background-color 300ms ease;">{{n.g}}</div>
+<span class="evl" style="font-size: 13px; font-weight: 600; white-space: nowrap;">{{n.t}}</span>
+</div>
+</sc-for>
+</div>
+<div style="min-height: 64px; display: flex; justify-content: center;">
+<p class="fadein" style="margin: 0; max-width: 620px; padding: 14px 18px 14px 14px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); display: flex; gap: 12px; font-size: 15px; line-height: 1.5;"><span class="bar" style="flex: 0 0 3px;"></span><span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{evWhere}}</span><br>{{evMsg}}</span></p>
+</div>
+</div>
+<p class="reveal" style="margin: 0; font-size: 14px; color: var(--muted);">Cloud agents are opt-in and only see the pages you hand them, while they work. Based Cloud runs on EU servers and is end-to-end encrypted by release.</p>
 </div>
 </section>
 
@@ -817,6 +995,32 @@
 <p class="mb-p" style="margin-top: 4px;">Based is open source and made by one person in Vienna. The roadmap is public, so you can see what is next, vote on it and add what you are missing. What testers run into decides the order.</p>
 <a href="/roadmap" class="btn2 mb-full" style="margin-top: 14px;">See the roadmap →</a>
 </section>
+<section class="mb-sec" aria-labelledby="mb-later">
+<p class="eyebrow">After the beta</p>
+<h2 id="mb-later" class="mb-h2">Later, if you want them: agents.</h2>
+<p class="mb-p" style="margin: 4px 0 14px;">Opt-in agents that work inside your pages, mark every line they write and use the AI you already pay for. Off until you switch them on.</p>
+<div class="mb-card" style="padding: 18px 16px 16px;">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+<p style="margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">Today</p>
+<span class="mono" style="padding: 2px 8px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600;">{{nowTxt}}</span>
+</div>
+<div class="mb-scroll" style="margin: 12px -16px 6px; padding: 0 16px; gap: 6px;"><sc-for list="{{legend}}" as="g" hint-placeholder-count="4"><span style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{g.dot}};"></span>{{g.t}}</span></sc-for></div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;">
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="6"><li style="padding: 11px 0; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px;">
+<span aria-hidden="true" style="flex: 0 0 10px; height: 10px; border-radius: 50%; background: {{l.dot}}; transition: background-color 500ms ease;"></span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+<span style="display: flex; justify-content: space-between; gap: 8px;"><b style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.t}}</b><span class="mono" style="flex: 0 0 auto; font-size: 12px; color: var(--muted);">{{l.when}}</span></span>
+<span style="font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.who}}</span>
+<span aria-hidden="true" style="display: block; height: 4px; border-radius: 4px; background: var(--surface-raised); overflow: hidden;"><span style="display: block; height: 100%; width: {{l.fill}}; background: {{l.barBg}}; transition: width 900ms linear, background-color 500ms ease;"></span></span>
+</span>
+<span style="flex: 0 0 auto; padding: 4px 9px; border-radius: 999px; background: {{l.chipBg}}; color: {{l.chipFg}}; font-size: 12px; font-weight: 600; min-width: 64px; text-align: center; box-sizing: border-box;">{{l.status}}</span>
+</li></sc-for>
+</ul>
+</div>
+
+<p style="margin: 10px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Planned after the beta: your day and your agents. Sample data.</p>
+<a href="/agents" class="btn2 mb-full" style="margin-top: 14px;">Where this is going →</a>
+</section>
 <section id="waitlist" class="mb-sec" aria-labelledby="mb-join">
 <div class="ink-panel" style="padding: 26px 20px; border-radius: 26px; display: flex; flex-direction: column; gap: 16px;">
 <h2 id="mb-join" class="disp" style="margin: 0; font-size: 30px; line-height: 1.08;">Based on your Mac. Based in Europe. <span class="hl">Based on your feedback.</span></h2>
@@ -897,7 +1101,8 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flipped: {}, statsT: window.__DC_PRERENDER ? 1 : 0, flapI: 0 };
+    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flipped: {}, statsT: window.__DC_PRERENDER ? 1 : 0, flapI: 0, ev: 0, menuI: 0, promptI: 0, promptN: 0, clock: 0 };
+    this.prompts = ['Prepare my week: deadlines first, then the Acme proposal', 'Summarise yesterday\u2019s calls into the Clients database', 'Find sources for thesis chapter 2 and add them to Reading', 'Draft the investor update from the Metrics database'];
     this.timers = { reply: [], loop: [] };
     this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'reading list'];
   }
@@ -907,6 +1112,13 @@ class Component extends DCLogic {
   }
   componentDidMount() {
     this.flapTimer = setInterval(() => this.setState({ flapI: this.state.flapI + 1 }), 2800);
+    // agent preview (after the beta): typing prompt, menus opening one by one, terminal-to-phone track
+    this.typeTimer = setInterval(() => {
+      const p = this.prompts[this.state.promptI % this.prompts.length];
+      if (this.state.promptN < p.length) this.setState({ promptN: this.state.promptN + 1 });
+    }, 45);
+    this.menuTimer = setInterval(() => this.setState({ menuI: this.state.menuI + 1, promptI: this.state.menuI % 2 === 1 ? this.state.promptI + 1 : this.state.promptI, promptN: this.state.menuI % 2 === 1 ? 0 : this.state.promptN }), 2600);
+    this.evTimer = setInterval(() => this.setState({ ev: (this.state.ev + 1) % 8, clock: (this.state.clock + 1) % 60 }), 2200);
     if (typeof IntersectionObserver !== 'undefined') {
       this.io = new IntersectionObserver((entries) => {
         entries.forEach((e) => { if (e.isIntersecting && e.target === this.statsEl && this.state.statsT === 0) this.countUp(); });
@@ -914,7 +1126,7 @@ class Component extends DCLogic {
       if (this.statsEl) this.io.observe(this.statsEl);
     } else { this.setState({ statsT: 1 }); }
   }
-  componentWillUnmount() { clearInterval(this.flapTimer); this.clearTimers(); if (this.io) this.io.disconnect(); }
+  componentWillUnmount() { clearInterval(this.flapTimer); clearInterval(this.typeTimer); clearInterval(this.menuTimer); clearInterval(this.evTimer); this.clearTimers(); if (this.io) this.io.disconnect(); }
   clearTimers(g) { (g ? [g] : ['reply', 'loop']).forEach((k) => { this.timers[k].forEach((t) => clearTimeout(t)); this.timers[k] = []; }); }
   later(fn, ms, g) { const k = g || 'loop'; const t = setTimeout(fn, ms); this.timers[k].push(t); return t; }
   reduced() { return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
@@ -993,7 +1205,69 @@ class Component extends DCLogic {
       { title: 'Ask AI → “Upgrade”', joke: 'Full Notion AI lives on Business at $20 a seat. Custom agents run on credits. Your OpenAI plan? Irrelevant, apparently.', fixTitle: 'Bring the AI you pay for', fix: 'After the beta, AI is opt-in: use the ChatGPT or Claude Code login you already have, or an API key. No second subscription, no credits.', src: 'Notion pricing, November 2026.' }
     ];
     const ease = s.statsT;
+    const ev = s.ev;
+    const menus = [
+      { k: 'Agent', v: 'Main', icon: '\u25cf', title: 'Agent', hint: 'who takes this', foot: 'The main agent can hand work to the others.', options: [
+        { n: 'Main', d: 'Plans, delegates, writes updates', icon: 'M', on: true }, { n: 'Tutor', d: 'Explains and quizzes you', icon: 'T' }, { n: 'Researcher', d: 'Reads sources, cites them', icon: 'R' }, { n: 'Night shift', d: 'Works through your backlog at night', icon: 'N' } ] },
+      { k: 'Model', v: 'Auto', icon: '\u25c6', title: 'Compute', hint: 'how hard Based thinks', foot: 'Use your ChatGPT login, the Claude Code CLI or an API key.', options: [
+        { n: 'Auto', d: 'Picks per task, recommended', icon: 'A', on: true }, { n: 'Fast', d: 'Quick answers, light tasks', icon: 'F' }, { n: 'Deep', d: 'Long reasoning, big documents', icon: 'D' }, { n: 'Specific model', d: 'Claude, GPT or Gemini', icon: '\u2026' } ] },
+      { k: 'Permission', v: 'Ask before edits', icon: '\u25b2', title: 'Permission', hint: 'what Based may do alone', foot: 'Agents never delete for good or send anything out without asking, unless you allow it.', options: [
+        { n: 'Ask every time', d: 'Every step needs your OK', icon: '1' }, { n: 'Ask before edits', d: 'Research freely, ask before changing pages', icon: '2', on: true }, { n: 'Work freely', d: 'Within budget and scope, all edits marked', icon: '3' } ] },
+      { k: 'Tools', v: '4 on', icon: '\u25a0', title: 'Tools and connectors', hint: 'what Based can reach', foot: 'Any MCP server works. Add your own in settings.', options: [
+        { n: 'Your workspace', d: 'Pages, databases, files', icon: 'W', on: true }, { n: 'Web search', d: 'With sources', icon: 'S', on: true }, { n: 'Calendar and mail', d: 'Through MCP', icon: 'C', on: true }, { n: 'Code sandbox', d: 'Runs scripts in the cloud, opt-in', icon: '>', on: true } ] },
+      { k: 'Privacy', v: 'Check on', icon: '\u2726', title: 'Before sending', hint: 'runs on your device', foot: 'Planned: a local check flags private details before a prompt leaves your Mac.', options: [
+        { n: 'Privacy check', d: 'Finds names, numbers, health and money details', icon: 'P', on: true }, { n: 'Memory', d: 'Remember what matters across chats', icon: 'M', on: true }, { n: 'Skills', d: '3 active: client updates, lecture notes, weekly review', icon: 'K', on: true } ] }
+    ];
+    const mi = Math.floor(s.menuI / 2) % menus.length;
+    const menuOpen = s.menuI % 2 === 0;
+    const hNow = 12.4 + (s.clock / 59) * 4.2;
+    const pct = (h) => ((h - 6) / 18) * 100;
+    const hm = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0');
+    const ST = {
+      sched: { status: 'Scheduled', bg: '#C3D4F2', chipBg: 'var(--status-ready)', chipFg: 'var(--ink)' },
+      work: { status: 'Working', bg: 'var(--marker)', chipBg: 'var(--marker)', chipFg: 'var(--ink)' },
+      done: { status: 'Done', bg: '#A9D6B8', chipBg: '#DCEFE3', chipFg: '#2F6B47' },
+      need: { status: 'Needs you', bg: 'var(--status-review)', chipBg: 'var(--status-review)', chipFg: '#8A2F52' }
+    };
     return {
+      evNodes: [
+        { t: 'Terminal', g: '>_', x: '8%', r: '18px', on: ev <= 1 || ev === 7 },
+        { t: 'Cloud sandbox', g: '\u25cc', x: '36%', r: '50%', on: ev >= 2 && ev <= 3 },
+        { t: 'Phone', g: '\u25a2', x: '64%', r: '26px', on: ev >= 4 && ev <= 5 },
+        { t: 'Workspace', g: 'b', x: '92%', r: '22px', on: ev === 6 }
+      ].map((n) => Object.assign(n, { bg: n.on ? 'var(--button)' : 'var(--bg)', fg: n.on ? 'var(--button-ink)' : 'var(--ink)', s: n.on ? '1.12' : '1' })),
+      evDot: ['8%', '8%', '36%', '36%', '64%', '64%', '92%', '8%'][ev],
+      evWhere: ['Terminal, 09:14', 'Terminal, 09:14', 'Cloud sandbox, 09:20', 'Cloud sandbox, 10:05', 'Phone, 10:06', 'Phone, 10:07', 'Workspace, 10:08', 'Terminal, 10:30'][ev],
+      evMsg: [
+        'based ask \u201csummarise the Acme call and update the deal\u201d',
+        'Planning 2 tasks. You can close the lid.',
+        'Moved to the cloud sandbox. Writing the summary.',
+        'Summary done. Updating deal stage and next steps.',
+        'Acme summary is ready. Move the deal to Proposal?',
+        'You: Yes, and draft the proposal by Friday.',
+        'Saved to Deals/Acme. 3 changes, all marked.',
+        'Back at your desk: the session is still here, nothing to re-explain.'
+      ][ev],
+      nowTxt: hm(hNow),
+      nowLeft: 'calc(25px + var(--tl-name) + (100% - 40px - var(--tl-name) - var(--tl-chipgap)) * ' + (pct(hNow) / 100).toFixed(4) + ')',
+      menuOpen,
+      legend: [['Done', '#DCEFE3', 'var(--synced)'], ['Working', 'var(--marker)', 'var(--marker-strong)'], ['Needs you', 'var(--status-review)', '#D9739A'], ['Scheduled', 'var(--status-ready)', '#7C9BD6']].map(([t, bg, dot]) => ({ t, bg, dot })),
+      lanes: [
+        { t: 'Morning briefing', who: 'Main agent, Fast', a: 7.5, b: 8.25 },
+        { t: 'Thesis sources', who: 'Researcher, Claude', a: 8, b: 11.5 },
+        { t: 'Acme proposal draft', who: 'Writer, Claude', a: 9.5, b: 13, ask: true },
+        { t: 'Q4 metrics', who: 'Coder, GPT', a: 12, b: 15.5 },
+        { t: 'Northwind call notes', who: 'Transcribed on your Mac', a: 14, b: 15 },
+        { t: 'Night shift', who: 'Backlog, tests, build log', a: 23, b: 24 }
+      ].map((l) => {
+        const k = hNow < l.a ? 'sched' : hNow < l.b ? 'work' : l.ask ? 'need' : 'done';
+        const st = ST[k];
+        const f = k === 'work' ? Math.round(((hNow - l.a) / (l.b - l.a)) * 100) : k === 'sched' ? 0 : 100;
+        return { t: l.t, who: l.who, x: pct(l.a).toFixed(2) + '%', w: (pct(l.b) - pct(l.a)).toFixed(2) + '%', label: hm(l.a) + ' to ' + hm(l.b), bg: st.bg, fill: f + '%', fillBg: k === 'work' ? 'var(--marker-strong)' : 'transparent', status: k === 'work' ? f + ' %' : st.status, chipBg: st.chipBg, chipFg: st.chipFg };
+      }),
+      promptShown: this.prompts[s.promptI % this.prompts.length].slice(0, s.promptN),
+      pills: menus.map((m, i) => ({ k: m.k, v: m.v, icon: m.icon, bg: (menuOpen && i === mi) ? 'var(--button)' : 'var(--surface-raised)', fg: (menuOpen && i === mi) ? 'var(--button-ink)' : 'var(--ink)', dotBg: (menuOpen && i === mi) ? 'rgba(255,255,255,.15)' : 'var(--bg)' })),
+      menu: { title: menus[mi].title, hint: menus[mi].hint, foot: menus[mi].foot, options: menus[mi].options.map((o) => ({ n: o.n, d: o.d, icon: o.icon, check: o.on ? '\u2713' : '', bg: o.on ? 'var(--surface-raised)' : 'transparent', tileBg: o.on ? 'var(--button)' : 'var(--surface-raised)', tileFg: o.on ? 'var(--button-ink)' : 'var(--ink)' })) },
       theme,
       heroLabel: 'Your data. Based.',
       hero1: Component.split('Your data.', 0, 22),
@@ -1100,12 +1374,12 @@ return Component;}},{template:"dc-tpl-mobile",mobile:true,props:{"theme":{"edito
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flapI: 0, when: 'beta' };
+    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flapI: 0, when: 'beta', clock: 0 };
     this.timers = { reply: [], loop: [] };
     this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'reading list'];
   }
   componentDidMount() {
-    this.tick = setInterval(() => this.setState({ flapI: this.state.flapI + 1 }), 2600);
+    this.tick = setInterval(() => this.setState({ flapI: this.state.flapI + 1, clock: (this.state.clock + 1) % 60 }), 2600);
   }
   componentWillUnmount() { clearInterval(this.tick); this.clearTimers(); }
   clearTimers(g) { (g ? [g] : ['reply', 'loop']).forEach((k) => { this.timers[k].forEach((t) => clearTimeout(t)); this.timers[k] = []; }); }
@@ -1177,8 +1451,32 @@ class Component extends DCLogic {
       { title: 'Page 3f9a2c…e81.md', joke: 'Export your workspace and you get thousands of files with a 32-character ID glued to every name. Good luck finding anything.', fixTitle: 'Real file names', fix: 'Markdown export with the names you gave your pages, plus a lossless archive that brings everything back. Leaving takes one click.', src: 'Notion help center on exports.' },
       { title: 'Ask AI → “Upgrade”', joke: 'Full Notion AI lives on Business at $20 a seat. Custom agents run on credits. Your OpenAI plan? Irrelevant, apparently.', fixTitle: 'Bring the AI you pay for', fix: 'After the beta, AI is opt-in: use the ChatGPT or Claude Code login you already have, or an API key. No second subscription, no credits.', src: 'Notion pricing, November 2026.' }
     ];
+    const hNow = 12.4 + (s.clock / 59) * 4.2;
+    const hm = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0');
+    const ST = {
+      sched: { status: 'Scheduled', dot: '#7C9BD6', chipBg: 'var(--status-ready)', chipFg: 'var(--ink)' },
+      work: { status: 'Working', dot: 'var(--marker-strong)', chipBg: 'var(--marker)', chipFg: 'var(--ink)' },
+      done: { status: 'Done', dot: 'var(--synced)', chipBg: '#DCEFE3', chipFg: '#2F6B47' },
+      need: { status: 'Needs you', dot: '#D9739A', chipBg: 'var(--status-review)', chipFg: '#8A2F52' }
+    };
+    const lanes = [
+      { t: 'Morning briefing', who: 'Main agent', a: 7.5, b: 8.25 },
+      { t: 'Thesis sources', who: 'Researcher, Claude', a: 8, b: 11.5 },
+      { t: 'Acme proposal draft', who: 'Writer, Claude', a: 9.5, b: 13, ask: true },
+      { t: 'Q4 metrics', who: 'Coder, GPT', a: 12, b: 15.5 },
+      { t: 'Northwind call notes', who: 'Transcribed on your Mac', a: 14, b: 15 },
+      { t: 'Night shift', who: 'Backlog, tests, build log', a: 23, b: 24 }
+    ].map((l) => {
+      const k = hNow < l.a ? 'sched' : hNow < l.b ? 'work' : l.ask ? 'need' : 'done';
+      const st = ST[k];
+      const f = k === 'work' ? Math.round(((hNow - l.a) / (l.b - l.a)) * 100) : k === 'sched' ? 0 : 100;
+      return { t: l.t, who: l.who, when: hm(l.a), dot: st.dot, status: k === 'work' ? f + ' %' : st.status, chipBg: st.chipBg, chipFg: st.chipFg, fill: f + '%', barBg: st.dot };
+    });
     return {
       theme,
+      nowTxt: hm(hNow),
+      lanes,
+      legend: [['Done', 'var(--synced)'], ['Working', 'var(--marker-strong)'], ['Needs you', '#D9739A'], ['Scheduled', '#7C9BD6']].map(([t, dot]) => ({ t, dot })),
       markSrc: '/mark.svg',
       markDarkSrc: '/mark-dark.svg',
       flapWord: this.flapWords[s.flapI % this.flapWords.length],

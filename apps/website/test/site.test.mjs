@@ -136,6 +136,11 @@ test("framing (17.11.2026): own brand first, the notes app before agents", () =>
   // order: workspace, moving in, your data, Notion pains, open, agents later
   const order = ["Based workspace preview", "pillars-title", "yours-title", "pain-title", "open-title", "later-title", "cta-title"].map((k) => home.indexOf(k));
   assert.ok(order.every((v, i) => v > 0 && (i === 0 || v > order[i - 1])), "section order " + order.join(","));
+  // Elija 17.11., 22:33: the agent preview stays on the site, marked as after the beta, below the notes app
+  const later = home.indexOf("later-title");
+  for (const t of ["Planned after the beta: one box for everything", "Start in your terminal. Finish on your phone.", "Planned after the beta: your day and your agents"]) {
+    assert.ok(home.indexOf(t) > later, `"${t}" sits in the after-the-beta section`);
+  }
   // header menus without Agents, footer keeps it
   for (const p of ["index.html", "workspace/index.html", "imprint/index.html"]) {
     const s = readFileSync(join(out, p), "utf8");
