@@ -4,6 +4,14 @@
 export const RELEASES_API = "https://api.github.com/repos/elija-7580/Based/releases?per_page=30";
 export const DOWNLOAD_PAGE = "https://github.com/elija-7580/Based/releases/tag/next-latest";
 
+/** Release-Linie eines Kanals: Based Next (`next-<version>`) oder Based Beta (`beta-v<version>`), je mit festem Link. */
+export interface ReleaseLine { tagPrefix: string; downloadPage: string }
+export function releaseLine(channel: "dev" | "beta"): ReleaseLine {
+  return channel === "beta"
+    ? { tagPrefix: "beta-v", downloadPage: "https://github.com/elija-7580/Based/releases/tag/beta-latest" }
+    : { tagPrefix: "next-", downloadPage: DOWNLOAD_PAGE };
+}
+
 interface ReleaseLike { tag_name?: unknown; draft?: unknown }
 
 /** Kleinere/gleich/größere Version („0.1.12“), fehlende Teile zählen als 0. */
@@ -17,13 +25,13 @@ export function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-/** Neueste Version aus Releases `next-<version>` (nicht `next-latest`, keine Entwürfe). */
-export function newestNextVersion(releases: readonly ReleaseLike[]): string | undefined {
+/** Neueste Version aus Releases `<tagPrefix><version>` (nicht `…-latest`, keine Entwürfe, keine andere Linie). */
+export function newestNextVersion(releases: readonly ReleaseLike[], tagPrefix = "next-"): string | undefined {
   let best: string | undefined;
   for (const r of releases) {
-    if (r.draft === true || typeof r.tag_name !== "string") continue;
-    const m = /^next-(\d+(?:\.\d+)*)$/.exec(r.tag_name);
-    if (m && (!best || compareVersions(m[1]!, best) > 0)) best = m[1]!;
+    if (r.draft === true || typeof r.tag_name !== "string" || !r.tag_name.startsWith(tagPrefix)) continue;
+    const v = r.tag_name.slice(tagPrefix.length);
+    if (/^\d+(?:\.\d+)*$/.test(v) && (!best || compareVersions(v, best) > 0)) best = v;
   }
   return best;
 }
@@ -35,11 +43,11 @@ export function isMissingUpdateManifest(message: string): boolean {
 
 export type FallbackResult = { kind: "newer"; version: string } | { kind: "current" } | { kind: "unknown" };
 
-export async function checkReleasesFallback(current: string, fetcher: typeof fetch = fetch): Promise<FallbackResult> {
+export async function checkReleasesFallback(current: string, fetcher: typeof fetch = fetch, tagPrefix = "next-"): Promise<FallbackResult> {
   try {
     const res = await fetcher(RELEASES_API, { headers: { Accept: "application/vnd.github+json" } });
     if (!res.ok) return { kind: "unknown" };
-    const newest = newestNextVersion((await res.json()) as ReleaseLike[]);
+    const newest = newestNextVersion((await res.json()) as ReleaseLike[], tagPrefix);
     if (!newest) return { kind: "unknown" };
     return compareVersions(newest, current) > 0 ? { kind: "newer", version: newest } : { kind: "current" };
   } catch {

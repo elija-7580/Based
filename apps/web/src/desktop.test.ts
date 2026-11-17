@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clipboardData, isTauri, updatePrompt } from "./desktop.js";
+import { clipboardData, isTauri, updatePrompt, upToDateText } from "./desktop.js";
 
 describe("desktop (BSD-164)", () => {
   it("erkennt die Tauri-Hülle an __TAURI_INTERNALS__", () => {
@@ -21,6 +21,9 @@ describe("Seitenfenster (BSD-202)", () => {
 describe("Update-Notizen (BSD-168)", () => {
   it("zeigt die Notizen aus latest.json, kürzt auf 12 Zeilen", () => {
     expect(updatePrompt("0.1.70", "0.1.62")).toBe("Based Next 0.1.70 is available (you have 0.1.62).\n\nInstall it and restart now?");
+    // Feedback 17. 11.: die Beta nennt sich selbst (nicht „Based Next“), und „kein Update“ sagt, welche Version läuft.
+    expect(updatePrompt("0.2.3", "0.2.2", undefined, "Based Beta")).toBe("Based Beta 0.2.3 is available (you have 0.2.2).\n\nInstall it and restart now?");
+    expect(upToDateText({ name: "Based Beta", version: "0.2.2" })).toBe("You’re on the newest version: Based Beta 0.2.2.");
     const p = updatePrompt("0.1.70", "0.1.62", "• AI chat button\n\n• ⇧⌘U opens the parent page\n");
     expect(p).toContain("What’s new:\n• AI chat button\n• ⇧⌘U opens the parent page\n\nInstall");
     const long = updatePrompt("1", "0", Array.from({ length: 15 }, (_, i) => `• item ${i}`).join("\n"));

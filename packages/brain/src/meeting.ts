@@ -229,6 +229,8 @@ export interface MeetingRecorderOptions {
   engine?: () => Promise<ChatEngine | undefined> | ChatEngine | undefined;
   /** Takt für die Uhr (ms; Standard 250). 0 = kein Takt (Tests). */
   tickMs?: number;
+  /** Wo man das Mikrofon freigibt, wenn es gesperrt ist (Host: Browser oder Mac-App). Standard: Browser. */
+  micBlockedHint?: string;
 }
 
 const IDLE: MeetingRecorderState = { meetingID: undefined, recording: false, paused: false, elapsed: 0, roles: [], processing: [], summarizing: [], error: undefined, warning: undefined };
@@ -301,7 +303,7 @@ export class MeetingRecorder {
     try {
       capture = await this.o.capture({ systemAudio: opts.systemAudio === true, onChunk });
     } catch (e) {
-      this.fail(store, meetingID, captureMessage(e));
+      this.fail(store, meetingID, captureMessage(e, this.o.micBlockedHint));
       return;
     }
     // Notizen, die beim Start schon Text haben, bekommen keinen Stempel.
@@ -520,9 +522,12 @@ function withDefaultSpeaker(s: TranscriptSegment, hasSystem: boolean): Transcrip
   return s;
 }
 
-function captureMessage(e: unknown): string {
+export const MIC_HINT_BROWSER = "Allow it for this site in the browser settings.";
+export const MIC_HINT_MAC = "Allow it in System Settings → Privacy & Security → Microphone, then try again.";
+
+function captureMessage(e: unknown, hint = MIC_HINT_BROWSER): string {
   const name = e instanceof Error ? e.name : "";
-  if (name === "NotAllowedError" || name === "SecurityError") return "Microphone access is blocked. Allow it for this site in the browser settings.";
+  if (name === "NotAllowedError" || name === "SecurityError") return `Microphone access is blocked. ${hint}`;
   if (name === "NotFoundError") return "No microphone found.";
   return e instanceof Error ? e.message : String(e);
 }

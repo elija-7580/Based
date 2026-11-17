@@ -9,13 +9,13 @@ import { TEAMSPACE_ICONS } from "../../components/TeamspaceDialog.js";
 import { Text } from "@astryxdesign/core/Text";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
-import { useId, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import type { Appearance } from "../../appearance.js";
 import { ExportDialog, ImportDialog } from "../../components/ImportExport.js";
 import { PagePickerDialog } from "../../components/MoveDialog.js";
 import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
-import { checkForUpdates, isTauri } from "../../desktop.js";
+import { appIdentity, checkForUpdates, isTauri, type AppIdentity } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { HangsSection } from "./hangs.js";
@@ -313,6 +313,14 @@ function BillingSection() {
 function UpdatesSection() {
   const [busy, setBusy] = useState(false);
   const auto = useSyncExternalStore(autoUpdatePref.subscribe, autoUpdatePref.get);
+  // Feedback 17. 11.: bei den Updates steht, welche Version läuft.
+  const [app, setApp] = useState<AppIdentity>();
+  useEffect(() => {
+    if (!isTauri()) return;
+    let live = true;
+    void appIdentity().then((a) => { if (live) setApp(a); }).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
   if (!isTauri()) {
     return (
       <Group>
@@ -322,7 +330,7 @@ function UpdatesSection() {
   }
   return (
     <Group>
-      <Row label="Desktop app" hint={auto ? "Based Next checks for updates when it starts" : "Automatic checks are off — check by hand"}>
+      <Row label={app ? `${app.name} ${app.version}` : "Desktop app"} hint={auto ? "Checks for updates when it starts" : "Automatic checks are off — check by hand"}>
         <BasedButton label="Check for updates…" busy={busy} onClick={() => { setBusy(true); void checkForUpdates({ interactive: true }).finally(() => setBusy(false)); }} />
       </Row>
       <Switch label="Check automatically" description="Look for a new version a few seconds after Based starts" value={auto} onChange={(on) => autoUpdatePref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
