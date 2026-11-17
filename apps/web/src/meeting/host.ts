@@ -3,7 +3,7 @@
 // Swift-App transkribiert auf dem Gerät (Parakeet); ein Anbieter-Format für Audio gibt es in der Vorlage nicht.
 // Tests/E2E setzen über `globalThis.__basedMeeting` einen festen Transcriber und eine ScriptedEngine ein.
 import {
-  FixedTranscriber, MEETING_SUMMARY_SYSTEM, MeetingRecorder, ScriptedEngine,
+  FixedTranscriber, MEETING_SUMMARY_SYSTEM, MeetingRecorder, MIC_HINT_MAC, ScriptedEngine,
   type CapturedTrack, type ChatEngine, type FixedLine, type ScriptStep, type Transcriber,
 } from "@based/brain";
 import { meetingInfo, type WorkspaceStore } from "@based/core";
@@ -11,6 +11,7 @@ import type { MeetingHost, MeetingHostState } from "@based/editor";
 import { aiConfig } from "../chat/aiConfig.js";
 import type { PageReplica, StoreClient } from "../worker/client.js";
 import { canCaptureSystemAudio, canRecordAudio, startBrowserCapture } from "./capture.js";
+import { isTauri } from "../desktop.js";
 import { MeetingPlayer } from "./player.js";
 import { onBattery, watchPower } from "./power.js";
 import { meetingTranscribePref, pendingTranscripts, syncConfig } from "../shell/storage.js";
@@ -59,6 +60,8 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
 
   const recorder = new MeetingRecorder({
     capture: startBrowserCapture,
+    // BSD-453: in der Mac-App gibt es keine „browser settings“.
+    ...(isTauri() ? { micBlockedHint: MIC_HINT_MAC } : {}),
     async saveAudio(t: CapturedTrack) {
       const blob = t.data as Blob;
       const bytes = await blob.arrayBuffer();
