@@ -66,9 +66,15 @@ engine), view: `packages/editor/src/schema/meeting.tsx`, browser capture/playbac
 - Notes typed while recording get the recording time; transcript lines, stamped notes and summary citations play
   from there.
 - The summary runs only when you click *Generate summary* (engine from Settings → Agents & AI).
-- **No transcription yet**: the Swift app transcribes on the device (Parakeet), and there is no provider request
-  format for audio in the Swift code to port. The `Transcriber` interface is ready; tests use a fixed transcript.
-  No speaker separation (diarization) and no voice profiles in the web app.
+- **Transcription** (BSD-231): whisper.cpp on a `based-server` (`/local/transcribe`). The app asks the Mac app's
+  own local server first, then the connected server (`apps/web/src/meeting/servers.ts`). Set-up lives in
+  Settings → Meeting notes → *Transcription* and names the next missing step:
+  1. Mac app: turn on the local server (Settings → Sync & server).
+  2. whisper.cpp on that machine – on a Mac `brew install whisper-cpp`. The local server finds `whisper-cli`
+     itself (login-shell `PATH`, `/opt/homebrew/bin`, `/usr/local/bin`); a hosted server needs `BASED_WHISPER_BIN`.
+  3. *Download model* – whisper-base (148 MB) from the pinned source, only on that click; size and SHA-256 checked.
+  A recording made before set-up gets *Transcribe recording* in its Transcript tab. Not bundled yet: `whisper-cli`
+  inside the app (so step 2 disappears). No speaker separation (diarization) and no voice profiles in the web app.
 
 ## Other systems (planned)
 

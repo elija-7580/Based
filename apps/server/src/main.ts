@@ -288,7 +288,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).
     ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL || undefined, lowModel: process.env.BASED_AGENT_LOW_MODEL || undefined }) } : {}),
-    ...(whisperFromEnv(process.env) ? { whisper: { ...whisperFromEnv(process.env)!, ...(defaultModelsDir(opts.db) ? { modelsDir: defaultModelsDir(opts.db)! } : {}) } } : {}),
+    ...(whisperFromEnv(process.env, { local: opts.local }) ? { whisper: { ...whisperFromEnv(process.env, { local: opts.local })!, ...(defaultModelsDir(opts.db) ? { modelsDir: defaultModelsDir(opts.db)! } : {}) } } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.backupDir ? { backupDir: opts.backupDir, backupCreate: opts.backupCreate } : {}),
     // BSD-334: Gerätekennung im Ordner – ohne Angabe der Knotenname (nur erlaubte Zeichen)

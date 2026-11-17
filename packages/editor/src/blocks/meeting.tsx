@@ -183,7 +183,7 @@ export function MeetingBlock(props: MeetingBlockProps) {
           <SummaryTab store={store} id={id} info={info} summaryID={summaryID} count={summaryBlocks} host={host} summarizing={summarizing} editable={editable}
             disabled={!hasTracks || !host} onPlay={play} hasContent={segments.length > 0 || notesHaveText} renderSection={props.renderSection} />
         ) : (
-          <TranscriptTab store={store} id={id} info={info} editable={editable} recording={recordingHere} host={host} disabled={!hasTracks || !host} onPlay={play} playingFrom={playback?.from} />
+          <TranscriptTab store={store} id={id} info={info} editable={editable} recording={recordingHere} processing={processing} host={host} disabled={!hasTracks || !host} onPlay={play} playingFrom={playback?.from} />
         )}
       </div>
     </div>
@@ -386,15 +386,30 @@ function SummaryTab(props: {
 // MARK: Transkript
 
 function TranscriptTab(props: {
-  store: WorkspaceStore; id: string; info: MeetingInfo; editable: boolean; recording: boolean; host: MeetingHost | undefined; disabled: boolean; onPlay: (s: number) => void; playingFrom: number | undefined;
+  store: WorkspaceStore; id: string; info: MeetingInfo; editable: boolean; recording: boolean; processing: boolean; host: MeetingHost | undefined; disabled: boolean; onPlay: (s: number) => void; playingFrom: number | undefined;
 }) {
   const { store, info } = props;
   const segments = meetingTranscript(store, props.id);
   if (segments.length === 0) {
     const text = !props.host?.hasTranscriber()
-      ? "Transcription isn't available in this app yet. The recording and your timestamped notes are saved with the meeting."
+      ? "Transcription isn't set up on this device yet. Set it up in Settings → Meeting notes. The recording and your timestamped notes are saved with the meeting."
       : props.recording ? "Listening… text appears after the first sentence." : "No transcript yet. Start transcribing to get one.";
-    return <p className="bx-meet-hint" data-testid="meeting-transcript-empty">{text}</p>;
+    // Feedback 17. 11.: Aufnahme von vorher (ohne Transkription gemacht) nachträglich transkribieren.
+    const host = props.host;
+    const later = host?.transcribeNow && host.hasTranscriber() && props.editable && !props.recording && !props.processing && !props.disabled && (info.tracks?.length ?? 0) > 0 && !info.transcribePending;
+    return (
+      <>
+        <p className="bx-meet-hint" data-testid="meeting-transcript-empty">{later ? "This recording has no transcript yet." : text}</p>
+        {later ? (
+          <div className="bx-meet-row">
+            <BasedButton label="Transcribe recording" size="sm" onClick={() => {
+              crumb("meeting transcribe now");
+              void host.transcribeNow?.(store, props.id);
+            }} />
+          </div>
+        ) : null}
+      </>
+    );
   }
   return (
     <>

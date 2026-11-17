@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { localModels } from "@based/brain";
 import { defaultModelsDir, FileModelStore } from "../src/models.js";
-import { checkWav, whisperFromEnv } from "../src/transcribe.js";
+import { checkWav, findWhisper, whisperFromEnv } from "../src/transcribe.js";
 import { startApp, TOKEN } from "./helpers.js";
 
 const apps: { close(): Promise<void> }[] = [];
@@ -51,7 +51,7 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     expect(args[args.indexOf("--prompt") + 1]).toBe("Based, Elijá; $(rm -rf /)");
     expect(args).toContain("-oj");
     expect(readdirSync(tmpdir()).filter((f) => f.startsWith("based-whisper-") && !f.startsWith("based-whisper-test-")).length).toBe(before);
-    expect((await (await fetch(`${app.url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json())).toEqual({ engine: "whisper.cpp", ready: true, model: { source: "file", installed: true } });
+    expect((await (await fetch(`${app.url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json())).toEqual({ engine: "whisper.cpp", engineInstalled: true, ready: true, model: { source: "file", installed: true } });
   });
 
   it("Falsches Format, falsche Sprache, ohne Token, Fehler von whisper-cli", async () => {
@@ -107,6 +107,32 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     expect((await model("remove")).status).toBe(200);
     expect((await state()).ready).toBe(false);
     expect((await model("explode")).status).toBe(400);
+  });
+
+  it("Lokaler Server der Mac-App: findet ein installiertes whisper-cli selbst und sagt, was fehlt (Feedback 17. 11.)", async () => {
+    // Suche: PATH zuerst, dann die üblichen Homebrew-Orte; alter Name whisper-cpp zählt; relative Einträge nie.
+    const has = (...files: string[]) => (f: string) => files.includes(f);
+    expect(findWhisper("/a:/b", has("/b/whisper-cli"))).toBe("/b/whisper-cli");
+    expect(findWhisper("/a", has("/opt/homebrew/bin/whisper-cli"))).toBe("/opt/homebrew/bin/whisper-cli");
+    expect(findWhisper("/a", has("/a/whisper-cpp"))).toBe("/a/whisper-cpp");
+    expect(findWhisper("rel:.:", has("rel/whisper-cli", "whisper-cli"), [])).toBeUndefined();
+    expect(findWhisper(undefined, () => false)).toBeUndefined();
+    // Ohne BASED_WHISPER_BIN: nur der lokale Server bekommt die Routen.
+    expect(whisperFromEnv({})).toBeUndefined();
+    expect(whisperFromEnv({}, { local: true })).toMatchObject({ bin: "" });
+    expect(whisperFromEnv({ BASED_WHISPER_BIN: "/x/whisper-cli" }, { local: true })).toEqual({ bin: "/x/whisper-cli" });
+
+    const dir = mkdtempSync(join(tmpdir(), "based-whisper-test-"));
+    const { model } = fakeWhisper(dir);
+    let installed = false;
+    const app = await startApp({ whisper: { bin: "", find: () => (installed ? join(dir, "whisper-cli") : undefined), model } });
+    apps.push(app);
+    const state = async () => (await (await fetch(`${app.url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json()) as { ready: boolean; engineInstalled: boolean };
+    expect(await state()).toMatchObject({ ready: false, engineInstalled: false });
+    expect((await post(`${app.url}/local/transcribe`, wav(1))).status).toBe(503);
+    installed = true; // „brew install whisper-cpp“, ohne Neustart
+    expect(await state()).toMatchObject({ ready: true, engineInstalled: true });
+    expect((await post(`${app.url}/local/transcribe`, wav(1))).status).toBe(200);
   });
 
   it("Einrichtung aus der Umgebung, WAV-Kopf", () => {

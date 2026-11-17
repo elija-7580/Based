@@ -14,8 +14,10 @@ import { canCaptureSystemAudio, canRecordAudio, startBrowserCapture } from "./ca
 import { isTauri } from "../desktop.js";
 import { MeetingPlayer } from "./player.js";
 import { onBattery, watchPower } from "./power.js";
-import { meetingTranscribePref, pendingTranscripts, syncConfig } from "../shell/storage.js";
-import { serverWhisper, whisperReady } from "./whisper.js";
+import { meetingTranscribePref, pendingTranscripts } from "../shell/storage.js";
+import { onTranscriptionChanged, serverWhisper, whisperReady, type ServerAccess } from "./whisper.js";
+import { transcriptionServers } from "./servers.js";
+import { localServer } from "../desktop/localServer.js";
 
 export interface MeetingTestHooks {
   /** Fester Transcriber (Zeilen mit Zeiten in Sekunden ab Aufnahmebeginn); `undefined` = keiner. */
@@ -36,15 +38,22 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
   // BSD-231 Teil 3c: whisper.cpp auf dem verbundenen based-server, wenn er es anbietet (Test-Transcriber geht vor).
   let serverTranscriber: Transcriber | undefined;
   let probedFor = "";
-  const probeServer = async () => {
-    const cfg = syncConfig.get();
-    const key = cfg ? `${cfg.url}\n${cfg.token}` : "";
-    if (key === probedFor) return;
+  // Feedback 17. 11.: auch der lokale Server der Mac-App (zuerst), nicht nur der verbundene; der erste, der bereit ist.
+  const probeServer = async (force = false) => {
+    const servers = await transcriptionServers();
+    const key = servers.map((s) => `${s.url}\n${s.token}`).join("\n\n");
+    if (!force && key === probedFor) return;
     probedFor = key;
-    const ready = await whisperReady(cfg);
-    serverTranscriber = ready && cfg ? serverWhisper(cfg) : undefined;
+    let found: ServerAccess | undefined;
+    for (const s of servers) if (await whisperReady(s)) { found = s; break; }
+    if (probedFor !== key) return; // inzwischen neu gefragt
+    serverTranscriber = found ? serverWhisper(found) : undefined;
     notify();
+    if (found) void drain();
   };
+  // Modell geladen/entfernt (Einstellungen) oder lokaler Server gestartet/gestoppt → neu fragen.
+  onTranscriptionChanged(() => void probeServer(true));
+  if (isTauri()) localServer().subscribe(() => void probeServer());
   const activeTranscriber = () => transcriber ?? serverTranscriber;
   let script: ScriptStep[] | undefined;
   const urls = new Map<string, string>();

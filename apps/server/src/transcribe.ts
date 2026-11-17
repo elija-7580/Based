@@ -8,15 +8,20 @@ import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { localModels } from "@based/brain";
 import type { Logger } from "./log.js";
 import { FileModelStore } from "./models.js";
 import { error, json, type Router } from "./router.js";
 
 export interface WhisperConfig {
-  /** whisper-cli (whisper.cpp ≥ 1.7). */
+  /** whisper-cli (whisper.cpp ≥ 1.7). Leer: `find` sucht es (lokaler Server der Mac-App). */
   bin: string;
+  /**
+   * Feedback 17. 11.: Der lokale Server der Mac-App bekommt kein BASED_WHISPER_BIN – er sucht ein installiertes
+   * whisper-cli selbst, bei jeder Anfrage neu (nach `brew install whisper-cpp` ohne Neustart bereit).
+   */
+  find?: () => string | undefined;
   /** Eigenes ggml-Modell; ohne: whisper-base aus dem Katalog in `modelsDir` (erst nach ausdrücklichem Laden). */
   model?: string;
   /** Ordner für Modelle aus dem Katalog (Standard `<db>.models`). */
@@ -32,11 +37,37 @@ export interface WhisperConfig {
 /** Größte WAV (16 MiB ≈ 8,7 min bei 16 kHz mono 16 Bit). */
 export const TRANSCRIBE_BODY_LIMIT = 16 << 20;
 
-export function whisperFromEnv(env: NodeJS.ProcessEnv): WhisperConfig | undefined {
+/** Namen des Programms: `whisper-cli` (whisper.cpp ≥ 1.7.4, Homebrew `whisper-cpp`), davor `whisper-cpp`. */
+export const WHISPER_NAMES = ["whisper-cli", "whisper-cpp"] as const;
+/** Übliche Orte auf dem Mac, falls der PATH der Login-Shell sie nicht nennt (Homebrew auf Apple Silicon und Intel). */
+export const WHISPER_DIRS = ["/opt/homebrew/bin", "/usr/local/bin"] as const;
+
+/** Sucht whisper-cli im PATH und an den üblichen Orten; nur absolute Ordner, erste vorhandene Datei gewinnt. */
+export function findWhisper(path: string | undefined, exists: (file: string) => boolean = existsSync, extra: readonly string[] = WHISPER_DIRS): string | undefined {
+  const seen = new Set<string>();
+  for (const dir of [...(path ?? "").split(delimiter), ...extra]) {
+    if (!dir.startsWith("/") || seen.has(dir)) continue;
+    seen.add(dir);
+    for (const name of WHISPER_NAMES) {
+      const file = join(dir, name);
+      if (exists(file)) return file;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Einrichtung aus der Umgebung. Mit BASED_WHISPER_BIN wie bisher. `local` (lokaler Server der Mac-App): auch ohne
+ * die Variable gibt es die Routen – das Programm wird gesucht, und GET /local/transcribe sagt, was noch fehlt.
+ */
+export function whisperFromEnv(env: NodeJS.ProcessEnv, opts: { local?: boolean } = {}): WhisperConfig | undefined {
   const bin = env.BASED_WHISPER_BIN, model = env.BASED_WHISPER_MODEL;
-  if (!bin) return undefined;
+  if (!bin && !opts.local) return undefined;
   const threads = Number(env.BASED_WHISPER_THREADS);
-  return { bin, ...(model ? { model } : {}), ...(Number.isInteger(threads) && threads > 0 ? { threads } : {}) };
+  return {
+    bin: bin ?? "", ...(bin ? {} : { find: () => findWhisper(process.env.PATH) }),
+    ...(model ? { model } : {}), ...(Number.isInteger(threads) && threads > 0 ? { threads } : {}),
+  };
 }
 
 /** Prüft den WAV-Kopf: PCM, mono, 16 kHz, 16 Bit. */
@@ -52,7 +83,7 @@ export function checkWav(b: Uint8Array): string | undefined {
 const LANGUAGE = /^(auto|[a-z]{2,3})$/;
 
 /** Ein whisper-cli-Lauf; gibt das JSON (`-oj`) zurück. */
-export async function runWhisper(cfg: WhisperConfig & { model: string }, wav: Uint8Array, opts: { language?: string; prompt?: string } = {}): Promise<unknown> {
+export async function runWhisper(cfg: Pick<WhisperConfig, "bin" | "threads" | "timeoutMs"> & { model: string }, wav: Uint8Array, opts: { language?: string; prompt?: string } = {}): Promise<unknown> {
   const dir = await mkdtemp(join(tmpdir(), "based-whisper-"));
   try {
     const input = join(dir, "in.wav"), out = join(dir, "out");
@@ -140,9 +171,12 @@ export function registerTranscribeRoutes(router: Router, cfg: WhisperConfig, log
   let queue: Promise<unknown> = Promise.resolve();
   const catalog = !cfg.model && cfg.modelsDir ? new ServerModel(cfg.modelsDir, cfg, log) : undefined;
   const modelPath = async () => (cfg.model ? (existsSync(cfg.model) ? cfg.model : undefined) : await catalog?.path());
+  const binPath = () => (cfg.bin && existsSync(cfg.bin) ? cfg.bin : cfg.find?.());
   router.add("GET", "/local/transcribe", async () => json({
     engine: "whisper.cpp",
-    ready: existsSync(cfg.bin) && (await modelPath()) !== undefined,
+    // Feedback 17. 11.: getrennt melden, was fehlt – das Programm oder das Modell (Einstellungen → Meeting notes).
+    engineInstalled: binPath() !== undefined,
+    ready: binPath() !== undefined && (await modelPath()) !== undefined,
     model: cfg.model ? { source: "file", installed: existsSync(cfg.model) } : catalog ? { source: "catalog", ...(await catalog.state()) } : { source: "none", installed: false },
   }));
   // Teil 3d: Modell aus dem Katalog laden lassen (nur Besitzer, nur auf ausdrücklichen Aufruf).
@@ -164,9 +198,10 @@ export function registerTranscribeRoutes(router: Router, cfg: WhisperConfig, log
     // Fachwörter als Startkontext; ohne Steuerzeichen, kurz.
     const prompt = [...(url.searchParams.get("prompt") ?? "")].map((c) => (c.charCodeAt(0) < 32 || c === "\u007f" ? " " : c)).join("").slice(0, 400).trim();
     const model = await modelPath();
-    if (!existsSync(cfg.bin) || !model) return error("whisper.cpp or its model is missing on the server", 503);
+    const bin = binPath();
+    if (!bin || !model) return error("whisper.cpp or its model is missing on the server", 503);
     const started = Date.now();
-    const run = queue.then(() => runWhisper({ ...cfg, model }, body, { language, ...(prompt ? { prompt } : {}) }));
+    const run = queue.then(() => runWhisper({ ...cfg, bin, model }, body, { language, ...(prompt ? { prompt } : {}) }));
     queue = run.catch(() => undefined);
     try {
       const result = await run;
