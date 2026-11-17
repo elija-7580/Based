@@ -2,6 +2,7 @@
 // standardmäßig ohne Nutzertext; Liste der Berichte, Log-Filter, Entwickler-Ansicht; Aufzeichnung kostet beim Tippen nichts.
 import { expect, type Page } from "@playwright/test";
 import { editor, openNewPage, ready, test } from "./replay/fixture.js";
+import { overflows, overlaps } from "./layout-checks.js";
 
 const SECRET = "Quarterly salary Ada Lovelace 4711";
 
@@ -87,6 +88,56 @@ test("Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem",
   expect(json).not.toContain("SECRETSECRET");
   expect(r!.bundle.screenshot).toBeUndefined();
   expect(r!.shotSize).toBe(0);
+});
+
+// BSD-467: Nach dem Speichern zeigt der Dialog den Weg zu uns – Adresse, Hinweis zum Anhang, Knopf „Email report“
+// (mailto mit Version, Kanal, System; ohne Seiteninhalt und ohne Notiz). Fotos 1280 × 820 hell/dunkel.
+for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (${theme})`, async ({ page, browserName }) => {
+  await page.addInitScript((t) => {
+    localStorage.setItem("based.appearance", JSON.stringify({ theme: t }));
+    const w = globalThis as unknown as { __mailto: string[] };
+    w.__mailto = [];
+    const click = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+      if (this.href.startsWith("mailto:")) { w.__mailto.push(this.href); return; }
+      click.call(this);
+    };
+  }, theme);
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await ready(page);
+  await openNewPage(page, "Mail");
+  await page.keyboard.type(SECRET);
+  await page.keyboard.press("ControlOrMeta+Shift+b");
+  const dialog = page.getByRole("dialog", { name: "Report a problem" });
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog.getByRole("textbox", { name: "What did you do, and what happened?" }).fill("Private note about Lovelace");
+  await dialog.getByRole("button", { name: "Save report" }).click();
+  const saved = page.getByRole("dialog", { name: "Report saved" });
+  const box = saved.getByTestId("report-email");
+  await expect(box).toContainText("Send it to hello@basednotes.app");
+  await expect(box).toContainText("Save it as a file first, then attach the file to the email.");
+  await page.mouse.move(0, 0);
+  expect(await overflows(page)).toEqual([]);
+  expect(await overlaps(page)).toEqual([]);
+  if (browserName === "chromium") await saved.screenshot({ path: `../../docs/design/screens/report-saved-email-${theme}.png` });
+
+  await box.getByRole("button", { name: "Email report" }).click();
+  const hrefs = await page.evaluate(() => (globalThis as unknown as { __mailto: string[] }).__mailto);
+  expect(hrefs).toHaveLength(1);
+  const href = hrefs[0]!;
+  expect(href).toBe(await box.getAttribute("data-mailto"));
+  expect(href.startsWith("mailto:hello@basednotes.app?subject=")).toBe(true);
+  const text = decodeURIComponent(href);
+  expect(text).toMatch(/subject=Based \S+ – problem report/);
+  expect(text).toContain("Channel: dev");
+  expect(text).toMatch(/Report: \d{8}-\d{6}-\w+/);
+  for (const leak of ["Quarterly", "Lovelace", "4711", "Mozilla"]) expect(text).not.toContain(leak);
+  await expect(saved).toBeVisible();
+
+  // kleinstes Fenster: nichts läuft heraus, Knopf erreichbar
+  await page.setViewportSize({ width: 900, height: 600 });
+  await expect(box.getByRole("button", { name: "Email report" })).toBeInViewport();
+  expect(await overflows(page)).toEqual([]);
 });
 
 test("Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht", async ({ page }) => {

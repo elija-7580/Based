@@ -36,6 +36,13 @@ test("Seitenfenster (BSD-202): Rechte gelten auch für page-*, Fenster dürfen a
   assert.ok(cap.permissions.includes("core:webview:allow-create-webview-window"));
 });
 
+test("BSD-467: Opener darf nur mailto öffnen (Problem melden → Mail), keine beliebigen Adressen", () => {
+  const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/default.json", import.meta.url), "utf8"));
+  const open = cap.permissions.filter((x) => (typeof x === "string" ? x : x.identifier).startsWith("opener:allow-open"));
+  assert.deepEqual(open, [{ identifier: "opener:allow-open-url", allow: [{ url: "mailto:*" }] }]);
+  assert.ok(!cap.permissions.includes("opener:default"));
+});
+
 test("BSD-138/414: Bundle und Node als Resource (kein externalBin); Shell-Plugin nur für vier feste Aufrufe", () => {
   assert.equal(conf.bundle.externalBin, undefined);
   // BSD-314: node-pty (native Datei für das Terminal) liegt daneben in node_modules/, nicht im Bundle.

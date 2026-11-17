@@ -180,6 +180,22 @@ export async function openPageWindow(hash: string, title: string): Promise<void>
   });
 }
 
+/**
+ * BSD-467: mailto-Adresse im Mail-Programm öffnen. Mac-App: über das Opener-Plugin (die Webview folgt mailto-Links
+ * nicht; Recht nur für `mailto:*`), Browser: wie ein Klick auf einen Link.
+ */
+export async function openMailto(href: string): Promise<void> {
+  if (!href.startsWith("mailto:")) throw new Error("Not a mail address");
+  if (isTauri()) {
+    const { openUrl } = await import("@tauri-apps/plugin-opener");
+    await openUrl(href);
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = href;
+  a.click();
+}
+
 /** BSD-358: HTML der Zwischenablage aus der Hülle (nur macOS); ohne: undefined. */
 async function readClipboardHTML(): Promise<string | undefined> {
   try {

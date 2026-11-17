@@ -1,13 +1,17 @@
 // BSD-319: Dialog „Report a problem“ – ein Satz, Foto (abwählbar), echter Text nur per Häkchen. Danach: wo das Bündel
-// liegt (Finder in der Mac-App, Datei im Browser).
+// liegt (Finder in der Mac-App, Datei im Browser). BSD-467: dazu der Weg zu uns – Mail an hello@basednotes.app mit
+// Version, Kanal und System (kein Seiteninhalt), den Bericht hängt der Tester an.
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { Text } from "@astryxdesign/core/Text";
 import { TextArea } from "@astryxdesign/core/TextArea";
-import { VStack } from "@astryxdesign/core/Layout";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { BasedButton, BasedDialog } from "@based/ui/astryx";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { CrashReportPrompt } from "./CrashReportPrompt.js";
-import { bundleFile, reportStore } from "../shell/reportStore.js";
+import { FEEDBACK_EMAIL, reportEmail } from "@based/core";
+import { openMailto } from "../desktop.js";
+import { APP_NAME, CHANNEL } from "../shell/beta.js";
+import { bundleFile, REPORTS_DIR, reportStore } from "../shell/reportStore.js";
 import { closeReport, reportUI, saveReport } from "../shell/reportUI.js";
 
 export function ReportProblemDialog({ onOpenDiagnostics }: { onOpenDiagnostics: () => void }) {
@@ -18,12 +22,14 @@ export function ReportProblemDialog({ onOpenDiagnostics }: { onOpenDiagnostics: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [canReveal, setCanReveal] = useState(false);
+  const [mailFailed, setMailFailed] = useState(false);
   useEffect(() => {
     if (s.phase === "open") {
       setNote("");
       setShot(true);
       setRealText(false);
       setError(undefined);
+      setMailFailed(false);
     }
   }, [s.phase]);
   useEffect(() => {
@@ -45,6 +51,10 @@ export function ReportProblemDialog({ onOpenDiagnostics }: { onOpenDiagnostics: 
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     };
+    const inBrowser = s.saved.where === "this browser";
+    const file = inBrowser ? `based-report-${s.saved.id}.json` : `~/${REPORTS_DIR}/${s.saved.id}`;
+    const mail = reportEmail({ appName: APP_NAME, channel: CHANNEL, app: s.bundle.app, reportID: s.saved.id, attach: file });
+    const email = () => void openMailto(mail.href).catch(() => setMailFailed(true));
     return (
       <BasedDialog open onClose={closeReport} title="Report saved" subtitle={s.saved.where === "this browser" ? "Kept in this browser. Save it as a file to pass it on." : "Agents can read it with `based reports`."}
         actions={<>
@@ -52,9 +62,17 @@ export function ReportProblemDialog({ onOpenDiagnostics }: { onOpenDiagnostics: 
           <BasedButton label="Open Diagnostics" variant="ghost" onClick={() => { closeReport(); onOpenDiagnostics(); }} />
           <BasedButton label="Done" variant="primary" onClick={closeReport} />
         </>}>
-        <VStack gap={1} data-testid="report-saved">
-          <Text type="body">{`${s.saved.events} recorded events · ${s.saved.issues === 0 ? "no layout issues found" : `${s.saved.issues} layout issue${s.saved.issues === 1 ? "" : "s"} found`}`}</Text>
-          {s.saved.where !== "this browser" ? <Text type="code" color="secondary" data-testid="report-where">{s.saved.where}</Text> : null}
+        <VStack gap={4}>
+          <VStack gap={1} data-testid="report-saved">
+            <Text type="body">{`${s.saved.events} recorded events · ${s.saved.issues === 0 ? "no layout issues found" : `${s.saved.issues} layout issue${s.saved.issues === 1 ? "" : "s"} found`}`}</Text>
+            {s.saved.where !== "this browser" ? <Text type="code" color="secondary" data-testid="report-where">{s.saved.where}</Text> : null}
+          </VStack>
+          <VStack gap={2} data-testid="report-email" data-mailto={mail.href}>
+            <Text type="body">{`Send it to ${FEEDBACK_EMAIL}`}</Text>
+            <Text type="body" color="secondary">{inBrowser ? "Save it as a file first, then attach the file to the email." : "Attach the report folder from Finder to the email."}</Text>
+            {mailFailed ? <Text type="body" color="secondary" data-testid="report-email-failed">{`Couldn’t open your mail app. Write to ${FEEDBACK_EMAIL} and attach the report.`}</Text> : null}
+            <HStack><BasedButton label="Email report" onClick={email} /></HStack>
+          </VStack>
         </VStack>
       </BasedDialog>
     );

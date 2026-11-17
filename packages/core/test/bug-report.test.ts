@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { cpuTime, expectWithinBudget } from "./perf-budget.js";
 import {
-  buildBugBundle, bundleID, comboFor, InputRecorder, layoutIssues, normalizeDoc, parseBugBundle, replayPlan, scrambleHTML, scrambleText,
+  buildBugBundle, bundleID, comboFor, FEEDBACK_EMAIL, InputRecorder, reportEmail, systemLabel, layoutIssues, normalizeDoc, parseBugBundle, replayPlan, scrambleHTML, scrambleText,
   type BugBundleInput, type RecordedEvent,
 } from "../src/index.js";
 
@@ -165,5 +165,52 @@ describe("Wiedergabe-Plan", () => {
     expect(comboFor(" ", {})).toBe("Space");
     expect(comboFor("B", { ctrl: true, shift: true })).toBe("ControlOrMeta+Shift+b");
     expect(normalizeDoc(doc("a"))).not.toHaveProperty("content.0.content.0.attrs.id");
+  });
+});
+
+describe("BSD-467: Mail zum Bericht", () => {
+  const mac = { shell: "desktop", version: "0.9.0", commit: "abc1234", platform: "MacIntel", userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15" };
+  const mail = (app = mac) => reportEmail({ appName: "Based Beta", channel: "beta", app, reportID: "20261117-122500-ab3f", attach: "~/.config/based/reports/20261117-122500-ab3f" });
+
+  it("geht an hello@basednotes.app mit Version, Kanal und System im Betreff/Text", () => {
+    const m = mail();
+    expect(FEEDBACK_EMAIL).toBe("hello@basednotes.app");
+    expect(m.to).toBe(FEEDBACK_EMAIL);
+    expect(m.subject).toBe("Based Beta 0.9.0 – problem report");
+    expect(m.body).toContain("App: Based Beta 0.9.0 (abc1234)");
+    expect(m.body).toContain("Channel: beta");
+    expect(m.body).toContain("System: macOS");
+    expect(m.body).toContain("Report: 20261117-122500-ab3f");
+    expect(m.body).toContain("~/.config/based/reports/20261117-122500-ab3f");
+  });
+
+  it("kodiert nach RFC 6068: Leerzeichen %20, Zeilen %0D%0A, keine rohen Sonderzeichen", () => {
+    const { href, subject, body } = mail();
+    expect(href.startsWith("mailto:hello@basednotes.app?subject=")).toBe(true);
+    const q = href.slice(href.indexOf("?") + 1);
+    expect(q).not.toMatch(/[\s+\n]/);
+    expect(q).toContain("%20");
+    expect(q).toContain("%0D%0A");
+    expect(q).not.toMatch(/(?<!%0D)%0A/);
+    const params = new URLSearchParams(q.replace(/%0D%0A/g, "%0A"));
+    expect(params.get("subject")).toBe(subject);
+    expect(params.get("body")).toBe(body);
+  });
+
+  it("enthält keinen Seiteninhalt, keine Notiz und keinen User-Agent", () => {
+    const { href, body } = mail();
+    for (const leak of ["Mozilla", "AppleWebKit", "10_15_7", SECRET]) {
+      expect(body).not.toContain(leak);
+      expect(decodeURIComponent(href)).not.toContain(leak);
+    }
+  });
+
+  it("Entwicklungsbuild ohne Version; System grob", () => {
+    expect(mail({ ...mac, version: "", commit: "" }).subject).toBe("Based Beta dev – problem report");
+    expect(mail({ ...mac, version: "", commit: "" }).body).toContain("App: Based Beta dev build");
+    expect(systemLabel({ platform: "Win32" })).toBe("Windows");
+    expect(systemLabel({ platform: "Linux x86_64" })).toBe("Linux");
+    expect(systemLabel({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)" })).toBe("iOS");
+    expect(systemLabel({})).toBe("unknown");
   });
 });

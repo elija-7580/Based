@@ -200,7 +200,8 @@ export {
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
 export {
-  BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
+  BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, FEEDBACK_EMAIL, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
+  reportEmail, systemLabel, type ReportEmail, type ReportEmailInput,
   buildBugBundle, bundleID, comboFor, exportEvent, layoutIssues, mapStrings, normalizeDoc, parseBugBundle, replayPlan, scrambleDeep, scrambleHTML, scrambleText, summarizeBundle,
   type BugApp, type BugBundle, type BugBundleInput, type BugBundleSummary, type BugEnv, type BugState, type InputRecorderOptions, type LayoutIssue, type LayoutItem,
   type BlockChangeRecord, type Lazy, type Mods, type RecordedEvent, type RecordedInput, type Rect, type ReplayAction, type ReplayPlan, type SelectionInfo,
