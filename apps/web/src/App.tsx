@@ -34,6 +34,7 @@ import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
+import { markFreshPage } from "./shell/freshPage.js";
 import { fallbackHomePage, homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
@@ -140,7 +141,10 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   const newPage = useCallback(async (opts: { parent?: string; section?: string } = {}) => {
     const id = await client.command<string | undefined>({ op: "createPage", ...opts, format: newPageFormat.get() });
-    if (id) openPage(id);
+    if (id) {
+      markFreshPage(id);
+      openPage(id);
+    }
     return id;
   }, [client, openPage]);
 

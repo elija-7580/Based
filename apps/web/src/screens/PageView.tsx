@@ -25,6 +25,7 @@ import { guestMayEdit, isGuest, mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
+import { takeFreshPage } from "../shell/freshPage.js";
 import type { PageReplica, ShellState, StoreClient } from "../worker/client.js";
 import type { HistoryRestoreResult } from "../worker/protocol.js";
 
@@ -569,6 +570,10 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
   useEffect(() => {
     if (!focused.current) setValue(title === "Untitled" ? "" : title);
   }, [title, id]);
+  // BSD-482: eben angelegte Seite → Schreibmarke in den Titel (sobald das Feld bearbeitbar ist)
+  useEffect(() => {
+    if (!readOnly && takeFreshPage(id)) field.current?.focus();
+  }, [id, readOnly]);
   useLayoutEffect(() => {
     const el = field.current;
     if (!el) return;
