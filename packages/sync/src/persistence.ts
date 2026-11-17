@@ -60,8 +60,6 @@ export const SKELETON_SQL =
   ` OR json_extract(${JSON_TEXT}, '$.trashedAt') IS NOT NULL) THEN 1 END`;
 const CLOCK_MAX_KEY = "clock.max";
 export const LAZY_INDEXES = ["records_parent", "records_skeleton"] as const;
-const IN_CHUNK = 100;
-const IN_LIST = Array.from({ length: IN_CHUNK }, () => "?").join(", ");
 
 /** Stempel als JSON wie Swift `JSONEncoder` (Reihenfolge egal, Swift liest es zurück). */
 export const encodeStamp = (s: Stamp) => JSON.stringify({ millis: s.millis, counter: s.counter, node: s.node });
@@ -145,31 +143,18 @@ export class SqlitePersistence implements Persistence {
         return out;
       });
     },
+    // Je ID und je Elternteil eine eigene (vorbereitete) Abfrage: Mit `IN (…)` über dem Index-Ausdruck sucht SQLite
+    // die ganze Tabelle ab (gemessen 17.11.: 1,4 s statt 0,05 ms bei 520 000 Zeilen).
     loadBlocks: (ids) =>
       this.guard("load", () => {
         const out: Block[] = [];
-        if (ids.length === 1) this.blocksOf(this.db.all("SELECT id, data FROM records WHERE kind = 'block' AND id = ?", [ids[0]!]), out);
-        else {
-          for (let i = 0; i < ids.length; i += IN_CHUNK) {
-            // Immer gleich viele Platzhalter (aufgefüllt mit der letzten ID): eine vorbereitete Anweisung für alle Größen.
-            const chunk = ids.slice(i, i + IN_CHUNK);
-            while (chunk.length < IN_CHUNK) chunk.push(chunk[chunk.length - 1]!);
-            this.blocksOf(this.db.all(`SELECT id, data FROM records WHERE kind = 'block' AND id IN (${IN_LIST})`, chunk), out);
-          }
-        }
+        for (const id of ids) this.blocksOf(this.db.all("SELECT id, data FROM records WHERE kind = 'block' AND id = ?", [id]), out);
         return out;
       }),
     loadChildren: (parents) =>
       this.guard("load", () => {
         const out: Block[] = [];
-        if (parents.length === 1) this.blocksOf(this.db.all(`SELECT id, data FROM records WHERE kind = 'block' AND ${PARENT_SQL} = ?`, [parents[0]!]), out);
-        else {
-          for (let i = 0; i < parents.length; i += IN_CHUNK) {
-            const chunk = parents.slice(i, i + IN_CHUNK);
-            while (chunk.length < IN_CHUNK) chunk.push(chunk[chunk.length - 1]!);
-            this.blocksOf(this.db.all(`SELECT id, data FROM records WHERE kind = 'block' AND ${PARENT_SQL} IN (${IN_LIST})`, chunk), out);
-          }
-        }
+        for (const parent of parents) this.blocksOf(this.db.all(`SELECT id, data FROM records WHERE kind = 'block' AND ${PARENT_SQL} = ?`, [parent]), out);
         return out;
       }),
     loadRemaining: (skip) =>
@@ -188,6 +173,16 @@ export class SqlitePersistence implements Persistence {
           flush();
         } else for (const row of this.db.all(sql)) take(row);
         return out;
+      }),
+    scanBlocks: (containing, each, opts) =>
+      this.guard("load", () => {
+        // SQLite sucht die Zeilen ab; JSON und Prüfung laufen nur für Treffer. LIKE unterscheidet bei ASCII nicht
+        // nach Groß/Klein, instr sucht genau.
+        const where = containing.map(() => (opts?.ignoreCase ? `${JSON_TEXT} LIKE ? ESCAPE '\\'` : `instr(${JSON_TEXT}, ?) > 0`)).join(" OR ");
+        const params = opts?.ignoreCase ? containing.map((c) => `%${c.replace(/[\\%_]/g, "\\$&")}%`) : [...containing];
+        const out: Block[] = [];
+        this.blocksOf(this.db.all(`SELECT id, data FROM records WHERE kind = 'block'${where ? ` AND (${where})` : ""}`, params), out);
+        for (const b of out) each(b);
       }),
     countBlocks: () => this.guard("load", () => asInt(first(this.db, "SELECT count(*) AS n FROM records WHERE kind = 'block'")?.n)),
     clockFloor: (maxMillis) => this.guard("load", () => this.readClockMax(maxMillis)),

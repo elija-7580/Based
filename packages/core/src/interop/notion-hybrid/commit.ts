@@ -176,7 +176,8 @@ export interface HybridPendingPage { id: string; source: HybridSource; updatedAt
 /** Seiten ohne Inhalt, zuletzt bearbeitete zuerst. */
 export function hybridPending(store: WorkspaceStore): HybridPendingPage[] {
   const out: HybridPendingPage[] = [];
-  for (const b of store.blocks.values()) {
+  // Nur Seiten tragen die Markierung: das Gerüst reicht (ADR 0017 Stufe B, lädt nichts nach).
+  for (const b of store.skeletonBlocks()) {
     const source = importPendingSource(b);
     if (source === undefined || !live(b)) continue;
     out.push({ id: b.id, source, updatedAt: b.updatedAt, title: plain(b.text) });

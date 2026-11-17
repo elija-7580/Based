@@ -89,4 +89,34 @@ describe("100 000 Records: Start, Speicher, erster Sync (BSD-495, @perf)", () =>
     console.info(`BSD-495 Start: ${r.open.toFixed(0)} ms CPU, Heap nach dem Öffnen ${mb(heap)} MB`);
     expectWithinBudget("Heap nach dem Öffnen (MB)", { heap: 150 }, () => ({ heap: mb(heap) }), 1);
   }, 120_000);
+
+  it("Start nach Bedarf (ADR 0017 Stufe B): nur das Gerüst – ein Bruchteil von Zeit und Speicher", () => {
+    // Einmalig: die beiden Indizes anlegen (gehört nicht zum Start, den jeder weitere Start zahlt).
+    const first = openNodeDatabase(file);
+    const built = cpuTime(() => { openWorkspace(first, { node: "AAAA", lazy: true }); });
+    first.close();
+    let heap = 0, loaded = 0;
+    // Ausgangswert 17.11. (Container): 78 ms CPU, 1 MB Heap, Indizes einmalig 0,6 s (voll geladen: 1,1 s, 41 MB).
+    const r = expectWithinBudget("Start nach Bedarf 100 000 Records", { open: 600 }, () => {
+      gc();
+      const h0 = process.memoryUsage().heapUsed;
+      const db = openNodeDatabase(file);
+      let store: ReturnType<typeof openWorkspace>["store"] | undefined;
+      const open = cpuTime(() => { store = openWorkspace(db, { node: "AAAA", lazy: true }).store; });
+      expect(store!.isPartial).toBe(true);
+      expect(store!.blocks.size).toBe(100_000);
+      loaded = store!.blocks.loadedSize;
+      gc();
+      heap = Math.max(heap, process.memoryUsage().heapUsed - h0);
+      // eine Seite öffnen holt nur ihre Blöcke
+      const page = [...store!.skeletonBlocks()][17]!.id;
+      expect(store!.descendants(page).length).toBeGreaterThan(0);
+      expect(store!.fullLoads).toBe(0);
+      db.close();
+      return { open };
+    });
+    expect(loaded).toBeLessThan(5_000);
+    console.info(`ADR 0017 B Start nach Bedarf: ${r.open.toFixed(0)} ms CPU (Indizes einmalig ${built.toFixed(0)} ms), ${loaded} Blöcke geladen, Heap ${mb(heap)} MB`);
+    expectWithinBudget("Heap nach dem Öffnen nach Bedarf (MB)", { heap: 30 }, () => ({ heap: mb(heap) }), 1);
+  }, 120_000);
 });

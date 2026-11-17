@@ -47,13 +47,18 @@ export function containingPage(store: WorkspaceStore, id: string): string | unde
   return undefined;
 }
 
+/** Was im JSON eines Blocks stehen muss, damit `linkedPages` etwas finden kann (Erwähnung, based:-Link, Link-to-page). */
+export const LINK_HINTS = ['"mention"', "based:", '"linkTarget"'] as const;
+
 export class LinkIndex {
   private targets = new Map<string, Set<string>>(); // Block → Zielseiten
   private sources = new Map<string, Set<string>>(); // Zielseite → Blöcke
 
   static fromStore(store: WorkspaceStore): LinkIndex {
     const idx = new LinkIndex();
-    for (const b of store.blocks.values()) idx.reindex(b.id, b);
+    // Nur Blöcke, die überhaupt verweisen können – mit Laden nach Bedarf direkt aus der Datei, ohne den Workspace
+    // in den Speicher zu holen (ADR 0017 Stufe B). `linkedPages` prüft genau; die Texte hier sind nur der Vorfilter.
+    store.scanBlocks(LINK_HINTS, (b) => idx.reindex(b.id, b));
     return idx;
   }
 

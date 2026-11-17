@@ -64,8 +64,110 @@ export function iconText(b: Block | undefined): string | undefined {
   return icon.emoji ?? icon.symbol;
 }
 
-/** Seitenleisten-Struktur eines Stands (eine Tiefensuche über alle Blöcke). */
+type OutlinePath = (readonly [string, string])[];
+const comparePaths = (a: OutlinePath, b: OutlinePath) => {
+  for (let i = 0; i < a.length && i < b.length; i++) {
+    const [ask, aid] = a[i]!, [bsk, bid] = b[i]!;
+    if (ask !== bsk) return ask < bsk ? -1 : 1;
+    if (aid !== bid) return aid < bid ? -1 : 1;
+  }
+  return a.length - b.length;
+};
+const ROOT = Symbol("root"), MISSING = Symbol("missing");
+
+/**
+ * Seitenleisten-Struktur eines Stands. Gerechnet wird nur über das Gerüst (Seiten, Datenbanken): jede Seite sucht
+ * nach oben ihre nächste Seite, die Reihenfolge ist die Dokumentreihenfolge (Pfad aus Sortierschlüsseln). Das braucht
+ * keinen Seiteninhalt und lädt deshalb nichts nach (ADR 0017 Stufe B) – das Ergebnis ist dasselbe wie bei der
+ * Tiefensuche über alle Blöcke (`buildOutlineByWalk`, ein Test vergleicht beide).
+ */
 export function buildOutline(store: WorkspaceStore): Outline {
+  const { sections, children, nodes, push } = outlineFrame(store);
+
+  // 1) Jede Seite (und eigene Inline-Datenbank) ihrem Behälter zuordnen: Wurzel, nächste Seite darüber, oder keiner.
+  const under = new Map<string | typeof ROOT, { id: string; path: OutlinePath }[]>();
+  const orphans: string[] = [];
+  for (const b of store.skeletonBlocks()) {
+    if (b.trashedAt !== undefined) continue;
+    const page = isPageLike(b);
+    if (!page && !(b.type === "databaseInline" && ownsDatabase(store, b))) continue;
+    const path: OutlinePath = [[b.sk, b.id]];
+    let container: string | typeof ROOT | typeof MISSING | undefined;
+    let throughInline = false;
+    let cur = b;
+    for (let n = 0; n < 1000; n++) {
+      const p = cur.parent;
+      if (p === "w") { container = ROOT; break; }
+      if (!p.startsWith("b:")) break; // Datenbankzeilen erscheinen nicht
+      const pb = store.blocks.get(p.slice(2));
+      if (!pb) { if (cur === b) container = MISSING; break; }
+      if (pb.trashedAt !== undefined) break;
+      if (isPageLike(pb)) { container = pb.id; break; }
+      // Unter einer eigenen Inline-Datenbank, die selbst unter einer Seite steht, wird nicht weitergesucht.
+      if (pb.type === "databaseInline" && ownsDatabase(store, pb)) throughInline = true;
+      path.unshift([pb.sk, pb.id]);
+      cur = pb;
+    }
+    if (container === undefined) continue;
+    if (container === MISSING) { if (page) orphans.push(b.id); continue; }
+    if (container !== ROOT && throughInline) continue;
+    if (!page && container === ROOT) continue; // Inline-Datenbank ohne Seite darüber ist kein Eintrag
+    let list = under.get(container);
+    if (!list) under.set(container, (list = []));
+    list.push({ id: b.id, path });
+  }
+  for (const list of under.values()) list.sort((a, b) => comparePaths(a.path, b.path));
+
+  // 2) Von oben nach unten ausgeben; nur was von der Wurzel (oder einer verwaisten Seite) erreichbar ist.
+  const emit = (container: string | typeof ROOT, page: string | undefined, section: string) => {
+    for (const { id } of under.get(container) ?? []) {
+      const b = store.blocks.get(id)!;
+      if (isPageLike(b)) {
+        let sec = section;
+        if (!page) {
+          const s = sectionOf(store, b);
+          sec = s.kind === "private" ? PRIVATE_SECTION : s.id;
+        }
+        const node: OutlineNode = { kind: b.type === "databasePage" ? "database" : "page", section: sec };
+        const icon = iconText(b);
+        if (icon) node.icon = icon;
+        if (page) node.parent = page;
+        nodes[id] = node;
+        push(page ?? sectionKey(sec), id);
+        emit(id, id, sec);
+      } else if (page) {
+        // BSD-377: Inline-Datenbanken stehen wie in Notion unter ihrer Seite (verknüpfte Ansichten nicht).
+        const node: OutlineNode = { kind: "database", section, parent: page };
+        const icon = iconText(b);
+        if (icon) node.icon = icon;
+        nodes[id] = node;
+        push(page, id);
+      }
+    }
+  };
+  emit(ROOT, undefined, PRIVATE_SECTION);
+
+  // BSD-235: Seiten, deren Eltern dieses Gerät nicht kennt – im Gast-Modus die geteilten Seiten (der Server schickt
+  // nur den geteilten Bereich, ohne Workspace und ohne die Seiten darüber). Eigene Sektion „Shared with you“.
+  const shared = orphans.filter((id) => !nodes[id]);
+  if (shared.length) {
+    shared.sort((a, b) => titleOf(store, a).localeCompare(titleOf(store, b)) || (a < b ? -1 : 1));
+    sections.push({ id: SHARED_SECTION, name: "Shared with you" });
+    children[sectionKey(SHARED_SECTION)] = [];
+    for (const id of shared) {
+      const b = store.blocks.get(id)!;
+      const node: OutlineNode = { kind: b.type === "databasePage" ? "database" : "page", section: SHARED_SECTION };
+      const icon = iconText(b);
+      if (icon) node.icon = icon;
+      nodes[id] = node;
+      push(sectionKey(SHARED_SECTION), id);
+      emit(id, id, SHARED_SECTION);
+    }
+  }
+  return finishOutline(store, sections, children, nodes);
+}
+
+function outlineFrame(store: WorkspaceStore) {
   const teamspaces = store.workspace.teamspaces ?? [];
   const sections: OutlineSection[] = [
     ...teamspaces.map((t) => {
@@ -80,6 +182,15 @@ export function buildOutline(store: WorkspaceStore): Outline {
   const nodes: Record<string, OutlineNode> = {};
   for (const s of sections) children[sectionKey(s.id)] = [];
   const push = (key: string, id: string) => (children[key] ??= []).push(id);
+  return { sections, children, nodes, push };
+}
+
+/**
+ * Dieselbe Struktur als Tiefensuche über alle Blöcke – die ursprüngliche Fassung. Sie lädt den ganzen Inhalt und
+ * bleibt nur als Vergleich für Tests (`buildOutline` muss dasselbe liefern).
+ */
+export function buildOutlineByWalk(store: WorkspaceStore): Outline {
+  const { sections, children, nodes, push } = outlineFrame(store);
 
   const visit = (parent: string, page: string | undefined, section: string) => {
     for (const id of store.children(parent)) {
@@ -135,8 +246,12 @@ export function buildOutline(store: WorkspaceStore): Outline {
     }
   }
 
+  return finishOutline(store, sections, children, nodes);
+}
+
+function finishOutline(store: WorkspaceStore, sections: OutlineSection[], children: Record<string, string[]>, nodes: Record<string, OutlineNode>): Outline {
   const trash: TrashEntry[] = [];
-  for (const b of store.blocks.values()) {
+  for (const b of store.skeletonBlocks()) {
     if (b.trashedAt === undefined) continue;
     const e: TrashEntry = { id: b.id, trashedAt: b.trashedAt };
     const from = parentTitle(store, b);
@@ -147,6 +262,7 @@ export function buildOutline(store: WorkspaceStore): Outline {
   const wsIcon = store.workspace.icon;
   return { workspaceName: store.workspace.name, ...(typeof wsIcon === "string" && wsIcon ? { workspaceIcon: wsIcon } : typeof wsIcon === "object" && wsIcon?.emoji ? { workspaceIcon: wsIcon.emoji } : {}), sections, children, nodes, favorites: store.workspace.favorites.filter((f) => nodes[f]), trash };
 }
+
 
 function parentTitle(store: WorkspaceStore, b: Block): string | undefined {
   if (b.parent.startsWith("d:")) {
@@ -166,7 +282,7 @@ function parentTitle(store: WorkspaceStore, b: Block): string | undefined {
 /** Titel aller Seiten (auch Zeilen und Papierkorb), für Seitenleiste, Breadcrumb und Papierkorb. */
 export function pageTitles(store: WorkspaceStore): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const b of store.blocks.values()) if (hasPageTitle(b)) out[b.id] = titleOf(store, b.id);
+  for (const b of store.skeletonBlocks()) if (hasPageTitle(b)) out[b.id] = titleOf(store, b.id);
   return out;
 }
 

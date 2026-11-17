@@ -56,6 +56,9 @@ for (const [name, open] of [["node:sqlite", async () => openNodeDatabase()], ["S
       expect(p.lazy.loadBlocks(Array.from({ length: 250 }, (_, i) => ids[i % ids.length]!)).length).toBeGreaterThanOrEqual(ids.length);
       expect(p.lazy.loadBlocks(["P3-2"])[0]?.parent).toBe("b:P3");
       expect(p.lazy.countBlocks()).toBe(56);
+      const hits: string[] = [];
+      p.lazy.scanBlocks(["text of P3-2", "text of P6-0", "nirgends"], (b) => hits.push(b.id));
+      expect(hits.sort()).toEqual(["P3-2", "P6-0"]);
       db.close();
     });
 

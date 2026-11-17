@@ -68,6 +68,12 @@ export interface LazyPersistence {
    * `maxMillis` zählen nicht – die Uhr nimmt sie auch beim Laden nicht an (`StampClock.maxDrift`).
    */
   clockFloor(maxMillis: number): Stamp | undefined;
+  /**
+   * Alle gespeicherten Blöcke, deren JSON einen der Texte enthält, der Reihe nach durchreichen – ohne sie im
+   * Speicher zu behalten. Für abgeleitete Indizes (Links), die nur wenige Blöcke betreffen. Leere Liste = alle
+   * Blöcke. `ignoreCase`: Groß/Klein von ASCII-Buchstaben zählt nicht.
+   */
+  scanBlocks(containing: readonly string[], each: (b: Block) => void, opts?: { ignoreCase?: boolean }): void;
 }
 
 /**
@@ -111,6 +117,11 @@ export class MemoryPersistence implements Persistence {
     loadChildren: (parents) => { const set = new Set(parents); return [...this.storedBlocks()].filter((b) => set.has(b.parent)).map((b) => cloneRecord(b)); },
     loadRemaining: (skip) => [...this.storedBlocks()].filter((b) => !skip(b.id)).map((b) => cloneRecord(b)),
     countBlocks: () => { let n = 0; for (const _ of this.storedBlocks()) n += 1; return n; },
+    scanBlocks: (containing, each, opts) => {
+      const fold = (s: string) => (opts?.ignoreCase ? s.toLowerCase() : s);
+      const needles = containing.map(fold);
+      for (const b of this.storedBlocks()) { const json = fold(JSON.stringify(b)); if (needles.length === 0 || needles.some((c) => json.includes(c))) each(cloneRecord(b)); }
+    },
     clockFloor: (maxMillis) => {
       let max: Stamp | undefined;
       for (const r of this.records.values()) { const s = r.data.stamp as Stamp | undefined; if (s && s.millis <= maxMillis && (!max || compareStamps(s, max) > 0)) max = s; }
@@ -147,6 +158,11 @@ export interface StoreChange {
   notified?: RecordKeyString[];
   /** Name der Transaktion (z. B. „New block“, beim Undo der des rückgängig gemachten Schritts) – für die Diagnose. */
   name?: string;
+  /**
+   * Blöcke aus `keys`, die den Elternteil gewechselt haben (ADR 0017 Stufe B: wer die Struktur verfolgt, muss dafür
+   * nicht mehr die Eltern aller Blöcke im Speicher halten). Fehlt, wenn keiner umgezogen ist.
+   */
+  moved?: RecordKeyString[];
 }
 
 export interface RemoteMergeResult {
@@ -550,6 +566,16 @@ export class WorkspaceStore {
     this.rebuildChildIndex();
     this.fullLoads += 1;
     this.onFullLoad?.(why);
+  }
+
+  /**
+   * Über alle Blöcke laufen, deren gespeichertes JSON einen der Texte enthält – ohne den Workspace dafür in den
+   * Speicher zu holen. `each` darf den Store lesen, aber nicht schreiben. Voll geladen: ein Durchlauf im Speicher
+   * (dann ohne Vorfilter – `each` muss selbst prüfen).
+   */
+  scanBlocks(containing: readonly string[], each: (b: Block) => void, opts?: { ignoreCase?: boolean }): void {
+    if (this.lazySource) this.lazySource.scanBlocks(containing, each, opts);
+    else for (const b of this.blocks.loaded()) each(b);
   }
 
   /** Alles in den Speicher holen (für Vorgänge über den ganzen Workspace: Export, Voll-Abgleich, Suche über Inhalt). */
@@ -968,6 +994,12 @@ export class WorkspaceStore {
         }
       }
       const change: StoreChange = notified.length > 0 ? { keys, origin, notified, name } : { keys, origin, name };
+      const moved: RecordKeyString[] = [];
+      for (const [k, cur] of after) {
+        const prev = before.get(k);
+        if (cur?.kind === "block" && prev?.kind === "block" && cur.data.parent !== prev.data.parent) moved.push(k);
+      }
+      if (moved.length > 0) change.moved = moved;
       for (const fn of this.observers) fn(change);
     }
     return true;

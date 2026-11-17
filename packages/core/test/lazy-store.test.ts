@@ -1,6 +1,6 @@
 // ADR 0017 Stufe B: Ein Store, der nach Bedarf lädt, verhält sich in jedem Schritt wie einer, der alles geladen hat.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { isSkeletonBlock, keyOf, keysBetween, MemoryPersistence, WorkspaceStore, type Block, type RecordKeyString, type Stamp, type WireRecord } from "../src/index.js";
+import { isSkeletonBlock, LinkIndex, keyOf, keysBetween, MemoryPersistence, WorkspaceStore, type Block, type RecordKeyString, type Stamp, type WireRecord } from "../src/index.js";
 
 /** Fester Zufall, damit ein Fehlschlag wiederholbar ist. */
 function rng(seed: number) {
@@ -156,4 +156,18 @@ describe("Laden nach Bedarf (ADR 0017 Stufe B)", () => {
       expect(sorted(reopened.lazy)).toEqual(sorted(reopened.eager));
     });
   }
+
+  it("Backlinks: der Link-Index aus der Datei ist derselbe wie über alle Blöcke – ohne alles zu laden", () => {
+    const recs = seedRecords(rng(7));
+    const text = (id: string, t: unknown) => { (recs.find((r) => r.data.id === id)!.data as Block).text = t as Block["text"]; };
+    text("P0-b0", [{ t: "see " }, { t: "P2", mention: { page: { _0: "P2" } } }]);
+    text("P1-b1-n", [{ t: "link", m: { link: "based://page/P2" } }]);
+    (recs.find((r) => r.data.id === "P3-b4")!.data as Block).props = { linkTarget: "P2" };
+    text("P4-b2", "based: kein Link, nur das Wort");
+    const { open } = pair(recs);
+    const { eager, lazy } = open();
+    expect(LinkIndex.fromStore(lazy).backlinks(lazy, "P2")).toEqual(LinkIndex.fromStore(eager).backlinks(eager, "P2"));
+    expect(LinkIndex.fromStore(lazy).backlinks(lazy, "P2")).toEqual(["P0", "P1", "P3"]);
+    expect(lazy.fullLoads).toBe(0);
+  });
 });
