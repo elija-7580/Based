@@ -34,6 +34,8 @@ test("Frischer Speicher → Willkommen → Turn on agents → Start empty → An
     await expect(page.getByTestId("home")).toHaveCount(0);
     // der erste Weg hat den Fokus (Enter wählt ihn ohne Maus)
     await expect(welcome(page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
+    // BSD-463: der Datei-Import bringt keine Ansichten – die Karte verspricht sie nur für die direkte Verbindung
+    await expect(welcome(page).getByRole("button", { name: /Import from Notion/ })).toContainText("Views come along when you connect Notion directly");
     // kein Composer, keine Agenten-Bedienung auf dem ersten Bildschirm
     await expect(page.getByLabel("Tell Based", { exact: true })).toHaveCount(0);
 

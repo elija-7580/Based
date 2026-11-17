@@ -13,4 +13,11 @@ describe("welcomeGuides", () => {
     expect(welcomeGuides(false).map((g) => g.title)).toEqual(welcomeGuides(true).map((g) => g.title));
     expect(welcomeGuides(false).find((g) => g.title === "Your data")!.lines.length).toBe(welcomeGuides(true).find((g) => g.title === "Your data")!.lines.length - 1);
   });
+  it("BSD-463: Ansichten aus Notion nur zusammen mit „Connect Notion directly“ (der ZIP-Import bringt eine Tabelle)", () => {
+    for (const ai of [true, false]) {
+      const notion = welcomeGuides(ai).flatMap((g) => g.lines.map((l) => l[1])).filter((t) => /notion/i.test(t));
+      expect(notion.length).toBeGreaterThan(0);
+      for (const t of notion) if (/\bviews?\b/i.test(t)) expect(t).toMatch(/connect notion directly/i);
+    }
+  });
 });
