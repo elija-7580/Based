@@ -1,61 +1,61 @@
-failure 5e6acbab4bb44fee6e573a7870f00f66c5d21e98
-  ✓  246 [webkit] › e2e/welcome.spec.ts:256:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.3s)
-
-
-  1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
-      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-
-
-      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
-      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
-    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
-          |                                           ^
-      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
-      363 |   expect(posts).toEqual([]);
-      364 |   await shot("choose");
-        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
-
-    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
-      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-
-
-      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
-      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
-    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
-          |                                           ^
-      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
-      363 |   expect(posts).toEqual([]);
-      364 |   await shot("choose");
-        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
-
-    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
-  45 skipped
-  199 passed (8.6m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+cancelled 4017d2e451ac7880df1395f70ccf0040540dd584
+  -   41 [webkit] › e2e/kit-states.spec.ts:479:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (bold, light)
+  -   42 [webkit] › e2e/kit-states.spec.ts:479:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark)
+  ✓   39 [webkit] › e2e/native-free.spec.ts:65:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (3.6s)
+  -   43 [webkit] › e2e/kit-states.spec.ts:479:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (bold, dark)
+  -   45 [webkit] › e2e/kit-states.spec.ts:533:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (default, light)
+  -   46 [webkit] › e2e/kit-states.spec.ts:533:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (bold, light)
+  -   47 [webkit] › e2e/kit-states.spec.ts:533:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (default, dark)
+  -   48 [webkit] › e2e/kit-states.spec.ts:533:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (bold, dark)
+  -   49 [webkit] › e2e/kit-states.spec.ts:587:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (default, light)
+  -   50 [webkit] › e2e/kit-states.spec.ts:587:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (bold, light)
+  -   51 [webkit] › e2e/kit-states.spec.ts:587:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (default, dark)
+  -   52 [webkit] › e2e/kit-states.spec.ts:587:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (bold, dark)
+  ✓   44 [webkit] › e2e/native-free.spec.ts:86:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (2.1s)
+  ✓   53 [webkit] › e2e/kit-states.spec.ts:630:1 › Zustands-Galerie erkennt eine fremde Überfahren-Farbe (2.0s)
+  ✓   54 [webkit] › e2e/native-free.spec.ts:93:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (4.5s)
+  ✓   56 [webkit] › e2e/native-free.spec.ts:131:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (3.2s)
+  ✓   57 [webkit] › e2e/native-free.spec.ts:151:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (1.8s)
+  ✓   58 [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (2.8s)
+  ✓   59 [webkit] › e2e/native-free.spec.ts:187:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (4.4s)
+  ✓   60 [webkit] › e2e/native-free.spec.ts:218:1 › Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfung bleibt (2.1s)
+  ✓   61 [webkit] › e2e/native-free.spec.ts:241:1 › Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unverändert (2.0s)
+  ✓   62 [webkit] › e2e/native-free.spec.ts:266:49 › Rechtsklick auf falsch geschriebenes Wort: Vorschläge, ersetzen, Rückgängig (light) (2.7s)
+  ✓   63 [webkit] › e2e/native-free.spec.ts:266:49 › Rechtsklick auf falsch geschriebenes Wort: Vorschläge, ersetzen, Rückgängig (dark) (1.8s)
+  ✓   64 [webkit] › e2e/native-free.spec.ts:324:3 › Dialog mit sehr langem Text: Knöpfe bleiben erreichbar, der Text scrollt (1280 × 820) (1.5s)
+  ✓   55 [webkit] › e2e/notion-api.spec.ts:53:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (25.6s)
+  ✓   65 [webkit] › e2e/native-free.spec.ts:324:3 › Dialog mit sehr langem Text: Knöpfe bleiben erreichbar, der Text scrollt (900 × 600) (1.9s)
+  ✓   66 [webkit] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (5.1s)
+  ✓   67 [webkit] › e2e/notion-hybrid.spec.ts:44:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (15.6s)
+  ✓   69 [webkit] › e2e/notion-hybrid.spec.ts:130:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (2.7s)
+  -   70 [webkit] › e2e/notion-hybrid.spec.ts:148:1 › Hybrid-Import: Bildschirmfotos
+  ✓   68 [webkit] › e2e/overflow.spec.ts:85:1 › Leerer Workspace: nichts läuft über (18.7s)
+  ✓   71 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (11.8s)
+  ✓   73 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (2.4s)
+  ✓   74 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (2.7s)
+  -   75 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  -   76 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   77 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (5.4s)
+  ✓   72 [webkit] › e2e/overflow.spec.ts:99:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (21.0s)
+  ✓   78 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (900 px) (3.6s)
+  ✓   79 [webkit] › e2e/overflow.spec.ts:119:1 › Gliederung überdeckt nie den Text (3.8s)
+  ✓   80 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1100 px) (3.7s)
+  ✓   82 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1280 px) (3.7s)
+  ✓   83 [webkit] › e2e/panel-still.spec.ts:37:1 › schräges Wischen und Code verschieben die Fläche nicht seitlich (5.1s)
+  ✓   81 [webkit] › e2e/overflow.spec.ts:151:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (11.2s)
+  ✓   84 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (900 px) (1.3s)
+  ✓   86 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (1100 px) (1.7s)
+  ✓   85 [webkit] › e2e/overflow.spec.ts:172:1 › Kopfzeile bleibt in 900 × 600 einzeilig, auch 6 Ebenen tief mit langen Namen (3.0s)
+  ✓   88 [webkit] › e2e/overflow.spec.ts:201:1 › Inline-Datenbank: Werkzeugleiste in 900 × 600 einzeilig (3.5s)
+  ✓   87 [webkit] › e2e/peek-resize.spec.ts:29:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (6.4s)
+  ✓   89 [webkit] › e2e/overflow.spec.ts:227:1 › Datenbank: 1.000 Zeilen, lange Spaltennamen und Optionen (5.5s)
+  ✓   90 [webkit] › e2e/peek-resize.spec.ts:68:1 › Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mit Fokus in der Tabelle (5.7s)
+  ✓   92 [webkit] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (2.6s)
+  ✓   91 [webkit] › e2e/overflow.spec.ts:258:1 › Schmales Fenster: Seitenleiste schwebt bei Bedarf, Köpfe einzeilig (5.3s)
+  ✓   93 [webkit] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (3.2s)
+  ✓   94 [webkit] › e2e/persist-reload.spec.ts:25:1 › BSD-416: anlegen, tippen, sofort neu laden → Seite und Text da (dauerhaftes Profil) (7.8s)
+  ✓   96 [webkit] › e2e/persist-reload.spec.ts:59:1 › BSD-416: ohne OPFS (flüchtiges WebKit-Profil) sagt die Seitenleiste „Not saved“ (1.0s)
+  ✓   95 [webkit] › e2e/phase2.spec.ts:9:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (9.1s)
+  ✓   97 [webkit] › e2e/polish.spec.ts:14:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (4.3s)
+  ✓   99 [webkit] › e2e/polish.spec.ts:28:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (2.9s)
+  ✓  100 [webkit] › e2e/polish.spec.ts:40:1 › Slash-Menü: Überfahren färbt die Zeile wie das Seitenmenü, nicht mit dem Blau der Bibliothek (4.2s)
