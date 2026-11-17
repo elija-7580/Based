@@ -886,6 +886,11 @@ class Component extends DCLogic {
         { who: 'Researcher', time: '11:02', t: 'Done. Competitor table added to Projects/Launch, 14 sources linked.' },
         { who: 'Main agent', time: '16:58', t: 'One thing needs you: approve the proposal draft for Acme.' }
       ],
+      apps: [
+        { n: 'Notion', x: '24%', y: '74%', size: '34px', bg: 'var(--control-border)', sh: 'none', d: '200ms' },
+        { n: 'Obsidian', x: '76%', y: '26%', size: '34px', bg: 'var(--control-border)', sh: 'none', d: '400ms' },
+        { n: 'Based', x: '24%', y: '24%', size: '46px', bg: 'var(--marker-strong)', sh: '0 0 0 8px rgba(224,194,74,.25)', d: '700ms' }
+      ],
       pains: painsRaw.map((p, i) => {
         const on = !!s.flipped[i];
         return Object.assign({}, p, {

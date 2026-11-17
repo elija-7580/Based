@@ -57,6 +57,19 @@ test("build: every page exists, nothing points back to the design canvas or to G
   assert.match(imprint, /hello@basednotes\.app/);
 });
 
+test("home: every template value is provided by its script (the quadrant went blank once)", () => {
+  for (const f of ["Main.dc.html", "Mobile.dc.html"]) {
+    const s = readFileSync(join(ROOT, "src", "pages", f), "utf8");
+    const body = /<\/helmet>([\s\S]*?)<\/x-dc>/.exec(s)[1];
+    const code = /data-dc-script[^>]*>([\s\S]*?)<\/script>/.exec(s)[1];
+    const rv = code.slice(code.indexOf("renderVals"));
+    const loops = new Set([...body.matchAll(/as="(\w+)"/g)].map((m) => m[1]));
+    const roots = new Set([...body.matchAll(/\{\{\s*([A-Za-z_]\w*)/g)].map((m) => m[1])
+      .filter((r) => !loops.has(r) && r !== "true" && r !== "false"));
+    for (const r of roots) assert.match(rv, new RegExp("\\b" + r + "\\s*[:,\\n]"), `${f}: {{${r}}} has no value`);
+  }
+});
+
 test("seo (BSD-457): short descriptions, structured data, FAQ indexed, download page hidden from search", () => {
   const out = mkdtempSync(join(tmpdir(), "based-site-seo-"));
   execFileSync(process.execPath, [join(ROOT, "scripts", "build.mjs")], { env: { ...process.env, WEBSITE_OUT: out, NO_PRERENDER: "1" }, stdio: "pipe" });

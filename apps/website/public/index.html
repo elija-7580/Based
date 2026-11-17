@@ -178,7 +178,7 @@
 <span class="mono" style="position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); font-size: 11px; color: var(--muted);">their cloud</span>
 <span class="mono" style="position: absolute; left: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">easy</span>
 <span class="mono" style="position: absolute; right: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">technical</span>
-
+<div class="dropin" style="position: absolute; left: 24%; top: 74%; transform: translate(-50%, -50%); animation-delay: 200ms; display: flex; flex-direction: column; align-items: center; gap: 8px;"><span style="width: 34px; height: 34px; border-radius: 50%; background: var(--control-border); box-shadow: none;"></span><span style="font-size: 14px; font-weight: 700; white-space: nowrap;">Notion</span></div><div class="dropin" style="position: absolute; left: 76%; top: 26%; transform: translate(-50%, -50%); animation-delay: 400ms; display: flex; flex-direction: column; align-items: center; gap: 8px;"><span style="width: 34px; height: 34px; border-radius: 50%; background: var(--control-border); box-shadow: none;"></span><span style="font-size: 14px; font-weight: 700; white-space: nowrap;">Obsidian</span></div><div class="dropin" style="position: absolute; left: 24%; top: 24%; transform: translate(-50%, -50%); animation-delay: 700ms; display: flex; flex-direction: column; align-items: center; gap: 8px;"><span style="width: 46px; height: 46px; border-radius: 50%; background: var(--marker-strong); box-shadow: 0 0 0 8px rgba(224,194,74,.25);"></span><span style="font-size: 14px; font-weight: 700; white-space: nowrap;">Based</span></div>
 </div>
 </div>
 </section>
@@ -1342,6 +1342,11 @@ class Component extends DCLogic {
         { who: 'Main agent', time: '07:30', t: 'Your morning briefing is ready: 2 deadlines, 1 approval, 3 pages changed overnight.' },
         { who: 'Researcher', time: '11:02', t: 'Done. Competitor table added to Projects/Launch, 14 sources linked.' },
         { who: 'Main agent', time: '16:58', t: 'One thing needs you: approve the proposal draft for Acme.' }
+      ],
+      apps: [
+        { n: 'Notion', x: '24%', y: '74%', size: '34px', bg: 'var(--control-border)', sh: 'none', d: '200ms' },
+        { n: 'Obsidian', x: '76%', y: '26%', size: '34px', bg: 'var(--control-border)', sh: 'none', d: '400ms' },
+        { n: 'Based', x: '24%', y: '24%', size: '46px', bg: 'var(--marker-strong)', sh: '0 0 0 8px rgba(224,194,74,.25)', d: '700ms' }
       ],
       pains: painsRaw.map((p, i) => {
         const on = !!s.flipped[i];
