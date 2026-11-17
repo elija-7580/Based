@@ -121,9 +121,11 @@ describe("Lokaler Speicher", () => {
     d.db.run("INSERT INTO records VALUES('block','broken',?)", [new TextEncoder().encode("{kaputt")]);
     d.db.run("INSERT INTO changes(kind, id, deleted, local) VALUES('block','broken',0,1)");
     const again = device(d.db);
-    expect(again.persistence.undecodable.map((u) => u.key)).toEqual(["block:broken"]);
+    // Voll geladen ist die Zeile sofort bekannt; mit Laden nach Bedarf (ADR 0017 Stufe B) spätestens, wenn der Push sie anfasst.
+    if (!again.store.isPartial) expect(again.persistence.undecodable.map((u) => u.key)).toEqual(["block:broken"]);
     const server = new FakeServer();
     await client(again, server).syncOnce();
+    expect(again.persistence.undecodable.map((u) => u.key)).toEqual(["block:broken"]);
     expect(server.keys()).not.toContain("block:broken");
     expect(d.db.all("SELECT id FROM records WHERE id = 'broken'")).toHaveLength(1);
   });

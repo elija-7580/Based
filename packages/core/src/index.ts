@@ -10,7 +10,8 @@ export type { DatabaseCore, MigrationReport, PropertyDiff, SchemaIssue } from ".
 export { StampClock, ZERO_STAMP, compareStamps, parseStamp, stampToString, type Stamp } from "./hlc.js";
 export { FIRST_KEY, isValidKey, keyBetween, keysBetween } from "./sortkeys.js";
 export { plainText } from "./richtext.js";
-export { MemoryPersistence, StoreReadOnlyError, Tx, WorkspaceStore, keyOf, parseKey, recordKey, WORKSPACE_ID } from "./store/store.js";
+export { MemoryPersistence, StoreReadOnlyError, Tx, WorkspaceStore, keyOf, parseKey, recordKey, WORKSPACE_ID, SKELETON_TYPES, isSkeletonBlock } from "./store/store.js";
+export type { LazyPersistence } from "./store/store.js";
 export type { ChangeOrigin, Persistence, RecordKeyString, RemoteMergeResult, StoreChange, StoreOptions, UndoOutcome, WriteFailure } from "./store/store.js";
 export { Formula, FormulaError, FUNCTION_NAMES, referencedProperties } from "./query/formula.js";
 export type { FormulaEnvironment, FormulaExpr } from "./query/formula.js";
