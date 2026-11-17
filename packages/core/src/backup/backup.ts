@@ -125,22 +125,49 @@ export function snapshotsToPrune(snaps: readonly { name: string; at: number }[],
   return sorted.filter((s) => !keepNames.has(s.name)).map((s) => s.name);
 }
 
+/**
+ * BSD-491: Datei-IDs, die ein Stand nennen KANN – per Textsuche statt JSON-Parse (ein Stand mit 50 000 Records ist
+ * ~16 MB; alle ~64 Stände zu parsen dauerte 16 s). Obermenge von `snapshotAssetIDs`: jeder JSON-String aus genau 64
+ * Hex-Zeichen und jeder Wert `"id":"…"` (kanonisches JSON ohne Leerzeichen; Asset-IDs brauchen kein Escaping). Zu viel schadet nicht
+ * (eine Datei bleibt länger liegen), zu wenig würde eine gebrauchte Datei löschen. `undefined`: kein lesbarer Stand.
+ */
+export function snapshotAssetCandidates(text: string): Set<string> | undefined {
+  const head = text.slice(0, text.indexOf("\n") >>> 0);
+  if (!head.startsWith("{") || !head.includes(`"format":"based-archive"`)) return undefined;
+  const out = new Set<string>();
+  for (const m of text.matchAll(/"([0-9a-f]{64})"/g)) out.add(m[1]!);
+  for (const m of text.matchAll(/"id":"([A-Za-z0-9_-]{1,128})"/g)) out.add(m[1]!);
+  return out;
+}
+
+/** BSD-491: Datei-IDs je Stand (Stände ändern sich nie) – der Server hält ihn, damit jeder Stand nur einmal gelesen wird. */
+export type SnapshotAssetCache = Map<string, ReadonlySet<string>>;
+
 /** Alte Stände löschen und Dateien, auf die kein Stand mehr zeigt. */
-export async function pruneBackups(target: BackupTarget, keep?: Parameters<typeof snapshotsToPrune>[1]): Promise<{ snapshots: number; assets: number }> {
+export async function pruneBackups(target: BackupTarget, keep?: Parameters<typeof snapshotsToPrune>[1], cache: SnapshotAssetCache = new Map()): Promise<{ snapshots: number; assets: number }> {
   const snaps = await listSnapshots(target);
   const drop = snapshotsToPrune(snaps, keep);
-  for (const name of drop) await target.remove(`${SNAPSHOT_DIR}/${name}`);
+  for (const name of drop) { await target.remove(`${SNAPSHOT_DIR}/${name}`); cache.delete(name); }
   if (drop.length === 0) return { snapshots: 0, assets: 0 };
-  // Dateien nur löschen, wenn kein verbleibender Stand sie nennt (dafür werden die Stände gelesen).
+  // BSD-491: ohne Dateien im Backup gibt es nichts aufzuräumen – dann auch keinen Stand lesen.
+  const files = await target.list(ASSET_DIR).catch(() => []);
+  if (files.length === 0) return { snapshots: drop.length, assets: 0 };
+  // Dateien nur löschen, wenn kein verbleibender Stand sie nennt (dafür werden die Stände gelesen, je Stand einmal).
   const used = new Set<string>();
+  const dropped = new Set(drop);
   for (const s of snaps) {
-    if (drop.includes(s.name)) continue;
-    const read = await readSnapshot(target, s.name).catch(() => undefined);
-    if (!read) return { snapshots: drop.length, assets: 0 }; // im Zweifel nichts löschen
-    for (const id of snapshotAssetIDs(read.records)) used.add(id);
+    if (dropped.has(s.name)) continue;
+    let ids = cache.get(s.name);
+    if (!ids) {
+      const text = await target.read(`${SNAPSHOT_DIR}/${s.name}`).then((d) => dec.decode(d), () => undefined);
+      ids = text === undefined ? undefined : snapshotAssetCandidates(text);
+      if (!ids) return { snapshots: drop.length, assets: 0 }; // im Zweifel nichts löschen
+      cache.set(s.name, ids);
+    }
+    for (const id of ids) used.add(id);
   }
   let assets = 0;
-  for (const name of await target.list(ASSET_DIR).catch(() => [])) {
+  for (const name of files) {
     if (!used.has(name)) { await target.remove(`${ASSET_DIR}/${name}`); assets++; }
   }
   return { snapshots: drop.length, assets };

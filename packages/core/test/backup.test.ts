@@ -3,8 +3,8 @@
 // nach „Seite gelöscht und Papierkorb geleert“.
 import { describe, expect, it } from "vitest";
 import {
-  applyRestore, createPage, emptyTrash, listSnapshots, planRestore, pruneBackups, readSnapshot, snapshotAssetIDs, snapshotName, snapshotsToPrune,
-  snapshotTime, trashPages, writeSnapshot, WorkspaceStore, canonicalStringify, type BackupTarget, type WireRecord,
+  applyRestore, createPage, emptyTrash, listSnapshots, planRestore, pruneBackups, readSnapshot, snapshotAssetCandidates, snapshotAssetIDs, snapshotName, snapshotsToPrune,
+  snapshotTime, trashPages, writeSnapshot, WorkspaceStore, canonicalStringify, type BackupTarget, type SnapshotAssetCache, type WireRecord,
 } from "../src/index.js";
 
 function memoryTarget(): BackupTarget & { files: Map<string, Uint8Array>; reads: number } {
@@ -102,5 +102,40 @@ describe("Backups (BSD-274)", () => {
     expect(r.snapshots).toBe(29);
     expect(r.assets).toBe(1);
     expect(await t.list("assets")).toEqual([]);
+  });
+
+  // BSD-491: das Aufräumen las jede Stunde alle verbleibenden Stände (50 000 Records: ~1 GB, 16 s).
+  it("Aufräumen: Datei-IDs per Textsuche (Obermenge), jeder Stand nur einmal gelesen, ohne Dateien gar nicht", async () => {
+    const { s } = workspace();
+    const other = "b".repeat(64);
+    s.transact("cover", (tx) => tx.put({ kind: "block", data: { id: "cov", type: "page", parent: "w", sk: "z", createdAt: 0, updatedAt: 0, text: "Cover", props: { cover: { asset: { _0: { id: other, name: "c.png" } } } } } } as WireRecord));
+    s.transact("arch", (tx) => tx.put({ kind: "block", data: { id: "file1", type: "file", parent: "w", sk: "zz", createdAt: 0, updatedAt: 0, props: { asset: { id: "Imported_file-1", name: "a.pdf" } } } } as WireRecord));
+    const t = memoryTarget();
+    await writeSnapshot(t, { records: s.exportRecords(), workspaceName: "W", assets: [], now: new Date("2026-11-12T00:00:00Z") });
+    const text = new TextDecoder().decode(t.files.get("snapshots/" + snapshotName(new Date("2026-11-12T00:00:00Z")))!);
+    const found = snapshotAssetCandidates(text)!;
+    for (const id of snapshotAssetIDs(s.exportRecords())) expect(found.has(id)).toBe(true);
+    expect(found.has(HASH) && found.has(other) && found.has("Imported_file-1")).toBe(true);
+    expect(snapshotAssetCandidates("not an archive\n" + HASH)).toBeUndefined();
+
+    // ohne Dateien im Backup: kein Stand wird gelesen
+    const plain = memoryTarget();
+    for (let h = 0; h < 5; h++) await writeSnapshot(plain, { records: s.exportRecords(), workspaceName: "W", assets: [], now: new Date(Date.parse("2026-11-12T00:00:00Z") + h * 3_600_000), force: true });
+    expect(await pruneBackups(plain, { recent: 2, hourly: 0, daily: 0, monthly: 0 })).toEqual({ snapshots: 3, assets: 0 });
+    expect(plain.reads).toBe(0);
+
+    // mit Dateien: jeder verbleibende Stand einmal je Cache; gebrauchte Dateien bleiben, verwaiste fallen weg
+    const t2 = memoryTarget();
+    const cache: SnapshotAssetCache = new Map();
+    const assets = [{ id: HASH, read: () => new Uint8Array([1]) }];
+    for (let h = 0; h < 4; h++) await writeSnapshot(t2, { records: s.exportRecords(), workspaceName: "W", assets, now: new Date(Date.parse("2026-11-12T00:00:00Z") + h * 3_600_000), force: true });
+    t2.files.set("assets/" + "c".repeat(64), new Uint8Array([2]));
+    expect(await pruneBackups(t2, { recent: 3, hourly: 0, daily: 0, monthly: 0 }, cache)).toEqual({ snapshots: 1, assets: 1 });
+    expect(t2.reads).toBe(3);
+    await writeSnapshot(t2, { records: s.exportRecords(), workspaceName: "W", assets, now: new Date(Date.parse("2026-11-12T00:00:00Z") + 9 * 3_600_000), force: true });
+    expect(await pruneBackups(t2, { recent: 3, hourly: 0, daily: 0, monthly: 0 }, cache)).toEqual({ snapshots: 1, assets: 0 });
+    expect(t2.reads).toBe(4); // nur der neue Stand
+    expect(await t2.list("assets")).toEqual([HASH]);
+    expect(cache.size).toBe(3);
   });
 });
