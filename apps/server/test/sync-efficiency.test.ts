@@ -101,6 +101,8 @@ describe("Sync v2: Seiten nach Größe und gzip (ADR 0017 A2)", () => {
     expect(((await get(`${app.url}/sync/v2/pull?after=0`)).body as { records: unknown[] }).records).toHaveLength(2);
     expect((await raw(`${app.url}/sync/v2/push`, { method: "POST", headers: { "Content-Encoding": "gzip" }, body: Buffer.from("kein gzip") })).status).toBe(400);
     expect((await raw(`${app.url}/sync/v2/push`, { method: "POST", headers: { "Content-Encoding": "br" }, body })).status).toBe(415);
+    // leerer Körper mit gzip-Kopfzeile ist kein fremdes Format (dann fehlt nur das JSON → 400, nicht 415)
+    expect((await raw(`${app.url}/sync/v2/push`, { method: "POST", headers: { "Content-Encoding": "gzip" } })).status).toBe(400);
     const bomb = gzipSync(Buffer.alloc(40 << 20, 32)); // 40 MiB Leerzeichen, wenige KB komprimiert
     expect((await raw(`${app.url}/sync/v2/push`, { method: "POST", headers: { "Content-Encoding": "gzip" }, body: bomb })).status).toBe(413);
   });

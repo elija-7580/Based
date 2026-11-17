@@ -156,6 +156,8 @@ export async function gzipText(text: string): Promise<Uint8Array<ArrayBuffer> | 
 }
 
 export class SyncClient {
+  /** ADR 0017 A2: ein komprimierter Push wurde abgelehnt – in dieser Sitzung unkomprimiert senden. */
+  private gzipRefused = false;
   readonly baseURL: string;
   pageSize: number;
   lastError: string | undefined;
@@ -310,7 +312,18 @@ export class SyncClient {
       }
       if (skipped > 0) log?.("warning", `Sync: ${skipped} undecodable records not pushed`);
       if (records.length > 0 || deletions.length > 0) {
-        const reply = await this.request<{ newer?: unknown; deleted?: unknown; seq?: number; rejected?: unknown; restamped?: unknown }>("POST", "sync/v2/push", { records, deletions }, undefined, caps.gzip);
+        type PushReply = { newer?: unknown; deleted?: unknown; seq?: number; rejected?: unknown; restamped?: unknown };
+        let reply: PushReply;
+        try {
+          reply = await this.request<PushReply>("POST", "sync/v2/push", { records, deletions }, undefined, caps.gzip && !this.gzipRefused);
+        } catch (e) {
+          // Etwas zwischen Gerät und Server (Proxy) nimmt den komprimierten Körper nicht an: einmal unkomprimiert
+          // wiederholen und für diese Sitzung dabei bleiben – sonst scheitert jede Runde gleich.
+          if (!(caps.gzip && !this.gzipRefused && e instanceof SyncHTTPError && (e.status === 400 || e.status === 415))) throw e;
+          this.gzipRefused = true;
+          log?.("warning", `Sync: compressed push was refused (HTTP ${e.status}); sending uncompressed`);
+          reply = await this.request<PushReply>("POST", "sync/v2/push", { records, deletions });
+        }
         const newer = decodeRecords(reply.newer, log);
         const deleted = decodeDeletions(reply.deleted, log);
         // BSD-285: vom Server abgelehnt (geteilte Seite ohne Bearbeiten-Recht): seine Kopie gilt trotz eigenem Stempel.

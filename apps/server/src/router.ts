@@ -201,7 +201,7 @@ export class Router {
           }
           return error("invalid gzip body", 400);
         }
-      } else if (encoding !== "" && encoding !== "identity") return error("unsupported content encoding", 415);
+      } else if (encoding !== "" && encoding !== "identity" && encoding !== "gzip") return error("unsupported content encoding", 415);
     } catch (e) {
       if (e instanceof BodyTooLarge) {
         res.setHeader("Connection", "close");
@@ -215,6 +215,7 @@ export class Router {
 
 /** Ab dieser Größe lohnt Kompression (ADR 0017 A2); darunter kostet sie mehr, als sie spart. */
 export const GZIP_MIN_BYTES = 1024;
+export const GZIP_MAX_BYTES = 16 * 1024 * 1024;
 
 function send(res: ServerResponse, r: NonNullable<RouteResult>, head = false, acceptsGzip = false) {
   for (const [k, v] of Object.entries(r.headers ?? {})) res.setHeader(k, v);
@@ -225,7 +226,8 @@ function send(res: ServerResponse, r: NonNullable<RouteResult>, head = false, ac
     const data = Buffer.from(JSON.stringify(r.json));
     // ADR 0017 A2: JSON-Antworten selbst komprimieren (der lokale Server hat keinen Caddy davor; ein Proxy lässt eine
     // schon komprimierte Antwort unverändert). Sync-Seiten schrumpfen auf rund ein Fünftel.
-    if (acceptsGzip && data.length >= GZIP_MIN_BYTES && !res.hasHeader("Content-Encoding")) {
+    // Über 16 MiB unkomprimiert: gzipSync hielte den Server sonst spürbar an (Sync-Seiten sind auf 8 MiB begrenzt).
+    if (acceptsGzip && data.length >= GZIP_MIN_BYTES && data.length <= GZIP_MAX_BYTES && !res.hasHeader("Content-Encoding")) {
       const packed = gzipSync(data, { level: 5 });
       const vary = res.getHeader("Vary"); // CORS setzt schon „Origin“ – ergänzen, nicht ersetzen
       res.writeHead(r.status, { "Content-Type": "application/json", "Content-Encoding": "gzip", Vary: vary ? `${String(vary)}, Accept-Encoding` : "Accept-Encoding", "Content-Length": packed.length });

@@ -1,7 +1,7 @@
 # ADR 0017: Speicher und Sync für große Workspaces, alte Geräte und das Web
 
-- **Status:** angenommen (2026-11-17, Elija) – Richtung und die Entscheidungen unten. Keine Code-Änderung in diesem
-  ADR; die Umsetzung beginnt nach der Beta am 23.11. (Notion: „Based — Speicher und Sync: Befund und Plan“).
+- **Status:** angenommen (2026-11-17, Elija) – Richtung und die Entscheidungen unten. Umsetzung auf Elijas Wort ab
+  17.11. direkt auf main, Stufe A zuerst (Stand siehe „Umsetzung“; Notion: „Based — Speicher und Sync: Befund und Plan“).
 - **Maßstab (Elija):** langfristig am stabilsten, schnellsten und verlässlichsten – der Aufwand entscheidet nicht.
 - **Bezug:** ADR 0001 (Server-Sync), 0002 (Tombstones), 0003 (Persistenz neben dem Hauptthread), 0008 (Zusammenarbeit
   vorbereiten), 0011 (TypeScript-Stack), 0014 (Properties als Records), 0015 (Ordner-Sync), `docs/sync-protocol.md`,
@@ -149,7 +149,21 @@ nach Leerlauf wieder entlassen. Mit E2E ist das ohnehin der einzige Weg.
 
 Stufe A ist unabhängig und klein. Stufe B ist der große Hebel für alte Geräte und das Web und sollte vor Mobil
 (Phase 5) fertig sein. Stufe C und D gehören vor Based Cloud; C zusammen entwerfen, weil E2E-Umschlag, Teil-Sync und
-kompaktes Format dieselben Felder berühren. Nichts davon am Datenweg vor der Beta am 23.11. ohne Elijas Wort.
+kompaktes Format dieselben Felder berühren. Elija am 17.11.: alles umsetzen, direkt nach main. Grenze dabei: Eine
+Migration, die seine vorhandene Datei umschreibt (Schema v4), kommt erst mit Sicherung, Rückweg und einem Probelauf
+auf seinem echten Workspace nach main.
+
+## Umsetzung
+
+| Teil | Stand | Gemessen |
+| --- | --- | --- |
+| A1 Vorbereitete Anweisungen im WASM-Treiber, Laden in Stücken | auf main (17.11.) | 100 000 Records schreiben: Chromium 6,2 s → 4,3 s, WebKit 6,0 s → 4,0 s (1,5×, nicht die erwarteten 3×); Start unverändert 2,1 s / 2,4–3,0 s |
+| A3 Pull nach Größe, gzip für Push und Antworten | auf main (17.11.) | 12 000 Records: 24 Pull-Anfragen → höchstens 4; Seiten und Push auf rund ein Fünftel. Nur gegen einen Server mit diesem Stand; ein älterer bekommt unveränderte Anfragen |
+| A4 Dauerhafter Web-Speicher, Zeile „Browser storage“ | auf main (17.11.) | – |
+| A7 Zeitmessung `@perf` mit 100 000 Records | auf main (17.11.) | Schwellen: Schreiben 12 s, Start 6 s |
+| A2 Zod beim Laden überspringen | gestrichen | Prüfung beim Laden bleibt (Sicherheit vor Tempo); der Gewinn kommt mit Stufe B |
+| A5 Gliederung als Änderung, A6 Ordner-Segmente komprimiert | offen | A6 zuerst nur lesen beider Formen |
+| B, C, D, Bereiche | offen | – |
 
 ## Entscheidungen (Elija, 17.11.2026)
 
@@ -162,8 +176,8 @@ kompaktes Format dieselben Felder berühren. Nichts davon am Datenweg vor der Be
    ist entweder *privat* (Ende-zu-Ende, Suche und Agenten nur auf den Geräten) oder *für Agenten offen* (der Server
    darf lesen, baut den Vektor-Index und bedient MCP). Wichtigste Vorgabe: einfach und übersichtlich einstellbar,
    wenig nötig; technisch tief nur für die, die wollen. Siehe „Bereiche und Agenten“ unten.
-4. Stufe A: Elija hat keine Vorgabe. Festgelegt nach der Empfehlung: nach dem 23.11., vor Stufe B (A1 und der
-   Zeitmess-Test zuerst, weil sie B messbar machen).
+4. Stufe A: zuerst ohne Vorgabe; am 17.11. abends: alles umsetzen, direkt nach main (A1 und der Zeitmess-Test
+   zuerst, weil sie B messbar machen).
 5. Größe: rund 20 000 Seiten in Elijas Workspace – die Größenordnung der 520 000-Records-Messung. Stufe B ist damit
    für den eigenen Alltag nötig, nicht erst für Mobil.
 
@@ -173,7 +187,7 @@ kompaktes Format dieselben Felder berühren. Nichts davon am Datenweg vor der Be
   Teilen mit Menschen bleibt eine eigene Achse (Rollen wie heute).
 - **Einfach zuerst:** ein Schalter „Let agents work while my devices are off“ (Standard aus) und drei Arbeitsweisen
   zur Wahl – *Private* (alles Ende-zu-Ende), *Balanced* (alles privat, ein Bereich „Agents“ offen), *Open* (alles
-  offen). Jede Seite zeigt ihre Stufe mit einem Zeichen; ein Klick erklärt in einem Satz, wer lesen kann.
+  offen). **Entschieden (Elija, 17.11.): Balanced ist die Voreinstellung, die drei Namen bleiben so.** Jede Seite zeigt ihre Stufe mit einem Zeichen; ein Klick erklärt in einem Satz, wer lesen kann.
 - **Wechsel ist ausdrücklich:** privat → offen nennt die Zahl der Seiten und fragt nach; offen → privat löscht die
   lesbare Kopie und den Index auf dem Server.
 - **Agent = Mitglied mit Rolle** (lesen, kommentieren, bearbeiten) nur in offenen Bereichen; er schreibt normale

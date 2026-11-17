@@ -44,4 +44,32 @@ describe("Sync-Fähigkeiten", () => {
     expect(seen.filter((s) => s.url.includes("/sync/v2/pull")).map((s) => s.url)).toEqual(["http://server/sync/v2/pull?after=0&limit=500"]);
     expect(server.store.blocks.size).toBe(30);
   });
+
+  it("abgelehnter gzip-Push (400/415): einmal unkomprimiert wiederholen, danach dabei bleiben", async () => {
+    const server = new FakeServer();
+    const pushes: (string | null)[] = [];
+    const persistence = new SqlitePersistence(openNodeDatabase());
+    const store = new WorkspaceStore({ persistence, node: "client" });
+    const client = new SyncClient(store, persistence, {
+      baseURL: "http://server", token: server.token,
+      fetch: async (input, init) => {
+        const url = String(input);
+        if (url.endsWith("/sync/v2/info")) return new Response(JSON.stringify({ protocol: 2, seq: 0, oldestSeq: 0, sync: { gzip: true } }), { status: 200 });
+        if (url.endsWith("/sync/v2/push")) {
+          const enc = new Headers(init?.headers).get("content-encoding");
+          pushes.push(enc);
+          if (enc) return new Response("unsupported content encoding", { status: 415 });
+        }
+        return server.fetch(input, init);
+      },
+    });
+    const write = (id: string) => store.transact("t", (tx) => tx.put({ kind: "block", data: { id, type: "page", parent: "w", sk: "a" + id, text: "long text ".repeat(200), createdAt: 0, updatedAt: 0 } }));
+    write("one");
+    expect((await client.syncOnce()).pushed).toBe(1);
+    expect(pushes).toEqual(["gzip", null]);
+    write("two");
+    await client.syncOnce();
+    expect(pushes).toEqual(["gzip", null, null]);
+    expect(server.store.blocks.size).toBe(2);
+  });
 });

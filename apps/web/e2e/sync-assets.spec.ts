@@ -161,3 +161,25 @@ test("Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter,
 
   for (const p of [a, b, c]) await p.context().close();
 });
+
+// ADR 0017 A2: Der komprimierte Push braucht im Browser einen CORS-Preflight (Content-Encoding). Hier aus der
+// Seite selbst gegen den echten Server, in beiden Browsern – scheitert der Preflight, stünde jeder Push still.
+test("komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Server nimmt gzip an und antwortet gepackt", async ({ browser, baseURL }) => {
+  const page = await deviceOn(browser, baseURL!);
+  const result = await page.evaluate(async ({ url, token }) => {
+    const id = "gz" + Math.random().toString(36).slice(2, 10);
+    const record = { kind: "block", data: { id, type: "page", parent: "w", sk: "a0", text: "compressed push ".repeat(200), createdAt: 0, updatedAt: 0, stamp: { millis: Date.now(), counter: 0, node: "e2e" } } };
+    const text = JSON.stringify({ records: [record], deletions: [] });
+    const packed = new Uint8Array(await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer());
+    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Encoding": "gzip" };
+    const push = await fetch(`${url}/sync/v2/push`, { method: "POST", headers, body: packed });
+    const info = (await (await fetch(`${url}/sync/v2/info`, { headers: { Authorization: `Bearer ${token}` } })).json()) as { sync?: unknown };
+    const pull = (await (await fetch(`${url}/sync/v2/pull?after=0&limit=5000&bytes=2097152`, { headers: { Authorization: `Bearer ${token}` } })).json()) as { records: { data: { id: string } }[] };
+    return { status: push.status, plain: text.length, sent: packed.length, sync: info.sync, found: pull.records.some((r) => r.data.id === id) };
+  }, { url: serverURL, token: TOKEN });
+  expect(result.status).toBe(200);
+  expect(result.sent).toBeLessThan(result.plain / 5);
+  expect(result.sync).toEqual({ maxPage: 5000, pageBytes: true, gzip: true });
+  expect(result.found).toBe(true);
+  await page.context().close();
+});
