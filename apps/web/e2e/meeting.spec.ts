@@ -322,7 +322,7 @@ test("Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, ber
     const all = models.map((m) => ({ ...m, active: m.id === active }));
     return { engine: "whisper.cpp", engineInstalled: true, ready: models.some((m) => m.installed), model: { source: "catalog", ...all.find((m) => m.active)! }, models: all };
   };
-  await page.route("http://127.0.0.1:9/local/transcribe**", async (route) => {
+  await page.route("http://127.0.0.1:58231/local/transcribe**", async (route) => {
     const req = route.request();
     const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
     if (req.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
@@ -338,7 +338,7 @@ test("Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, ber
     return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(state()) });
   });
   await page.goto("/#prefs-sync");
-  await page.getByLabel("Server URL").fill("http://127.0.0.1:9/");
+  await page.getByLabel("Server URL").fill("http://127.0.0.1:58231/");
   await page.getByLabel("Token").fill("secret");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByLabel("Server URL")).toBeDisabled();
