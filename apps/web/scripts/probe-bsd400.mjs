@@ -46,12 +46,29 @@ await page.evaluate(() => {
 if (process.env.FRAMES) await page.evaluate(() => { globalThis.__FRAMES = true; });
 if (process.env.SYNCBUSY) await page.evaluate((b) => document.addEventListener("beforeinput", () => { const t = performance.now(); while (performance.now() - t < b); }), Number(process.env.SYNCBUSY));
 if (process.env.SYNCREWRITE) await page.evaluate(() => document.addEventListener("beforeinput", () => { const all = [...document.querySelectorAll("[data-editable-id]")].filter((e) => e !== document.activeElement); for (const e of all) { const c = [...e.childNodes].map((n) => n.cloneNode(true)); e.replaceChildren(...c); } }, true));
+if (process.env.MICRO) await page.evaluate((m) => document.addEventListener("beforeinput", () => queueMicrotask(() => {
+  const all = [...document.querySelectorAll("[data-editable-id]")].filter((e) => e !== document.activeElement);
+  for (const e of (m === "one" ? all.slice(0, 1) : all)) { if (m === "attr") e.toggleAttribute("data-zz"); else { const c = [...e.childNodes].map((n) => n.cloneNode(true)); e.replaceChildren(...c); } }
+})), process.env.MICRO);
 if (process.env.TOUCH) await page.evaluate((mode) => { document.addEventListener("beforeinput", () => setTimeout(() => {
   if (mode === "layout") void document.body.offsetHeight;
   if (mode === "style") { const ed = document.querySelector("[data-testid=block-editor]"); ed.classList.toggle("zz"); void document.body.offsetHeight; }
   if (mode === "rewrite" || mode === "rewrite1") { const all = [...document.querySelectorAll("[data-editable-id]")].filter((e) => e !== document.activeElement); for (const e of (mode === "rewrite1" ? all.slice(0, 1) : all)) { const c = [...e.childNodes].map((n) => n.cloneNode(true)); e.replaceChildren(...c); } }
   if (mode === "sel") { const s = getSelection(); const r = s.getRangeAt(0); s.removeAllRanges(); s.addRange(r); }
 }, 0)); }, process.env.TOUCH);
+if (process.env.E) await page.evaluate((e) => { globalThis.__E = e; }, process.env.E);
+if (process.env.PATCH) await page.evaluate((m) => {
+  const d = document.createElement("div"); d.textContent = "x"; d.style.cssText = m === "hidden" ? "position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0.01" : "font-size:10px"; document.body.prepend(d);
+  const first = () => document.querySelector("[data-editable-id]");
+  if (m === "sbe") { Selection.prototype.removeAllRanges = function () {}; Selection.prototype.addRange = function (r) { this.setBaseAndExtent(r.startContainer, r.startOffset, r.endContainer, r.endOffset); }; return; }
+  if (m === "collapse") { Selection.prototype.removeAllRanges = function () {}; Selection.prototype.addRange = function (r) { this.collapse(r.startContainer, r.startOffset); if (!r.collapsed) this.extend(r.endContainer, r.endOffset); }; return; }
+  const orig = Selection.prototype.removeAllRanges;
+  Selection.prototype.removeAllRanges = function () {
+    if (m === "field") { const f = first(); if (f && f !== document.activeElement) f.replaceChildren(...[...f.childNodes].map((n) => n.cloneNode(true))); }
+    else d.firstChild.data = d.firstChild.data === "x" ? "y" : "x";
+    return orig.call(this);
+  };
+}, process.env.PATCH);
 const BUSY = Number(process.env.BUSY ?? 0);
 if (BUSY) await page.evaluate((b) => document.addEventListener("keydown", () => setTimeout(() => { const t = performance.now(); while (performance.now() - t < b); }, 0)), BUSY);
 if (process.env.NOSPELL) await page.evaluate(() => { document.body.spellcheck = false; for (const e of document.querySelectorAll("[contenteditable]")) e.spellcheck = false; new MutationObserver(() => { for (const e of document.querySelectorAll("[contenteditable]:not([spellcheck=false])")) e.spellcheck = false; }).observe(document.body, { subtree: true, childList: true }); });
@@ -71,6 +88,7 @@ const diag = await page.evaluate(() => ({
 }));
 const idleFrames = async (label) => { const d = await page.evaluate(() => new Promise((res) => { const fr = []; const f = () => { fr.push(performance.now()); if (fr.length < 40) requestAnimationFrame(f); else res(fr.slice(1).map((x,i)=>x-fr[i]).sort((a,b)=>a-b)); }; requestAnimationFrame(f); })); console.log(label, "p50", d[19].toFixed(1), "max", d[d.length-1].toFixed(1)); };
 await idleFrames("idle-before-click");
+if (process.env.CSS) await page.addStyleTag({ content: process.env.CSS });
 await page.locator("[data-testid=block-editor]").getByText("Big page B line " + LAST, { exact: false }).click();
 await page.keyboard.press("End");
 await page.waitForTimeout(300);
