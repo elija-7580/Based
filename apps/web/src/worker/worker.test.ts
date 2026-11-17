@@ -88,6 +88,18 @@ describe("Store-Worker-Schnittstelle", () => {
     expect(client.getState().outline?.children[home]).toHaveLength(4);
   });
 
+  it("BSD-436: Startvorlage legt eine Datenbank bzw. Seite oben unter Private an", async () => {
+    const { client } = setup();
+    const r = await client.init({});
+    const tasks = await client.command<string>({ op: "addStarterTemplate", template: "tasks" });
+    const wiki = await client.command<string>({ op: "addStarterTemplate", template: "wiki" });
+    await settle();
+    expect(client.getState().outline?.children[sectionKey("private")]).toEqual([r.homePageID, tasks, wiki]);
+    expect(client.title(tasks)).toBe("Tasks");
+    expect(client.getState().outline?.nodes[tasks]?.kind).toBe("database");
+    expect(client.getState().outline?.children[wiki]).toHaveLength(3);
+  });
+
   it("Befehle: anlegen, umbenennen, Papierkorb, wiederherstellen, endgültig löschen", async () => {
     const { client, sent } = setup();
     await client.init({ device: "DEV00001" });

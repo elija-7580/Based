@@ -110,7 +110,7 @@ test("Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn
     await ready(page);
     await expect(welcome(page)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    for (const name of [/Import from Notion/, /Start empty/, /Turn on agents/]) await expect(welcome(page).getByRole("button", { name })).toBeInViewport({ ratio: 1 });
+    for (const name of [/Import from Notion/, /Start empty/, /^Tasks$/, /^Notes$/, /^Journal$/, /^Wiki$/, /Turn on agents/]) await expect(welcome(page).getByRole("button", { name })).toBeInViewport({ ratio: 1 });
     // Beschriftungen der Wege laufen nicht heraus
     const clipped = await welcome(page).locator(".welcome-choice strong, .welcome-ai strong").evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).length);
     expect(clipped).toBe(0);
@@ -191,5 +191,60 @@ test("ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seit
     } finally {
       await close();
     }
+  }
+});
+
+// BSD-436 (Mac-Beta): dritter Weg „Start from a template“ – Tasks öffnet ein Board mit Beispielaufgaben, die
+// Anleitungsseiten liegen trotzdem unter „Welcome to Based“; nach dem Neuladen kein Willkommen mehr. Fotos hell/dunkel.
+test("Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen", async ({ playwright, browserName, baseURL }) => {
+  for (const theme of ["light", "dark"] as const) {
+    const { page, close } = await fresh(playwright, browserName, baseURL!);
+    try {
+      await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.goto("/");
+      await ready(page);
+      const tpl = welcome(page).getByRole("group", { name: "Or start from a template" });
+      await expect(tpl.getByRole("button")).toHaveText(["Tasks", "Notes", "Journal", "Wiki"]);
+      if (browserName === "chromium") {
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: `${SHOTS}web-welcome-templates-${theme}.png` });
+      }
+      const t0 = Date.now();
+      await tpl.getByRole("button", { name: "Tasks" }).click();
+      const board = page.locator(".shell-database.full");
+      await expect(board).toBeVisible();
+      await expect(board.getByText("Try Based for a day")).toBeVisible();
+      expect(Date.now() - t0).toBeLessThan(3000);
+      // jede Aufgabe hat einen Status: „No Status“ steht nur unter den ausgeblendeten Gruppen, nicht als Spalte
+      await expect(board.getByRole("region", { name: "Hidden groups" })).toContainText("No Status");
+      for (const col of ["Not started", "In progress", "Done"]) await expect(board.getByTestId("board").getByText(col, { exact: true }).first()).toBeVisible();
+      await expect(page.getByRole("treeitem", { name: "Tasks" })).toHaveCount(1);
+      if (browserName === "chromium") {
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: `${SHOTS}web-template-tasks-${theme}.png` });
+      }
+      await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+      await expect(page.getByTestId("page-content").getByText("Your data", { exact: true })).toBeVisible();
+      await page.reload();
+      await ready(page);
+      await expect(welcome(page)).toHaveCount(0);
+    } finally {
+      await close();
+    }
+  }
+});
+
+test("Vorlagen auch später über ⌘N: Journal", async ({ playwright, browserName, baseURL }) => {
+  const { page, close } = await fresh(playwright, browserName, baseURL!, false);
+  try {
+    await page.goto("/");
+    await ready(page);
+    await page.keyboard.press("ControlOrMeta+n");
+    await page.keyboard.type("journal");
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".shell-database.full")).toBeVisible();
+    await expect(page.getByRole("treeitem", { name: "Journal" })).toHaveCount(1);
+  } finally {
+    await close();
   }
 });

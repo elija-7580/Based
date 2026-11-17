@@ -24,3 +24,11 @@
 }
 .welcome-ai .welcome-choice-text { flex: 1 1 calc(var(--page-measure) / 2.4); }
 .welcome-foot { margin: 0; }
+
+/* BSD-436: Startvorlagen als dritter Weg – kleine Karten nur mit Titel, vier in einer Zeile (bei wenig Platz zwei) */
+.welcome-templates { display: flex; flex-direction: column; gap: var(--space-2); }
+.welcome-templates-title { margin: 0; user-select: none; }
+.welcome-choices.compact { grid-template-columns: repeat(auto-fit, minmax(calc(var(--page-measure) / 6), 1fr)); gap: var(--space-2); }
+.welcome-choice.compact { align-items: center; padding: var(--space-3); border-radius: var(--radius-lg); }
+.welcome-choice.compact .tile { border-radius: calc(var(--radius-lg) - var(--space-1)); }
+.welcome-choice.compact .welcome-choice-text { gap: 0; }

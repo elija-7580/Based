@@ -101,6 +101,7 @@ export {
   databasesNeedingIDCheck, repairUniqueIDs, uniqueIDRepair, valuesMatchingSchema,
 } from "./store/database-ops.js";
 export type { AddRowOptions, CreatedDatabase, InsertPosition as RowInsertPosition } from "./store/database-ops.js";
+export { addStarterTemplate, STARTER_TEMPLATES, type StarterTemplate, type StarterTemplateID } from "./store/starter-templates.js";
 export { chartDateBucket, chartNumber, chartPoints } from "./query/chart.js";
 export type { ChartPoint } from "./query/chart.js";
 export {
