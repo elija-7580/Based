@@ -34,6 +34,7 @@ import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
+import { hiddenRoute } from "./shell/hiddenRoute.js";
 import { fallbackHomePage, homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
@@ -109,6 +110,9 @@ export function App({ client, history }: { client: StoreClient; history: History
   const creatingHome = useRef(false);
   const aiRoute = route.name === "chat" || route.name === "tasks" || route.name === "coding" || route.name === "agent" || route.name === "project";
   const wantsHome = route.name === "home" || (!ai && aiRoute);
+  // BSD-486: ausgeblendete Ansicht (alter Tab, Lesezeichen) → Home, und die Adresse wird #home statt stehen zu bleiben.
+  const hidden = hiddenRoute(route, ai);
+  useEffect(() => { if (hidden) history.navigate({ name: "home" }, { replace: true }); }, [hidden, history]);
   useEffect(() => {
     if (ai || !wantsHome || homePage || !state.ready || !state.outline || welcome || creatingHome.current) return;
     const existing = fallbackHomePage(state.outline, state.titles);
@@ -288,9 +292,9 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = homePage
       ? <PageView key={homePage} client={client} state={state} pageID={homePage} history={history} onOpenPage={openPage} onNavigate={navigate} />
       : <div className="screen-loading" role="status" aria-label="Loading" />;
-  } else if (!commandVisible(route.name) && (route.name === "graph" || route.name === "meetings" || route.name === "coding")) {
-    // Beta-Gate: ausgeblendete Ansichten (alte Tabs, Links) landen in der Library.
-    screen = <Library client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} />;
+  } else if (hidden) {
+    // Beta-Gate (BSD-486): ausgeblendete Ansicht – der Effekt oben schreibt gleich auf #home um.
+    screen = <div className="screen-loading" role="status" aria-label="Loading" />;
   } else if (route.name === "chat") {
     screen = <ChatPage client={client} history={history} />;
   } else if (route.name === "tasks") {
