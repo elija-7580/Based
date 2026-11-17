@@ -59,6 +59,17 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
       cancelLabel: "Later",
     });
     if (!yes) return;
+    // BSD-456: vor dem Installieren den ganzen Workspace sichern (auch ohne lokalen Server); scheitert das, kein Update.
+    const { backupBeforeUpdate } = await import("./desktop/preUpdate.js");
+    const { preUpdateFailureText } = await import("@based/core");
+    const { diagnosticsLog } = await import("./shell/diagnostics.js");
+    const saved = await backupBeforeUpdate(update.currentVersion, update.version);
+    if (!saved.ok) {
+      diagnosticsLog.add("error", `pre-update backup failed: ${saved.message}`);
+      await showMessage(preUpdateFailureText(saved.message), { title: "Update not installed" });
+      return;
+    }
+    diagnosticsLog.add("info", `pre-update backup: ${saved.name} (${saved.records} records, ${saved.bytes} bytes)`);
     await update.downloadAndInstall();
     // Neustart nach dem Update ist ein gewolltes Ende – sonst meldete der nächste Start „didn't close normally“.
     const { markSessionEnd } = await import("./shell/diagnostics.js");

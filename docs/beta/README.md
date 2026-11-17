@@ -45,6 +45,9 @@ Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Set
 - Either way, export anything important now and then (**•••** page menu → Export, or Settings → Import & export).
 - Based Beta and Based Next can be installed side by side. Each keeps its own workspace, local server (Beta: port
   47822), backups folder and iCloud folder (`Based Beta`); the command line tool of the Beta is `based-beta`.
+- Before it installs an update, Based Beta saves a copy of your whole workspace (a Based archive with all files) in
+  `~/Library/Application Support/com.friedrich-ulrich.based.beta/pre-update` and keeps the last three. If that copy
+  can't be saved, the update isn't installed. To go back, import the archive in **Settings → Import & export**.
 - Updates keep your data. If an update ever fails to open your workspace, don't delete anything – write to us.
 
 ## Updates
