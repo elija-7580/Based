@@ -160,7 +160,7 @@ export function createApp(opts: AppOptions): App {
   // BSD-243: `agents.runsOnServer` – Zeitpläne laufen auch bei geschlossener App (Modell auf dem Server eingerichtet).
   router.add("GET", "/sync/v2/info", () => json({ ...sync.info(), assets: { maxBytes: assets.maxBytes, chunkBytes: ASSET_CHUNK_LIMIT }, agents: { runsOnServer: scheduler.executes } }), { access: "shared" });
   router.add("GET", "/sync/v2/pull", ({ url, caller, req }) =>
-    handle(() => (sameProtocol(req), json(share.pull(principalOf(caller), sync, intParam(url, "after", 0), intParam(url, "limit", DEFAULT_PAGE))))), { access: "shared" });
+    handle(() => (sameProtocol(req), json(share.pull(principalOf(caller), sync, intParam(url, "after", 0), intParam(url, "limit", DEFAULT_PAGE), url.searchParams.has("bytes") ? intParam(url, "bytes", 0) : undefined)))), { access: "shared" });
   router.add("POST", "/sync/v2/push", ({ body, caller, req }) =>
     handle(() => {
       sameProtocol(req);

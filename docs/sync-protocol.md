@@ -94,6 +94,16 @@ up to this number may have been removed. A client whose `pulled` is above 0 but 
 again (`after=0`) after pushing its own changes, and then deletes the records the server no longer has (except
 ones changed locally during that sync and rows it can't decode). Clients treat a failing `info` as `oldestSeq = 0`.
 
+`sync` (ADR 0017 A2, optional): what the server can do beyond the base protocol –
+`{"maxPage": 5000, "pageBytes": true, "gzip": true}`. A client uses a capability only when it is listed here; a
+server without the field (older TypeScript servers, the Swift server) gets exactly the base requests
+(`limit=500`, no `bytes`, uncompressed bodies). Clients treat a failing `info` as "no capabilities".
+
+- `pageBytes`: `pull` accepts `bytes=<n>`. `maxPage`: the largest `limit` the server honours.
+- `gzip`: request bodies may be sent with `Content-Encoding: gzip` (the route's size limit applies to the unpacked
+  body; broken gzip → `400`, any other encoding → `415`). Independently of this field the TypeScript server
+  compresses JSON replies of 1 KB and more when the request says `Accept-Encoding: gzip`.
+
 ### `POST /sync/v2/push`
 
 Body:
@@ -128,6 +138,11 @@ Reply:
 This returns every record changed after server change number `after`, oldest first. Each record appears
 at most once, in its current version. Pass `next` as `after` for the next page, and repeat while `more`
 is `true`. Start with `after=0` for a full download.
+
+`bytes=<n>` (only if `info.sync.pageBytes`): the page also ends once its records add up to about `n` bytes of JSON
+(server cap 8 MiB). At least one entry is always returned, so a single large record never blocks the cursor. The
+TypeScript client asks for `limit=5000&bytes=2097152`: few requests for many small records, and still a bounded
+transaction per page for large ones.
 
 ### `GET /sync/v2/wait?after=<seq>&timeout=<seconds>`
 

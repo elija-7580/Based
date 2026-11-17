@@ -24,6 +24,9 @@ export function openNodeDatabase(path = ":memory:"): SqlDatabase {
     exec: (sql) => db.exec(sql),
     run: (sql, params = []) => void prepare(sql).run(...(params as SQLInputValue[])),
     all: (sql, params = []) => prepare(sql).all(...(params as SQLInputValue[])) as SqlRow[],
+    each: (sql, params, row) => {
+      for (const r of prepare(sql).iterate(...(params as SQLInputValue[]))) row(r as SqlRow);
+    },
     backupIsComplete: true,
     backup(version) {
       if (path === ":memory:") return undefined;

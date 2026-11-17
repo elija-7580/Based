@@ -70,16 +70,75 @@ export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatab
   } else {
     db = new sqlite3.oo1.DB(":memory:", "c");
   }
-  const bind = (params: unknown[]) => (params.length ? (params as BindableValue[]) : undefined);
+  // ADR 0017 A1: vorbereitete Anweisungen je Datenbank wiederverwenden (wie drivers/node.ts). Vorher bereitete jeder
+  // Aufruf seine Anweisung neu vor – beim Schreiben in einem Zug (erster Sync, Import) der größte Posten.
+  // Regeln: nach jedem Lauf zurücksetzen, nach einem Fehler verwerfen – sonst hält eine offene Anweisung die Transaktion;
+  // vor dem Schließen alle freigeben, sonst gibt der Pool die OPFS-Datei nicht her. `exec` (mehrere Anweisungen,
+  // PRAGMA, BEGIN/COMMIT) bleibt ohne Cache.
+  type Statement = ReturnType<Database["prepare"]>;
+  const statements = new Map<string, Statement>();
+  const STATEMENT_LIMIT = 256;
+  const prepare = (sql: string): Statement => {
+    let st = statements.get(sql);
+    if (st) return st;
+    if (statements.size >= STATEMENT_LIMIT) {
+      // Selten (SQL mit eingesetzten Namen): die älteste Anweisung freigeben.
+      const [oldest, old] = statements.entries().next().value as [string, Statement];
+      statements.delete(oldest);
+      old.finalize();
+    }
+    st = db.prepare(sql);
+    statements.set(sql, st);
+    return st;
+  };
+  // Nach einem Fehler die Anweisung nicht behalten: `reset` meldet den Fehler des letzten Schritts noch einmal, und
+  // eine halb gelaufene Anweisung darf nie die nächste Transaktion aufhalten. Der Fehler selbst geht an den Aufrufer.
+  const discard = (sql: string, st: Statement) => {
+    statements.delete(sql);
+    try { st.finalize(); } catch { /* der ursprüngliche Fehler zählt */ }
+  };
+  const finalizeAll = () => {
+    for (const st of statements.values()) {
+      try { st.finalize(); } catch { /* schon freigegeben */ }
+    }
+    statements.clear();
+  };
   return {
     exec: (sql) => void db.exec(sql),
     run: (sql, params = []) => {
-      const b = bind(params);
-      db.exec(b ? { sql, bind: b } : { sql });
+      const st = prepare(sql);
+      try {
+        if (params.length) st.bind(params as BindableValue[]);
+        st.step();
+      } catch (e) {
+        discard(sql, st);
+        throw e;
+      }
+      st.reset(true);
     },
     all: (sql, params = []) => {
-      const b = bind(params);
-      return (b ? db.selectObjects(sql, b) : db.selectObjects(sql)) as SqlRow[];
+      const st = prepare(sql);
+      const rows: SqlRow[] = [];
+      try {
+        if (params.length) st.bind(params as BindableValue[]);
+        while (st.step()) rows.push(st.get({}) as SqlRow);
+      } catch (e) {
+        discard(sql, st);
+        throw e;
+      }
+      st.reset(true);
+      return rows;
+    },
+    each: (sql, params, row) => {
+      const st = prepare(sql);
+      try {
+        if (params.length) st.bind(params as BindableValue[]);
+        while (st.step()) row(st.get({}) as SqlRow);
+      } catch (e) {
+        discard(sql, st);
+        throw e;
+      }
+      st.reset(true);
     },
     backup(version) {
       if (!shared || !file) return undefined;
@@ -90,6 +149,9 @@ export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatab
       void shared.importDb(target, bytes);
       return target;
     },
-    close: () => db.close(),
+    close: () => {
+      finalizeAll();
+      db.close();
+    },
   };
 }

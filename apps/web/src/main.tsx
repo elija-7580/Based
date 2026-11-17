@@ -13,6 +13,7 @@ import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareF
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
+import { installBrowserKeep } from "./shell/storagePersist.js";
 import { installWheelLatch } from "./shell/wheelLatch.js";
 import { StoreClient } from "./worker/client.js";
 
@@ -210,6 +211,8 @@ function start(guest: GuestBoot | undefined) {
       if (r.created && r.homePageID) recentPages.touch(r.homePageID);
       // BSD-275: frischer Workspace → Willkommensbildschirm an Stelle von Home (nicht für Gäste, nicht in E2E-Browsern)
       if (!guest) firstRun.noteInit(r);
+      // ADR 0017 A3: dauerhaften Speicher anfragen (nur im Browser, nur wenn wirklich im Browser gespeichert wird).
+      if (!guest && !isTauri() && r.persistent) installBrowserKeep(window);
     })
     .catch(() => undefined);
 
