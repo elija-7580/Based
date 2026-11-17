@@ -9,6 +9,7 @@ import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
 import { useEffect, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { isTauri } from "../../desktop.js";
+import { reportSendingHint } from "../../shell/beta.js";
 import { BUILD, recorder } from "../../shell/bugReport.js";
 import { copyText } from "../../shell/copyText.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText, stallCount } from "../../shell/diagnostics.js";
@@ -81,7 +82,7 @@ export function CrashReportsSection(_: SettingsSectionProps) {
       <Row label="Last session" hint={report ? (report.kind === "hang" ? "Ended in a hang" : report.kind === "crash" ? "Didn’t close normally" : `Froze ${plural(report.session.freezes, "time")}`) : "Closed normally — nothing to report"}>
         <BasedButton label="Prepare report…" variant="ghost" disabled={!report} onClick={() => crashPrompt.show()} />
       </Row>
-      <Row label="Sending" hint="Not available in this beta yet — save the report as a file or copy it and pass it on." />
+      <Row label="Sending" hint={reportSendingHint()} />
     </Group>
   );
 }

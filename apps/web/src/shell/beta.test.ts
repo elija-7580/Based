@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { slashItemsFor } from "@based/editor";
-import { BETA_HIDDEN, BETA_HIDDEN_SETTINGS, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes, productBlurb, productName, settingsPageVisible } from "./beta.js";
+import { BETA_HIDDEN, BETA_HIDDEN_SETTINGS, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes, productBlurb, productName, reportSendingHint, settingsPageVisible, workspaceNameHint } from "./beta.js";
 import { SETTINGS_PAGES } from "./settings.js";
 import { matchCommands, navAvailable, NAV_COMMANDS } from "./sidebarNav.js";
 
@@ -131,5 +131,12 @@ describe("features.csv passt zum Beta-Gate", () => {
     expect(productName("dev")).toBe("Based Next");
     expect(productBlurb("dev")).toMatch(/agents/);
     expect(SETTINGS_PAGES.find((p) => p.id === "about")?.summary).toBe("Based Next — the notes app that keeps your data yours.");
+  });
+
+  it("Einstellungen auf beta: kein Teilen beim Namen, Berichte gehen an hello@basednotes.app (BSD-483)", () => {
+    expect(workspaceNameHint("beta")).toBe("Used for exports");
+    expect(workspaceNameHint("dev")).toMatch(/share/);
+    expect(reportSendingHint("beta")).toContain("hello@basednotes.app");
+    expect(reportSendingHint("dev")).not.toContain("hello@basednotes.app");
   });
 });

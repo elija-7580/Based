@@ -83,3 +83,15 @@ export function productBlurb(channel: Channel = CHANNEL): string {
     ? "Local-first notes and databases. Your workspace lives on your device."
     : "Local-first notes, databases and agents. Your workspace lives on your device.";
 }
+
+/** BSD-483: Hinweis unter Settings → General → Name – Teilen nur nennen, wo es Teilen gibt. */
+export function workspaceNameHint(channel: Channel = CHANNEL): string {
+  return featureVisible("sharing", channel) ? "Used for exports and shown to people you share with" : "Used for exports";
+}
+
+/** BSD-483: Diagnostics → Crash reports → Sending – auf beta der Weg zu uns (BSD-467: Mail an hello@basednotes.app). */
+export function reportSendingHint(channel: Channel = CHANNEL): string {
+  return channel === "beta"
+    ? "Based doesn’t send reports by itself — save the report as a file and email it to hello@basednotes.app."
+    : "Not available in this beta yet — save the report as a file or copy it and pass it on.";
+}

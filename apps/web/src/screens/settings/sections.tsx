@@ -25,7 +25,7 @@ import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { clockSkewText } from "./clockSkew.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
-import { featureVisible, productBlurb, productName } from "../../shell/beta.js";
+import { featureVisible, productBlurb, productName, workspaceNameHint } from "../../shell/beta.js";
 import { TranscriptionSetup } from "../../meeting/TranscriptionSetup.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
 import { AI_OPTION, aiSetting } from "../../shell/ai.js";
@@ -200,7 +200,7 @@ function WorkspaceSection({ client, state, navigate }: SettingsSectionProps) {
   const trash = state.outline?.trash.length ?? 0;
   return (
     <Group>
-      <Row label="Name" hint="Used for exports and shown to people you share with">
+      <Row label="Name" hint={workspaceNameHint()}>
         <WorkspaceName name={state.outline?.workspaceName ?? ""} onRename={(name) => void client.command({ op: "renameWorkspace", name })} />
       </Row>
       <Row label="Icon" hint="Shown next to the workspace name; syncs to every device">

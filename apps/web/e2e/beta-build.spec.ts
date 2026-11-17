@@ -93,6 +93,16 @@ for (const theme of ["light", "dark"] as const) {
       await expect(settings).not.toContainText(/Based Next|agent/i);
       await clean(page, "About");
       await shoot(page, "settings-about");
+      // BSD-483: General verspricht kein Teilen; Diagnostics nennt den Weg für Berichte
+      await nav.getByRole("button", { name: "General", exact: true }).click();
+      await expect(settings).toContainText("Used for exports");
+      await expect(settings).not.toContainText(/share with/i);
+      await nav.getByRole("button", { name: "Diagnostics", exact: true }).click();
+      await expect(settings.getByText(/email it to hello@basednotes\.app/)).toBeVisible();
+      await expect(settings).not.toContainText("pass it on");
+      await settings.getByText(/email it to hello@basednotes\.app/).scrollIntoViewIfNeeded();
+      await clean(page, "Diagnostics");
+      await shoot(page, "settings-diagnostics");
 
       // Library ohne Graph und Meetings; ⌘N ohne Meeting und AI-Chat, mit den Vorlagen
       await page.goto("/#library");
