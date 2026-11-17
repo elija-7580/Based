@@ -25,7 +25,7 @@ pnpm --filter @based/server start -- --stdio --db ./based.sqlite     # MCP für 
 | `--sandbox` | `BASED_SANDBOX` | aus | `docker` oder `local`: Sandbox pro Lauf, Routen `/sandbox/*` |
 | `--sandbox-dir` | `BASED_SANDBOX_DIR` | `<db>.sandbox` | Snapshot-Archive |
 | | `BASED_LOG_LEVEL` | `info` | `debug` loggt jede Anfrage |
-| | `BASED_WHISPER_BIN`, `BASED_WHISPER_MODEL` | – | BSD-231: `whisper-cli` (whisper.cpp ≥ 1.7) → Route `/local/transcribe` für Meeting Notes. Modell: eigene Datei (`BASED_WHISPER_MODEL`) oder whisper-base aus dem Katalog, erst nach `POST /local/transcribe/model {"action":"download"}` geladen (Ordner `<db>.models`, Größe + SHA-256 geprüft); optional `BASED_WHISPER_THREADS` |
+| | `BASED_WHISPER_BIN`, `BASED_WHISPER_MODEL` | – | BSD-231: `whisper-cli` (whisper.cpp ≥ 1.7) → Route `/local/transcribe` für Meeting Notes. Der lokale Server der Mac-App (`desktop`/`--local`) hat die Route auch ohne die Variable und sucht `whisper-cli` selbst (PATH der Login-Shell, `/opt/homebrew/bin`, `/usr/local/bin`); `GET` meldet dann `engineInstalled`. Modell: eigene Datei (`BASED_WHISPER_MODEL`) oder whisper-base aus dem Katalog, erst nach `POST /local/transcribe/model {"action":"download"}` geladen (Ordner `<db>.models`, Größe + SHA-256 geprüft); optional `BASED_WHISPER_THREADS` |
 
 Neben der Datenbank legt der Server `<db>.collab.sqlite` an (Y-Zustände für `/collab`).
 

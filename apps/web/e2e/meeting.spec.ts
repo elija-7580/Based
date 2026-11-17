@@ -120,7 +120,7 @@ test("/meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neul
   await block(page).getByRole("tab", { name: "Summary" }).click();
   await expect(block(page)).toContainText("Connect an AI under Settings");
   await block(page).getByRole("tab", { name: "Transcript" }).click();
-  await expect(page.getByTestId("meeting-transcript-empty")).toContainText("Transcription isn't available in this app yet");
+  await expect(page.getByTestId("meeting-transcript-empty")).toContainText("Transcription isn't set up on this device yet");
   await settled(page);
 
   await page.reload();
@@ -259,6 +259,50 @@ test("Feedback 14. 11.: auf Akku nur aufnehmen – Transkript wartet, kommt am S
   await second.getByRole("button", { name: "Transcribe now" }).click();
   await expect(page.getByTestId("meeting-transcript")).toContainText("Welcome everyone.", { timeout: 10_000 });
   await expect(second).toHaveCount(0);
+});
+
+// Feedback 17. 11. (Elija, Mac-App): Aufnahme ohne eingerichtete Transkription → ehrlicher Hinweis mit dem Weg in die
+// Einstellungen; ist sie später eingerichtet, lässt sich die vorhandene Aufnahme nachträglich transkribieren.
+test("Feedback 17. 11.: ohne Transkription aufnehmen, später einrichten → „Transcribe recording“ holt das Transkript nach", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Playwright-WebKit hat kein Fake-Mikrofon; Aufnahme nur in Chromium geprüft.");
+  await newPageWithMeeting(page, "Recorded first");
+  await block(page).getByRole("button", { name: "Start recording" }).click();
+  await expect(block(page)).toHaveAttribute("data-recording", "true");
+  await page.waitForTimeout(1500);
+  await block(page).getByRole("button", { name: "Stop" }).click();
+  await expect(block(page)).toHaveAttribute("data-status", "done", { timeout: 15_000 });
+  await block(page).getByRole("tab", { name: "Transcript" }).click();
+  await expect(page.getByTestId("meeting-transcript-empty")).toContainText("Set it up in Settings → Meeting notes");
+  await expect(block(page).getByRole("button", { name: "Transcribe recording" })).toHaveCount(0);
+  await shots(page, test.info().project.name, "-no-transcription");
+  // Transkription wird eingerichtet (hier: fester Transcriber) – der Knopf erscheint, ohne neu aufzunehmen.
+  await page.evaluate(() => (globalThis as unknown as { __basedMeeting: { useTranscriber(l: unknown): void } }).__basedMeeting
+    .useTranscriber([{ start: 0.2, end: 1.2, text: "Recorded before setup.", speaker: "me" }]));
+  await block(page).getByRole("tab", { name: "Notes" }).click();
+  await block(page).getByRole("tab", { name: "Transcript" }).click();
+  await shots(page, test.info().project.name, "-transcribe-recording");
+  await block(page).getByRole("button", { name: "Transcribe recording" }).click();
+  await expect(page.getByTestId("meeting-transcript")).toContainText("Recorded before setup.", { timeout: 10_000 });
+  await expect(block(page).getByRole("button", { name: "Transcribe recording" })).toHaveCount(0);
+});
+
+// Einstellungen → Meeting notes: im Browser ohne Server steht, was fehlt – kein Knopf, der ins Leere führt.
+test("Feedback 17. 11.: Einstellungen nennen den fehlenden Schritt für die Transkription", async ({ page, browserName }) => {
+  await page.goto("/#prefs-my-settings");
+  await expect(page.getByTestId("settings-page")).toBeVisible();
+  const section = page.getByTestId("settings-section-meetings");
+  await expect(section).toContainText("Transcription");
+  await expect(section).toContainText("Needs a Based server that offers transcription. Connect one in Sync & server.");
+  await expect(section.getByRole("button", { name: /Download model|Check again|Remove model/ })).toHaveCount(0);
+  if (SHOTS && browserName === "chromium") {
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await section.scrollIntoViewIfNeeded();
+    for (const theme of ["light", "dark"] as const) {
+      await setTheme(page, theme);
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: `../../docs/design/screens/web-settings-transcription-${theme}.png` });
+    }
+  }
 });
 
 test("BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite", async ({ page }) => {

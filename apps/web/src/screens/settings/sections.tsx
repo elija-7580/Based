@@ -26,6 +26,7 @@ import { Group, Row, Value } from "./parts.js";
 import { clockSkewText } from "./clockSkew.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
 import { featureVisible } from "../../shell/beta.js";
+import { TranscriptionSetup } from "../../meeting/TranscriptionSetup.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
 import { AI_OPTION, aiSetting } from "../../shell/ai.js";
 
@@ -287,6 +288,7 @@ function MeetingsSection(_: SettingsSectionProps) {
           options={[{ value: "now", label: "Right away" }, { value: "plugged-in", label: "When plugged in" }]}
         />
       </Row>
+      <TranscriptionSetup />
     </Group>
   );
 }
