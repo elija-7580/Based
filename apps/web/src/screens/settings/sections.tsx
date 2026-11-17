@@ -25,7 +25,7 @@ import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { clockSkewText } from "./clockSkew.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
-import { featureVisible } from "../../shell/beta.js";
+import { featureVisible, productBlurb, productName } from "../../shell/beta.js";
 import { TranscriptionSetup } from "../../meeting/TranscriptionSetup.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
 import { AI_OPTION, aiSetting } from "../../shell/ai.js";
@@ -344,7 +344,7 @@ function AboutSection() {
   const id = useId();
   return (
     <Group>
-      <Row label="Based Next" labelID={id} hint="Local-first notes, databases and agents. Your workspace lives on your device." />
+      <Row label={productName()} labelID={id} hint={productBlurb()} />
       <Row label="License"><Value>MIT · open source</Value></Row>
       <Row label="Source code" hint="Opens GitHub in a new tab">
         <Link href="https://github.com/elija-7580/Based" target="_blank">github.com/elija-7580/Based</Link>

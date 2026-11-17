@@ -71,3 +71,15 @@ export function settingsPageVisible(id: string, channel: Channel = CHANNEL): boo
 
 /** Name der App im Kanal (Fenstertitel, Über-Seite, Problem melden). */
 export const APP_NAME = CHANNEL === "beta" ? "Based Beta" : "Based";
+
+/** BSD-485: Produktname auf der Über-Seite – „Based Beta“ auf beta, sonst „Based Next“. */
+export function productName(channel: Channel = CHANNEL): string {
+  return channel === "beta" ? "Based Beta" : "Based Next";
+}
+
+/** BSD-485: Kurzbeschreibung auf der Über-Seite – auf beta ohne Agenten (die gibt es dort nicht). */
+export function productBlurb(channel: Channel = CHANNEL): string {
+  return channel === "beta"
+    ? "Local-first notes and databases. Your workspace lives on your device."
+    : "Local-first notes, databases and agents. Your workspace lives on your device.";
+}

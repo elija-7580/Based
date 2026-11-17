@@ -102,5 +102,8 @@ describe("Evernote ENEX", () => {
     const r = importNotionItems(s, [{ files: new ImportFiles([["export.zip", zip]]), path: "export.zip" }]);
     expect(kids(s, "w").map((b) => plainText(b.text))).toEqual(["Travel", "Work"]);
     expect(r.rows).toBe(3);
+    // BSD-485: Einzahl im Hinweis
+    expect(r.warnings).toContain("Evernote notebook “Work”: 1 note");
+    expect(r.warnings).toContain("Evernote notebook “Travel”: 2 notes");
   });
 });

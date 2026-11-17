@@ -228,7 +228,7 @@ export class EnexImporter {
       const bk = keysBetween(blocks.length, undefined, undefined);
       blocks.forEach((b, j) => this.putBlock(b, "b:" + rowID, bk[j]!));
     });
-    this.report.warnings.unshift(`Evernote notebook “${title}”: ${notes.length} notes`);
+    this.report.warnings.unshift(`Evernote notebook “${title}”: ${notes.length} ${notes.length === 1 ? "note" : "notes"}`);
     return { records: this.records, rootKeys: [key], report: this.report };
   }
 }

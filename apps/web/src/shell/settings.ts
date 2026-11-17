@@ -3,6 +3,7 @@
 // Andere Bereiche hängen ihren Abschnitt ein, ohne Settings.tsx anzufassen:
 //   registerSettingsSection({ id: "ai-keys", page: "agents", title: "API keys", component: AIKeys, provides: ["API keys"] })
 import type { SyncConfig } from "../worker/protocol.js";
+import { productName } from "./beta.js";
 
 export type SettingsGroup = "account" | "workspace";
 
@@ -50,7 +51,7 @@ export const SETTINGS_PAGES: readonly SettingsPageDef[] = [
   { id: "billing", group: "workspace", title: "Billing", summary: "Based is open source and free.", ai: "missing", missing: ["AI usage overview"] },
   { id: "updates", group: "workspace", title: "Updates", summary: "How this copy of Based stays current.", missing: [] },
   { id: "diagnostics", group: "workspace", title: "Diagnostics", summary: "What the app knows about its own state.", missing: ["Logs", "Hang reports", "Layout audit"] },
-  { id: "about", group: "workspace", title: "About", summary: "Based Next — the notes app that keeps your data yours.", missing: [] },
+  { id: "about", group: "workspace", title: "About", summary: `${productName()} — the notes app that keeps your data yours.`, missing: [] },
 ];
 
 export const DEFAULT_SETTINGS_PAGE = "my-settings";

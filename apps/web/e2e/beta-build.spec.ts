@@ -87,6 +87,12 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
       await clean(page, "My settings");
       await shoot(page, "settings");
+      // BSD-485: About heißt „Based Beta“, ohne Agenten
+      await nav.getByRole("button", { name: "About", exact: true }).click();
+      await expect(settings).toContainText("Based Beta — the notes app that keeps your data yours.");
+      await expect(settings).not.toContainText(/Based Next|agent/i);
+      await clean(page, "About");
+      await shoot(page, "settings-about");
 
       // Library ohne Graph und Meetings; ⌘N ohne Meeting und AI-Chat, mit den Vorlagen
       await page.goto("/#library");
