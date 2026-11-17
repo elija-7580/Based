@@ -249,6 +249,19 @@ test("whisper.cpp: Ziele, cmake-Argumente, Cache, universelle Datei, Fehler brec
   }
 });
 
+// Elija 17.11.: Die Notizen von beta 0.2.4 (33 Zeilen) machten den Update-Dialog unbedienbar. Der oberste Abschnitt
+// von docs/beta/RELEASE_NOTES.md geht in latest.json (Workflow: awk '/^## /{n++; next} n==1') – er bleibt kurz.
+test("Beta-Release-Notes: oberster Abschnitt passt in den Update-Dialog (≤ 8 Zeilen, je ≤ 110 Zeichen)", () => {
+  const notes = readFileSync(new URL("../../../docs/beta/RELEASE_NOTES.md", import.meta.url), "utf8");
+  let n = 0;
+  const top = notes.split("\n").filter((l) => { if (/^## /.test(l)) { n += 1; return false; } return n === 1; }).filter((l) => l.trim() !== "");
+  assert.ok(top.length >= 1 && top.length <= 8, `${top.length} lines`);
+  for (const l of top) {
+    assert.ok(l.length <= 110, `${l.length} chars: ${l}`);
+    assert.match(l, /^- \S/, `one point per line, no wrapped lines: ${l}`);
+  }
+});
+
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.
 test("Beta-Overlay: eigener Name, eigene Bundle-ID, Updater auf beta-latest", () => {
   const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
