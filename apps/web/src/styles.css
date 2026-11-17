@@ -114,13 +114,19 @@ input::placeholder { color: var(--muted); }
 .nav-item[aria-current="page"] { background: var(--bg); color: var(--ink); box-shadow: var(--shadow-panel); font-weight: var(--weight-heading); }
 .nav-item .key { margin-left: auto; }
 /* BSD-270: Kürzel nur beim langen Halten von ⌘ (data-show-keys am Wurzelelement, shell/keyHints.ts) */
-.key-badge {
-  display: none; align-items: center; justify-content: center; min-width: var(--space-5); height: var(--space-4); padding: 0 var(--space-1);
-  border-radius: var(--radius-sm); background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: var(--type-meta-size);
-  line-height: 1; white-space: nowrap; flex: none; pointer-events: none;
+/* Tastenkappe (docs/design/elements.md): eine flache Kappe je Kürzel – Seitenleiste, Tabs, Menüs, Übersicht, ⌘-Anzeige. */
+.keycaps { display: inline-flex; align-items: center; gap: var(--space-1); flex: none; }
+.keycap, .key-badge {
+  align-items: center; justify-content: center; box-sizing: border-box; min-width: var(--keycap); height: var(--keycap);
+  padding: 0 calc(var(--space-1) + var(--space-half)); border: 0; border-radius: var(--radius-sm); background: var(--selected); color: var(--ink);
+  font-family: var(--font-ui); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking);
+  font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; flex: none; pointer-events: none;
 }
+.keycap { display: inline-flex; }
+.key-badge { display: none; }
 :root:not([data-show-keys]) .nav-item .key { display: none; }
-:root[data-show-keys] .nav-item .key { display: inline-flex; padding: 0 var(--space-1); border-radius: var(--radius-sm); background: var(--ink); color: var(--bg); animation: key-in var(--duration-fast) var(--ease-out); }
+:root[data-show-keys] .nav-item .key { display: inline-flex; animation: key-in var(--duration-fast) var(--ease-out); }
+.nav-item[aria-current="page"] .key { background: var(--surface-raised); }
 :root[data-show-keys] .key-badge { display: inline-flex; animation: key-in var(--duration-fast) var(--ease-out); }
 .key-badge.above { position: absolute; left: 50%; top: 0; transform: translate(-50%, -110%); }
 .tab .key-badge { margin-left: var(--space-1); }
@@ -139,13 +145,14 @@ input::placeholder { color: var(--muted); }
 .keys-label { min-width: 0; }
 .keys-hud {
   position: fixed; left: 50%; bottom: var(--space-5); transform: translateX(-50%); z-index: 40; pointer-events: none;
-  display: flex; align-items: flex-start; gap: var(--space-5); max-width: calc(100vw - var(--space-6)); padding: var(--space-4) var(--space-5); background: var(--bg); border-radius: var(--radius-xl);
+  display: flex; align-items: flex-start; gap: var(--space-5); max-width: calc(100vw - var(--space-6)); padding: var(--space-3) var(--space-4); background: var(--surface-card); border-radius: var(--radius-xl);
   box-shadow: var(--shadow-menu); animation: key-in var(--duration-fast) var(--ease-out);
 }
 [data-material="glass"] .keys-hud { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
 .keys-hud-group { display: flex; flex-direction: column; gap: var(--space-1); min-width: calc(var(--sidebar-width) + var(--space-5)); }
-.keys-hud .keys-row { min-height: var(--space-5); }
-.keys-hud .keys-label { white-space: nowrap; color: var(--ink); }
+.keys-hud .keys-row { min-height: var(--control-sm); gap: var(--space-5); }
+.keys-hud .keys-label { white-space: nowrap; color: var(--ink); font-size: var(--type-ui-size); line-height: var(--type-ui-leading); }
+.keys-sheet .keys-label { font-size: var(--type-ui-size); color: var(--ink); }
 @media (max-width: 45rem) { .keys-columns { column-count: 1; } .keys-hud-group + .keys-hud-group { display: none; } }
 @media (prefers-reduced-motion: reduce) { .keys-hud { animation: none; } }
 .badge {
@@ -790,3 +797,10 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .sync-card-label { color: var(--muted); }
 .sync-card-value { overflow-wrap: anywhere; }
 .sync-card-hint { color: var(--muted); padding-top: var(--space-1); }
+
+/* Element-System v11 (docs/design/elements.md): Felder sind Flächen ohne Rahmen; den Fokus zeigt allein der Fokusrahmen. */
+.astryx-text-input { background: var(--surface-raised); border-color: transparent; border-radius: var(--radius-md); box-shadow: none; }
+.astryx-text-input:hover { border-color: transparent; }
+.astryx-text-input:focus-within { outline: none; box-shadow: inset 0 0 0 var(--space-half) var(--focus-ring); }
+/* Auf einer grauen Fläche (Gruppe, Karte) wäre das Feld unsichtbar: dort eine Stufe dunkler. */
+:is(.astryx-card, .astryx-section:not([data-variant="transparent"]), .settings-group, .lib-bulk) .astryx-text-input { background: var(--selected); }

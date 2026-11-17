@@ -147,6 +147,13 @@ Backlog-Eintrag „Design · Element-System …“ an und ändert sie nicht nebe
 
 ## 7 · Umstellung
 
+**Stand 17. 11. 2026 (erste Runde, Fotos `screens/web-elements-v11-*.png`):** umgesetzt sind die Standardgröße (kein
+`size="sm"` mehr außerhalb der Datenbank, Wächter-Bestand 0), `lg` = 40 px, Felder als Flächen mit Fokusrahmen, die
+eine Tastenkappe (`BasedKeys`, Seitenleiste, Tabs, ⌘-Anzeige, Übersicht), ein Rahmen in der Tabelle, der Kopf von
+Library und Meetings und die Sprachliste im Code-Block. Offen: `BasedSwitcher`/`BasedPicker`/`BasedSheet`/`BasedToast`
+als eigene Bausteine (bis dahin `SegmentedControl` in `md` und `BasedTabs`), das eine Menü (Punkt 3), anklickbare
+Texte unter 14 px (Rest von Punkt 4), die Animationen (Punkt 5), die Köpfe von Trash, Graph und Einstellungen.
+
 Der Bestand wird in dieser Reihenfolge umgestellt (je ein Backlog-Eintrag „Design · Element-System …“):
 
 1. **Grundlage:** `BasedSwitcher`, `BasedPicker`, `BasedSheet`, `BasedToast` und die neue Tastenkappe in

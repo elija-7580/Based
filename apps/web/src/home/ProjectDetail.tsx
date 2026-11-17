@@ -66,8 +66,8 @@ export function ProjectDetailScreen({ client, state, projectID, showDetails, onN
             <span className="t-meta">{p.data.status}{" · "}{p.data.goal ?? "No goal yet — tell the main agent what this project is for."}</span>
           </span>
           <span className="task-actions">
-            <Button size="sm" variant="primary" label="Give an agent a task" onClick={() => ask.current?.querySelector("textarea")?.focus()} />
-            {p.data.pageID && state.titles.has(p.data.pageID) ? <Button size="sm" variant="secondary" label="Open project page" onClick={() => onOpenPage(p.data.pageID!)} /> : null}
+            <Button variant="primary" label="Give an agent a task" onClick={() => ask.current?.querySelector("textarea")?.focus()} />
+            {p.data.pageID && state.titles.has(p.data.pageID) ? <Button variant="secondary" label="Open project page" onClick={() => onOpenPage(p.data.pageID!)} /> : null}
           </span>
         </section>
 

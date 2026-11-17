@@ -25,7 +25,7 @@ export function ShareButton({ pageID, title, onNavigate }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <BasedButton label="Share" variant="ghost" size="sm" onClick={() => setOpen(true)} />
+      <BasedButton label="Share" variant="ghost" onClick={() => setOpen(true)} />
       {open ? <SharePanel pageID={pageID} title={title} onNavigate={onNavigate} onClose={() => setOpen(false)} /> : null}
     </>
   );
@@ -100,7 +100,7 @@ function SharePanel({ pageID, title, onNavigate, onClose }: Props & { onClose: (
   return (
     <BasedDialog open onClose={onClose} title={heading} subtitle={`Through ${new URL(config.url).host}`} width={520} busy={busy} actions={done}>
       <VStack gap={5}>
-        {error ? <Banner status="error" title="Couldn't update sharing" description={error} endContent={<BasedButton size="sm" label="Try again" onClick={() => void load()} />} /> : null}
+        {error ? <Banner status="error" title="Couldn't update sharing" description={error} endContent={<BasedButton label="Try again" onClick={() => void load()} />} /> : null}
 
         <section className="share-section" aria-label="Publish to web">
           <VStack gap={2}>
@@ -147,14 +147,14 @@ function SharePanel({ pageID, title, onNavigate, onClose }: Props & { onClose: (
             {fresh ? (
               <VStack gap={1}>
                 <Text type="code" display="block" data-testid="share-new-url" className="share-url">{fresh.url}</Text>
-                <HStack gap={2}><BasedButton size="sm" label={copied === fresh.url ? "Copied" : "Copy link"} onClick={() => void copyURL(fresh.url)} /></HStack>
+                <HStack gap={2}><BasedButton label={copied === fresh.url ? "Copied" : "Copy link"} onClick={() => void copyURL(fresh.url)} /></HStack>
               </VStack>
             ) : null}
             {others.length > 0 ? (
               <List density="compact" hasDividers edge="flush" header={<Text type="supporting" color="secondary">Active links</Text>}>
                 {others.map((l) => (
                   <ListItem key={l.id} label={KIND_LABEL[l.kind]} description={`${SHARE_ROLE_LABEL[l.role]}${l.inherited ? " · from a page above" : ""}`}
-                    endContent={l.inherited ? undefined : <BasedButton size="sm" variant="ghost" label="Revoke" disabled={busy} onClick={() => void act(() => api.revoke(l.id))} />} />
+                    endContent={l.inherited ? undefined : <BasedButton variant="ghost" label="Revoke" disabled={busy} onClick={() => void act(() => api.revoke(l.id))} />} />
                 ))}
               </List>
             ) : null}
@@ -167,7 +167,7 @@ function SharePanel({ pageID, title, onNavigate, onClose }: Props & { onClose: (
               {access.people.map((p) => (
                 <ListItem key={p.id} label={p.name} description={p.inherited ? `${SHARE_ROLE_LABEL[p.role]} · from a page above` : undefined}
                   endContent={p.inherited ? <Text type="supporting" color="secondary">{SHARE_ROLE_LABEL[p.role]}</Text> : (
-                    <BasedMenu size="sm" variant="ghost" align="end" label={SHARE_ROLE_LABEL[p.role]} items={[
+                    <BasedMenu variant="ghost" align="end" label={SHARE_ROLE_LABEL[p.role]} items={[
                       ...(["full", "edit", "comment", "view"] as const).map((r) => ({ label: SHARE_ROLE_LABEL[r], onSelect: () => void act(() => api.setRole(p.userID, pageID, r)) })),
                       {},
                       { label: "Remove", danger: true, onSelect: () => void act(() => api.setRole(p.userID, pageID, null)) },

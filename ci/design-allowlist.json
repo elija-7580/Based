@@ -1,10 +1,9 @@
 {
   "note": "BSD-348: Bestand, darf nur schrumpfen (node ci/design-guard.mjs --shrink)",
   "totals": {
-    "px": 138,
+    "px": 136,
     "button": 261,
-    "astryx": 183,
-    "sm": 169
+    "astryx": 183
   },
   "files": {
     "apps/web/src/assets.css": {
@@ -12,27 +11,22 @@
     },
     "apps/web/src/brain/BrainChatUI.tsx": {
       "button": 4,
-      "astryx": 4,
-      "sm": 8
+      "astryx": 4
     },
     "apps/web/src/brain/BrainSettings.tsx": {
-      "astryx": 4,
-      "sm": 1
+      "astryx": 4
     },
     "apps/web/src/brain/brain.css": {
       "px": 1
     },
     "apps/web/src/chat/AiSettingsSection.tsx": {
-      "astryx": 4,
-      "sm": 2
+      "astryx": 4
     },
     "apps/web/src/chat/ChatMessages.tsx": {
-      "astryx": 6,
-      "sm": 3
+      "astryx": 6
     },
     "apps/web/src/chat/ChatView.tsx": {
-      "astryx": 6,
-      "sm": 11
+      "astryx": 6
     },
     "apps/web/src/chat/ConnectionsSection.tsx": {
       "astryx": 4
@@ -41,16 +35,13 @@
       "px": 1
     },
     "apps/web/src/coding/CliChats.tsx": {
-      "astryx": 3,
-      "sm": 3
+      "astryx": 3
     },
     "apps/web/src/coding/CodingScreen.tsx": {
-      "astryx": 12,
-      "sm": 4
+      "astryx": 12
     },
     "apps/web/src/coding/Composer.tsx": {
-      "astryx": 8,
-      "sm": 3
+      "astryx": 8
     },
     "apps/web/src/coding/TerminalView.tsx": {
       "astryx": 1
@@ -59,8 +50,7 @@
       "px": 2
     },
     "apps/web/src/components/Backlinks.tsx": {
-      "button": 3,
-      "sm": 1
+      "button": 3
     },
     "apps/web/src/components/BlockView.tsx": {
       "button": 3
@@ -79,8 +69,7 @@
       "astryx": 2
     },
     "apps/web/src/components/LibraryTabs.tsx": {
-      "astryx": 1,
-      "sm": 1
+      "astryx": 1
     },
     "apps/web/src/components/MoveDialog.tsx": {
       "astryx": 4
@@ -96,18 +85,13 @@
       "astryx": 1
     },
     "apps/web/src/components/PageCover.tsx": {
-      "button": 4,
-      "sm": 5
-    },
-    "apps/web/src/components/QuickFind.tsx": {
-      "sm": 1
+      "button": 4
     },
     "apps/web/src/components/ReportProblem.tsx": {
       "astryx": 4
     },
     "apps/web/src/components/Share.tsx": {
-      "astryx": 6,
-      "sm": 5
+      "astryx": 6
     },
     "apps/web/src/components/Sidebar.tsx": {
       "button": 22,
@@ -132,12 +116,10 @@
       "px": 2
     },
     "apps/web/src/database/FormView.tsx": {
-      "astryx": 16,
-      "sm": 10
+      "astryx": 16
     },
     "apps/web/src/database/RowPeek.tsx": {
-      "astryx": 4,
-      "sm": 3
+      "astryx": 4
     },
     "apps/web/src/desktop/BackupsGroup.tsx": {
       "astryx": 4
@@ -150,56 +132,46 @@
     },
     "apps/web/src/home/AgentDetail.tsx": {
       "button": 4,
-      "astryx": 3,
-      "sm": 6
+      "astryx": 3
     },
     "apps/web/src/home/ProjectDetail.tsx": {
       "button": 3,
-      "astryx": 3,
-      "sm": 2
+      "astryx": 3
     },
     "apps/web/src/home/TaskCard.tsx": {
       "button": 1,
-      "astryx": 2,
-      "sm": 13
+      "astryx": 2
     },
     "apps/web/src/home/TimeArc.tsx": {
       "button": 12,
-      "astryx": 1,
-      "sm": 8
+      "astryx": 1
     },
     "apps/web/src/home/home.css": {
       "px": 35
     },
     "apps/web/src/screens/Graph.tsx": {
       "button": 1,
-      "astryx": 7,
-      "sm": 8
+      "astryx": 7
     },
     "apps/web/src/screens/Home.tsx": {
       "button": 4,
-      "astryx": 1,
-      "sm": 1
+      "astryx": 1
     },
     "apps/web/src/screens/Library.tsx": {
       "button": 1,
-      "astryx": 9,
-      "sm": 4
+      "astryx": 9
     },
     "apps/web/src/screens/Meetings.tsx": {
-      "astryx": 3,
-      "sm": 1
+      "astryx": 3
     },
     "apps/web/src/screens/PageView.tsx": {
-      "button": 28,
-      "sm": 1
+      "button": 28
     },
     "apps/web/src/screens/Settings.tsx": {
       "astryx": 4
     },
     "apps/web/src/screens/Trash.tsx": {
-      "button": 1,
-      "sm": 5
+      "button": 1
     },
     "apps/web/src/screens/Welcome.tsx": {
       "button": 1
@@ -211,14 +183,10 @@
       "px": 1
     },
     "apps/web/src/screens/settings/AstryxKit.tsx": {
-      "astryx": 4,
-      "sm": 1
+      "astryx": 4
     },
     "apps/web/src/screens/settings/diagnostics.tsx": {
       "astryx": 4
-    },
-    "apps/web/src/screens/settings/hangs.tsx": {
-      "sm": 4
     },
     "apps/web/src/screens/settings/parts.tsx": {
       "astryx": 3
@@ -233,15 +201,13 @@
       "astryx": 3
     },
     "apps/web/src/styles.css": {
-      "px": 22
+      "px": 21
     },
     "apps/web/src/tasks/AgentSettingsSection.tsx": {
-      "astryx": 9,
-      "sm": 3
+      "astryx": 9
     },
     "apps/web/src/tasks/TasksScreen.tsx": {
-      "astryx": 9,
-      "sm": 9
+      "astryx": 9
     },
     "apps/web/src/tasks/tasks.css": {
       "px": 1
@@ -298,14 +264,10 @@
       "button": 4
     },
     "packages/editor/src/blocks/BlockEditor.tsx": {
-      "button": 15,
-      "sm": 24
+      "button": 15
     },
     "packages/editor/src/blocks/blocks.css": {
-      "px": 43
-    },
-    "packages/editor/src/blocks/meeting.tsx": {
-      "sm": 13
+      "px": 42
     },
     "packages/editor/src/styles.css": {
       "px": 2
@@ -321,9 +283,6 @@
     },
     "packages/editor/src/ui/Outline.tsx": {
       "button": 1
-    },
-    "packages/editor/src/whiteboard/BoardView.tsx": {
-      "sm": 5
     }
   }
 }

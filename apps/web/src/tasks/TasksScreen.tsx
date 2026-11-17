@@ -98,8 +98,8 @@ export function TasksScreen({ client, state }: { client: StoreClient; state: She
                     <HStack gap={2} vAlign="center"><StatusDot variant="warning" label="Needs you" /><Text type="label">Needs you</Text></HStack>
                     <Text type="body">{`${snap?.runs.find((r) => r.id === a.runID)?.name ?? "An agent"} wants to use ${a.name}.`}</Text>
                     <HStack gap={2}>
-                      <Button variant="primary" size="sm" label="Allow" onClick={() => rt.agents.approve(a.runID, a.callID, true)} />
-                      <Button variant="secondary" size="sm" label="Deny" onClick={() => rt.agents.approve(a.runID, a.callID, false)} />
+                      <Button variant="primary" label="Allow" onClick={() => rt.agents.approve(a.runID, a.callID, true)} />
+                      <Button variant="secondary" label="Deny" onClick={() => rt.agents.approve(a.runID, a.callID, false)} />
                     </HStack>
                   </VStack>
                 </Card>
@@ -195,7 +195,7 @@ function TaskCard({ task, runs, projectName, onAnswer, onConfirm, onDismiss, onU
             <VStack gap={2} className="task-ask">
               <Text type="label">{d.question.text}</Text>
               <HStack gap={2} wrap="wrap">
-                {d.question.options.map((o) => <Button key={o} variant="secondary" size="sm" label={o} onClick={() => onAnswer(o)} />)}
+                {d.question.options.map((o) => <Button key={o} variant="secondary" label={o} onClick={() => onAnswer(o)} />)}
               </HStack>
             </VStack>
           ) : null}
@@ -204,8 +204,8 @@ function TaskCard({ task, runs, projectName, onAnswer, onConfirm, onDismiss, onU
             <VStack gap={2} className="task-ask">
               {(d.proposal ?? []).map((r) => <Text key={r} type="supporting" color="secondary">{r}</Text>)}
               <HStack gap={2} wrap="wrap">
-                {plan.some((a) => d.decisions?.[a.id] !== "deny") ? <Button variant="primary" size="sm" label="Go ahead" onClick={onConfirm} /> : null}
-                <Button variant="secondary" size="sm" label="File as note" onClick={onDismiss} />
+                {plan.some((a) => d.decisions?.[a.id] !== "deny") ? <Button variant="primary" label="Go ahead" onClick={onConfirm} /> : null}
+                <Button variant="secondary" label="File as note" onClick={onDismiss} />
               </HStack>
             </VStack>
           ) : null}
@@ -217,10 +217,10 @@ function TaskCard({ task, runs, projectName, onAnswer, onConfirm, onDismiss, onU
 
           {d.state === "done" || d.state === "failed" || d.state === "filed" ? (
             <HStack gap={2} wrap="wrap" vAlign="center">
-              {d.state === "done" && (d.undo?.length ?? 0) > 0 ? <Button variant="secondary" size="sm" label="Undo" onClick={onUndo} /> : null}
-              {d.state === "done" && firstPage ? <Button variant="ghost" size="sm" label="Open page" onClick={() => onOpen(firstPage)} /> : null}
-              {d.state === "filed" && d.noteID ? <Button variant="ghost" size="sm" label="Open Inbox" onClick={() => onOpen(INBOX_PAGE_ID)} /> : null}
-              {d.state !== "done" ? <Button variant="secondary" size="sm" label="Try again" onClick={onRetry} /> : null}
+              {d.state === "done" && (d.undo?.length ?? 0) > 0 ? <Button variant="secondary" label="Undo" onClick={onUndo} /> : null}
+              {d.state === "done" && firstPage ? <Button variant="ghost" label="Open page" onClick={() => onOpen(firstPage)} /> : null}
+              {d.state === "filed" && d.noteID ? <Button variant="ghost" label="Open Inbox" onClick={() => onOpen(INBOX_PAGE_ID)} /> : null}
+              {d.state !== "done" ? <Button variant="secondary" label="Try again" onClick={onRetry} /> : null}
               {cost !== undefined ? <Text type="code" color="secondary">{formatEUR(cost)}</Text> : null}
             </HStack>
           ) : null}

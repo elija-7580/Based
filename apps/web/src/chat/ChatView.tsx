@@ -32,7 +32,7 @@ function ImportOldChats({ onImport }: { onImport: () => Promise<number> }) {
   const [done, setDone] = useState<string | undefined>();
   return (
     <div className="chat-import">
-      <Button size="sm" variant="ghost" label="Import chats from the Mac app" clickAction={async () => {
+      <Button variant="ghost" label="Import chats from the Mac app" clickAction={async () => {
         const n = await onImport();
         setDone(n === 0 ? "No old chats found." : `Imported ${n} chat${n === 1 ? "" : "s"}.`);
       }} />
@@ -54,7 +54,7 @@ export function ChatHistoryList({ chats, current, onOpen, onDelete, onImport, ex
           description={[relative(new Date(fromSwift(c.updatedAt))), usageLine(c.usage)].filter(Boolean).join(" · ")}
           isSelected={c.id === current}
           onClick={() => onOpen(c.id)}
-          endContent={<IconButton size="sm" variant="ghost" label={`Delete ${c.title || "chat"}`} icon={<Icon name="trash" size={16} />} onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} />}
+          endContent={<IconButton variant="ghost" label={`Delete ${c.title || "chat"}`} icon={<Icon name="trash" size={16} />} onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} />}
         />
       ))}
     </List>
@@ -137,15 +137,15 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
         <span className="chat-title t-section" title={title}>{showSettings ? "Chat settings" : pane === "history" && mode === "panel" ? "Chats" : title}</span>
         <span className="chat-head-actions">
           {mode === "panel" ? (
-            <IconButton size="sm" variant="ghost" label="Chats" icon={<Icon name="history" size={18} />} onClick={() => setPane(pane === "history" ? "chat" : "history")} />
+            <IconButton variant="ghost" label="Chats" icon={<Icon name="history" size={18} />} onClick={() => setPane(pane === "history" ? "chat" : "history")} />
           ) : null}
           {/* BSD-300: Im leeren neuen Chat gibt es nichts neu anzufangen – Knopf aus statt ohne Wirkung. */}
-          <IconButton size="sm" variant="ghost" label="New chat" icon={<Icon name="plus" size={18} />} isDisabled={!cli && pane === "chat" && t.items.length === 0 && !s.chatID} onClick={() => { controller.newChat(); setCli(undefined); setPane("chat"); }} />
-          <IconButton size="sm" variant="ghost" label="Chat settings" icon={<Icon name="settings" size={18} />} onClick={() => setPane(showSettings ? "chat" : "settings")} />
+          <IconButton variant="ghost" label="New chat" icon={<Icon name="plus" size={18} />} isDisabled={!cli && pane === "chat" && t.items.length === 0 && !s.chatID} onClick={() => { controller.newChat(); setCli(undefined); setPane("chat"); }} />
+          <IconButton variant="ghost" label="Chat settings" icon={<Icon name="settings" size={18} />} onClick={() => setPane(showSettings ? "chat" : "settings")} />
           {onToggleMode ? (
-            <IconButton size="sm" variant="ghost" label={mode === "panel" ? "Open as page" : "Open as side panel"} icon={<Icon name={mode === "panel" ? "expand" : "collapse"} size={18} />} onClick={onToggleMode} />
+            <IconButton variant="ghost" label={mode === "panel" ? "Open as page" : "Open as side panel"} icon={<Icon name={mode === "panel" ? "expand" : "collapse"} size={18} />} onClick={onToggleMode} />
           ) : null}
-          {onClose ? <IconButton size="sm" variant="ghost" label="Close chat" icon={<Icon name="close" size={18} />} onClick={onClose} /> : null}
+          {onClose ? <IconButton variant="ghost" label="Close chat" icon={<Icon name="close" size={18} />} onClick={onClose} /> : null}
         </span>
       </header>
       <div className="chat-body">
@@ -177,8 +177,8 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                     <li key={w.id} className="chat-queued">
                       <span className="t-meta">Waiting</span>
                       <span className="chat-queued-text">{w.text}</span>
-                      <Button size="sm" variant="ghost" label="Send now" onClick={() => controller.sendNow(w.id)} />
-                      <IconButton size="sm" variant="ghost" label="Remove waiting message" icon={<Icon name="close" size={14} />} onClick={() => controller.removeQueued(w.id)} />
+                      <Button variant="ghost" label="Send now" onClick={() => controller.sendNow(w.id)} />
+                      <IconButton variant="ghost" label="Remove waiting message" icon={<Icon name="close" size={14} />} onClick={() => controller.removeQueued(w.id)} />
                     </li>
                   ))}
                 </ul>
@@ -192,8 +192,8 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                   description={s.plan.steps.map((x, i) => `${i + 1}. ${x.name.replace(/_/g, " ")}`).join(" · ")}
                   endContent={
                     <HStack gap={2}>
-                      <Button size="sm" variant="primary" label="Run plan" onClick={() => void controller.runPlan()} />
-                      <Button size="sm" variant="ghost" label="Dismiss" onClick={() => controller.dismissPlan()} />
+                      <Button variant="primary" label="Run plan" onClick={() => void controller.runPlan()} />
+                      <Button variant="ghost" label="Dismiss" onClick={() => controller.dismissPlan()} />
                     </HStack>
                   }
                 />

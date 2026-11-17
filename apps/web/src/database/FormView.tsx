@@ -41,12 +41,12 @@ function EditQuestion({ p, q, index, count, prev }: { p: FormRenderProps; q: For
     <section className="db-form-question" aria-label={`Question ${name}`} data-testid="form-question">
       <HStack gap={2}>
         <span className="db-form-qtitle"><Text type="label">{name}</Text> <Text type="supporting">{PROPERTY_TYPE_LABELS[q.prop.type] ?? q.prop.type}</Text></span>
-        <IconButton label={`Move ${name} up`} variant="ghost" size="sm" icon={<Icon name="up" size={16} />} isDisabled={index === 0} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(-1))} />
-        <IconButton label={`Move ${name} down`} variant="ghost" size="sm" icon={<Icon name="down" size={16} />} isDisabled={index === count - 1} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(1))} />
-        {q.prop.type !== "title" && <Button label={`Remove ${name}`} variant="ghost" size="sm" onClick={() => setPropertyVisible(p.store, p.view.id, q.prop.id, false)}>Remove</Button>}
+        <IconButton label={`Move ${name} up`} variant="ghost" icon={<Icon name="up" size={16} />} isDisabled={index === 0} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(-1))} />
+        <IconButton label={`Move ${name} down`} variant="ghost" icon={<Icon name="down" size={16} />} isDisabled={index === count - 1} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(1))} />
+        {q.prop.type !== "title" && <Button label={`Remove ${name}`} variant="ghost" onClick={() => setPropertyVisible(p.store, p.view.id, q.prop.id, false)}>Remove</Button>}
       </HStack>
-      <TextInput label="Help text" size="sm" width="100%" placeholder="Add a description for this question" value={desc} onChange={(v) => { setDesc(v); setQuestionDescription(p.store, p.view.id, q.prop.id, v); }} onKeyDown={(e) => { if (e.key === "Enter") doneDesc(); }} />
-      <Switch label="Required" size="sm" value={q.required} onChange={(on) => setQuestionRequired(p.store, p.view.id, q.prop.id, on)} />
+      <TextInput label="Help text" width="100%" placeholder="Add a description for this question" value={desc} onChange={(v) => { setDesc(v); setQuestionDescription(p.store, p.view.id, q.prop.id, v); }} onKeyDown={(e) => { if (e.key === "Enter") doneDesc(); }} />
+      <Switch label="Required" value={q.required} onChange={(on) => setQuestionRequired(p.store, p.view.id, q.prop.id, on)} />
     </section>
   );
 }
@@ -80,11 +80,11 @@ function PlaceField({ q, value, onChange, error }: { q: FormQuestion; value: Pla
     <fieldset className="db-form-place" aria-label={q.prop.name}>
       <legend><Text type="label">{q.prop.name}{q.required ? " *" : ""}</Text></legend>
       {q.description && <Text type="supporting" display="block">{q.description}</Text>}
-      <TextInput label="Name" size="sm" width="100%" value={value.name ?? ""} onChange={set("name")} />
-      <TextInput label="Address" size="sm" width="100%" value={value.address ?? ""} onChange={set("address")} />
+      <TextInput label="Name" width="100%" value={value.name ?? ""} onChange={set("name")} />
+      <TextInput label="Address" width="100%" value={value.address ?? ""} onChange={set("address")} />
       <HStack gap={2}>
-        <TextInput label="Latitude" size="sm" inputMode="decimal" placeholder="48.2082" value={value.lat ?? ""} onChange={set("lat")} />
-        <TextInput label="Longitude" size="sm" inputMode="decimal" placeholder="16.3738" value={value.lon ?? ""} onChange={set("lon")} />
+        <TextInput label="Latitude" inputMode="decimal" placeholder="48.2082" value={value.lat ?? ""} onChange={set("lat")} />
+        <TextInput label="Longitude" inputMode="decimal" placeholder="16.3738" value={value.lon ?? ""} onChange={set("lon")} />
       </HStack>
       {error && <span role="alert" className="t-desc">{error}</span>}
     </fieldset>
@@ -165,7 +165,7 @@ export function FormView(p: FormRenderProps) {
     <div className="db-form-scroll">
     <div className="db-form" data-testid="form-view" data-mode={shown}>
       {!p.locked && (
-        <SegmentedControl label="Form mode" size="sm" value={shown} onChange={(v) => setMode(v === "fill" ? "fill" : "edit")}>
+        <SegmentedControl label="Form mode" value={shown} onChange={(v) => setMode(v === "fill" ? "fill" : "edit")}>
           <SegmentedControlItem value="edit" label="Edit form" />
           <SegmentedControlItem value="fill" label="Fill out" />
         </SegmentedControl>

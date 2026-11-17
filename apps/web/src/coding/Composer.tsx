@@ -130,7 +130,7 @@ export function Composer({ model, session }: { model: CodingModel; session: Codi
       ) : null}
       {files.length > 0 ? (
         <HStack gap={1} wrap="wrap" data-testid="coding-file-chips">
-          {files.map((f) => <Token key={f} size="sm" label={`@${f.slice(f.lastIndexOf("/") + 1)}`} description={f} onRemove={() => setFiles((fs) => fs.filter((x) => x !== f))} />)}
+          {files.map((f) => <Token key={f} label={`@${f.slice(f.lastIndexOf("/") + 1)}`} description={f} onRemove={() => setFiles((fs) => fs.filter((x) => x !== f))} />)}
         </HStack>
       ) : null}
       <HStack gap={2} vAlign="end" className="coding-composer">
@@ -144,8 +144,8 @@ export function Composer({ model, session }: { model: CodingModel; session: Codi
       </HStack>
       {modes.length > 0 ? (
         <HStack gap={2} vAlign="center" data-testid="coding-agent-mode">
-          <Button size="sm" variant="ghost" onClick={cycleMode} label={`Mode: ${modeName ?? "–"}`} />
-          <Text type="supporting" size="sm"><Kbd keys="shift+tab" /> to switch</Text>
+          <Button variant="ghost" onClick={cycleMode} label={`Mode: ${modeName ?? "–"}`} />
+          <Text type="supporting"><Kbd keys="shift+tab" /> to switch</Text>
         </HStack>
       ) : null}
     </VStack>

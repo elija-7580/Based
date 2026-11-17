@@ -81,7 +81,7 @@ export function CoverPicker({ store, pageID, onClose, hasCover }: { store: Works
       }} />
       <form className="cover-link" onSubmit={(e) => { e.preventDefault(); if (/^https?:\/\//.test(link.trim())) set({ url: { _0: link.trim() } }); }}>
         <input className="field" aria-label="Image link" placeholder="Paste an image link…" value={link} onChange={(e) => setLink(e.target.value)} />
-        <BasedButton type="submit" variant="ghost" size="sm" label="Apply" />
+        <BasedButton type="submit" variant="ghost" label="Apply" />
       </form>
       {hasCover ? <button type="button" className="menu-item danger" onClick={() => set(undefined)}>Remove cover</button> : null}
     </div>
@@ -143,13 +143,13 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
         <div className="page-cover-actions" data-visible={editing ? "" : undefined}>
           {editing ? (
             <>
-              <BasedButton variant="secondary" size="sm" label="Save position" onClick={save} />
-              <BasedButton variant="ghost" size="sm" label="Cancel" onClick={cancel} />
+              <BasedButton variant="secondary" label="Save position" onClick={save} />
+              <BasedButton variant="ghost" label="Cancel" onClick={cancel} />
             </>
           ) : (
             <>
-              <BasedButton variant="secondary" size="sm" label="Change cover" onClick={() => setPicker((o) => !o)} />
-              <BasedButton variant="secondary" size="sm" label={image ? "Reposition" : "Resize"} onClick={() => { setPicker(false); setEditing(true); }} />
+              <BasedButton variant="secondary" label="Change cover" onClick={() => setPicker((o) => !o)} />
+              <BasedButton variant="secondary" label={image ? "Reposition" : "Resize"} onClick={() => { setPicker(false); setEditing(true); }} />
             </>
           )}
         </div>

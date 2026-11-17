@@ -1373,7 +1373,7 @@ export function BlockEditor(props: PageEditorProps) {
       {notice ? (
         <div className="bx-notice" role="status" data-testid="editor-notice">
           <span>{notice}</span>
-          <BasedButton size="sm" variant="ghost" label="Dismiss" onClick={() => setNotice(undefined)} />
+          <BasedButton variant="ghost" label="Dismiss" onClick={() => setNotice(undefined)} />
         </div>
       ) : null}
     </EditorCtx.Provider>
@@ -1733,8 +1733,8 @@ function SyncedBlockView({ block: b, depth }: { block: Block; depth: number }) {
     <div className="bx2-embed bx2-synced" data-embed="" data-synced-copy={isCopy ? "" : undefined} data-trashed={trashed ? "true" : undefined}>
       {isCopy ? (
         <div className="bx2-synced-bar" contentEditable={false}>
-          {home && !trashed ? <BasedButton size="sm" variant="ghost" label={"Original in " + homeTitle} onClick={() => props.onOpenPage?.(home)} /> : null}
-          {editable ? <BasedButton size="sm" variant="ghost" label="Unsync" onClick={() => unsyncCopy(store, b.id)} /> : null}
+          {home && !trashed ? <BasedButton variant="ghost" label={"Original in " + homeTitle} onClick={() => props.onOpenPage?.(home)} /> : null}
+          {editable ? <BasedButton variant="ghost" label="Unsync" onClick={() => unsyncCopy(store, b.id)} /> : null}
         </div>
       ) : null}
       {trashed ? (
@@ -1811,7 +1811,7 @@ function BookmarkCard({ block: b, url }: { block: Block; url: string }) {
       {card}
       {editable && fetchLink ? (
         <span className="bx2-bookmark-actions">
-          <BasedButton size="sm" variant="ghost" busy={busy} onClick={() => void fetchPreview()}
+          <BasedButton variant="ghost" busy={busy} onClick={() => void fetchPreview()}
             label={busy ? "Fetching preview…" : meta?.title ? "Refresh preview" : "Fetch preview"} />
           {note ? <span className="bx2-muted" role="status">{note}</span> : null}
         </span>
@@ -2152,8 +2152,8 @@ function TableBlock({ block: b }: { block: Block }) {
           <button type="button" className="bx2-table-add" onClick={() => cmd.addTableColumn(store, b.id)} aria-label="Add column">+ Column</button>
           {at ? (
             <>
-              <BasedButton size="sm" variant="ghost" label="Delete row" disabled={rows.length <= 1} onClick={deleteRow} />
-              <BasedButton size="sm" variant="ghost" label="Delete column" disabled={m.cols <= 1} onClick={deleteColumn} />
+              <BasedButton variant="ghost" label="Delete row" disabled={rows.length <= 1} onClick={deleteRow} />
+              <BasedButton variant="ghost" label="Delete column" disabled={m.cols <= 1} onClick={deleteColumn} />
             </>
           ) : null}
         </span>
@@ -2233,25 +2233,25 @@ function BlockAIBox({ ai, req, onClose }: { ai: EditorAI; req: AIState; onClose:
             onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); run(prompt); } }} />
           {req.selection ? (
             <span className="bx2-ai-actions" role="group" aria-label="Edit selection">
-              {SELECTION_ACTIONS.map((a) => <BasedButton key={a.label} size="sm" variant="ghost" label={a.label} onClick={() => run(a.prompt)} />)}
+              {SELECTION_ACTIONS.map((a) => <BasedButton key={a.label} variant="ghost" label={a.label} onClick={() => run(a.prompt)} />)}
             </span>
           ) : null}
         </>
       ) : state.phase === "busy" ? (
-        <span className="bx2-ai-status" role="status" aria-busy="true">Writing…<BasedButton size="sm" variant="ghost" label="Stop" onClick={discard} /></span>
+        <span className="bx2-ai-status" role="status" aria-busy="true">Writing…<BasedButton variant="ghost" label="Stop" onClick={discard} /></span>
       ) : state.phase === "failed" ? (
         <>
           <span className="bx2-ai-status" role="alert">{state.message}</span>
-          <span className="bx2-ai-actions"><BasedButton size="sm" label="Try again" onClick={() => run(state.prompt)} /><BasedButton size="sm" variant="ghost" label="Discard" onClick={discard} /></span>
+          <span className="bx2-ai-actions"><BasedButton label="Try again" onClick={() => run(state.prompt)} /><BasedButton variant="ghost" label="Discard" onClick={discard} /></span>
         </>
       ) : (
         <>
           <div className="bx2-ai-preview" data-testid="ai-preview">{state.text}</div>
           <span className="bx2-ai-actions">
-            {req.selection ? <BasedButton size="sm" variant="primary" label="Replace selection" onClick={() => finish("replace")} /> : null}
-            <BasedButton size="sm" variant={req.selection ? "secondary" : "primary"} label={req.selection ? "Insert below" : "Insert"} onClick={() => finish("below")} />
-            <BasedButton size="sm" variant="ghost" label="Try again" onClick={() => run(state.prompt)} />
-            <BasedButton size="sm" variant="ghost" label="Discard" onClick={discard} />
+            {req.selection ? <BasedButton variant="primary" label="Replace selection" onClick={() => finish("replace")} /> : null}
+            <BasedButton variant={req.selection ? "secondary" : "primary"} label={req.selection ? "Insert below" : "Insert"} onClick={() => finish("below")} />
+            <BasedButton variant="ghost" label="Try again" onClick={() => run(state.prompt)} />
+            <BasedButton variant="ghost" label="Discard" onClick={discard} />
           </span>
         </>
       )}
@@ -2322,15 +2322,15 @@ function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
   return (
     <div className="bx2-embed bx2-btn" data-embed="" contentEditable={false} data-editing={editing ? "" : undefined}>
       <span className="bx2-btn-row">
-        <BasedButton label={buttonLabel(b)} size="sm" busy={busy} disabled={!editable} onClick={() => void run()} />
-        {editable ? <BasedButton label={editing ? "Done" : "Edit"} variant="ghost" size="sm" ariaLabel={editing ? "Close button settings" : "Edit button"} onClick={() => setEditing((o) => !o)} /> : null}
+        <BasedButton label={buttonLabel(b)} busy={busy} disabled={!editable} onClick={() => void run()} />
+        {editable ? <BasedButton label={editing ? "Done" : "Edit"} variant="ghost" ariaLabel={editing ? "Close button settings" : "Edit button"} onClick={() => setEditing((o) => !o)} /> : null}
         {note ? <span className="bx2-muted" role="status">{note}</span> : null}
       </span>
       {pause ? (
         <span className="bx2-btn-confirm" role="alertdialog" aria-label="Confirm">
           <span>{pause.message}</span>
-          <BasedButton label="Cancel" variant="ghost" size="sm" onClick={() => setPause(undefined)} />
-          <BasedButton label="Continue" variant="primary" size="sm" onClick={() => void run(pause.next, pause.added)} />
+          <BasedButton label="Cancel" variant="ghost" onClick={() => setPause(undefined)} />
+          <BasedButton label="Continue" variant="primary" onClick={() => void run(pause.next, pause.added)} />
         </span>
       ) : null}
       {editing ? <ButtonSetup block={b} depth={depth} onDone={() => setEditing(false)} /> : null}
@@ -2378,12 +2378,12 @@ function ButtonSetup({ block: b, depth, onDone }: { block: Block; depth: number;
             ) : <span className="bx2-muted">{buttonActionName(st.kind)} ({st.kind})</span>}
             {st.kind === "addPage" ? (
               <>
-                <BasedButton size="sm" label={st.targetID ? dbTitle(st.targetID) : "Choose a database…"} onClick={() => setPicking({ step: i, kind: "database" })} />
+                <BasedButton label={st.targetID ? dbTitle(st.targetID) : "Choose a database…"} onClick={() => setPicking({ step: i, kind: "database" })} />
                 <input className="bx2-link-input" aria-label="Page name" placeholder="Page name" defaultValue={st.title ?? ""}
                   onBlur={(e) => { if ((st.title ?? "") !== e.target.value) change(i, { title: e.target.value }); }} />
               </>
             ) : null}
-            {st.kind === "openPage" ? <BasedButton size="sm" label={st.targetID ? pageTitle(st.targetID) : "Choose a page…"} onClick={() => setPicking({ step: i, kind: "page" })} /> : null}
+            {st.kind === "openPage" ? <BasedButton label={st.targetID ? pageTitle(st.targetID) : "Choose a page…"} onClick={() => setPicking({ step: i, kind: "page" })} /> : null}
             {st.kind === "openAdded" ? (
               <select className="bx2-link-input" aria-label="Which page" value={st.step === undefined ? "" : String(st.step)}
                 onChange={(e) => change(i, { step: e.target.value === "" ? undefined : Number(e.target.value) })}>
@@ -2409,13 +2409,13 @@ function ButtonSetup({ block: b, depth, onDone }: { block: Block; depth: number;
           <option value="">+ Add step</option>
           {BUTTON_ACTION_KINDS.map((k) => <option key={k} value={k}>{buttonActionName(k)}</option>)}
         </select>
-        <BasedButton label="Done" variant="primary" size="sm" onClick={onDone} />
+        <BasedButton label="Done" variant="primary" onClick={onDone} />
       </span>
       {hasTemplate ? (
         <div className="bx2-btn-template" aria-label="Blocks to insert" data-testid="button-template">
           <span className="bx2-btn-caption">Blocks to insert</span>
           {kids.length ? <BlockList parent={b.id} depth={depth + 1} /> : (
-            <BasedButton size="sm" variant="ghost" label="Add a block" onClick={() => {
+            <BasedButton variant="ghost" label="Add a block" onClick={() => {
               ctrl.apply(cmd.insertBlock(store, { inside: b.id }, "text"));
             }} />
           )}
@@ -2544,11 +2544,11 @@ function CodeLanguage({ block: b }: { block: Block }) {
       <button type="button" className="bx2-code-lang-btn" disabled={!editable} aria-haspopup="listbox" onClick={() => setOpen((o) => !o)}>{name}</button>
       {open ? (
         <span className="bx2-menu bx2-code-menu" role="listbox" aria-label="Language">
-          <input autoFocus className="bx2-link-input" aria-label="Search languages" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)}
+          <input autoFocus className="bx2-menu-search" aria-label="Search languages" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setOpen(false); } else if (e.key === "Enter") { e.preventDefault(); pick(list[0]?.id); } }} onBlur={() => setTimeout(() => setOpen(false), 120)} />
-          <button type="button" role="option" aria-selected={!cur} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(undefined)}><span className="bx2-menu-text">Plain text</span></button>
-          {list.slice(0, 40).map((l) => (
-            <button key={l.id} type="button" role="option" aria-selected={cur === l.id} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(l.id)}><span className="bx2-menu-text">{l.name}</span></button>
+          <button type="button" role="option" aria-selected={!cur} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(undefined)}><span className="bx2-menu-text">Plain text</span>{!cur ? <span className="bx2-menu-check" aria-hidden="true">✓</span> : null}</button>
+          {list.filter((l) => l.name !== "Plain text").slice(0, 40).map((l) => (
+            <button key={l.id} type="button" role="option" aria-selected={cur === l.id} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(l.id)}><span className="bx2-menu-text">{l.name}</span>{cur === l.id ? <span className="bx2-menu-check" aria-hidden="true">✓</span> : null}</button>
           ))}
         </span>
       ) : null}
@@ -2972,9 +2972,9 @@ function FormatBar({ x, y, caret, onMark, onColor, onAI, onLink, onEquation, onT
   return (
     <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 48) }} onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("input")) e.preventDefault(); }}>
       {turnable ? (
-        <BasedButton size="sm" variant="ghost" label={blockTypeLabel(b)} ariaLabel={"Turn into · " + blockTypeLabel(b)} icon={<MenuIcon name="turn" />} onClick={onTurn} />
+        <BasedButton variant="ghost" label={blockTypeLabel(b)} ariaLabel={"Turn into · " + blockTypeLabel(b)} icon={<MenuIcon name="turn" />} onClick={onTurn} />
       ) : null}
-      {onAI ? <BasedButton size="sm" variant="ghost" label="Ask AI" onClick={onAI} /> : null}
+      {onAI ? <BasedButton variant="ghost" label="Ask AI" onClick={onAI} /> : null}
       <span className="bx2-format-sep" aria-hidden="true" />
       {items.map((it) => <BasedIconButton key={it.m} label={it.label} tooltip={`${it.label} (${it.key})`} pressed={on(it.m)} icon={<MenuIcon name={it.icon} />} onClick={() => onMark(it.m)} testID={"format-" + it.m} />)}
       <BasedIconButton label="Equation" tooltip="Equation" icon={<MenuIcon name="sqrt" />} onClick={onEquation} testID="format-equation" />

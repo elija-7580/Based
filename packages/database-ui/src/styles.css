@@ -138,12 +138,8 @@
 
 /* Tabelle */
 .dbui-table { position: relative; outline: none; margin: 0 var(--space-6); }
-/* BSD-304: Die Tabelle nimmt per Tab den Fokus (Pfeiltasten wählen Zellen) – dann sichtbar, im neutralen Fokusrahmen (BSD-367). */
-/* Als Rahmen über allem (die klebende Kopfzeile liegt sonst über der Kontur). */
-.dbui-table:focus-visible::after {
-  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
-  border: var(--marker-width) solid var(--focus-ring); border-radius: var(--radius-sm);
-}
+/* Element-System (docs/design/elements.md, Abschnitt 3): ein Rahmen zur Zeit. Die Tabelle zeichnet keinen eigenen –
+   per Tab bekommt die erste Zelle den Rahmen (Table.tsx onFocus). */
 .dbui-thead {
   position: sticky; top: 0; z-index: 2; display: flex; height: var(--dbui-row); background: var(--bg); border-bottom: 1px solid var(--line);
 }
@@ -181,7 +177,7 @@
 .dbui-vrow.wrap .dbui-cell { align-items: flex-start; padding-top: var(--cell-pad); padding-bottom: var(--cell-pad); }
 .dbui-cell:last-child { border-right: 0; }
 .dbui-cell.title { font-weight: var(--type-meta-weight); }
-.dbui-cell.active { box-shadow: inset 0 0 0 2px var(--control-border); border-radius: var(--radius-xs); }
+.dbui-cell.active { box-shadow: inset 0 0 0 2px var(--focus-ring); border-radius: var(--radius-xs); }
 /* Zellbereich (⇧-Pfeile, Ziehen): getönt; die aktive Zelle behält ihren Rahmen. */
 .dbui-cell.in-range { background: var(--selected); }
 .dbui-table[data-range] { user-select: none; -webkit-user-select: none; }
@@ -343,11 +339,13 @@
 .dbui-back { border: 0; background: transparent; color: var(--muted); display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); }
 .dbui-back .dbui-icon { transform: rotate(180deg); }
 .dbui-input, .dbui-select {
-  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); min-height: var(--space-6);
-  padding: 0 var(--space-2); min-width: 0;
+  font: inherit; color: var(--ink); background: var(--surface-raised); border: 1px solid transparent; border-radius: var(--radius-md); min-height: var(--control-md);
+  padding: 0 var(--space-3); min-width: 0;
 }
 textarea.dbui-input { padding: var(--space-1) var(--space-2); resize: vertical; width: 100%; }
-.dbui-cell-editor .dbui-input { width: 100%; border-color: var(--control-border); }
+/* Der Zelleneditor steht im Rahmen der aktiven Zelle und hat keinen eigenen. */
+.dbui-cell-editor .dbui-input { width: 100%; border-color: transparent; background: transparent; }
+.dbui-cell-editor .dbui-input:focus-visible { outline: none; }
 .dbui-input.invalid { border-color: var(--danger); }
 .dbui-input.bare { border: 0; flex: 1; min-width: calc(var(--space-8) + var(--space-5)); outline: none; }
 .dbui-input.small, .dbui-select.small { min-height: var(--space-5); font-size: var(--type-description-size); }

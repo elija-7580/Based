@@ -46,7 +46,7 @@ Schalter aus Einstellungen → My settings:
 | Schalter | Wirkung auf Astryx |
 |---|---|
 | Theme Hell / Dunkel / System | `<Theme mode>`; „System“ wird in `appearance.ts` aufgelöst, damit `data-theme` für tokens.css und Astryx gleich ist |
-| Dichte | eigenes Theme `based-compact` (Steuerhöhen 24/28/32 statt 28/32/36) |
+| Dichte | eigenes Theme `based-compact` (Steuerhöhen 24/28/36 statt 28/32/40) |
 | Stil Bold | über `--font-ui`, `--font-head`, `--size-title`, `--weight-title` aus tokens.css |
 | Marker, Calm | keine – der Marker ist kein Theme-Wert |
 

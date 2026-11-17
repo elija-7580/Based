@@ -95,8 +95,8 @@ describe("Based → Astryx theme", () => {
     const compact = astryxThemeSpec({ density: "compact" });
     expect(spec.name).toBe(ASTRYX_THEME_NAMES.comfortable);
     expect(compact.name).toBe(ASTRYX_THEME_NAMES.compact);
-    expect(controlHeights("comfortable")).toEqual([28, 32, 36]);
-    expect(controlHeights("compact")).toEqual([24, 28, 32]);
+    expect(controlHeights("comfortable")).toEqual([28, 32, 40]);
+    expect(controlHeights("compact")).toEqual([24, 28, 36]);
     expect(compact.tokens["--size-element-md"]).toBe("28px");
     expect(compact.tokens["--color-accent"]).toEqual(spec.tokens["--color-accent"]);
   });

@@ -41,7 +41,7 @@ export function CliChatList({ current, onOpen }: { current: string | undefined; 
     return (
       <div className="chat-cli-offer" data-testid="cli-chats-offer">
         <p className="t-desc">Your Claude Code and Codex conversations on this Mac can show up here.</p>
-        <Button size="sm" variant="ghost" label={local.status === "starting" ? "Starting…" : "Show them"} isDisabled={local.status === "starting"} onClick={() => void turnOnLocal()} />
+        <Button variant="ghost" label={local.status === "starting" ? "Starting…" : "Show them"} isDisabled={local.status === "starting"} onClick={() => void turnOnLocal()} />
         {local.error ?? (local.node && !local.node.ok ? local.node.message : undefined) ? <p className="t-meta" role="status">{local.error ?? local.node?.message}</p> : null}
       </div>
     );
@@ -143,8 +143,8 @@ export function CliChatView({ session, connection }: { session: CliSession; conn
         <span className="t-meta chat-cli-origin" title={session.cwd}>{[TOOL[session.tool], session.cwd, relative(new Date(session.updatedAt))].filter(Boolean).join(" · ")}</span>
         {live ? <span className="chat-cli-live t-meta" data-testid="cli-chat-live" role="status"><span className="chat-cli-live-dot" aria-hidden="true" />Live</span> : null}
         <span className="chat-cli-actions">
-          <Button size="sm" variant="ghost" label={copied ? "Copied" : "Copy terminal command"} onClick={() => void copy()} />
-          <Button size="sm" variant="primary" label={busy ? "Opening…" : "Continue in Based"} isDisabled={busy} onClick={() => void resume()} />
+          <Button variant="ghost" label={copied ? "Copied" : "Copy terminal command"} onClick={() => void copy()} />
+          <Button variant="primary" label={busy ? "Opening…" : "Continue in Based"} isDisabled={busy} onClick={() => void resume()} />
         </span>
       </div>
       <div className="chat-scroll" data-testid="cli-chat-messages">

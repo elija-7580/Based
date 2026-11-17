@@ -65,7 +65,7 @@ export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
             onChange={(v) => void (v === SAME ? save({}, ["model"]) : save({ model: v }))} />
         </Row>
         <Row label="What the main agent may do alone" hint={PERMISSIONS.find((p) => p.mode === main.permissions.mode)?.desc}>
-          <SegmentedControl label="What the main agent may do alone" size="sm" value={main.permissions.mode} onChange={(v) => void save({ mode: v as PermissionMode })}>
+          <SegmentedControl label="What the main agent may do alone" value={main.permissions.mode} onChange={(v) => void save({ mode: v as PermissionMode })}>
             {PERMISSIONS.map((p) => <SegmentedControlItem key={p.mode} value={p.mode} label={p.name} />)}
           </SegmentedControl>
         </Row>
@@ -104,7 +104,7 @@ export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
         {snap.projects.length === 0 ? <Text type="supporting" color="secondary">No projects yet. The main agent creates one when you file something into a new project.</Text> : null}
         {snap.projects.map((p) => (
           <Row key={p.id} label={p.name} hint={p.data.goal}>
-            <SegmentedControl label={`Status of ${p.name}`} size="sm" value={p.data.status} onChange={(v) => void client.agents({ op: "updateProject", id: p.id, patch: { status: v as ProjectStatus } })}>
+            <SegmentedControl label={`Status of ${p.name}`} value={p.data.status} onChange={(v) => void client.agents({ op: "updateProject", id: p.id, patch: { status: v as ProjectStatus } })}>
               <SegmentedControlItem value="active" label="Active" />
               <SegmentedControlItem value="paused" label="Paused" />
               <SegmentedControlItem value="done" label="Done" />
@@ -127,7 +127,7 @@ export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
           <Row key={s.id} label={s.name} hint={`${s.data.when}${s.data.nextAt !== undefined ? ` · next ${formatFire(toMs(s.data.nextAt), Date.now())}` : " · no next time"}`}>
             <HStack gap={2} vAlign="center">
               <Switch label="On" isLabelHidden value={s.data.enabled} onChange={(on) => void client.agents({ op: "updateSchedule", id: s.id, patch: { enabled: on } })} />
-              <Button variant="ghost" size="sm" label="Delete" onClick={() => void client.agents({ op: "deleteSchedule", id: s.id })} />
+              <Button variant="ghost" label="Delete" onClick={() => void client.agents({ op: "deleteSchedule", id: s.id })} />
             </HStack>
           </Row>
         ))}

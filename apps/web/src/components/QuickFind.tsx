@@ -184,7 +184,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             <li className="qf-none" data-testid="qf-none">
               <strong>No results for “{query.trim()}”</strong>
               <span className="t-desc">{filtered ? "The filters above narrow the search." : "Check the spelling, or try fewer or different words."}</span>
-              {filtered ? <BasedButton label="Clear filters" size="sm" onClick={() => setFilter({ titleOnly: false, inPage: false, date: "any" })} /> : null}
+              {filtered ? <BasedButton label="Clear filters" onClick={() => setFilter({ titleOnly: false, inPage: false, date: "any" })} /> : null}
             </li>
           ) : null}
         </ul>

@@ -8,7 +8,7 @@ export function LibraryTabs({ value, onNavigate }: { value: "library" | "graph" 
   const graph = featureVisible("graph"), meetings = featureVisible("meetings");
   if (!graph && !meetings) return null;
   return (
-    <SegmentedControl label="Library view" size="sm" value={value} onChange={(v) => onNavigate(v === "graph" || v === "meetings" ? v : "library")}>
+    <SegmentedControl label="Library view" value={value} onChange={(v) => onNavigate(v === "graph" || v === "meetings" ? v : "library")}>
       <SegmentedControlItem value="library" label="Pages" />
       {graph ? <SegmentedControlItem value="graph" label="Graph" /> : null}
       {meetings ? <SegmentedControlItem value="meetings" label="Meetings" /> : null}

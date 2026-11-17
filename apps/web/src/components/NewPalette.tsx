@@ -68,8 +68,8 @@ export function NewPalette({ commands, onClose }: { commands: readonly PaletteCo
               onMouseMove={() => setSelected(i)} onClick={() => run(i)}>
               <span className="tile"><Icon name={c.icon} size={18} /></span>
               <span className="grow"><strong>{c.title}</strong></span>
-              {c.hint ? <span className="key t-data qf-key">{c.hint}</span> : null}
-              {query === "" && i < 9 ? <span className="key t-data qf-key qf-digit" aria-label={`Press ${i + 1}`}>{i + 1}</span> : null}
+              {c.hint ? <span className="key keycap qf-key">{c.hint}</span> : null}
+              {query === "" && i < 9 ? <span className="key keycap qf-key qf-digit" aria-label={`Press ${i + 1}`}>{i + 1}</span> : null}
             </li>
           ))}
           {items.length === 0 ? <li className="qf-none t-desc">Nothing to create by that name</li> : null}
