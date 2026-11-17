@@ -588,6 +588,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           onExport={(format) => void client.exportPage(menu.id, format).then(download).catch(() => undefined)}
           isHome={homePage === menu.id}
           onHome={(on) => startPage.set(on ? menu.id : undefined)}
+          dashboard={ai}
           quickMoves={(outline?.nodes[menu.id]?.parent === undefined ? outline?.sections ?? [] : []).filter((x) => x.id !== menuSection).map((x) => ({ id: x.id, label: `Move to ${x.name}` }))}
           onQuickMove={(section) => void client.command({ op: "moveToSection", ids: [menu.id], section })}
           onTrash={() => {
@@ -906,7 +907,7 @@ function copyPageLinks(ids: string[]): Promise<void> {
   return navigator.clipboard?.writeText(text).catch(() => undefined) ?? Promise.resolve();
 }
 
-function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, onOpenTab, onCopyLink, onExport, isHome, onHome, quickMoves, onQuickMove }: {
+function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, onOpenTab, onCopyLink, onExport, isHome, onHome, dashboard, quickMoves, onQuickMove }: {
   menu: Menu;
   favorite: boolean;
   canNest: boolean;
@@ -926,6 +927,8 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   /** Diese Seite ist Home bzw. soll es werden (aus: zurück zum Dashboard). */
   isHome: boolean;
   onHome: (on: boolean) => void;
+  /** BSD-493: Gibt es ein Dashboard (AI an)? Ohne AI ist Home immer eine Seite – an ihr kein „Use dashboard as Home“. */
+  dashboard: boolean;
   /** Direkt in einen anderen Abschnitt (Private, Teamspaces) – nur für Seiten der obersten Ebene. */
   quickMoves: { id: string; label: string }[];
   onQuickMove: (section: string) => void;
@@ -967,7 +970,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   return (
     <div ref={ref} role="menu" aria-label="Page actions" className="menu" style={pos}>
       {item(favorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!favorite))}
-      {item(isHome ? "Use dashboard as Home" : "Set as Home", "home", () => onHome(!isHome))}
+      {isHome && !dashboard ? null : item(isHome ? "Use dashboard as Home" : "Set as Home", "home", () => onHome(!isHome))}
       {item("Rename", "page", onRename)}
       {canNest ? item("Add a page inside", "plus", onAdd) : null}
       {item("Duplicate", "duplicate", onDuplicate)}

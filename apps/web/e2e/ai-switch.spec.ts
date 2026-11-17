@@ -119,3 +119,42 @@ test("ohne AI: kein Ask AI im Block-Editor", async ({ page }) => {
   await expect(page.getByTestId("format-bar")).toBeVisible();
   await expect(page.getByTestId("format-bar").getByRole("button", { name: "Ask AI" })).toHaveCount(0);
 });
+
+// BSD-493: Ohne AI gibt es kein Dashboard – an der Home-Seite fehlt „Use dashboard as Home“ (der Klick tat nichts);
+// eine andere Seite lässt sich weiter als Home setzen.
+test("ohne AI: Rechtsklick auf die Home-Seite ohne „Use dashboard as Home“, andere Seite „Set as Home“", async ({ page, browserName }) => {
+  await ready(page);
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click({ button: "right" });
+  const menu = page.getByRole("menu", { name: "Page actions" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Rename" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: /dashboard/i })).toHaveCount(0);
+  await expect(menu.getByRole("menuitem", { name: "Set as Home" })).toHaveCount(0);
+  if (browserName === "chromium") {
+    await page.screenshot({ path: "../../docs/design/screens/home-page-menu-no-ai-light.png" });
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.waitForTimeout(400);
+    await page.getByRole("treeitem", { name: "Welcome to Based" }).click({ button: "right" });
+    await expect(menu).toBeVisible();
+    await page.screenshot({ path: "../../docs/design/screens/home-page-menu-no-ai-dark.png" });
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  }
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeHidden();
+
+  // andere Seite → Set as Home → Home öffnet sie
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(page.getByLabel("Page title")).toBeFocused();
+  await page.keyboard.type("Other home");
+  await page.getByRole("treeitem", { name: "Other home" }).click({ button: "right" });
+  await menu.getByRole("menuitem", { name: "Set as Home" }).click();
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await nav(page).getByRole("button", { name: "Home" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Other home");
+});
