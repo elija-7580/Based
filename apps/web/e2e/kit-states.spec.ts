@@ -306,6 +306,9 @@ for (const theme of ["light", "dark"] as const) {
 // verschieden; die Matrix nutzt deshalb die gebündelte Schibsted Grotesk (aus dist/assets) – verglichen werden Farben, Formen, Abstände.
 // Gewollte Änderung: `playwright test e2e/kit-states.spec.ts --project=chromium --update-snapshots`, Bild im selben
 // Commit ablegen und im Ergebnisfeld begründen.
+// Toleranz: Schrift und Browser sind fest, also fast pixelgleich. Ein Anteil (0,01 = 1 %) war zu großzügig – ein
+// verschwundener Tooltip (~2 600 Pixel) fiel nicht auf. Jetzt höchstens 100 abweichende Pixel, Farbschwelle 0,1.
+const SHOT = { animations: "disabled", caret: "hide", maxDiffPixels: 100, threshold: 0.1 } as const;
 const FORCE: Record<State, string[]> = { rest: [], hover: ["hover"], pressed: ["hover", "active"], focus: ["focus", "focus-visible"], disabled: [] };
 const MATRIX_STATES: State[] = ["rest", "hover", "pressed", "focus", "disabled"];
 
@@ -314,7 +317,7 @@ const MATRIX_STATES: State[] = ["rest", "hover", "pressed", "focus", "disabled"]
  * zweite, vorerst versteckte Galerie gelegt und wieder geschlossen. Das Menü dreimal: in Ruhe, mit überfahrener und
  * mit per Tastatur fokussierter Zeile (erzwungen in buildMatrix).
  */
-const OVERLAYS = ["Menu", "Menu item hover", "Menu item focus", "Popover", "Dialog"] as const;
+const OVERLAYS = ["Menu", "Menu item hover", "Menu item focus", "Popover", "Dialog", "Tooltip"] as const;
 
 async function captureOverlays(page: Page) {
   const kit = page.getByTestId("astryx-kit");
@@ -339,6 +342,7 @@ async function captureOverlays(page: Page) {
         const copy = el.cloneNode(true) as Element;
         copy.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
         copy.setAttribute("data-overlay", name);
+        copy.removeAttribute("popover"); // eine Kopie ist nie „open“ – ohne Attribut bleibt sie sichtbar
         // Breite kam vom Positionierer um die Fläche – mitnehmen
         (copy as HTMLElement).style.width = `${Math.round(el.getBoundingClientRect().width)}px`;
         figure.append(caption, copy);
@@ -354,6 +358,10 @@ async function captureOverlays(page: Page) {
   await keep(page.locator(".astryx-popover[role=dialog]:not([data-overlay])").filter({ hasText: "The marker means one thing" }), ["Popover"]);
   await kit.getByRole("button", { name: "Open dialog" }).click();
   await keep(page.locator("dialog.astryx-dialog[open]:not([data-overlay])"), ["Dialog"]);
+  // Tooltip am Icon-Knopf (erscheint mit Verzögerung beim Überfahren)
+  await kit.getByRole("button", { name: "Close", exact: true }).hover();
+  await keep(page.getByRole("tooltip").filter({ hasText: "Close (Esc)" }).and(page.locator(":not([data-overlay])")), ["Tooltip"]);
+  await page.mouse.move(1, 1);
 }
 
 /** Schrift für den Bildvergleich: die gebündelte Schibsted Grotesk direkt aus dem Build (Default lädt sie sonst nicht). */
@@ -484,7 +492,7 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     expect(rest.equals(await shot("hover")), "Überfahren erzwungen").toBe(false);
     expect(rest.equals(await shot("focus")), "Fokus erzwungen").toBe(false);
 
-    await expect(matrix).toHaveScreenshot(`kit-states-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    await expect(matrix).toHaveScreenshot(`kit-states-${style}-${theme}.png`, SHOT);
     if (style === "default") await matrix.screenshot({ path: `../../docs/design/screens/web-kit-states-${theme}.png`, animations: "disabled" });
 
     // Teil 4: offene Flächen – Menü (Ruhe, Zeile überfahren, Zeile fokussiert), Popover, Dialog
@@ -503,7 +511,7 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     expect(found).toEqual([]);
     const menuShot = (name: string) => overlays.locator(`[data-overlay="${name}"]`).screenshot({ animations: "disabled" });
     expect((await menuShot("Menu")).equals(await menuShot("Menu item hover")), "Menüzeile überfahren erzwungen").toBe(false);
-    await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, SHOT);
     if (style === "default") await overlays.screenshot({ path: `../../docs/design/screens/web-kit-overlays-${theme}.png`, animations: "disabled" });
   });
 }
@@ -542,7 +550,7 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
       for (const [k, c] of Object.entries(await colorsOf(copy))) if (!transparent(c) && !isToken(c, allowed)) found.push(`${label} ${k}: ${c}`);
     }
     expect(found).toEqual([]);
-    await expect(nav).toHaveScreenshot(`sidebar-states-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    await expect(nav).toHaveScreenshot(`sidebar-states-${style}-${theme}.png`, SHOT);
     if (style === "default") await nav.screenshot({ path: `../../docs/design/screens/web-kit-sidebar-states-${theme}.png`, animations: "disabled" });
   });
 }
@@ -576,7 +584,7 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     const slash = page.getByRole("listbox").filter({ has: options.first() }).first();
     await settle(slash);
     await check("Slash-Menü", slash);
-    await expect(slash).toHaveScreenshot(`slash-menu-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    await expect(slash).toHaveScreenshot(`slash-menu-${style}-${theme}.png`, SHOT);
     await page.keyboard.press("Escape");
 
     await page.mouse.move(1279, 819);
@@ -585,7 +593,7 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     await expect(qf.locator('[role="option"][aria-selected="true"]').first()).toBeVisible();
     await settle(qf);
     await check("Quick Find", qf);
-    await expect(qf).toHaveScreenshot(`quick-find-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    await expect(qf).toHaveScreenshot(`quick-find-${style}-${theme}.png`, SHOT);
     if (style === "default") await qf.screenshot({ path: `../../docs/design/screens/web-kit-quick-find-${theme}.png`, animations: "disabled" });
     await page.keyboard.press("Escape");
     expect(found).toEqual([]);
