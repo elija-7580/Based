@@ -1,17 +1,17 @@
-success f303cbfd99ce22d0df1632474d3151975c2ec54a (nicht blockierend)
-perf 5000: {"mapOpen":[],"idleBeforePan":[100],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3825,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":4.95,"peekLong":[],"formSubmitMs":53,"formLong":[]}
-BSD-215 chromium: 100000 Zeilen öffnen 1587 ms, ans Ende scrollen 27 ms, Zelle ändern 198 ms
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 2.2, 10.8, 11.7, 22.3, 24.6
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.3s)
-[chromium] Start mit 5.000 Seiten: Seitenleiste nach 411 ms, längste Aufgabe 0 ms
-  ✓   7 [chromium] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (2.7s)
-[chromium] Seitenwechsel (300 Blöcke): 128, 129, 140, 164 ms · Tastendruck p50 32 p95 47 max 54 ms (44 Tasten)
-  ✓   9 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (4.4s)
-BSD-215 webkit: 100000 Zeilen öffnen 2498 ms, ans Ende scrollen 79 ms, Zelle ändern 425 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 6, 7, 7, 8, 9
-  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.0s)
-[webkit] Start mit 5.000 Seiten: Seitenleiste nach 1165 ms, längste Aufgabe 0 ms
-  ✓  15 [webkit] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (6.0s)
-[webkit] Seitenwechsel (300 Blöcke): 381, 389, 502, 910 ms · Tastendruck p50 45 p95 70 max 205 ms (44 Tasten)
-  ✓  16 [webkit] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (7.4s)
-  15 passed (1.3m)
+success 356cf5392297afb234fc39d45e759d5aa15977bf (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[112],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3804,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":5.6,"peekLong":[],"formSubmitMs":50,"formLong":[]}
+BSD-215 chromium: 100000 Zeilen öffnen 1599 ms, ans Ende scrollen 38 ms, Zelle ändern 183 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 4.1, 4.3, 8.5, 8.8, 20.1
+  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.4s)
+[chromium] Start mit 5.000 Seiten: Seitenleiste nach 345 ms, längste Aufgabe 0 ms
+  ✓   7 [chromium] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (2.8s)
+[chromium] Seitenwechsel (300 Blöcke): 128, 132, 137, 151 ms · Tastendruck p50 21 p95 23 max 31 ms (44 Tasten)
+  ✓   9 [chromium] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (3.8s)
+BSD-215 webkit: 100000 Zeilen öffnen 1420 ms, ans Ende scrollen 548 ms, Zelle ändern 400 ms
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 5, 8, 11, 12, 29
+  ✓  13 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.1s)
+[webkit] Start mit 5.000 Seiten: Seitenleiste nach 567 ms, längste Aufgabe 0 ms
+  ✓  15 [webkit] › e2e/startup-perf.spec.ts:12:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (4.4s)
+[webkit] Seitenwechsel (300 Blöcke): 333, 361, 380, 525 ms · Tastendruck p50 28 p95 86 max 184 ms (44 Tasten)
+  ✓  16 [webkit] › e2e/startup-perf.spec.ts:76:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (6.1s)
+  15 passed (1.4m)
