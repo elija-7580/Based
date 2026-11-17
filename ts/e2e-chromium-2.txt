@@ -1,4 +1,26 @@
-failure 0ca2dc0b3f1e950034fb0692a86adcab8c10023f
+failure 01ed953baa566c434137de0f0c5621cf6aa6a2f9
+
+      256 |       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      257 |       const after = await info();
+    > 258 |       expect(after.partial).toBe(true);
+          |                             ^
+      259 |       expect(after.totalBlocks).toBe(before);
+      260 |       expect(after.fullLoads).toEqual([]);
+      261 |       await expect(page.getByRole("switch", { name: "Fast start (beta)" })).toBeChecked();
+        at /home/runner/work/Based/Based/apps/web/e2e/settings.spec.ts:258:29
+
+    Error Context: test-results/settings-Fast-start-900×60-fc6f5-tart-lädt-Based-nach-Bedarf-chromium-retry1/error-context.md
+
+  6) [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1728×1000 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      256 |       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      257 |       const after = await info();
+    > 258 |       expect(after.partial).toBe(true);
           |                             ^
       259 |       expect(after.totalBlocks).toBe(before);
       260 |       expect(after.fullLoads).toEqual([]);
@@ -25,26 +47,6 @@ failure 0ca2dc0b3f1e950034fb0692a86adcab8c10023f
 
     Error Context: test-results/settings-Fast-start-1728×1-0fd47-tart-lädt-Based-nach-Bedarf-chromium-retry1/error-context.md
 
-  7) [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
-
-    Test timeout of 30000ms exceeded.
-
-    Error: locator.boundingBox: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('[data-editable-id]:focus')
-
-
-      544 |     // Zeilen bis kurz vor den unteren Rand
-      545 |     for (let i = 0; i < 40; i++) {
-    > 546 |       const box = await page.locator("[data-editable-id]:focus").boundingBox();
-          |                                                                  ^
-      547 |       if (box && box.y > h - 140) break;
-      548 |       await page.keyboard.type(`Line ${i + 1}`);
-      549 |       await page.keyboard.press("Enter");
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:546:66
-
-    Error Context: test-results/polish-Slash--und--Menü-üb-7f046-nicht-auch-unten-im-Fenster-chromium/error-context.md
-
   6 failed
     [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1280×820 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
     [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 900×600 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
@@ -52,10 +54,8 @@ failure 0ca2dc0b3f1e950034fb0692a86adcab8c10023f
     [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1280×820 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
     [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 900×600 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
     [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1728×1000 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
-  1 flaky
-    [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
   10 skipped
-  228 passed (7.7m)
+  229 passed (5.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
