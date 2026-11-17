@@ -11,14 +11,14 @@
 //   der UndoManager verfolgt es nicht, und es wird nicht zurückgeschrieben (kein Echo).
 import * as Y from "yjs";
 import {
+  boardBackground, setBoardBackground, type BoardBackground,
   BOARD_OBJECT_TYPE, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, danglingConnectors, keyBetween, keyOf, parseKey, sameBoardObject, sortByZ, wbFields,
   type StoreChange, type WBObject, type WorkspaceStore,
 } from "@based/core";
 import { addObject, boardObjectsMap, readObject } from "./yboard.js";
 import type { PresenceChannel } from "../yjs/collab.js";
 
-export type BoardBackground = "dots" | "lines" | "grid" | "plain";
-export const BOARD_BACKGROUNDS: readonly { id: BoardBackground; label: string }[] = [{ id: "dots", label: "Dots" }, { id: "lines", label: "Ruled lines" }, { id: "grid", label: "Squared grid" }, { id: "plain", label: "Plain" }];
+export type { BoardBackground } from "@based/core";
 
 /** Herkunft eigener Änderungen (vom UndoManager verfolgt). */
 export const BOARD_LOCAL = { source: "board-local" } as const;
@@ -117,17 +117,13 @@ export class BoardSession {
 
   /** Untergrund der Fläche: Punkte (Standard), Linien oder Karo – gespeichert an der Seite (`props.board.bg`). */
   get background(): BoardBackground {
-    const board = (this.store.blocks.get(this.pageID)?.props as { board?: { bg?: unknown } } | undefined)?.board;
-    return board?.bg === "lines" || board?.bg === "grid" || board?.bg === "plain" ? board.bg : "dots";
+    return boardBackground(this.store, this.pageID);
   }
   setBackground(bg: BoardBackground): boolean {
     if (this.readOnly || bg === this.background) return false;
     this.writing = true;
     try {
-      this.store.transact("Board background", (tx) => tx.update(this.pageID, (b) => {
-        const props = (b.props ?? {}) as Record<string, unknown>;
-        b.props = { ...props, board: { ...((props.board as Record<string, unknown> | undefined) ?? {}), bg } } as typeof b.props;
-      }));
+      setBoardBackground(this.store, this.pageID, bg);
     } finally {
       this.writing = false;
     }

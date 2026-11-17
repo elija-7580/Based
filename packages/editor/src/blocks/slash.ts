@@ -1,6 +1,6 @@
 // ADR 0016 (E5, erster Teil): Einträge des Slash-Menüs im Block-Editor. Reine Daten + Filter; Kürzel im Mac-Stil.
 import type { BlockIconName } from "./icons.js";
-import { blockCommands, createDatabase, createFuzzyIndex, insertMeetingAfter, insertPage, type Block, type FuzzyIndex, type WorkspaceStore } from "@based/core";
+import { blockCommands, createDatabase, insertBoardPage, createFuzzyIndex, insertMeetingAfter, insertPage, type Block, type FuzzyIndex, type WorkspaceStore } from "@based/core";
 
 export interface SlashItem {
   type: string;
@@ -72,6 +72,18 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
     if (replace) store.transact("Remove empty block", (tx) => tx.remove(`block:${after}`), { coalesce: "db:" + r.blockID });
     return r.blockID;
   } },
+  // Elija 17.11.: ein Whiteboard mitten in der Seite (eine Board-Unterseite, die in der Seite als Fläche erscheint).
+  { type: "page", label: "Whiteboard", group: "Pages", icon: "boardPen", keywords: "board drawing draw sketch canvas freeform pen", create: (store, after, replace) => {
+    const a = store.blocks.get(after);
+    const parentPage = a?.parent.startsWith("b:") ? a.parent.slice(2) : undefined;
+    if (!parentPage) return undefined;
+    let id: string | undefined;
+    store.transact("New whiteboard", (tx) => {
+      id = insertBoardPage(store, tx, { parent: parentPage, position: { kind: "after", id: after }, title: "Whiteboard" });
+      if (replace) tx.remove(`block:${after}`);
+    });
+    return id;
+  } },
   { type: "databaseInline", label: "Linked view of database", group: "Pages", icon: "linkedDatabase", keywords: "linked database view existing", linkDatabase: true },
   { type: "image", label: "Image", group: "Media", icon: "image", keywords: "picture photo upload" },
   { type: "video", label: "Video", group: "Media", icon: "video", keywords: "movie clip upload" },
@@ -127,6 +139,7 @@ const ALIASES: Record<string, string> = {
   "Divider": "rule horizontal break trennlinie linie trenner strich",
   "Simple table": "table spreadsheet tabelle raster",
   "Page": "document doc subpage seite unterseite dokument",
+  "Whiteboard": "board tafel zeichnen skizze zeichnung freihand stift",
   "Database": "db table board kanban list gallery calendar datenbank tabelle",
   "Linked view of database": "db reference datenbank verknüpft ansicht",
   "Image": "img picture photo screenshot bild foto grafik",

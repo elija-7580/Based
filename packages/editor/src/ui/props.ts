@@ -13,6 +13,8 @@ export interface PageEditorProps {
   pageID: string;
   /** Zeichnet eine eingebettete Datenbank-Ansicht (anderes Paket). Ohne: Platzhalter. */
   renderDatabase?: (p: DatabaseRenderProps) => ReactNode;
+  /** Elija 17.11.: ein Board als Unterseite erscheint in der Seite als Fläche (bearbeitbar), nicht nur als Link. */
+  renderBoard?: (p: { blockID: string; pageID: string }) => ReactNode;
   /** Zeichnet eine Gleichung (KaTeX, eigener Eintrag). Ohne: TeX als Code. */
   renderEquation?: (p: EquationRenderProps) => ReactNode;
   /**

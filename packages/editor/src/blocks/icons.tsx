@@ -64,7 +64,8 @@ export const BLOCK_ICON_PATHS = {
   boardShape: "M4 13.5A1.5 1.5 0 0 1 5.5 12h5a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 18.5zM16.5 4a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z",
   // BSD-265–267: Stift, Textmarker, Radierer, Lasso, Text, Verbindung, Frame (Pfade aus dem Entwurf)
   boardPen: "M4 20l1-4.2L15.6 5.2a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19zM13.5 7.3l3.2 3.2",
-  boardHighlighter: "M9 15l-2.5 5H4l1.6-3.3M9 15l-3-3 8.5-8.5a2 2 0 0 1 2.8 0l.2.2a2 2 0 0 1 0 2.8z",
+  // Textmarker mit schräger Spitze und dem Strich darunter (Elija 17.11.: „Icon vom Marker besser“).
+  boardHighlighter: "M13.6 4.4a1.8 1.8 0 0 1 2.5 0l3.5 3.5a1.8 1.8 0 0 1 0 2.5L12 18l-6-6zM6 12l-1.6 4.7 2.9 2.9L12 18M3 21h7",
   boardEraser: "M8.5 20H20M4.6 14.6l8.8-8.8a2 2 0 0 1 2.8 0l2.8 2.8a2 2 0 0 1 0 2.8L11 19.4a2 2 0 0 1-2.8 0l-3.6-3.6a1.2 1.2 0 0 1 0-1.2zM9 10l5 5",
   boardLasso: "M12 4c4.4 0 8 2.2 8 5s-3.6 5-8 5-8-2.2-8-5 3.6-5 8-5zM7 13c-1 1.3-1 3 .5 3.6 1.3.5 2.2-.6 1.6-1.6M8 16.5c.3 1.6-.2 3-1.5 3.5",
   boardText: "M5 6V4.5h14V6M12 4.5v15M9 19.5h6",

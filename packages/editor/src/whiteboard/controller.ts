@@ -34,8 +34,15 @@ type BoxTool = "note" | "shape" | "frame";
 const isBoxTool = (t: BoardTool): t is BoxTool => t === "note" || t === "shape" || t === "frame";
 
 /** Stiftfarben (Token-Namen in render.ts; kein Gelb) und Strichstärken in Welt-px: fein, mittel, kräftig. */
-export const PEN_COLORS = ["ink", "blue", "red", "green", "purple"] as const;
-export const HIGHLIGHT_COLORS = ["sky", "rose", "mint", "lilac"] as const;
+// Elija 17.11.: Farben von Based – die Textfarben des Editors für Striche und Text, die Marker-Familie für den
+// Textmarker (die eigene Marker-Farbe fällt in der Ansicht heraus: sie gehört den Agenten), die Hintergründe des
+// Editors für Zettel und Flächen. Namen statt Werte: hell/dunkel und spätere Themen kommen aus den Tokens.
+export const STROKE_COLORS = ["ink", "gray", "brown", "orange", "green", "blue", "purple", "pink", "red"] as const;
+export const PEN_COLORS = STROKE_COLORS;
+export const HIGHLIGHT_COLORS = ["mint", "sky", "rose", "calm"] as const;
+export const FILL_COLORS = ["gray", "brown", "orange", "green", "blue", "purple", "pink", "red"] as const;
+/** Welche Farbreihen für eine Auswahl gelten. */
+export type ColorRow = "stroke" | "fill" | "highlight";
 export const PEN_WIDTHS = [1.6, 2.6, 4.4] as const;
 export const HIGHLIGHT_WIDTHS = [10, 16, 24] as const;
 export const SHAPE_KINDS = ["rect", "oval", "diamond"] as const;
@@ -54,7 +61,7 @@ export const FRAME_SIZE: Size = { w: 480, h: 320 };
 export const NOTE_SIZE: Size = { w: 168, h: 150 };
 export const SHAPE_SIZE: Size = { w: 160, h: 100 };
 /** Farben der Zettel der Reihe nach (kein Gelb: Gelb heißt „von einem Agenten“). */
-export const NOTE_COLORS = ["blue", "pink", "green", "purple", "gray"] as const;
+export const NOTE_COLORS = ["blue", "pink", "green", "purple", "orange", "gray"] as const;
 /** Ab diesem Weg (Bildschirm-px) ist ein Druck ein Ziehen. */
 export const DRAG_THRESHOLD = 4;
 /** Halbe Trefferbreite eines Griffs (Bildschirm-px). */
@@ -86,7 +93,7 @@ type Gesture =
   | { kind: "resize"; world: Point; handle: Handle; from: Rect; start: Map<string, Rect> }
   | { kind: "marquee"; start: Point; world: Point; base: Set<string> }
   | { kind: "create"; tool: BoxTool; start: Point; world: Point }
-  | { kind: "ink"; tool: "pen" | "highlighter"; points: InkPoint[]; pen: boolean; rest: Point; restAt: number }
+  | { kind: "ink"; tool: "pen" | "highlighter"; points: InkPoint[]; pen: boolean; rest: Point; restAt: number; snap?: { kind: "line" | "rect" | "oval"; bounds: Rect } | undefined }
   | { kind: "erase"; hit: Set<string>; last: Point }
   | { kind: "lasso"; points: Point[] }
   | { kind: "connect"; from: string; to: Point; target: string | undefined };
@@ -117,6 +124,8 @@ export interface BoardScene {
   connecting: { from: Rect; to: Point; target: Rect | undefined } | undefined;
   /** Objekt, dessen Text gerade im Eingabefeld steht (die Fläche zeichnet ihn dann nicht). */
   editing: string | undefined;
+  /** Snap shapes: die Form, zu der der gehaltene Strich beim Loslassen wird (Vorschau). */
+  snap: { kind: "line" | "rect" | "oval"; from: Point; to: Point; bounds: Rect } | undefined;
   background: BoardBackground;
   previewScroll: ReadonlyMap<string, number>;
 }
@@ -162,7 +171,11 @@ export interface BoardFile {
 }
 export const FILE_CARD: Size = { w: 264, h: 72 };
 export const PAGE_CARD: Size = { w: 240, h: 72 };
-const isLocked = (o: WBObject) => o.style?.locked === true;
+/** Ganze Seite auf dem Board (Elija 17.11.: Seiten als ganze zeigen und dort bearbeiten). */
+export const PAGE_FULL: Size = { w: 520, h: 620 };
+// Feststecken: nur was jemand selbst festgesteckt hat („Lock in place“). Ein früheres `locked` auf PDF-Seiten gilt
+// nicht mehr – PDF-Seiten lassen sich wählen und verschieben (Elija 17.11.).
+const isLocked = (o: WBObject) => o.style?.pin === true;
 /** Größe der Vorschau je Stufe-2-Art und Breite einer PDF-Seite (Welt-px). */
 export const PREVIEW_SIZE: Record<"text" | "html" | "video" | "audio", Size> = { text: { w: 440, h: 320 }, html: { w: 560, h: 400 }, video: { w: 480, h: 310 }, audio: { w: 360, h: 104 } };
 export const PDF_WIDTH = 560;
@@ -198,6 +211,8 @@ export class BoardController {
   inkVersion = 0;
 
   private gesture: Gesture | undefined;
+  /** Letzte Zeigerstelle über der Fläche (Welt) – dort beginnt getippter Text. */
+  hover: Point | undefined;
   private lastClick: { at: number; p: Point; hit: string | undefined } | undefined;
   private readonly now: () => number;
   private readonly onOpenFile: ((obj: WBShape) => void) | undefined;
@@ -504,11 +519,73 @@ export class BoardController {
     return id;
   }
 
+  // MARK: Farben der Auswahl
+
+  /** Farbreihen, die für die Auswahl gelten (Strich/Text, Fläche, Textmarker). */
+  colorRows(): ColorRow[] {
+    const rows = new Set<ColorRow>();
+    for (const id of this.selection) {
+      const o = this.session.get(id);
+      if (!o) continue;
+      if (o.kind === "ink") rows.add(o.style?.tool === "hl" ? "highlight" : "stroke");
+      else if (o.kind === "text" || o.kind === "connector") rows.add("stroke");
+      else if (o.kind === "note" || o.kind === "frame") rows.add("fill");
+      else if (o.kind === "shape") { rows.add("stroke"); rows.add("fill"); }
+    }
+    return (["stroke", "fill", "highlight"] as const).filter((r) => rows.has(r));
+  }
+  /** Gemeinsame Farbe der Auswahl in einer Reihe (für den gedrückten Zustand), sonst `undefined`. */
+  selectionColor(row: ColorRow): string | undefined {
+    let found: string | undefined;
+    for (const id of this.selection) {
+      const o = this.session.get(id);
+      if (!o) continue;
+      const v = row === "fill" ? (o.kind === "shape" ? o.style?.fill : o.kind === "note" || o.kind === "frame" ? o.style?.color : undefined)
+        : row === "highlight" ? (o.kind === "ink" && o.style?.tool === "hl" ? o.style?.color : undefined)
+          : (o.kind === "ink" && o.style?.tool !== "hl") || o.kind === "text" || o.kind === "connector" || o.kind === "shape" ? (o.style?.color ?? "ink") : undefined;
+      if (v === undefined) continue;
+      if (found !== undefined && found !== String(v)) return undefined;
+      found = String(v);
+    }
+    return found;
+  }
+  /** Auswahl umfärben – ein Undo-Schritt. */
+  setColor(row: ColorRow, color: string): boolean {
+    const patches = new Map<string, Record<string, unknown>>();
+    for (const id of this.selection) {
+      const o = this.session.get(id);
+      if (!o || isLocked(o)) continue;
+      const style = { ...(o.style ?? {}) };
+      if (row === "fill" && o.kind === "shape") style.fill = color;
+      else if (row === "fill" && (o.kind === "note" || o.kind === "frame")) style.color = color;
+      else if (row === "highlight" && o.kind === "ink" && o.style?.tool === "hl") style.color = color;
+      else if (row === "stroke" && ((o.kind === "ink" && o.style?.tool !== "hl") || o.kind === "text" || o.kind === "connector" || o.kind === "shape")) style.color = color;
+      else continue;
+      patches.set(id, { style });
+    }
+    return patches.size > 0 && this.session.patch(patches);
+  }
+
   // MARK: Sperren und Seitenkarten
 
   /** Gesperrte Objekte bleiben liegen: nur Rechtsklick und ⌘A wählen sie. */
   private pick(world: Point, tolerance: number): string | undefined {
     return this.spatial.hit(world, tolerance, isLocked);
+  }
+  /** Ist eine Seitenkarte gewählt, und zeigt sie die ganze Seite? (für das Menü) */
+  get selectedPage(): { full: boolean } | undefined {
+    if (this.selection.size !== 1) return undefined;
+    const o = this.session.get([...this.selection][0]!);
+    return o && o.kind === "page" ? { full: o.style?.full === true } : undefined;
+  }
+  /** Seitenkarte zwischen „ganze Seite“ und „kleine Karte“ umschalten (Größe passt sich an). */
+  togglePageFull(): boolean {
+    const id = [...this.selection][0];
+    const o = id ? this.session.get(id) : undefined;
+    if (!o || !isShape(o) || o.kind !== "page") return false;
+    const full = o.style?.full !== true;
+    const size = full ? PAGE_FULL : PAGE_CARD;
+    return this.session.patch(new Map([[o.id, { w: size.w, h: size.h, style: { ...(o.style ?? {}), full } }]]));
   }
   /** Ist in der Auswahl etwas gesperrt (für das Menü)? */
   get selectionLocked(): boolean {
@@ -518,7 +595,7 @@ export class BoardController {
     const patches = new Map<string, Record<string, unknown>>();
     for (const id of this.selection) {
       const o = this.session.get(id);
-      if (o && isShape(o) && isLocked(o) !== locked) patches.set(id, { style: { ...(o.style ?? {}), locked } });
+      if (o && isShape(o) && isLocked(o) !== locked) patches.set(id, { style: { ...(o.style ?? {}), pin: locked } });
     }
     if (patches.size === 0 || !this.session.patch(patches)) return false;
     if (locked) this.select([]);
@@ -529,7 +606,7 @@ export class BoardController {
     if (this.readOnly) return undefined;
     const c = at ?? screenToWorld(this.camera, { x: this.viewport.w / 2, y: this.viewport.h / 2 });
     const id = this.newID();
-    if (!this.session.add([{ id, kind: "page", z: frontZs(this.session.objects, 1)[0]!, x: Math.round(c.x - PAGE_CARD.w / 2), y: Math.round(c.y - PAGE_CARD.h / 2), ...PAGE_CARD, rot: 0, ref: pageID, text: title || "Untitled" }])) return undefined;
+    if (!this.session.add([{ id, kind: "page", z: frontZs(this.session.objects, 1)[0]!, x: Math.round(c.x - PAGE_FULL.w / 2), y: Math.round(c.y - PAGE_FULL.h / 2), ...PAGE_FULL, rot: 0, ref: pageID, text: title || "Untitled", style: { full: true } }])) return undefined;
     this.tool = "select";
     this.select([id]);
     return id;
@@ -553,8 +630,7 @@ export class BoardController {
         const k = Math.min(1, IMAGE_MAX / Math.max(f.width!, f.height!));
         parts.push({ f, kind: "image", size: { w: Math.max(8, Math.round(f.width! * k)), h: Math.max(8, Math.round(f.height! * k)) }, style: base });
       } else if (view === "pdf" && f.pages?.length) {
-        // Seiten eines Ausdrucks liegen fest (wie in OneNote): Zeiger und Aufziehen greifen durch sie hindurch.
-        f.pages.forEach((p, i) => parts.push({ f, kind: "file", size: { w: PDF_WIDTH, h: Math.max(8, Math.round((PDF_WIDTH * p.height) / Math.max(1, p.width))) }, style: { ...base, view: "pdf", page: i + 1, pages: f.pages!.length, locked: true } }));
+                f.pages.forEach((p, i) => parts.push({ f, kind: "file", size: { w: PDF_WIDTH, h: Math.max(8, Math.round((PDF_WIDTH * p.height) / Math.max(1, p.width))) }, style: { ...base, view: "pdf", page: i + 1, pages: f.pages!.length } }));
       } else if (view === "text" || view === "html" || view === "video" || view === "audio") parts.push({ f, kind: "file", size: PREVIEW_SIZE[view], style: { ...base, view } });
       else parts.push({ f, kind: "file", size: FILE_CARD, style: base });
     }
@@ -614,9 +690,9 @@ export class BoardController {
     return true;
   }
   /** Neuer Text an einer Stelle (Text-Werkzeug, Doppelklick ins Leere). Das Objekt entsteht erst mit dem ersten Zeichen. */
-  startText(world: Point): boolean {
+  startText(world: Point, initial = ""): boolean {
     if (this.readOnly) return false;
-    this.editing = { id: undefined, kind: "text", rect: { x: Math.round(world.x), y: Math.round(world.y - TEXT_LINE / 2), w: TEXT_WIDTH, h: TEXT_LINE }, text: "" };
+    this.editing = { id: undefined, kind: "text", rect: { x: Math.round(world.x), y: Math.round(world.y - TEXT_LINE / 2), w: TEXT_WIDTH, h: TEXT_LINE }, text: initial };
     this.tool = "select";
     this.select([], { quiet: true });
     return true;
@@ -827,7 +903,11 @@ export class BoardController {
         const last = g.points[g.points.length - 1]!;
         // Punkte, die auf dem Bildschirm unter einem halben px auseinanderliegen, bringen nichts.
         // „Ruhen“ am Ende eines Strichs: solange der Zeiger keine 4 px mehr wandert, läuft die Zeit.
-        if (Math.hypot(p.x - g.rest.x, p.y - g.rest.y) > 4) { g.rest = p; g.restAt = this.now(); }
+        if (Math.hypot(p.x - g.rest.x, p.y - g.rest.y) > 4) {
+          g.rest = p; g.restAt = this.now();
+          // Weiterzeichnen hebt die Vorschau auf.
+          if (g.snap) { g.snap = undefined; this.changed(); }
+        }
         if (Math.hypot(pt.x - last.x, pt.y - last.y) * this.camera.zoom < 0.5) return;
         g.points.push(pt);
         this.pulse();
@@ -857,12 +937,27 @@ export class BoardController {
   }
 
   /** Den fertigen Strich als Objekt ablegen: ausgedünnt, relativ zu seinem Rahmen, kompakt kodiert. */
+  /**
+   * Snap shapes: die Ansicht ruft das kurz nach der letzten Bewegung. Liegt der Stift lange genug still und ähnelt der
+   * Strich einer Form, erscheint die Form als Vorschau; beim Loslassen wird sie übernommen.
+   */
+  tick(): boolean {
+    const g = this.gesture;
+    if (g?.kind !== "ink" || g.tool !== "pen" || !this.snapShapes || g.snap || this.now() - g.restAt < SNAP_HOLD_MS) return false;
+    const shape = recognizeShape(g.points);
+    if (!shape) return false;
+    g.snap = shape;
+    this.announcement = shape.kind === "line" ? "Release to make a straight line" : `Release to make ${shape.kind === "oval" ? "an oval" : "a rectangle"}`;
+    this.changed();
+    return true;
+  }
+
   private finishInk(g: Extract<Gesture, { kind: "ink" }>) {
     const s = g.tool === "pen" ? this.pen : this.highlighter;
     const width = (g.tool === "pen" ? PEN_WIDTHS : HIGHLIGHT_WIDTHS)[s.width] ?? 2.6;
     // Toleranz in Bildschirm-px: wer hineinzoomt und fein zeichnet, behält die Feinheit.
     // Snap shapes: am Ende kurz halten macht aus dem Strich eine gerade Linie, ein Rechteck oder ein Oval.
-    const shape = g.tool === "pen" && this.snapShapes && this.now() - g.restAt >= SNAP_HOLD_MS ? recognizeShape(g.points) : undefined;
+    const shape = g.snap ?? (g.tool === "pen" && this.snapShapes && this.now() - g.restAt >= SNAP_HOLD_MS ? recognizeShape(g.points) : undefined);
     if (shape && shape.kind !== "line") {
       const id = this.newID();
       const r = shape.bounds;
@@ -927,7 +1022,7 @@ export class BoardController {
         this.lastClick = twice ? undefined : { at, p: { x: e.x, y: e.y }, hit: g.hit };
         const target = g.hit ? this.session.get(g.hit) : undefined;
         if (twice && target && isShape(target) && (target.kind === "file" || target.kind === "image")) { this.onOpenFile?.(target); break; }
-        if (twice && target && isShape(target) && target.kind === "page" && target.ref) { this.onOpenPage?.(target.ref); break; }
+        if (twice && target && isShape(target) && target.kind === "page" && target.ref && target.style?.full !== true) { this.onOpenPage?.(target.ref); break; }
         if (twice && !this.readOnly && !g.shift) {
           if (g.hit ? this.startEdit(g.hit) : this.startText(g.world)) break;
         }
@@ -1042,6 +1137,13 @@ export class BoardController {
     if (k === "Enter" && this.selection.size === 1) return this.startEdit([...this.selection][0]!) ? (this.changed(), true) : false;
     const d = nudgeDelta(e.key, e.shift === true);
     if (d) return this.selection.size > 0 ? this.nudge(d) : (this.setCamera(panBy(this.camera, -d.x * 40, -d.y * 40)), true);
+    // Text-Werkzeug gewählt und einfach losgetippt: der Text beginnt dort, wo der Zeiger ist (sonst in der Mitte).
+    if (this.tool === "text" && !this.readOnly && e.key.length === 1 && e.key !== " ") {
+      const at = this.hover ?? screenToWorld(this.camera, { x: this.viewport.w / 2, y: this.viewport.h / 2 });
+      this.startText(at, e.key);
+      this.changed();
+      return true;
+    }
     if (e.repeat) return false;
     if (!e.shift && (k === "o" || k === "d")) { this.setShapeKind(k === "o" ? "oval" : "diamond"); return !this.readOnly; }
     if (!e.shift && k === "r") this.shapeKind = "rect";
@@ -1110,6 +1212,7 @@ export class BoardController {
       editing: this.editing?.id,
       background: this.session.background,
       previewScroll: this.previewScroll,
+      snap: g?.kind === "ink" && g.snap ? { ...g.snap, from: g.points[0]!, to: g.points[g.points.length - 1]! } : undefined,
     };
     this.sceneCache = { key, scene };
     return scene;

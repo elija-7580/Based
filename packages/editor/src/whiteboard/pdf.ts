@@ -19,7 +19,10 @@ export const PDF_PAGE_WIDTH = 560;
 export const PDF_MAX_PAGES = 200;
 /** Größte Kante einer gerechneten Seite (px) und Zahl der Seiten im Speicher. */
 export const PDF_RENDER_MAX = 2200;
-export const PDF_CACHE_MAX = 10;
+/** Speicher für gerechnete Seiten: höchstens so viele Pixel (≈ 4 Byte je Pixel). Kleine Fassungen kosten fast nichts,
+ *  darum bleiben beim Rauszoomen alle Seiten sichtbar. */
+export const PDF_PIXEL_BUDGET = 24_000_000;
+const TIERS = [320, 700, 1300, PDF_RENDER_MAX] as const;
 
 /** Seitenmaße (in Punkt) eines PDFs lesen – beim Ablegen, um die Objekte in der richtigen Form anzulegen. */
 export async function pdfPageSizes(data: ArrayBuffer): Promise<{ width: number; height: number }[]> {
@@ -37,7 +40,7 @@ export async function pdfPageSizes(data: ArrayBuffer): Promise<{ width: number; 
   }
 }
 
-interface PageEntry { at: number; width: number; canvas?: HTMLCanvasElement; state: "loading" | "ready" | "failed" }
+interface PageEntry { at: number; tier: number; canvas?: HTMLCanvasElement; state: "loading" | "ready" | "failed" }
 
 export class BoardPdfCache {
   private readonly docs = new Map<string, Promise<PdfDoc>>();
@@ -49,20 +52,25 @@ export class BoardPdfCache {
 
   /**
    * Die Seite als Bild, mindestens `pxWidth` breit (auf Stufen gerundet, damit Zoomen nicht ständig neu rechnet).
-   * Ist nur eine gröbere Fassung da, kommt die – und die feinere wird gerechnet.
+   * Ist die gewünschte Stufe noch nicht da, kommt die beste vorhandene – nie ein leeres Blatt, wenn es schon ein Bild gab.
    */
   get = (ref: string, page: number, pxWidth: number): CanvasImageSource | undefined => {
-    const want = Math.min(PDF_RENDER_MAX, pxWidth <= 700 ? 700 : pxWidth <= 1300 ? 1300 : PDF_RENDER_MAX);
-    const key = `${ref}#${page}`;
-    const e = this.pages.get(key);
-    if (e) {
-      e.at = ++this.clock;
-      if (e.state !== "loading" && e.state !== "failed" && e.width < want) { e.state = "loading"; this.render(ref, page, want, key); }
-      return e.canvas;
+    const tier = TIERS.find((t) => t >= pxWidth) ?? PDF_RENDER_MAX;
+    const key = (t: number) => `${ref}#${page}@${t}`;
+    let best: PageEntry | undefined;
+    for (const t of TIERS) {
+      const e = this.pages.get(key(t));
+      if (e?.canvas && (!best || Math.abs(t - tier) < Math.abs(best.tier - tier) || (t >= tier && best.tier < tier))) best = e;
     }
-    this.pages.set(key, { at: ++this.clock, width: 0, state: "loading" });
-    this.render(ref, page, want, key);
-    return undefined;
+    const want = this.pages.get(key(tier));
+    if (!want) {
+      this.pages.set(key(tier), { at: ++this.clock, tier, state: "loading" });
+      // Zuerst schnell eine kleine Fassung, dann die gewünschte.
+      if (!best && tier > TIERS[0]) { this.pages.set(key(TIERS[0]), { at: ++this.clock, tier: TIERS[0], state: "loading" }); this.render(ref, page, TIERS[0], key(TIERS[0])); }
+      this.render(ref, page, tier, key(tier));
+    } else want.at = ++this.clock;
+    if (best) best.at = ++this.clock;
+    return (want?.canvas ?? best?.canvas);
   };
 
   private doc(ref: string): Promise<PdfDoc> {
@@ -92,7 +100,7 @@ export class BoardPdfCache {
         canvas.height = Math.round(viewport.height);
         await p.render({ canvas, viewport }).promise;
         if (this.dead) return;
-        this.pages.set(key, { at: ++this.clock, width, canvas, state: "ready" });
+        this.pages.set(key, { at: ++this.clock, tier: width, canvas, state: "ready" });
         this.evict();
         this.onLoad();
       } catch {
@@ -104,10 +112,14 @@ export class BoardPdfCache {
 
   private evict() {
     const ready = [...this.pages].filter(([, e]) => e.canvas);
-    if (ready.length <= PDF_CACHE_MAX) return;
-    ready.sort((a, b) => a[1].at - b[1].at);
-    for (const [k, e] of ready.slice(0, ready.length - PDF_CACHE_MAX)) {
-      if (e.canvas) { e.canvas.width = 0; e.canvas.height = 0; } // Speicher sofort freigeben
+    let pixels = ready.reduce((n, [, e]) => n + e.canvas!.width * e.canvas!.height, 0);
+    if (pixels <= PDF_PIXEL_BUDGET) return;
+    // Zuerst die großen, lange nicht gebrauchten; die kleinste Fassung einer Seite bleibt, solange es geht.
+    ready.sort((a, b) => (a[1].tier === TIERS[0] ? 1 : 0) - (b[1].tier === TIERS[0] ? 1 : 0) || a[1].at - b[1].at);
+    for (const [k, e] of ready) {
+      if (pixels <= PDF_PIXEL_BUDGET) break;
+      pixels -= e.canvas!.width * e.canvas!.height;
+      e.canvas!.width = 0; e.canvas!.height = 0; // Speicher sofort freigeben
       this.pages.delete(k);
     }
   }

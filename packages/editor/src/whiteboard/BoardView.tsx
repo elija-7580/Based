@@ -1,19 +1,18 @@
 // BSD-264 (Whiteboard 2): die Board-Fläche als Ansicht. Dünn: Sitzung (session.ts) hält die Daten, der Controller
 // (controller.ts) die Bedienung, render.ts zeichnet. Hier: Canvas an die Größe und Pixeldichte anpassen, Zeiger, Rad
 // und Tasten weiterreichen, die schwebenden Pillen (Werkzeuge, Hinweis, Zoom, Undo) und die Minimap.
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { registerContextItems } from "@based/ui/native";
-import { BasedButton, BasedField, BasedIconButton } from "@based/ui/astryx";
-import { BOARD_BACKGROUNDS } from "./session.js";
+import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { boardFileView, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
 import { BlockIcon, type BlockIconName } from "../blocks/icons.js";
-import { BOARD_TOOLS, BoardController, HIGHLIGHT_COLORS, isEditTool, minimapTransform, PEN_COLORS, type BoardEdit, type BoardFile, type BoardTool } from "./controller.js";
+import { BOARD_TOOLS, BoardController, FILL_COLORS, HIGHLIGHT_COLORS, isEditTool, minimapTransform, PEN_COLORS, SNAP_HOLD_MS, STROKE_COLORS, type BoardEdit, type BoardFile, type BoardTool, type ColorRow } from "./controller.js";
 import { BoardImageCache } from "./images.js";
 import { BoardPdfCache, pdfPageSizes } from "./pdf.js";
 import { BoardTextCache } from "./texts.js";
 import { PREVIEW_HEADER } from "./render.js";
 import { PASTE_TEXT_MAX } from "./controller.js";
-import { drawBoardObjects, drawBoardOverlay, drawLiveInk, drawMinimap, highlightToken, penToken, readBoardTheme, type BoardTheme } from "./render.js";
+import { drawBoardObjects, drawBoardOverlay, drawLiveInk, drawMinimap, fillToken, highlightToken, penToken, readBoardTheme, type BoardTheme } from "./render.js";
 import { BoardSession } from "./session.js";
 import "./board.css";
 
@@ -27,8 +26,12 @@ export interface BoardViewProps {
   resolveFileUrl?: (url: string) => Promise<string>;
   /** Seitenkarte öffnen (Doppelklick, Enter). */
   onOpenPage?: (pageID: string) => void;
-  /** Titel aller Seiten (ID → Titel): Seitenkarten zeigen den heutigen Titel, und @ sucht darin. */
+  /** Titel aller Seiten (ID → Titel): Seitenkarten zeigen den heutigen Titel. */
   pageTitles?: ReadonlyMap<string, string>;
+  /** Seite wählen wie mit ⌘K (Suche der App); `undefined`: abgebrochen. */
+  pickPage?: () => Promise<string | undefined>;
+  /** Eine Seite als ganze, bearbeitbare Seite auf dem Board zeigen (Editor der App). `editable`: die Karte ist gewählt. */
+  renderPage?: (pageID: string, editable: boolean) => ReactNode;
 }
 
 /** Gemerkte Stifte je Gerät (höchstens so viele). */
@@ -45,22 +48,28 @@ function loadPresets(): InkPreset[] {
 }
 const samePreset = (a: InkPreset, b: InkPreset) => a.tool === b.tool && a.color === b.color && a.width === b.width;
 
-interface FileHost { upload: ((file: File) => Promise<string>) | undefined; resolve: ((url: string) => Promise<string>) | undefined; titles?: ReadonlyMap<string, string> | undefined }
+interface FileHost {
+  upload: ((file: File) => Promise<string>) | undefined; resolve: ((url: string) => Promise<string>) | undefined; titles?: ReadonlyMap<string, string> | undefined;
+  pickPage?: (() => Promise<string | undefined>) | undefined; renderPage?: ((pageID: string, editable: boolean) => ReactNode) | undefined;
+  openPage?: ((pageID: string) => void) | undefined;
+}
 
 /** Höchstens so viel HTML wird für die Vorschau gelesen, und so viele eingebettete Vorschauen laufen gleichzeitig. */
 const HTML_PREVIEW_BYTES = 2 * 1024 * 1024;
 const EMBEDS_MAX = 4;
 /** Vorschau ohne Netz und ohne Skripte: die Datei darf nichts nachladen und nichts ausführen. */
 const HTML_GUARD = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; media-src data: blob:; style-src 'unsafe-inline'; font-src data:"><base target="_blank">`;
-const isEmbed = (o: { kind: string; style?: Record<string, unknown> | undefined }) => o.kind === "file" && (o.style?.view === "html" || o.style?.view === "video" || o.style?.view === "audio");
+const isEmbed = (o: { kind: string; style?: Record<string, unknown> | undefined }) =>
+  (o.kind === "file" && (o.style?.view === "html" || o.style?.view === "video" || o.style?.view === "audio")) || (o.kind === "page" && o.style?.full === true);
 
 /** Eingebetteter Inhalt einer Vorschau-Karte (HTML, Video, Audio) – nur da, solange die Karte zu sehen ist. */
-function BoardEmbed({ obj, camera, active, resolve }: { obj: WBShape; camera: Camera; active: boolean; resolve: ((url: string) => Promise<string>) | undefined }) {
-  const view = String(obj.style?.view);
+function BoardEmbed({ obj, camera, active, resolve, renderPage }: { obj: WBShape; camera: Camera; active: boolean; resolve: ((url: string) => Promise<string>) | undefined; renderPage?: ((pageID: string, editable: boolean) => ReactNode) | undefined }) {
+  const view = obj.kind === "page" ? "page" : String(obj.style?.view);
   const [src, setSrc] = useState<{ url?: string; html?: string; failed?: boolean }>({});
   const ref = obj.ref;
   useEffect(() => {
     let alive = true;
+    if (view === "page") return;
     if (!ref || !resolve) { setSrc({ failed: true }); return; }
     void (async () => {
       try {
@@ -82,7 +91,8 @@ function BoardEmbed({ obj, camera, active, resolve }: { obj: WBShape; camera: Ca
   const name = String(obj.style?.name ?? "File");
   return (
     <div className="wb-embed" data-view={view} data-active={active ? "" : undefined} data-testid="board-embed" style={style}>
-      {src.failed ? <p className="wb-embed-note">This file can't be shown right now.</p>
+      {view === "page" ? (obj.ref && renderPage ? renderPage(obj.ref, active) : <p className="wb-embed-note">This page can't be shown here.</p>)
+        : src.failed ? <p className="wb-embed-note">This file can't be shown right now.</p>
         : view === "html" && src.html !== undefined ? <iframe className="wb-embed-frame" title={name} sandbox="" srcDoc={src.html} loading="lazy" referrerPolicy="no-referrer" />
           : view === "video" && src.url ? <video className="wb-embed-media" src={src.url} controls preload="metadata" playsInline aria-label={name} />
             : view === "audio" && src.url ? <audio className="wb-embed-audio" src={src.url} controls preload="metadata" aria-label={name} />
@@ -108,7 +118,29 @@ const TOOL_ICONS: Record<BoardTool, BlockIconName> = {
   select: "boardSelect", hand: "boardHand", pen: "boardPen", highlighter: "boardHighlighter", eraser: "boardEraser", lasso: "boardLasso",
   text: "boardText", note: "boardNote", shape: "boardShape", connector: "boardConnector", frame: "boardFrame",
 };
-const COLOR_NAMES: Record<string, string> = { ink: "Ink", blue: "Blue", red: "Red", green: "Green", purple: "Purple", sky: "Sky", rose: "Rose", mint: "Mint", lilac: "Lilac" };
+const COLOR_NAMES: Record<string, string> = {
+  ink: "Default", gray: "Gray", brown: "Brown", orange: "Orange", green: "Green", blue: "Blue", purple: "Purple", pink: "Pink", red: "Red",
+  sky: "Sky", rose: "Rose", mint: "Mint", calm: "Calm", lilac: "Lilac",
+};
+/** Textmarker-Farben ohne die eigene Marker-Farbe (die gehört den Agenten, Entwurf „Based – Whiteboard“). */
+function highlightPalette(): readonly string[] {
+  const own = typeof document === "undefined" ? undefined : document.documentElement.dataset.marker;
+  return HIGHLIGHT_COLORS.filter((c) => c !== own);
+}
+const tokenOf = (row: ColorRow, c: string) => (row === "fill" ? fillToken(c) : row === "highlight" ? highlightToken(c) : penToken(c));
+const ROW_LABEL: Record<ColorRow, string> = { stroke: "Color", fill: "Fill", highlight: "Highlight" };
+/** Hinweise zum Werkzeug: jeder nur beim ersten Mal (Elija 17.11.: „nur einmal als Einleitung“). */
+const HINTS_KEY = "based.board.hintsSeen";
+function hintSeen(tool: string): boolean {
+  try { return (JSON.parse(localStorage.getItem(HINTS_KEY) ?? "[]") as unknown[]).includes(tool); } catch { return false; }
+}
+function markHintSeen(tool: string) {
+  try {
+    const seen = new Set(JSON.parse(localStorage.getItem(HINTS_KEY) ?? "[]") as string[]);
+    seen.add(tool);
+    localStorage.setItem(HINTS_KEY, JSON.stringify([...seen]));
+  } catch { /* ohne Speicher: dann eben wieder */ }
+}
 const WIDTH_NAMES = ["Fine", "Medium", "Bold"] as const;
 /** Schrift des Eingabefelds je Objektart – dieselben Maße, mit denen render.ts den Text zeichnet. */
 const EDIT_TYPE: Record<BoardEdit["kind"], { size: number; weight: number; leading: number; pad: number }> = {
@@ -127,12 +159,12 @@ const modKey = (key: string) => (isApple() ? `⌘${key}` : `Ctrl+${key}`);
 /** Safari meldet Pinch als eigene Gesten-Ereignisse (kein Strg+Rad). */
 interface GestureEvent extends UIEvent { scale: number; clientX: number; clientY: number }
 
-export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl, onOpenPage, pageTitles }: BoardViewProps) {
+export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl, onOpenPage, pageTitles, pickPage, renderPage }: BoardViewProps) {
   const openPage = useRef(onOpenPage);
   openPage.current = onOpenPage;
   const [ctl, setCtl] = useState<BoardController>();
-  const host = useRef<FileHost>({ upload: uploadFile, resolve: resolveFileUrl, titles: pageTitles });
-  host.current = { upload: uploadFile, resolve: resolveFileUrl, titles: pageTitles };
+  const host = useRef<FileHost>({ upload: uploadFile, resolve: resolveFileUrl, titles: pageTitles, pickPage, renderPage });
+  host.current = { upload: uploadFile, resolve: resolveFileUrl, titles: pageTitles, pickPage, renderPage, openPage: onOpenPage };
   useEffect(() => {
     const session = new BoardSession(store, pageID);
     const controller = new BoardController(session, {
@@ -166,20 +198,15 @@ export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl,
 
 function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; host: { current: FileHost }; pageID: string; titles: ReadonlyMap<string, string> | undefined }) {
   // Seitenkarte: Suche in den Titeln (lokal, ohne Anfrage), höchstens ein paar Treffer.
-  const [pagePick, setPagePick] = useState<string>();
-  const pickInput = useRef<HTMLInputElement>(null);
-  const pickOpen = pagePick !== undefined;
-  useEffect(() => { if (pickOpen) pickInput.current?.focus(); }, [pickOpen]);
-  const pageHits = pagePick === undefined || !titles ? [] : (() => {
-    const q = pagePick.trim().toLowerCase();
-    const out: { id: string; title: string }[] = [];
-    for (const [id, title] of titles) {
-      if (id === pageID || (q !== "" && !title.toLowerCase().includes(q))) continue;
-      out.push({ id, title });
-      if (out.length >= 6) break;
-    }
-    return out;
-  })();
+  // Seite wählen wie mit ⌘K (Suche der App), dann als ganze Seite aufs Board.
+  const choosePage = () => {
+    const pick = host.current.pickPage;
+    if (!pick || ctl.readOnly) return;
+    void pick().then((id) => {
+      if (id && id !== pageID) ctl.addPage(id, titles?.get(id) ?? "");
+      root.current?.focus({ preventScroll: true });
+    });
+  };
   // Ein umbenannter Seitentitel soll auf seiner Karte gleich stimmen.
   useEffect(() => { ctl.refresh(); }, [ctl, titles]);
   const [presets, setPresets] = useState<InkPreset[]>(loadPresets);
@@ -232,8 +259,29 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
   };
   useSyncExternalStore(ctl.subscribe, () =>
     [ctl.tool, zoomLabel(ctl.camera.zoom), session.canUndo, session.canRedo, session.objects.length, ctl.selection.size, ctl.announcement, ctl.hint,
-      ctl.snapShapes, ctl.presenting, ctl.pen.color, ctl.pen.width, ctl.highlighter.color, ctl.highlighter.width, ctl.shapeKind, embedKey(), ctl.editing ? `${ctl.editing.id ?? "new"}@${ctl.camera.x},${ctl.camera.y}` : ""].join("|"));
+      ctl.snapShapes, ctl.presenting, ctl.busy ? 1 : 0, ctl.selection.size ? [...ctl.selection].join(",") + ctl.session.version : "", ctl.camera.x, ctl.camera.y, ctl.camera.zoom, ctl.pen.color, ctl.pen.width, ctl.highlighter.color, ctl.highlighter.width, ctl.shapeKind, embedKey(), ctl.editing ? `${ctl.editing.id ?? "new"}@${ctl.camera.x},${ctl.camera.y}` : ""].join("|"));
   const readOnly = ctl.readOnly;
+  // Hinweis zum Werkzeug: beim ersten Mal ein paar Sekunden, danach nie wieder.
+  const [hintFor, setHintFor] = useState<string | undefined>(() => (hintSeen(ctl.tool) ? undefined : ctl.tool));
+  useEffect(() => {
+    if (hintSeen(ctl.tool)) return;
+    setHintFor(ctl.tool);
+    markHintSeen(ctl.tool);
+    const t = window.setTimeout(() => setHintFor(undefined), 5000);
+    return () => window.clearTimeout(t);
+  }, [ctl.tool]);
+  // „Nur lesen“ ist kein Tipp, sondern der Zustand: der bleibt stehen.
+  const hint = readOnly ? ctl.hint : hintFor === ctl.tool ? ctl.hint : undefined;
+  const editRef = useRef<HTMLTextAreaElement>(null);
+  const editKey = ctl.editing ? `${ctl.editing.id ?? "new"}` : "";
+  // Fokus ins Textfeld, sobald es da ist – auch wenn der Klick, der es geöffnet hat, noch läuft.
+  useEffect(() => {
+    if (!editKey) return;
+    const f = () => { const t = editRef.current; if (t && document.activeElement !== t) { t.focus({ preventScroll: true }); const n = t.value.length; t.setSelectionRange(n, n); } };
+    f();
+    const r = requestAnimationFrame(f);
+    return () => cancelAnimationFrame(r);
+  }, [editKey]);
   const embeds = visibleEmbeds();
 
   useEffect(() => {
@@ -343,7 +391,10 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
     };
     const onDown = (e: PointerEvent) => {
       if (e.target !== cv) return; // Pillen und Minimap gehören sich selbst
-      el.focus({ preventScroll: true });
+      // Kein Standard-Fokuswechsel: sonst nimmt der Browser einem gerade geöffneten Textfeld den Fokus wieder weg
+      // (Text-Werkzeug: klicken, tippen – es passierte nichts, Elija 17.11.).
+      if (e.button !== 1) e.preventDefault();
+      if (!ctl.editing) el.focus({ preventScroll: true });
       lastPointer = at(e);
       if (e.pointerType === "touch") {
         if (penDown) return; // Handballen neben dem Stift
@@ -371,8 +422,12 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
       if (ctl.busy) { cv.setPointerCapture(e.pointerId); active = e.pointerId; }
       if (e.button === 1) e.preventDefault(); // kein Autoscroll-Kompass
     };
+    let snapTimer = 0;
     const onMove = (e: PointerEvent) => {
       lastPointer = at(e);
+      ctl.hover = screenToWorld(ctl.camera, lastPointer);
+      // Snap shapes: kurz nach der letzten Bewegung nachsehen, ob der Stift still liegt (dann Vorschau der Form).
+      if (ctl.inking) { clearTimeout(snapTimer); snapTimer = window.setTimeout(() => ctl.tick(), SNAP_HOLD_MS + 20); }
       if (e.pointerType === "touch" && touches.has(e.pointerId)) {
         touches.set(e.pointerId, at(e));
         if (pinch && touches.size >= 2) {
@@ -413,6 +468,8 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
     // Rad: selbst behandeln und nicht weiterreichen – sonst rollt die Seite und das waagrechte Wischen der App
     // (Zurück/Vor, shell/historyGestures.ts) greift mitten im Verschieben der Fläche.
     const onWheel = (e: WheelEvent) => {
+      // In einer bedienbaren Einbettung (gewählte Seite, HTML) rollt deren Inhalt.
+      if (e.target instanceof Element && e.target.closest(".wb-embed[data-active]") && !(e.ctrlKey || e.metaKey)) { e.stopPropagation(); return; }
       // Auch über den Pillen: sonst blättert ein Wisch, der dort beginnt, in der App zurück.
       e.preventDefault();
       e.stopPropagation();
@@ -448,7 +505,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
       void addFiles([...e.dataTransfer!.files], at(e));
     };
     const onPaste = (e: ClipboardEvent) => {
-      if (e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLTextAreaElement || (e.target instanceof Element && e.target.closest(".wb-embed"))) return;
       if (ctl.readOnly) return;
       const list = [...(e.clipboardData?.files ?? [])];
       if (list.length > 0) {
@@ -472,6 +529,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
       el.removeEventListener("dragover", onDragOver);
       el.removeEventListener("drop", onDrop);
       el.removeEventListener("paste", onPaste);
+      clearTimeout(snapTimer);
       images.destroy();
       if (frame) cancelAnimationFrame(frame);
       ro.disconnect();
@@ -491,6 +549,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
     };
   }, [ctl, session]);
 
+  const openPageOf = (id: string) => host.current.openPage?.(id);
   // Rechtsklick: Based-Menü mit den Befehlen für die Auswahl (nie das Systemmenü).
   useEffect(() => registerContextItems((info) => {
     if (info.target !== canvas.current) return [];
@@ -504,9 +563,13 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
         { label: "Delete", icon: "trash", danger: true, run: () => void ctl.deleteSelection() },
         { separator: true as const },
       ] : []),
-      ...(edit && some ? [{ label: ctl.selectionLocked ? "Unlock" : "Lock in place", run: () => void ctl.setLocked(!ctl.selectionLocked) }, { separator: true as const }] : []),
-      ...(edit ? BOARD_BACKGROUNDS.filter((b) => b.id !== ctl.session.background).map((b) => ({ label: `Background: ${b.label}`, run: () => void ctl.session.setBackground(b.id) })) : []),
-      { separator: true as const },
+      ...(ctl.selectedPage ? [
+        { label: ctl.selectedPage.full ? "Show as small card" : "Show the whole page", icon: "page", run: () => void ctl.togglePageFull() },
+        { label: "Open page", icon: "expand", run: () => { const o = ctl.session.get([...ctl.selection][0]!); if (o && o.kind === "page" && o.ref) openPageOf(o.ref); } },
+        { separator: true as const },
+      ] : []),
+      ...(edit && some ? [{ label: ctl.selectionLocked ? "Unlock" : "Lock in place", icon: "lock", run: () => void ctl.setLocked(!ctl.selectionLocked) }, { separator: true as const }] : []),
+      ...(ctl.slides().length ? [{ label: "Present", icon: "expand", run: () => ctl.present(0) }, { separator: true as const }] : []),
       { label: "Select all", icon: "selectAll", hint: modKey("A"), run: () => ctl.selectAll() },
       { label: "Zoom to fit", hint: modKey("0"), run: () => ctl.fit() },
       { separator: true as const },
@@ -522,6 +585,15 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
 
   // Nach einem Klick auf eine Pille geht der Fokus zurück auf die Fläche: V, N, ⌘Z wirken sofort weiter.
   const act = (run: () => void) => { run(); root.current?.focus({ preventScroll: true }); };
+  // Farbleiste über der Auswahl: nur mit dem Auswahl-Werkzeug, ohne laufende Geste und ohne Eingabefeld.
+  const rows = !readOnly && ctl.tool === "select" && !ctl.busy && !ctl.editing && ctl.presenting === undefined && ctl.selection.size > 0 ? ctl.colorRows() : [];
+  const selBounds = rows.length ? ctl.scene().selectionBounds : undefined;
+  const selBar = selBounds ? {
+    rows,
+    x: Math.max(8, Math.min(ctl.viewport.w - 8, (selBounds.x + selBounds.w / 2 - ctl.camera.x) * ctl.camera.zoom)),
+    // über der Auswahl; reicht der Platz nicht, darunter
+    y: (selBounds.y - ctl.camera.y) * ctl.camera.zoom > 64 ? (selBounds.y - ctl.camera.y) * ctl.camera.zoom - 14 : (selBounds.y + selBounds.h - ctl.camera.y) * ctl.camera.zoom + 58,
+  } : undefined;
   const empty = session.objects.length === 0 && !ctl.editing;
   const slideCount = session.objects.reduce((n, o) => n + (o.kind === "frame" ? 1 : 0), 0);
   const canFiles = !readOnly && host.current.upload !== undefined;
@@ -540,9 +612,9 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
         if (ctl.keyDown({ key: e.key, code: e.code, shift: e.shiftKey, alt: e.altKey, mod: e.metaKey || e.ctrlKey, repeat: e.repeat })) {
           e.preventDefault();
           e.stopPropagation();
-        } else if (e.key === "@" && titles && !readOnly) {
+        } else if (e.key === "@" && host.current.pickPage && !readOnly) {
           e.preventDefault();
-          setPagePick("");
+          choosePage();
         } else if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === "i" && canFiles) {
           e.preventDefault();
           picker.current?.click();
@@ -557,7 +629,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
         </div>
       ) : null}
       {edit && editType ? (
-        <textarea key={edit.id ?? "new"} className="wb-edit" data-kind={edit.kind} data-testid="board-edit" aria-label="Text" defaultValue={edit.text} autoFocus spellCheck
+        <textarea key={edit.id ?? "new"} className="wb-edit" data-kind={edit.kind} data-testid="board-edit" aria-label="Text" defaultValue={edit.text} autoFocus spellCheck ref={editRef}
           rows={1}
           style={{
             left: (edit.rect.x - ctl.camera.x) * ctl.camera.zoom, top: (edit.rect.y - ctl.camera.y) * ctl.camera.zoom, width: edit.rect.w, height: edit.kind === "text" ? undefined : edit.rect.h,
@@ -573,25 +645,14 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
           }} />
       ) : null}
       {embeds.map((o) => (
-        <BoardEmbed key={o.id} obj={o} camera={ctl.camera} resolve={resolveFile}
+        <BoardEmbed key={o.id} obj={o} camera={ctl.camera} resolve={resolveFile} renderPage={host.current.renderPage}
           active={ctl.tool === "select" && ctl.selection.size === 1 && ctl.selection.has(o.id) && !ctl.busy} />
       ))}
-      {pagePick !== undefined && !readOnly ? (
-        <div className="wb-pagepick" role="dialog" aria-label="Add a page card" data-testid="board-pagepick"
-          onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Escape") { setPagePick(undefined); root.current?.focus({ preventScroll: true }); } }}>
-          <BasedField label="Find a page" labelHidden type="search" placeholder="Find a page…" value={pagePick} onChange={setPagePick} inputRef={pickInput}
-            onEnter={() => { const first = pageHits[0]; if (first) { ctl.addPage(first.id, first.title); setPagePick(undefined); root.current?.focus({ preventScroll: true }); } }} />
-          {pageHits.length === 0 ? <p className="wb-embed-note">No page with that title.</p> : pageHits.map((p) => (
-            <BasedButton key={p.id} label={p.title || "Untitled"} variant="ghost"
-              onClick={() => { ctl.addPage(p.id, p.title); setPagePick(undefined); root.current?.focus({ preventScroll: true }); }} />
-          ))}
-        </div>
-      ) : null}
       {inkTool && !readOnly ? (
         <div className="wb-pill wb-options" role="toolbar" aria-label={ctl.tool === "pen" ? "Pen options" : "Highlighter options"} data-testid="board-options">
-          {(ctl.tool === "pen" ? PEN_COLORS : HIGHLIGHT_COLORS).map((c) => (
-            <BasedIconButton key={c} label={`${COLOR_NAMES[c]} colour`} pressed={inkStyle.color === c} testID={`board-color-${c}`}
-              icon={<span className="wb-swatch" style={{ background: `var(${ctl.tool === "pen" ? penToken(c) : highlightToken(c)})` }} />}
+          {(ctl.tool === "pen" ? PEN_COLORS : highlightPalette()).map((c) => (
+            <BasedIconButton key={c} label={`${COLOR_NAMES[c]} colour`} tooltip={COLOR_NAMES[c]} pressed={inkStyle.color === c} testID={`board-color-${c}`}
+              icon={<span className="wb-swatch" data-row={ctl.tool === "pen" ? "stroke" : "highlight"} style={{ background: `var(${ctl.tool === "pen" ? penToken(c) : highlightToken(c)})` }} />}
               onClick={() => act(() => ctl.setInkStyle({ color: c }))} />
           ))}
           <span className="wb-sep" aria-hidden="true" />
@@ -620,7 +681,20 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
           ) : null}
         </div>
       ) : null}
-      <div className="wb-hint" aria-hidden="true" data-testid="board-hint">{ctl.hint}</div>
+      {hint ? <div className="wb-hint" aria-hidden="true" data-testid="board-hint">{hint}</div> : null}
+      {selBar ? (
+        <div className="wb-pill wb-selbar" role="toolbar" aria-label="Selection colour" data-testid="board-selbar" style={{ left: selBar.x, top: selBar.y }}>
+          {selBar.rows.flatMap((row, ri) => [
+            ...(ri > 0 ? [<span key={row + "-sep"} className="wb-sep" aria-hidden="true" />] : []),
+            ...(selBar.rows.length > 1 ? [<span key={row + "-label"} className="wb-selbar-label">{ROW_LABEL[row]}</span>] : []),
+            ...(row === "stroke" ? STROKE_COLORS : row === "fill" ? FILL_COLORS : highlightPalette()).map((c) => (
+              <BasedIconButton key={row + c} label={`${ROW_LABEL[row]}: ${COLOR_NAMES[c] ?? c}`} tooltip={`${ROW_LABEL[row]} · ${COLOR_NAMES[c] ?? c}`} testID={`board-sel-${row}-${c}`}
+                pressed={ctl.selectionColor(row) === c} icon={<span className="wb-swatch" data-row={row} style={{ background: `var(${tokenOf(row, c)})` }} />}
+                onClick={() => act(() => void ctl.setColor(row, c))} />
+            )),
+          ])}
+        </div>
+      ) : null}
       <div className="wb-pill wb-tools" role="toolbar" aria-label="Board tools">
         {BOARD_TOOLS.flatMap((t) => [
           ...(t.group ? [<span key={`${t.id}-sep`} className="wb-sep" aria-hidden="true" />] : []),
@@ -628,16 +702,16 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
             disabled={readOnly && isEditTool(t.id)} icon={<BlockIcon name={TOOL_ICONS[t.id]} />}
             onClick={() => act(() => ctl.setTool(t.id))} />,
         ])}
-        {titles ? (
+        {host.current.pickPage ? (
           <>
             <span className="wb-sep" aria-hidden="true" />
-            <BasedIconButton label="Page" tooltip="Page card (@)" size="md" pressed={pagePick !== undefined} disabled={readOnly} testID="board-tool-page"
-              icon={<BlockIcon name="page" />} onClick={() => setPagePick((v) => (v === undefined ? "" : undefined))} />
+            <BasedIconButton label="Page" tooltip="Page (@) · the whole page, editable on the board" size="md" disabled={readOnly} testID="board-tool-page"
+              icon={<BlockIcon name="page" />} onClick={choosePage} />
           </>
         ) : null}
         {host.current.upload ? (
           <>
-            {titles ? null : <span className="wb-sep" aria-hidden="true" />}
+            {host.current.pickPage ? null : <span className="wb-sep" aria-hidden="true" />}
             <BasedIconButton label={busyFiles > 0 ? "Adding files…" : "Image or file"} tooltip="Image or file (⇧I) · or drop files on the board" size="md" disabled={!canFiles || busyFiles > 0}
               testID="board-tool-file" icon={<BlockIcon name="boardImage" />} onClick={() => picker.current?.click()} />
             <input ref={picker} type="file" multiple hidden aria-label="Add files to the board" data-testid="board-file-input"

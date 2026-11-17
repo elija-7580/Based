@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -445,6 +445,14 @@ export function BlockEditor(props: PageEditorProps) {
     root.addEventListener("compositionend", onCompositionEnd);
     root.addEventListener("paste", onPaste);
     root.addEventListener("keydown", onPlainKey, true);
+    // ⌘A außerhalb des Editors (Seitenrand, Titel, nichts im Fokus): die Shell bittet um „alle Blöcke“.
+    const onSelectAll = () => {
+      const all = ctrl.order();
+      if (all.length === 0) return;
+      ctrl.select(all);
+      root.focus({ preventScroll: true });
+    };
+    root.addEventListener("based:select-all-blocks", onSelectAll);
     root.addEventListener("copy", onCopy);
     root.addEventListener("cut", onCopy);
     root.addEventListener("drop", onDrop);
@@ -454,6 +462,7 @@ export function BlockEditor(props: PageEditorProps) {
       root.removeEventListener("compositionstart", onCompositionStart);
       root.removeEventListener("compositionend", onCompositionEnd);
       root.removeEventListener("paste", onPaste);
+      root.removeEventListener("based:select-all-blocks", onSelectAll);
       root.removeEventListener("keydown", onPlainKey, true);
       root.removeEventListener("copy", onCopy);
       root.removeEventListener("cut", onCopy);
@@ -1286,11 +1295,10 @@ export function BlockEditor(props: PageEditorProps) {
       const t = e.target instanceof Element ? e.target : null;
       if (!t || root.contains(t) || !scroller.contains(t)) return;
       if (t.closest("button, a, input, textarea, select, label, [contenteditable], [role=menu], [role=dialog], [role=toolbar], [data-embed], [data-no-marquee], .bx2-menu")) return;
-      // Nur auf Höhe des Editors oder darunter – der Seitenkopf (Titel, Icon, Cover) behält seine Klicks.
+      // Elija 17.11., wie in Notion: Ziehen beginnt überall auf der Seite – auch über dem Titel, auf der Metazeile oder
+      // den Backlinks – und wählt immer nur Blöcke. Titel, Knöpfe und Links (oben ausgenommen) behalten ihre Klicks;
+      // Text der Oberfläche wird dabei nie markiert (styles.css: nicht markierbar).
       const r = root.getBoundingClientRect();
-      if (e.clientY < r.top - 24) return;
-      // Text außerhalb des Editors (z. B. Hinweise) bleibt markierbar.
-      if (t !== scroller && t.childNodes.length && [...t.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())) return;
       // kein preventDefault: der Klick selbst (ohne Ziehen) bleibt für die Seite
       startMarquee(e, { additive: e.shiftKey || e.metaKey || e.ctrlKey, fromMargin: e.clientX < r.left || e.clientX > r.right, outside: true });
     };
@@ -1656,6 +1664,14 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <hr className="bx2-divider" />;
     case "page": case "databasePage": case "linkToPage": {
       const target = b.type === "linkToPage" ? b.props?.linkTarget : b.id;
+      if (b.type === "page" && isBoardPage(b) && props.renderBoard) {
+        return (
+          <div className="bx2-embed bx2-board" data-embed="" data-no-marquee="" contentEditable={false} data-testid="board-block">
+            <PageLink target={target} />
+            <div className="bx2-board-body">{props.renderBoard({ blockID: b.id, pageID: b.id })}</div>
+          </div>
+        );
+      }
       return <PageLink target={target} />;
     }
     case "databaseInline": {
@@ -2851,7 +2867,7 @@ function BlockMenu({ id, x, y, view0, onClose, onMove }: { id: string; x: number
   }
   // „Page“ (⌘⌥9) steht wie im alten Editor unter „Turn into“.
   // BSD-407 Teil 4: auch „Block equation“ (Text wird TeX) wie im alten Editor.
-  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => s.type === "page" || s.type === "equation" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
+  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => (s.type === "page" && !s.create) || s.type === "equation" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
   const runTurn = (s: (typeof SLASH_ITEMS)[number]) => {
     if (s.type === "equation") return void ctrl.apply(cmd.turnIntoEquation(store, ids));
     if (s.type !== "page") return void cmd.turnInto(store, ids, s.type, s.props ?? {});
