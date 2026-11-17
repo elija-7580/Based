@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 37 (Nachtlauf 2026-11-16, TS-Stack, Abschnitt direkt unten; Pass 36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 38 (Nachtlauf 2026-11-17, TS-Stack, Abschnitt direkt unten; Pass 37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,31 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-17 (Pass 38, TS-Stack, Beta-Sprint)
+
+Merges nach main: 7a4701af (A bis BSD-450 + B bis BSD-447), 49332323 (B bis BSD-357), 3fc3a335 (A3, BSD-302), 63bde3d5 (B2, BSD-400); jeweils run-ts --fast (typecheck, lint, Unit beider Formate, @smoke 29/29) grün, betroffene E2E in Chromium + WebKit grün. Schicht A 03:25–04:52, B 03:25–05:57, A2 ~04:50–05:00 (ohne Commit), A3 05:10–06:52, B2 05:52–07:00.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-455 Based Beta neben Based Next | 🟡 | Kanal-Tabelle packages/core/src/desktop-channel.ts: eigener Port 47822, local-beta.json/-token, „Based Beta Backups“, iCloud-Ordner „Based Beta“, Befehl based-beta; Mac-Test |
+| BSD-456 Sicherung vor jedem App-Update, Migrations-Test alter Beta-Daten | 🟡 | Based-Archiv in $APPDATA/pre-update, zurückgelesen und geprüft, letzte 3; scheitert sie, kein Update; Fixtures beta-9614eb09 in beiden Formaten; Mac-Test |
+| BSD-452 Node für Intel-Macs | 🟡 | universelle node (arm64 + x86_64) über scripts/macho.mjs; Mac-Test |
+| BSD-433 Node signieren (Vorbereitung) | 🟡 | node.entitlements, sign-node.mjs, verify-app.mjs; Vorlage ci/github-actions-desktop-beta.yml – Elija kopiert nach .github/ |
+| BSD-449 Backup-Ordner frei wählen | 🟡 | „Change folder…“, fehlender Ordner → Hinweis statt stillem Ausweichen; neue Abhängigkeit tauri-plugin-dialog 2.8.4 (MIT/Apache-2.0); Rust hier nicht kompiliert; Mac-Test |
+| BSD-450 Wackelige E2E unter Last | ✅ | Upload-Wettlauf behoben, e2e/perf.ts (bester von 3, CI nur Warnung) |
+| BSD-460 Share und „Not yet“-Seiten auf beta aus | ✅ | Beta-Gate |
+| BSD-461 Keine leere Seite „Home“ | ✅ | Welcome ist Home |
+| BSD-459 AI-Reste in My settings | ✅ | |
+| BSD-436 Startvorlagen (Tasks, Notes, Journal, Wiki) | ✅ | packages/core/src/store/starter-templates.ts, auch unter ⌘N |
+| BSD-447 Video/Audio mit Based-Bedienung | ✅ | BasedMediaPlayer in packages/ui |
+| BSD-463 Willkommen verspricht keine Notion-Ansichten mehr | ✅ | |
+| BSD-305 Teil 5/6 Editor-Feinschliff | 🟡 | e2e/beta-build.spec.ts gegen den Beta-Build; offen: Textauswahl-Farbe (Entscheidung Elija) |
+| BSD-302 Teil 2–8 Zustands-Galerie | ✅ | erzwungene Zustände, Bildvergleich (nur Chromium/Linux), WebKit-Zeitgrenze behoben; Rest in BSD-465 |
+| BSD-357 Rechtschreibvorschläge im Based-Menü | 🟡 | NSSpellChecker über Tauri-Befehle; Hülle hier nicht gebaut; Mac-Test |
+| BSD-400 Tippen auf großen Seiten (WebKit) | 🟡 | Felder hängen nicht mehr an den Hüllen-props, renderRich ändert nur Textknoten; WebKit p50 (DPR 1) 25→15 ms, Chromium p95 44→20 ms; Mac-Messung |
+| BSD-205 Einstellungen | 🟡 | im Beta-Umfang nichts mehr offen; Mac-Test |
+| Neu offen: 464 (Einstellungen nach der Beta), 465 (Design-Kit-Bausteine), 466 (WebKit-Schatten .panel) | ❌ | alle blockiert mit Frage bzw. nach der Beta |
 
 ## Nachtlauf 2026-11-16 (Pass 37, TS-Stack)
 
