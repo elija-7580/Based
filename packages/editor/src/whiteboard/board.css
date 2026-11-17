@@ -73,6 +73,18 @@
 .wb-minimap { width: calc(var(--space-8) * 2 + var(--space-6)); height: calc(var(--space-8) + var(--space-6)); overflow: hidden; cursor: pointer; }
 .wb-minimap-canvas { width: 100%; height: 100%; display: block; }
 
+/* Eingebettete Vorschau (HTML, Video, Audio): liegt im Körper der Karte. Bedienbar erst, wenn die Karte gewählt ist –
+   sonst gehören Zeiger und Rad der Fläche (verschieben, zeichnen). */
+.wb-embed {
+  position: absolute; z-index: 1; transform-origin: 0 0; overflow: hidden; pointer-events: none; display: flex; align-items: center; justify-content: center;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: var(--surface-card);
+}
+.wb-embed[data-active] { pointer-events: auto; }
+.wb-embed-frame { width: 100%; height: 100%; border: 0; background: white; color-scheme: light; }
+.wb-embed-media { width: 100%; height: 100%; object-fit: contain; background: var(--surface-raised); }
+.wb-embed-audio { width: calc(100% - var(--space-4) * 2); }
+.wb-embed-note { margin: 0; color: var(--muted); font-size: var(--type-meta-size); line-height: var(--type-meta-leading); font-weight: var(--type-meta-weight); }
+
 /* Leeres Board: ein Satz, was hierher kommt, und der nächste Schritt. Klicks gehen an die Fläche darunter. */
 .wb-empty {
   position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1);

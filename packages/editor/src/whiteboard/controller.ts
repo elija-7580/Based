@@ -3,7 +3,7 @@
 // lebt bis zum Loslassen nur hier als Vorschau; erst dann geht sie als ein Schritt in die Sitzung (ein Undo-Schritt,
 // ein Schreiben in den Store).
 import {
-  backZ, BoardIndex, centerOn, DEFAULT_CAMERA, duplicateObjects, encodeInk, fitCamera, frontZs, hitHandle, inkObjectGeometry, inkPointsOf, isConnector, isShape, nudgeDelta, objectBounds,
+  backZ, BoardIndex, boardFileView, centerOn, DEFAULT_CAMERA, duplicateObjects, encodeInk, fitCamera, frontZs, hitHandle, inkObjectGeometry, inkPointsOf, isConnector, isShape, nudgeDelta, objectBounds,
   objectsInRect, panBy, pointInPolygon, readingOrder, rectContains, rectFromPoints, resizeRect, scaleInto, screenToWorld, selectionBounds, shareInside, simplifyInk, unionRect,
   visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
   type BoardPoint as Point, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
@@ -147,8 +147,19 @@ export interface BoardControllerOptions {
 }
 
 /** Eine abgelegte Datei: `ref` ist die Adresse im Dateispeicher (`based-asset:<sha256>`), nie der Inhalt. */
-export interface BoardFile { ref: string; name: string; mime: string; size: number; /** Bildmaße in px, wenn es ein Bild ist. */ width?: number; height?: number }
+export interface BoardFile {
+  ref: string; name: string; mime: string; size: number;
+  /** Bildmaße in px, wenn es ein Bild ist. */
+  width?: number; height?: number;
+  /** Seitenmaße (Punkt), wenn es ein PDF ist: jede Seite wird ein Objekt. */
+  pages?: readonly { width: number; height: number }[];
+}
 export const FILE_CARD: Size = { w: 264, h: 72 };
+/** Größe der Vorschau je Stufe-2-Art und Breite einer PDF-Seite (Welt-px). */
+export const PREVIEW_SIZE: Record<"text" | "html" | "video" | "audio", Size> = { text: { w: 440, h: 320 }, html: { w: 560, h: 400 }, video: { w: 480, h: 310 }, audio: { w: 360, h: 104 } };
+export const PDF_WIDTH = 560;
+/** Längerer eingefügter Text wird eine Datei mit Vorschau statt eines Text-Objekts. */
+export const PASTE_TEXT_MAX = 400;
 /** Größte Kante eines frisch abgelegten Bildes (Welt-px). */
 export const IMAGE_MAX = 480;
 
@@ -440,23 +451,58 @@ export class BoardController {
   addFiles(files: readonly BoardFile[], at?: Point): string[] {
     if (this.readOnly || files.length === 0) return [];
     const c = at ?? screenToWorld(this.camera, { x: this.viewport.w / 2, y: this.viewport.h / 2 });
-    const zs = frontZs(this.session.objects, files.length);
+    // Je Datei ein Objekt – bei einem PDF eines je Seite (der „Ausdruck“: Seiten untereinander, zum Draufschreiben).
+    const parts: { f: BoardFile; kind: "image" | "file"; size: Size; style: Record<string, string | number> }[] = [];
+    for (const f of files) {
+      const view = boardFileView(f.name, f.mime);
+      const base = { name: f.name, mime: f.mime, size: f.size };
+      if (view === "image" && (f.width ?? 0) > 0 && (f.height ?? 0) > 0) {
+        const k = Math.min(1, IMAGE_MAX / Math.max(f.width!, f.height!));
+        parts.push({ f, kind: "image", size: { w: Math.max(8, Math.round(f.width! * k)), h: Math.max(8, Math.round(f.height! * k)) }, style: base });
+      } else if (view === "pdf" && f.pages?.length) {
+        f.pages.forEach((p, i) => parts.push({ f, kind: "file", size: { w: PDF_WIDTH, h: Math.max(8, Math.round((PDF_WIDTH * p.height) / Math.max(1, p.width))) }, style: { ...base, view: "pdf", page: i + 1, pages: f.pages!.length } }));
+      } else if (view === "text" || view === "html" || view === "video" || view === "audio") parts.push({ f, kind: "file", size: PREVIEW_SIZE[view], style: { ...base, view } });
+      else parts.push({ f, kind: "file", size: FILE_CARD, style: base });
+    }
+    // Ohne feste Stelle (Auswahl, Einfügen): liegt in der Mitte schon etwas, kommt das Neue rechts neben den Inhalt –
+    // sonst stapeln sich nacheinander hinzugefügte Dateien übereinander.
+    if (!at && parts.length) {
+      const w = Math.max(...parts.map((p) => p.size.w)), h = parts.reduce((n, p) => n + p.size.h + 16, -16);
+      const extent = this.spatial.extent();
+      if (extent && this.spatial.search({ x: c.x - w / 2, y: c.y - parts[0]!.size.h / 2, w, h }).length > 0) {
+        c.x = extent.x + extent.w + 48 + w / 2;
+        c.y = extent.y + Math.min(parts[0]!.size.h, this.viewport.h / this.camera.zoom - 96) / 2;
+      }
+    }
+    const zs = frontZs(this.session.objects, parts.length);
     let y = c.y;
-    const objs: WBObject[] = files.map((f, i) => {
-      const image = f.mime.startsWith("image/") && (f.width ?? 0) > 0 && (f.height ?? 0) > 0;
-      const k = image ? Math.min(1, IMAGE_MAX / Math.max(f.width!, f.height!)) : 1;
-      const size = image ? { w: Math.max(8, Math.round(f.width! * k)), h: Math.max(8, Math.round(f.height! * k)) } : FILE_CARD;
-      // Das erste Objekt sitzt mittig auf der Stelle, weitere untereinander.
-      const top = i === 0 ? c.y - size.h / 2 : y;
-      y = top + size.h + 16;
-      return { id: this.newID(), kind: image ? "image" : "file", z: zs[i]!, x: Math.round(c.x - size.w / 2), y: Math.round(top), ...size, rot: 0, ref: f.ref, style: { name: f.name, mime: f.mime, size: f.size } };
+    const objs: WBObject[] = parts.map((p, i) => {
+      // Das erste Objekt sitzt mittig auf der Stelle (eine lange Seite mit der Oberkante im Blick), weitere untereinander.
+      const top = i === 0 ? c.y - Math.min(p.size.h, this.viewport.h / this.camera.zoom - 96) / 2 : y;
+      y = top + p.size.h + 16;
+      return { id: this.newID(), kind: p.kind, z: zs[i]!, x: Math.round(c.x - p.size.w / 2), y: Math.round(top), ...p.size, rot: 0, ref: p.f.ref, style: p.style };
     });
     if (!this.session.add(objs)) return [];
     this.tool = "select";
     this.select(objs.map((o) => o.id));
-    const r = selectionBounds(this.session.objects, this.selection);
-    if (r) this.reveal(r);
+    const first = objs[0];
+    if (first && isShape(first)) this.reveal({ x: first.x, y: first.y, w: first.w, h: Math.min(first.h, 200) });
     return objs.map((o) => o.id);
+  }
+
+  /** Kurzen Text einfügen (Zwischenablage): ein Text-Objekt an der Stelle bzw. in der Mitte. */
+  addText(text: string, at?: Point): string | undefined {
+    const value = text.replace(/\r\n?/g, "\n").replace(/\s+$/, "");
+    if (this.readOnly || value === "") return undefined;
+    const c = at ?? screenToWorld(this.camera, { x: this.viewport.w / 2, y: this.viewport.h / 2 });
+    // Höhe geschätzt (rund 38 Zeichen je Zeile bei dieser Breite); beim nächsten Bearbeiten wird sie genau.
+    const rows = value.split("\n").reduce((n, l) => n + Math.max(1, Math.ceil(l.length / 38)), 0);
+    const id = this.newID();
+    const h = rows * TEXT_LINE;
+    if (!this.session.add([{ id, kind: "text", z: frontZs(this.session.objects, 1)[0]!, x: Math.round(c.x - TEXT_WIDTH / 2), y: Math.round(c.y - h / 2), w: TEXT_WIDTH, h, rot: 0, text: value }])) return undefined;
+    this.tool = "select";
+    this.select([id]);
+    return id;
   }
 
   // MARK: Text
@@ -750,7 +796,7 @@ export class BoardController {
               const bw = Number(o.style?.bw) || o.w || 1, bh = Number(o.style?.bh) || o.h || 1;
               const pts = inkPointsOf(o.ink).map((q) => ({ x: o.x + (q.x * o.w) / bw, y: o.y + (q.y * o.h) / bh }));
               if (shareInside(pts, poly) >= 0.6) ids.push(o.id);
-            } else if (o.kind !== "frame" && pointInPolygon({ x: o.x + o.w / 2, y: o.y + o.h / 2 }, poly)) ids.push(o.id);
+            } else if (o.kind !== "frame" && o.style?.view !== "pdf" && pointInPolygon({ x: o.x + o.w / 2, y: o.y + o.h / 2 }, poly)) ids.push(o.id);
           }
         }
         // Mit der Auswahl geht es beim Auswahl-Werkzeug weiter: verschieben, duplizieren, löschen.
