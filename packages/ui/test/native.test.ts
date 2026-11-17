@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  daysInMonth, monthGrid, nextEnabled, parseDay, parseTime, place, pointBox, shiftDay, shiftMonth, textActions, tidyEntries, timeSlots, tipPlan, typeahead,
+  daysInMonth, monthGrid, nextEnabled, spellingEntries, wordAt, parseDay, parseTime, place, pointBox, shiftDay, shiftMonth, textActions, tidyEntries, timeSlots, tipPlan, typeahead,
   type MenuEntry,
 } from "../src/native/logic.js";
 
@@ -114,5 +114,25 @@ describe("Tooltip aus title", () => {
   it("leere Titel und iframes bleiben unberührt", () => {
     expect(tipPlan({ ...base, title: "  " })).toBeUndefined();
     expect(tipPlan({ ...base, tag: "iframe" })).toBeUndefined();
+  });
+});
+
+// BSD-357: Wort unter dem Zeiger und Einträge für Rechtschreibvorschläge
+describe("Rechtschreibung", () => {
+  it("findet das Wort um eine Stelle", () => {
+    expect(wordAt("Ein Beispeil hier", 6)).toEqual({ start: 4, end: 12, word: "Beispeil" });
+    expect(wordAt("Ein Beispeil hier", 12)).toEqual({ start: 4, end: 12, word: "Beispeil" }); // direkt dahinter
+    expect(wordAt("don't stop", 2)?.word).toBe("don't");
+    expect(wordAt("well-known", 0)?.word).toBe("well-known");
+    expect(wordAt("Größe ändern", 1)?.word).toBe("Größe");
+    expect(wordAt("a  b", 2)).toBeUndefined();
+    expect(wordAt("1234", 1)).toBeUndefined(); // nur Ziffern
+  });
+  it("Einträge: bis zu fünf Vorschläge, dann Learn/Ignore; richtig geschrieben: nichts", () => {
+    const act = { replace: () => undefined, learn: () => undefined, ignore: () => undefined };
+    expect(spellingEntries(undefined, act)).toEqual([]);
+    const labels = (r: Parameters<typeof spellingEntries>[0]) => spellingEntries(r, act).map((e) => ("label" in e ? e.label : "heading" in e ? `#${e.heading}` : "-"));
+    expect(labels({ guesses: ["a", "b", "c", "d", "e", "f"] })).toEqual(["#Spelling", "a", "b", "c", "d", "e", "-", "Learn spelling", "Ignore spelling"]);
+    expect(labels({ guesses: [] })).toEqual(["No guesses found", "-", "Learn spelling", "Ignore spelling"]);
   });
 });

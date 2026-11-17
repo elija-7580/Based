@@ -43,7 +43,7 @@ const GUIDES: readonly WelcomeGuide[] = [
       ["bulletedList", "Every row is a page. Open it to write notes inside."],
       ["bulletedList", "Add views to see the same rows as a table, a board, a list or a calendar."],
       ["bulletedList", "Filter and sort per view. Your other views stay as they are."],
-      ["text", "Importing from Notion keeps your databases, their properties and their views."],
+      ["text", "Importing a Notion export keeps your databases and their properties. Connect Notion directly to bring the views too."],
     ],
   },
   {

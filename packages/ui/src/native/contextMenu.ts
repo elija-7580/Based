@@ -3,7 +3,7 @@
 // Link-Einträge plus das, was die App für die Stelle anmeldet (registerContextItems).
 import { showMenu } from "./menu.js";
 import { closeLayers } from "./layer.js";
-import { textActions, tidyEntries, type MenuEntry, type TextAction } from "./logic.js";
+import { spellingEntries, textActions, tidyEntries, wordAt, type MenuEntry, type SpellResult, type TextAction } from "./logic.js";
 
 export interface ContextInfo {
   target: Element;
@@ -19,8 +19,16 @@ export interface ClipboardAccess {
   write: (text: string) => Promise<void>;
 }
 
+/** BSD-357: Rechtschreibprüfung der Hülle (Mac: NSSpellChecker). Im Browser fehlt sie – dann keine Vorschläge. */
+export interface SpellingAccess {
+  check: (word: string) => Promise<SpellResult>;
+  learn: (word: string) => Promise<void>;
+  ignore: (word: string) => Promise<void>;
+}
+
 export interface ContextMenuOptions {
   clipboard?: ClipboardAccess;
+  spelling?: SpellingAccess;
   /** Icons der App für die Menüeinträge (Name → SVG). */
   icon?: (name: string) => Element | undefined;
   /** Für Entwickler: liefert `true`, wenn ausnahmsweise das Systemmenü kommen darf (Web-Inspektor). */
@@ -126,6 +134,42 @@ export function contextEntries(info: ContextInfo, clipboard: ClipboardAccess): M
   return tidyEntries(entries);
 }
 
+interface WordSpot { node: Text; start: number; end: number; word: string }
+
+/** Wort unter dem Punkt (nur Textknoten in `editable`; Eingabefelder bleiben ohne Vorschläge). */
+function wordUnder(x: number, y: number, editable: HTMLElement): WordSpot | undefined {
+  if (editable instanceof HTMLInputElement || editable instanceof HTMLTextAreaElement) return undefined;
+  const d = document as Document & { caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null; caretRangeFromPoint?: (x: number, y: number) => Range | null };
+  const pos = d.caretPositionFromPoint?.(x, y);
+  const node = pos ? pos.offsetNode : d.caretRangeFromPoint?.(x, y)?.startContainer;
+  const offset = pos ? pos.offset : d.caretRangeFromPoint?.(x, y)?.startOffset ?? 0;
+  if (!node || node.nodeType !== Node.TEXT_NODE || !editable.contains(node)) return undefined;
+  const w = wordAt(node.textContent ?? "", offset);
+  return w ? { node: node as Text, ...w } : undefined;
+}
+
+/**
+ * Ersetzt das Wort wie Einfügen über die Auswahl: erst als paste-Ereignis (der Editor macht daraus einen eigenen,
+ * rückgängig zu machenden Schritt – in Chromium kam insertText sonst am Rückgängig-Stapel vorbei), sonst als Tippen.
+ */
+function replaceWord(spot: WordSpot, replacement: string) {
+  if (!spot.node.isConnected || spot.node.textContent?.slice(spot.start, spot.end) !== spot.word) return;
+  const r = document.createRange();
+  r.setStart(spot.node, spot.start);
+  r.setEnd(spot.node, spot.end);
+  const sel = document.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(r);
+  let handled = false;
+  try {
+    const transfer = new DataTransfer();
+    transfer.setData("text/plain", replacement);
+    const ev = new ClipboardEvent("paste", { clipboardData: transfer, bubbles: true, cancelable: true });
+    if (ev.clipboardData) handled = !spot.node.parentElement!.dispatchEvent(ev);
+  } catch { /* kein ClipboardEvent mit Daten: unten als Text */ }
+  if (!handled) document.execCommand("insertText", false, replacement);
+}
+
 /** Ersetzt das Systemmenü im ganzen Fenster. Liefert die Funktion zum Abbauen. */
 export function installContextMenu(opts: ContextMenuOptions = {}, target: Window = window): () => void {
   const clipboard = opts.clipboard ?? defaultClipboard;
@@ -140,7 +184,21 @@ export function installContextMenu(opts: ContextMenuOptions = {}, target: Window
     const editable = editableOf(el);
     const info: ContextInfo = { target: el, editable, selection: selectionIn(editable), link: el.closest<HTMLAnchorElement>("a[href]") };
     const entries = contextEntries(info, clipboard);
-    if (entries.length) showMenu(entries, { x: e.clientX, y: e.clientY }, { label: "Context menu", scrollWith: el });
+    const at = { x: e.clientX, y: e.clientY };
+    const show = (list: MenuEntry[]) => { const all = tidyEntries(list); if (all.length) showMenu(all, at, { label: "Context menu", scrollWith: el }); };
+    // BSD-357: Wort unter dem Zeiger in einem bearbeitbaren Bereich – die Hülle prüft es (kurz, sonst ohne Vorschläge)
+    const spot = opts.spelling && editable && !info.selection && !(editable instanceof HTMLInputElement && editable.type === "password") ? wordUnder(e.clientX, e.clientY, editable) : undefined;
+    if (!spot || !opts.spelling) { show(entries); return; }
+    const spelling = opts.spelling;
+    const timeout = new Promise<SpellResult>((r) => setTimeout(() => r(undefined), 250));
+    void Promise.race([spelling.check(spot.word).catch((): SpellResult => undefined), timeout]).then((result) => {
+      const extra = spellingEntries(result, {
+        replace: (s) => replaceWord(spot, s),
+        learn: () => void spelling.learn(spot.word).catch(() => undefined),
+        ignore: () => void spelling.ignore(spot.word).catch(() => undefined),
+      });
+      show(extra.length ? [...extra, { separator: true }, ...entries] : entries);
+    });
   };
   target.addEventListener("contextmenu", onMenu);
   return () => target.removeEventListener("contextmenu", onMenu);

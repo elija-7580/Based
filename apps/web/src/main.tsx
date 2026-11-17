@@ -5,7 +5,7 @@ import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
-import { desktopClipboard, isPageWindow, isTauri, startDesktop } from "./desktop.js";
+import { desktopClipboard, desktopSpelling, isPageWindow, isTauri, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
 import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
@@ -45,7 +45,8 @@ registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 // Entwickeln öffnet ⌥⇧-Rechtsklick das Systemmenü (Web-Inspektor).
 {
   const clipboard = desktopClipboard();
-  installNativeFree({ icon: iconElement, ...(clipboard ? { clipboard } : {}), ...(import.meta.env.DEV ? { allowNative: (e: MouseEvent) => e.altKey && e.shiftKey } : {}) });
+  const spelling = desktopSpelling();
+  installNativeFree({ icon: iconElement, ...(clipboard ? { clipboard } : {}), ...(spelling ? { spelling } : {}), ...(import.meta.env.DEV ? { allowNative: (e: MouseEvent) => e.altKey && e.shiftKey } : {}) });
 }
 // BSD-374: Scroll-Gesten bleiben am Bereich, in dem sie begonnen haben (innere Felder fangen sie nicht ab).
 installWheelLatch();

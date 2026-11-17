@@ -352,3 +352,47 @@ test("Video und Audio: Based-Leiste statt Browser-Steuerung", async ({ page, bro
   await audio.getByRole("button", { name: "Pause" }).click();
   await expect(audio.getByRole("button", { name: "Play" })).toBeVisible();
 });
+
+// BSD-305 Teil 6: Ziehen am Griff – Einfügestrich und Geisterbild mitten im Ziehen ansehen (Checkliste: Zustand
+// „wird gezogen“). Strich und Geist nur aus Tokens, der gezogene Block blass; Fotos 1280 × 820 hell/dunkel.
+test("Ziehen: Einfügestrich und Geisterbild mitten im Ziehen", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  for (const theme of SHOTS && browserName === "chromium" ? (["light", "dark"] as const) : (["light"] as const)) {
+    await page.goto("/");
+    await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    const pid = (await command(page, { op: "createPage", title: `Drag ${theme}` })) as string;
+    await page.goto("/#page-" + pid);
+    await expectEditable(page);
+    await focusEditorEnd(page);
+    for (const t of ["Alpha", "Beta", "Gamma"]) { await page.keyboard.type(t); await page.keyboard.press("Enter"); }
+    await page.keyboard.press("Backspace");
+    const blocks = editor(page).locator(".bx2-block");
+    const gamma = blocks.nth(2), alpha = blocks.nth(0);
+    await gamma.locator(".bx2-row").hover();
+    const h = (await gamma.locator(":scope > .bx2-gutter [data-handle]").boundingBox())!;
+    const a = (await alpha.locator(".bx2-row").boundingBox())!;
+    await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(h.x + 20, h.y + 10, { steps: 4 });
+    await page.mouse.move(a.x + 40, a.y + 3, { steps: 8 });
+    const drop = page.locator(".bx2-drop");
+    await expect(drop).toBeVisible();
+    await expect(gamma).toHaveAttribute("data-dragging", "");
+    // der Strich liegt über Alpha (davor) und hat die Farbe von --ink-2
+    const look = await drop.evaluate((el) => {
+      const probe = document.createElement("i");
+      probe.style.color = "var(--ink-2)";
+      document.body.append(probe);
+      const ink2 = getComputedStyle(probe).color;
+      probe.remove();
+      return { bg: getComputedStyle(el).backgroundColor, ink2, top: el.getBoundingClientRect().top };
+    });
+    expect(look.bg).toBe(look.ink2);
+    expect(Math.abs(look.top - a.y)).toBeLessThan(12);
+    if (SHOTS && browserName === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-editor-drag-${theme}.png` });
+    await page.mouse.up();
+    await expect.poll(() => editor(page).locator("[data-editable-id]").allInnerTexts()).toEqual(["Gamma", "Alpha", "Beta"]);
+  }
+});

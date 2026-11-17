@@ -68,7 +68,7 @@ export function Welcome({ client, pending, onOpenPage, onNavigate, onImport }: P
         </header>
 
         <div className="welcome-choices" role="group" aria-label="How do you want to start?">
-          <Choice buttonRef={first} icon="library" title="Import from Notion" description="Pages, databases and views, from an export file or a Notion connection." disabled={busy} onChoose={() => void choose("notion")} />
+          <Choice buttonRef={first} icon="library" title="Import from Notion" description="Pages, databases and relations from your Notion export. Views come along when you connect Notion directly." disabled={busy} onChoose={() => void choose("notion")} />
           <Choice icon="page" title="Start empty" description={`A blank workspace with ${WELCOME_GUIDES.length} short guides: ${guideList()}.`} disabled={busy} onChoose={() => void choose("empty")} />
         </div>
 
