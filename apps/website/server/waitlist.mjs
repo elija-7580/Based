@@ -15,7 +15,8 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
 const DB_PATH = process.env.WAITLIST_DB || "./data/waitlist.sqlite";
-const PORT = Number(process.env.PORT || 8790);
+// PORT=0: a free port from the system (tests); empty or missing: 8790
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8790;
 const ORIGINS = (process.env.WAITLIST_ORIGINS || "https://basednotes.app,https://www.basednotes.app").split(",");
 const ROLES = new Set(["", "knowledge", "business", "study", "dev"]);
 const AREAS = new Set(["Workspace", "Databases", "Agents", "Sync", "Mobile and apps"]);
@@ -148,5 +149,5 @@ const server = createServer(async (req, res) => {
   return send(res, 200, { ok: true });
 });
 
-server.listen(PORT, () => console.log(`waitlist service on :${PORT}, db ${DB_PATH}`));
+server.listen(PORT, () => console.log(`waitlist service on :${server.address().port}, db ${DB_PATH}`));
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { server.close(); db.close(); process.exit(0); });

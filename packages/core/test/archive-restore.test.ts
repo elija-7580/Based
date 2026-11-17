@@ -3,8 +3,8 @@
 // Papierkorb-Markierung und die Tombstones sind neuer als die Archivversion), und der Bericht zählte das als importiert.
 import { describe, expect, it } from "vitest";
 import {
-  compareStamps, createDatabase, createPage, emptyTrash, importArchiveRecords, loadArchive, MemoryPersistence, recordKey, topLevelPages,
-  trashPages, WorkspaceStore, writeArchivePackage, type Stamp,
+  addView, compareStamps, createDatabase, deleteProperty, deleteView, createPage, emptyTrash, importArchiveRecords, loadArchive, MemoryPersistence, recordKey, topLevelPages,
+  trashPages, WorkspaceStore, writeArchivePackage, type Block, type Stamp,
 } from "../src/index.js";
 
 const store = (node = "t") => new WorkspaceStore({ persistence: new MemoryPersistence(), node, propertyRecords: true });
@@ -103,5 +103,63 @@ describe("BSD-423 Archiv-Import nach „alles löschen“", () => {
     other.applyRemote(s.allRecords());
     expect(titles(other)).toEqual(titles(s));
     expect(titles(other)).toHaveLength(3);
+  });
+
+  // Prüfung Pass 40: Nur ganze Seiten (Papierkorb-Einheiten) kommen zurück. Was auf einer Seite, die es hier noch gibt,
+  // nach dem Export gelöscht wurde (Absatz, Ansicht, Spalte), bleibt gelöscht – sonst tauchten beim erneuten Import
+  // eines Archivs (oder der Sicherung vor dem Update) gelöschte Sätze mitten in bearbeiteten Seiten wieder auf.
+  it("Auf einer noch vorhandenen Seite gelöschte Absätze, Ansichten und Spalten bleiben gelöscht", () => {
+    const { s, a, db } = sample();
+    const now = s.now();
+    const para = (id: string, sk: string, text: string) => s.transact("t", (tx) => tx.put({ kind: "block", data: { id, type: "text", parent: "b:" + a, sk, text, createdAt: now, updatedAt: now } as Block }));
+    para("p-keep", "a0", "Keep me");
+    para("p-gone", "a1", "Deleted after the export");
+    s.transact("t", (tx) => tx.put({ kind: "block", data: { id: "p-nested", type: "text", parent: "b:p-gone", sk: "a0", text: "Nested", createdAt: now, updatedAt: now } as Block }));
+    const board = addView(s, db.blockID, "board", "Board")!;
+    const extra = s.databases.get(db.databaseID)!.properties.find((p) => p.type !== "title")!.id;
+    const archive = roundTrip(s);
+
+    s.deleteBlocks(["p-gone"]);
+    deleteView(s, board);
+    deleteProperty(s, db.databaseID, extra);
+    expect(s.blocks.has("p-gone")).toBe(false);
+    const props = s.databases.get(db.databaseID)!.properties.map((p) => p.id);
+    expect(props).not.toContain(extra);
+
+    const r = importArchiveRecords(s, archive);
+    expect(s.blocks.has("p-gone")).toBe(false);
+    expect(s.blocks.has("p-nested")).toBe(false);
+    expect(s.blocks.get("p-keep")?.text).toBe("Keep me");
+    expect(s.views.has(board)).toBe(false);
+    expect(s.databases.get(db.databaseID)!.properties.map((p) => p.id)).toEqual(props);
+    expect(r.restored).toBeUndefined();
+  });
+
+  it("Seite gelöscht, deren Absätze vorher einzeln gelöscht wurden: Seite kommt mit dem Inhalt des Archivs zurück", () => {
+    const { s, a } = sample();
+    const now = s.now();
+    s.transact("t", (tx) => tx.put({ kind: "block", data: { id: "p1", type: "text", parent: "b:" + a, sk: "a0", text: "Body", createdAt: now, updatedAt: now } as Block }));
+    const archive = roundTrip(s);
+    s.deleteBlocks(["p1"]);
+    trashPages(s, [a]);
+    emptyTrash(s);
+    importArchiveRecords(s, archive);
+    expect(s.blocks.get(a)?.trashedAt).toBeUndefined();
+    expect(s.blocks.get("p1")?.text).toBe("Body");
+    expect(s.children("b:" + a)).toHaveLength(2);
+  });
+
+  it("Unterseite aus einem gelöschten Toggle, danach Papierkorb geleert: kommt mit ihrem Toggle zurück, nicht verwaist", () => {
+    const { s, a } = sample();
+    const now = s.now();
+    s.transact("t", (tx) => tx.put({ kind: "block", data: { id: "tg", type: "toggle", parent: "b:" + a, sk: "a0", text: "Toggle", createdAt: now, updatedAt: now } as Block }));
+    const sub = createPage(s, { title: "Inside toggle", parent: "tg" });
+    const archive = roundTrip(s);
+    s.deleteBlocks(["tg"]); // Unterseite wandert in den Papierkorb, der Toggle wird gelöscht
+    emptyTrash(s);
+    expect(s.blocks.has(sub)).toBe(false);
+    importArchiveRecords(s, archive);
+    expect(s.blocks.get(sub)?.parent).toBe("b:tg");
+    expect(s.blocks.get("tg")?.parent).toBe("b:" + a);
   });
 });
