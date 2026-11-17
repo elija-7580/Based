@@ -79,8 +79,17 @@ export function sameBoardObject(a: WBObject | undefined, b: WBObject | undefined
  * Record für ein Objekt. `existing`: der bisherige Record – Anlegedaten und unbekannte Felder daneben bleiben
  * erhalten. Zeiten und Stempel setzt der Store beim Speichern.
  */
-export function boardObjectToBlock(obj: WBObject, pageID: string, now: number, existing?: Block): Block {
+export function boardObjectToBlock(obj: WBObject, pageID: string, now: number, existing?: Block, byID?: ReadonlyMap<string, WBObject>): Block {
   const text = obj.kind === "connector" ? obj.label : obj.text;
+  // BSD-267: echte Links. Eine Seitenkarte verlinkt vom Board auf ihre Seite; eine Verbindung zwischen zwei
+  // Seitenkarten ist ein Link von der einen Seite zur anderen (Backlinks und Graph lesen linkTarget/linkSource).
+  const link: { linkTarget?: string; linkSource?: string } = {};
+  if (obj.kind === "page" && obj.ref) link.linkTarget = obj.ref;
+  else if (obj.kind === "connector") {
+    const a = byID?.get(obj.from.id), b = byID?.get(obj.to.id);
+    if (a?.kind === "page" && b?.kind === "page" && a.ref && b.ref && a.ref !== b.ref) { link.linkSource = a.ref; link.linkTarget = b.ref; }
+  }
+  const { linkTarget: _lt, linkSource: _ls, ...keptProps } = ((existing?.props as Record<string, unknown> | undefined) ?? {});
   const b: Block = {
     ...(existing ? structuredClone(existing) : { createdAt: now }),
     id: obj.id,
@@ -88,7 +97,7 @@ export function boardObjectToBlock(obj: WBObject, pageID: string, now: number, e
     parent: "b:" + pageID,
     sk: obj.z,
     updatedAt: now,
-    props: { ...((existing?.props as Record<string, unknown> | undefined) ?? {}), wb: boardObjectProps(obj) } as Block["props"],
+    props: { ...keptProps, ...link, wb: boardObjectProps(obj) } as Block["props"],
   } as Block;
   if (text !== undefined && text !== "") b.text = text;
   else delete b.text;

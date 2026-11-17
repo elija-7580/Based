@@ -4,7 +4,7 @@
 // ein Schreiben in den Store).
 import {
   backZ, BoardIndex, boardFileView, centerOn, DEFAULT_CAMERA, duplicateObjects, encodeInk, fitCamera, frontZs, hitHandle, inkObjectGeometry, inkPointsOf, isConnector, isShape, nudgeDelta, objectBounds,
-  objectsInRect, panBy, pointInPolygon, readingOrder, rectContains, rectFromPoints, resizeRect, scaleInto, screenToWorld, selectionBounds, shareInside, simplifyInk, unionRect,
+  objectsInRect, panBy, pointInPolygon, readingOrder, recognizeShape, rectContains, rectFromPoints, resizeRect, scaleInto, screenToWorld, selectionBounds, shareInside, simplifyInk, unionRect,
   visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
   type BoardPoint as Point, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
 } from "@based/core";
@@ -16,7 +16,7 @@ export type BoardTool = "select" | "hand" | "pen" | "highlighter" | "eraser" | "
 export const BOARD_TOOLS: readonly { id: BoardTool; label: string; key: string; hint: string; group?: boolean }[] = [
   { id: "select", label: "Select", key: "V", hint: "Select · drag to move, ⌥-drag to duplicate, double-click to type" },
   { id: "hand", label: "Hand", key: "H", hint: "Hand · or hold Space and drag · pinch to zoom" },
-  { id: "pen", label: "Pen", key: "P", group: true, hint: "Pen · mouse, trackpad or Pencil · with a Pencil, your finger moves the board" },
+  { id: "pen", label: "Pen", key: "P", group: true, hint: "Pen · hold still at the end of a stroke to snap a shape · with a Pencil, your finger moves the board" },
   { id: "highlighter", label: "Highlighter", key: "⇧P", hint: "Highlighter · shows through what is underneath · no yellow: yellow means an agent wrote it" },
   { id: "eraser", label: "Eraser", key: "E", hint: "Eraser · rub over a line to remove it" },
   { id: "lasso", label: "Lasso", key: "L", hint: "Lasso · circle ink and objects to select them" },
@@ -42,6 +42,8 @@ export const SHAPE_KINDS = ["rect", "oval", "diamond"] as const;
 export type ShapeKind = (typeof SHAPE_KINDS)[number];
 /** Radius des Radierers und Fangweite der Verbindung (Bildschirm-px). */
 export const ERASER_REACH = 9;
+/** So lange am Ende eines Strichs halten, damit er zur Form wird. */
+export const SNAP_HOLD_MS = 450;
 /** Zwei Klicks an derselben Stelle innerhalb dieser Zeit sind ein Doppelklick. */
 export const DOUBLE_CLICK_MS = 420;
 export const TEXT_WIDTH = 320;
@@ -84,7 +86,7 @@ type Gesture =
   | { kind: "resize"; world: Point; handle: Handle; from: Rect; start: Map<string, Rect> }
   | { kind: "marquee"; start: Point; world: Point; base: Set<string> }
   | { kind: "create"; tool: BoxTool; start: Point; world: Point }
-  | { kind: "ink"; tool: "pen" | "highlighter"; points: InkPoint[]; pen: boolean }
+  | { kind: "ink"; tool: "pen" | "highlighter"; points: InkPoint[]; pen: boolean; rest: Point; restAt: number }
   | { kind: "erase"; hit: Set<string>; last: Point }
   | { kind: "lasso"; points: Point[] }
   | { kind: "connect"; from: string; to: Point; target: string | undefined };
@@ -116,6 +118,7 @@ export interface BoardScene {
   /** Objekt, dessen Text gerade im Eingabefeld steht (die Fläche zeichnet ihn dann nicht). */
   editing: string | undefined;
   background: BoardBackground;
+  previewScroll: ReadonlyMap<string, number>;
 }
 
 const sizeOf = (tool: BoxTool) => (tool === "note" ? NOTE_SIZE : tool === "frame" ? FRAME_SIZE : SHAPE_SIZE);
@@ -184,6 +187,11 @@ export class BoardController {
   pen: { color: string; width: number } = { color: "ink", width: 1 };
   highlighter: { color: string; width: number } = { color: "sky", width: 1 };
   shapeKind: ShapeKind = "rect";
+  snapShapes = true;
+  /** Present: Nummer des gezeigten Frames (Frames sind die Folien), sonst `undefined`. */
+  presenting: number | undefined;
+  /** Wie weit die Textvorschau einer Datei gerollt ist (Welt-px, nur für diese Sitzung). */
+  readonly previewScroll = new Map<string, number>();
   /** Text im Eingabefeld (die Ansicht zeigt es an der Stelle des Objekts). */
   editing: BoardEdit | undefined;
   /** Zählt bei jedem neuen Punkt des laufenden Strichs hoch (die Fläche darunter bleibt, wie sie ist). */
@@ -286,6 +294,7 @@ export class BoardController {
   setViewport(size: Size) {
     if (size.w === this.viewport.w && size.h === this.viewport.h) return;
     this.viewport = size;
+    if (this.presenting !== undefined) { const s = this.slides()[this.presenting]; if (s) this.camera = fitCamera(s, size, 32); }
     if (!this.fitted && size.w > 0 && size.h > 0) {
       this.fitted = true;
       this.camera = fitCamera(this.spatial.extent(), size);
@@ -299,6 +308,17 @@ export class BoardController {
   }
   /** Rad: mit ⌘/Strg (Pinch auf dem Trackpad) zoomen, sonst verschieben. */
   wheel(e: { x: number; y: number; deltaX: number; deltaY: number; zoom: boolean }) {
+    if (this.presenting !== undefined) return;
+    // Über einer gewählten Textvorschau rollt das Rad ihren Inhalt, nicht die Fläche.
+    if (!e.zoom && this.selection.size === 1) {
+      const o = this.session.get([...this.selection][0]!);
+      const w = screenToWorld(this.camera, e);
+      if (o && isShape(o) && o.kind === "file" && o.style?.view === "text" && w.x >= o.x && w.x <= o.x + o.w && w.y >= o.y && w.y <= o.y + o.h) {
+        this.previewScroll.set(o.id, Math.max(0, Math.min(6000, (this.previewScroll.get(o.id) ?? 0) + e.deltaY / this.camera.zoom)));
+        this.changed();
+        return;
+      }
+    }
     this.setCamera(e.zoom ? zoomByWheel(this.camera, e.deltaY, e) : panBy(this.camera, -e.deltaX, -e.deltaY));
   }
   /** Pinch (Safari-Gesten): `factor` relativ zum letzten Ereignis. */
@@ -327,6 +347,33 @@ export class BoardController {
     else if (r.y + r.h + m > v.y + v.h) y = r.y + r.h + m - v.h;
     this.setCamera({ x, y, zoom: this.camera.zoom });
   }
+
+  // MARK: Present
+
+  /** Frames in Leserichtung – die Folien. */
+  slides(): WBShape[] {
+    const frames = this.session.objects.filter((o): o is WBShape => isShape(o) && o.kind === "frame");
+    const order = readingOrder(frames);
+    return order.map((id) => frames.find((f) => f.id === id)!);
+  }
+  /** Folie zeigen (`undefined` beendet); die Kamera passt den Frame ein. */
+  present(index: number | undefined) {
+    const slides = this.slides();
+    if (index === undefined || slides.length === 0) {
+      if (this.presenting === undefined) return;
+      this.presenting = undefined;
+      this.camera = this.beforePresent ?? this.camera;
+      this.changed();
+      return;
+    }
+    if (this.presenting === undefined) { this.beforePresent = this.camera; this.cancel(); this.cancelEdit(); this.select([], { quiet: true }); }
+    const i = Math.max(0, Math.min(slides.length - 1, index));
+    this.presenting = i;
+    this.camera = fitCamera(slides[i]!, this.viewport, 32);
+    this.announcement = `Slide ${i + 1} of ${slides.length}: ${slides[i]!.text ?? "Frame"}`;
+    this.changed();
+  }
+  private beforePresent: Camera | undefined;
 
   // MARK: Werkzeug und Auswahl
 
@@ -658,6 +705,11 @@ export class BoardController {
   }
 
   pointerDown(e: PointerInput) {
+    // Present: ein Klick blättert weiter (am Ende zurück zur Fläche).
+    if (this.presenting !== undefined) {
+      if (e.button === 0 || e.button === undefined) this.present(this.presenting + 1 < this.slides().length ? this.presenting + 1 : undefined);
+      return;
+    }
     if (this.gesture) this.cancel();
     const p = { x: e.x, y: e.y };
     const world = screenToWorld(this.camera, p);
@@ -685,7 +737,7 @@ export class BoardController {
     }
     if (this.tool === "pen" || this.tool === "highlighter") {
       if (this.readOnly) return;
-      this.gesture = { kind: "ink", tool: this.tool, points: [this.inkPoint(e)], pen: e.pressure !== undefined };
+      this.gesture = { kind: "ink", tool: this.tool, points: [this.inkPoint(e)], pen: e.pressure !== undefined, rest: p, restAt: this.now() };
       this.pulse();
       return;
     }
@@ -774,6 +826,8 @@ export class BoardController {
         const pt = this.inkPoint(e);
         const last = g.points[g.points.length - 1]!;
         // Punkte, die auf dem Bildschirm unter einem halben px auseinanderliegen, bringen nichts.
+        // „Ruhen“ am Ende eines Strichs: solange der Zeiger keine 4 px mehr wandert, läuft die Zeit.
+        if (Math.hypot(p.x - g.rest.x, p.y - g.rest.y) > 4) { g.rest = p; g.restAt = this.now(); }
         if (Math.hypot(pt.x - last.x, pt.y - last.y) * this.camera.zoom < 0.5) return;
         g.points.push(pt);
         this.pulse();
@@ -807,6 +861,16 @@ export class BoardController {
     const s = g.tool === "pen" ? this.pen : this.highlighter;
     const width = (g.tool === "pen" ? PEN_WIDTHS : HIGHLIGHT_WIDTHS)[s.width] ?? 2.6;
     // Toleranz in Bildschirm-px: wer hineinzoomt und fein zeichnet, behält die Feinheit.
+    // Snap shapes: am Ende kurz halten macht aus dem Strich eine gerade Linie, ein Rechteck oder ein Oval.
+    const shape = g.tool === "pen" && this.snapShapes && this.now() - g.restAt >= SNAP_HOLD_MS ? recognizeShape(g.points) : undefined;
+    if (shape && shape.kind !== "line") {
+      const id = this.newID();
+      const r = shape.bounds;
+      this.session.add([{ id, kind: "shape", z: frontZs(this.session.objects, 1)[0]!, x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h), rot: 0, style: { shape: shape.kind } }]);
+      this.announcement = shape.kind === "oval" ? "Snapped to an oval" : "Snapped to a rectangle";
+      return;
+    }
+    if (shape) g.points = [g.points[0]!, g.points[g.points.length - 1]!].map((q) => ({ ...q, p: 0.5 }));
     const tol = Math.min(1.5, Math.max(0.05, 0.35 / this.camera.zoom));
     const geo = inkObjectGeometry(simplifyInk(g.points, tol), width);
     if (!geo) return;
@@ -937,6 +1001,14 @@ export class BoardController {
   /** `true`: verarbeitet (die Ansicht ruft preventDefault). */
   keyDown(e: KeyInput): boolean {
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (this.presenting !== undefined) {
+      if (k === "Escape") this.present(undefined);
+      else if (k === "ArrowRight" || k === "ArrowDown" || k === " " || k === "Enter" || k === "PageDown") this.present(this.presenting + 1);
+      else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp" || k === "Backspace") this.present(this.presenting - 1);
+      else if (k === "Home") this.present(0);
+      else if (k === "End") this.present(this.slides().length - 1);
+      return true;
+    }
     if (e.mod) {
       if (k === "z") { if (e.shift) this.redo(); else this.undo(); return true; }
       if (k === "y") { this.redo(); return true; }
@@ -1037,6 +1109,7 @@ export class BoardController {
       connecting: g?.kind === "connect" && fromObj && isShape(fromObj) ? { from: fromObj, to: g.to, target: targetObj && isShape(targetObj) ? targetObj : undefined } : undefined,
       editing: this.editing?.id,
       background: this.session.background,
+      previewScroll: this.previewScroll,
     };
     this.sceneCache = { key, scene };
     return scene;

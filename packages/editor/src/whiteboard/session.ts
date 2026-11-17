@@ -280,7 +280,7 @@ export class BoardSession {
           const o = this.cache.get(id);
           if (!o) continue; // im Y.Doc, aber nicht lesbar (neuere Version): Record bleibt, wie er ist
           if (existing && sameBoardObject(boardObjectFromBlock(existing), o)) continue;
-          tx.put({ kind: "block", data: boardObjectToBlock(o, this.pageID, now, existing) });
+          tx.put({ kind: "block", data: boardObjectToBlock(o, this.pageID, now, existing, this.cache) });
         }
       }, { undoable: false });
     } finally {

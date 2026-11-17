@@ -1,6 +1,6 @@
 // BSD-265 (Whiteboard 3): Tinte ausdünnen, Treffer nur auf dem Strich, Lasso, Frame nur am Rand greifbar.
 import { describe, expect, it } from "vitest";
-import { distanceToInk, encodeInk, hitsObject, inkObjectGeometry, inkPointsOf, pointInPolygon, shareInside, simplifyInk, type InkPoint, type WBShape } from "../src/index.js";
+import { backlinksTo, boardObjectToBlock, buildPageGraph, createBoardPage, createPage, distanceToInk, encodeInk, hitsObject, inkObjectGeometry, inkPointsOf, MemoryPersistence, pointInPolygon, recognizeShape, shareInside, simplifyInk, WorkspaceStore, type WBObject, type InkPoint, type WBShape } from "../src/index.js";
 
 const line = (n: number, f: (i: number) => [number, number, number?]): InkPoint[] => Array.from({ length: n }, (_, i) => { const [x, y, p] = f(i); return { x, y, p: p ?? 0.5 }; });
 
@@ -67,5 +67,46 @@ describe("Lasso", () => {
   it("Anteil der Punkte im Lasso", () => {
     expect(shareInside([{ x: 5, y: 5 }, { x: 6, y: 6 }, { x: 20, y: 20 }, { x: 1, y: 1 }], square)).toBe(0.75);
     expect(shareInside([], square)).toBe(0);
+  });
+});
+
+describe("recognizeShape", () => {
+  const circle = Array.from({ length: 60 }, (_, i) => ({ x: 200 + Math.cos((i / 59) * Math.PI * 2) * 80 + (i % 3), y: 200 + Math.sin((i / 59) * Math.PI * 2) * 50 }));
+  const box = [...Array.from({ length: 20 }, (_, i) => ({ x: i * 10, y: 0 })), ...Array.from({ length: 12 }, (_, i) => ({ x: 200, y: i * 10 })), ...Array.from({ length: 20 }, (_, i) => ({ x: 200 - i * 10, y: 120 })), ...Array.from({ length: 12 }, (_, i) => ({ x: 2, y: 120 - i * 10 }))];
+  it("Oval, Rechteck, gerade Linie", () => {
+    expect(recognizeShape(circle)?.kind).toBe("oval");
+    expect(recognizeShape(box)?.kind).toBe("rect");
+    expect(recognizeShape(Array.from({ length: 30 }, (_, i) => ({ x: i * 8, y: i * 3 + (i % 2) })))?.kind).toBe("line");
+  });
+  it("Handschrift und Winziges bleiben, was sie sind", () => {
+    expect(recognizeShape(Array.from({ length: 80 }, (_, i) => ({ x: i * 4, y: Math.sin(i / 3) * 30 })))).toBeUndefined();
+    expect(recognizeShape([{ x: 0, y: 0 }, { x: 5, y: 5 }])).toBeUndefined();
+  });
+});
+
+// BSD-267: Seitenkarten und Verbindungen zwischen ihnen sind echte Links (Backlinks, Graph).
+describe("echte Links vom Board", () => {
+  it("Karte: Board → Seite. Verbindung zwischen zwei Karten: Seite → Seite. Verbindung zu einem Zettel: kein Link", () => {
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "local", now: () => 1 });
+    const a = createPage(store, { title: "A" }), b = createPage(store, { title: "B" });
+    const board = createBoardPage(store, { title: "Map" });
+    const objs: WBObject[] = [
+      { id: "ca", kind: "page", z: "a0", x: 0, y: 0, w: 240, h: 72, rot: 0, ref: a },
+      { id: "cb", kind: "page", z: "a1", x: 400, y: 0, w: 240, h: 72, rot: 0, ref: b },
+      { id: "n", kind: "note", z: "a2", x: 0, y: 200, w: 168, h: 150, rot: 0 },
+      { id: "ab", kind: "connector", z: "a3", from: { id: "ca", side: "auto" }, to: { id: "cb", side: "auto" }, shape: "curved" },
+      { id: "an", kind: "connector", z: "a4", from: { id: "ca", side: "auto" }, to: { id: "n", side: "auto" }, shape: "curved" },
+    ];
+    const byID = new Map(objs.map((o) => [o.id, o]));
+    store.transact("draw", (tx) => { for (const o of objs) tx.put({ kind: "block", data: boardObjectToBlock(o, board, 1, undefined, byID) }); });
+    expect(backlinksTo(store, b).sort()).toEqual([a, board].sort());
+    expect(backlinksTo(store, a)).toEqual([board]);
+    const edges = buildPageGraph(store).edges.filter((e) => e.k === "mention").map((e) => `${e.s}>${e.t}`);
+    expect(edges).toContain(`${a}>${b}`);
+    expect(edges).toContain(`${board}>${a}`);
+    expect(edges).not.toContain(`${b}>${a}`);
+    // Ohne die Karten (umgeschrieben ohne Nachbarn) verschwindet der Seiten-Link wieder.
+    store.transact("redo", (tx) => tx.put({ kind: "block", data: boardObjectToBlock(objs[3]!, board, 2, store.blocks.get("ab")) }));
+    expect(backlinksTo(store, b)).toEqual([board]);
   });
 });

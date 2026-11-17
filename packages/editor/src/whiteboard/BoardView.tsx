@@ -232,7 +232,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
   };
   useSyncExternalStore(ctl.subscribe, () =>
     [ctl.tool, zoomLabel(ctl.camera.zoom), session.canUndo, session.canRedo, session.objects.length, ctl.selection.size, ctl.announcement, ctl.hint,
-      ctl.pen.color, ctl.pen.width, ctl.highlighter.color, ctl.highlighter.width, ctl.shapeKind, embedKey(), ctl.editing ? `${ctl.editing.id ?? "new"}@${ctl.camera.x},${ctl.camera.y}` : ""].join("|"));
+      ctl.snapShapes, ctl.presenting, ctl.pen.color, ctl.pen.width, ctl.highlighter.color, ctl.highlighter.width, ctl.shapeKind, embedKey(), ctl.editing ? `${ctl.editing.id ?? "new"}@${ctl.camera.x},${ctl.camera.y}` : ""].join("|"));
   const readOnly = ctl.readOnly;
   const embeds = visibleEmbeds();
 
@@ -523,6 +523,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
   // Nach einem Klick auf eine Pille geht der Fokus zurück auf die Fläche: V, N, ⌘Z wirken sofort weiter.
   const act = (run: () => void) => { run(); root.current?.focus({ preventScroll: true }); };
   const empty = session.objects.length === 0 && !ctl.editing;
+  const slideCount = session.objects.reduce((n, o) => n + (o.kind === "frame" ? 1 : 0), 0);
   const canFiles = !readOnly && host.current.upload !== undefined;
   const inkTool = ctl.tool === "pen" || ctl.tool === "highlighter";
   const inkStyle = ctl.tool === "highlighter" ? ctl.highlighter : ctl.pen;
@@ -532,7 +533,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
   const commit = (el: HTMLTextAreaElement, next = false) => { ctl.commitEdit(el.value, { height: el.scrollHeight, next }); if (!next) root.current?.focus({ preventScroll: true }); };
   return (
     <div ref={root} className="wb-root" tabIndex={0} role="application" aria-label="Board" aria-roledescription="whiteboard" data-testid="board"
-      data-tool={ctl.tool} data-editing={edit ? "" : undefined} data-objects={session.objects.length} data-selected={ctl.selection.size}
+      data-tool={ctl.tool} data-editing={edit ? "" : undefined} data-present={ctl.presenting !== undefined ? ctl.presenting + 1 : undefined} data-objects={session.objects.length} data-selected={ctl.selection.size}
       onKeyDown={(e) => {
         // Tasten in den Pillen (Leertaste/Enter auf einem Knopf, Tab zwischen Knöpfen) gehören den Knöpfen.
         if (e.target !== e.currentTarget) return;
@@ -609,6 +610,10 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
                 onClick={() => act(() => (on ? savePresets(presets.filter((q) => !samePreset(q, p))) : ctl.useInk(p)))} />
             );
           })}
+          {ctl.tool === "pen" ? (
+            <BasedButton label="Snap shapes" ariaLabel={`Snap shapes: ${ctl.snapShapes ? "on" : "off"}. Hold still at the end of a stroke to turn it into a line, rectangle or oval.`}
+              variant={ctl.snapShapes ? "secondary" : "ghost"} size="sm" onClick={() => act(() => { ctl.snapShapes = !ctl.snapShapes; ctl.refresh(); })} />
+          ) : null}
           {presets.length < PRESETS_MAX && !presets.some((p) => samePreset(p, current)) ? (
             <BasedIconButton label="Save this pen" tooltip="Save this colour and stroke as a favourite" testID="board-preset-save" icon={<BlockIcon name="boardZoomIn" />}
               onClick={() => act(() => savePresets([...presets, current]))} />
@@ -656,8 +661,18 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
           <BasedIconButton label="Zoom in" tooltip={`Zoom in (${modKey("+")})`} icon={<BlockIcon name="boardZoomIn" />} testID="board-zoom-in" onClick={() => act(() => ctl.zoomIn())} />
           <span className="wb-sep" aria-hidden="true" />
           <BasedButton label="Fit" variant="ghost" size="sm" ariaLabel="Zoom to fit" onClick={() => act(() => ctl.fit())} />
+          {slideCount > 0 ? <BasedButton label="Present" variant="ghost" size="sm" ariaLabel={`Present ${slideCount} frame${slideCount === 1 ? "" : "s"} as slides`} onClick={() => act(() => ctl.present(0))} /> : null}
         </div>
       </div>
+      {ctl.presenting !== undefined ? (
+        <div className="wb-pill wb-present" role="group" aria-label="Presentation" data-testid="board-present">
+          <BasedIconButton label="Previous slide" disabled={ctl.presenting === 0} icon={<BlockIcon name="boardUndo" />} onClick={() => act(() => ctl.present(ctl.presenting! - 1))} />
+          <span className="wb-zoom-label">{ctl.presenting + 1} / {slideCount}</span>
+          <BasedIconButton label="Next slide" disabled={ctl.presenting + 1 >= slideCount} icon={<BlockIcon name="boardRedo" />} onClick={() => act(() => ctl.present(ctl.presenting! + 1))} />
+          <span className="wb-sep" aria-hidden="true" />
+          <BasedButton label="Done" variant="ghost" size="sm" ariaLabel="End presentation" onClick={() => act(() => ctl.present(undefined))} />
+        </div>
+      ) : null}
       <div className="wb-live" role="status" aria-live="polite">{ctl.announcement}</div>
     </div>
   );

@@ -280,7 +280,7 @@ function drawPreviewFrame(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number,
 }
 
 /** Textvorschau: Zeilen in fester Breite; ein Chat-/Agent-Log als Gespräch (wer in gedämpfter Zeile, darunter was). */
-function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextPreview | undefined, legible: (size: number) => boolean) {
+function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextPreview | undefined, legible: (size: number) => boolean, scroll = 0) {
   const body = { x: o.x + 14, y: o.y + PREVIEW_HEADER + 4, w: o.w - 28, h: o.h - PREVIEW_HEADER - 14 };
   if (body.h < 16 || !legible(12)) return;
   if (!preview) { drawText(ctx, theme, "Loading…", body, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.5 }); return; }
@@ -291,9 +291,14 @@ function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextP
   ctx.clip();
   const font = theme.font;
   const mono = `ui-monospace, "SF Mono", Menlo, Consolas, monospace`;
-  let y = body.y;
+  // Höhe des Ganzen, damit das Rollen am Ende anhält.
+  ctx.font = `400 13px ${font}`;
+  let total = preview.more ? 26 : 0;
+  for (const line of preview.lines) total += preview.chat ? 24 + Math.min(6, Math.max(1, wrapText((s) => ctx.measureText(s).width, line.text, body.w).length)) * 19 : 18;
+  let y = body.y - Math.max(0, Math.min(scroll, total - body.h));
   for (const line of preview.lines) {
     if (y >= body.y + body.h) break;
+    if (y < body.y - 160) { y += preview.chat ? 24 + Math.min(6, Math.max(1, wrapText((s) => ctx.measureText(s).width, line.text, body.w).length)) * 19 : 18; ctx.font = `400 13px ${font}`; continue; }
     if (preview.chat) {
       drawText(ctx, theme, line.role ?? "", { x: body.x, y, w: body.w, h: 16 }, { size: 11, weight: 600, color: theme.muted, lineHeight: 1.45 });
       y += 16;
@@ -310,11 +315,13 @@ function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextP
       if (line.text) ctx.fillText(line.text.length > 160 ? line.text.slice(0, 160) : line.text, body.x, y + 9);
       y += 18;
     }
+    ctx.font = `400 13px ${font}`;
   }
+  if (preview.more && y < body.y + body.h) drawText(ctx, theme, "… the preview ends here. Double-click to save the whole file.", { x: body.x, y: y + 4, w: body.w, h: 18 }, { size: 11, weight: 500, color: theme.muted, lineHeight: 1.5 });
   ctx.restore();
 }
 
-function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editing = false, images?: BoardImages, dpr = 1) {
+function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editing = false, images?: BoardImages, dpr = 1, scroll = 0) {
   const res = resourcesOf(images);
   // Fernsicht: ein Objekt, das auf dem Bildschirm nur wenige px groß ist, wird ein Rechteck – bei Tausenden
   // sichtbaren Objekten (weit herausgezoomt) kostet sonst jeder Pfad mit Rundung und Rand.
@@ -412,7 +419,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       }
       if (view === "text" || view === "html" || view === "video" || view === "audio") {
         drawPreviewFrame(ctx, theme, o, zoom, legible);
-        if (view === "text") drawTextPreview(ctx, theme, o, o.ref ? res?.text?.(o.ref, String(o.style?.name ?? "")) : undefined, legible);
+        if (view === "text") drawTextPreview(ctx, theme, o, o.ref ? res?.text?.(o.ref, String(o.style?.name ?? "")) : undefined, legible, scroll);
         break;
       }
       roundRect(ctx, o.x, o.y, o.w, o.h, 14);
@@ -574,7 +581,7 @@ export function drawBoardObjects(ctx: Ctx, scene: BoardScene, theme: BoardTheme,
   ctx.setTransform(dpr * camera.zoom, 0, 0, dpr * camera.zoom, -camera.x * camera.zoom * dpr, -camera.y * camera.zoom * dpr);
   for (const o of scene.objects) {
     if (isConnector(o)) drawConnector(ctx, theme, o, scene.byID, camera.zoom, scene.editing === o.id);
-    else drawShape(ctx, theme, o, camera.zoom, scene.editing === o.id, images, dpr);
+    else drawShape(ctx, theme, o, camera.zoom, scene.editing === o.id, images, dpr, scene.previewScroll.get(o.id) ?? 0);
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }

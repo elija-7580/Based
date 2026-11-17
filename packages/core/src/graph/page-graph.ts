@@ -158,11 +158,13 @@ export function buildPageGraph(store: WorkspaceStore): PageGraph {
         }
       }
     }
-    if (b.type === "linkToPage" && b.props?.linkTarget) targets.push(b.props.linkTarget);
+    if ((b.type === "linkToPage" || b.type === "boardObject") && b.props?.linkTarget) targets.push(b.props.linkTarget);
     if (targets.length === 0) continue;
     const st = stateOf(b);
     if (st.trashed) continue;
-    const from = isNode.has(b.id) ? b.id : owningPage(b.id);
+    // Board: eine Verbindung zwischen zwei Seitenkarten zählt von Seite zu Seite, eine Seitenkarte vom Board zur Seite.
+    const source = (b.props as { linkSource?: unknown } | undefined)?.linkSource;
+    const from = typeof source === "string" && isNode.has(source) ? source : isNode.has(b.id) ? b.id : owningPage(b.id);
     if (!from) continue;
     for (const t of targets) edge(from, t, "mention");
   }

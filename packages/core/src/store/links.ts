@@ -101,7 +101,9 @@ export class LinkIndex {
     for (const src of this.sourcesOf(pageID)) {
       const b = store.blocks.get(src);
       if (!b || b.trashedAt !== undefined) continue;
-      const page = containingPage(store, src);
+      // Verbindung zwischen zwei Seitenkarten auf einem Board: die Quelle ist die Seite der ersten Karte.
+      const from = (b.props as { linkSource?: unknown } | undefined)?.linkSource;
+      const page = typeof from === "string" && from !== "" ? from : containingPage(store, src);
       if (!page || page === pageID || pages.has(page) || isTrashed(store, page)) continue;
       pages.add(page);
     }

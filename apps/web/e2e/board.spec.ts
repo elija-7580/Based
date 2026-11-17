@@ -560,3 +560,28 @@ test("Seitenkarte über @, Untergrund liniert, gemerkter Stift", async ({ page, 
   await page.waitForTimeout(300);
   if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-lines-page-light.png` });
 });
+
+test("Present: Frames als Folien – Knopf erscheint mit dem ersten Frame, Pfeile blättern, Esc zurück; Leisten treten zurück", async ({ page, browserName }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  const c = await center(page);
+  await board.focus();
+  await expect(page.getByRole("button", { name: /^Present/ })).toHaveCount(0);
+  for (const dx of [-320, 60]) {
+    await page.keyboard.press("f");
+    await stroke(page, [[c.x + dx, c.y - 120], [c.x + dx + 120, c.y], [c.x + dx + 260, c.y + 100]]);
+  }
+  await expect(board).toHaveAttribute("data-objects", "2");
+  await page.getByRole("button", { name: /^Present 2 frames/ }).click();
+  await expect(board).toHaveAttribute("data-present", "1");
+  await expect(page.locator(".wb-tools")).toBeHidden();
+  await expect(page.getByTestId("board-present")).toContainText("1 / 2");
+  await page.keyboard.press("ArrowRight");
+  await expect(board).toHaveAttribute("data-present", "2");
+  await page.mouse.move(0, 0);
+  expect(await overflows(page)).toEqual([]);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-present-light.png` });
+  await page.keyboard.press("Escape");
+  await expect(board).not.toHaveAttribute("data-present", /./);
+  await expect(page.locator(".wb-tools")).toBeVisible();
+});

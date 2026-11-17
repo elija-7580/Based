@@ -352,3 +352,63 @@ describe("Sperren, Untergrund, Seitenkarte", () => {
     expect(session.get(id)).toMatchObject({ kind: "page", ref: "page-1", text: "Lecture 5", w: 240 });
   });
 });
+
+describe("Snap shapes, Present, Vorschau rollen", () => {
+  const loop: [number, number][] = Array.from({ length: 50 }, (_, i) => [400 + Math.cos((i / 49) * Math.PI * 2) * 120, 300 + Math.sin((i / 49) * Math.PI * 2) * 70]);
+  it("am Ende halten macht aus dem Kringel ein Oval; ohne Halten bleibt er Handschrift; abgeschaltet auch", () => {
+    const { ctl, session, tick } = setup();
+    ctl.setTool("pen");
+    drag(ctl, loop);
+    expect(shapes(session)[0]!.kind).toBe("ink");
+    const held = () => {
+      ctl.pointerDown({ x: loop[0]![0], y: loop[0]![1], button: 0 });
+      for (const [x, y] of loop.slice(1)) ctl.pointerMove({ x, y });
+      tick(600);
+      ctl.pointerUp({ x: loop[49]![0], y: loop[49]![1] });
+    };
+    held();
+    expect(shapes(session)[1]).toMatchObject({ kind: "shape", style: { shape: "oval" }, w: 240 });
+    ctl.snapShapes = false;
+    held();
+    expect(shapes(session)[2]!.kind).toBe("ink");
+  });
+  it("gehaltene gerade Linie wird wirklich gerade (zwei Punkte)", () => {
+    const { ctl, session, tick } = setup();
+    ctl.setTool("pen");
+    ctl.pointerDown({ x: 100, y: 100, button: 0 });
+    for (let i = 1; i <= 30; i++) ctl.pointerMove({ x: 100 + i * 10, y: 100 + (i % 2) * 2 });
+    tick(600);
+    ctl.pointerUp({ x: 400, y: 100 });
+    expect(inkPointsOf(shapes(session)[0]!.ink!)).toHaveLength(2);
+  });
+  it("Present: Frames sind Folien in Leserichtung; Pfeile blättern, Esc stellt die Ansicht wieder her", () => {
+    const { ctl } = setup();
+    ctl.setTool("frame");
+    drag(ctl, [[600, 100], [700, 200], [900, 300]]);
+    ctl.setTool("frame");
+    drag(ctl, [[100, 100], [200, 200], [400, 300]]);
+    const before = ctl.camera;
+    ctl.present(0);
+    expect(ctl.presenting).toBe(0);
+    expect(ctl.camera.x).toBeLessThan(400); // die linke Folie zuerst
+    ctl.keyDown({ key: "ArrowRight" });
+    expect(ctl.presenting).toBe(1);
+    ctl.keyDown({ key: "ArrowRight" });
+    expect(ctl.presenting).toBe(1);
+    ctl.keyDown({ key: "p" });
+    expect(ctl.tool).toBe("select"); // Kürzel greifen beim Zeigen nicht
+    ctl.keyDown({ key: "Escape" });
+    expect(ctl.presenting).toBeUndefined();
+    expect(ctl.camera).toEqual(before);
+  });
+  it("Rad über einer gewählten Textvorschau rollt ihren Inhalt, sonst die Fläche", () => {
+    const { ctl } = setup();
+    const [id] = ctl.addFiles([{ ref: "r", name: "run.log", mime: "", size: 10 }], { x: 500, y: 350 });
+    ctl.wheel({ x: 500, y: 350, deltaX: 0, deltaY: 120, zoom: false });
+    expect(ctl.scene().previewScroll.get(id!)).toBe(120);
+    ctl.clearSelection();
+    const cam = ctl.camera;
+    ctl.wheel({ x: 500, y: 350, deltaX: 0, deltaY: 120, zoom: false });
+    expect(ctl.camera.y).toBe(cam.y + 120);
+  });
+});
