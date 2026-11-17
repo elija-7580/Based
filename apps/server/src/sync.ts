@@ -31,6 +31,8 @@ export const TOMBSTONE_RETENTION_DAYS = 90;
 export const OLDEST_SEQ_KEY = "sync.oldestSeq";
 export const MAX_PAGE = 5_000;
 export const DEFAULT_PAGE = 500;
+/** ADR 0017 A2: Obergrenze für `bytes` einer Pull-Seite (eine Seite ist beim Empfänger eine Transaktion). */
+export const MAX_PAGE_BYTES = 8 * 1024 * 1024;
 export const MAX_WAIT_SECONDS = 55;
 
 const KINDS = new Set<RecordKind>(["workspace", "block", "database", "view", "property"]);
@@ -195,7 +197,9 @@ export class SyncService {
   }
 
   info() {
-    return { protocol: this.protocol, seq: this.seq, oldestSeq: this.oldestSeq };
+    // ADR 0017 A2: was dieser Server zusätzlich kann. Ein Client nutzt es nur, wenn es hier steht; ohne das Feld
+    // (ältere Server, Swift) schickt er dieselben Anfragen wie bisher.
+    return { protocol: this.protocol, seq: this.seq, oldestSeq: this.oldestSeq, sync: { maxPage: MAX_PAGE, pageBytes: true, gzip: true } };
   }
 
   /** Push zusammenführen (Last-Writer-Wins). Ungestempelte Löschungen stempelt der Server beim Empfang. */
@@ -268,22 +272,32 @@ export class SyncService {
     records[i] = { ...pushed, data: { ...pushed.data, stamp: this.store.clock.now() } };
   }
 
-  /** Änderungen nach `after`, älteste zuerst, höchstens `limit` Einträge pro Seite. */
-  pull(after: number, limit = DEFAULT_PAGE): PullPage {
+  /**
+   * Änderungen nach `after`, älteste zuerst, höchstens `limit` Einträge pro Seite. `maxBytes` (ADR 0017 A2): die Seite
+   * endet zusätzlich, sobald ihre Records zusammen so groß sind (ungefähr, als JSON) – mindestens ein Eintrag geht
+   * immer mit, damit ein einzelner großer Record den Cursor nicht festhält.
+   */
+  pull(after: number, limit = DEFAULT_PAGE, maxBytes?: number): PullPage {
     const n = Math.max(1, Math.min(Math.floor(limit), MAX_PAGE));
+    const budget = maxBytes !== undefined && Number.isFinite(maxBytes) && maxBytes > 0 ? Math.min(Math.floor(maxBytes), MAX_PAGE_BYTES) : undefined;
     const entries = this.persistence.changes(after, n + 1);
-    const page = entries.slice(0, n);
     const records: WireRecord[] = [];
     const deletions: WireDeletion[] = [];
-    for (const e of page) {
+    let taken = 0, bytes = 0;
+    for (const e of entries.slice(0, n)) {
+      if (budget !== undefined && taken > 0 && bytes >= budget) break;
+      taken += 1;
       // Nur eine ausdrückliche Löschung ist eine Löschung; eine nicht lesbare Zeile wird übersprungen (BSD-16).
-      if (e.deleted) deletions.push(wireDeletion(e.key, e.deletedStamp));
+      if (e.deleted) { deletions.push(wireDeletion(e.key, e.deletedStamp)); bytes += 120; }
       else {
         const r = this.store.record(e.key);
-        if (r) records.push(r);
+        if (r) {
+          records.push(r);
+          if (budget !== undefined) bytes += JSON.stringify(r).length;
+        }
       }
     }
-    return { records, deletions, next: page.length > 0 ? page[page.length - 1]!.seq : after, more: entries.length > n };
+    return { records, deletions, next: taken > 0 ? entries[taken - 1]!.seq : after, more: entries.length > taken };
   }
 
   /**

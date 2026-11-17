@@ -2,6 +2,7 @@
 // Body-Grenze (413) → Authentifizierung (nur Header, nie `?token=`) → Handler. Eine neue Route ist damit
 // standardmäßig geschützt. Node-HTTP ohne Framework.
 import { createHash, timingSafeEqual } from "node:crypto";
+import { gunzipSync, gzipSync } from "node:zlib";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Logger } from "./log.js";
 
@@ -143,7 +144,7 @@ export class Router {
       this.config.log.error("handler failed", { method: req.method, path: logPath, error: e instanceof Error ? e.name : "unknown" });
       result = error("internal error", 500);
     }
-    if (result && !res.headersSent && !res.writableEnded) send(res, result, req.method === "HEAD");
+    if (result && !res.headersSent && !res.writableEnded) send(res, result, req.method === "HEAD", /\bgzip\b/i.test(String(req.headers["accept-encoding"] ?? "")));
     const status = result?.status ?? res.statusCode;
     this.config.log.log(status >= 500 ? "error" : "debug", "request", {
       method: req.method,
@@ -160,7 +161,7 @@ export class Router {
         status: 204,
         headers: {
           "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Authorization, Content-Type, Range, Mcp-Session-Id, Mcp-Protocol-Version, X-Based-Protocol",
+          "Access-Control-Allow-Headers": "Authorization, Content-Type, Content-Encoding, Range, Mcp-Session-Id, Mcp-Protocol-Version, X-Based-Protocol",
         },
       };
     }
@@ -188,6 +189,19 @@ export class Router {
     let body: Buffer;
     try {
       body = method === "GET" || method === "HEAD" ? Buffer.alloc(0) : await readBody(req, route.bodyLimit);
+      // ADR 0017 A2: komprimierter Körper (Sync-Push). Die Grenze der Route gilt für den entpackten Inhalt.
+      const encoding = String(req.headers["content-encoding"] ?? "").trim().toLowerCase();
+      if (encoding === "gzip" && body.length > 0) {
+        try {
+          body = gunzipSync(body, { maxOutputLength: route.bodyLimit });
+        } catch (e) {
+          if ((e as { code?: string }).code === "ERR_BUFFER_TOO_LARGE") {
+            res.setHeader("Connection", "close");
+            return error("request body too large", 413);
+          }
+          return error("invalid gzip body", 400);
+        }
+      } else if (encoding !== "" && encoding !== "identity") return error("unsupported content encoding", 415);
     } catch (e) {
       if (e instanceof BodyTooLarge) {
         res.setHeader("Connection", "close");
@@ -199,14 +213,26 @@ export class Router {
   }
 }
 
-function send(res: ServerResponse, r: NonNullable<RouteResult>, head = false) {
+/** Ab dieser Größe lohnt Kompression (ADR 0017 A2); darunter kostet sie mehr, als sie spart. */
+export const GZIP_MIN_BYTES = 1024;
+
+function send(res: ServerResponse, r: NonNullable<RouteResult>, head = false, acceptsGzip = false) {
   for (const [k, v] of Object.entries(r.headers ?? {})) res.setHeader(k, v);
   if (head) {
     res.writeHead(r.status);
     res.end();
   } else if (r.json !== undefined) {
-    const data = JSON.stringify(r.json);
-    res.writeHead(r.status, { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) });
+    const data = Buffer.from(JSON.stringify(r.json));
+    // ADR 0017 A2: JSON-Antworten selbst komprimieren (der lokale Server hat keinen Caddy davor; ein Proxy lässt eine
+    // schon komprimierte Antwort unverändert). Sync-Seiten schrumpfen auf rund ein Fünftel.
+    if (acceptsGzip && data.length >= GZIP_MIN_BYTES && !res.hasHeader("Content-Encoding")) {
+      const packed = gzipSync(data, { level: 5 });
+      const vary = res.getHeader("Vary"); // CORS setzt schon „Origin“ – ergänzen, nicht ersetzen
+      res.writeHead(r.status, { "Content-Type": "application/json", "Content-Encoding": "gzip", Vary: vary ? `${String(vary)}, Accept-Encoding` : "Accept-Encoding", "Content-Length": packed.length });
+      res.end(packed);
+      return;
+    }
+    res.writeHead(r.status, { "Content-Type": "application/json", "Content-Length": data.length });
     res.end(data);
   } else if (r.html !== undefined) {
     res.writeHead(r.status, { "Content-Type": "text/html; charset=utf-8", "Content-Length": Buffer.byteLength(r.html) });

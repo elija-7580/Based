@@ -468,8 +468,8 @@ export class ShareService {
    * Das Change-Log, wie der Principal es sieht. Geänderte Records, die er nicht (mehr) lesen darf, kommen als
    * ungestempelte Löschung; eine Seite, die den geteilten Bereich verlässt, nimmt ihren Inhalt mit.
    */
-  pull(p: SharePrincipal, sync: SyncService, after: number, limit: number): PullPage {
-    const page = sync.pull(after, limit);
+  pull(p: SharePrincipal, sync: SyncService, after: number, limit: number, maxBytes?: number): PullPage {
+    const page = sync.pull(after, limit, maxBytes);
     if (p.kind === "owner") return page;
     const records: WireRecord[] = [];
     // BSD-285: Löschungen nur aus dem Bereich des Gastes (sonst sähe er, wie viel anderswo gelöscht wird).
