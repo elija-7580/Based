@@ -24,6 +24,8 @@ export interface BoardViewProps {
   /** Dateispeicher der App (wie im Editor): Datei ablegen → Adresse; Adresse → abrufbare URL. Ohne: keine Dateien. */
   uploadFile?: (file: File) => Promise<string>;
   resolveFileUrl?: (url: string) => Promise<string>;
+  /** Seitenkarte öffnen (Doppelklick, Enter). */
+  onOpenPage?: (pageID: string) => void;
 }
 
 interface FileHost { upload: ((file: File) => Promise<string>) | undefined; resolve: ((url: string) => Promise<string>) | undefined }
@@ -108,7 +110,9 @@ const modKey = (key: string) => (isApple() ? `⌘${key}` : `Ctrl+${key}`);
 /** Safari meldet Pinch als eigene Gesten-Ereignisse (kein Strg+Rad). */
 interface GestureEvent extends UIEvent { scale: number; clientX: number; clientY: number }
 
-export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl }: BoardViewProps) {
+export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl, onOpenPage }: BoardViewProps) {
+  const openPage = useRef(onOpenPage);
+  openPage.current = onOpenPage;
   const [ctl, setCtl] = useState<BoardController>();
   const host = useRef<FileHost>({ upload: uploadFile, resolve: resolveFileUrl });
   host.current = { upload: uploadFile, resolve: resolveFileUrl };
@@ -116,6 +120,7 @@ export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl 
     const session = new BoardSession(store, pageID);
     const controller = new BoardController(session, {
       camera: cameras.get(pageID),
+      onOpenPage: (id) => openPage.current?.(id),
       // Öffnen heißt sichern: eine Datei (etwa HTML) läuft nie im Fenster der App.
       onOpenFile: (o) => {
         const resolve = host.current.resolve;

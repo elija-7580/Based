@@ -144,6 +144,8 @@ export interface BoardControllerOptions {
   now?: () => number;
   /** Doppelklick auf ein Bild oder eine Datei: öffnen bzw. sichern (macht die Ansicht). */
   onOpenFile?: (obj: WBShape) => void;
+  /** Doppelklick auf eine Seitenkarte: die Seite öffnen. */
+  onOpenPage?: (pageID: string) => void;
 }
 
 /** Eine abgelegte Datei: `ref` ist die Adresse im Dateispeicher (`based-asset:<sha256>`), nie der Inhalt. */
@@ -188,6 +190,7 @@ export class BoardController {
   private lastClick: { at: number; p: Point; hit: string | undefined } | undefined;
   private readonly now: () => number;
   private readonly onOpenFile: ((obj: WBShape) => void) | undefined;
+  private readonly onOpenPage: ((pageID: string) => void) | undefined;
   private space = false;
   private fitted: boolean;
   /** Die Fläche hatte schon eine Größe (erst dann lohnt es, die Kamera zu merken). */
@@ -204,6 +207,7 @@ export class BoardController {
     this.newID = opts.newID ?? (() => globalThis.crypto.randomUUID().toLowerCase());
     this.now = opts.now ?? (() => Date.now());
     this.onOpenFile = opts.onOpenFile;
+    this.onOpenPage = opts.onOpenPage;
     this.camera = opts.camera ?? DEFAULT_CAMERA;
     this.fitted = opts.camera !== undefined;
     this.stopSession = session.subscribe(() => {
@@ -816,6 +820,7 @@ export class BoardController {
         this.lastClick = twice ? undefined : { at, p: { x: e.x, y: e.y }, hit: g.hit };
         const target = g.hit ? this.session.get(g.hit) : undefined;
         if (twice && target && isShape(target) && (target.kind === "file" || target.kind === "image")) { this.onOpenFile?.(target); break; }
+        if (twice && target && isShape(target) && target.kind === "page" && target.ref) { this.onOpenPage?.(target.ref); break; }
         if (twice && !this.readOnly && !g.shift) {
           if (g.hit ? this.startEdit(g.hit) : this.startText(g.world)) break;
         }
@@ -915,6 +920,10 @@ export class BoardController {
     if (k === "Tab") return this.focusNext(e.shift ? -1 : 1);
     if (k === "Delete" || k === "Backspace") return this.deleteSelection();
     if (k === "Enter" && isBoxTool(this.tool)) return this.createAtCenter(this.tool) !== undefined;
+    if (k === "Enter" && this.selection.size === 1) {
+      const only = this.session.get([...this.selection][0]!);
+      if (only && isShape(only) && only.kind === "page" && only.ref) { this.onOpenPage?.(only.ref); return true; }
+    }
     if (k === "Enter" && this.selection.size === 1) return this.startEdit([...this.selection][0]!) ? (this.changed(), true) : false;
     const d = nudgeDelta(e.key, e.shift === true);
     if (d) return this.selection.size > 0 ? this.nudge(d) : (this.setCamera(panBy(this.camera, -d.x * 40, -d.y * 40)), true);

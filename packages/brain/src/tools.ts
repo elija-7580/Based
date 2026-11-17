@@ -6,7 +6,7 @@
 // Rumpf, dreht der Store alles zurück; kein Zwischenstand im Sync). `find_replace` ersetzt lauf-weise im RichText
 // (`replaceInRichText`), Fett/Kursiv/Links/Erwähnungen bleiben.
 import {
-  attachSearchIndex, addRow, cellText, insertPage, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
+  attachSearchIndex, addRow, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
   parseCSVValue, plainText, QueryEngine, replaceInRichText, rowsOf, sortKeys, titleOf, titleProperty, toRichText,
   type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
@@ -273,6 +273,67 @@ export class WorkspaceTools implements ToolHost {
             return pid;
           });
           return `Created page “${title ?? "Untitled"}” (id: ${id})`;
+        },
+      },
+      // BSD-93: Whiteboards als Text – wenige Token, keine Koordinaten; die Anordnung rechnet Based (whiteboard/agent.ts).
+      {
+        write: false,
+        spec: { name: "read_board", description: "A whiteboard as compact text: one line per object (short handle, kind, text, position), connectors as “a -> b: label”. Use the handles in draw_board.", inputSchema: obj({ page_id: pageID }, ["page_id"]) },
+        run: (a) => {
+          const id = need(a, "page_id");
+          this.page(id, true);
+          if (!isBoardPage(store.blocks.get(id))) throw new Error("That page is not a whiteboard. Use read_page.");
+          return boardOutline(boardObjectsOf(store, id), (pid) => titleOf(store, pid) || undefined);
+        },
+      },
+      {
+        write: true,
+        spec: {
+          name: "draw_board",
+          description: [
+            "Add to or change a whiteboard with a short script; Based lays the objects out (columns follow the arrows) and puts new content beside what is there. Omit page_id to create a new board (title, parent_id optional). One statement per line:",
+            "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
+            "a -> b: optional label (a, b: names from this script or handles from read_board)",
+            "frame f: Title { a b c } | set <handle>: new text | del <handle>",
+          ].join("\n"),
+          inputSchema: obj({ page_id: pageID, script: S, title: S, parent_id: pageID }, ["script"]),
+        },
+        run: (a) => {
+          const given = str(a, "page_id");
+          const parent = str(a, "parent_id");
+          if (given !== undefined) { this.page(given); if (!isBoardPage(store.blocks.get(given))) throw new Error("That page is not a whiteboard."); }
+          else if (parent !== undefined) this.page(parent);
+          const existing = given ? boardObjectsOf(store, given) : [];
+          const plan = planBoardScript(need(a, "script"), existing, () => makeRecordID());
+          // Seitenkarten: nur vorhandene Seiten, mit ihrem Titel als Text (für Suche und Vorschau).
+          plan.add = plan.add.filter((o) => {
+            if (o.kind !== "page") return true;
+            const b = o.ref ? store.blocks.get(o.ref) : undefined;
+            if (!isPageLike(b) || b?.trashedAt !== undefined) { plan.errors.push(`page ${o.ref ?? ""} — no such page`); return false; }
+            o.text = titleOf(store, o.ref!) || "Untitled";
+            return true;
+          });
+          const kept = new Set(plan.add.map((o) => o.id));
+          plan.add = plan.add.filter((o) => o.kind !== "connector" || ((kept.has(o.from.id) || existing.some((e) => e.id === o.from.id)) && (kept.has(o.to.id) || existing.some((e) => e.id === o.to.id))));
+          const page = store.transact("Agent: draw on board", (tx) => {
+            const pid = given ?? insertBoardPage(store, tx, { ...(parent ? { parent } : {}), title: str(a, "title") ?? "Untitled board" });
+            const now = store.now();
+            for (const o of plan.add) tx.put({ kind: "block", data: boardObjectToBlock(o, pid, now) });
+            for (const [id, fields] of plan.patch) {
+              const block = store.blocks.get(id);
+              const cur = block ? boardObjectFromBlock(block) : undefined;
+              if (block && cur) tx.put({ kind: "block", data: boardObjectToBlock({ ...cur, ...fields } as typeof cur, pid, now, block) });
+            }
+            for (const id of plan.remove) if (store.blocks.get(id)) tx.remove(keyOf("block", id));
+            return pid;
+          });
+          const handles = boardHandles(boardObjectsOf(store, page));
+          const names = [...plan.names].filter(([, id]) => handles.has(id)).map(([n, id]) => `${n}=${handles.get(id)!}`).join(" ");
+          return [
+            `${given ? "Updated" : "Created"} board (id: ${page}): ${plan.add.length} added, ${plan.patch.size} changed, ${plan.remove.length} removed.`,
+            ...(names ? [`Handles: ${names}`] : []),
+            ...(plan.errors.length ? ["Skipped:", ...plan.errors.map((e) => `- ${e}`)] : []),
+          ].join("\n");
         },
       },
       {

@@ -200,6 +200,7 @@ export {
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
 export { boardFileView, fileExtension, PREVIEW_BYTES, PREVIEW_LINES, textPreview, type BoardFileView, type PreviewLine, type TextPreview } from "./whiteboard/files.js";
+export { BOARD_SCRIPT_MAX, boardHandles, boardOutline, planBoardScript, type BoardPlan } from "./whiteboard/agent.js";
 // BSD-265 (Whiteboard 3): Tinte – ausdünnen, Treffer, Lasso
 export { distanceToInk, inkBounds, inkObjectGeometry, inkPointsOf, pointInPolygon, shareInside, simplifyInk } from "./whiteboard/stroke.js";
 // BSD-264 (Whiteboard 2): Kamera, Geometrie, Raumindex und Board-Objekte als Records

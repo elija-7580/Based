@@ -185,7 +185,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
     // BSD-264: Board-Seite – die Fläche füllt das Panel (kein Seitenkopf; umbenennen über die Seitenleiste).
     // BSD-266: Dateien auf dem Board liegen im selben Dateispeicher wie Bilder im Editor (nur die Adresse im Record).
     const files = assets();
-    body = <BoardView store={store} pageID={pageID} readOnly={readOnly}
+    body = <BoardView store={store} pageID={pageID} readOnly={readOnly} onOpenPage={(id) => onOpenPage(id)}
       {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />;
   } else if (dbID) {
     const View = slots.DatabaseView;

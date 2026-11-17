@@ -7,7 +7,7 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { AgentBrain, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import { AgentBrain, WorkspaceTools, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
 import type { WorkspaceStore } from "@based/core";
 import { resolveInboxText, createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
@@ -337,6 +337,33 @@ export function createMcpServer(pages: Pages): McpServer {
       const id = pages.create(a);
       return text(`Created ${pages.title(id)} (id: ${id}, ${PAGE_URI}${id})`);
     }),
+  );
+
+  // BSD-494: Whiteboards als Text (wenige Token, keine Koordinaten – die Anordnung rechnet Based). Dieselbe Logik wie
+  // für Baseds eigene Agenten (WorkspaceTools), damit beide Wege genau dasselbe können.
+  const boards = new WorkspaceTools(pages.store);
+  const board = (name: string, input: Record<string, unknown>): CallToolResult => {
+    const r = boards.callSync(name, Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)) as never);
+    return { content: [{ type: "text", text: r.text }], ...(r.isError ? { isError: true } : {}) };
+  };
+  server.registerTool(
+    "read_board",
+    { description: "A whiteboard as compact text: one line per object (short handle, kind, text, position), connectors as `a -> b: label`. Use the handles in draw_board.", inputSchema: { id: z.string() }, annotations: { readOnlyHint: true } },
+    guarded(({ id }: { id: string }) => board("read_board", { page_id: id })),
+  );
+  server.registerTool(
+    "draw_board",
+    {
+      description: [
+        "Add to or change a whiteboard with a short script. Based lays the objects out (columns follow the arrows) and puts new content beside what is there. Omit `id` to create a new board (`title`, `parent` optional). One statement per line:",
+        "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
+        "a -> b: optional label (a, b: names from this script or handles from read_board)",
+        "frame f: Title { a b c } | set <handle>: new text | del <handle>",
+      ].join("\n"),
+      inputSchema: { id: z.string().optional(), script: z.string().min(1), title: z.string().optional(), parent: z.string().optional() },
+    },
+    guarded((a: { id?: string | undefined; script: string; title?: string | undefined; parent?: string | undefined }) =>
+      board("draw_board", { page_id: a.id, script: a.script, title: a.title, parent_id: a.parent })),
   );
 
   server.registerTool(

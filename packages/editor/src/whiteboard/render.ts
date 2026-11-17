@@ -29,6 +29,8 @@ export interface BoardTheme {
   highlights: Record<string, string>;
   /** Dunkles Thema: der Textmarker hellt auf statt abzudunkeln. */
   dark: boolean;
+  /** Marker-Farbe: kennzeichnet, was ein Agent angelegt hat (und nur das). */
+  marker: string;
 }
 
 /** Token je Stiftfarbe bzw. Textmarker-Tönung (kein Gelb: die Marker-Farbe gehört den Agenten). */
@@ -58,7 +60,7 @@ export function readBoardTheme(el: Element): BoardTheme {
     bg: v("--bg"), dot: v("--selection-bg"), ink: v("--ink"), muted: v("--muted"), card: v("--surface-card"), raised: v("--surface-raised"), line: v("--line"),
     border: v("--control-border"), select: v("--focus-ring"), selectFill: v("--selected"), peer: v("--synced"),
     font: cs.fontFamily || "system-ui, sans-serif",
-    notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), dark: isDark(v("--bg")),
+    notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), dark: isDark(v("--bg")), marker: v("--marker-strong"),
   };
 }
 
@@ -423,8 +425,24 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       if (legible(12)) drawText(ctx, theme, [mime || "File", fileSizeLabel(Number(o.style?.size ?? 0))].filter(Boolean).join(" · "), { x: left, y: o.y + o.h / 2 + 1, w: width, h: 18 }, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.4 });
       break;
     }
+    case "page": {
+      // Seitenkarte: eine echte Seite auf dem Board (Doppelklick öffnet sie).
+      roundRect(ctx, o.x, o.y, o.w, o.h, 14);
+      ctx.fillStyle = theme.card;
+      ctx.fill();
+      ctx.lineWidth = hair;
+      ctx.strokeStyle = theme.line;
+      ctx.stroke();
+      const tile = Math.min(40, o.h - 24);
+      roundRect(ctx, o.x + 14, o.y + (o.h - tile) / 2, tile, tile, 9);
+      ctx.fillStyle = theme.raised;
+      ctx.fill();
+      if (legible(10.5)) drawText(ctx, theme, "PAGE", { x: o.x + 14, y: o.y + (o.h - tile) / 2, w: tile, h: tile }, { size: 10, weight: 600, color: theme.muted, lineHeight: 1.3, align: "center", middle: true });
+      if (legible(13.5)) drawText(ctx, theme, o.text || "Untitled", { x: o.x + 26 + tile, y: o.y + 12, w: o.w - tile - 40, h: o.h - 24 }, { size: 13.5, weight: 600, color: theme.ink, lineHeight: 1.4, middle: true });
+      break;
+    }
     default: {
-      // Seitenkarte: kommt noch (BSD-266); bis dahin eine Karte mit Namen, damit nichts unsichtbar ist.
+      // Unbekannte Art: eine Karte mit Namen, damit nichts unsichtbar ist.
       roundRect(ctx, o.x, o.y, o.w, o.h, 14);
       ctx.fillStyle = theme.card;
       ctx.fill();
@@ -433,6 +451,12 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       ctx.stroke();
       if (legible(12)) drawText(ctx, theme, o.text || (o.kind === "page" ? "Page" : "Image"), { x: o.x + 14, y: o.y + 12, w: o.w - 28, h: o.h - 24 }, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.35 });
     }
+  }
+  // Von einem Agenten angelegt: der Marker-Strich an der linken Kante (wie überall in Based).
+  if (o.style?.agent === true && o.kind !== "ink" && Math.min(o.w, o.h) * zoom >= 24) {
+    roundRect(ctx, o.x + 6, o.y + 12, 3, Math.max(4, o.h - 24), 1.5);
+    ctx.fillStyle = theme.marker;
+    ctx.fill();
   }
   if (o.rot) ctx.restore();
 }
@@ -461,8 +485,12 @@ function drawConnector(ctx: Ctx, theme: BoardTheme, c: WBConnector, byID: Readon
   ctx.lineWidth = Math.max(1 / zoom, 1.8);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.strokeStyle = theme.border;
+  // Verbindung eines Agenten: gestrichelt in der Marker-Farbe.
+  const agent = c.style?.agent === true;
+  ctx.strokeStyle = agent ? theme.marker : theme.border;
+  if (agent) ctx.setLineDash([4, 5]);
   ctx.stroke();
+  ctx.setLineDash([]);
   const a = 8;
   ctx.beginPath();
   ctx.moveTo(to.x - a * Math.cos(angle - 0.45), to.y - a * Math.sin(angle - 0.45));

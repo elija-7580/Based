@@ -40,7 +40,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent", "read_board", "draw_board"].sort(),
     );
   });
 
@@ -396,5 +396,19 @@ describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
     const tasks = listRecords<{ state: string; input: string; source?: string }>(app.sync.store, TASK_TYPE);
     expect(tasks.map((t) => t.data)).toEqual([expect.objectContaining({ state: "received", input: "Summarize this week's notes", source: "mcp" })]);
     expect((await call("ask_main_agent", { task: "" })).isError).toBe(true);
+  });
+});
+
+// BSD-494: Whiteboards über MCP – zeichnen als Text, knapp zurücklesen.
+describe("Whiteboard über MCP", () => {
+  it("draw_board legt ein Board an und verknüpft eine Seite; read_board liest es knapp", async () => {
+    const { call } = await httpClient();
+    const page = idIn(textOf(await call("create_page", { title: "Lecture 5", markdown: "Notes" })));
+    const out = textOf(await call("draw_board", { title: "Map", script: `page p: ${page}\nnote n: On the exam\np -> n: explains` }));
+    expect(out).toContain("3 added");
+    const board = idIn(out);
+    const read = textOf(await call("read_board", { id: board }));
+    expect(read).toContain(`page ${page} "Lecture 5"`);
+    expect(read).toMatch(/\w+ -> \w+: explains/);
   });
 });

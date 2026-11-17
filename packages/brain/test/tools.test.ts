@@ -167,8 +167,8 @@ describe("WorkspaceTools – Seiten", () => {
   it("Schreib-Werkzeuge sind als solche markiert (für „Ask before edits“)", () => {
     const { tools } = setup();
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
-    expect(write).toEqual(["create_page", "append_markdown", "replace_page_content", "find_replace", "update_page", "add_row", "update_row"]);
-    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual(["search", "read_page", "list_pages", "list_databases", "query_database"]);
+    expect(write).toEqual(["create_page", "draw_board", "append_markdown", "replace_page_content", "find_replace", "update_page", "add_row", "update_row"]);
+    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual(["search", "read_page", "list_pages", "read_board", "list_databases", "query_database"]);
     expect(tools.isWrite("unknown"), "Unbekanntes gilt als Schreiben").toBe(true);
     for (const s of tools.specs) expect(s.inputSchema).toMatchObject({ type: "object" });
   });
@@ -242,5 +242,41 @@ describe("WorkspaceTools – Datenbanken", () => {
     for (let i = 0; i < 5; i++) ok("add_row", { database_id: db, title: "Row " + i });
     const text = ok("query_database", { database_id: db, limit: 2, offset: 1 });
     expect(text.split("\n").map((l) => l.replace(/ \(id: [^)]+\)/, ""))).toEqual(["- Row 1", "- Row 2", "… 2 more (offset: 3)"]);
+  });
+});
+
+// BSD-93: Agenten bedienen Whiteboards über Text (read_board, draw_board).
+describe("Whiteboard für Agenten", () => {
+  it("draw_board legt ein Board an, ordnet an, verknüpft eine Seite; read_board liest es knapp zurück", () => {
+    const { store, ok, idIn } = setup();
+    const page = createPage(store, { title: "Lecture 5" });
+    const out = ok("draw_board", { title: "Regression map", script: `page p: ${page}\nnote n: Residual plots are on the exam\nbox b: Least squares\np -> n: explains\nn -> b\nframe f: Exam { n b }` });
+    const board = idIn(out);
+    expect(out).toContain("6 added");
+    expect(out).toMatch(/Handles: p=\w+ n=\w+ b=\w+ f=\w+/);
+    const text = ok("read_board", { page_id: board });
+    expect(text).toContain(`page ${page} "Lecture 5"`);
+    expect(text).toContain('note "Residual plots are on the exam"');
+    expect(text).toMatch(/\w+ -> \w+: explains/);
+    expect(text.length).toBeLessThan(420); // knapp: das ganze Board in rund hundert Token
+    expect(store.children("b:" + board)).toHaveLength(6);
+  });
+  it("ändern und löschen über Kennungen; unbekannte Seite und Unverständliches werden gemeldet, der Rest gilt", () => {
+    const { store, ok, idIn } = setup();
+    const out = ok("draw_board", { script: "note a: one\nnote b: two\na -> b" });
+    const board = idIn(out);
+    const [, a, b] = /Handles: a=(\w+) b=(\w+)/.exec(out)!;
+    const second = ok("draw_board", { page_id: board, script: `set ${a}: renamed\ndel ${b}\npage x: nope\nwhatever` });
+    expect(second).toContain("0 added, 1 changed, 2 removed");
+    expect(second).toContain("no such page");
+    expect(second).toContain("not understood");
+    expect(ok("read_board", { page_id: board })).toBe(`${a} note "renamed" @0,0`);
+    expect(store.children("b:" + board)).toHaveLength(1);
+  });
+  it("auf einer gewöhnlichen Seite lehnen beide ab", () => {
+    const { store, call } = setup();
+    const page = createPage(store, { title: "Plain" });
+    expect(call("read_board", { page_id: page }).isError).toBe(true);
+    expect(call("draw_board", { page_id: page, script: "note a: x" }).isError).toBe(true);
   });
 });
