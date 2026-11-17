@@ -2,13 +2,16 @@
 // beim Beenden nach ~/Documents/Based Backups (letzte 10, 24 stündlich, 30 täglich, 12 monatlich). Hier: letzter
 // Stand, „Back up now“, Wiederherstellen mit Vorschau. Vor dem Wiederherstellen sichert der Server den aktuellen
 // Stand – das Wiederherstellen lässt sich so selbst wieder zurücknehmen.
+// BSD-449: Ordner frei wählen („Change folder…“, Tauri-Ordnerdialog), z. B. ein externes Laufwerk. Fehlt der Ordner
+// (Laufwerk ab), steht das hier – zurück zum Standardordner geht es nur auf ausdrücklichen Klick, nie still.
 import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Text } from "@astryxdesign/core/Text";
-import { VStack } from "@astryxdesign/core/Layout";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { BasedButton } from "@based/ui/astryx";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Group, Row, Value } from "../screens/settings/parts.js";
+import { isTauri } from "../desktop.js";
 import { relative } from "../shell/format.js";
 import { syncConfig } from "../shell/storage.js";
 import { localServer, PLACES } from "./localServer.js";
@@ -39,6 +42,23 @@ export function BackupsGroup() {
   const ask = async (x: { name: string; at: number }) => {
     try { setConfirm({ ...x, pages: (await ls.backupPreview(x.name)).pages }); } catch (e) { setMessage(e instanceof Error ? e.message : String(e)); }
   };
+  const changeFolder = async (dir?: string) => {
+    setMessage(undefined);
+    try {
+      const chosen = dir === undefined ? await ls.pickBackupDir() : dir === "" ? undefined : dir;
+      if (dir === undefined && !chosen) return; // abgebrochen
+      setBusy(true);
+      await ls.setBackupDir(chosen);
+      setMessage(chosen ? `Backups now go to ${chosen}.` : `Backups go to Documents/${PLACES.backupFolder} again.`);
+    } catch (e) { setMessage(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); }
+  };
+  const reveal = async () => {
+    if (!info?.dir) return;
+    try { const { revealItemInDir } = await import("@tauri-apps/plugin-opener"); await revealItemInDir(info.dir); }
+    catch (e) { setMessage(e instanceof Error ? e.message : String(e)); }
+  };
+  const unreachable = info?.reachable === false;
   const restore = async () => {
     if (!confirm) return;
     const c = confirm;
@@ -49,12 +69,20 @@ export function BackupsGroup() {
   };
   return (
     <Group>
-      <Row label="Backups" hint={`Every hour (when something changed) and when the app quits, into ${info?.dir ?? `Documents/${PLACES.backupFolder}`}. Keeps the last 10, 24 hourly, 30 daily and 12 monthly.`}>
+      <Row label="Backups" hint="Every hour (when something changed) and when the app quits. Keeps the last 10, 24 hourly, 30 daily and 12 monthly.">
         <BasedButton label={busy ? "Backing up…" : "Back up now"} disabled={busy} onClick={() => void now()} />
       </Row>
+      <Row label="Folder" hint={`${info?.dir ?? s.backupDir ?? `Documents/${PLACES.backupFolder}`} — ${s.backupDir ? "chosen by you. If its drive isn't connected, backups pause until it is." : "the standard folder. You can choose another one, for example on an external drive."}`}>
+        <HStack gap={2} wrap="wrap">
+          {info?.dir && !unreachable && isTauri() ? <BasedButton label="Show in Finder" variant="ghost" disabled={busy} onClick={() => void reveal()} /> : null}
+          {s.backupDir ? <BasedButton label="Use standard folder" variant="ghost" disabled={busy} onClick={() => void changeFolder("")} /> : null}
+          <BasedButton label="Change folder…" variant="secondary" disabled={busy} onClick={() => void changeFolder()} />
+        </HStack>
+      </Row>
+      {unreachable ? <Text type="supporting" color="secondary" role="alert" data-testid="backup-unreachable">{info?.error ?? "The backup folder isn't available."} No backups are made until it's back.</Text> : null}
       <Row label="Last backup"><Value testID="backup-last">{info?.last ? relative(new Date(info.last.at)) : info?.snapshots[0] ? relative(new Date(info.snapshots[0].at)) : "None yet"}</Value></Row>
       {!syncsHere ? <Text type="supporting" color="secondary" data-testid="backup-not-synced">Backups contain what the local server holds. Use it for sync (above) so they include this app's pages.</Text> : null}
-      {info?.error ? <Text type="supporting" color="secondary" role="alert">The last backup failed: {info.error}</Text> : null}
+      {info?.error && !unreachable ? <Text type="supporting" color="secondary" role="alert">The last backup failed: {info.error}</Text> : null}
       {message ? <Text type="supporting" color="secondary" role="status" data-testid="backup-message">{message}</Text> : null}
       {info && info.snapshots.length > 0 ? (
         <VStack gap={1}>

@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, channelServerEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { actionEnv, backupEnv, channelServerEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -34,6 +34,12 @@ describe("lokaler Server und CLI (Desktop)", () => {
     expect(actionEnv("/b.cjs", "install-cli", {}, "beta")).toMatchObject({ BASED_CHANNEL: "beta" });
     // Tests/Entwicklung: Based Next
     expect(actionEnv("/b.cjs", "cli-status")).toMatchObject({ BASED_CHANNEL: "next" });
+  });
+
+  it("BSD-449: gewählter Backup-Ordner wird nie vom Server angelegt; ohne Wahl der Standardordner des Kanals", () => {
+    expect(backupEnv("/Users/e/Documents", undefined, "next")).toEqual({ BASED_BACKUP_DIR: "/Users/e/Documents/Based Backups" });
+    expect(backupEnv("/Users/e/Documents", "/Volumes/T7/Based/", "beta")).toEqual({ BASED_BACKUP_DIR: "/Volumes/T7/Based", BASED_BACKUP_CREATE: "0" });
+    expect(backupEnv("/Users/e/Documents", "relative/path", "beta")).toEqual({ BASED_BACKUP_DIR: "/Users/e/Documents/Based Beta Backups" });
   });
 
   it("Ergebnis- und Bereit-Zeilen", () => {

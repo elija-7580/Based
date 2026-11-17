@@ -42,6 +42,8 @@ Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Set
 - Everything stays on your Mac. Based does not send your pages anywhere.
 - Automatic backups: turn on **Settings → Sync & server → Local server** and let this app sync with it. Based then
   keeps backups in `~/Documents/Based Beta Backups` (hourly, daily, monthly) with **Back up now** and **Restore…**.
+  **Change folder…** puts them somewhere else, for example on an external drive. If that drive isn't connected,
+  Based says so there and makes no backups until it's back – it never quietly switches to another folder.
 - Either way, export anything important now and then (**•••** page menu → Export, or Settings → Import & export).
 - Based Beta and Based Next can be installed side by side. Each keeps its own workspace, local server (Beta: port
   47822), backups folder and iCloud folder (`Based Beta`); the command line tool of the Beta is `based-beta`.

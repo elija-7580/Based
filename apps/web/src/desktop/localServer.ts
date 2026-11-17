@@ -68,6 +68,8 @@ export interface LocalServerState {
   icloud: boolean;
   /** BSD-334: Kennung dieses Macs im Sync-Ordner (einmal erzeugt, bleibt). */
   icloudDevice: string | undefined;
+  /** BSD-449: selbst gewählter Backup-Ordner (absolut); ohne: ~/Documents/<Kanal-Ordner>. */
+  backupDir: string | undefined;
 }
 
 /** BSD-334: Standard-Ordner in iCloud Drive (macOS); BSD-455: Based Beta nimmt „Based Beta“. */
@@ -183,13 +185,24 @@ export function newToken(random: (a: Uint8Array) => Uint8Array = (a) => crypto.g
 
 interface Child { kill(): Promise<void> }
 
-function readSettings(): { enabled: boolean; tailnet: boolean; icloud: boolean; icloudDevice: string | undefined } {
+function readSettings(): { enabled: boolean; tailnet: boolean; icloud: boolean; icloudDevice: string | undefined; backupDir: string | undefined } {
   try {
-    const v = JSON.parse(globalThis.localStorage?.getItem(SETTINGS_KEY) ?? "{}") as { enabled?: unknown; tailnet?: unknown; icloud?: unknown; icloudDevice?: unknown };
-    return { enabled: v.enabled === true, tailnet: v.tailnet === true, icloud: v.icloud === true, icloudDevice: typeof v.icloudDevice === "string" ? v.icloudDevice : undefined };
+    const v = JSON.parse(globalThis.localStorage?.getItem(SETTINGS_KEY) ?? "{}") as { enabled?: unknown; tailnet?: unknown; icloud?: unknown; icloudDevice?: unknown; backupDir?: unknown };
+    return { enabled: v.enabled === true, tailnet: v.tailnet === true, icloud: v.icloud === true, icloudDevice: typeof v.icloudDevice === "string" ? v.icloudDevice : undefined,
+      backupDir: typeof v.backupDir === "string" && v.backupDir.startsWith("/") ? v.backupDir : undefined };
   } catch {
-    return { enabled: false, tailnet: false, icloud: false, icloudDevice: undefined };
+    return { enabled: false, tailnet: false, icloud: false, icloudDevice: undefined, backupDir: undefined };
   }
+}
+
+/**
+ * BSD-449: Backup-Umgebung – gewählter Ordner (nie vom Server angelegt: fehlt er, meldet die App das, statt still
+ * auf die interne Platte auszuweichen) oder der Standardordner des Kanals unter ~/Documents.
+ */
+export function backupEnv(documents: string, chosen: string | undefined, channel: DesktopChannel = DESKTOP_CHANNEL): Record<string, string> {
+  const dir = chosen?.trim().replace(/\/+$/, "");
+  if (dir && dir.startsWith("/")) return { BASED_BACKUP_DIR: dir, BASED_BACKUP_CREATE: "0" };
+  return { BASED_BACKUP_DIR: channelServerEnv(documents, channel).BASED_BACKUP_DIR! };
 }
 
 class LocalServer {
@@ -312,11 +325,12 @@ class LocalServer {
     }
   }
 
-  private save(patch: { enabled?: boolean; tailnet?: boolean; icloud?: boolean; icloudDevice?: string }) {
+  private save(patch: { enabled?: boolean; tailnet?: boolean; icloud?: boolean; icloudDevice?: string; backupDir?: string | undefined }) {
     try {
       globalThis.localStorage?.setItem(SETTINGS_KEY, JSON.stringify({
         enabled: patch.enabled ?? this.state.enabled, tailnet: patch.tailnet ?? this.state.tailnet,
         icloud: patch.icloud ?? this.state.icloud, icloudDevice: patch.icloudDevice ?? this.state.icloudDevice,
+        backupDir: "backupDir" in patch ? patch.backupDir : this.state.backupDir,
       }));
     } catch {
       // nur für diese Sitzung
@@ -343,6 +357,24 @@ class LocalServer {
       this.set({ status: "off" });
       await this.start();
     }
+  }
+
+  /** BSD-449: Backup-Ordner wählen (`undefined` = Standardordner); der laufende Server startet damit neu. */
+  async setBackupDir(dir: string | undefined): Promise<void> {
+    this.save({ backupDir: dir?.startsWith("/") ? dir.replace(/\/+$/, "") || "/" : undefined });
+    if (this.child || this.starting) {
+      await this.stop();
+      this.set({ status: "off" });
+      await this.start();
+    }
+  }
+
+  /** BSD-449: Ordnerdialog (Tauri); `undefined` = abgebrochen oder nicht in der Hülle. */
+  async pickBackupDir(): Promise<string | undefined> {
+    if (!isTauri()) return undefined;
+    const { open } = await import("@tauri-apps/plugin-dialog");
+    const picked = await open({ directory: true, multiple: false, title: "Choose a folder for backups", ...(this.state.backupDir ? { defaultPath: this.state.backupDir } : {}) });
+    return typeof picked === "string" ? picked : undefined;
   }
 
   /** BSD-334: Stand des Ordner-Syncs im lokalen Server. */
@@ -372,7 +404,7 @@ class LocalServer {
     if (!r.ok) throw new Error(v.error ?? `The local server answered ${r.status}.`);
     return v;
   }
-  backups() { return this.call<{ dir: string; last?: { at: number; name: string }; error?: string; snapshots: { name: string; at: number }[] }>("GET", "/backups"); }
+  backups() { return this.call<{ dir: string; reachable?: boolean; last?: { at: number; name: string }; error?: string; snapshots: { name: string; at: number }[] }>("GET", "/backups"); }
   backupNow() { return this.call<{ snapshot: { name: string; at: number } | null }>("POST", "/backups"); }
   backupPreview(name: string) { return this.call<{ pages: { added: number; changed: number; removed: number } }>("GET", `/backups/${encodeURIComponent(name)}/preview`); }
   backupRestore(name: string) { return this.call<{ before?: string; pages: { added: number; changed: number; removed: number } }>("POST", `/backups/${encodeURIComponent(name)}/restore`); }
@@ -414,6 +446,8 @@ class LocalServer {
         // BSD-455: Port, Besitzer, Kanal und Backup-Ordner (~/Documents/Based Backups bzw. Based Beta Backups)
         // BSD-274: automatische Backups (stündlich bei Änderungen, beim Beenden) außerhalb des App-Speichers
         ...channelServerEnv(documents),
+        // BSD-449: oder der selbst gewählte Ordner
+        ...backupEnv(documents, this.state.backupDir),
         // BSD-251: das Fenster der App darf den Server ansprechen (CORS) – sonst scheitern Coding, CLI-Verlauf und Sync
         BASED_APP_ORIGIN: globalThis.location?.origin ?? "",
         // BSD-315: zusätzlich nur auf den Tailscale-Adressen lauschen

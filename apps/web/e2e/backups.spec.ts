@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -106,5 +106,72 @@ test("BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup
       await page.setViewportSize({ width: 1280, height: 820 });
     }
     await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+});
+
+// BSD-449: selbst gewählter Ordner (externes Laufwerk). Server mit BASED_BACKUP_CREATE=0 wie aus der App: Backup
+// landet im Ordner; Laufwerk weg → sichtbarer Hinweis, kein Ersatzordner, Rückweg nur per Klick.
+test("BSD-449: gewählter Backup-Ordner – Backup landet dort, fehlender Ordner sichtbar, kein stiller Rückfall", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  const port = 20_000 + webPort + 750 + (browserName === "webkit" ? 100 : 0);
+  const url = `http://127.0.0.1:${port}`;
+  const data = mkdtempSync(join(tmpdir(), "based-e2e-drive-"));
+  const drive = join(data, "Drive");
+  const chosen = join(drive, "Based on Drive");
+  mkdirSync(chosen, { recursive: true });
+  const srv = spawn("pnpm", ["exec", "tsx", "src/main.ts", "--db", join(data, "based.sqlite"), "--port", String(port), "--host", "127.0.0.1", "--public-url", `http://localhost:${webPort}`], {
+    cwd: serverDir, env: { ...process.env, BASED_TOKEN: TOKEN, BASED_LOG_LEVEL: "warning", BASED_BACKUP_DIR: chosen, BASED_BACKUP_CREATE: "0" }, stdio: ["ignore", "ignore", "inherit"], detached: true,
+  });
+  try {
+    for (let i = 0; i < 150; i++) {
+      try { if ((await fetch(`${url}/health`)).ok) break; } catch { /* startet noch */ }
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    const patch = (p: Record<string, unknown>) => page.evaluate((x) => (globalThis as unknown as { __basedLocalServerTest(p: unknown): void }).__basedLocalServerTest(x), p);
+    const open = async () => {
+      await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Settings" }).click();
+      await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+      await patch({ status: "running", enabled: true, url, token: TOKEN, backupDir: chosen });
+    };
+    await open();
+    await expect(page.getByText(`${chosen} — chosen by you`)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Use standard folder" })).toBeVisible();
+    await page.getByRole("button", { name: "Back up now" }).click();
+    await expect(page.getByTestId("backup-message")).toHaveText(/Backed up\.|Nothing changed/);
+    expect(readdirSync(join(chosen, "snapshots")).length).toBeGreaterThanOrEqual(1);
+
+    // Laufwerk abgezogen
+    rmSync(drive, { recursive: true, force: true });
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await open();
+    const alert = page.getByTestId("backup-unreachable");
+    await expect(alert).toContainText("isn't available");
+    await expect(alert).toContainText("No backups are made until it's back.");
+    await expect(page.getByRole("button", { name: "Show in Finder" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Back up now" }).click();
+    await expect(page.getByTestId("backup-message")).toContainText("isn't available");
+    expect(existsSync(chosen)).toBe(false); // nichts still angelegt
+    if (browserName === "chromium") {
+      for (const theme of ["light", "dark"] as const) {
+        await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+        await page.reload();
+        await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+        await open();
+        await expect(page.getByTestId("backup-unreachable")).toBeVisible();
+        await page.getByTestId("backup-unreachable").scrollIntoViewIfNeeded();
+        const box = (await page.getByTestId("backup-unreachable").boundingBox())!;
+        expect(box.x + box.width).toBeLessThanOrEqual(1280);
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: join(screens, `web-settings-backups-folder-missing-${theme}.png`) });
+      }
+      await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+    }
+  } finally {
+    await new Promise<void>((r) => { srv.once("exit", () => r()); try { process.kill(-srv.pid!, "SIGTERM"); } catch { srv.kill(); } setTimeout(r, 5000); });
+    rmSync(data, { recursive: true, force: true });
   }
 });

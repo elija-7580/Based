@@ -59,6 +59,8 @@ export interface Options {
   tailnet: boolean;
   /** BSD-274: Ordner für automatische Backups. */
   backupDir: string | undefined;
+  /** BSD-449: BASED_BACKUP_CREATE=0 – gewählter Ordner, nie selbst anlegen. */
+  backupCreate: boolean;
   /** BSD-334: Sync-Ordner (iCloud Drive) und Kennung dieses Geräts darin (Standard: --node). */
   folderSync: string | undefined;
   folderDevice: string | undefined;
@@ -89,6 +91,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     local: false,
     tailnet: env.BASED_TAILNET === "1",
     backupDir: env.BASED_BACKUP_DIR || undefined,
+    backupCreate: env.BASED_BACKUP_CREATE !== "0",
     folderSync: env.BASED_FOLDER_SYNC || undefined,
     folderDevice: env.BASED_FOLDER_DEVICE || undefined,
   };
@@ -287,7 +290,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL || undefined, lowModel: process.env.BASED_AGENT_LOW_MODEL || undefined }) } : {}),
     ...(whisperFromEnv(process.env) ? { whisper: { ...whisperFromEnv(process.env)!, ...(defaultModelsDir(opts.db) ? { modelsDir: defaultModelsDir(opts.db)! } : {}) } } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
-    ...(opts.backupDir ? { backupDir: opts.backupDir } : {}),
+    ...(opts.backupDir ? { backupDir: opts.backupDir, backupCreate: opts.backupCreate } : {}),
     // BSD-334: Gerätekennung im Ordner – ohne Angabe der Knotenname (nur erlaubte Zeichen)
     ...(opts.folderSync ? { folderSync: { dir: opts.folderSync, device: opts.folderDevice ?? (opts.node.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 64) || "server") } } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
