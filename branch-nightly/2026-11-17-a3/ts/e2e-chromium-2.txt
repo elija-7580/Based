@@ -1,61 +1,61 @@
-success 82c7dc7415a7d9d26b483b8e0e7411772bade7db
-  ✓  150 [chromium] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (1.5s)
-  ✓  152 [chromium] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (963ms)
-  ✓  151 [chromium] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (1.7s)
-  ✓  153 [chromium] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (1.3s)
-  ✓  154 [chromium] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (1.3s)
-  ✓  156 [chromium] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light) (955ms)
-  ✓  157 [chromium] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark) (788ms)
-  ✓  155 [chromium] › e2e/sidebar-scroll.spec.ts:10:1 › Aufklappen oberhalb der aktiven Seite: Liste bleibt stehen, Zeile bleibt unter der Maus (2.0s)
-  ✓  159 [chromium] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (912ms)
-  ✓  158 [chromium] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (1.5s)
-  ✓  160 [chromium] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (941ms)
-  ✓  162 [chromium] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (2.3s)
-  ✓  161 [chromium] › e2e/storage.spec.ts:51:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (2.9s)
-  ✓  164 [chromium] › e2e/storage.spec.ts:72:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (1.1s)
-  -  165 [chromium] › e2e/storage.spec.ts:88:1 › Screenshots web-storage-warning-*
-  ✓  163 [chromium] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (1.9s)
-  ✓  166 [chromium] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (801ms)
-(node:8039) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  168 [chromium] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (950ms)
-  ✓  169 [chromium] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (878ms)
-  ✓  170 [chromium] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (1.9s)
-  ✓  171 [chromium] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (2.2s)
-  -  172 [chromium] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓  173 [chromium] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (1.8s)
-  ✓  174 [chromium] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (1.7s)
-  ✓  167 [chromium] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (9.7s)
-(node:8597) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  175 [chromium] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (1.8s)
-  ✓  176 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (2.8s)
-  ✓  178 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (1.3s)
-  ✓  179 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (1.3s)
-  ✓  180 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (1.2s)
-  ✓  181 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (619ms)
-  ✓  177 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (7.4s)
-  ✓  182 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (817ms)
-  ✓  184 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.0s)
-  ✓  185 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.3s)
-  ✓  183 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (2.7s)
-  ✓  186 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.3s)
-  ✓  187 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (2.0s)
-  ✓  188 [chromium] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (2.1s)
-  ✓  189 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (1.9s)
-  ✓  190 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (1.9s)
-  ✓  191 [chromium] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (2.2s)
-  ✓  192 [chromium] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (896ms)
-  ✓  194 [chromium] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (619ms)
-  ✓  193 [chromium] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (1.5s)
-  ✓  196 [chromium] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (676ms)
-  ✓  195 [chromium] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.2s)
-  ✓  198 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (1.3s)
-  ✓  197 [chromium] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (1.7s)
-  -  199 [chromium] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
-  ✓  200 [chromium] › e2e/welcome.spec.ts:165:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (2.6s)
-  ✓  201 [chromium] › e2e/welcome.spec.ts:199:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (2.8s)
-  ✓  202 [chromium] › e2e/welcome.spec.ts:237:1 › Vorlagen auch später über ⌘N: Journal (695ms)
+failure 92f6d174415d17ee3ad5cf21dbacbeaee80ec10c
 
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveScreenshot(expected) failed
+
+    Locator: getByTestId('kit-overlays')
+      5904 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: kit-overlays-default-dark.png
+
+    Call log:
+      - Expect "toHaveScreenshot(kit-overlays-default-dark.png)" getByTestId('kit-overlays') with timeout 5000ms
+        - verifying given screenshot expectation
+      - waiting for getByTestId('kit-overlays')
+        - locator resolved to <section class="kit-overlays" data-testid="kit-overlays">…</section>
+      - taking element screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - attempting scroll into view action
+        - waiting for element to be stable
+      - 5904 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - waiting for getByTestId('kit-overlays')
+        - locator resolved to <section class="kit-overlays" data-testid="kit-overlays">…</section>
+      - taking element screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - attempting scroll into view action
+        - waiting for element to be stable
+      - captured a stable screenshot
+      - 5904 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      490 |     const menuShot = (name: string) => overlays.locator(`[data-overlay="${name}"]`).screenshot({ animations: "disabled" });
+      491 |     expect((await menuShot("Menu")).equals(await menuShot("Menu item hover")), "Menüzeile überfahren erzwungen").toBe(false);
+    > 492 |     await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+          |                            ^
+      493 |     if (style === "default") await overlays.screenshot({ path: `../../docs/design/screens/web-kit-overlays-${theme}.png`, animations: "disabled" });
+      494 |   });
+      495 | }
+        at /home/runner/work/Based/Based/apps/web/e2e/kit-states.spec.ts:492:28
+
+    attachment #1: kit-overlays-default-dark (image/png) ───────────────────────────────────────────
+    Expected: e2e/kit-states.spec.ts-snapshots/kit-overlays-default-dark-chromium-linux.png
+    Received: test-results/kit-states-Zustands-Galeri-06e59-Bildvergleich-default-dark--chromium-retry1/kit-overlays-default-dark-actual.png
+    Diff:     test-results/kit-states-Zustands-Galeri-06e59-Bildvergleich-default-dark--chromium-retry1/kit-overlays-default-dark-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/kit-states-Zustands-Galeri-06e59-Bildvergleich-default-dark--chromium-retry1/error-context.md
+
+  2 failed
+    [chromium] › e2e/kit-states.spec.ts:446:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:446:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark) 
   10 skipped
-  192 passed (4.0m)
+  190 passed (4.9m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
