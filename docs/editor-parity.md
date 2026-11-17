@@ -31,7 +31,7 @@ neuen Editor auf dem Mac abgenommen hat.
 | HTML-/Mermaid-Vorschau | should | ja | Mermaid; HTML-Vorschau im abgeschotteten Rahmen seit 14.11. |
 | Inline-Datenbank | must | ja | über `renderDatabase` |
 | Meeting-Block | — | ja | BSD-407 Teil 5 (14.11.): Aufnahme, Notizen mit Zeitmarken, Wiedergabe, Transkript, Zusammenfassung, Kontext, Sprecher; gleiche Records wie der alte Editor |
-| Whiteboard | — | nein | Platzhalter „in the new editor soon“ |
+| Whiteboard | — | teils | Eigene Board-Seite statt Block (BSD-264, 17.11.): Fläche, Zettel, Rechteck, Auswahl, Undo; Stift (BSD-265), Text (BSD-266), Verbindungen (BSD-267) fehlen; auf beta ausgeblendet |
 
 ## Bearbeiten
 
@@ -86,7 +86,7 @@ Teile (jeder Teil für sich grün, eigener Commit „BSD-407 Teil n“):
 | 2c | Inline-Gleichung anlegen/bearbeiten, `[[`-Seitenlink, nackte URL → Bookmark | erledigt 14.11. |
 | 2d | Bild per Link, Bookmark-Vorschau (`fetchLinkPreview`), Embed als iframe, PDF-Vorschau | erledigt 14.11. |
 | 2e | Tabelle vollständig (Formatierung in Zellen, Zeile/Spalte löschen), HTML-Vorschau | Zeile/Spalte löschen und HTML-Vorschau erledigt 14.11.; Formatierung in Zellen offen |
-| 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Meeting erledigt 14.11. (Teil 5, unten); Button erledigt (Teil 6.5); Whiteboard offen |
+| 2f | Meeting-Block, Whiteboard, Button-Aktionen, „Copy and sync“ (Synced Block anlegen) | „Copy and sync“ erledigt 14.11.; Meeting erledigt 14.11. (Teil 5, unten); Button erledigt (Teil 6.5); Whiteboard als eigene Board-Seite teilweise (BSD-264, 17.11.) |
 | 2g | Menüs und Formatleiste aus `@based/ui/astryx` statt eigener `.bx2-menu`-Knöpfe (BSD-349 geht darin auf) | Blockmenü erledigt (Teil 6.1); Formatleiste erledigt 15.11. (BasedIconButton mit aria-pressed, Blocktyp mit Turn into wie im Blockmenü, Inline-Code, Inline-Gleichung, Link, Textfarbe als Menüzeilen; BSD-341/342) |
 | 3 | Block-Editor ist Standard (neuer Schlüssel `based.legacyEditor`, alter Schalter `based.newEditor` wird einmalig entfernt); Specs auf `getByTestId("block-editor")`/`.bx2-*` umgestellt, Rest gepinnt (unten) | erledigt 14.11. |
 | 4a | Alter Editor aus dem Client: `ui/PageEditor.tsx` und seine Helfer, Notausgang „Old editor (BlockNote)“, `@blocknote/ariakit`, Seiten-Dokument `page:` im Web-Client, ProseMirror-Sonde und -Bündel; gepinnte Specs umgeschrieben oder gelöscht; Lücken geschlossen (unten) | erledigt 15.11. |
