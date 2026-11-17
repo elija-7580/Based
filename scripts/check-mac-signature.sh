@@ -16,5 +16,13 @@ for f in "$APP"/Contents/Frameworks/*.framework "$APP"/Contents/Frameworks/*.dyl
     bad=1
   fi
 done
+# BSD-453: Hardened Runtime + Mikrofon-Text in Info.plist, aber kein Recht audio-input → macOS verweigert das
+# Mikrofon ohne Rückfrage (Meeting-Aufnahme: „Microphone access is blocked“). Dann lieber kein Release.
+if codesign -dv "$APP" 2>&1 | grep -q 'flags=.*runtime' && grep -q NSMicrophoneUsageDescription "$APP/Contents/Info.plist"; then
+  if ! codesign -d --entitlements - --xml "$APP" 2>/dev/null | grep -q 'com.apple.security.device.audio-input'; then
+    echo "error: hardened runtime without com.apple.security.device.audio-input – the microphone would be blocked"
+    bad=1
+  fi
+fi
 [ "$bad" = 0 ] && echo "signature OK (team '${APP_TEAM:-ad hoc}')"
 exit "$bad"
