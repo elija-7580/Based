@@ -138,7 +138,38 @@ export function renderRich(el: HTMLElement, text: RichText | undefined, atoms: A
   // Ein abschließender Zeilenumbruch braucht ein <br>, sonst ist die letzte (leere) Zeile nicht sichtbar
   const plain = plainText(text);
   if (plain === "" || plain.endsWith("\n")) frag.append(doc.createElement("br"));
-  el.replaceChildren(frag);
+  // BSD-400: Gleicher Aufbau (nur anderer Text, der Normalfall beim Tippen) → Textknoten an Ort und Stelle ändern
+  // statt alles zu ersetzen. Weniger DOM-Arbeit, und WebKit malt den nächsten Frame sofort (nach replaceChildren
+  // im fokussierten Feld kam der Frame bei schnellem Tippen oft erst mit der nächsten Taste).
+  if (sameShape(el, frag)) patchText(el, frag);
+  else el.replaceChildren(frag);
+}
+
+/** Gleiche Knotenarten, Tags und Attribute in gleicher Reihenfolge – nur Textinhalte dürfen sich unterscheiden. */
+function sameShape(a: Node, b: Node): boolean {
+  const ac = a.childNodes, bc = b.childNodes;
+  if (ac.length !== bc.length) return false;
+  for (let i = 0; i < ac.length; i++) {
+    const x = ac[i]!, y = bc[i]!;
+    if (x.nodeType !== y.nodeType) return false;
+    if (x.nodeType === Node.TEXT_NODE) continue;
+    if (x.nodeType !== Node.ELEMENT_NODE) return false;
+    const xe = x as Element, ye = y as Element;
+    if (xe.tagName !== ye.tagName || xe.attributes.length !== ye.attributes.length) return false;
+    for (const at of ye.attributes) if (xe.getAttribute(at.name) !== at.value) return false;
+    if (!sameShape(x, y)) return false;
+  }
+  return true;
+}
+
+function patchText(a: Node, b: Node): void {
+  const ac = a.childNodes, bc = b.childNodes;
+  for (let i = 0; i < ac.length; i++) {
+    const x = ac[i]!, y = bc[i]!;
+    if (x.nodeType === Node.TEXT_NODE) {
+      if ((x as Text).data !== (y as Text).data) (x as Text).data = (y as Text).data;
+    } else patchText(x, y);
+  }
 }
 
 const isAtomEl = (n: Node): n is HTMLElement => n.nodeType === 1 && (n as HTMLElement).dataset.atom !== undefined;

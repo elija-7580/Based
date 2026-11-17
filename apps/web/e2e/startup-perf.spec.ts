@@ -126,3 +126,33 @@ test("Seitenwechsel und Tippen auf großen Seiten bleiben flüssig", { tag: "@pe
   expectFaster(info, "Seitenwechsel (langsamster)", r.worstSwitch, switchLimit);
   expectFaster(info, "Tastendruck p95", r.p95, keyLimit);
 });
+
+// BSD-400: Eine Taste schreibt nur ihr eigenes Textfeld. Vorher hingen die Felder an den props der Hülle (neu bei
+// jeder Taste) – alle 300 Felder bauten ihr DOM neu auf. Zählt Felder, deren Inhalt sich beim Tippen ändert.
+test("Tippen zeichnet nur das eigene Textfeld neu", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await seedTwoBigPages(page);
+  await page.getByRole("treeitem", { name: "Big page A" }).click();
+  await expect(page.getByTestId("page-content").getByText("Big page A line 299", { exact: false })).toBeAttached({ timeout: 20_000 });
+  const editor = blockEditor(page);
+  await editor.getByText("Big page A line 150", { exact: false }).click();
+  await page.keyboard.press("End");
+  await page.evaluate(() => {
+    const w = globalThis as unknown as { __touched: Set<string>; __mo: MutationObserver };
+    w.__touched = new Set();
+    w.__mo = new MutationObserver((list) => {
+      for (const m of list) {
+        const f = (m.target instanceof Element ? m.target : m.target.parentElement)?.closest<HTMLElement>("[data-editable-id]");
+        if (f) w.__touched.add(f.dataset.editableId!);
+      }
+    });
+    w.__mo.observe(document.querySelector("[data-testid=block-editor]")!, { subtree: true, childList: true, characterData: true });
+  });
+  await page.keyboard.type("abc", { delay: 50 });
+  await page.waitForTimeout(300);
+  const touched = await page.evaluate(() => { const w = globalThis as unknown as { __touched: Set<string>; __mo: MutationObserver }; w.__mo.disconnect(); return w.__touched.size; });
+  expect(touched).toBe(1);
+  await expect(editor.getByText("Big page A line 150 with some ordinary words to fill the rowabc")).toBeVisible();
+});

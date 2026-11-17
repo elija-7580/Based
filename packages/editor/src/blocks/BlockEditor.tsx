@@ -2612,6 +2612,12 @@ function refreshEquations(props: PageEditorProps) {
 const TextField = memo(function TextField({ block }: { block: Block }) {
   const { ctrl, props, editable } = useCtx();
   const ref = useRef<HTMLDivElement>(null);
+  // BSD-400: Die Hülle reicht bei jeder Taste neue props. Hingen die Felder daran, schrieb jede Taste alle Felder der
+  // Seite neu (300 Blöcke: ~10 ms JS und erzwungenes Layout je Taste). Erwähnungen und Gleichungen zeichnen sich über
+  // eigene Abos neu (refreshMentions, refreshEquations) – hier zählt nur, ob es einen Gleichungs-Renderer gibt.
+  const propsRef = useRef(props);
+  propsRef.current = props;
+  const hasEquations = props.renderEquationHTML !== undefined;
   useLayoutEffect(() => {
     const el = ref.current;
     ctrl.register(block.id, el);
@@ -2620,12 +2626,12 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || ctrl.composing === block.id) return;
-    renderRich(el, block.text, atomRenderer(props));
+    renderRich(el, block.text, atomRenderer(propsRef.current));
     if (plainText(block.text).length === 0) el.setAttribute("data-empty", "");
     else el.removeAttribute("data-empty");
     ctrl.restore(block.id);
     if (block.type === "code") highlightCode(block.id, el, plainText(block.text), block.props?.language);
-  }, [block.text, ctrl, block.id, props, block.type, block.props?.language]);
+  }, [block.text, ctrl, block.id, props.pages, hasEquations, block.type, block.props?.language]);
   useEffect(() => () => highlightCode(block.id, null, "", undefined), [block.id]);
   const cls = "bx2-field bx2-t-" + block.type + (block.type === "todo" && block.props?.checked ? " bx2-done" : "");
   return (
