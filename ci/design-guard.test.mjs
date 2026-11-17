@@ -23,3 +23,9 @@ test("Apostroph im JSX-Text stört nicht; .ts-Dateien ohne JSX", () => {
   assert.equal(count(`export const C = () => <p>Don't <button type="button">x</button></p>;`), 1);
   assert.equal(count(`const s = "<button"; // <button\\n`, "x.ts"), 1);
 });
+
+test("size=\"sm\" wird nach dem Entfernen der Kommentare gezählt (docs/design/elements.md)", () => {
+  const src = stripTSComments(`// size="sm" im Kommentar
+  export const D = () => <><BasedButton size="sm" label="a" /><BasedButton size={"sm"} label="b" /><BasedButton size="md" label="c" /></>;`);
+  assert.equal((src.match(/\bsize\s*=\s*(?:"sm"|\{\s*"sm"\s*\})/g) ?? []).length, 2);
+});

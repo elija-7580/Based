@@ -62,6 +62,7 @@ input::placeholder { color: var(--muted); }
 .t-heading { font-family: var(--font-head); font-size: var(--type-heading-size); font-weight: var(--weight-heading); letter-spacing: var(--type-heading-tracking); line-height: var(--type-heading-leading); }
 .t-section { font-family: var(--font-head); font-size: var(--type-section-size); font-weight: var(--weight-heading); line-height: var(--type-section-leading); }
 .t-body { font-family: var(--font-body); font-size: var(--size-body); line-height: var(--leading-body); color: var(--ink-2); }
+.t-label { font-size: var(--type-label-size); font-weight: var(--type-label-weight); line-height: var(--type-label-leading); }
 .t-desc { font-size: var(--type-description-size); font-weight: var(--type-description-weight); letter-spacing: var(--type-description-tracking); line-height: var(--type-description-leading); color: var(--muted); }
 .t-meta { font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); line-height: var(--type-meta-leading); color: var(--muted); }
 .t-data { font-family: var(--font-mono); font-size: var(--type-data-size); line-height: var(--type-data-leading); color: var(--muted); }

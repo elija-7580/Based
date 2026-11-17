@@ -102,6 +102,9 @@ für Zeilen: `screens/settings/parts.tsx` (`Group`, `Row`, `Value`). Adresse ein
 
 ## Regeln
 
+- Welches Element wofür, in welcher Größe und mit welchen Zuständen: [`elements.md`](elements.md). Die Bausteine
+  hier setzen das um; `size` wird weggelassen (= `md`).
+
 - Fertig gebaute CSS, kein StyleX-Compiler: keine `xstyle`-Props, keine Vorlagen, die StyleX brauchen.
 - Nichts von fremden Servern laden (Schriften, Icons). `astryx theme add` nicht benutzen, es bindet `fonts.css` ein.
 - Farben, Radien, Abstände kommen aus `@based/design-tokens`. Astryx-Tokens werden im Theme darauf abgebildet,

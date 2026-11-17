@@ -45,6 +45,8 @@ interfaces feel better“) stehen im Entwicklungslog unter „Recherche und Plan
 - [ ] Ruhe, Überfahren, gedrückt, Fokus per Tastatur (neutraler Rahmen `focus-ring`, nie Marker – BSD-367),
       ausgewählt (`selection-bg`/`selected`), deaktiviert.
 - [ ] Gleiche Elemente verhalten sich überall gleich (ein Menü ist überall dasselbe Menü).
+- [ ] Jedes Element entspricht `docs/design/elements.md`: Höhe `md` (außer in dichten Daten), Anklickbares
+      mindestens 14 px, höchstens ein Fokusrahmen auf dem Bildschirm, Einblendung eine der vier Arten.
 - [ ] Zustände fremder Bibliotheken (BlockNote, Ariakit, Astryx) sind auf Based-Flächen umgestellt. Kein
       fremdes Blau, keine fremden Schatten, keine fremde Schrift.
 - [ ] Klickflächen mindestens 24 × 24 px, auf Touch 44 × 44 px, auch wenn das Icon kleiner ist.

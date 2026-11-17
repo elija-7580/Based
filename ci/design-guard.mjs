@@ -3,6 +3,8 @@
 //   button  – kein JSX <button> in Oberflächen (BasedButton aus @based/ui/astryx nehmen)
 //   astryx  – kein Import von @astryxdesign/core* außerhalb packages/ui, apps/web/src/main.tsx, apps/web/src/astryxTheme.ts
 //   px      – keine festen px in CSS außer 0, 1 und 3 px (Tokens aus tokens.css nehmen)
+//   sm      – kein size="sm" in apps/web und packages/editor (docs/design/elements.md: Standardgröße ist md = 32 px;
+//             sm nur in dichten Daten, also in packages/database-ui)
 // Bestand steht in ci/design-allowlist.json (je Datei und Regel eine Höchstzahl) und darf nur schrumpfen:
 //   node ci/design-guard.mjs            prüfen (rot bei jedem neuen Verstoß; Hinweis, wo die Liste kleiner werden kann)
 //   node ci/design-guard.mjs --shrink   Liste auf den Ist-Stand verkleinern (erhöht nie etwas)
@@ -20,6 +22,7 @@ const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const LIST = join(ROOT, "ci/design-allowlist.json");
 const SCOPES = ["apps/web/src", "apps/desktop/src", "packages/editor/src", "packages/database-ui/src", "packages/ui/src"];
 const ASTRYX_OK = new Set(["apps/web/src/main.tsx", "apps/web/src/astryxTheme.ts"]);
+const SM_SCOPES = ["apps/web/src/", "apps/desktop/src/", "packages/editor/src/"];
 const isTest = (p) => /\.(test|spec)\.tsx?$/.test(p) || p.includes("/e2e/");
 
 function walk(dir, out = []) {
@@ -56,6 +59,7 @@ export function scan(root = ROOT) {
       if (/\.tsx?$/.test(file)) {
         const src = stripTSComments(readFileSync(abs, "utf8"), file);
         if (file.endsWith(".tsx") && !file.startsWith("packages/ui/")) add(file, "button", (src.match(/<button\b/g) ?? []).length);
+        if (file.endsWith(".tsx") && SM_SCOPES.some((sc) => file.startsWith(sc))) add(file, "sm", (src.match(/\bsize\s*=\s*(?:"sm"|\{\s*"sm"\s*\})/g) ?? []).length);
         if (!file.startsWith("packages/ui/") && !ASTRYX_OK.has(file)) add(file, "astryx", (src.match(/(?:from\s*|import\s*\(\s*|import\s+)["']@astryxdesign\/core[^"']*["']/g) ?? []).length);
       } else if (file.endsWith(".css")) {
         const src = stripCSSComments(readFileSync(abs, "utf8"));
@@ -127,8 +131,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   if (shrink.length) console.log(`design-guard: ${shrink.length} Stelle(n) besser als die Liste – mit --shrink festhalten.`);
   if (errors.length) {
-    console.error("design-guard: neue Verstöße gegen die Design-Regeln (docs/design/astryx.md):\n  " + errors.join("\n  "));
-    console.error("Statt <button> → BasedButton, statt @astryxdesign/core → @based/ui/astryx, statt px → var(--…) aus tokens.css.");
+    console.error("design-guard: neue Verstöße gegen die Design-Regeln (docs/design/astryx.md, docs/design/elements.md):\n  " + errors.join("\n  "));
+    console.error("Statt <button> → BasedButton, statt @astryxdesign/core → @based/ui/astryx, statt px → var(--…) aus tokens.css, statt size=\"sm\" → Standardgröße md (docs/design/elements.md).");
     process.exit(1);
   }
   console.log("design-guard OK", JSON.stringify(totals(actual)));
