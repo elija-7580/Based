@@ -184,3 +184,38 @@ export function tipPlan(s: TipSource): { tip: string; label?: string; descriptio
   const named = s.isField ? s.hasFieldLabel : s.hasText;
   return named ? { tip, description: tip } : { tip, label: tip };
 }
+
+
+// MARK: Rechtschreibung (BSD-357)
+
+/** Wort um `offset` in `text` (Buchstaben, Ziffern, Apostroph, Bindestrich im Wort); `undefined` = kein Wort. */
+export function wordAt(text: string, offset: number): { start: number; end: number; word: string } | undefined {
+  const isWord = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{N}\p{M}]/u.test(ch);
+  const inner = (i: number) => (text[i] === "'" || text[i] === "’" || text[i] === "-") && isWord(text[i - 1]) && isWord(text[i + 1]);
+  let i = Math.max(0, Math.min(offset, text.length));
+  if (!isWord(text[i]) && !inner(i)) {
+    if (isWord(text[i - 1])) i -= 1;
+    else return undefined;
+  }
+  let start = i, end = i;
+  while (start > 0 && (isWord(text[start - 1]) || inner(start - 1))) start--;
+  while (end < text.length && (isWord(text[end]) || inner(end))) end++;
+  const word = text.slice(start, end);
+  return /[\p{L}]/u.test(word) ? { start, end, word } : undefined;
+}
+
+/** Ergebnis der Prüfung eines Worts: `undefined` = richtig geschrieben (oder keine Prüfung möglich). */
+export type SpellResult = { guesses: readonly string[] } | undefined;
+
+/** Menüeinträge für ein falsch geschriebenes Wort: bis zu fünf Vorschläge, dann „Learn spelling“ und „Ignore spelling“. */
+export function spellingEntries(result: SpellResult, act: { replace: (s: string) => void; learn: () => void; ignore: () => void }): MenuEntry[] {
+  if (!result) return [];
+  const guesses = result.guesses.slice(0, 5);
+  return [
+    ...(guesses.length ? [{ heading: "Spelling" } as MenuEntry] : [{ label: "No guesses found", disabled: true, run: () => undefined } as MenuEntry]),
+    ...guesses.map((g): MenuEntry => ({ label: g, run: () => act.replace(g) })),
+    { separator: true },
+    { label: "Learn spelling", run: act.learn },
+    { label: "Ignore spelling", run: act.ignore },
+  ];
+}

@@ -114,6 +114,112 @@ fn clipboard_html() -> Option<String> {
     }
 }
 
+/// BSD-357: Rechtschreibvorschläge für das Based-Kontextmenü. WKWebView unterstreicht falsch geschriebene Wörter,
+/// gibt die Vorschläge aber nicht an JavaScript; deshalb fragt die Hülle NSSpellChecker (Sprache: automatisch wie
+/// macOS). `None` = richtig geschrieben (oder nicht macOS), sonst die Vorschläge (höchstens fünf, auch leer).
+#[cfg(target_os = "macos")]
+mod spelling {
+    use objc2::encode::{Encode, Encoding};
+    use objc2::rc::Retained;
+    use objc2::runtime::AnyObject;
+    use objc2::{class, msg_send};
+    use std::ffi::{c_char, CStr, CString};
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct NSRange {
+        pub location: usize,
+        pub length: usize,
+    }
+    unsafe impl Encode for NSRange {
+        const ENCODING: Encoding = Encoding::Struct("_NSRange", &[usize::ENCODING, usize::ENCODING]);
+    }
+    const NS_NOT_FOUND: usize = isize::MAX as usize;
+
+    fn ns_string(s: &str) -> Option<Retained<AnyObject>> {
+        let c = CString::new(s).ok()?;
+        unsafe { msg_send![class!(NSString), stringWithUTF8String: c.as_ptr()] }
+    }
+
+    fn checker() -> Option<Retained<AnyObject>> {
+        unsafe { msg_send![class!(NSSpellChecker), sharedSpellChecker] }
+    }
+
+    pub fn check(word: &str) -> Option<Vec<String>> {
+        let checker = checker()?;
+        let text = ns_string(word)?;
+        unsafe {
+            let miss: NSRange = msg_send![&*checker, checkSpellingOfString: &*text, startingAt: 0usize];
+            if miss.location == NS_NOT_FOUND || miss.length == 0 {
+                return None;
+            }
+            let lang: *mut AnyObject = std::ptr::null_mut();
+            let guesses: Option<Retained<AnyObject>> =
+                msg_send![&*checker, guessesForWordRange: miss, inString: &*text, language: lang, inSpellDocumentWithTag: 0isize];
+            let mut out = Vec::new();
+            if let Some(list) = guesses {
+                let n: usize = msg_send![&*list, count];
+                for i in 0..n.min(5) {
+                    let item: *mut AnyObject = msg_send![&*list, objectAtIndex: i];
+                    if item.is_null() {
+                        continue;
+                    }
+                    let utf8: *const c_char = msg_send![item, UTF8String];
+                    if !utf8.is_null() {
+                        out.push(CStr::from_ptr(utf8).to_string_lossy().into_owned());
+                    }
+                }
+            }
+            Some(out)
+        }
+    }
+
+    pub fn learn(word: &str) {
+        if let (Some(checker), Some(text)) = (checker(), ns_string(word)) {
+            unsafe {
+                let _: () = msg_send![&*checker, learnWord: &*text];
+            }
+        }
+    }
+
+    pub fn ignore(word: &str) {
+        if let (Some(checker), Some(text)) = (checker(), ns_string(word)) {
+            unsafe {
+                let _: () = msg_send![&*checker, ignoreWord: &*text, inSpellDocumentWithTag: 0isize];
+            }
+        }
+    }
+}
+
+#[tauri::command]
+fn spell_check(word: String) -> Option<Vec<String>> {
+    #[cfg(target_os = "macos")]
+    {
+        spelling::check(&word)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = word;
+        None
+    }
+}
+
+#[tauri::command]
+fn spell_learn(word: String) {
+    #[cfg(target_os = "macos")]
+    spelling::learn(&word);
+    #[cfg(not(target_os = "macos"))]
+    let _ = word;
+}
+
+#[tauri::command]
+fn spell_ignore(word: String) {
+    #[cfg(target_os = "macos")]
+    spelling::ignore(&word);
+    #[cfg(not(target_os = "macos"))]
+    let _ = word;
+}
+
 pub fn run() {
     tauri::Builder::default()
         .manage(FrontWindow(Mutex::new("main".to_string())))
@@ -127,7 +233,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         // BSD-449: „Change folder…“ für Backups (Ordnerdialog, nur im Hauptfenster erlaubt)
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![power_on_battery, clipboard_html])
+        .invoke_handler(tauri::generate_handler![power_on_battery, clipboard_html, spell_check, spell_learn, spell_ignore])
         .setup(|app| {
             create_main_window(app)?;
             Ok(())

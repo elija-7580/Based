@@ -9,7 +9,7 @@ import { installTooltips } from "./tooltip.js";
 import { installNoWritingTools } from "./writingTools.js";
 
 export { registerContextItems, contextEntries, pasteInto } from "./contextMenu.js";
-export type { ClipboardAccess, ContextInfo, ContextMenuOptions } from "./contextMenu.js";
+export type { ClipboardAccess, ContextInfo, ContextMenuOptions, SpellingAccess } from "./contextMenu.js";
 export { menuIcon, setMenuIcons, showMenu } from "./menu.js";
 export { MenuGlyph } from "./MenuGlyph.js";
 export { closeLayers, openLayer } from "./layer.js";

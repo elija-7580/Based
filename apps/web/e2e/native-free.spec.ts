@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { blockEditor, expectEditable } from "./editor-helpers.js";
+import { blockEditor, expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // „Nichts vom System“ (@based/ui/native): Jeder Klick öffnet Based-Oberfläche – eigenes Kontextmenü an jeder Stelle,
 // eigene Auswahlliste für <select>, eigene Tooltips statt der title-Blase, keine Systemauswahl für Datum/Uhrzeit.
@@ -258,4 +258,61 @@ test("Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unveränd
   await expect.poll(async () => (await look()).bg).toBe(button); // Farbübergang (--duration-fast) abwarten
   await box.click(); // (der Editor zeichnet das Kästchen nach dem Umschalten neu, der Fokus bleibt nicht darauf)
   await expect(box).not.toBeChecked();
+});
+
+// BSD-357: Rechtschreibvorschläge oben im Based-Kontextmenü. In der Mac-Hülle liefert NSSpellChecker die Vorschläge
+// (Tauri-Befehl spell_check); hier ersetzt ein kleines Wörterbuch (`__basedSpelling`) die Hülle. Klick ersetzt das Wort
+// wie Tippen (Rückgängig möglich), „Ignore spelling“ nimmt das Wort aus der Prüfung. Fotos 1280 × 820 hell/dunkel.
+for (const theme of ["light", "dark"] as const) test(`Rechtsklick auf falsch geschriebenes Wort: Vorschläge, ersetzen, Rückgängig (${theme})`, async ({ page, browserName }) => {
+  await page.addInitScript((t) => {
+    (globalThis as { __basedSpelling?: Record<string, string[]> }).__basedSpelling = { Beispeil: ["Beispiel", "Beispiele"], Wrod: [] };
+    localStorage.setItem("based.appearance", JSON.stringify({ theme: t }));
+  }, theme);
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "New page" }).first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
+  await page.keyboard.type("Ein Beispeil hier");
+  const field = blockEditor(page).locator("[data-editable-id]").first();
+  await expect(field).toHaveText("Ein Beispeil hier");
+  // Mitte des falschen Worts
+  const box = await field.evaluate((el) => {
+    const t = el.firstChild!;
+    const r = document.createRange();
+    r.setStart(t, 6);
+    r.setEnd(t, 7);
+    const b = r.getBoundingClientRect();
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  });
+  await page.mouse.click(box.x, box.y, { button: "right" });
+  const menu = page.getByRole("menu", { name: "Context menu" });
+  await expect(menu).toBeVisible();
+  const items = menu.getByRole("menuitem");
+  await expect(items.nth(0)).toHaveText("Beispiel");
+  await expect(items.nth(1)).toHaveText("Beispiele");
+  await expect(menu.getByRole("menuitem", { name: "Learn spelling" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Ignore spelling" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: /^Paste/ })).toBeVisible(); // die Text-Einträge bleiben darunter
+  if (browserName === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-context-spelling-${theme}.png` });
+  await items.nth(0).click();
+  await expect(menu).toHaveCount(0);
+  await expect(field).toHaveText("Ein Beispiel hier");
+  // Rückgängig stellt das Wort wieder her
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(field).toHaveText("Ein Beispeil hier");
+  // richtig geschriebenes Wort: keine Vorschläge, nur die Text-Einträge
+  const ok = await field.evaluate((el) => { const r = document.createRange(); r.setStart(el.firstChild!, 1); r.setEnd(el.firstChild!, 2); const b = r.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
+  await page.mouse.click(ok.x, ok.y, { button: "right" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Learn spelling" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  // Ignore spelling: danach keine Vorschläge mehr für das Wort
+  await page.mouse.click(box.x, box.y, { button: "right" });
+  await menu.getByRole("menuitem", { name: "Ignore spelling" }).click();
+  await page.mouse.click(box.x, box.y, { button: "right" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Beispiel", exact: true })).toHaveCount(0);
+  await page.keyboard.press("Escape");
 });

@@ -9,7 +9,7 @@ import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from ".
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
 import { askUser, showMessage } from "./shell/prompts.js";
-import type { ClipboardAccess } from "@based/ui/native";
+import type { ClipboardAccess, SpellingAccess } from "@based/ui/native";
 
 /** BSD-319: Menü Hilfe → „Report a Problem…“ kommt als dieses Fenster-Ereignis an (App.tsx startet den Bericht). */
 export const REPORT_PROBLEM_EVENT = "based:report-problem";
@@ -206,5 +206,28 @@ export function desktopClipboard(): ClipboardAccess | undefined {
     // BSD-358: dazu HTML (Fett, Links, Listen) über den Befehl clipboard_html (NSPasteboard public.html), wie bei ⌘V
     read: async () => clipboardData(await (await plugin()).readText().catch(() => ""), await readClipboardHTML()),
     write: async (text) => (await plugin()).writeText(text),
+  };
+}
+
+/**
+ * BSD-357: Rechtschreibvorschläge im Based-Kontextmenü. In der Mac-Hülle fragen die Befehle spell_check, spell_learn
+ * und spell_ignore NSSpellChecker (WKWebView gibt die Vorschläge nicht an JavaScript). Im Browser keine Vorschläge –
+ * außer ein Test legt `globalThis.__basedSpelling` (Wort → Vorschläge) an.
+ */
+export function desktopSpelling(): SpellingAccess | undefined {
+  if (isTauri()) {
+    const invoke = async <T>(cmd: string, args: Record<string, unknown>) => (await import("@tauri-apps/api/core")).invoke<T>(cmd, args);
+    return {
+      check: async (word) => { const g = await invoke<string[] | null>("spell_check", { word }); return g ? { guesses: g } : undefined; },
+      learn: async (word) => { await invoke("spell_learn", { word }); },
+      ignore: async (word) => { await invoke("spell_ignore", { word }); },
+    };
+  }
+  const fake = (globalThis as { __basedSpelling?: Record<string, string[]> }).__basedSpelling;
+  if (!fake) return undefined;
+  return {
+    check: async (word) => (fake[word] ? { guesses: fake[word] } : undefined),
+    learn: async (word) => { delete fake[word]; },
+    ignore: async (word) => { delete fake[word]; },
   };
 }
