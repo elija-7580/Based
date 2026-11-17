@@ -12,9 +12,10 @@ sie aus den Seitenquellen). Nach einer Änderung dort die Dateien hierher kopier
   Schrift selbst gehostet (keine Google Fonts), Footer-Links auf `/imprint` und `/privacy`, Einwilligungstext und Honeypot an
   der Warteliste, Aufruf von `/api/waitlist` und `/api/ideas`.
 - Startseite: am Handy (≤ 760 px) die eigene Mobile-Version (`Mobile.dc.html`), `/?desktop` erzwingt die Desktop-Version.
-- Logo-Intro: auf der Startseite „tippt“ sich das Zeichen im Kopf einmal (Linie, Einfügemarke, Stamm, Bauch; wie in der App,
-  `apps/web/src/components/logoTimeline.ts`). Reines CSS aus `build.mjs`, weil nur CSS-Animationen das Abgleichen des DOM
-  überstehen; `site.js` setzt danach `lg-rest`. Unterseiten behalten das Verhalten aus dem Canvas.
+- Logo-Intro: auf jeder Seite „tippt“ sich das Zeichen im Kopf beim Laden einmal (Linie, Einfügemarke, Stamm, Bauch; wie in
+  der App, `apps/web/src/components/logoTimeline.ts`). Reines CSS aus `build.mjs`, weil nur CSS-Animationen das Abgleichen
+  des DOM überstehen; `site.js` nimmt danach `lg-intro` weg. Hover gibt einen „Anschlag“ (Linie gibt nach, Blöcke kippeln).
+  Die Hüpf-Animationen aus dem Canvas (`bsdStem`, `bsdBowl`) sind überall abgeschaltet.
 - Nur heller Modus: kein dunkler Modus, auch nicht per Systemeinstellung.
 - Mit Google Chrome auf dem Rechner werden alle Seiten vorgerendert (Inhalt ohne JavaScript sichtbar, gut für Suchmaschinen).
 - `src/legal/`: Impressum (Offenlegung § 25 MedienG) und Datenschutzerklärung, Deutsch mit kurzer englischer Zusammenfassung.
