@@ -11,6 +11,10 @@ import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { DevOverlay } from "./components/DevOverlay.js";
 import { ReportProblemDialog } from "./components/ReportProblem.js";
+import { ShortcutHud } from "./components/ShortcutHud.js";
+import { ShortcutSheet } from "./components/ShortcutSheet.js";
+import { installArrowNav } from "./shell/arrowNav.js";
+import { COMMAND_EVENT, installCommands } from "./shell/commands.js";
 import { isTauri, REPORT_PROBLEM_EVENT } from "./desktop.js";
 import { startReport } from "./shell/reportUI.js";
 import { Sidebar } from "./components/Sidebar.js";
@@ -28,7 +32,7 @@ import { installKeyHints } from "./shell/keyHints.js";
 import { Icon, type IconName } from "./icons.js";
 import { STARTER_TEMPLATES, type StarterTemplateID } from "@based/core";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
-import { cycleRegion } from "./shell/regions.js";
+import { cycleRegion, toggleSidebarFocus } from "./shell/regions.js";
 import { FIND_EVENT, matchShortcut, menuOwnsShortcut, parentPage } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
@@ -105,6 +109,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     return t.name === "page" ? t.id : undefined;
   })();
   const goHome = useCallback(() => navigate(homePage ? { name: "page", id: homePage } : { name: "home" }), [navigate, homePage]);
+  const goHomeRef = useRef(goHome);
+  goHomeRef.current = goHome;
   // Ohne AI ist Home einfach eine Seite. BSD-461: fehlt eine gewählte Home-Seite, wird eine vorhandene Seite Home
   // („Welcome to Based“, sonst die erste unter Private) – keine leere Seite „Home“ mehr. Nur ein Workspace ganz ohne
   // Seiten bekommt einmal eine. Schon angelegte Home-Seiten älterer Starts bleiben, wie sie sind.
@@ -135,6 +141,16 @@ export function App({ client, history }: { client: StoreClient; history: History
   const swipeHint = useRef<HTMLDivElement>(null);
   // BSD-270: ⌘ (Strg) lange halten blendet die Kürzel-Plaketten ein
   useEffect(() => installKeyHints(window), []);
+  // Tastatur überall: Pfeiltasten zwischen Bedienelementen, Seitenleiste als Liste, ⇧F10 (shell/arrowNav.ts);
+  // Befehle aus dem Mac-Menü laufen über dieselben Tasten (shell/commands.ts).
+  useEffect(() => installArrowNav(window), []);
+  useEffect(() => {
+    const commands = installCommands(window);
+    const onCommand = (e: Event) => { commands.run(String((e as CustomEvent).detail)); };
+    window.addEventListener(COMMAND_EVENT, onCommand);
+    return () => { window.removeEventListener(COMMAND_EVENT, onCommand); commands.dispose(); };
+  }, []);
+  const [sheet, setSheet] = useState(false);
   useEffect(() => installHistoryGestures(window, history, (p) => {
     const el = swipeHint.current;
     if (!el) return;
@@ -245,6 +261,15 @@ export function App({ client, history }: { client: StoreClient; history: History
         case "back": history.back(); break;
         case "forward": history.forward(); break;
         case "reportProblem": void startReport(); break;
+        case "shortcuts": setQuickFind(false); setPalette(false); setSheet((v) => !v); break;
+        case "home": goHomeRef.current(); break;
+        case "focusSidebar":
+          // Ausgeblendete Seitenleiste erst zeigen (⌘\ über denselben Weg wie die Taste), dann hinein.
+          if (!toggleSidebarFocus(document)) {
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "\\", code: "Backslash", metaKey: e.metaKey, ctrlKey: e.ctrlKey, bubbles: true }));
+            requestAnimationFrame(() => requestAnimationFrame(() => toggleSidebarFocus(document)));
+          }
+          break;
         case "openParent": {
           const r = history.route;
           if (r.name !== "page") break;
@@ -339,6 +364,8 @@ export function App({ client, history }: { client: StoreClient; history: History
       <PromptHost />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
       <DevOverlay />
+      {sheet ? <ShortcutSheet ai={ai} onClose={() => setSheet(false)} /> : null}
+      <ShortcutHud ai={ai} />
       <ReportProblemDialog onOpenDiagnostics={() => history.navigate({ name: "settings", page: "diagnostics" })} />
       {importing ? <ImportDialog client={client} initial={importing} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}
@@ -349,6 +376,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           else if (id === "home") goHome();
           else if (id === "dashboard") navigate({ name: "home" });
           else if (id === "report") void startReport();
+          else if (id === "shortcuts") setSheet(true);
           else if (id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
         }} /> : null}
     </div>

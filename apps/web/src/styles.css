@@ -125,6 +125,28 @@ input::placeholder { color: var(--muted); }
 .tab .key-badge { margin-left: var(--space-1); }
 @keyframes key-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { :root[data-show-keys] :is(.key-badge, .nav-item .key) { animation: none; } }
+/* Tastatur: Fokusrahmen im Seitenbaum liegt innen – die Zeile darunter schnitt ihn sonst ab. */
+.tree :is(.tree-header-label, .tree-row, .tree-create):focus-visible { outline-offset: calc(var(--marker-width) * -1); border-radius: var(--radius-md); }
+/* Tastatur: Übersicht (⇧⌘/) und Kurzanzeige beim Halten von ⌘ – Inhalt aus shell/keymap.ts */
+/* Zwei Ebenen: außen rollt es senkrecht, innen zwei Spalten (Spalten mit fester Höhe liefen sonst seitlich aus dem Bild). */
+.keys-sheet { max-height: calc(72vh - var(--space-8) * 3); overflow-y: auto; display: block; margin-bottom: var(--space-4); }
+.keys-columns { display: block; column-count: 2; column-gap: var(--space-6); }
+.keys-group { break-inside: avoid; padding-bottom: var(--space-4); }
+.keys-group-title { user-select: none; -webkit-user-select: none; padding-bottom: var(--space-1); }
+.keys-body { display: flex; flex-direction: column; gap: var(--space-3); }
+.keys-row { display: flex; align-items: center; gap: var(--space-3); justify-content: space-between; min-height: var(--space-6); user-select: none; -webkit-user-select: none; }
+.keys-label { min-width: 0; }
+.keys-hud {
+  position: fixed; left: 50%; bottom: var(--space-5); transform: translateX(-50%); z-index: 40; pointer-events: none;
+  display: flex; align-items: flex-start; gap: var(--space-5); max-width: calc(100vw - var(--space-6)); padding: var(--space-4) var(--space-5); background: var(--bg); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-menu); animation: key-in var(--duration-fast) var(--ease-out);
+}
+[data-material="glass"] .keys-hud { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
+.keys-hud-group { display: flex; flex-direction: column; gap: var(--space-1); min-width: calc(var(--sidebar-width) + var(--space-5)); }
+.keys-hud .keys-row { min-height: var(--space-5); }
+.keys-hud .keys-label { white-space: nowrap; color: var(--ink); }
+@media (max-width: 45rem) { .keys-columns { column-count: 1; } .keys-hud-group + .keys-hud-group { display: none; } }
+@media (prefers-reduced-motion: reduce) { .keys-hud { animation: none; } }
 .badge {
   margin-left: auto; min-width: var(--space-5); height: var(--icon-md); padding: 0 var(--space-2); border-radius: var(--radius-pill);
   background: var(--surface-raised); font-size: var(--type-meta-size); font-weight: var(--weight-heading); display: inline-flex; align-items: center; justify-content: center;
@@ -433,7 +455,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .todo { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-1) 0; cursor: pointer; }
 .todo input { margin-top: var(--space-2); accent-color: var(--ink); }
 .todo.done span { color: var(--muted); text-decoration: line-through; }
-@media (max-width: 720px) {
+@media (max-width: 45rem) {
   .page-grid { grid-template-columns: minmax(0, 1fr); }
   .page-grid > .spacer-cell { display: none; }
   .margin-note { text-align: left; }

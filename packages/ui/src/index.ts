@@ -5,3 +5,5 @@ export type { VirtualListProps } from "./VirtualList.js";
 export { sameRange, scrollToReveal, windowRange } from "./virtual.js";
 export type { WindowRange } from "./virtual.js";
 export * from "./holdKey.js";
+export * from "./keys.js";
+export * from "./spatial.js";

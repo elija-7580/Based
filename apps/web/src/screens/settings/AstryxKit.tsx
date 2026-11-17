@@ -4,7 +4,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMediaPlayer, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
+import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedKeys, BasedMediaPlayer, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
 import { useState } from "react";
 import { Icon } from "../../icons.js";
 
@@ -91,6 +91,13 @@ export function AstryxKit() {
               <BasedChip label="Title only" pressed={chip} onChange={setChip} />
               <BasedChip label="In this page" pressed={!chip} onChange={(on) => setChip(!on)} tooltip="Only this page and its sub-pages" />
               <BasedChip label="Shared only" pressed={false} onChange={() => undefined} disabled />
+            </HStack>
+            {/* Tastenkürzel in der Schreibweise des Tastatur-Registers (shell/keymap.ts) */}
+            <HStack gap={4} wrap="wrap" vAlign="center" data-testid="kit-keys">
+              <BasedKeys keys="Mod+K" />
+              <BasedKeys keys="Mod+Shift+/" />
+              <BasedKeys keys="Tab / Shift+Tab" />
+              <BasedKeys keys="Arrows" />
             </HStack>
           </VStack>
         </Card>

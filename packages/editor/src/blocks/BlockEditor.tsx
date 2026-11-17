@@ -709,6 +709,21 @@ export function BlockEditor(props: PageEditorProps) {
     if (ctrl.selected.length) return onSelectionKey(e, mod);
   };
 
+  /** ⌘/ (wie Notion): Blockmenü per Tastatur – am Block, an dem man steht bzw. an den ausgewählten Blöcken. */
+  const openMenuByKey = (e: React.KeyboardEvent, ids: readonly string[]): boolean => {
+    if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || !(e.code === "Slash" || e.key === "/") || !editable || !ids.length) return false;
+    e.preventDefault();
+    const id = ids[0]!;
+    const el = rootRef.current?.querySelector<HTMLElement>(`.bx2-block[data-block-id="${CSS.escape(id)}"]`);
+    const r = el?.getBoundingClientRect();
+    setSlash(undefined);
+    setToolbar(undefined);
+    ctrl.select([...ids]);
+    rootRef.current?.focus({ preventScroll: true });
+    setMenu({ id, x: Math.round(r?.left ?? 0), y: Math.round((r?.top ?? 0) + Math.min(r?.height ?? 0, 28)) });
+    return true;
+  };
+
   /** ⌘⌥0–9 (wie Notion): Text, H1–H3, To-do, Liste, Nummern, Toggle, Code, Seite. ⌘⌥T: alle Toggles auf/zu. */
   const blockShortcut = (e: React.KeyboardEvent, ids: readonly string[]): boolean => {
     if (!(e.metaKey || e.ctrlKey) || !e.altKey || !editable) return false;
@@ -747,6 +762,7 @@ export function BlockEditor(props: PageEditorProps) {
     const len = textLen(store, id);
     const key = e.key;
     if (blockShortcut(e, [id])) return;
+    if (openMenuByKey(e, [id])) return;
     // WebKit schickt am Anfang/Ende eines Felds kein beforeinput (nichts zu löschen) – hier selbst behandeln
     if (key === "Backspace" && !mod && !e.altKey && c.from === 0 && c.to === 0) {
       e.preventDefault();
@@ -858,6 +874,7 @@ export function BlockEditor(props: PageEditorProps) {
     const key = e.key;
     const order = ctrl.order();
     if (blockShortcut(e, sel)) return;
+    if (openMenuByKey(e, sel)) return;
     if (key === "Escape") { e.preventDefault(); ctrl.clearSelection(); return; }
     if ((key === "Backspace" || key === "Delete") && editable) {
       e.preventDefault();

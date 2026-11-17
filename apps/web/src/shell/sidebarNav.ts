@@ -171,6 +171,8 @@ export const NAV_COMMANDS: readonly NavCommand[] = [
   { id: "settings", label: "Settings", keywords: ["preferences", "options"] },
   // BSD-319: Fehler festhalten (⇧⌘B)
   { id: "report", label: "Report a problem", keywords: ["bug", "feedback", "diagnostics", "issue"] },
+  // Übersicht aller Tastenkürzel (⇧⌘/)
+  { id: "shortcuts", label: "Keyboard shortcuts", keywords: ["keys", "hotkeys", "cheat sheet", "help"] },
 ];
 
 /** Befehle, die nur mit eingeschalteter AI erscheinen (Dashboard = Zeitbogen der Agenten). */

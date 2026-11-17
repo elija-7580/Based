@@ -169,6 +169,8 @@ export async function startDesktop(tabs?: { close: () => void; count: () => numb
   if (main) for (const ev of ["tauri://close-requested", "tauri://destroyed"]) await win.listen(ev, () => markSessionEnd());
   // BSD-319: Hilfe → „Report a Problem…“ (⇧⌘B) – im Fenster vorn.
   await win.listen("desktop://report-problem", () => void window.dispatchEvent(new CustomEvent(REPORT_PROBLEM_EVENT)));
+  // Mac-Menü: Befehle aus dem Tastatur-Register (File, Edit, View, Go, Help) – im Fenster vorn.
+  await win.listen<string>("desktop://command", (e) => void window.dispatchEvent(new CustomEvent("based:command", { detail: e.payload })));
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
   if (main && autoUpdatePref.get()) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }
