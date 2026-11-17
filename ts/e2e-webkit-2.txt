@@ -1,2 +1,61 @@
-cancelled be90791a029c89cb4de78142c08d93e579bdb9f4
-(kein Log – Lauf vorher abgebrochen)
+cancelled 55f60cbed3ddbade8d72161bcf3dad45e2191d5d
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 245 tests using 2 workers, shard 2 of 2
+
+  ✓    2 [webkit] › e2e/keyboard-everywhere.spec.ts:42:1 › Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter öffnet, Esc zurück in die Seite @smoke (5.4s)
+  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (6.5s)
+  ✓    3 [webkit] › e2e/keyboard-everywhere.spec.ts:92:1 › ⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächste Pfeiltaste den Fokus zurück (1.3s)
+  -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -    6 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓    5 [webkit] › e2e/keyboard-everywhere.spec.ts:105:1 › Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück (2.6s)
+  ✓    8 [webkit] › e2e/keyboard-everywhere.spec.ts:123:1 › Übersicht aller Kürzel: ⇧⌘/ öffnet, Suche filtert, Esc schließt; auch über ⌘K @smoke (1.9s)
+  ✓    7 [webkit] › e2e/keyboard-select.spec.ts:39:1 › Einfache Tabelle: Tab, ⇧Tab, Pfeile, Enter, Tab am Ende legt eine Zeile an (5.1s)
+  ✓    9 [webkit] › e2e/keyboard-everywhere.spec.ts:147:1 › ⌘ halten zeigt die Tasten der Stelle: überall, Seitenleiste, Text, Blöcke, Datenbank (6.9s)
+  ✓   10 [webkit] › e2e/keyboard-select.spec.ts:77:1 › Datenbank: Tab im Zellen-Editor, ⇧-Pfeile wählen Bereich, Kopieren, Einfügen, Leeren, Ziehen (5.5s)
