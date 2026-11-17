@@ -121,9 +121,9 @@ heutigen Treiber 6 297 ms, nativ mit vorbereiteten Anweisungen 1 788 ms.
   Oberfläche zeigt ehrlich, wie viel schon da ist. Der Server kann je Record filtern (Gäste); das wird der
   allgemeine Weg. Ein Gerät, das nur einen Teil hält, gibt es nicht.
 - **Umschlag für Ende-zu-Ende:** im Klartext nur `id`, `kind`, `stamp`, `scope` (die Seite, zu der der Record
-  gehört) und gelöscht ja/nein; alles andere verschlüsselt. Damit funktionieren Cursor, LWW und Teil-Sync ohne dass
-  der Server Inhalte liest. Folge: Suche und MCP auf dem Server gibt es mit E2E nur für Seiten, die ein Gerät
-  ausdrücklich übergibt (so schon entschieden).
+  gehört) und gelöscht ja/nein; alles andere verschlüsselt. Damit funktionieren Cursor, LWW und der geordnete Pull,
+  ohne dass der Server Inhalte liest. Suche und MCP auf dem Server gibt es nur in Bereichen, die für Agenten offen
+  sind (siehe „Bereiche und Agenten“).
 - **Erster Sync als Strom:** ein komprimierter Schnappschuss (eine Antwort, Zeile für Zeile verarbeitet) statt
   hunderter Seiten.
 
@@ -157,12 +157,34 @@ kompaktes Format dieselben Felder berühren. Nichts davon am Datenweg vor der Be
    Tabellen derselben Datei werden.
 2. **Jedes Gerät hält den ganzen Workspace offline** – auch Telefon, iPad und Web. → Kein Teil-Sync als Dauerzustand.
    Umso wichtiger ist Stufe B: Auf der Platte liegt alles, im Arbeitsspeicher nur das Gerüst und das Offene.
-3. Mit E2E laufen Suche und MCP nur auf den Geräten (und für Seiten, die ein Gerät ausdrücklich übergibt). → Der
-   Server ist ein Speicher für verschlüsselte Records und braucht keinen Store (Stufe D ist damit Pflicht, nicht Option).
+3. **Mehrstufig statt entweder–oder** (Elija, 17.11. nachmittags; ersetzt „Suche und MCP nur auf den Geräten“):
+   Agenten sollen auch ohne eingeschaltetes Gerät Kontext haben, mit vektorbasierter Memory über MCP. Ein Bereich
+   ist entweder *privat* (Ende-zu-Ende, Suche und Agenten nur auf den Geräten) oder *für Agenten offen* (der Server
+   darf lesen, baut den Vektor-Index und bedient MCP). Wichtigste Vorgabe: einfach und übersichtlich einstellbar,
+   wenig nötig; technisch tief nur für die, die wollen. Siehe „Bereiche und Agenten“ unten.
 4. Stufe A: Elija hat keine Vorgabe. Festgelegt nach der Empfehlung: nach dem 23.11., vor Stufe B (A1 und der
    Zeitmess-Test zuerst, weil sie B messbar machen).
 5. Größe: rund 20 000 Seiten in Elijas Workspace – die Größenordnung der 520 000-Records-Messung. Stufe B ist damit
    für den eigenen Alltag nötig, nicht erst für Mobil.
+
+## Bereiche und Agenten (Vorschlag zur Entscheidung 3, Feinentwurf offen)
+
+- **Zwei Stufen je Bereich, vererbt wie Rechte** (Workspace → Teamspace → Seite): *Private* und *Open to agents*.
+  Teilen mit Menschen bleibt eine eigene Achse (Rollen wie heute).
+- **Einfach zuerst:** ein Schalter „Let agents work while my devices are off“ (Standard aus) und drei Arbeitsweisen
+  zur Wahl – *Private* (alles Ende-zu-Ende), *Balanced* (alles privat, ein Bereich „Agents“ offen), *Open* (alles
+  offen). Jede Seite zeigt ihre Stufe mit einem Zeichen; ein Klick erklärt in einem Satz, wer lesen kann.
+- **Wechsel ist ausdrücklich:** privat → offen nennt die Zahl der Seiten und fragt nach; offen → privat löscht die
+  lesbare Kopie und den Index auf dem Server.
+- **Agent = Mitglied mit Rolle** (lesen, kommentieren, bearbeiten) nur in offenen Bereichen; er schreibt normale
+  Records über den Sync (sichtbar, im Verlauf, rückgängig zu machen). Jeder Zugriff steht in einem Protokoll.
+- **Memory:** Erinnerungen und ihre Relationen sind normale Records (Datenbank „Memories“, bearbeitbar). Vektoren
+  sind abgeleitet, nie synchronisiert, jederzeit neu berechenbar: auf den Geräten für alles, auf dem Server nur für
+  offene Bereiche.
+- **Für Technische (Einstellungen → Advanced):** Rolle je Agent, Stufe je Seite, eigener Server, eigenes
+  Embedding-Modell, Aufbewahrung, Zugriffsprotokoll als Export.
+- **Für das Format (Stufe C):** Der Umschlag trägt je Record den Bereich und dessen Stufe; in privaten Bereichen
+  reicht der Server Records und Y-Änderungen nur verschlüsselt weiter, in offenen liest er sie.
 
 ## Was aus „Aufwand egal, langfristig am besten“ folgt
 
