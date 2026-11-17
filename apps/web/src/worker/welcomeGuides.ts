@@ -3,6 +3,7 @@
 // Workspace – so bleibt der frische Workspace für Tests und Sync derselbe wie vorher. Texte englisch, kurz, ohne
 // Gedankenstriche (Plan im Backlog-Eintrag).
 import { insertPage, keysBetween, type Block, type WorkspaceStore } from "@based/core";
+import { AI_OPTION } from "../shell/ai.js";
 
 type Line = readonly [type: string, text: string];
 
@@ -11,7 +12,15 @@ export interface WelcomeGuide {
   readonly lines: readonly Line[];
 }
 
-export const WELCOME_GUIDES: readonly WelcomeGuide[] = [
+/** Satz über AI in „Your data“ – nur in Builds, die AI anbieten (auf beta gibt es keinen Schalter dafür). */
+const AI_LINE: Line = ["bulletedList", "AI is off. Agents only run after you turn them on in Settings and choose a model."];
+
+/** Die Anleitungsseiten für einen Build; `aiOption` = darf der Build AI anbieten (BSD-305 Teil 5: nicht auf beta). */
+export function welcomeGuides(aiOption: boolean = AI_OPTION): readonly WelcomeGuide[] {
+  return GUIDES.map((g) => (aiOption ? g : { ...g, lines: g.lines.filter((l) => l !== AI_LINE) }));
+}
+
+const GUIDES: readonly WelcomeGuide[] = [
   {
     title: "Basics",
     lines: [
@@ -55,10 +64,12 @@ export const WELCOME_GUIDES: readonly WelcomeGuide[] = [
       ["text", "Based works without an account. Your workspace lives in a file on this Mac and nothing leaves it unless you ask."],
       ["bulletedList", "Export a page or the whole workspace as Markdown, HTML or a Based archive at any time."],
       ["bulletedList", "Connect your own sync server in Settings to use the same workspace on other devices."],
-      ["bulletedList", "AI is off. Agents only run after you turn them on in Settings and choose a model."],
+      AI_LINE,
     ],
   },
 ];
+
+export const WELCOME_GUIDES: readonly WelcomeGuide[] = welcomeGuides();
 
 /**
  * Legt die Willkommensseiten unter `parentID` an (am Ende, in fester Reihenfolge) und gibt ihre IDs zurück.
