@@ -57,7 +57,20 @@ export interface TranscribeModelState {
   name?: string;
   error?: string;
 }
-export interface TranscribeStatus { engineInstalled: boolean; ready: boolean; model: TranscribeModelState }
+/** Ein Modell aus der Auswahl des Servers (Elija 17.11.: Fast, Balanced, Best). */
+export interface TranscribeModelChoice extends TranscribeModelState { id: string; active: boolean }
+export interface TranscribeStatus { engineInstalled: boolean; ready: boolean; model: TranscribeModelState; models?: TranscribeModelChoice[] }
+
+/** Stufen der Auswahl; unbekannte Modelle (eigener Server) zeigen ihren Namen. */
+export const MODEL_TIERS: Readonly<Record<string, { tier: string; hint: string }>> = {
+  "whisper-base": { tier: "Fast", hint: "Quickest and smallest; fine for clear English, weaker in other languages." },
+  "whisper-small": { tier: "Balanced", hint: "Clearly better in German and mixed languages, still quick on a laptop." },
+  "whisper-large-v3-turbo": { tier: "Best", hint: "Most accurate; a large download and more battery." },
+};
+/** „Balanced · 488 MB“ */
+export function modelLabel(m: Pick<TranscribeModelChoice, "id" | "name" | "size">): string {
+  return [MODEL_TIERS[m.id]?.tier ?? m.name ?? m.id, megabytes(m.size)].filter(Boolean).join(" · ");
+}
 
 /** Stand der Transkription auf einem Server; `undefined`: er bietet sie nicht an (keine Route, Gast, nicht erreichbar). */
 export async function transcribeStatus(cfg: ServerAccess | undefined, fetcher: typeof fetch = (...a) => fetch(...a)): Promise<TranscribeStatus | undefined> {
@@ -65,18 +78,21 @@ export async function transcribeStatus(cfg: ServerAccess | undefined, fetcher: t
   try {
     const r = await fetcher(`${base(cfg)}/local/transcribe`, { headers: { Authorization: `Bearer ${cfg.token}` } });
     if (!r.ok) return undefined;
-    const b = (await r.json()) as { ready?: boolean; engineInstalled?: boolean; model?: Partial<TranscribeModelState> };
+    const b = (await r.json()) as { ready?: boolean; engineInstalled?: boolean; model?: Partial<TranscribeModelState>; models?: Partial<TranscribeModelChoice>[] };
     const model: TranscribeModelState = { source: "none", installed: false, ...b.model };
+    const models = Array.isArray(b.models)
+      ? b.models.filter((m): m is Partial<TranscribeModelChoice> & { id: string } => typeof m.id === "string").map((m) => ({ source: "catalog" as const, installed: false, active: false, ...m }))
+      : undefined;
     // Ältere Server melden engineInstalled nicht: dort gibt es die Route nur mit eingerichtetem Programm.
-    return { engineInstalled: b.engineInstalled ?? true, ready: b.ready === true, model };
+    return { engineInstalled: b.engineInstalled ?? true, ready: b.ready === true, model, ...(models?.length ? { models } : {}) };
   } catch {
     return undefined;
   }
 }
 
 /** Modell aus dem Katalog laden, abbrechen oder entfernen – nur auf ausdrücklichen Klick. */
-export async function transcribeModel(cfg: ServerAccess, action: "download" | "cancel" | "remove", fetcher: typeof fetch = (...a) => fetch(...a)): Promise<void> {
-  const r = await fetcher(`${base(cfg)}/local/transcribe/model`, { method: "POST", body: JSON.stringify({ action }), headers: { Authorization: `Bearer ${cfg.token}`, "Content-Type": "application/json" } });
+export async function transcribeModel(cfg: ServerAccess, action: "download" | "select" | "cancel" | "remove", fetcher: typeof fetch = (...a) => fetch(...a), id?: string): Promise<void> {
+  const r = await fetcher(`${base(cfg)}/local/transcribe/model`, { method: "POST", body: JSON.stringify({ action, ...(id ? { id } : {}) }), headers: { Authorization: `Bearer ${cfg.token}`, "Content-Type": "application/json" } });
   if (!r.ok) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? `HTTP ${r.status}`);
 }
 
@@ -85,8 +101,8 @@ export type TranscriptionStep = "no-server" | "no-engine" | "no-model" | "downlo
 /** Reine Regel (getestet): der nächste fehlende Schritt. */
 export function transcriptionStep(status: TranscribeStatus | undefined): TranscriptionStep {
   if (!status) return "no-server";
+  if (status.models?.some((m) => m.downloading) || status.model.downloading) return "downloading";
   if (status.ready) return "ready";
-  if (status.model.downloading) return "downloading";
   if (!status.engineInstalled) return "no-engine";
   return "no-model";
 }
@@ -97,8 +113,8 @@ export function downloadPercent(model: TranscribeModelState): number | undefined
   return Math.max(0, Math.min(100, Math.floor((model.loaded / model.size) * 100)));
 }
 
-/** „148 MB“ */
-export const megabytes = (bytes: number | undefined) => (bytes ? `${Math.round(bytes / 1_000_000)} MB` : "");
+/** „148 MB“, ab 1 GB „1.6 GB“ */
+export const megabytes = (bytes: number | undefined) => (!bytes ? "" : bytes >= 1_000_000_000 ? `${(bytes / 1_000_000_000).toFixed(1)} GB` : `${Math.round(bytes / 1_000_000)} MB`);
 
 // Die Einstellungen melden „es hat sich etwas geändert“ – der Aufnahmedienst (host.ts) fragt dann neu nach.
 const changed = new Set<() => void>();

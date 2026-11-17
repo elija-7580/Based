@@ -305,6 +305,94 @@ test("Feedback 17. 11.: Einstellungen nennen den fehlenden Schritt für die Tran
   }
 });
 
+// Elija 17.11.: Modell wählen und laden in den Einstellungen. Der Server ist ein Doppel (page.route) mit dem Verhalten
+// von apps/server/src/transcribe.ts: drei Modelle, „download“ macht das Modell zum gewählten, Fortschritt, dann bereit.
+test("Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen", async ({ page, browserName }) => {
+  type M = { id: string; name: string; size: number; installed: boolean; downloading: boolean; loaded?: number };
+  const models: M[] = [
+    { id: "whisper-base", name: "Whisper base", size: 147_951_465, installed: false, downloading: false },
+    { id: "whisper-small", name: "Whisper small", size: 487_601_967, installed: false, downloading: false },
+    { id: "whisper-large-v3-turbo", name: "Whisper large v3 turbo", size: 1_624_555_275, installed: false, downloading: false },
+  ];
+  let active = "whisper-small";
+  let hold = true; // Download bleibt bei 50 % stehen, bis der Test ihn freigibt
+  const posts: unknown[] = [];
+  const state = () => {
+    for (const m of models) if (m.downloading && !hold) { m.downloading = false; m.installed = true; delete m.loaded; }
+    const all = models.map((m) => ({ ...m, active: m.id === active }));
+    return { engine: "whisper.cpp", engineInstalled: true, ready: models.some((m) => m.installed), model: { source: "catalog", ...all.find((m) => m.active)! }, models: all };
+  };
+  await page.route("http://127.0.0.1:9/local/transcribe**", async (route) => {
+    const req = route.request();
+    const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
+    if (req.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
+    if (req.method() === "POST" && req.url().endsWith("/model")) {
+      const body = req.postDataJSON() as { action: string; id?: string };
+      posts.push(body);
+      const m = models.find((x) => x.id === (body.id ?? active))!;
+      if (body.action === "download") { active = m.id; m.downloading = true; m.loaded = Math.ceil(m.size / 2); }
+      if (body.action === "select") active = m.id;
+      if (body.action === "cancel") { m.downloading = false; delete m.loaded; }
+      if (body.action === "remove") m.installed = false;
+    }
+    return route.fulfill({ status: 200, headers: cors, contentType: "application/json", body: JSON.stringify(state()) });
+  });
+  await page.goto("/#prefs-sync");
+  await page.getByLabel("Server URL").fill("http://127.0.0.1:9/");
+  await page.getByLabel("Token").fill("secret");
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByLabel("Server URL")).toBeDisabled();
+  await page.goto("/#prefs-my-settings");
+  const section = page.getByTestId("settings-section-meetings");
+  const shot = async (name: string) => {
+    if (!SHOTS || browserName !== "chromium") return;
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await section.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    for (const theme of ["light", "dark"] as const) {
+      await setTheme(page, theme);
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `../../docs/design/screens/web-settings-transcription-${name}-${theme}.png` });
+    }
+    await setTheme(page, "light");
+  };
+  // vorausgewählt: Balanced (small); nichts wird von selbst geladen
+  const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
+  await expect(pick("Balanced · 488 MB")).toBeVisible();
+  await expect(section).toContainText("Download a speech model once from huggingface.co");
+  expect(posts).toEqual([]);
+  await shot("choose");
+  await section.getByRole("button", { name: "Download", exact: true }).click();
+  await expect(section).toContainText("Downloading Balanced (488 MB)… 50 %");
+  await expect(section.getByRole("button", { name: "Cancel" })).toBeVisible();
+  expect(posts).toEqual([{ action: "download", id: "whisper-small" }]);
+  await shot("downloading");
+  hold = false;
+  await expect(section).toContainText("Ready with Balanced.", { timeout: 10_000 });
+  await expect(pick("Balanced · 488 MB · downloaded")).toBeVisible();
+  await expect(section.getByRole("button", { name: "Remove" })).toBeVisible();
+  await shot("ready");
+  // anderes Modell wählen: erst nach Klick laden
+  hold = true;
+  await pick(/Balanced/).click();
+  await page.getByRole("menuitem", { name: /Best · 1\.6 GB/ }).click();
+  await expect(section).toContainText("Ready with another model. Most accurate");
+  expect(posts).toHaveLength(1);
+  await section.getByRole("button", { name: "Download", exact: true }).click();
+  await expect(section).toContainText("Downloading Best (1.6 GB)… 50 %");
+  await section.getByRole("button", { name: "Cancel" }).click();
+  await expect(section.getByRole("button", { name: "Download", exact: true })).toBeVisible();
+  expect(posts.slice(1)).toEqual([{ action: "download", id: "whisper-large-v3-turbo" }, { action: "cancel", id: "whisper-large-v3-turbo" }]);
+  // zurück zum geladenen Modell: „Use this model“, dann entfernen
+  await pick(/Best/).click();
+  await page.getByRole("menuitem", { name: /Balanced/ }).click();
+  await section.getByRole("button", { name: "Use this model" }).click();
+  await expect(section).toContainText("Ready with Balanced.");
+  await section.getByRole("button", { name: "Remove" }).click();
+  await expect(section.getByRole("button", { name: "Download", exact: true })).toBeVisible();
+  expect(posts.at(-1)).toEqual({ action: "remove", id: "whisper-small" });
+});
+
 test("BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite", async ({ page }) => {
   await newPageWithMeeting(page, "Planning");
   await block(page).getByLabel("Meeting title").fill("Roadmap planning");

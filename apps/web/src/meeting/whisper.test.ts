@@ -1,7 +1,9 @@
 // BSD-231 Teil 3c: Transkription über den eigenen Server – nur wenn er sie anbietet; Anfrage mit Token, Sprache und
 // Fachwörtern; Fehler des Servers kommen als verständliche Meldung an.
 import { describe, expect, it } from "vitest";
-import { downloadPercent, megabytes, onTranscriptionChanged, serverWhisper, transcribeModel, transcribeStatus, transcriptionChanged, transcriptionStep, whisperReady } from "./whisper.js";
+import { downloadPercent, megabytes, modelLabel, onTranscriptionChanged, serverWhisper, transcribeModel, transcribeStatus, transcriptionChanged, transcriptionStep, whisperReady } from "./whisper.js";
+import { turnOnAction, waitForLocalServer } from "./useTranscription.js";
+import { meetingNotesOptionText } from "../screens/Welcome.js";
 import { orderServers } from "./servers.js";
 import { transcriptionHint } from "./TranscriptionSetup.js";
 
@@ -52,20 +54,62 @@ describe("Transkription einrichten (Feedback 17. 11.)", () => {
   });
 
   it("Hinweise nennen den nächsten Handgriff – in der Mac-App ohne „browser“ und ohne Server-Jargon", () => {
-    const model = { source: "catalog" as const, installed: false, size: 147_951_465, name: "Whisper base" };
-    expect(transcriptionHint("no-server", { local: false, desktop: true })).toMatch(/Turn on the local server in Sync & server/);
+    const small = { id: "whisper-small", active: true, source: "catalog" as const, installed: false, size: 487_601_967, name: "Whisper small" };
+    const status = { engineInstalled: true, ready: false, model: small, models: [small] };
+    expect(transcriptionHint("no-server", { local: false, desktop: true })).toMatch(/^Off\. Turn it on .* made on this Mac\. .*488 MB/);
     expect(transcriptionHint("no-server", { local: false, desktop: false })).toMatch(/Connect one in Sync & server/);
     expect(transcriptionHint("no-engine", { local: true, desktop: true })).toMatch(/brew install whisper-cpp/);
-    expect(transcriptionHint("no-model", { local: true, desktop: true, status: { engineInstalled: true, ready: false, model } })).toMatch(/Whisper base, 148 MB\) from huggingface\.co/);
-    expect(transcriptionHint("no-model", { local: true, desktop: true, status: { engineInstalled: true, ready: false, model: { ...model, error: "checksum mismatch" } } })).toMatch(/The last download failed: checksum mismatch\./);
-    expect(transcriptionHint("no-model", { local: true, desktop: true, status: { engineInstalled: true, ready: false, model: { ...model, error: "cancelled" } } })).not.toMatch(/failed/);
-    expect(transcriptionHint("downloading", { local: true, desktop: true, status: { engineInstalled: true, ready: false, model: { ...model, downloading: true, loaded: 73_975_733 } } })).toBe("Downloading the speech model… 50 %");
-    expect(transcriptionHint("ready", { local: true, desktop: true })).toMatch(/on this Mac/);
+    expect(transcriptionHint("no-model", { local: true, desktop: true, status, choice: small })).toMatch(/once from huggingface\.co.*Clearly better in German/);
+    expect(transcriptionHint("no-model", { local: true, desktop: true, status, choice: { ...small, error: "checksum mismatch" } })).toMatch(/The last download failed: checksum mismatch\./);
+    expect(transcriptionHint("no-model", { local: true, desktop: true, status, choice: { ...small, error: "cancelled" } })).not.toMatch(/failed/);
+    expect(transcriptionHint("downloading", { local: true, desktop: true, status, choice: { ...small, downloading: true, loaded: 243_800_984 } })).toBe("Downloading Balanced (488 MB)… 50 %");
+    expect(transcriptionHint("ready", { local: true, desktop: true, status, choice: { ...small, installed: true } })).toBe("Ready with Balanced. Recordings are transcribed on this Mac; the audio doesn't leave it.");
+    expect(transcriptionHint("ready", { local: false, desktop: false })).toBe("Ready. Recordings are transcribed on your server.");
+  });
+
+  it("Elija 17.11.: drei Stufen zur Auswahl; „Einschalten“ lädt das gewünschte bzw. gewählte Modell genau einmal", () => {
+    const m = (id: string, o: Partial<{ installed: boolean; active: boolean; downloading: boolean; size: number }> = {}) => ({ id, source: "catalog" as const, installed: false, active: false, name: id, ...o });
+    expect(modelLabel(m("whisper-base", { size: 147_951_465 }))).toBe("Fast · 148 MB");
+    expect(modelLabel(m("whisper-small", { size: 487_601_967 }))).toBe("Balanced · 488 MB");
+    expect(modelLabel(m("whisper-large-v3-turbo", { size: 1_624_555_275 }))).toBe("Best · 1.6 GB");
+    expect(modelLabel(m("own-model", { size: 5_000_000 }))).toBe("own-model · 5 MB");
+    const status = (models: ReturnType<typeof m>[], engineInstalled = true) => ({ engineInstalled, ready: false, model: models.find((x) => x.active) ?? models[0]!, models });
+    const fresh = [m("whisper-base"), m("whisper-small", { active: true }), m("whisper-large-v3-turbo")];
+    expect(turnOnAction(status(fresh))).toEqual({ action: "download", id: "whisper-small" });
+    expect(turnOnAction(status(fresh), "whisper-large-v3-turbo")).toEqual({ action: "download", id: "whisper-large-v3-turbo" });
+    expect(turnOnAction(status(fresh, false))).toBeUndefined(); // ohne Programm nichts laden
+    expect(turnOnAction(status([m("whisper-base", { installed: true }), m("whisper-small", { active: true, installed: true })]))).toBeUndefined();
+    expect(turnOnAction(status([m("whisper-base", { installed: true }), m("whisper-small", { active: true })]), "whisper-base")).toEqual({ action: "select", id: "whisper-base" });
+    expect(turnOnAction(status([m("whisper-small", { active: true, downloading: true })]))).toBeUndefined();
+    // Stand mit Modellen vom Server; ein laufender Download zählt vor „bereit mit einem anderen Modell“
+    expect(transcriptionStep({ engineInstalled: true, ready: true, model: fresh[1]!, models: [m("whisper-base", { installed: true }), m("whisper-small", { active: true, downloading: true })] })).toBe("downloading");
+  });
+
+  it("Willkommensbildschirm: Text je Stand; lokaler Server startet oder scheitert mit Meldung", async () => {
+    expect(meetingNotesOptionText("no-server").title).toBe("Meeting notes are off");
+    expect(meetingNotesOptionText("no-server").text).toMatch(/downloads a speech model once \(488 MB\)/);
+    expect(meetingNotesOptionText("downloading", { model: { size: 487_601_967, loaded: 243_800_984 } }).text).toBe("Downloading the speech model (488 MB)… 50 %. You can start now; it continues in the background.");
+    expect(meetingNotesOptionText("ready").title).toBe("Meeting notes are on");
+    expect(meetingNotesOptionText("no-server", { problem: "The local server didn't start." }).text).toMatch(/The local server didn't start\.$/);
+    const fake = (states: { status: "off" | "starting" | "running" | "failed" | "unavailable"; error: string | undefined }[]) => {
+      let i = 0; const subs = new Set<() => void>();
+      return { getState: () => states[Math.min(i, states.length - 1)]!, subscribe: (fn: () => void) => { subs.add(fn); return () => void subs.delete(fn); }, next: () => { i += 1; for (const fn of [...subs]) fn(); }, subs };
+    };
+    const ok = fake([{ status: "starting", error: undefined }, { status: "running", error: undefined }]);
+    const waiting = waitForLocalServer(ok);
+    ok.next();
+    await expect(waiting).resolves.toBeUndefined();
+    expect(ok.subs.size).toBe(0);
+    await expect(waitForLocalServer(fake([{ status: "failed", error: "Node.js is missing" }]))).rejects.toThrow("Node.js is missing");
+    await expect(waitForLocalServer(fake([{ status: "starting", error: undefined }]), 20)).rejects.toThrow("in time");
   });
 
   it("Modell laden nur auf Aufruf, mit Token; Fehler des Servers als Meldung; Signal an den Aufnahmedienst", async () => {
     const ok = fakeFetch(() => Response.json({ installed: false, downloading: true }, { status: 202 }));
     await transcribeModel(cfg, "download", ok.f);
+    await transcribeModel(cfg, "select", ok.f, "whisper-base");
+    expect(ok.calls[1]!.init!.body).toBe(JSON.stringify({ action: "select", id: "whisper-base" }));
+    ok.calls.pop();
     expect(ok.calls).toHaveLength(1);
     expect(ok.calls[0]!.url).toBe("http://127.0.0.1:8787/local/transcribe/model");
     expect(ok.calls[0]!.init!.method).toBe("POST");

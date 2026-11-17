@@ -47,7 +47,7 @@ test("BSD-138/414: Bundle und Node als Resource (kein externalBin); Shell-Plugin
   assert.equal(conf.bundle.externalBin, undefined);
   // BSD-314: node-pty (native Datei für das Terminal) liegt daneben in node_modules/, nicht im Bundle.
   // BSD-414: die mitgelieferte Node liegt als Resource node/ bei (fetch-node.mjs), weiter kein externalBin.
-  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/", "../dist-sidecar/node/": "node/" });
+  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/", "../dist-sidecar/node/": "node/", "../dist-sidecar/whisper/": "whisper/" });
   assert.match(conf.build.beforeBuildCommand, /@based\/desktop sidecar/);
   assert.match(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.sidecar, /fetch-node\.mjs && node scripts\/sign-node\.mjs/);
   assert.match(conf.build.beforeDevCommand, /@based\/desktop sidecar/);
@@ -182,6 +182,71 @@ test("Entitlements: Mikrofon-Recht der App, in beiden Kanälen eingebunden", () 
   // Das Beta-Overlay wird über tauri.conf.json gelegt und darf bundle.macOS nicht ersetzen.
   const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
   assert.equal(beta.bundle?.macOS, undefined);
+});
+
+// BSD-231 (Elija 17.11.): whisper.cpp liegt der App bei – gebaut aus dem gepinnten Stand, nie ein Build-Abbruch.
+test("whisper.cpp: Ziele, cmake-Argumente, Cache, universelle Datei, Fehler brechen den Build nicht ab", async () => {
+  const { buildWhisper, cmakeArgs, whisperArchs, WHISPER_COMMIT, WHISPER_VERSION, MACOS_MIN } = await import("../scripts/build-whisper.mjs");
+  const { fatArchs } = await import("../scripts/macho.mjs");
+  const { mkdirSync, mkdtempSync, rmSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  assert.deepEqual(whisperArchs({ triple: "universal-apple-darwin" }), ["arm64", "x86_64"]);
+  assert.deepEqual(whisperArchs({ triple: "aarch64-apple-darwin" }), ["arm64"]);
+  assert.deepEqual(whisperArchs({ triple: "x86_64-unknown-linux-gnu" }), []);
+  assert.deepEqual(whisperArchs({ platform: "darwin", arch: "x64" }), ["x86_64"]);
+  assert.deepEqual(whisperArchs({ platform: "linux", arch: "x64" }), []);
+  assert.equal(MACOS_MIN, conf.bundle.macOS.minimumSystemVersion);
+  const args = cmakeArgs({ src: "/s", build: "/b", arch: "x86_64" });
+  for (const a of ["-DCMAKE_OSX_ARCHITECTURES=x86_64", "-DBUILD_SHARED_LIBS=OFF", "-DGGML_NATIVE=OFF", "-DGGML_METAL_EMBED_LIBRARY=ON", "-DWHISPER_CURL=OFF"]) assert.ok(args.includes(a), a);
+  assert.match(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.sidecar, /build-whisper\.mjs && node scripts\/fetch-node\.mjs/);
+
+  const dir = mkdtempSync(join(tmpdir(), "based-whisper-build-"));
+  try {
+    // Doppel für git/cmake: legt Quellstand und „Programm“ (Mach-O-Kopf der Architektur) an und zählt die Aufrufe.
+    const macho = (cpu) => { const b = Buffer.alloc(64); b.writeUInt32LE(0xfeedfacf, 0); b.writeInt32LE(cpu, 4); return b; };
+    const calls = [];
+    let commit = WHISPER_COMMIT;
+    const run = (cmd, a) => {
+      calls.push([cmd, ...a].join(" "));
+      if (cmd === "git" && a.includes("rev-parse")) { if (!existsSync(join(a[1], "LICENSE"))) throw new Error("no repo"); return commit + "\n"; }
+      if (cmd === "git" && a.includes("clone")) { mkdirSync(a.at(-1), { recursive: true }); writeFileSync(join(a.at(-1), "LICENSE"), "MIT"); return ""; }
+      if (cmd === "cmake" && a[0] === "--build") {
+        const arch = /-(arm64|x86_64)$/.exec(a[1])[1];
+        mkdirSync(join(a[1], "bin"), { recursive: true });
+        writeFileSync(join(a[1], "bin", "whisper-cli"), macho(arch === "arm64" ? 0x0100000c : 0x01000007));
+      }
+      return "";
+    };
+    const log = [];
+    const o = { out: join(dir, "out"), cache: join(dir, "cache"), run, log: (m) => log.push(m) };
+    assert.equal(await buildWhisper({ ...o, archs: [] }), false);
+    assert.equal(existsSync(join(dir, "out", "README.txt")), true);
+    assert.equal(await buildWhisper({ ...o, archs: ["arm64", "x86_64"] }), true);
+    assert.deepEqual(fatArchs(readFileSync(join(dir, "out", "whisper-cli"))).map((a) => a.name).sort(), ["arm64", "x86_64"]);
+    assert.equal(readFileSync(join(dir, "out", "LICENSE"), "utf8"), "MIT");
+    assert.ok(calls.some((c) => c.includes(`--branch ${WHISPER_VERSION}`)));
+    // zweiter Lauf: aus dem Cache, ohne git und cmake
+    const before = calls.length;
+    assert.equal(await buildWhisper({ ...o, archs: ["arm64", "x86_64"] }), true);
+    assert.equal(calls.length, before);
+    // falscher Commit (Tag verschoben) oder Fehler von cmake: kein Programm, kein Abbruch
+    commit = "0".repeat(40);
+    assert.equal(await buildWhisper({ ...o, cache: join(dir, "cache2"), archs: ["arm64"] }), false);
+    assert.equal(existsSync(join(dir, "out", "whisper-cli")), false);
+    commit = WHISPER_COMMIT;
+    const failing = (cmd, a) => { if (cmd === "cmake") throw Object.assign(new Error("cmake failed"), { stderr: "CMake Error: no compiler" }); return run(cmd, a); };
+    assert.equal(await buildWhisper({ ...o, cache: join(dir, "cache3"), run: failing, archs: ["arm64"] }), false);
+    assert.equal(existsSync(join(dir, "out", "whisper-cli")), false);
+    assert.match(log.at(-1), /build failed .*no compiler/);
+    // Signierplan: whisper-cli mit Hardened Runtime, ohne besondere Rechte
+    const { signTargets } = await import("../scripts/sign-node.mjs");
+    mkdirSync(join(dir, "dist", "whisper"), { recursive: true });
+    writeFileSync(join(dir, "dist", "whisper", "whisper-cli"), "x");
+    assert.deepEqual(signTargets(join(dir, "dist")), [{ path: join(dir, "dist", "whisper", "whisper-cli"), entitlements: false }]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.
