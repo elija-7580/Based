@@ -1,33 +1,4 @@
-failure 0c2c017b219a96f460817cf8119fcaa82b28aa12
-
-    - Array []
-    + Array [
-    +   "Datenbank: div.dbui-table „Table“ – kein sichtbarer Fokusrahmen",
-    + ]
-
-      158 |   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
-      159 |   console.log(found.join("\n"));
-    > 160 |   expect(found).toEqual([]);
-          |                 ^
-      161 | });
-      162 |
-      163 | // Fotos der in BSD-304 geänderten Stellen (Gliederung 24 px, Quick Find, Tabelle mit Fokus), hell und dunkel in
-        at /home/runner/work/Based/Based/apps/web/e2e/a11y.spec.ts:160:17
-
-    Error Context: test-results/a11y-Tab-Durchlauf-Namen-F-db003-chen-auf-allen-Hauptscreens-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(received).toEqual(expected) // deep equality
-
-    - Expected  - 1
-    + Received  + 3
-
-    - Array []
-    + Array [
-    +   "Datenbank: div.dbui-table „Table“ – kein sichtbarer Fokusrahmen",
-    + ]
-
+failure e23712634a75bc015382303a21ac3b22d8edd30d
       158 |   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
       159 |   console.log(found.join("\n"));
     > 160 |   expect(found).toEqual([]);
@@ -49,13 +20,42 @@ failure 0c2c017b219a96f460817cf8119fcaa82b28aa12
 
     Test timeout of 30000ms exceeded.
 
+    Error: locator.click: Target page, context or browser has been closed
+    Call log:
+      - waiting for getByTestId('block-editor').first().locator('[data-editable-id]').last()
+        - locator resolved to <div role="textbox" aria-label="Code" spellcheck="false" aria-multiline="true" contenteditable="true" data-placeholder="Code" writingsuggestions="false" class="bx2-field bx2-t-code" data-editable-id="a0000000-0000-4000-8000-000000000028"><div class="mystery-widget" id="a0000000-0000-400…</div>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+          - waiting 100ms
+        41 × waiting for element to be visible, enabled and stable
+           - element is not visible
+         - retrying click action
+           - waiting 500ms
+        - waiting for element to be visible, enabled and stable
+
+
+      174 |   await fields.first().click();
+      175 |   await page.keyboard.press("End");
+    > 176 |   await fields.last().click();
+          |                       ^
+      177 |   await page.keyboard.press("Escape");
+      178 |   await page.getByRole("button", { name: "Home", exact: true }).first().click();
+      179 |   await page.goBack();
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-passthrough.spec.ts:176:23
+
     Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-webkit-retry1/error-context.md
 
   2 failed
     [webkit] › e2e/a11y.spec.ts:126:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens 
     [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
   26 skipped
-  238 passed (12.6m)
+  239 passed (16.2m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
