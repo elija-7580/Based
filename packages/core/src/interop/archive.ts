@@ -9,7 +9,7 @@ import { canonicalStringify } from "../json.js";
 import { compareStamps, ZERO_STAMP, type Stamp } from "../hlc.js";
 import type { Block, BlockProps, Database, Workspace, WireRecord } from "../model/records.js";
 import { safeParseRecord } from "../model/records.js";
-import { recordKey, type RecordKeyString, type WorkspaceStore } from "../store/store.js";
+import { keyOf, recordKey, type RecordKeyString, type WorkspaceStore } from "../store/store.js";
 import { DEFAULT_ZIP_LIMITS, isZip, readZipEntries, writeZip, ZipError, zipEntryData, type ZipLimits, type ZipWriteEntry } from "./zip.js";
 
 type AssetRef = NonNullable<BlockProps["asset"]>;
@@ -301,6 +301,22 @@ function revivable(store: WorkspaceStore, records: readonly WireRecord[], candid
     else if (r.kind === "view") keep = !unitAlive(r.data.blockID);
     else if (r.kind === "property") { const b = dbBlock(r.data.databaseID); keep = b === undefined || !unitAlive(b); }
     if (keep) out.add(key);
+  }
+  // Was zurückkommt, braucht seine Eltern: ein gelöschter Behälter (z. B. ein Toggle, aus dem die Unterseite in den
+  // Papierkorb gerettet wurde) kommt mit, sonst wäre die zurückgeholte Seite verwaist.
+  const byKey = new Map(candidates.map((c) => [c.key, c.r] as const));
+  for (const key of [...out]) {
+    let r = byKey.get(key);
+    const seen = new Set<string>();
+    while (r?.kind === "block" && r.data.parent.startsWith("b:")) {
+      const parent = r.data.parent.slice(2);
+      if (seen.has(parent) || store.blocks.has(parent)) break;
+      seen.add(parent);
+      const pk = keyOf("block", parent);
+      if (!byKey.has(pk)) break;
+      out.add(pk);
+      r = byKey.get(pk);
+    }
   }
   return out;
 }

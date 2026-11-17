@@ -148,4 +148,18 @@ describe("BSD-423 Archiv-Import nach „alles löschen“", () => {
     expect(s.blocks.get("p1")?.text).toBe("Body");
     expect(s.children("b:" + a)).toHaveLength(2);
   });
+
+  it("Unterseite aus einem gelöschten Toggle, danach Papierkorb geleert: kommt mit ihrem Toggle zurück, nicht verwaist", () => {
+    const { s, a } = sample();
+    const now = s.now();
+    s.transact("t", (tx) => tx.put({ kind: "block", data: { id: "tg", type: "toggle", parent: "b:" + a, sk: "a0", text: "Toggle", createdAt: now, updatedAt: now } as Block }));
+    const sub = createPage(s, { title: "Inside toggle", parent: "tg" });
+    const archive = roundTrip(s);
+    s.deleteBlocks(["tg"]); // Unterseite wandert in den Papierkorb, der Toggle wird gelöscht
+    emptyTrash(s);
+    expect(s.blocks.has(sub)).toBe(false);
+    importArchiveRecords(s, archive);
+    expect(s.blocks.get(sub)?.parent).toBe("b:tg");
+    expect(s.blocks.get("tg")?.parent).toBe("b:" + a);
+  });
 });
