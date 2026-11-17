@@ -1,5 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // BSD-302 Teil 1: Zustands-Galerie. Jeder Based-Baustein im Design-Kit (Settings → Diagnostics → Design kit) und die
 // häufigsten Bedienelemente der Shell werden in Ruhe, Überfahren, gedrückt, Tastaturfokus und deaktiviert angesehen.
@@ -217,6 +220,53 @@ for (const theme of ["light", "dark"] as const) {
     for (const [k, c] of Object.entries(await colorsOf(sel))) if (!transparent(c) && !isToken(c, allowed)) found.push(`Quick Find: Zeile ausgewählt ${k}: ${c}`);
     await page.keyboard.press("Escape");
     expect(found).toEqual([]);
+  });
+}
+
+// BSD-302 Teil 2 (Beta-Umfang): die neuen Bausteine der Beta – Media-Player (BSD-447) im Kit und die Karten des
+// Willkommensbildschirms mit den Startvorlagen (BSD-436) – in allen Zuständen nur mit Token-Farben. Eigener Test,
+// damit die große Kit-Galerie unter Last nicht an ihre Zeitgrenze kommt.
+for (const theme of ["light", "dark"] as const) {
+  test(`Zustands-Galerie: Media-Player und Willkommens-Karten nutzen nur Token-Farben (${theme})`, async ({ playwright, browserName, baseURL }) => {
+    const dir = mkdtempSync(join(tmpdir(), "based-kit-"));
+    const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL!, viewport: { width: 1280, height: 900 } });
+    try {
+      await ctx.addInitScript((t) => {
+        (globalThis as { __basedWelcome?: boolean }).__basedWelcome = true;
+        localStorage.setItem("based.appearance", JSON.stringify({ theme: t }));
+      }, theme);
+      const page = ctx.pages()[0] ?? (await ctx.newPage());
+      await page.goto("/");
+      await expect(page.getByTestId("welcome")).toBeVisible();
+      const allowed = await tokenColors(page);
+      const found: string[] = [];
+      const look = async (name: string, loc: Locator, states: State[]) => {
+        await expect(loc, name).toBeVisible();
+        for (const st of states) {
+          await setState(page, loc, st);
+          const colors = await colorsOf(loc);
+          await release(page, st);
+          for (const [k, c] of Object.entries(colors)) if (!transparent(c) && !isToken(c, allowed)) found.push(`${name} ${st} ${k}: ${c}`);
+        }
+      };
+      const welcome = page.getByTestId("welcome");
+      await look("Willkommen: Karte", welcome.getByRole("button", { name: /Start empty/ }), ["rest", "hover", "pressed", "focus"]);
+      await look("Willkommen: Vorlage", welcome.getByRole("button", { name: "Journal", exact: true }), ["rest", "hover", "pressed", "focus"]);
+
+      await page.goto("/#prefs-kit");
+      const media = page.getByTestId("kit-media");
+      await look("Media-Player", media, ["rest", "focus"]);
+      await look("Media: Abspielen", media.getByRole("button", { name: "Play" }), ["rest", "hover", "pressed", "focus"]);
+      await look("Media: Ton", media.getByRole("button", { name: "Mute" }), ["rest", "hover", "focus"]);
+      await look("Media: Position", media.getByRole("slider", { name: "Position" }), ["rest", "hover", "focus"]);
+      await media.getByRole("button", { name: "Mute" }).click();
+      await look("Media: Ton aus (gedrückt)", media.getByRole("button", { name: "Unmute" }), ["rest", "hover"]);
+      if (browserName === "chromium") await media.screenshot({ path: `../../docs/design/screens/web-kit-media-${theme}.png` });
+      expect(found).toEqual([]);
+    } finally {
+      await ctx.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 }
 
