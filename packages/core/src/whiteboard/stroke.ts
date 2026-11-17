@@ -114,3 +114,34 @@ export function shareInside(points: readonly Point[], poly: readonly Point[]): n
   for (const p of points) if (pointInPolygon(p, poly)) n += 1;
   return n / points.length;
 }
+
+/**
+ * BSD-265 „Snap shapes“: erkennt in einem Strich eine gerade Linie, ein Rechteck oder ein Oval. `undefined`, wenn
+ * er keiner Form klar ähnelt (dann bleibt er Handschrift). Geschlossen heißt: Anfang und Ende liegen nah beieinander.
+ */
+export function recognizeShape(points: readonly Point[]): { kind: "line" | "rect" | "oval"; bounds: Rect } | undefined {
+  const b = inkBounds(points);
+  if (!b || points.length < 2) return undefined;
+  const a = points[0]!, z = points[points.length - 1]!;
+  const chord = Math.hypot(z.x - a.x, z.y - a.y), diag = Math.hypot(b.w, b.h);
+  if (diag < 24) return undefined;
+  let length = 0;
+  for (let i = 1; i < points.length; i++) length += Math.hypot(points[i]!.x - points[i - 1]!.x, points[i]!.y - points[i - 1]!.y);
+  if (chord > 0.2 * diag) {
+    // Offen: gerade, wenn kein Punkt weit von der Sehne abweicht und der Weg kaum länger ist als sie.
+    let worst = 0;
+    for (const p of points) worst = Math.max(worst, Math.sqrt(segDist2(p.x, p.y, a.x, a.y, z.x, z.y)));
+    return worst <= Math.max(3, 0.06 * chord) && length <= chord * 1.15 ? { kind: "line", bounds: b } : undefined;
+  }
+  if (b.w < 16 || b.h < 16 || length < diag * 1.6) return undefined;
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  let oval = 0, rect = 0;
+  for (const p of points) {
+    const u = (p.x - cx) / (b.w / 2), v = (p.y - cy) / (b.h / 2);
+    oval += Math.abs(Math.hypot(u, v) - 1);
+    rect += 1 - Math.max(Math.abs(u), Math.abs(v));
+  }
+  oval /= points.length; rect /= points.length;
+  if (Math.min(oval, rect) > 0.16) return undefined;
+  return { kind: oval < rect ? "oval" : "rect", bounds: b };
+}

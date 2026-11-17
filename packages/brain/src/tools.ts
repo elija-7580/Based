@@ -318,7 +318,8 @@ export class WorkspaceTools implements ToolHost {
           const page = store.transact("Agent: draw on board", (tx) => {
             const pid = given ?? insertBoardPage(store, tx, { ...(parent ? { parent } : {}), title: str(a, "title") ?? "Untitled board" });
             const now = store.now();
-            for (const o of plan.add) tx.put({ kind: "block", data: boardObjectToBlock(o, pid, now) });
+            const all = new Map([...existing, ...plan.add].map((o) => [o.id, o]));
+            for (const o of plan.add) tx.put({ kind: "block", data: boardObjectToBlock(o, pid, now, undefined, all) });
             for (const [id, fields] of plan.patch) {
               const block = store.blocks.get(id);
               const cur = block ? boardObjectFromBlock(block) : undefined;

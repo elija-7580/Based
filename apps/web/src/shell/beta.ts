@@ -29,7 +29,7 @@ export const BETA_HIDDEN: Readonly<Partial<Record<GatedFeature, string>>> = {
   realtimeText: "Echtzeit-Text ist „after“ (features.csv), braucht einen Server",
   coding: "Labs, hängt an AI",
   agentMarks: "BSD-459: Marker-Farbe und Calm mode erklären sich nur über Agenten, die es auf beta nicht gibt",
-  whiteboard: "BSD-264: bisher nur die Fläche (auswählen, verschieben, zoomen); Stift, Text und Objekte folgen (BSD-265–269). Vorhandene Boards werden angezeigt, neue lassen sich auf beta nicht anlegen",
+  // whiteboard: seit 17.11. auf beta sichtbar (Entscheidung Elija: freischalten, sobald Stift und Dateien stehen – BSD-93).
   fastStart: "ADR 0017 Stufe B: Laden nach Bedarf ist ein Versuch; die erste Suche lädt noch den ganzen Workspace",
   sharing: "BSD-460: Teilen ist „after“ (features.csv „Sharing and permissions“), braucht einen Server; docs/beta/README.md",
 };

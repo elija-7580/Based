@@ -527,3 +527,61 @@ test("Einfügen: kurzer Text wird ein Text-Objekt", async ({ page }) => {
   await expect(board).toHaveAttribute("data-objects", "1");
   await expect(board).toHaveAttribute("data-selected", "1");
 });
+
+test("Seitenkarte über @, Untergrund liniert, gemerkter Stift", async ({ page, browserName }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  await board.focus();
+  // @ öffnet die Suche; Enter legt die erste Seite als Karte ab
+  await page.keyboard.press("@");
+  const pick = page.getByTestId("board-pagepick");
+  await expect(pick).toBeVisible();
+  await page.keyboard.type("Welcome");
+  await expect(pick.getByRole("button", { name: "Welcome to Based" })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(pick).toHaveCount(0);
+  await expect(board).toHaveAttribute("data-objects", "1");
+  // Untergrund über das Based-Menü
+  const c = await center(page);
+  await page.mouse.click(c.x + 300, c.y - 200, { button: "right" });
+  await page.getByRole("menuitem", { name: "Background: Ruled lines" }).click();
+  // Stift merken und wiederfinden
+  await board.focus();
+  await page.keyboard.press("p");
+  await page.getByTestId("board-color-red").click();
+  await page.getByTestId("board-preset-save").click();
+  await expect(page.getByTestId("board-preset-0")).toHaveAttribute("aria-pressed", "true");
+  await page.getByTestId("board-color-blue").click();
+  await expect(page.getByTestId("board-preset-0")).toHaveAttribute("aria-pressed", "false");
+  await page.getByTestId("board-preset-0").click();
+  await expect(page.getByTestId("board-color-red")).toHaveAttribute("aria-pressed", "true");
+  await page.mouse.move(0, 0);
+  expect(await overflows(page)).toEqual([]);
+  await page.waitForTimeout(300);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-lines-page-light.png` });
+});
+
+test("Present: Frames als Folien – Knopf erscheint mit dem ersten Frame, Pfeile blättern, Esc zurück; Leisten treten zurück", async ({ page, browserName }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  const c = await center(page);
+  await board.focus();
+  await expect(page.getByRole("button", { name: /^Present/ })).toHaveCount(0);
+  for (const dx of [-320, 60]) {
+    await page.keyboard.press("f");
+    await stroke(page, [[c.x + dx, c.y - 120], [c.x + dx + 120, c.y], [c.x + dx + 260, c.y + 100]]);
+  }
+  await expect(board).toHaveAttribute("data-objects", "2");
+  await page.getByRole("button", { name: /^Present 2 frames/ }).click();
+  await expect(board).toHaveAttribute("data-present", "1");
+  await expect(page.locator(".wb-tools")).toBeHidden();
+  await expect(page.getByTestId("board-present")).toContainText("1 / 2");
+  await page.keyboard.press("ArrowRight");
+  await expect(board).toHaveAttribute("data-present", "2");
+  await page.mouse.move(0, 0);
+  expect(await overflows(page)).toEqual([]);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-present-light.png` });
+  await page.keyboard.press("Escape");
+  await expect(board).not.toHaveAttribute("data-present", /./);
+  await expect(page.locator(".wb-tools")).toBeVisible();
+});

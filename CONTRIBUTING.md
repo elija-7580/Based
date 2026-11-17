@@ -3,8 +3,8 @@
 Thanks for wanting to help. A few things before your first pull request:
 
 1. **License:** Based is AGPL-3.0-or-later ([`LICENSE`](LICENSE)). Your contribution is released under it.
-2. **CLA:** external contributions need the Contributor License Agreement ([`CLA.md`](CLA.md)). The CLA Assistant bot
-   asks you to sign it on your first pull request. You keep your copyright.
+2. **CLA:** external contributions need the Contributor License Agreement ([`CLA.md`](CLA.md)). A bot asks you to sign it on
+   your first pull request (one comment). You keep your copyright.
 3. **Clean room:** only public Notion help docs as a source. No Notion code, assets or reverse engineering.
 4. **Security problems** go privately to [`SECURITY.md`](SECURITY.md), not into an issue.
 5. **Name:** forks need their own name, see [`TRADEMARK.md`](TRADEMARK.md).

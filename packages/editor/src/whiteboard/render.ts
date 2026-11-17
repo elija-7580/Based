@@ -31,11 +31,14 @@ export interface BoardTheme {
   dark: boolean;
   /** Marker-Farbe: kennzeichnet, was ein Agent angelegt hat (und nur das). */
   marker: string;
+  /** Schrift auf Zetteln: dunkel in beiden Themen (der Zettel ist Papier). */
+  noteInk: string;
 }
 
 /** Token je Stiftfarbe bzw. Textmarker-Tönung (kein Gelb: die Marker-Farbe gehört den Agenten). */
-const PEN_TOKENS: Record<string, string> = { ink: "--ink", blue: "--block-blue-text", red: "--block-red-text", green: "--block-green-text", purple: "--block-purple-text" };
-const HIGHLIGHT_TOKENS: Record<string, string> = { sky: "--marker-sky", rose: "--marker-rose", mint: "--marker-mint", lilac: "--block-purple" };
+// Farben des freigegebenen Entwurfs „Based – Whiteboard“ (eigene Tokens board-*, hell und dunkel).
+const PEN_TOKENS: Record<string, string> = { ink: "--ink", blue: "--board-pen-blue", red: "--board-pen-red", green: "--board-pen-green", purple: "--board-pen-purple" };
+const HIGHLIGHT_TOKENS: Record<string, string> = { sky: "--board-highlight-sky", rose: "--board-highlight-rose", mint: "--board-highlight-mint", lilac: "--board-highlight-lilac" };
 export const penToken = (name: string) => PEN_TOKENS[name] ?? PEN_TOKENS.ink!;
 export const highlightToken = (name: string) => HIGHLIGHT_TOKENS[name] ?? HIGHLIGHT_TOKENS.sky!;
 
@@ -50,7 +53,9 @@ const tokensOf = (v: (name: string) => string, map: Record<string, string>) => O
 
 /** Token je Zettelfarbe (kein Gelb: die Marker-Farbe gehört den Agenten). */
 const NOTE_TOKENS: Record<string, string> = {
-  blue: "--status-ready", pink: "--status-review", orange: "--status-blocked", gray: "--status-neutral", green: "--block-green", purple: "--block-purple",
+  blue: "--board-note-blue", pink: "--board-note-pink", green: "--board-note-green", purple: "--board-note-purple", gray: "--board-note-gray",
+  // Früher angelegte orange Zettel behalten ihre Farbe; neu vergeben wird sie nicht mehr (Entwurf: vier Tönungen und Grau).
+  orange: "--status-blocked",
 };
 
 export function readBoardTheme(el: Element): BoardTheme {
@@ -60,7 +65,7 @@ export function readBoardTheme(el: Element): BoardTheme {
     bg: v("--bg"), dot: v("--selection-bg"), ink: v("--ink"), muted: v("--muted"), card: v("--surface-card"), raised: v("--surface-raised"), line: v("--line"),
     border: v("--control-border"), select: v("--focus-ring"), selectFill: v("--selected"), peer: v("--synced"),
     font: cs.fontFamily || "system-ui, sans-serif",
-    notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), dark: isDark(v("--bg")), marker: v("--marker-strong"),
+    notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), dark: isDark(v("--bg")), marker: v("--marker-strong"), noteInk: v("--board-note-ink"),
   };
 }
 
@@ -73,6 +78,8 @@ type Ctx = CanvasRenderingContext2D;
 export interface BoardResources {
   image(ref: string): CanvasImageSource | undefined;
   text?(ref: string, name: string): TextPreview | undefined;
+  /** Heutiger Titel einer Seite (Seitenkarten zeigen ihn live); ohne: der Titel vom Anlegen. */
+  title?(pageID: string): string | undefined;
   /** PDF-Seite, mindestens `pxWidth` Gerätepixel breit. */
   pdf?(ref: string, page: number, pxWidth: number): CanvasImageSource | undefined;
 }
@@ -273,7 +280,7 @@ function drawPreviewFrame(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number,
 }
 
 /** Textvorschau: Zeilen in fester Breite; ein Chat-/Agent-Log als Gespräch (wer in gedämpfter Zeile, darunter was). */
-function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextPreview | undefined, legible: (size: number) => boolean) {
+function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextPreview | undefined, legible: (size: number) => boolean, scroll = 0) {
   const body = { x: o.x + 14, y: o.y + PREVIEW_HEADER + 4, w: o.w - 28, h: o.h - PREVIEW_HEADER - 14 };
   if (body.h < 16 || !legible(12)) return;
   if (!preview) { drawText(ctx, theme, "Loading…", body, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.5 }); return; }
@@ -284,9 +291,14 @@ function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextP
   ctx.clip();
   const font = theme.font;
   const mono = `ui-monospace, "SF Mono", Menlo, Consolas, monospace`;
-  let y = body.y;
+  // Höhe des Ganzen, damit das Rollen am Ende anhält.
+  ctx.font = `400 13px ${font}`;
+  let total = preview.more ? 26 : 0;
+  for (const line of preview.lines) total += preview.chat ? 24 + Math.min(6, Math.max(1, wrapText((s) => ctx.measureText(s).width, line.text, body.w).length)) * 19 : 18;
+  let y = body.y - Math.max(0, Math.min(scroll, total - body.h));
   for (const line of preview.lines) {
     if (y >= body.y + body.h) break;
+    if (y < body.y - 160) { y += preview.chat ? 24 + Math.min(6, Math.max(1, wrapText((s) => ctx.measureText(s).width, line.text, body.w).length)) * 19 : 18; ctx.font = `400 13px ${font}`; continue; }
     if (preview.chat) {
       drawText(ctx, theme, line.role ?? "", { x: body.x, y, w: body.w, h: 16 }, { size: 11, weight: 600, color: theme.muted, lineHeight: 1.45 });
       y += 16;
@@ -303,11 +315,13 @@ function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextP
       if (line.text) ctx.fillText(line.text.length > 160 ? line.text.slice(0, 160) : line.text, body.x, y + 9);
       y += 18;
     }
+    ctx.font = `400 13px ${font}`;
   }
+  if (preview.more && y < body.y + body.h) drawText(ctx, theme, "… the preview ends here. Double-click to save the whole file.", { x: body.x, y: y + 4, w: body.w, h: 18 }, { size: 11, weight: 500, color: theme.muted, lineHeight: 1.5 });
   ctx.restore();
 }
 
-function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editing = false, images?: BoardImages, dpr = 1) {
+function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editing = false, images?: BoardImages, dpr = 1, scroll = 0) {
   const res = resourcesOf(images);
   // Fernsicht: ein Objekt, das auf dem Bildschirm nur wenige px groß ist, wird ein Rechteck – bei Tausenden
   // sichtbaren Objekten (weit herausgezoomt) kostet sonst jeder Pfad mit Rundung und Rand.
@@ -333,7 +347,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       ctx.lineWidth = hair;
       ctx.strokeStyle = theme.line;
       ctx.stroke();
-      if (o.text && legible(15)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 14, w: o.w - 28, h: o.h - 28 }, { size: 15, weight: 500, color: theme.ink, lineHeight: 1.4 });
+      if (o.text && legible(15)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 14, w: o.w - 28, h: o.h - 28 }, { size: 15, weight: 500, color: o.style?.color === "orange" ? theme.ink : theme.noteInk, lineHeight: 1.4 });
       break;
     }
     case "shape": {
@@ -405,7 +419,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       }
       if (view === "text" || view === "html" || view === "video" || view === "audio") {
         drawPreviewFrame(ctx, theme, o, zoom, legible);
-        if (view === "text") drawTextPreview(ctx, theme, o, o.ref ? res?.text?.(o.ref, String(o.style?.name ?? "")) : undefined, legible);
+        if (view === "text") drawTextPreview(ctx, theme, o, o.ref ? res?.text?.(o.ref, String(o.style?.name ?? "")) : undefined, legible, scroll);
         break;
       }
       roundRect(ctx, o.x, o.y, o.w, o.h, 14);
@@ -438,7 +452,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       ctx.fillStyle = theme.raised;
       ctx.fill();
       if (legible(10.5)) drawText(ctx, theme, "PAGE", { x: o.x + 14, y: o.y + (o.h - tile) / 2, w: tile, h: tile }, { size: 10, weight: 600, color: theme.muted, lineHeight: 1.3, align: "center", middle: true });
-      if (legible(13.5)) drawText(ctx, theme, o.text || "Untitled", { x: o.x + 26 + tile, y: o.y + 12, w: o.w - tile - 40, h: o.h - 24 }, { size: 13.5, weight: 600, color: theme.ink, lineHeight: 1.4, middle: true });
+      if (legible(13.5)) drawText(ctx, theme, (o.ref ? res?.title?.(o.ref) : undefined) || o.text || "Untitled", { x: o.x + 26 + tile, y: o.y + 12, w: o.w - tile - 40, h: o.h - 24 }, { size: 13.5, weight: 600, color: theme.ink, lineHeight: 1.4, middle: true });
       break;
     }
     default: {
@@ -513,6 +527,20 @@ function drawConnector(ctx: Ctx, theme: BoardTheme, c: WBConnector, byID: Readon
 
 function drawGrid(ctx: Ctx, theme: BoardTheme, scene: BoardScene, size: Size) {
   const { camera } = scene;
+  if (scene.background === "plain") return;
+  if (scene.background === "lines" || scene.background === "grid") {
+    // Liniert (Zeilenabstand 32, wie ein Schreibblock) bzw. kariert (24); weit herausgezoomt wird ausgedünnt.
+    const base = scene.background === "lines" ? 32 : GRID_STEP;
+    let step = base;
+    while (step * camera.zoom < 12) step *= 2;
+    ctx.strokeStyle = theme.dot;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let y = (Math.ceil(camera.y / step) * step - camera.y) * camera.zoom; y < size.h; y += step * camera.zoom) { ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(size.w, Math.round(y) + 0.5); }
+    if (scene.background === "grid") for (let x = (Math.ceil(camera.x / step) * step - camera.x) * camera.zoom; x < size.w; x += step * camera.zoom) { ctx.moveTo(Math.round(x) + 0.5, 0); ctx.lineTo(Math.round(x) + 0.5, size.h); }
+    ctx.stroke();
+    return;
+  }
   const step = gridStepFor(camera.zoom);
   const stepPx = step * camera.zoom;
   // Erster Punkt links oben; Versatz wie im Entwurf (halber Schritt), damit bei 100 % kein Punkt in der Ecke klebt.
@@ -553,7 +581,7 @@ export function drawBoardObjects(ctx: Ctx, scene: BoardScene, theme: BoardTheme,
   ctx.setTransform(dpr * camera.zoom, 0, 0, dpr * camera.zoom, -camera.x * camera.zoom * dpr, -camera.y * camera.zoom * dpr);
   for (const o of scene.objects) {
     if (isConnector(o)) drawConnector(ctx, theme, o, scene.byID, camera.zoom, scene.editing === o.id);
-    else drawShape(ctx, theme, o, camera.zoom, scene.editing === o.id, images, dpr);
+    else drawShape(ctx, theme, o, camera.zoom, scene.editing === o.id, images, dpr, scene.previewScroll.get(o.id) ?? 0);
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }

@@ -20,10 +20,10 @@ describe("Beta-Gate", () => {
     expect(featureVisible("realtimeText", "beta")).toBe(false);
     expect(featureVisible("coding", "beta")).toBe(false);
     expect(featureVisible("sharing", "beta")).toBe(false);
-    expect(featureVisible("whiteboard", "beta")).toBe(false);
+    expect(featureVisible("whiteboard", "beta")).toBe(true); // BSD-93: seit 17.11. freigeschaltet
+    for (const id of ["graph", "coding"]) expect(commandVisible(id, "beta")).toBe(false);
+    for (const ch of ["dev", "beta"] as const) expect(commandVisible("board", ch)).toBe(true);
     expect(featureVisible("fastStart", "beta")).toBe(false);
-    for (const id of ["graph", "coding", "board"]) expect(commandVisible(id, "beta")).toBe(false);
-    expect(commandVisible("board", "dev")).toBe(true);
     for (const id of ["home", "library", "trash", "settings", "report"]) expect(commandVisible(id, "beta")).toBe(true);
   });
 

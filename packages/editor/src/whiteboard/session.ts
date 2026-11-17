@@ -17,6 +17,9 @@ import {
 import { addObject, boardObjectsMap, readObject } from "./yboard.js";
 import type { PresenceChannel } from "../yjs/collab.js";
 
+export type BoardBackground = "dots" | "lines" | "grid" | "plain";
+export const BOARD_BACKGROUNDS: readonly { id: BoardBackground; label: string }[] = [{ id: "dots", label: "Dots" }, { id: "lines", label: "Ruled lines" }, { id: "grid", label: "Squared grid" }, { id: "plain", label: "Plain" }];
+
 /** Herkunft eigener Änderungen (vom UndoManager verfolgt). */
 export const BOARD_LOCAL = { source: "board-local" } as const;
 /** Herkunft von Änderungen aus den Records (nicht verfolgt, nicht zurückgeschrieben). */
@@ -111,6 +114,27 @@ export class BoardSession {
   private notify = () => {
     for (const fn of [...this.listeners]) fn();
   };
+
+  /** Untergrund der Fläche: Punkte (Standard), Linien oder Karo – gespeichert an der Seite (`props.board.bg`). */
+  get background(): BoardBackground {
+    const board = (this.store.blocks.get(this.pageID)?.props as { board?: { bg?: unknown } } | undefined)?.board;
+    return board?.bg === "lines" || board?.bg === "grid" || board?.bg === "plain" ? board.bg : "dots";
+  }
+  setBackground(bg: BoardBackground): boolean {
+    if (this.readOnly || bg === this.background) return false;
+    this.writing = true;
+    try {
+      this.store.transact("Board background", (tx) => tx.update(this.pageID, (b) => {
+        const props = (b.props ?? {}) as Record<string, unknown>;
+        b.props = { ...props, board: { ...((props.board as Record<string, unknown> | undefined) ?? {}), bg } } as typeof b.props;
+      }));
+    } finally {
+      this.writing = false;
+    }
+    this.version += 1;
+    this.notify();
+    return true;
+  }
 
   // MARK: Ändern
 
@@ -256,7 +280,7 @@ export class BoardSession {
           const o = this.cache.get(id);
           if (!o) continue; // im Y.Doc, aber nicht lesbar (neuere Version): Record bleibt, wie er ist
           if (existing && sameBoardObject(boardObjectFromBlock(existing), o)) continue;
-          tx.put({ kind: "block", data: boardObjectToBlock(o, this.pageID, now, existing) });
+          tx.put({ kind: "block", data: boardObjectToBlock(o, this.pageID, now, existing, this.cache) });
         }
       }, { undoable: false });
     } finally {
@@ -268,6 +292,8 @@ export class BoardSession {
 
   private onStore = (change: StoreChange) => {
     if (this.writing || this.destroyed) return;
+    // Die Seite selbst hat sich geändert (Untergrund von einem anderen Gerät): neu zeichnen.
+    if (change.keys.some((k) => parseKey(k).id === this.pageID)) { this.version += 1; this.notify(); }
     const ids: string[] = [];
     for (const key of change.keys) {
       const { kind, id } = parseKey(key);

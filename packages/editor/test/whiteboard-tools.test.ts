@@ -319,3 +319,96 @@ describe("Dateien in drei Stufen", () => {
     expect(shapes(session)[0]).toMatchObject({ kind: "text", text: "line one\nline two", h: 52, x: 340 });
   });
 });
+
+describe("Sperren, Untergrund, Seitenkarte", () => {
+  it("PDF-Seiten liegen fest: Klick und Aufziehen greifen hindurch; ⌘A wählt sie, Entsperren macht sie greifbar", () => {
+    const { ctl, session } = setup();
+    ctl.addFiles([{ ref: "p", name: "a.pdf", mime: "application/pdf", size: 1, pages: [{ width: 300, height: 300 }] }], { x: 500, y: 350 });
+    ctl.clearSelection();
+    click(ctl, 500, 350);
+    expect(ctl.selection.size).toBe(0);
+    drag(ctl, [[100, 20], [600, 300], [900, 680]]);
+    expect(ctl.selection.size).toBe(0);
+    ctl.selectAll();
+    expect(ctl.selectionLocked).toBe(true);
+    expect(ctl.setLocked(false)).toBe(true);
+    ctl.clearSelection();
+    click(ctl, 500, 350);
+    expect(ctl.selection.size).toBe(1);
+    expect(shapes(session)[0]!.style?.locked).toBe(false);
+  });
+  it("Untergrund steht an der Seite und überlebt eine neue Sitzung", () => {
+    const { store, page, session, ctl } = setup();
+    expect(ctl.scene().background).toBe("dots");
+    expect(session.setBackground("lines")).toBe(true);
+    expect(ctl.scene().background).toBe("lines");
+    expect(new BoardSession(store, page).background).toBe("lines");
+    session.setLocked(true);
+    expect(session.setBackground("grid")).toBe(false);
+  });
+  it("Seitenkarte trägt die Seite und ihren Titel", () => {
+    const { ctl, session } = setup();
+    const id = ctl.addPage("page-1", "Lecture 5")!;
+    expect(session.get(id)).toMatchObject({ kind: "page", ref: "page-1", text: "Lecture 5", w: 240 });
+  });
+});
+
+describe("Snap shapes, Present, Vorschau rollen", () => {
+  const loop: [number, number][] = Array.from({ length: 50 }, (_, i) => [400 + Math.cos((i / 49) * Math.PI * 2) * 120, 300 + Math.sin((i / 49) * Math.PI * 2) * 70]);
+  it("am Ende halten macht aus dem Kringel ein Oval; ohne Halten bleibt er Handschrift; abgeschaltet auch", () => {
+    const { ctl, session, tick } = setup();
+    ctl.setTool("pen");
+    drag(ctl, loop);
+    expect(shapes(session)[0]!.kind).toBe("ink");
+    const held = () => {
+      ctl.pointerDown({ x: loop[0]![0], y: loop[0]![1], button: 0 });
+      for (const [x, y] of loop.slice(1)) ctl.pointerMove({ x, y });
+      tick(600);
+      ctl.pointerUp({ x: loop[49]![0], y: loop[49]![1] });
+    };
+    held();
+    expect(shapes(session)[1]).toMatchObject({ kind: "shape", style: { shape: "oval" }, w: 240 });
+    ctl.snapShapes = false;
+    held();
+    expect(shapes(session)[2]!.kind).toBe("ink");
+  });
+  it("gehaltene gerade Linie wird wirklich gerade (zwei Punkte)", () => {
+    const { ctl, session, tick } = setup();
+    ctl.setTool("pen");
+    ctl.pointerDown({ x: 100, y: 100, button: 0 });
+    for (let i = 1; i <= 30; i++) ctl.pointerMove({ x: 100 + i * 10, y: 100 + (i % 2) * 2 });
+    tick(600);
+    ctl.pointerUp({ x: 400, y: 100 });
+    expect(inkPointsOf(shapes(session)[0]!.ink!)).toHaveLength(2);
+  });
+  it("Present: Frames sind Folien in Leserichtung; Pfeile blättern, Esc stellt die Ansicht wieder her", () => {
+    const { ctl } = setup();
+    ctl.setTool("frame");
+    drag(ctl, [[600, 100], [700, 200], [900, 300]]);
+    ctl.setTool("frame");
+    drag(ctl, [[100, 100], [200, 200], [400, 300]]);
+    const before = ctl.camera;
+    ctl.present(0);
+    expect(ctl.presenting).toBe(0);
+    expect(ctl.camera.x).toBeLessThan(400); // die linke Folie zuerst
+    ctl.keyDown({ key: "ArrowRight" });
+    expect(ctl.presenting).toBe(1);
+    ctl.keyDown({ key: "ArrowRight" });
+    expect(ctl.presenting).toBe(1);
+    ctl.keyDown({ key: "p" });
+    expect(ctl.tool).toBe("select"); // Kürzel greifen beim Zeigen nicht
+    ctl.keyDown({ key: "Escape" });
+    expect(ctl.presenting).toBeUndefined();
+    expect(ctl.camera).toEqual(before);
+  });
+  it("Rad über einer gewählten Textvorschau rollt ihren Inhalt, sonst die Fläche", () => {
+    const { ctl } = setup();
+    const [id] = ctl.addFiles([{ ref: "r", name: "run.log", mime: "", size: 10 }], { x: 500, y: 350 });
+    ctl.wheel({ x: 500, y: 350, deltaX: 0, deltaY: 120, zoom: false });
+    expect(ctl.scene().previewScroll.get(id!)).toBe(120);
+    ctl.clearSelection();
+    const cam = ctl.camera;
+    ctl.wheel({ x: 500, y: 350, deltaX: 0, deltaY: 120, zoom: false });
+    expect(ctl.camera.y).toBe(cam.y + 120);
+  });
+});
