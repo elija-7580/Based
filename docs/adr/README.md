@@ -21,5 +21,6 @@ decision, consequences. Source: the architecture review of 2026-11-08.
 | [0014](0014-properties-as-records.md) | Datenbank-Properties als eigene Records: Record-Art `property`, Sicht im Store, deterministische Migration, alte Clients gesperrt (BSD-30). |
 | [0015](0015-folder-sync-icloud.md) | *Vorgeschlagen:* Sync über einen geteilten Ordner (iCloud Drive) – ein Schreiber je Datei, Segmente mit Endmarke, LWW wie der Server; Spike hinter Schalter (BSD-296). |
 | [0016](0016-block-editor.md) | Eigener Block-Editor nach dem Anytype-Prinzip (Clean-Room, kein Code übernommen): ein Modell (Block-Records), Befehle im Kern, ein Textfeld pro Block, Fokus-Manager, Auswahl- und Zieh-Schicht; BlockNote hinter Schalter bis Parität (Phasen E0–E8). |
+| [0017](0017-storage-and-sync-efficiency.md) | *Vorgeschlagen:* Speicher und Sync für große Workspaces – Inhalt erst beim Öffnen laden (Schema v4), Protokoll v4 mit Teil-Sync, kompakten Records und E2E-Umschlag, Server ohne Store im Speicher; Messungen in `spikes/storage-bench`. |
 
 New decisions get the next number. A superseded ADR keeps its file and gets status "superseded by NNNN".
