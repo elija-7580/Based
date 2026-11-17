@@ -89,8 +89,18 @@ if (isMain) {
       const kc = keychainCommands(keychain, p12, process.env.APPLE_CERTIFICATE_PASSWORD ?? "", randomBytes(16).toString("hex"));
       for (const a of kc.setup) execFileSync("security", a, { stdio: ["ignore", "ignore", "inherit"] });
       rmSync(p12, { force: true });
+      // codesign findet eine Identität nur in Schlüsselbunden der Suchliste – `--keychain` allein reicht nicht
+      // („The specified item could not be found in the keychain“, Desktop-Lauf 17.11.). Also vorn in die Liste
+      // des Nutzers eintragen und beim Aufräumen die alte Liste wiederherstellen.
+      const before = execFileSync("security", ["list-keychains", "-d", "user"], { encoding: "utf8" })
+        .split("\n").map((l) => l.trim().replace(/^"|"$/g, "")).filter(Boolean);
+      execFileSync("security", ["list-keychains", "-d", "user", "-s", keychain, ...before], { stdio: ["ignore", "ignore", "inherit"] });
       keychainArgs = ["--keychain", keychain];
-      cleanup = () => { for (const a of kc.cleanup) { try { execFileSync("security", a); } catch { /* schon weg */ } } rmSync(dir, { recursive: true, force: true }); };
+      cleanup = () => {
+        try { execFileSync("security", ["list-keychains", "-d", "user", "-s", ...before]); } catch { /* Liste bleibt, wie sie ist */ }
+        for (const a of kc.cleanup) { try { execFileSync("security", a); } catch { /* schon weg */ } }
+        rmSync(dir, { recursive: true, force: true });
+      };
     }
     try {
       for (const args of commands) {
