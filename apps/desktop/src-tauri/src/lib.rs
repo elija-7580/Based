@@ -125,6 +125,8 @@ pub fn run() {
         // BSD-319: Fehlerberichte nach ~/.config/based/reports (Rechte nur dort, capabilities/default.json) und im Finder zeigen.
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        // BSD-449: „Change folder…“ für Backups (Ordnerdialog, nur im Hauptfenster erlaubt)
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![power_on_battery, clipboard_html])
         .setup(|app| {
             create_main_window(app)?;

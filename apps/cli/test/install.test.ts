@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { defaultTarget, installStarter, nodeMajor, starterScript, starterStatus, STARTER_MARK, uninstallStarter } from "../src/install.js";
+import { defaultTarget, installStarter, nodeMajor, starterMark, starterScript, starterStatus, STARTER_MARK, uninstallStarter } from "../src/install.js";
 
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
@@ -51,5 +51,38 @@ describe("CLI-Starter", () => {
     expect(existsSync(foreign)).toBe(true);
     expect(uninstallStarter(target)).toMatchObject({ ok: true, message: "Removed." });
     expect(uninstallStarter(target)).toMatchObject({ ok: true, message: "Not installed." });
+  });
+
+  it("BSD-455: Based Beta – eigener Befehl, Kanal im Starter, Starter von Based Next bleibt unberührt", () => {
+    expect(defaultTarget("/Users/e", "beta")).toBe("/Users/e/.local/bin/based-beta");
+    expect(starterMark("next")).toBe(STARTER_MARK);
+    const beta = starterScript("/n", "/Applications/Based Beta.app/Contents/Resources/based-server.cjs", "beta");
+    expect(beta).toContain(starterMark("beta"));
+    expect(beta).not.toContain(STARTER_MARK);
+    expect(beta).toContain("BASED_CHANNEL=beta; export BASED_CHANNEL");
+    expect(starterScript("/n", "/b.cjs")).not.toContain("BASED_CHANNEL");
+
+    const d = tmp();
+    const bundle = join(d, "b.cjs");
+    writeFileSync(bundle, "");
+    const nextTarget = join(d, "bin", "based");
+    expect(installStarter({ target: nextTarget, node: "/n", nodeVersion: "v22.1.0", bundle }).ok).toBe(true);
+    // Beta auf den Ort von Next: abgelehnt, Datei unverändert; entfernen/Status der Beta lassen sie stehen
+    const before = readFileSync(nextTarget, "utf8");
+    const r = installStarter({ target: nextTarget, node: "/n", nodeVersion: "v22.1.0", bundle, channel: "beta" });
+    expect(r.ok).toBe(false);
+    expect(r.message).toContain("another Based app");
+    expect(readFileSync(nextTarget, "utf8")).toBe(before);
+    expect(starterStatus(nextTarget, "beta").installed).toBe(false);
+    expect(uninstallStarter(nextTarget, "beta").ok).toBe(false);
+    expect(existsSync(nextTarget)).toBe(true);
+    // Beta an ihrem eigenen Ort: beide nebeneinander
+    const betaTarget = join(d, "bin", "based-beta");
+    const ok = installStarter({ target: betaTarget, node: "/n", nodeVersion: "v22.1.0", bundle, channel: "beta" });
+    expect(ok.ok).toBe(true);
+    expect(starterStatus(betaTarget, "beta").installed).toBe(true);
+    expect(starterStatus(nextTarget).installed).toBe(true);
+    expect(uninstallStarter(betaTarget, "beta").ok).toBe(true);
+    expect(existsSync(nextTarget)).toBe(true);
   });
 });

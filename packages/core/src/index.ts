@@ -85,6 +85,10 @@ export { ARCHIVE_FORMAT, ARCHIVE_PLAIN_VERSION, ARCHIVE_VERSION, ArchiveError, P
   assetRefForEntry, encodeArchive, importArchive, importArchiveRecords, isArchive, loadArchive, mergeWorkspace, readArchive, writeArchive, writeArchivePackage } from "./interop/archive.js";
 export type { ArchiveHeader, ArchiveImportResult, ArchiveReadResult, LoadedArchive } from "./interop/archive.js";
 export * from "./backup/backup.js";
+// BSD-456: Sicherung vor jedem App-Update.
+export * from "./backup/pre-update.js";
+// BSD-455: feste Namen/Ports pro Desktop-Kanal (Based Next / Based Beta).
+export * from "./desktop-channel.js";
 // BSD-155: Datenbank-Operationen, Diagramme, Anzeige-Helfer und gefilterte Beobachtung für @based/database-ui.
 export * as dbops from "./store/database-ops.js";
 export {

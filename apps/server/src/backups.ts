@@ -1,5 +1,7 @@
 // BSD-274: automatische lokale Backups des Server-Stores (der lokale Server der Desktop-App schreibt sie nach
-// ~/Documents/Based Backups). Logik in @based/core (`writeSnapshot`, `pruneBackups`, `planRestore`); hier nur das
+// ~/Documents/Based Backups). BSD-449: oder in einen selbst gewählten Ordner (z. B. externes Laufwerk) – den legt der
+// Server nie selbst an (`create: false`): ist er weg (Laufwerk ab), schlägt die Sicherung mit klarer Meldung fehl,
+// statt still auf die interne Platte zu schreiben (unter /Volumes entstünde sonst ein gleichnamiger Ordner). Logik in @based/core (`writeSnapshot`, `pruneBackups`, `planRestore`); hier nur das
 // Dateisystem (atomar: .tmp + rename), der Takt (stündlich, wenn sich etwas geändert hat, und beim Beenden) und
 // die Dateien aus dem Asset-Speicher.
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
@@ -8,15 +10,27 @@ import { applyRestore, listSnapshots, planRestore, pruneBackups, readSnapshot, s
 import type { AssetStore } from "./assets.js";
 import type { Logger } from "./log.js";
 
-export function nodeBackupTarget(root: string): BackupTarget {
+/** BSD-449: Meldung, wenn der gewählte Backup-Ordner fehlt (Laufwerk nicht angeschlossen, Ordner umbenannt). */
+export const unreachableMessage = (dir: string) => `The backup folder isn't available: ${dir}. Connect the drive or choose another folder.`;
+
+export function nodeBackupTarget(root: string, opts: { create?: boolean } = {}): BackupTarget {
+  const create = opts.create ?? true;
+  /** Wurzel vorhanden? Standardordner wird angelegt, ein gewählter nie. */
+  const ensureRoot = async () => {
+    const s = await stat(root).catch(() => undefined);
+    if (s?.isDirectory()) return;
+    if (s || !create) throw new Error(unreachableMessage(root));
+    await mkdir(root, { recursive: true });
+  };
   const abs = (p: string) => {
     if (p.split("/").some((s) => s === ".." || s === "")) throw new Error("bad backup path");
     return join(root, ...p.split("/"));
   };
   return {
-    list: async (dir) => (await readdir(abs(dir), { withFileTypes: true })).filter((e) => e.isFile() && !e.name.endsWith(".tmp")).map((e) => e.name),
+    list: async (dir) => { await ensureRoot(); return (await readdir(abs(dir), { withFileTypes: true }).catch((e: NodeJS.ErrnoException) => { if (e.code === "ENOENT") return []; throw e; })).filter((e) => e.isFile() && !e.name.endsWith(".tmp")).map((e) => e.name); },
     exists: async (p) => stat(abs(p)).then(() => true, () => false),
     write: async (p, data) => {
+      await ensureRoot();
       const file = abs(p);
       await mkdir(dirname(file), { recursive: true });
       const tmp = `${file}.${process.pid}.tmp`;
@@ -36,8 +50,14 @@ export class Backups {
   last: { at: number; name: string } | undefined;
   lastError: string | undefined;
 
-  constructor(readonly dir: string, private readonly store: WorkspaceStore, private readonly assets: AssetStore, private readonly log: Logger) {
-    this.target = nodeBackupTarget(dir);
+  constructor(readonly dir: string, private readonly store: WorkspaceStore, private readonly assets: AssetStore, private readonly log: Logger, readonly create = true) {
+    this.target = nodeBackupTarget(dir, { create });
+  }
+
+  /** BSD-449: Ist der Ordner da (bzw. darf er angelegt werden)? */
+  async reachable(): Promise<boolean> {
+    const s = await stat(this.dir).catch(() => undefined);
+    return s ? s.isDirectory() : this.create;
   }
 
   /** Stündlich sichern (nur bei Änderungen) und aufräumen. */

@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Fenster schließen/ausblenden (⌘W beim letzten Tab, BSD-310), Seitenfenster öffnen, Menü, Updater, Zwischenablage (Based-Kontextmenü; Rückfragen sind Based-Dialoge), Neustart nach dem Update, HTTP nur zu Notion (API-Import, BSD-217: API und von Notion gehostete Dateien). BSD-319: Dateien nur in ~/.config/based/reports (Fehlerberichte) lesen, schreiben, löschen; Bericht im Finder zeigen.",
+  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Fenster schließen/ausblenden (⌘W beim letzten Tab, BSD-310), Seitenfenster öffnen, Menü, Updater, Zwischenablage (Based-Kontextmenü; Rückfragen sind Based-Dialoge), Neustart nach dem Update, HTTP nur zu Notion (API-Import, BSD-217: API und von Notion gehostete Dateien). BSD-319: Dateien nur in ~/.config/based/reports (Fehlerberichte) lesen, schreiben, löschen; Bericht im Finder zeigen. BSD-456: Sicherung vor jedem App-Update in $APPDATA/pre-update (schreiben, umbenennen, zurücklesen, alte löschen).",
   "windows": [
     "main",
     "page-*"
@@ -51,6 +51,7 @@
     "fs:allow-read-dir",
     "fs:allow-exists",
     "fs:allow-remove",
+    "fs:allow-rename",
     {
       "identifier": "fs:scope",
       "allow": [
@@ -59,6 +60,12 @@
         },
         {
           "path": "$HOME/.config/based/reports/**"
+        },
+        {
+          "path": "$APPDATA/pre-update"
+        },
+        {
+          "path": "$APPDATA/pre-update/**"
         }
       ]
     },

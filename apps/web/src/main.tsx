@@ -5,7 +5,7 @@ import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
-import { desktopClipboard, isPageWindow, startDesktop } from "./desktop.js";
+import { desktopClipboard, isPageWindow, isTauri, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
 import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
@@ -197,6 +197,8 @@ function start(guest: GuestBoot | undefined) {
   }
   // BSD-164: in der Tauri-Hülle Titelleiste, Updates und ⌘W aus dem Menü (im Browser ohne Wirkung).
   void startDesktop({ close: () => history.close(), count: () => history.tabs.length }).catch(() => undefined);
+  // BSD-456: Sicherung vor App-Updates = Based-Archiv des ganzen Workspaces (nicht im Gast-Tab).
+  if (isTauri() && !guest) void import("./desktop/preUpdate.js").then((m) => m.setPreUpdateArchive(async () => (await client.exportWorkspace("pre-update")).data));
 
   // Startwerte holt der Store-Tab selbst (initParams); `init` verbindet nur.
   void client

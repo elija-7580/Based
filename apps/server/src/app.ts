@@ -17,7 +17,7 @@ import type { AgentRunnerOptions, CodingSessions, PtyFactory } from "@based/brai
 import { registerCodingRoutes, type CodingHost } from "./coding-routes.js";
 import { TerminalSockets } from "./terminal-ws.js";
 import { OwnerDevices } from "./devices.js";
-import { Backups } from "./backups.js";
+import { Backups, unreachableMessage } from "./backups.js";
 import { FolderSyncService } from "./folder-sync.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import { registerTranscribeRoutes, type WhisperConfig } from "./transcribe.js";
@@ -53,6 +53,8 @@ export interface AppOptions extends SyncServiceOptions {
   codingHost?: CodingHost | undefined;
   /** BSD-274: Ordner für automatische Backups (stündlich bei Änderungen, beim Beenden); ohne: keine. */
   backupDir?: string | undefined;
+  /** BSD-449: gewählter Ordner – nie selbst anlegen (fehlt er, schlägt die Sicherung sichtbar fehl). Standard: anlegen. */
+  backupCreate?: boolean;
   /** BSD-334: Ordner-Sync (iCloud Drive) – Ordner und Kennung dieses Geräts; ohne: keiner. */
   folderSync?: { dir: string; device: string; intervalMs?: number } | undefined;
   /** Takt der Backups in ms (Tests); Standard 1 h. */
@@ -271,7 +273,7 @@ export function createApp(opts: AppOptions): App {
   if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs, opts.codingHost);
 
   // MARK: Backups (BSD-274)
-  const backups = opts.backupDir ? new Backups(opts.backupDir, sync.store, assets, log) : undefined;
+  const backups = opts.backupDir ? new Backups(opts.backupDir, sync.store, assets, log, opts.backupCreate ?? true) : undefined;
   // BSD-334: Ordner-Sync – nach Backups, damit ein Stand vor dem ersten Einmischen gesichert werden kann
   const folderSync = opts.folderSync
     ? new FolderSyncService({ ...opts.folderSync, store: sync.store, persistence: sync.persistence, assets, log, referencedAssets: () => referencedAssets(sync.store) })
@@ -284,8 +286,13 @@ export function createApp(opts: AppOptions): App {
   if (backups) {
     backups.start(opts.backupEvery);
     const nameOK = (n: string) => /^[0-9T-]+Z\.based\.jsonl$/.test(n);
-    router.add("GET", "/backups", async () => json({ dir: backups.dir, last: backups.last, error: backups.lastError, snapshots: await backups.list() }));
-    router.add("POST", "/backups", async () => json({ snapshot: (await backups.snapshot(true)) ?? null }, 201));
+    // BSD-449: fehlt der gewählte Ordner, sagt die Antwort das (reachable: false), statt mit 500 zu scheitern
+    router.add("GET", "/backups", async () => {
+      const reachable = await backups.reachable();
+      const snapshots = reachable ? await backups.list().catch(() => []) : [];
+      return json({ dir: backups.dir, reachable, last: backups.last, error: reachable ? backups.lastError : unreachableMessage(backups.dir), snapshots });
+    });
+    router.add("POST", "/backups", async () => (await backups.reachable()) ? json({ snapshot: (await backups.snapshot(true)) ?? null }, 201) : error(unreachableMessage(backups.dir), 409));
     router.add("GET", "/backups/:name/preview", async ({ params }) => nameOK(params.name!) ? json({ pages: await backups.preview(params.name!) }) : error("not a backup", 400));
     router.add("POST", "/backups/:name/restore", async ({ params }) => nameOK(params.name!) ? json(await backups.restore(params.name!)) : error("not a backup", 400));
   }

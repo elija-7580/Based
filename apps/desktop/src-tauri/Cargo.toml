@@ -26,6 +26,8 @@ tauri-plugin-shell = "2"
 # BSD-319: „Problem melden“ – Bündel schreiben (nur ~/.config/based/reports) und im Finder zeigen.
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
+# BSD-449: Ordnerauswahl für den Backup-Ordner (nur open, nur Ordner; capabilities/local-server.json).
+tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 
 # BSD-390: macOS Writing Tools aus – die WKWebViewConfiguration des Hauptfensters bekommt

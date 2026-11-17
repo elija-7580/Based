@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { actionEnv, backupEnv, channelServerEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -25,6 +25,21 @@ describe("lokaler Server und CLI (Desktop)", () => {
     const env = actionEnv("/App/Resources/based-server.cjs", "local", { BASED_TOKEN: "t" });
     expect(Object.keys(env).every((k) => k.startsWith("BASED_"))).toBe(true);
     expect(RUN.args.join(" ")).not.toContain("TOKEN");
+  });
+
+  it("BSD-455: Umgebung pro Kanal – Beta mit eigenem Port, Besitzer, Backup- und iCloud-Ordner", () => {
+    expect(channelServerEnv("/Users/e/Documents", "next")).toEqual({ BASED_PORT: "47821", BASED_LOCAL_OWNER: "Based Next", BASED_CHANNEL: "next", BASED_BACKUP_DIR: "/Users/e/Documents/Based Backups" });
+    expect(channelServerEnv("/Users/e/Documents/", "beta")).toEqual({ BASED_PORT: "47822", BASED_LOCAL_OWNER: "Based Beta", BASED_CHANNEL: "beta", BASED_BACKUP_DIR: "/Users/e/Documents/Based Beta Backups" });
+    expect(folderSyncEnv("/Users/e", true, "mac-1", "beta").BASED_FOLDER_SYNC).toBe("/Users/e/Library/Mobile Documents/com~apple~CloudDocs/Based Beta");
+    expect(actionEnv("/b.cjs", "install-cli", {}, "beta")).toMatchObject({ BASED_CHANNEL: "beta" });
+    // Tests/Entwicklung: Based Next
+    expect(actionEnv("/b.cjs", "cli-status")).toMatchObject({ BASED_CHANNEL: "next" });
+  });
+
+  it("BSD-449: gewählter Backup-Ordner wird nie vom Server angelegt; ohne Wahl der Standardordner des Kanals", () => {
+    expect(backupEnv("/Users/e/Documents", undefined, "next")).toEqual({ BASED_BACKUP_DIR: "/Users/e/Documents/Based Backups" });
+    expect(backupEnv("/Users/e/Documents", "/Volumes/T7/Based/", "beta")).toEqual({ BASED_BACKUP_DIR: "/Volumes/T7/Based", BASED_BACKUP_CREATE: "0" });
+    expect(backupEnv("/Users/e/Documents", "relative/path", "beta")).toEqual({ BASED_BACKUP_DIR: "/Users/e/Documents/Based Beta Backups" });
   });
 
   it("Ergebnis- und Bereit-Zeilen", () => {
@@ -85,9 +100,13 @@ describe("Tailnet (BSD-315)", () => {
     const built = parseNodeProbe("/Applications/Based Next.app/Contents/Resources/node/bin/node\nv24.22.2\n", 0);
     expect(await chooseNode(built, shell)).toMatchObject({ ok: true, bundled: true, version: "v24.22.2", message: "Node.js v24.22.2 (built in)" });
     expect(asked).toBe(0);
-    // fehlt (Intel im Universal-Build) oder scheitert: Login-Shell
+    // fehlt (Entwickler-Build ohne Netz) oder scheitert: Login-Shell
     expect(await chooseNode(undefined, shell)).toMatchObject({ ok: true, path: "/opt/homebrew/bin/node" });
     expect(await chooseNode(parseNodeProbe("", 127), shell)).toMatchObject({ ok: true, path: "/opt/homebrew/bin/node" });
     expect(asked).toBe(2);
+    // BSD-452: Rückfall sichtbar (Einstellungen zeigen die Meldung, wenn nicht die eingebaute läuft)
+    expect((await chooseNode(undefined, shell)).message).toContain("uses the one installed on this Mac");
+    expect((await chooseNode(undefined, shell)).bundled).toBeUndefined();
+    expect(await chooseNode(undefined, async () => parseNodeProbe("", 1))).toMatchObject({ ok: false, message: expect.stringContaining("wasn't found") });
   });
 });

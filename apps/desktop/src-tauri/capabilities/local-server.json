@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "local-server",
-  "description": "BSD-138: nur das Hauptfenster; genau zwei feste Aufrufe über die Login-Shell (PATH wie im Terminal): Node suchen (`command -v node && node --version`) und das beiliegende Bundle mit dieser Node starten (`exec node \"$BASED_BUNDLE\" desktop`, was zu tun ist steht in BASED_ACTION). Keine freien Argumente, kein anderes Programm. BSD-414: dazu die mitgelieferte Node (Resource node/bin/node, Pfad in BASED_NODE): Version prüfen und das Bundle mit ihr starten.",
+  "description": "BSD-138: nur das Hauptfenster; genau zwei feste Aufrufe über die Login-Shell (PATH wie im Terminal): Node suchen (`command -v node && node --version`) und das beiliegende Bundle mit dieser Node starten (`exec node \"$BASED_BUNDLE\" desktop`, was zu tun ist steht in BASED_ACTION). Keine freien Argumente, kein anderes Programm. BSD-414: dazu die mitgelieferte Node (Resource node/bin/node, Pfad in BASED_NODE): Version prüfen und das Bundle mit ihr starten. BSD-449: Ordnerdialog (dialog:allow-open) für „Change folder…“ beim Backup-Ordner.",
   "windows": [
     "main"
   ],
@@ -81,6 +81,7 @@
       ]
     },
     "shell:allow-kill",
-    "shell:allow-stdin-write"
+    "shell:allow-stdin-write",
+    "dialog:allow-open"
   ]
 }

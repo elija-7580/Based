@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
-    "sidecar": "node scripts/build-sidecar.mjs && node scripts/fetch-node.mjs"
+    "sidecar": "node scripts/build-sidecar.mjs && node scripts/fetch-node.mjs && node scripts/sign-node.mjs",
+    "verify-app": "node scripts/verify-app.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.4",

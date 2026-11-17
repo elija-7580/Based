@@ -1,6 +1,6 @@
 // BSD-274: Backups des Server-Stores – Ordner auf der Platte (atomar), „Jetzt sichern“, Vorschau, Wiederherstellen
 // nach „Seite gelöscht und Papierkorb geleert“, vorher automatisch ein Stand (rückgängig machbar), Sichern beim Beenden.
-import { mkdtempSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -55,4 +55,40 @@ describe("Backups (BSD-274)", () => {
     apps.push(app);
     expect((await call(`${app.url}/backups`)).status).toBe(404);
   });
+
+  it("BSD-449: gewählter Ordner – Backup landet dort; fehlt er (Laufwerk ab), sichtbarer Fehler und KEIN stiller Ersatzordner", async () => {
+    const drive = mkdtempSync(join(tmpdir(), "based-drive-"));
+    const chosen = join(drive, "My Backups");
+    mkdirSync(chosen);
+    const app = await startApp({ backupDir: chosen, backupCreate: false, backupEvery: 3_600_000 });
+    apps.push(app);
+    createPage(app.sync.store, { title: "On the drive" });
+    const made = await call(`${app.url}/backups`, "POST");
+    expect(made.status).toBe(201);
+    expect(readdirSync(join(chosen, "snapshots"))).toContain((made.body.snapshot as { name: string }).name);
+    expect((await call(`${app.url}/backups`)).body).toMatchObject({ dir: chosen, reachable: true });
+    // Laufwerk abgezogen: Ordner weg
+    rmSync(drive, { recursive: true, force: true });
+    const list = await call(`${app.url}/backups`);
+    expect(list.status).toBe(200);
+    expect(list.body).toMatchObject({ reachable: false, snapshots: [], error: expect.stringContaining("isn't available") });
+    createPage(app.sync.store, { title: "Later" });
+    const failed = await call(`${app.url}/backups`, "POST");
+    expect(failed).toMatchObject({ status: 409, body: { error: expect.stringContaining("isn't available") } });
+    expect(existsSync(chosen)).toBe(false); // nichts still angelegt
+    expect(existsSync(drive)).toBe(false);
+  });
+
+  it("BSD-449: Standardordner wird angelegt; BASED_BACKUP_CREATE=0 schaltet das ab", async () => {
+    const dir = join(mkdtempSync(join(tmpdir(), "based-docs-")), "Based Backups");
+    const app = await startApp({ backupDir: dir, backupEvery: 3_600_000 });
+    apps.push(app);
+    expect((await call(`${app.url}/backups`)).body).toMatchObject({ reachable: true });
+    createPage(app.sync.store, { title: "x" });
+    expect((await call(`${app.url}/backups`, "POST")).status).toBe(201);
+    expect(existsSync(join(dir, "snapshots"))).toBe(true);
+    expect(parseOptions([], { BASED_TOKEN: "t", BASED_BACKUP_DIR: "/Volumes/X/B", BASED_BACKUP_CREATE: "0" })).toMatchObject({ backupDir: "/Volumes/X/B", backupCreate: false });
+    expect(parseOptions([], { BASED_TOKEN: "t", BASED_BACKUP_DIR: "/b" }).backupCreate).toBe(true);
+  });
 });
+

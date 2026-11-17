@@ -14,6 +14,7 @@ import {
   printPageHTML,
   preparedImportFromWire,
   topLevelPages,
+  writeArchive,
   writeArchivePackage,
   writeExportZip,
   type AssetRef,
@@ -45,7 +46,15 @@ export interface ImportSummary {
 }
 
 export type ExportFormat = "markdown" | "html";
-export type WorkspaceExportFormat = ExportFormat | "archive";
+export type WorkspaceExportFormat = ExportFormat | "archive" | "pre-update";
+
+/**
+ * BSD-456: Sicherung vor dem App-Update. Bis zu dieser Dateimenge das volle Archiv (Records + Dateien); darüber –
+ * oder wenn das volle Archiv scheitert (Speicher) – nur die Records (`.based.jsonl`): die Dateien liegen
+ * inhaltsadressiert im Speicher der App und bleiben beim Update unberührt, die Records sind das Unersetzliche.
+ * Sonst könnte ein großer Workspace nie aktualisiert werden.
+ */
+export const PRE_UPDATE_MAX_ASSET_BYTES = 300 * 1024 * 1024;
 /** Nur für einzelne Seiten (BSD-260): Gliederung als OPML. */
 export type PageExportFormat = ExportFormat | "opml" | "json" | "docx";
 
@@ -156,6 +165,17 @@ export async function printPage(store: WorkspaceStore, pageID: string, assets?: 
 
 /** Ganzer Workspace: ZIP mit Markdown oder HTML (und `assets/`) oder ein verlustfreies Based-Archiv. */
 export async function exportWorkspace(store: WorkspaceStore, format: WorkspaceExportFormat, assets?: AssetStore, choice: HTMLExportChoice = {}): Promise<ExportFile> {
+  if (format === "pre-update") {
+    const refs = archiveAssetRefs(store.allRecords());
+    const known = refs.reduce((n, r) => n + (r.size ?? 0), 0);
+    const recordsOnly = (): ExportFile => ({ name: "pre-update.based.jsonl", mime: "application/x-ndjson", data: enc.encode(writeArchive(store)), summary: `Archived ${store.exportRecords().length} records (files stay in the app's storage).` });
+    if (known > PRE_UPDATE_MAX_ASSET_BYTES) return recordsOnly();
+    try {
+      return await exportWorkspace(store, "archive", assets, choice);
+    } catch {
+      return recordsOnly();
+    }
+  }
   if (format === "archive") {
     const files = await loadAssets(assets, archiveAssetRefs(store.allRecords()));
     const r = writeArchivePackage(store, (ref) => files.get(ref.id));
