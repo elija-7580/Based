@@ -1,5 +1,4 @@
-cancelled f06d96421fae9536d4bccfd23d223935be936869
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+cancelled d8099c335932fee3d33c3153671c8517b1f40b84
 [WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
@@ -14,6 +13,13 @@ cancelled f06d96421fae9536d4bccfd23d223935be936869
 [WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
 [WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
 [WebServer] 
 [WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
@@ -40,22 +46,16 @@ cancelled f06d96421fae9536d4bccfd23d223935be936869
 
 Running 250 tests using 2 workers, shard 2 of 2
 
-  ✓    2 [webkit] › e2e/keyboard-everywhere.spec.ts:42:1 › Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter öffnet, Esc zurück in die Seite @smoke (7.6s)
-  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (8.9s)
-  ✓    3 [webkit] › e2e/keyboard-everywhere.spec.ts:92:1 › ⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächste Pfeiltaste den Fokus zurück (1.5s)
+  ✓    2 [webkit] › e2e/keyboard-everywhere.spec.ts:42:1 › Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter öffnet, Esc zurück in die Seite @smoke (6.3s)
+  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (7.3s)
   -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
-  -    6 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
-  ✓    5 [webkit] › e2e/keyboard-everywhere.spec.ts:105:1 › Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück (2.7s)
-  ✓    8 [webkit] › e2e/keyboard-everywhere.spec.ts:123:1 › Übersicht aller Kürzel: ⇧⌘/ öffnet, Suche filtert, Esc schließt; auch über ⌘K @smoke (1.9s)
-  ✓    7 [webkit] › e2e/keyboard-select.spec.ts:39:1 › Einfache Tabelle: Tab, ⇧Tab, Pfeile, Enter, Tab am Ende legt eine Zeile an (5.8s)
-  ✓   10 [webkit] › e2e/keyboard-select.spec.ts:77:1 › Datenbank: Tab im Zellen-Editor, ⇧-Pfeile wählen Bereich, Kopieren, Einfügen, Leeren, Ziehen (5.1s)
-  ✓    9 [webkit] › e2e/keyboard-everywhere.spec.ts:147:1 › ⌘ halten zeigt die Tasten der Stelle: überall, Seitenleiste, Text, Blöcke, Datenbank (7.1s)
-  ✓   12 [webkit] › e2e/keyboard-everywhere.spec.ts:172:1 › Editor: ⌘/ öffnet das Blockmenü, Pfeile und Enter wählen (2.1s)
-  ✓   11 [webkit] › e2e/keyboard-select.spec.ts:133:1 › Blockauswahl: Rechteck aus dem Seitenrand außerhalb der Textspalte, ⇧-Klick erweitert (4.2s)
-  ✓   13 [webkit] › e2e/keyboard-everywhere.spec.ts:189:1 › Mac-Menü: ein Befehl aus dem Register läuft über dieselbe Taste (based:command) (2.1s)
-  ✓   14 [webkit] › e2e/keyboard-select.spec.ts:162:1 › ⌫ ohne Textfeld im Fokus geht nicht zur vorigen Seite zurück (1.4s)
-  ✓   15 [webkit] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (2.9s)
-  ✓   17 [webkit] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (3.6s)
-  ✓   18 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (4.6s)
-  ✓   16 [webkit] › e2e/kit-states.spec.ts:181:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Knöpfe (light) (14.2s)
-  ✓   19 [webkit] › e2e/meeting.spec.ts:110:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (7.5s)
+  -    5 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓    3 [webkit] › e2e/keyboard-everywhere.spec.ts:92:1 › ⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächste Pfeiltaste den Fokus zurück (1.9s)
+  ✓    7 [webkit] › e2e/keyboard-everywhere.spec.ts:105:1 › Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück (1.7s)
+  ✓    8 [webkit] › e2e/keyboard-everywhere.spec.ts:123:1 › Übersicht aller Kürzel: ⇧⌘/ öffnet, Suche filtert, Esc schließt; auch über ⌘K @smoke (2.4s)
+  ✓    6 [webkit] › e2e/keyboard-select.spec.ts:39:1 › Einfache Tabelle: Tab, ⇧Tab, Pfeile, Enter, Tab am Ende legt eine Zeile an (4.9s)
+  ✓   10 [webkit] › e2e/keyboard-select.spec.ts:77:1 › Datenbank: Tab im Zellen-Editor, ⇧-Pfeile wählen Bereich, Kopieren, Einfügen, Leeren, Ziehen (5.0s)
+  ✓    9 [webkit] › e2e/keyboard-everywhere.spec.ts:147:1 › ⌘ halten zeigt die Tasten der Stelle: überall, Seitenleiste, Text, Blöcke, Datenbank (7.8s)
+  ✓   11 [webkit] › e2e/keyboard-select.spec.ts:133:1 › Blockauswahl: Rechteck aus dem Seitenrand außerhalb der Textspalte, ⇧-Klick erweitert (3.7s)
+  ✓   12 [webkit] › e2e/keyboard-everywhere.spec.ts:172:1 › Editor: ⌘/ öffnet das Blockmenü, Pfeile und Enter wählen (2.0s)
+  ✓   13 [webkit] › e2e/keyboard-select.spec.ts:162:1 › ⌫ ohne Textfeld im Fokus geht nicht zur vorigen Seite zurück (1.4s)

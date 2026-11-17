@@ -1,3 +1,3 @@
-cancelled f06d96421fae9536d4bccfd23d223935be936869 (nicht blockierend)
-BSD-215 chromium: 100000 Zeilen öffnen 1045 ms, ans Ende scrollen 31 ms, Zelle ändern 161 ms
-perf 5000: {"mapOpen":[],"idleBeforePan":[111],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3922,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":7.65,"peekLong":[],"formSubmitMs":49,"formLong":[]}
+cancelled d8099c335932fee3d33c3153671c8517b1f40b84 (nicht blockierend)
+BSD-215 chromium: 100000 Zeilen öffnen 1063 ms, ans Ende scrollen 31 ms, Zelle ändern 159 ms
+perf 5000: {"mapOpen":[],"idleBeforePan":[126],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3918,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":12.65,"peekLong":[],"formSubmitMs":71,"formLong":[]}

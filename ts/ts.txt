@@ -30,6 +30,6 @@ packages/brain test: agents-context: 27/28 grün (1 bewusst abweichend)
 packages/brain test: agents-queue: 9/9 grün
 packages/brain test: agents-skills: 67/67 grün
 packages/brain test: [22m[39mbrain-routing: 25/25 grün
-packages/brain test: [2m      Tests [22m [1m[32m854 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (855)[39m
 packages/sync test: [2m      Tests [22m [1m[32m88 passed[39m[22m[2m | [22m[33m4 skipped[39m[90m (92)[39m
+packages/brain test: [2m      Tests [22m [1m[32m854 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (855)[39m
 --- smoke

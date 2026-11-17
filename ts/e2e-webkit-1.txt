@@ -1,7 +1,4 @@
-cancelled f06d96421fae9536d4bccfd23d223935be936869
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+cancelled d8099c335932fee3d33c3153671c8517b1f40b84
 [WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
@@ -16,11 +13,6 @@ cancelled f06d96421fae9536d4bccfd23d223935be936869
 [WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
 [WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
 [WebServer] 
 [WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
@@ -28,6 +20,18 @@ cancelled f06d96421fae9536d4bccfd23d223935be936869
 [WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
 [WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
 [WebServer] 
 [WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
@@ -54,8 +58,4 @@ cancelled f06d96421fae9536d4bccfd23d223935be936869
 
 Running 264 tests using 2 workers, shard 1 of 2
 
-  ✓    2 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (light) (21.8s)
-  ✓    3 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (dark) (14.8s)
-  ✓    4 [webkit] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (3.3s)
-  ✓    5 [webkit] › e2e/ai-switch.spec.ts:57:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (3.2s)
-  -    6 [webkit] › e2e/ai-switch.spec.ts:84:3 › Screenshots ohne AI (light)
+  ✓    2 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (light) (19.8s)
