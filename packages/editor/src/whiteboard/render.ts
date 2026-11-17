@@ -27,6 +27,7 @@ export interface BoardTheme {
   /** Stiftfarben und Textmarker-Tönungen nach Namen (PEN_COLORS, HIGHLIGHT_COLORS). */
   pens: Record<string, string>;
   highlights: Record<string, string>;
+  fills: Record<string, string>;
   /** Dunkles Thema: der Textmarker hellt auf statt abzudunkeln. */
   dark: boolean;
   /** Marker-Farbe: kennzeichnet, was ein Agent angelegt hat (und nur das). */
@@ -37,8 +38,18 @@ export interface BoardTheme {
 
 /** Token je Stiftfarbe bzw. Textmarker-Tönung (kein Gelb: die Marker-Farbe gehört den Agenten). */
 // Farben des freigegebenen Entwurfs „Based – Whiteboard“ (eigene Tokens board-*, hell und dunkel).
-const PEN_TOKENS: Record<string, string> = { ink: "--ink", blue: "--board-pen-blue", red: "--board-pen-red", green: "--board-pen-green", purple: "--board-pen-purple" };
-const HIGHLIGHT_TOKENS: Record<string, string> = { sky: "--board-highlight-sky", rose: "--board-highlight-rose", mint: "--board-highlight-mint", lilac: "--board-highlight-lilac" };
+// Elija 17.11.: die Farben von Based – Textfarben des Editors (Striche, Text), Marker-Familie (Textmarker),
+// Hintergründe des Editors (Zettel, Flächen). Frühere Namen (lilac, board-note) bleiben lesbar.
+const PEN_TOKENS: Record<string, string> = {
+  ink: "--ink", gray: "--muted", brown: "--block-brown-text", orange: "--block-orange-text", green: "--block-green-text", blue: "--block-blue-text",
+  purple: "--block-purple-text", pink: "--block-pink-text", red: "--block-red-text",
+};
+const HIGHLIGHT_TOKENS: Record<string, string> = { mint: "--marker-mint", sky: "--marker-sky", rose: "--marker-rose", calm: "--marker-calm", lilac: "--block-purple" };
+const FILL_TOKENS: Record<string, string> = {
+  gray: "--status-neutral", brown: "--block-brown", orange: "--block-orange", green: "--block-green", blue: "--block-blue", purple: "--block-purple",
+  pink: "--block-pink", red: "--block-red",
+};
+export const fillToken = (name: string) => FILL_TOKENS[name] ?? FILL_TOKENS.gray!;
 export const penToken = (name: string) => PEN_TOKENS[name] ?? PEN_TOKENS.ink!;
 export const highlightToken = (name: string) => HIGHLIGHT_TOKENS[name] ?? HIGHLIGHT_TOKENS.sky!;
 
@@ -53,9 +64,7 @@ const tokensOf = (v: (name: string) => string, map: Record<string, string>) => O
 
 /** Token je Zettelfarbe (kein Gelb: die Marker-Farbe gehört den Agenten). */
 const NOTE_TOKENS: Record<string, string> = {
-  blue: "--board-note-blue", pink: "--board-note-pink", green: "--board-note-green", purple: "--board-note-purple", gray: "--board-note-gray",
-  // Früher angelegte orange Zettel behalten ihre Farbe; neu vergeben wird sie nicht mehr (Entwurf: vier Tönungen und Grau).
-  orange: "--status-blocked",
+  ...FILL_TOKENS,
 };
 
 export function readBoardTheme(el: Element): BoardTheme {
@@ -65,7 +74,7 @@ export function readBoardTheme(el: Element): BoardTheme {
     bg: v("--bg"), dot: v("--selection-bg"), ink: v("--ink"), muted: v("--muted"), card: v("--surface-card"), raised: v("--surface-raised"), line: v("--line"),
     border: v("--control-border"), select: v("--focus-ring"), selectFill: v("--selected"), peer: v("--synced"),
     font: cs.fontFamily || "system-ui, sans-serif",
-    notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), dark: isDark(v("--bg")), marker: v("--marker-strong"), noteInk: v("--board-note-ink"),
+    notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), fills: tokensOf(v, FILL_TOKENS), dark: isDark(v("--bg")), marker: v("--marker-strong"), noteInk: v("--board-note-ink"),
   };
 }
 
@@ -325,7 +334,9 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
   const res = resourcesOf(images);
   // Fernsicht: ein Objekt, das auf dem Bildschirm nur wenige px groß ist, wird ein Rechteck – bei Tausenden
   // sichtbaren Objekten (weit herausgezoomt) kostet sonst jeder Pfad mit Rundung und Rand.
-  if (Math.max(o.w, o.h) * zoom < 8 || (zoom < 0.2 && !o.rot && o.kind !== "ink" && o.kind !== "text" && !(o.kind === "shape" && o.style?.shape && o.style.shape !== "rect"))) {
+  // Bilder und PDF-Seiten bleiben auch weit draußen sichtbar (Elija 17.11.: „Inhalt soll angezeigt bleiben“).
+  const media = o.kind === "image" || (o.kind === "file" && o.style?.view === "pdf");
+  if (Math.max(o.w, o.h) * zoom < (media ? 3 : 8) || (!media && zoom < 0.2 && !o.rot && o.kind !== "ink" && o.kind !== "text" && !(o.kind === "shape" && o.style?.shape && o.style.shape !== "rect"))) {
     ctx.fillStyle = farFill(theme, o);
     ctx.fillRect(o.x, o.y, Math.max(o.w, 1 / zoom), Math.max(o.h, 1 / zoom));
     return;
@@ -347,7 +358,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       ctx.lineWidth = hair;
       ctx.strokeStyle = theme.line;
       ctx.stroke();
-      if (o.text && legible(15)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 14, w: o.w - 28, h: o.h - 28 }, { size: 15, weight: 500, color: o.style?.color === "orange" ? theme.ink : theme.noteInk, lineHeight: 1.4 });
+      if (o.text && legible(15)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 14, w: o.w - 28, h: o.h - 28 }, { size: 15, weight: 500, color: theme.ink, lineHeight: 1.4 });
       break;
     }
     case "shape": {
@@ -357,23 +368,23 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       else if (kind === "diamond") {
         ctx.moveTo(o.x + o.w / 2, o.y); ctx.lineTo(o.x + o.w, o.y + o.h / 2); ctx.lineTo(o.x + o.w / 2, o.y + o.h); ctx.lineTo(o.x, o.y + o.h / 2); ctx.closePath();
       } else roundRect(ctx, o.x, o.y, o.w, o.h, 10);
-      ctx.fillStyle = theme.card;
+      ctx.fillStyle = (o.style?.fill && theme.fills[String(o.style.fill)]) || theme.card;
       ctx.fill();
       ctx.lineWidth = Math.max(hair, 1.5);
-      ctx.strokeStyle = theme.border;
+      ctx.strokeStyle = (o.style?.color && theme.pens[String(o.style.color)]) || theme.border;
       ctx.stroke();
-      if (o.text && legible(14)) drawText(ctx, theme, o.text, { x: o.x + 12, y: o.y + 8, w: o.w - 24, h: o.h - 16 }, { size: 14, weight: 500, color: theme.ink, lineHeight: 1.4, align: "center", middle: true });
+      if (o.text && legible(14)) drawText(ctx, theme, o.text, { x: o.x + 12, y: o.y + 8, w: o.w - 24, h: o.h - 16 }, { size: 14, weight: 500, color: (o.style?.color && theme.pens[String(o.style.color)]) || theme.ink, lineHeight: 1.4, align: "center", middle: true });
       break;
     }
     case "frame": {
       roundRect(ctx, o.x, o.y, o.w, o.h, 18);
-      ctx.fillStyle = theme.raised;
+      ctx.fillStyle = (o.style?.color && theme.fills[String(o.style.color)]) || theme.raised;
       ctx.fill();
       if (o.text && legible(13)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 11, w: o.w - 28, h: 20 }, { size: 13, weight: 600, color: theme.ink, lineHeight: 1.4 });
       break;
     }
     case "text":
-      if (o.text && legible(17)) drawText(ctx, theme, o.text, { x: o.x, y: o.y, w: o.w, h: Math.max(o.h, 26) }, { size: 17, weight: 400, color: theme.ink, lineHeight: 1.5 });
+      if (o.text && legible(17)) drawText(ctx, theme, o.text, { x: o.x, y: o.y, w: o.w, h: Math.max(o.h, 26) }, { size: 17, weight: 400, color: (o.style?.color && theme.pens[String(o.style.color)]) || theme.ink, lineHeight: 1.5 });
       break;
     case "ink": {
       const bytes = o.ink;
@@ -440,6 +451,21 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       break;
     }
     case "page": {
+      if (o.style?.full === true) {
+        // Ganze Seite: Kopf wie bei Vorschauen, darunter legt die Ansicht den Editor der Seite (BoardEmbed).
+        roundRect(ctx, o.x, o.y, o.w, o.h, 14);
+        ctx.fillStyle = theme.bg;
+        ctx.fill();
+        ctx.lineWidth = hair;
+        ctx.strokeStyle = theme.line;
+        ctx.stroke();
+        roundRect(ctx, o.x + 10, o.y + 9, 40, 22, 7);
+        ctx.fillStyle = theme.raised;
+        ctx.fill();
+        if (legible(10.5)) drawText(ctx, theme, "PAGE", { x: o.x + 10, y: o.y + 9, w: 40, h: 22 }, { size: 10, weight: 600, color: theme.muted, lineHeight: 1.3, align: "center", middle: true });
+        if (legible(13)) drawText(ctx, theme, (o.ref ? res?.title?.(o.ref) : undefined) || o.text || "Untitled", { x: o.x + 60, y: o.y + 10, w: o.w - 72, h: 20 }, { size: 13, weight: 600, color: theme.ink, lineHeight: 1.5 });
+        break;
+      }
       // Seitenkarte: eine echte Seite auf dem Board (Doppelklick öffnet sie).
       roundRect(ctx, o.x, o.y, o.w, o.h, 14);
       ctx.fillStyle = theme.card;
@@ -501,7 +527,7 @@ function drawConnector(ctx: Ctx, theme: BoardTheme, c: WBConnector, byID: Readon
   ctx.lineJoin = "round";
   // Verbindung eines Agenten: gestrichelt in der Marker-Farbe.
   const agent = c.style?.agent === true;
-  ctx.strokeStyle = agent ? theme.marker : theme.border;
+  ctx.strokeStyle = agent ? theme.marker : (c.style?.color && theme.pens[String(c.style.color)]) || theme.border;
   if (agent) ctx.setLineDash([4, 5]);
   ctx.stroke();
   ctx.setLineDash([]);
@@ -604,6 +630,20 @@ export function drawBoardOverlay(ctx: Ctx, scene: BoardScene, theme: BoardTheme,
     ctx.lineWidth = 1.8;
     ctx.lineCap = "round";
     ctx.strokeStyle = theme.muted;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  if (scene.snap) {
+    // Vorschau der Form, zu der der gehaltene Strich wird: gestrichelt in der Auswahlfarbe.
+    const sn = scene.snap;
+    const r = worldRectToScreen(camera, sn.bounds);
+    ctx.setLineDash([6, 5]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = theme.select;
+    ctx.beginPath();
+    if (sn.kind === "line") { ctx.moveTo((sn.from.x - camera.x) * camera.zoom, (sn.from.y - camera.y) * camera.zoom); ctx.lineTo((sn.to.x - camera.x) * camera.zoom, (sn.to.y - camera.y) * camera.zoom); }
+    else if (sn.kind === "oval") ctx.ellipse(r.x + r.w / 2, r.y + r.h / 2, r.w / 2, r.h / 2, 0, 0, Math.PI * 2);
+    else roundRect(ctx, r.x, r.y, r.w, r.h, 10 * camera.zoom);
     ctx.stroke();
     ctx.setLineDash([]);
   }

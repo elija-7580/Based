@@ -3,7 +3,7 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
 import { htmlPreviewFrame } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
@@ -1664,6 +1664,14 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <hr className="bx2-divider" />;
     case "page": case "databasePage": case "linkToPage": {
       const target = b.type === "linkToPage" ? b.props?.linkTarget : b.id;
+      if (b.type === "page" && isBoardPage(b) && props.renderBoard) {
+        return (
+          <div className="bx2-embed bx2-board" data-embed="" data-no-marquee="" contentEditable={false} data-testid="board-block">
+            <PageLink target={target} />
+            <div className="bx2-board-body">{props.renderBoard({ blockID: b.id, pageID: b.id })}</div>
+          </div>
+        );
+      }
       return <PageLink target={target} />;
     }
     case "databaseInline": {
@@ -2859,7 +2867,7 @@ function BlockMenu({ id, x, y, view0, onClose, onMove }: { id: string; x: number
   }
   // „Page“ (⌘⌥9) steht wie im alten Editor unter „Turn into“.
   // BSD-407 Teil 4: auch „Block equation“ (Text wird TeX) wie im alten Editor.
-  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => s.type === "page" || s.type === "equation" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
+  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => (s.type === "page" && !s.create) || s.type === "equation" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
   const runTurn = (s: (typeof SLASH_ITEMS)[number]) => {
     if (s.type === "equation") return void ctrl.apply(cmd.turnIntoEquation(store, ids));
     if (s.type !== "page") return void cmd.turnInto(store, ids, s.type, s.props ?? {});

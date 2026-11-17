@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { BlockEditor, textDocName, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { migrateEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
+import { EmbeddedBoard } from "./components/Embedded.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
 import { Equation, loadTeX, renderTeX, texReady } from "./equation.js";
@@ -69,7 +70,7 @@ const blockLink = (pageID: string) => (blockID: string) => {
   return u.toString();
 };
 
-export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock }: PageEditorProps) {
+export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock, embedded }: PageEditorProps) {
   const theme = useRootTheme();
   const client = shellClient;
   // BSD-407 Teil 4: nur noch der Block-Editor (ADR 0016); der alte BlockNote-Editor ist entfernt.
@@ -78,6 +79,8 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
     const View = slots.DatabaseView;
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
   };
+  // Elija 17.11.: ein Board als Unterseite erscheint mitten in der Seite als Fläche.
+  const renderBoard = client ? (p: { pageID: string }) => <EmbeddedBoard client={client} pageID={p.pageID} onOpenPage={onOpenPage} /> : undefined;
   const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
   // BSD-407: Inline-Gleichungen im neuen Editor als KaTeX-HTML (KaTeX lädt erst bei der ersten Gleichung)
   const renderEquationHTML = (tex: string, onReady: () => void): string | undefined => {
@@ -104,10 +107,10 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   const fetchLinkPreview = useMemo(() => linkPreviewFetcher(), []);
   return (
     <div className="shell-editor">
-      <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} renderEquationHTML={renderEquationHTML}
+      <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} {...(renderBoard ? { renderBoard } : {})} renderEquation={renderEquation} renderEquationHTML={renderEquationHTML}
         {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(HIDDEN_BLOCKS.size ? { hiddenBlocks: HIDDEN_BLOCKS } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
-      {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
+      {client && !hideBacklinks && !embedded ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>
   );
 }
