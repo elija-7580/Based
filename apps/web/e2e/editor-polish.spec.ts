@@ -298,3 +298,57 @@ test("Rest-Zustände: alle Blocktypen, Suche in der Seite, Link-Dialog", async (
   await page.evaluate(() => localStorage.removeItem("based.appearance"));
   expect([...new Set(found)]).toEqual([]);
 });
+
+// BSD-447: Video- und Audio-Block mit Based-Bedienung – keine Browser-Steuerleiste (controls) mehr. Abspielen/Pause,
+// Zeit, Ton aus, Tastatur auf dem Player (Leertaste, M). Fotos 1280 × 820 hell/dunkel (BASED_SCREENSHOTS=1).
+function silentWav(seconds: number): string {
+  const n = 8000 * seconds, b = Buffer.alloc(44 + n, 128);
+  b.write("RIFF", 0); b.writeUInt32LE(36 + n, 4); b.write("WAVEfmt ", 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(8000, 24); b.writeUInt32LE(8000, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34); b.write("data", 36); b.writeUInt32LE(n, 40);
+  return "data:audio/wav;base64," + b.toString("base64");
+}
+
+test("Video und Audio: Based-Leiste statt Browser-Steuerung", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const pid = (await command(page, { op: "createPage", title: "Media" })) as string;
+  const src = silentWav(2);
+  await page.evaluate(async ([id, url]) => {
+    const { store } = await (globalThis as unknown as Seeder).__based.client.openPage(id);
+    store.transact("Seed media", (tx) => {
+      tx.put({ kind: "block", data: { id: "MEDIA-AUDIO", type: "audio", parent: "b:" + id, sk: "a0", props: { url }, createdAt: 0, updatedAt: 0 } });
+      tx.put({ kind: "block", data: { id: "MEDIA-VIDEO", type: "video", parent: "b:" + id, sk: "a1", props: { url }, createdAt: 0, updatedAt: 0 } });
+    });
+  }, [pid, src] as const);
+  for (const theme of SHOTS && browserName === "chromium" ? (["light", "dark"] as const) : (["light"] as const)) {
+    await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.goto("/#page-" + pid);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    const players = editor(page).getByTestId("media-player");
+    await expect(players).toHaveCount(2);
+    // keine System-Steuerung
+    expect(await editor(page).locator("video[controls], audio[controls]").count()).toBe(0);
+    const audio = players.first();
+    await expect(audio.getByTestId("media-time")).toHaveText("0:00 / 0:02");
+    await expect(players.nth(1).getByRole("button", { name: "Full screen" })).toBeVisible();
+    await expect(audio.getByRole("button", { name: "Full screen" })).toHaveCount(0);
+    if (SHOTS && browserName === "chromium") {
+      await page.mouse.move(0, 0);
+      await page.screenshot({ path: `../../docs/design/screens/web-editor-media-${theme}.png` });
+    }
+  }
+  const audio = editor(page).getByTestId("media-player").first();
+  // Ton aus per Knopf, wieder an per Taste M auf dem Player
+  await audio.getByRole("button", { name: "Mute" }).click();
+  await expect(audio.getByRole("button", { name: "Unmute" })).toHaveAttribute("aria-pressed", "true");
+  await audio.focus();
+  await page.keyboard.press("m");
+  await expect(audio.getByRole("button", { name: "Mute" })).toBeVisible();
+  // Abspielen per Leertaste, Pause per Knopf
+  await page.keyboard.press(" ");
+  await expect(audio.getByRole("button", { name: "Pause" })).toBeVisible();
+  await audio.getByRole("button", { name: "Pause" }).click();
+  await expect(audio.getByRole("button", { name: "Play" })).toBeVisible();
+});

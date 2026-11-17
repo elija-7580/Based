@@ -4,7 +4,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
+import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMediaPlayer, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
 import { useState } from "react";
 import { Icon } from "../../icons.js";
 
@@ -94,6 +94,12 @@ export function AstryxKit() {
             </HStack>
           </VStack>
         </Card>
+
+        {/* BSD-447: Wiedergabe für Video- und Audio-Blöcke (statt der Browser-Steuerleiste) */}
+        <Heading level={2}>Media</Heading>
+        <Card>
+          <BasedMediaPlayer src={SILENCE} kind="audio" label="Two seconds of silence.wav" testID="kit-media" />
+        </Card>
       </VStack>
 
       <BasedDialog
@@ -113,3 +119,15 @@ export function AstryxKit() {
     </VStack>
   );
 }
+
+/** Zwei Sekunden Stille als WAV (8 kHz, 8 bit, mono) – damit der Player im Kit etwas zum Abspielen hat. */
+const SILENCE = (() => {
+  const n = 16000, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+  const w = (o: number, t: string) => { for (let i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+  w(0, "RIFF"); v.setUint32(4, 36 + n, true); w(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, "data"); v.setUint32(40, n, true);
+  b.fill(128, 44);
+  let s = "";
+  for (const x of b) s += String.fromCharCode(x);
+  return "data:audio/wav;base64," + btoa(s);
+})();
