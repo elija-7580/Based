@@ -1,2 +1,61 @@
-cancelled 46ba679d48ba5c68d7e4fd98f8e32bad642312c5
-(kein Log – Lauf vorher abgebrochen)
+success 45f2c81c49ef5ae315f2b0b2196c43c0b20e4f7d
+  ✓  214 [webkit] › e2e/welcome.spec.ts:107:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (2.3s)
+  -  216 [webkit] › e2e/welcome.spec.ts:126:1 › Willkommen: Bildschirmfotos
+  ✓  215 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.2s)
+  ✓  217 [webkit] › e2e/welcome.spec.ts:167:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (5.1s)
+  ✓  218 [webkit] › e2e/welcome.spec.ts:201:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (4.9s)
+  ✓  219 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.4s)
+
+
+  1) [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      204 |   await page.goto(`/#page-${other}`);
+      205 |   await expect(editor(page)).toBeVisible();
+    > 206 |   expect(await page.evaluate(([r, d, s, rr]) => (globalThis as unknown as { __basedReport: H }).__basedReport.load(r as string, d, s, rr as string), [other, b.state.doc, { type: "text", anchor: 1, head: 1, block: b.state.doc.blocks[1]!.id }, id] as const)).toBe(true);
+          |                                                                                                                                                                                                                                                                  ^
+      207 |   await expect(editor(page).locator("[data-editable-id]")).toHaveText(["One", "Two"]);
+      208 |   await expect(editor(page).locator("[data-editable-id]").nth(1)).toBeFocused();
+      209 |   await page.keyboard.type("!");
+        at /home/runner/work/Based/Based/apps/web/e2e/report.spec.ts:206:258
+
+    Error Context: test-results/report-Wiedergabe-Haken-im-a0a86-nwenden-Schreibmarke-setzen-webkit/error-context.md
+
+  2) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+        "Chat",
+        "Search",
+    -   "Home",
+        "Library",
+    +   "Home",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      104 |   // Library aus dem Fuß nach oben hinter Home
+      105 |   await drag(tools.getByRole("button", { name: "Library" }), item("Home"), (b) => ({ x: b.width / 2, y: b.height - 4 }));
+    > 106 |   await expect.poll(top).toEqual(["Chat", "Search", "Home", "Library"]);
+          |                          ^
+      107 |   await expect.poll(footer).toEqual(["Trash", "Settings"]);
+      108 |   // Search in den Fuß vor Trash
+      109 |   await drag(item("Search"), tools.getByRole("button", { name: /^Trash/ }), (b) => ({ x: 4, y: b.height / 2 }));
+        at /home/runner/work/Based/Based/apps/web/e2e/sidebar-nav.spec.ts:106:26
+
+    Error Context: test-results/sidebar-nav-Einträge-ziehe-52dba--bleibt-nach-Neuladen-Reset-webkit/error-context.md
+
+  2 flaky
+    [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen 
+    [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+  32 skipped
+  183 passed (8.0m)
