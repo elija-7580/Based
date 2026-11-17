@@ -36,7 +36,11 @@ OSI-approved open-source license (currently AGPL-3.0-or-later).
 
 ## 5. How to sign
 
-On your first pull request, the CLA Assistant bot asks you to sign by commenting or clicking. Your signature is linked
-to your GitHub account and applies to all your future contributions to Based.
+On your first pull request, a bot asks you to sign. Post this comment in the pull request:
+
+> I have read the CLA Document and I hereby sign the CLA
+
+Your signature is stored with your GitHub account in the branch `cla-signatures` and applies to all your future
+contributions to Based.
 
 *Based on the Apache Individual CLA. Not legal advice.*
