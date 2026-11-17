@@ -11,6 +11,11 @@ export interface SqlDatabase {
   run(sql: string, params?: SqlValue[]): void;
   all(sql: string, params?: SqlValue[]): SqlRow[];
   /**
+   * ADR 0017 A1: Zeilen einzeln durchreichen statt alle auf einmal zu sammeln (Laden großer Workspaces ohne
+   * Speicherspitze). Optional; ohne nimmt der Aufrufer `all`. Während des Durchlaufs nicht in dieselbe Datenbank schreiben.
+   */
+  each?(sql: string, params: SqlValue[], row: (r: SqlRow) => void): void;
+  /**
    * Konsistente Kopie vor einer Migration (`<datei>.bak-v<version>`), ältere Sicherungen entfernen.
    * Gibt den Namen der Sicherung zurück; `undefined` = nichts zu sichern (z. B. In-Memory).
    */

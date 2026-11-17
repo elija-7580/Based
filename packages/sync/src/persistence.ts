@@ -16,7 +16,7 @@ import {
   type WireRecord,
 } from "@based/core";
 import { CURRENT_SCHEMA_VERSION, enablePropertyRecords, hasPropertyRecords, migrate, PersistenceError, setMeta } from "./migrations.js";
-import { asInt, asText, first, utf8, type SqlDatabase } from "./sql.js";
+import { asInt, asText, first, utf8, type SqlDatabase, type SqlRow } from "./sql.js";
 
 export interface ChangeEntry {
   seq: number;
@@ -79,13 +79,27 @@ export class SqlitePersistence implements Persistence {
     return this.guard("load", () => {
       const out: WireRecord[] = [];
       this.undecodable = [];
-      for (const row of this.db.all("SELECT kind, id, data FROM records")) {
+      // ADR 0017 A1: Zeile für Zeile (wo der Treiber es kann) – sonst liegen alle Zeilen als BLOB, als Text und als
+      // Objekt gleichzeitig im Speicher.
+      // In Stücken von 4096 Zeilen: der Speicher bleibt begrenzt, und SQLite (WASM) und JSON/Zod wechseln sich nicht je
+      // Zeile ab. Die Ladezeit ändert das nicht messbar (17.11., 100 000 Records, WebKit 2,4–3,0 s in allen Varianten).
+      const each = (fn: (row: SqlRow) => void) => {
+        if (!this.db.each) {
+          for (const row of this.db.all("SELECT kind, id, data FROM records")) fn(row);
+          return;
+        }
+        let chunk: SqlRow[] = [];
+        const flush = () => { for (const row of chunk) fn(row); chunk = []; };
+        this.db.each("SELECT kind, id, data FROM records", [], (row) => { if (chunk.push(row) >= 4096) flush(); });
+        flush();
+      };
+      each((row) => {
         const kind = asText(row.kind) as RecordKind;
         const id = asText(row.id) ?? "";
         const key = keyOf(kind, id);
         if (!KINDS.has(kind)) {
           this.undecodable.push({ key, error: `unknown record kind ${kind}` });
-          continue;
+          return;
         }
         try {
           const parsed = safeParseRecord({ kind, data: JSON.parse(asText(row.data) ?? "") });
@@ -94,7 +108,7 @@ export class SqlitePersistence implements Persistence {
         } catch (e) {
           this.undecodable.push({ key, error: String(e) });
         }
-      }
+      });
       return out;
     });
   }
