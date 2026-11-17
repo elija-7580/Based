@@ -356,6 +356,31 @@ async function captureOverlays(page: Page) {
   await keep(page.locator("dialog.astryx-dialog[open]:not([data-overlay])"), ["Dialog"]);
 }
 
+/** Schrift für den Bildvergleich: die gebündelte Schibsted Grotesk direkt aus dem Build (Default lädt sie sonst nicht). */
+function fontFaces(): string {
+  const faces = readdirSync("dist/assets").flatMap((f) => {
+    const m = /^schibsted-grotesk-latin-(\d00)-normal-.*\.woff2$/.exec(f);
+    return m ? [`@font-face { font-family: KitMatrix; font-weight: ${m[1]}; src: url(/assets/${f}) format("woff2"); }`] : [];
+  });
+  expect(faces.length, "Schibsted Grotesk im Build").toBeGreaterThan(0);
+  return faces.join("\n");
+}
+
+async function loadFont(page: Page) {
+  await page.evaluate(async () => { await Promise.all(["400", "500", "600", "700"].map((w) => document.fonts.load(`${w} 14px KitMatrix`))); await document.fonts.ready; });
+}
+
+/** Pseudoklassen per DevTools-Protokoll erzwingen (nur Chromium). */
+async function forcer(page: Page) {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("DOM.enable");
+  await cdp.send("CSS.enable");
+  const { root } = await cdp.send("DOM.getDocument", { depth: -1 });
+  const ids = async (sel: string) => (await cdp.send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: sel })).nodeIds;
+  const force = async (nodeIds: number[], classes: string[]) => { for (const nodeId of nodeIds) await cdp.send("CSS.forcePseudoState", { nodeId, forcedPseudoClasses: classes }); };
+  return { cdp, ids, force };
+}
+
 async function buildMatrix(page: Page) {
   // Quelle je Zeile: der Baustein selbst, bei Feld und Token die sichtbare Hülle drumherum
   const sources: { name: string; states: State[]; index: number }[] = [];
@@ -368,13 +393,7 @@ async function buildMatrix(page: Page) {
     }, index);
     sources.push({ name: it.name, states: it.states, index });
   }
-  // Schrift: die gebündelte Schibsted Grotesk direkt aus dem Build (Default lädt sie sonst nicht)
-  const faces = readdirSync("dist/assets").flatMap((f) => {
-    const m = /^schibsted-grotesk-latin-(\d00)-normal-.*\.woff2$/.exec(f);
-    return m ? [`@font-face { font-family: KitMatrix; font-weight: ${m[1]}; src: url(/assets/${f}) format("woff2"); }`] : [];
-  });
-  expect(faces.length, "Schibsted Grotesk im Build").toBeGreaterThan(0);
-  await page.addStyleTag({ content: `${faces.join("\n")}
+  await page.addStyleTag({ content: `${fontFaces()}
     .kit-matrix { position: absolute; inset: 0 auto auto 0; z-index: 2147483647; width: max-content; display: grid;
       grid-template-columns: max-content repeat(5, max-content); gap: 12px 20px; align-items: center;
       padding: 20px; background: var(--bg); color: var(--ink); }
@@ -390,7 +409,7 @@ async function buildMatrix(page: Page) {
     .kit-overlays [data-overlay] { position: static !important; inset: auto !important; margin: 0 !important; transform: none !important;
       translate: none !important; scale: none !important; opacity: 1 !important; animation: none !important; }
   ` });
-  await page.evaluate(async () => { await Promise.all(["400", "500", "600", "700"].map((w) => document.fonts.load(`${w} 14px KitMatrix`))); await document.fonts.ready; });
+  await loadFont(page);
   await page.getByTestId("astryx-kit").evaluate((kit, { rows, states }) => {
     const grid = document.createElement("section");
     grid.className = "kit-matrix";
@@ -422,12 +441,7 @@ async function buildMatrix(page: Page) {
 
   // Zustände erzwingen: Überfahren/gedrückt auf der Kopie und allem darin (wie ein Zeiger über dem innersten Teil),
   // Fokus auf dem fokussierbaren Element, :focus-within auf seinen Hüllen.
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send("DOM.enable");
-  await cdp.send("CSS.enable");
-  const { root } = await cdp.send("DOM.getDocument", { depth: -1 });
-  const ids = async (sel: string) => (await cdp.send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: sel })).nodeIds;
-  const force = async (nodeIds: number[], classes: string[]) => { for (const nodeId of nodeIds) await cdp.send("CSS.forcePseudoState", { nodeId, forcedPseudoClasses: classes }); };
+  const { cdp, ids, force } = await forcer(page);
   for (const st of ["hover", "pressed"] as const) {
     await force(await ids(`[data-force=${st}], [data-force=${st}] *`), FORCE[st]);
   }
@@ -491,6 +505,45 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     expect((await menuShot("Menu")).equals(await menuShot("Menu item hover")), "Menüzeile überfahren erzwungen").toBe(false);
     await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
     if (style === "default") await overlays.screenshot({ path: `../../docs/design/screens/web-kit-overlays-${theme}.png`, animations: "disabled" });
+  });
+}
+
+// BSD-302 Teil 5: die Seitenleiste als Ganzes im Bildvergleich – Nav-Eintrag in Ruhe, überfahren, gedrückt und mit
+// Tastaturfokus, „Home“ aktiv, Baumzeile überfahren (mit ihren Knöpfen), gleichzeitig erzwungen auf den echten Zeilen.
+for (const theme of ["light", "dark"] as const) for (const style of ["default", "bold"] as const) {
+  test(`Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (${style}, ${theme})`, async ({ page, browserName }) => {
+    test.skip(browserName !== "chromium" || process.platform !== "linux", "Bildvergleich nur Chromium unter Linux (Grundbilder wie in der CI)");
+    await page.addInitScript(({ t, s }) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t, style: s })), { t: theme, s: style });
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    const nav = page.getByRole("navigation", { name: "Workspace" });
+    const row = nav.locator(".tree-row[role=treeitem]").first();
+    await expect(row).toBeVisible();
+    const allowed = await tokenColors(page);
+    await page.addStyleTag({ content: `${fontFaces()}
+      nav.sidebar, nav.sidebar * { font-family: KitMatrix, sans-serif !important; }` });
+    await loadFont(page);
+    const mark = async (loc: Locator, state: string) => loc.evaluate((el, st) => el.setAttribute("data-force", st), state);
+    await mark(nav.getByRole("button", { name: "Search" }).first(), "hover");
+    await mark(nav.getByRole("button", { name: "Chat" }).first(), "pressed");
+    await mark(nav.getByRole("button", { name: /Create a teamspace/ }).first(), "focus");
+    const { ids, force } = await forcer(page);
+    await force(await ids("nav.sidebar [data-force=hover], nav.sidebar [data-force=hover] *"), FORCE.hover);
+    await force(await ids("nav.sidebar [data-force=pressed], nav.sidebar [data-force=pressed] *"), FORCE.pressed);
+    await force(await ids("nav.sidebar [data-force=focus]"), FORCE.focus);
+    // Baumzeile: echter Zeiger über dem Titel (erzwungenes :hover auf der Zeile zeigt ihre Knöpfe anders als echt)
+    await row.getByText("Welcome to Based").hover();
+    await settle(row);
+
+    const found: string[] = [];
+    for (const copy of [...(await nav.locator("[data-force]").all()), row]) {
+      const label = `${(await copy.textContent())?.trim()} ${(await copy.getAttribute("data-force")) ?? "hover"}`;
+      for (const [k, c] of Object.entries(await colorsOf(copy))) if (!transparent(c) && !isToken(c, allowed)) found.push(`${label} ${k}: ${c}`);
+    }
+    expect(found).toEqual([]);
+    await expect(nav).toHaveScreenshot(`sidebar-states-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    if (style === "default") await nav.screenshot({ path: `../../docs/design/screens/web-kit-sidebar-states-${theme}.png`, animations: "disabled" });
   });
 }
 
