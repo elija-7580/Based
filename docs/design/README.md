@@ -118,3 +118,18 @@ Rendered“): Stamm und Bauch sind Blöcke, die Basis ist der Marker. Dateien in
 - `based-mark.svg`, `based-mark-on-dark.svg` — Zeichen ab 32 px
 - `based-mark-small.svg`, `based-mark-small-on-dark.svg` — flach, für ≤ 24 px (Seitenleiste, Favicon)
 - Wortmarke: Zeichen + „based“ klein, Systemschrift 650, −0,03 em. Schutzraum: eine Stammbreite.
+
+### Logo-Intro (Ausnahme von der Bewegungsregel)
+
+Beim ersten Start „tippt“ sich das Zeichen einmal über der Überschrift des Willkommensbildschirms
+(`apps/web/src/components/LogoIntro.tsx`, Ablauf als getestete Zeitfunktion in `logoTimeline.ts`):
+
+1. Ein gelber Punkt zieht sich in einem Zug zur Basislinie auf.
+2. Eine Einfügemarke in Blockfarbe (nie Gelb) blinkt dort, wo als Nächstes getippt wird.
+3. Der Stamm fällt auf die Linie, dann der Bauch. Die Linie federt nach, die Blöcke kippeln über ihre Kanten
+   aus und bleiben stehen.
+
+Das ist der einzige Ort mit Federn und Drehung – ein Markenmoment, kein UI-Übergang. Regeln: läuft genau
+einmal (rund 2 s bis das Zeichen steht), nie in Schleife, nie als Ladeanzeige im Alltag; mit „Bewegung
+reduzieren“ steht sofort das fertige Zeichen; das letzte Bild ist das ruhende Zeichen. Die Basis nutzt das
+feste `logo-base` (bleibt gelb, auch wenn eine andere Marker-Farbe gewählt ist).

@@ -47,6 +47,8 @@ for (const theme of ["light", "dark"] as const) {
       await expect(welcome).toBeVisible();
       await expect(welcome.getByRole("group", { name: "Or start from a template" }).getByRole("button")).toHaveText(["Tasks", "Notes", "Journal", "Wiki"]);
       await expect(welcome.getByText("AI stays off")).toHaveCount(0);
+      // das Logo-Intro läuft einmal und steht dann still (erst danach das Bildschirmfoto)
+      await expect(welcome.getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
       await clean(page, "Willkommen");
       await shoot(page, "welcome");
 

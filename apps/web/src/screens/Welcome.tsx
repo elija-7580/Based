@@ -13,6 +13,7 @@ import { BasedButton } from "@based/ui/astryx";
 import { STARTER_TEMPLATES, type StarterTemplateID } from "@based/core";
 import { useEffect, useRef, useState, type Ref } from "react";
 import { Icon, type IconName } from "../icons.js";
+import { LogoIntro } from "../components/LogoIntro.js";
 import type { Route } from "../shell/router.js";
 import { firstRun, type WelcomePending } from "../shell/firstRun.js";
 import { keyLabel } from "../shell/keyHints.js";
@@ -67,6 +68,8 @@ export function Welcome({ client, pending, onOpenPage, onNavigate, onImport }: P
     <div className="content welcome" data-testid="welcome">
       <div className="column">
         <header className="welcome-head">
+          {/* Elija 17.11.: das Zeichen tippt sich beim ersten Start einmal (components/LogoIntro.tsx) */}
+          <LogoIntro />
           <h1 className="t-title">Welcome to Based</h1>
           <p className="t-desc welcome-lead">Bring your pages over from Notion, start from a template or start with an empty workspace. No account needed.</p>
         </header>
