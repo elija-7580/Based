@@ -19,6 +19,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = join(ROOT, "src");
 const OUT = process.env.WEBSITE_OUT || join(ROOT, "public");
 const SITE = "https://basednotes.app";
+const SPONSORS = "https://github.com/sponsors/elija-7580";
 
 // Artboard → URL path. Mobile.dc.html is the phone version of the home page.
 const PAGES = [
@@ -138,9 +139,14 @@ function patchLinks(s) {
 function patchNav(s) {
   s = s.split("Databases, docs and agents. Instant, private, everywhere. Built in Vienna.")
     .join("Your data. Based. Notes and databases on your own Mac. Built in Vienna.");
+  // Donations in focus (Elija 17.11.): "Sponsor" in the header menus and in the footer's "Open" column.
+  s = s.replace(/(<footer[\s\S]*?<a href="https:\/\/github\.com\/elija-7580\/Based" class="navlink">GitHub<\/a>\n)/,
+    `$1<a href="${SPONSORS}" class="navlink">Sponsor Based</a>\n`);
   return s.replace(/<header[\s\S]*?<\/header>/, (h) => h
     .replace(/<a href="\/agents" class="navlink[^"]*">Agents<\/a>\n?/, "")
-    .replace(/<a href="\/agents">Agents<\/a>\n?/, ""));
+    .replace(/<a href="\/agents">Agents<\/a>\n?/, "")
+    .replace(/(<a href="https:\/\/github\.com\/elija-7580\/Based" class="navlink">GitHub<\/a>\n)/, `$1<a href="${SPONSORS}" class="navlink" style="display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 600;"><svg width="12" height="12" viewBox="0 0 24 24" fill="#E0C24A" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1.1 8.5 3.2 5 6.6 5c2 0 3.4 1.1 4.4 2.5C12 6.1 13.4 5 15.4 5c3.4 0 5.5 3.5 4.1 6.8C19.5 16.4 12 21 12 21z"/></svg>Sponsor</a>\n`)
+    .replace(/(<a href="https:\/\/github\.com\/elija-7580\/Based">GitHub<\/a>\n)/, `$1<a href="${SPONSORS}">Sponsor Based</a>\n`));
 }
 const patchAssets = (s) => s.split(MARK_LIGHT).join("/mark.svg").split(MARK_DARK).join("/mark-dark.svg");
 

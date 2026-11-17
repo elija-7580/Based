@@ -10,7 +10,8 @@
   <a href="https://basednotes.app/#waitlist"><b>Join the beta</b></a> ·
   <a href="https://basednotes.app/roadmap">Roadmap</a> ·
   <a href="https://basednotes.app/leaving-notion">Coming from Notion?</a> ·
-  <a href="https://basednotes.app/faq">FAQ</a>
+  <a href="https://basednotes.app/faq">FAQ</a> ·
+  <a href="https://github.com/sponsors/elija-7580"><b>Sponsor</b></a>
 </p>
 
 <p align="center">
@@ -18,6 +19,7 @@
   <img alt="Mac beta" src="https://img.shields.io/badge/Mac-beta-E7CE6A?style=flat-square&labelColor=1F1F1D">
   <img alt="Built in Austria" src="https://img.shields.io/badge/built%20in-Austria-F1F1EE?style=flat-square&labelColor=1F1F1D">
   <img alt="Local first" src="https://img.shields.io/badge/local-first-F1F1EE?style=flat-square&labelColor=1F1F1D">
+  <a href="https://github.com/sponsors/elija-7580"><img alt="Sponsor Based" src="https://img.shields.io/badge/sponsor-%E2%99%A5%20%243%20a%20month-E7CE6A?style=flat-square&labelColor=1F1F1D"></a>
 </p>
 
 **Based** is a fast, private home for your notes and databases. Pages, blocks and databases with tables, boards,
@@ -43,6 +45,19 @@ It's open source, built in Austria by one person and a night shift of agents, an
   encryption, or you run the server yourself.
 - **Built with the people who use it.** The [roadmap](https://basednotes.app/roadmap) is public and comes straight from
   the backlog. What testers run into decides the order.
+
+## Support Based
+
+Based has no investors and sells no ads. During the beta every feature is free for everyone, and donations pay for
+the servers. **$3 a month is enough.** It's a donation: you get nothing extra for it, just a notes app that stays yours.
+
+**Goal: 1,000 monthly sponsors.** At 1,000, Based Cloud goes live for everyone.
+
+<p>
+  <a href="https://github.com/sponsors/elija-7580"><img alt="Sponsor Based on GitHub" src="https://img.shields.io/badge/Sponsor%20on%20GitHub-%E2%99%A5-E7CE6A?style=for-the-badge&labelColor=1F1F1D"></a>
+  &nbsp;
+  <a href="https://github.com/sponsors/elija-7580?frequency=one-time"><img alt="Give once" src="https://img.shields.io/badge/Give%20once-1F1F1D?style=for-the-badge"></a>
+</p>
 
 ## What's in the beta, and what comes later
 
@@ -127,7 +142,8 @@ license. Those copies stay MIT; all later versions are AGPL-3.0-or-later.
 - **Contributing:** external contributions need the Contributor License Agreement ([`CLA.md`](CLA.md)). Details in
   [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - **Security:** report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md).
-- **Support the project:** during the beta, Based is funded by donations through GitHub Sponsors. All features stay
-  free for everyone; a donation buys no extra features or services.
+- **Support the project:** during the beta, Based is funded by donations through
+  [GitHub Sponsors](https://github.com/sponsors/elija-7580). All features stay free for everyone; a donation buys no
+  extra features or services.
 
 Built clean-room from public documentation. Notion is a trademark of Notion Labs, Inc.; Based is not affiliated with it.

@@ -165,6 +165,22 @@ test("framing (17.11.2026): own brand first, the notes app before agents", () =>
   assert.ok(!/[–—]/.test(home), "no en or em dashes on the home page");
 });
 
+test("donations in focus (17.11.2026): sponsor link in header and footer, card on the home page, FAQ answer", () => {
+  const out = mkdtempSync(join(tmpdir(), "based-site-sponsor-"));
+  execFileSync(process.execPath, [join(ROOT, "scripts", "build.mjs")], { env: { ...process.env, WEBSITE_OUT: out, NO_PRERENDER: "1" }, stdio: "pipe" });
+  const SP = "https://github.com/sponsors/elija-7580";
+  for (const p of ["index.html", "workspace/index.html", "faq/index.html"]) {
+    const s = readFileSync(join(out, p), "utf8");
+    assert.ok(/<header[\s\S]*?<\/header>/.exec(s)[0].includes(SP), `${p}: sponsor link in the header`);
+    assert.ok(/<footer[\s\S]*?<\/footer>/.exec(s)[0].includes(SP), `${p}: sponsor link in the footer`);
+  }
+  const home = readFileSync(join(out, "index.html"), "utf8");
+  assert.equal((home.match(/Keep it <span class="hl">independent\.<\/span>/g) || []).length, 2, "sponsor card on desktop and phone");
+  assert.match(home, /You get nothing extra for it/, "worded as a donation");
+  const faq = readFileSync(join(out, "faq", "index.html"), "utf8");
+  assert.match(faq, /<h2>How is Based funded\?<\/h2>/);
+});
+
 async function withServer(fn) {
   const dir = mkdtempSync(join(tmpdir(), "based-wl-"));
   // Port 0: the system picks a free port (a random one collided under load, „server exited 1“)
