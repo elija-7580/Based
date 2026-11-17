@@ -37,7 +37,7 @@ LINKS["Mobile.dc.html"] = "/";
 const META = {
   "/": {
     title: "Based Notes · The local-first Notion alternative for Mac",
-    description: "Pages and databases like Notion, stored on your own Mac. Import your whole Notion workspace, no account needed. Open source, free Mac beta."
+    description: "Fast, private notes and databases on your own Mac. Import your whole Notion workspace, no account needed. Open source, free Mac beta."
   },
   "/workspace": {
     title: "Based Workspace · Big databases, zero waiting",
@@ -137,7 +137,7 @@ function patchLinks(s) {
 // The footer tagline follows the same framing on every page.
 function patchNav(s) {
   s = s.split("Databases, docs and agents. Instant, private, everywhere. Built in Vienna.")
-    .join("Notion, but yours. Pages and databases on your own Mac. Built in Vienna.");
+    .join("Your data. Based. Notes and databases on your own Mac. Built in Vienna.");
   return s.replace(/<header[\s\S]*?<\/header>/, (h) => h
     .replace(/<a href="\/agents" class="navlink[^"]*">Agents<\/a>\n?/, "")
     .replace(/<a href="\/agents">Agents<\/a>\n?/, ""));
@@ -217,7 +217,7 @@ const PAGE_PATCHES = {
 // Strings inside the page scripts are single-quoted JavaScript: no plain apostrophes in replacements.
 const BETA_LIST_OLD = ["Sync between your Apple devices through iCloud", "Agents with your own keys, opt-in", "Meeting notes transcribed on your Mac, offline"];
 const CLAIMS = {
-  // Main.dc.html and Mobile.dc.html: reframed on 17.11.2026 ("Notion, but yours"); their texts already keep to the beta.
+  // Main.dc.html and Mobile.dc.html: reframed on 17.11.2026 ("Your data. Based."); their texts already keep to the beta.
   "Workspace.dc.html": [
     ["The beta syncs your Apple devices through iCloud.", "In the beta, your Macs can sync through iCloud Drive as a preview."],
     ["by release. iCloud in the beta.</span>", "by release. iCloud Drive sync as a preview in the beta.</span>"],
@@ -298,7 +298,7 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 <meta property="og:image" content="${SITE}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Based Notes: Notion, but yours. Pages and databases on your own Mac. Join the beta at basednotes.app">
+<meta property="og:image:alt" content="Based Notes. Your data. Based. Notes and databases on your own Mac. Join the beta at basednotes.app">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">

@@ -11,11 +11,12 @@ sie aus den Seitenquellen). Nach einer Änderung dort die Dateien hierher kopier
 - Patches beim Bauen (benannt in `build.mjs`, scheitern laut, wenn der Canvas sich ändert): Links auf echte Pfade, Logo-Dateien,
   Schrift selbst gehostet (keine Google Fonts), Footer-Links auf `/imprint` und `/privacy`, Einwilligungstext und Honeypot an
   der Warteliste, Aufruf von `/api/waitlist` und `/api/ideas`.
-- Startseite neu gerahmt (17.11.2026, Elija): „Notion, but yours.“ Zuerst die Notiz-App (Arbeitsbereich, Notion-Umzug,
-  Datenbanken, wo die Daten liegen, Notion-Ärger, offen gebaut), Agenten erst danach als „After the beta“. `Main.dc.html` und
-  `Mobile.dc.html` werden dafür direkt hier im Repo bearbeitet und sind dem Canvas (v7) voraus; ihre Texte halten sich schon an
-  den Beta-Umfang, deshalb gibt es für sie keine `CLAIMS`-Patches mehr. Kopfzeile ohne „Agents“ (bleibt im Footer), Footer-Zeile
-  „Notion, but yours. …“ auf allen Seiten (`patchNav`). Test: `framing (17.11.2026)` in `test/site.test.mjs`.
+- Startseite neu gerahmt (17.11.2026, Elija): Headline „Your data. Based.“ (eigene Marke, Notion nur als Umzugsweg
+  „Coming from Notion?“). Zuerst die Notiz-App (Arbeitsbereich, Notion-Umzug, Datenbanken, wo die Daten liegen,
+  Notion-Ärger, „The notes app we build together.“), Agenten erst danach als „After the beta“. `Main.dc.html` und
+  `Mobile.dc.html` werden dafür direkt hier im Repo bearbeitet und sind dem Canvas (v7) voraus; ihre Texte halten sich schon
+  an den Beta-Umfang, deshalb gibt es für sie keine `CLAIMS`-Patches mehr. Kopfzeile ohne „Agents“ (bleibt im Footer),
+  Footer-Zeile „Your data. Based. …“ auf allen Seiten (`patchNav`). Test: `framing (17.11.2026)` in `test/site.test.mjs`.
 - Startseite: am Handy (≤ 760 px) die eigene Mobile-Version (`Mobile.dc.html`), `/?desktop` erzwingt die Desktop-Version.
 - Logo-Intro: auf jeder Seite „tippt“ sich das Zeichen im Kopf beim Laden einmal (Linie, Einfügemarke, Stamm, Bauch; wie in
   der App, `apps/web/src/components/logoTimeline.ts`). Reines CSS aus `build.mjs`, weil nur CSS-Animationen das Abgleichen

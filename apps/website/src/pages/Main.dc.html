@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Based Notes · Notion, but yours</title>
-<meta name="description" content="Pages and databases like Notion, stored on your own Mac. Import your whole Notion workspace, no account needed. Open source, free Mac beta.">
+<title>Based Notes · Your data. Based.</title>
+<meta name="description" content="Fast, private notes and databases on your own Mac. Import your whole Notion workspace, no account needed. Open source, free Mac beta.">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -305,10 +305,10 @@ footer a{display:inline-block;padding:6px 0}
 <main id="top" style="flex: 1 1 auto;">
 
 <section aria-labelledby="hero-title" class="wrap" style="padding-top: 88px; padding-bottom: 48px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 26px;">
-<p class="rise d1 pill-hero" style="margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--marker); color: #1F1F1D; font-size: 13px; font-weight: 500;"><span style="font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Your data. Based.</span><a href="#yours" style="white-space: nowrap; padding: 3px 10px; border-radius: 999px; background: var(--bg); text-decoration: none; font-weight: 600;">How →</a></p>
+<p class="rise d1 pill-hero" style="margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--marker); color: #1F1F1D; font-size: 13px; font-weight: 500;"><span style="font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Open source, built in Vienna</span><a href="#yours" style="white-space: nowrap; padding: 3px 10px; border-radius: 999px; background: var(--bg); text-decoration: none; font-weight: 600;">How →</a></p>
 <h1 id="hero-title" class="disp flipin" aria-label="{{heroLabel}}" style="margin: 0; max-width: 1080px; font-size: clamp(52px, 9vw, 124px);"><span aria-hidden="true"><sc-for list="{{hero1}}" as="w" hint-placeholder-count="1"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="7"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for><br><span class="hl"><sc-for list="{{hero2}}" as="w" hint-placeholder-count="2"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="5"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for></span></span></h1>
 <p class="rise d3" aria-live="off" style="margin: 0; min-height: 1.3em; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 2.8vw, 36px); letter-spacing: -0.02em; line-height: 1.2;"><span class="sentflip {{flipCls}}">A home for your <span style="color: var(--muted);">{{flapWord}}</span>.</span></p>
-<p class="lead rise d4" style="max-width: 700px;">Pages and databases like Notion, stored on your own Mac and fast at a hundred thousand rows. Open source and built in Vienna. Bring your whole Notion workspace, databases included.</p>
+<p class="lead rise d4" style="max-width: 700px;">Fast, private notes and databases on your own Mac, even at a hundred thousand rows. Open source and built in Europe. Coming from Notion? Bring your whole workspace, databases included.</p>
 
 <div id="waitlist" class="rise d5" style="width: 100%; max-width: 580px; scroll-margin-top: 100px;">
 <sc-if value="{{showForm}}" hint-placeholder-val="{{ true }}">
@@ -344,7 +344,7 @@ footer a{display:inline-block;padding:6px 0}
 </div>
 </sc-if>
 </div>
-<p class="rise d6" style="margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; font-size: 13px; font-weight: 500; color: var(--muted);"><span>Open source</span><span>Your data on your Mac</span><span>No account needed</span><span>Built in Vienna, EU cloud at release</span></p>
+<p class="rise d6" style="margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; font-size: 13px; font-weight: 500; color: var(--muted);"><span>Your data on your Mac</span><span>No account needed</span><span>Free during the beta</span><span>EU cloud at release</span></p>
 </section>
 
 <section aria-label="Based workspace preview" class="wrap" style="padding-top: 24px; padding-bottom: 110px;">
@@ -490,7 +490,7 @@ footer a{display:inline-block;padding:6px 0}
 <section aria-labelledby="open-title" class="wrap" style="padding-top: 120px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 44px;">
 <div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
 <p class="eyebrow">Built in the open</p>
-<h2 id="open-title" class="h2">Built with the people who use it.</h2>
+<h2 id="open-title" class="h2">The notes app we build together.</h2>
 <p class="lead">Based is open source and made by one person in Vienna. The roadmap is public and comes straight from the backlog, so you can see what is next, vote on it and add what you are missing. What testers run into decides the order.</p>
 <p style="margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 10px;"><a href="Roadmap.dc.html" class="btn2">See the roadmap →</a><a href="https://github.com/elija-7580/Based" class="btn2">Read the code →</a></p>
 </div>
@@ -678,9 +678,9 @@ class Component extends DCLogic {
     const ease = s.statsT;
     return {
       theme,
-      heroLabel: 'Notion, but yours.',
-      hero1: Component.split('Notion,', 0, 22),
-      hero2: Component.split('but yours.', 420, 22),
+      heroLabel: 'Your data. Based.',
+      hero1: Component.split('Your data.', 0, 22),
+      hero2: Component.split('Based.', 420, 22),
       flapWord: word,
       flipCls: s.flapI % 2 === 0 ? 'fa' : 'fb',
       markSrc: dark ? '/_blob/60426240b69c9dab9372c2741257d898' : '/_blob/c3ccc021887376abcf7fe08d0002d913',

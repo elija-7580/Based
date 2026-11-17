@@ -120,13 +120,17 @@ test("claims (BSD-434): no promise the Mac beta can't keep", () => {
   assert.match(home, /Math\.round\(236 \* ease\)/);
 });
 
-test("framing (17.11.2026): the home page leads with the notes app, agents come after the beta", () => {
+test("framing (17.11.2026): own brand first, the notes app before agents", () => {
   const out = mkdtempSync(join(tmpdir(), "based-site-framing-"));
   execFileSync(process.execPath, [join(ROOT, "scripts", "build.mjs")], { env: { ...process.env, WEBSITE_OUT: out, NO_PRERENDER: "1" }, stdio: "pipe" });
   const home = readFileSync(join(out, "index.html"), "utf8");
   assert.match(home, /aria-label="\{\{heroLabel\}\}"/);
-  assert.match(home, /heroLabel: 'Notion, but yours\.'/, "desktop headline");
-  assert.match(home, /Notion,<br><span class="hl">but yours\.<\/span>/, "phone headline");
+  // Elija 17.11., 22:17: own brand first ("Your data. Based."), Notion only as the way in, "we build together" for the open section
+  assert.match(home, /heroLabel: 'Your data\. Based\.'/, "desktop headline");
+  assert.match(home, /Your data\.<br><span class="hl">Based\.<\/span>/, "phone headline");
+  assert.ok(!/heroLabel: '[^']*Notion/.test(home), "no competitor name in the headline");
+  assert.equal((home.match(/The notes app we build together\./g) || []).length, 2, "open section on desktop and phone");
+  assert.ok(!home.includes("Notion, but yours"), "old headline is gone");
   assert.ok(!home.includes("Databases, docs and agents"), "old agent-first headline is gone");
   assert.ok(!home.includes("Based on nobody's cloud"), "closing line fits iCloud sync in the beta");
   // order: workspace, moving in, your data, Notion pains, open, agents later
