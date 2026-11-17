@@ -3,9 +3,9 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, type CodeView, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
-import { htmlPreviewFrame } from "./htmlPreview.js";
+import { htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/props.js";
@@ -19,7 +19,7 @@ import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
 import { PageOutline } from "../ui/Outline.js";
 import { DatabasePicker, MovePicker, PageTargetPicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
-import { BasedButton, BasedIconButton, BasedMediaPlayer } from "@based/ui/astryx";
+import { BasedButton, BasedDialog, BasedIconButton, BasedMediaPlayer } from "@based/ui/astryx";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
@@ -1617,15 +1617,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
     case "text": case "quote":
       return <TextField block={b} />;
     case "code":
-      // BSD-407 Teil 6.2: Umbruch nur mit `wrap: true` (Standard ohne Umbruch wie Notion, Entscheidung BSD-340)
-      return (
-        <div className="bx2-codewrap" data-wrap={b.props?.wrap === true ? "" : undefined}>
-          <TextField block={b} />
-          <CodeTools block={b} />
-          {b.props?.language === "mermaid" && plainText(b.text).length > 0 ? <MermaidPreview code={plainText(b.text)} /> : null}
-          {b.props?.language === "html" && plainText(b.text).trim().length > 0 ? <HtmlPreview code={plainText(b.text)} /> : null}
-        </div>
-      );
+      return <CodeBlock block={b} />;
     case "bulletedList":
       return <><span className="bx2-marker" contentEditable={false}>{["•", "◦", "▪"][depth % 3]}</span><TextField block={b} /></>;
     case "numberedList":
@@ -2513,7 +2505,53 @@ export let lastCodeCopy = "";
  * BSD-407 Teil 6.2: Leiste oben rechts im Codeblock wie Notion und der alte Editor – Sprache, „Wrap code“ (an/aus) und
  * „Copy code“. Umbruch und Kopieren erscheinen beim Überfahren oder mit Tastaturfokus; die Leiste verschiebt nichts.
  */
-function CodeTools({ block: b }: { block: Block }) {
+const CODE_VIEW_BUTTONS: readonly { view: CodeView; label: string; icon: MenuIconName }[] = [
+  { view: "code", label: "Show code", icon: "code" },
+  { view: "split", label: "Show code and result", icon: "viewSplit" },
+  { view: "preview", label: "Show result only", icon: "viewPreview" },
+];
+
+/**
+ * Codeblock. Sprachen mit Ergebnis (HTML, Mermaid) haben drei Ansichten wie Notion: Code, Code + Ergebnis, nur Ergebnis.
+ * In „nur Ergebnis“ ist der Code ausgeblendet, bleibt aber erreichbar (Pfeiltasten, Knopf „Show code“) und erscheint,
+ * solange die Schreibmarke darin steht.
+ */
+function CodeBlock({ block: b }: { block: Block }) {
+  const { store } = useCtx();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [full, setFull] = useState(false);
+  const code = plainText(b.text);
+  const kind = codePreviewKind(b.props?.language);
+  const view = codeView(b.props);
+  const hasResult = kind !== undefined && (kind === "html" ? code.trim().length > 0 : code.length > 0);
+  const showResult = hasResult && view !== "code";
+  const codeHidden = showResult && view === "preview" && !editing;
+  const inField = (t: EventTarget) => t instanceof Element && t.closest("[data-editable-id]") !== null;
+  const setView = (v: CodeView) => {
+    cmd.setBlockProps(store, [b.id], { codeView: v }, "Code view");
+    if (v !== "preview") wrapRef.current?.querySelector<HTMLElement>(":scope > [data-editable-id]")?.focus({ preventScroll: true });
+    else if (wrapRef.current?.contains(document.activeElement)) (document.activeElement as HTMLElement | null)?.blur?.();
+  };
+  // BSD-407 Teil 6.2: Umbruch nur mit `wrap: true` (Standard ohne Umbruch wie Notion, Entscheidung BSD-340)
+  return (
+    <div ref={wrapRef} className="bx2-codewrap" data-wrap={b.props?.wrap === true ? "" : undefined} data-view={view}
+      data-code-hidden={codeHidden ? "" : undefined} data-testid="code-block"
+      onFocus={(e) => { if (inField(e.target)) setEditing(true); }} onBlur={(e) => { if (inField(e.target)) setEditing(false); }}>
+      <TextField block={b} />
+      <CodeTools block={b} view={hasResult ? view : undefined} onView={setView} onFull={hasResult ? () => setFull(true) : undefined} />
+      {showResult && kind === "mermaid" ? <MermaidPreview code={code} /> : null}
+      {showResult && kind === "html" ? <HtmlPreview code={code} /> : null}
+      {hasResult ? (
+        <BasedDialog open={full} onClose={() => setFull(false)} title={kind === "html" ? "HTML" : "Diagram"} width={960} testID="code-full-view">
+          {full ? (kind === "html" ? <HtmlPreview code={code} fill /> : <MermaidPreview code={code} />) : null}
+        </BasedDialog>
+      ) : null}
+    </div>
+  );
+}
+
+function CodeTools({ block: b, view, onView, onFull }: { block: Block; view?: CodeView | undefined; onView?: (v: CodeView) => void; onFull?: (() => void) | undefined }) {
   const { store, editable } = useCtx();
   const wrap = b.props?.wrap === true;
   const [copied, setCopied] = useState<"ok" | "failed" | undefined>();
@@ -2532,6 +2570,10 @@ function CodeTools({ block: b }: { block: Block }) {
     <span className="bx2-code-tools" contentEditable={false}>
       <CodeLanguage block={b} />
       <span className="bx2-code-actions" onMouseDown={(e) => e.preventDefault() /* Schreibmarke bleibt, wo sie ist */}>
+        {editable && view && onView ? CODE_VIEW_BUTTONS.map((v) => (
+          <BasedIconButton key={v.view} label={v.label} pressed={view === v.view} icon={<MenuIcon name={v.icon} />} testID={`code-view-${v.view}`} onClick={() => onView(v.view)} />
+        )) : null}
+        {onFull ? <BasedIconButton label="Open full view" icon={<MenuIcon name="expand" />} testID="code-full" onClick={onFull} /> : null}
         {editable ? (
           <BasedIconButton label="Wrap code" pressed={wrap} icon={<MenuIcon name="wrap" />}
             onClick={() => cmd.setBlockProps(store, [b.id], { wrap: !wrap }, "Wrap code")} />
@@ -2583,16 +2625,57 @@ function MermaidPreview({ code }: { code: string }) {
   return <div ref={ref} className="bx2-mermaid" contentEditable={false} data-embed="" />;
 }
 
-// BSD-407: HTML-Codeblock mit Vorschau wie im alten Editor (htmlPreviewFrame: sandbox ohne same-origin, CSP, kein Netz)
-function HtmlPreview({ code }: { code: string }) {
-  const ref = useRef<HTMLDivElement>(null);
+/** Zählt hoch, wenn die App zwischen hell und dunkel wechselt (Einstellung oder System). */
+function useSchemeTick(): string {
+  const [scheme, setScheme] = useState(() => hostScheme());
   useEffect(() => {
-    const host = ref.current;
-    if (!host) return;
-    const t = setTimeout(() => host.replaceChildren(htmlPreviewFrame(code)), 250);
+    const update = () => setScheme(hostScheme());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const mq = globalThis.matchMedia?.("(prefers-color-scheme: dark)");
+    mq?.addEventListener("change", update);
+    return () => { mo.disconnect(); mq?.removeEventListener("change", update); };
+  }, []);
+  return scheme;
+}
+
+/**
+ * Ergebnis eines HTML-Codeblocks (htmlPreview.ts): Rahmen mit sandbox ohne same-origin, CSP, kein Netz. Ohne Rand und
+ * Beschriftung, Schrift und Farbe der Seite, Höhe nach dem Inhalt; `fill` (Vollansicht) füllt stattdessen den Dialog.
+ */
+function HtmlPreview({ code, fill = false }: { code: string; fill?: boolean }) {
+  const host = useRef<HTMLDivElement>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const scheme = useSchemeTick();
+  const [doc, setDoc] = useState<string>();
+  const [height, setHeight] = useState<number>();
+  const first = useRef(true);
+  useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    const make = () => setDoc(htmlPreviewDoc(code, htmlThemeAt(el)));
+    if (first.current) { first.current = false; make(); return; }
+    const t = setTimeout(make, 250);
     return () => clearTimeout(t);
-  }, [code]);
-  return <div ref={ref} className="bx2-html-preview" contentEditable={false} data-embed="" />;
+  }, [code, scheme]);
+  useEffect(() => {
+    if (fill) return;
+    const onMessage = (e: MessageEvent) => {
+      if (!frame.current || e.source !== frame.current.contentWindow) return;
+      const h = htmlPreviewHeight(e.data);
+      if (h !== undefined) setHeight(h);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [fill]);
+  return (
+    <div ref={host} className="bx2-html-preview" contentEditable={false} data-embed="" data-fill={fill ? "" : undefined} data-sized={height !== undefined ? "" : undefined} data-testid="html-preview">
+      {doc !== undefined ? (
+        <iframe ref={frame} className="bx-html-preview" sandbox="allow-scripts" referrerPolicy="no-referrer" title="HTML preview" srcDoc={doc}
+          style={{ colorScheme: scheme, ...(!fill && height !== undefined ? { height } : {}) }} />
+      ) : null}
+    </div>
+  );
 }
 
 function labelOf(b: Block | undefined): string {
