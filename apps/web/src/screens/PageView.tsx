@@ -15,6 +15,7 @@ import { ExportDialog } from "../components/ImportExport.js";
 import { MoveDialog } from "../components/MoveDialog.js";
 import { CoverPicker, PageCoverBand, uploadPageIcon, useImageURL } from "../components/PageCover.js";
 import { ShareButton } from "../components/Share.js";
+import { featureVisible } from "../shell/beta.js";
 import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
@@ -224,7 +225,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
               <>
                 <BasedIconButton label={favorite ? "Remove from Favorites" : "Add to Favorites"} tooltip="Favorite" pressed={favorite} icon={<Icon name="star" size={18} filled={favorite} />}
                   onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })} />
-                <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
+                {/* BSD-460: Teilen ist nicht in der Beta (Beta-Gate). */}
+                {featureVisible("sharing") ? <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} /> : null}
               </>
             )}
             {/* BSD-168: AI-Knopf wie Swift NotionChrome – öffnet/schließt das Chat-Panel (⌘J), aktiv solange es offen ist. */}

@@ -18,7 +18,7 @@ export type Channel = "dev" | "beta";
 export const CHANNEL: Channel = typeof __BASED_CHANNEL__ === "string" && __BASED_CHANNEL__ === "beta" ? "beta" : "dev";
 
 /** Funktionen, die ein Kanal ausblenden kann. */
-export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding";
+export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing";
 
 /** Auf beta ausgeblendet, mit Grund (für Menschen; wird nicht angezeigt). */
 export const BETA_HIDDEN: Readonly<Record<GatedFeature, string>> = {
@@ -26,6 +26,7 @@ export const BETA_HIDDEN: Readonly<Record<GatedFeature, string>> = {
   graph: "BSD-420: Graph laut Mac-Abnahme buggy und langsam",
   realtimeText: "Echtzeit-Text ist „after“ (features.csv), braucht einen Server",
   coding: "Labs, hängt an AI",
+  sharing: "BSD-460: Teilen ist „after“ (features.csv „Sharing and permissions“), braucht einen Server; docs/beta/README.md",
 };
 
 /** Reine Regel (getestet): Ist die Funktion in diesem Kanal sichtbar? */
@@ -54,9 +55,11 @@ export function hiddenBlockTypes(channel: Channel = CHANNEL): ReadonlySet<string
 
 /**
  * Einstellungsseiten, die auf beta fehlen (Review 16.11.2026, BSD-458): Agents & AI und Connections gehören zu
- * AI/Agenten, My notifications handelt nur von Agenten. Alte Links (#settings/agents) fallen auf My settings zurück.
+ * AI/Agenten, My notifications handelt nur von Agenten. BSD-460: die „Not yet“-Seiten ohne eigene Einstellungen
+ * (My connections, People, Teamspaces, Security) – Konten, Mitglieder und Freigaben sind nicht in der Beta.
+ * Alte Links (#settings/agents) fallen auf My settings zurück.
  */
-export const BETA_HIDDEN_SETTINGS: ReadonlySet<string> = new Set(["agents", "connections", "notifications"]);
+export const BETA_HIDDEN_SETTINGS: ReadonlySet<string> = new Set(["agents", "connections", "notifications", "my-connections", "people", "teamspaces", "security"]);
 
 /** Darf die Einstellungsseite mit dieser ID in diesem Kanal erscheinen? */
 export function settingsPageVisible(id: string, channel: Channel = CHANNEL): boolean {
