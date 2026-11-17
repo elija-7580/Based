@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { blockEditor } from "./editor-helpers.js";
+import { bestOf, expectFaster } from "./perf.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -36,8 +37,9 @@ test("Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Ha
     const longest = Math.max(0, ...(await page.evaluate(() => (globalThis as unknown as { __longTasks: number[] }).__longTasks)));
     info.annotations.push({ type: "startup-ms", description: `ready ${ready} · longest task ${longest}` });
     console.log(`[${info.project.name}] Start mit 5.000 Seiten: Seitenleiste nach ${ready} ms, längste Aufgabe ${longest} ms`);
-    expect(ready).toBeLessThan(6000);
-    if (browserName === "chromium") expect(longest).toBeLessThan(1000);
+    // BSD-450: Zeiten lokal hart, in der CI Warnung
+    expectFaster(info, "Start bis Seitenleiste", ready, 6000);
+    if (browserName === "chromium") expectFaster(info, "längste Aufgabe", longest, 1000);
   } finally {
     await ctx.close();
     rmSync(dir, { recursive: true, force: true });
@@ -74,25 +76,15 @@ async function seedTwoBigPages(page: Page): Promise<Seeded> {
 }
 
 test("Seitenwechsel und Tippen auf großen Seiten bleiben flüssig", { tag: "@perf" }, async ({ page, browserName }, info) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000); // BSD-450: bis zu 3 Durchgänge
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await seedTwoBigPages(page);
-  const switches: number[] = [];
-  for (let i = 0; i < 4; i++) {
-    const title = i % 2 === 0 ? "Big page A" : "Big page B";
-    const t0 = await page.evaluate(() => performance.now());
-    await page.getByRole("treeitem", { name: title }).click();
-    await expect(page.getByLabel("Page title")).toHaveValue(title);
-    await expect(page.getByTestId("page-content").getByText(`${title} line 299`, { exact: false })).toBeAttached({ timeout: 20_000 });
-    switches.push(Math.round((await page.evaluate(() => performance.now())) - t0));
-  }
-  // Tippen: Zeit von keydown bis zum nächsten gemalten Frame, 40 Tasten am Ende der Seite.
-  const editor = blockEditor(page);
-  await editor.getByText("Big page B line 299", { exact: false }).click();
-  await page.keyboard.press("End");
+  const switchLimit = browserName === "chromium" ? 1200 : 4000;
+  const keyLimit = browserName === "chromium" ? 70 : 550;
+  // Tippen: Zeit von keydown bis zum nächsten gemalten Frame (Messung einmal anhängen, je Durchgang leeren).
   await page.evaluate(() => {
     const w = globalThis as unknown as { __keyLat: number[] };
     w.__keyLat = [];
@@ -101,21 +93,36 @@ test("Seitenwechsel und Tippen auf großen Seiten bleiben flüssig", { tag: "@pe
       requestAnimationFrame(() => setTimeout(() => w.__keyLat.push(performance.now() - start), 0));
     }, { capture: true });
   });
-  await page.keyboard.type(" the quick brown fox jumps over the lazy dog", { delay: 30 });
-  await page.waitForTimeout(300);
-  const lat = (await page.evaluate(() => (globalThis as unknown as { __keyLat: number[] }).__keyLat)).sort((x, y) => x - y);
-  const p = (q: number) => Math.round(lat[Math.min(lat.length - 1, Math.floor(q * lat.length))]!);
-  const sw = [...switches].sort((x, y) => x - y);
-  info.annotations.push({ type: "page-switch-ms", description: sw.join(", ") }, { type: "key-latency-ms", description: `p50 ${p(0.5)} · p95 ${p(0.95)} · max ${p(1)}` });
-  console.log(`[${info.project.name}] Seitenwechsel (300 Blöcke): ${sw.join(", ")} ms · Tastendruck p50 ${p(0.5)} p95 ${p(0.95)} max ${p(1)} ms (${lat.length} Tasten)`);
-  expect(lat.length).toBeGreaterThan(30);
+  const editor = blockEditor(page);
+  // Ein Durchgang: 4 Seitenwechsel, dann 44 Tasten am Ende von Big page B.
+  const measure = async () => {
+    const switches: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      const title = i % 2 === 0 ? "Big page A" : "Big page B";
+      const t0 = await page.evaluate(() => performance.now());
+      await page.getByRole("treeitem", { name: title }).click();
+      await expect(page.getByLabel("Page title")).toHaveValue(title);
+      await expect(page.getByTestId("page-content").getByText(`${title} line 299`, { exact: false })).toBeAttached({ timeout: 20_000 });
+      switches.push(Math.round((await page.evaluate(() => performance.now())) - t0));
+    }
+    await editor.getByText("Big page B line 299", { exact: false }).click();
+    await page.keyboard.press("End");
+    await page.evaluate(() => { (globalThis as unknown as { __keyLat: number[] }).__keyLat = []; });
+    await page.keyboard.type(" the quick brown fox jumps over the lazy dog", { delay: 30 });
+    await page.waitForTimeout(300);
+    const lat = (await page.evaluate(() => (globalThis as unknown as { __keyLat: number[] }).__keyLat)).sort((x, y) => x - y);
+    const p = (q: number) => Math.round(lat[Math.min(lat.length - 1, Math.floor(q * lat.length))]!);
+    const sw = [...switches].sort((x, y) => x - y);
+    return { sw, keys: lat.length, p50: p(0.5), p95: p(0.95), max: p(1), worstSwitch: sw[sw.length - 1]! };
+  };
+  // BSD-450: unter Last (~20 auf 4 Kernen) kostet ein Nachbar nur manchmal Zeit – bester von höchstens 3 Durchgängen
+  const r = await bestOf(3, measure, (x) => x.worstSwitch >= switchLimit || x.p95 >= keyLimit, (a, b) => Math.max(a.worstSwitch / switchLimit, a.p95 / keyLimit) < Math.max(b.worstSwitch / switchLimit, b.p95 / keyLimit));
+  info.annotations.push({ type: "page-switch-ms", description: r.sw.join(", ") }, { type: "key-latency-ms", description: `p50 ${r.p50} · p95 ${r.p95} · max ${r.max}` });
+  console.log(`[${info.project.name}] Seitenwechsel (300 Blöcke): ${r.sw.join(", ")} ms · Tastendruck p50 ${r.p50} p95 ${r.p95} max ${r.max} ms (${r.keys} Tasten)`);
+  expect(r.keys).toBeGreaterThan(30);
   // Grenzen aus drei Läufen am 13.11. (Linux-Container, alter BlockNote-Editor): Chromium Wechsel 250–590 ms,
   // Taste p95 21–32 ms; WebKit Wechsel 580–1900 ms, Taste p95 215–270 ms. Doppelte Luft – Wächter gegen Rückfälle.
-  if (browserName === "chromium") {
-    expect(sw[sw.length - 1]).toBeLessThan(1200);
-    expect(p(0.95)).toBeLessThan(70);
-  } else {
-    expect(sw[sw.length - 1]).toBeLessThan(4000);
-    expect(p(0.95)).toBeLessThan(550);
-  }
+  // BSD-450: lokal hart, in der CI Warnung.
+  expectFaster(info, "Seitenwechsel (langsamster)", r.worstSwitch, switchLimit);
+  expectFaster(info, "Tastendruck p95", r.p95, keyLimit);
 });

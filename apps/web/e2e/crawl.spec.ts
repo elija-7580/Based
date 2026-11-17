@@ -140,6 +140,20 @@ async function probe(page: Page, scope: string, t: Target): Promise<"ok" | "dead
   }
 }
 
+/**
+ * BSD-450: warten, bis die Seite ruhig ist (`ms` ohne DOM-Änderung, höchstens `max`). Unter Last rendert Home nach
+ * dem Laden noch nach – neue Knoten nach dem 200-ms-Lernfenster der Probe zählten sonst als Wirkung des toten Knopfs.
+ */
+async function quiet(page: Page, ms = 400, max = 5000) {
+  await page.evaluate(([ms, max]) => new Promise<void>((done) => {
+    let timer = setTimeout(finish, ms);
+    const obs = new MutationObserver(() => { clearTimeout(timer); timer = setTimeout(finish, ms); });
+    const stop = setTimeout(finish, max);
+    function finish() { obs.disconnect(); clearTimeout(timer); clearTimeout(stop); done(); }
+    obs.observe(document.documentElement, { subtree: true, childList: true, attributes: true, characterData: true });
+  }), [ms, max] as const);
+}
+
 async function ready(page: Page) {
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
 }
@@ -259,6 +273,7 @@ test("Ein eingeschleuster toter Knopf fällt auf", async ({ page }) => {
     live.onclick = () => { live.textContent = "Crawl live probe ✓"; };
     document.querySelector("main.main")!.prepend(live);
   });
+  await quiet(page);
   expect(await probe(page, "main.main", { name: "Crawl dead probe", nth: 0 })).toBe("dead");
   expect(await probe(page, "main.main", { name: "Crawl live probe", nth: 0 })).toBe("ok");
 });

@@ -691,17 +691,22 @@ test("Callout-Icon aus dem Emoji-Picker mit Suche", async ({ page }) => {
 test("Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline", async ({ page }) => {
   await createPage(page, "Uploads");
   await openBlockPage(page, "Uploads");
-  for (const [cmd, file, mime] of [
-    ["/PDF", "plan.pdf", "application/pdf"],
-    ["/Video", "clip.mp4", "video/mp4"],
-    ["/Audio", "sound.mp3", "audio/mpeg"],
-    ["/File", "notes.txt", "text/plain"],
+  for (const [cmd, file, mime, type] of [
+    ["/PDF", "plan.pdf", "application/pdf", "pdf"],
+    ["/Video", "clip.mp4", "video/mp4", "video"],
+    ["/Audio", "sound.mp3", "audio/mpeg", "audio"],
+    ["/File", "notes.txt", "text/plain", "file"],
   ] as const) {
     await focusEditorEnd(page);
     await page.keyboard.type(cmd);
     await expect(page.getByTestId("slash-menu").getByRole("option").first()).toBeVisible();
     await page.keyboard.press("Enter");
-    await editor(page).locator("input[type=file]").last().setInputFiles({ name: file, mimeType: mime, buffer: file.endsWith(".pdf") ? PDF : Buffer.from("based-test-" + file) });
+    // BSD-450: das Feld genau dieses neuen Blocks nehmen (unter Last stand der Block noch nicht im DOM und `.last()` traf
+    // das Feld eines anderen) und warten, bis der Upload durch ist (das Feld verschwindet), bevor der nächste kommt.
+    const input = editor(page).locator(`.bx2-block[data-type="${type}"] input[type=file]`);
+    await expect(input).toHaveCount(1);
+    await input.setInputFiles({ name: file, mimeType: mime, buffer: file.endsWith(".pdf") ? PDF : Buffer.from("based-test-" + file) });
+    await expect(input).toHaveCount(0, { timeout: 15_000 });
   }
   const check = async () => {
     await expect(editor(page).locator("object.bx2-pdf-frame")).toHaveAttribute("data", /^blob:/);
