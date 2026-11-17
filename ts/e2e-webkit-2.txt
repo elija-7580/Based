@@ -1,61 +1,61 @@
-failure 8d2952cb389a1ca68e4ac0dfaccbaedaf72e4453
-  ✓  232 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.5s)
-
-
-  1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
-      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-
-
-      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
-      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
-    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
-          |                                           ^
-      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
-      363 |   expect(posts).toEqual([]);
-      364 |   await shot("choose");
-        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
-
-    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
-      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-
-
-      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
-      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
-    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
-          |                                           ^
-      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
-      363 |   expect(posts).toEqual([]);
-      364 |   await shot("choose");
-        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
-
-    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
-  39 skipped
-  191 passed (8.4m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+cancelled b234296a1e35195ba50e188d181fe465e6d7e64e
+  ✓  116 [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen (5.6s)
+  ✓  117 [webkit] › e2e/polish.spec.ts:463:1 › Datei-Block: Vorschau für Text und CSV (7.5s)
+  ✓  118 [webkit] › e2e/report.spec.ts:213:1 › Aufzeichnung kostet beim Tippen messbar nichts (5.3s)
+  ✓  119 [webkit] › e2e/polish.spec.ts:508:1 › Slash-Menü: Gruppenköpfe kommen je einmal vor, auch beim Filtern (3.4s)
+(node:14245) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  121 [webkit] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster (9.7s)
+  ✓  120 [webkit] › e2e/schedules-server.spec.ts:39:1 › BSD-243: Hinweis unter Schedules – ohne Server nur bei offener App, mit Server mit Modellzugang auch geschlossen (10.0s)
+  ✘  122 [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (7.1s)
+  ✓  123 [webkit] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (12.2s)
+  ✓  124 [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (retry #1) (7.1s)
+  ✓  125 [webkit] › e2e/settings-region.spec.ts:41:1 › Workspace-Name in Einstellungen → General (2.5s)
+  ✓  126 [webkit] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (4.4s)
+  ✓  127 [webkit] › e2e/settings-region.spec.ts:53:1 › Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205) (5.4s)
+  ✓  128 [webkit] › e2e/settings.spec.ts:34:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (4.0s)
+(node:14928) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  130 [webkit] › e2e/settings.spec.ts:65:1 › Seiten mit echten Einstellungen zeigen keine Liste offener Punkte (Updates: kein „Update channel“) (2.5s)
+  ✓  131 [webkit] › e2e/settings.spec.ts:77:1 › Sync-Formular prüft die Adresse, bevor es verbindet (5.6s)
+  ✓  132 [webkit] › e2e/settings.spec.ts:95:1 › General: Zahlen aus dem Workspace, Papierkorb leeren mit Rückfrage (5.9s)
+  ✓  129 [webkit] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 (14.5s)
+  ✓  133 [webkit] › e2e/settings.spec.ts:121:1 › Account und Diagnostics zeigen echten Gerätezustand (4.0s)
+  ✓  135 [webkit] › e2e/settings.spec.ts:130:1 › Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token (3.1s)
+  ✓  136 [webkit] › e2e/settings.spec.ts:157:1 › Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen (2.4s)
+  -  137 [webkit] › e2e/settings.spec.ts:177:3 › Screenshot Einstellungen (light)
+  -  138 [webkit] › e2e/settings.spec.ts:177:3 › Screenshot Einstellungen (dark)
+  -  139 [webkit] › e2e/settings.spec.ts:191:1 › Sync & server zeigt, ob der Browser-Speicher geschützt ist
+  -  140 [webkit] › e2e/settings.spec.ts:205:5 › Browser storage: 1280×820 light – Zeile vollständig, nichts gekürzt
+  -  141 [webkit] › e2e/settings.spec.ts:205:5 › Browser storage: 900×600 light – Zeile vollständig, nichts gekürzt
+  -  142 [webkit] › e2e/settings.spec.ts:205:5 › Browser storage: 1728×1000 light – Zeile vollständig, nichts gekürzt
+  -  143 [webkit] › e2e/settings.spec.ts:205:5 › Browser storage: 1280×820 dark – Zeile vollständig, nichts gekürzt
+  -  144 [webkit] › e2e/settings.spec.ts:205:5 › Browser storage: 900×600 dark – Zeile vollständig, nichts gekürzt
+  -  145 [webkit] › e2e/settings.spec.ts:205:5 › Browser storage: 1728×1000 dark – Zeile vollständig, nichts gekürzt
+  ✓  146 [webkit] › e2e/shell-layout.spec.ts:12:1 › Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen (4.2s)
+  ✓  134 [webkit] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis (18.8s)
+  ✓  147 [webkit] › e2e/shell-layout.spec.ts:31:1 › Seitenleiste: Breite ziehen (gemerkt), ⌘\ blendet aus und ein (3.8s)
+  ✓  149 [webkit] › e2e/shell-layout.spec.ts:54:1 › „/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten nutzen die volle Breite (9.5s)
+  ✓  150 [webkit] › e2e/shell-layout.spec.ts:74:1 › Fokusrahmen per Tastatur neutral (Token focus-ring, nicht Marker – BSD-367) (2.0s)
+  ✓  148 [webkit] › e2e/shell-parity.spec.ts:71:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (14.9s)
+  ✓  151 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (6.4s)
+  ✓  153 [webkit] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) (9.5s)
+  ✓  152 [webkit] › e2e/shell-parity.spec.ts:109:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (16.8s)
+  ✓  155 [webkit] › e2e/shell-parity.spec.ts:168:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (5.7s)
+  ✓  154 [webkit] › e2e/shell.spec.ts:34:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (15.5s)
+  ✓  156 [webkit] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher (7.7s)
+  ✓  157 [webkit] › e2e/shell.spec.ts:97:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (9.1s)
+  ✓  158 [webkit] › e2e/shell-parity.spec.ts:204:1 › Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet (10.6s)
+  ✓  159 [webkit] › e2e/shell.spec.ts:117:1 › Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Position (4.2s)
+  ✓  160 [webkit] › e2e/shortcut-toggle.spec.ts:30:1 › ⌘F zweimal: Suchleiste zu, Schreibmarke zurück (4.1s)
+  ✓  162 [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘K zweimal: Quick Find zu, Schreibmarke zurück (4.6s)
+  ✓  161 [webkit] › e2e/shell.spec.ts:196:1 › Neuladen behält Daten (OPFS) @smoke (10.9s)
+  ✓  163 [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘P zweimal: Quick Find zu, Schreibmarke zurück (4.1s)
+  ✓  165 [webkit] › e2e/shortcut-toggle.spec.ts:52:1 › ⌘N zweimal: Neu-Palette zu, Schreibmarke zurück (3.3s)
+  ✓  166 [webkit] › e2e/shortcut-toggle.spec.ts:62:1 › ⌘, zweimal: Einstellungen auf und zurück zur Seite (4.9s)
+  ✓  164 [webkit] › e2e/shell.spec.ts:224:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (8.8s)
+  ✓  167 [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen (2.4s)
+  ✓  168 [webkit] › e2e/shortcuts.spec.ts:13:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite (3.2s)
+  ✓  169 [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen (2.5s)
+  ✓  170 [webkit] › e2e/shortcuts.spec.ts:35:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) (3.1s)
+  ✓  171 [webkit] › e2e/shortcut-toggle.spec.ts:110:1 › Quick Find: nach Weitertippen ist der erste Eintrag ausgewählt, Enter öffnet ihn (2.8s)
