@@ -1,7 +1,8 @@
 # ADR 0017: Speicher und Sync für große Workspaces, alte Geräte und das Web
 
-- **Status:** vorgeschlagen (2026-11-17). Keine Code-Änderung in diesem ADR; die Reihenfolge und vier Fragen
-  entscheidet Elija (Notion: „Based — Speicher und Sync: Befund und Plan“).
+- **Status:** angenommen (2026-11-17, Elija) – Richtung und die Entscheidungen unten. Keine Code-Änderung in diesem
+  ADR; die Umsetzung beginnt nach der Beta am 23.11. (Notion: „Based — Speicher und Sync: Befund und Plan“).
+- **Maßstab (Elija):** langfristig am stabilsten, schnellsten und verlässlichsten – der Aufwand entscheidet nicht.
 - **Bezug:** ADR 0001 (Server-Sync), 0002 (Tombstones), 0003 (Persistenz neben dem Hauptthread), 0008 (Zusammenarbeit
   vorbereiten), 0011 (TypeScript-Stack), 0014 (Properties als Records), 0015 (Ordner-Sync), `docs/sync-protocol.md`,
   `docs/platforms.md` („Performance budget“).
@@ -114,9 +115,11 @@ heutigen Treiber 6 297 ms, nativ mit vorbereiteten Anweisungen 1 788 ms.
 
 - **Kompakte Records:** Stempel als Zeichenkette `millis:counter:node`, Zeiten als ganze Millisekunden,
   `createdBy`/`updatedBy` nur wenn nicht Standard. Rund ein Drittel weniger Bytes (Schätzung aus den Anteilen oben).
-- **Teil-Sync:** Pull nach Bereich – erst das Gerüst, dann Seiteninhalt bei Bedarf und im Hintergrund nach
-  Wichtigkeit (zuletzt benutzt, Favoriten). Je Gerät wählbar: „alles offline“ (Mac) oder „Gerüst und Benutztes“
-  (Telefon, Web). Der Server kann je Record filtern (Gäste); das wird der allgemeine Weg.
+- **Sync in Reihenfolge, immer vollständig:** Jedes Gerät hat den ganzen Workspace offline (entschieden). Der
+  Pull kommt aber nach Bereich geordnet – erst das Gerüst (in Sekunden benutzbar), dann der Inhalt nach Wichtigkeit
+  (offene Seite, zuletzt benutzt, Favoriten), dann der Rest im Hintergrund; unterbrechbar und fortsetzbar. Die
+  Oberfläche zeigt ehrlich, wie viel schon da ist. Der Server kann je Record filtern (Gäste); das wird der
+  allgemeine Weg. Ein Gerät, das nur einen Teil hält, gibt es nicht.
 - **Umschlag für Ende-zu-Ende:** im Klartext nur `id`, `kind`, `stamp`, `scope` (die Seite, zu der der Record
   gehört) und gelöscht ja/nein; alles andere verschlüsselt. Damit funktionieren Cursor, LWW und Teil-Sync ohne dass
   der Server Inhalte liest. Folge: Suche und MCP auf dem Server gibt es mit E2E nur für Seiten, die ein Gerät
@@ -148,11 +151,29 @@ Stufe A ist unabhängig und klein. Stufe B ist der große Hebel für alte Gerät
 (Phase 5) fertig sein. Stufe C und D gehören vor Based Cloud; C zusammen entwerfen, weil E2E-Umschlag, Teil-Sync und
 kompaktes Format dieselben Felder berühren. Nichts davon am Datenweg vor der Beta am 23.11. ohne Elijas Wort.
 
-## Offene Fragen (an Elija)
+## Entscheidungen (Elija, 17.11.2026)
 
-1. Muss `based.sqlite` weiter von der Swift-App lesbar bleiben? Empfehlung: nein (Swift ist eingefroren); das
-   erlaubt Schema v4.
-2. Braucht jedes Gerät den ganzen Workspace offline? Empfehlung: Mac ja, Telefon und Web „Gerüst und Benutztes“,
-   umschaltbar.
-3. Mit E2E: Suche und MCP nur auf den Geräten und für übergebene Seiten – so bestätigt? Empfehlung: ja.
-4. Stufe A vor oder nach dem 23.11.? Empfehlung: Punkt 1, 3 und 4 danach in der ersten Woche; nichts davor.
+1. `based.sqlite` muss nicht mehr von der Swift-App lesbar sein. → Schema v4 ist frei; `history` und `ydocs` dürfen
+   Tabellen derselben Datei werden.
+2. **Jedes Gerät hält den ganzen Workspace offline** – auch Telefon, iPad und Web. → Kein Teil-Sync als Dauerzustand.
+   Umso wichtiger ist Stufe B: Auf der Platte liegt alles, im Arbeitsspeicher nur das Gerüst und das Offene.
+3. Mit E2E laufen Suche und MCP nur auf den Geräten (und für Seiten, die ein Gerät ausdrücklich übergibt). → Der
+   Server ist ein Speicher für verschlüsselte Records und braucht keinen Store (Stufe D ist damit Pflicht, nicht Option).
+4. Stufe A: Elija hat keine Vorgabe. Festgelegt nach der Empfehlung: nach dem 23.11., vor Stufe B (A1 und der
+   Zeitmess-Test zuerst, weil sie B messbar machen).
+5. Größe: rund 20 000 Seiten in Elijas Workspace – die Größenordnung der 520 000-Records-Messung. Stufe B ist damit
+   für den eigenen Alltag nötig, nicht erst für Mobil.
+
+## Was aus „Aufwand egal, langfristig am besten“ folgt
+
+- **Stufe B ganz, nicht halb:** SQLite ist die eine Quelle; der Store im Worker ist ein Zwischenspeicher mit fester
+  Obergrenze (Gerüst immer, Seiteninhalt nach Benutzung, ältestes zuerst entlassen). Keine Mischform, in der manche
+  Funktionen weiter „alles im Speicher“ voraussetzen – jede solche Stelle wird auf SQL umgestellt und bekommt einen
+  Test mit einem Workspace, der größer ist als die Obergrenze.
+- **Eine Formatumstellung statt mehrerer:** lokales Schema v4 und Protokoll v4 werden zusammen entworfen (Spalten,
+  kompakte Records, `scope`, E2E-Umschlag) und in einem Schritt mit Sicherung, Probelauf und Rückweg eingeführt.
+  Die Umsetzung von B kann vorher beginnen, soweit sie das Format nicht festlegt.
+- **Natives SQLite in den Apps:** Mac, iPhone, iPad und Android bekommen SQLite über die Hülle (mit WAL) statt
+  SQLite-WASM auf OPFS; WASM bleibt dem Browser. Das war schon vorgesehen (`sql.ts`) und wird Teil von B.
+- **Verlässlichkeit messbar halten:** vor jeder Stufe die Zeitmessung mit 100 000 und 500 000 Records, dazu ein
+  Dauerlauf (zufällige Änderungen, Abbruch mitten im Schreiben, Neustart, Vergleich mit einer Referenz).
