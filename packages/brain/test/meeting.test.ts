@@ -5,7 +5,7 @@ import {
   type AudioTrackRole,
 } from "@based/core";
 import {
-  buildMeetingSummaryPrompt, FixedTranscriber, MeetingRecorder, ScriptedEngine, stripFence, type AudioCapture, type AudioChunk, type CaptureOptions,
+  buildMeetingSummaryPrompt, FixedTranscriber, MeetingRecorder, MIC_HINT_MAC, ScriptedEngine, stripFence, type AudioCapture, type AudioChunk, type CaptureOptions,
   type CapturedTrack, type SavedAudio,
 } from "../src/index.js";
 
@@ -173,7 +173,12 @@ describe("MeetingRecorder", () => {
     await rec.start(store, m);
     expect(rec.getState().recording).toBe(false);
     expect(meetingInfo(store, m)?.status).toBe("ready");
-    expect(meetingInfo(store, m)?.error).toMatch(/Microphone access is blocked/);
+    expect(meetingInfo(store, m)?.error).toBe("Microphone access is blocked. Allow it for this site in the browser settings.");
+    // BSD-453: In der Mac-App gibt es keine „browser settings“ – der Host nennt den richtigen Ort.
+    const m2 = createMeeting(store, { parent: "w" });
+    const mac = new MeetingRecorder({ capture: () => Promise.reject(err), saveAudio: () => Promise.reject(new Error("x")), tickMs: 0, micBlockedHint: MIC_HINT_MAC });
+    await mac.start(store, m2);
+    expect(meetingInfo(store, m2)?.error).toBe("Microphone access is blocked. Allow it in System Settings → Privacy & Security → Microphone, then try again.");
   });
 
   it("Zusammenfassung über die Engine mit [m:ss]-Zitaten; Prompt enthält Transkript und Notizen", async () => {

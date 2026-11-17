@@ -109,3 +109,32 @@ for (const theme of ["light", "dark"] as const) {
     }
   });
 }
+
+// BSD-467: ⇧⌘B → Speichern → der Dialog nennt hello@basednotes.app und der Knopf „Email report“ öffnet eine Mail mit
+// „Based Beta“ und Kanal beta – ohne Seiteninhalt und ohne die Notiz.
+test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(90_000);
+  const { page, close } = await fresh(playwright, browserName, baseURL!, "light");
+  try {
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
+    await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
+    await page.keyboard.type("Secret beta page text");
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    const dialog = page.getByRole("dialog", { name: "Report a problem" });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await dialog.getByRole("textbox", { name: "What did you do, and what happened?" }).fill("My private note");
+    await dialog.getByRole("button", { name: "Save report" }).click();
+    const box = page.getByRole("dialog", { name: "Report saved" }).getByTestId("report-email");
+    await expect(box).toContainText("Send it to hello@basednotes.app");
+    await expect(box.getByRole("button", { name: "Email report" })).toBeVisible();
+    const text = decodeURIComponent((await box.getAttribute("data-mailto"))!);
+    expect(text.startsWith("mailto:hello@basednotes.app?subject=Based Beta ")).toBe(true);
+    expect(text).toContain("Channel: beta");
+    for (const leak of ["Secret beta page text", "My private note"]) expect(text).not.toContain(leak);
+    await clean(page, "Report saved");
+  } finally {
+    await close();
+  }
+});

@@ -36,6 +36,13 @@ test("Seitenfenster (BSD-202): Rechte gelten auch für page-*, Fenster dürfen a
   assert.ok(cap.permissions.includes("core:webview:allow-create-webview-window"));
 });
 
+test("BSD-467: Opener darf nur mailto öffnen (Problem melden → Mail), keine beliebigen Adressen", () => {
+  const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/default.json", import.meta.url), "utf8"));
+  const open = cap.permissions.filter((x) => (typeof x === "string" ? x : x.identifier).startsWith("opener:allow-open"));
+  assert.deepEqual(open, [{ identifier: "opener:allow-open-url", allow: [{ url: "mailto:*" }] }]);
+  assert.ok(!cap.permissions.includes("opener:default"));
+});
+
 test("BSD-138/414: Bundle und Node als Resource (kein externalBin); Shell-Plugin nur für vier feste Aufrufe", () => {
   assert.equal(conf.bundle.externalBin, undefined);
   // BSD-314: node-pty (native Datei für das Terminal) liegt daneben in node_modules/, nicht im Bundle.
@@ -162,6 +169,19 @@ test("Info.plist: Mikrofon für Meeting Notes (macOS verweigert getUserMedia ohn
   const plist = readFileSync(new URL("../src-tauri/Info.plist", import.meta.url), "utf8");
   assert.match(plist, /<key>NSMicrophoneUsageDescription<\/key>\s*<string>[^<]{20,}<\/string>/);
   assert.match(plist, /<key>NSAudioCaptureUsageDescription<\/key>\s*<string>[^<]{20,}<\/string>/);
+});
+
+// BSD-453: Die App ist mit Hardened Runtime signiert (auch ad hoc). Ohne das Recht audio-input verweigert macOS das
+// Mikrofon ohne Rückfrage – die Usage-Description allein reicht nicht.
+test("Entitlements: Mikrofon-Recht der App, in beiden Kanälen eingebunden", () => {
+  const ent = readFileSync(new URL("../src-tauri/Entitlements.plist", import.meta.url), "utf8");
+  assert.match(ent, /<key>com\.apple\.security\.device\.audio-input<\/key>\s*<true\/>/);
+  assert.equal((ent.match(/<key>/g) ?? []).length, 1, "nur so viel wie nötig");
+  const conf = JSON.parse(readFileSync(new URL("../src-tauri/tauri.conf.json", import.meta.url), "utf8"));
+  assert.equal(conf.bundle.macOS.entitlements, "Entitlements.plist");
+  // Das Beta-Overlay wird über tauri.conf.json gelegt und darf bundle.macOS nicht ersetzen.
+  const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
+  assert.equal(beta.bundle?.macOS, undefined);
 });
 
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.

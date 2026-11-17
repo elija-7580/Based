@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  BSD-453: Rechte der App selbst (nicht der mitgelieferten Node, die hat node.entitlements).
+  Tauri signiert die App mit Hardened Runtime – auch ad hoc. Unter Hardened Runtime verweigert macOS das Mikrofon
+  ohne dieses Recht sofort und ohne Rückfrage: getUserMedia endet mit NotAllowedError, die App taucht nie unter
+  Systemeinstellungen → Datenschutz → Mikrofon auf. Die Usage-Description in Info.plist allein reicht nicht.
+  Nur dieses eine Recht; WebKit rechnet (JIT) in eigenen Prozessen und braucht hier nichts.
+-->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+</dict>
+</plist>

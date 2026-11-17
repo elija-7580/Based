@@ -1,4 +1,5 @@
 // Beta-Gate: was der Kanal „beta“ ausblendet – in ⌘K, Seitenleiste, Slash-Menü und Routen.
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { slashItemsFor } from "@based/editor";
 import { BETA_HIDDEN, BETA_HIDDEN_SETTINGS, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes, settingsPageVisible } from "./beta.js";
@@ -85,5 +86,42 @@ describe("Beta-Gate: Teilen (BSD-460)", () => {
     expect(featureVisible("sharing", "beta")).toBe(false);
     expect(featureVisible("sharing", "dev")).toBe(true);
     expect(BETA_HIDDEN.sharing).toMatch(/after/);
+  });
+});
+
+// BSD-471: replica/features.csv Spalte „beta“ zeigt nur, was auf beta gebaut und sichtbar ist. Release Notes,
+// Website-Abgleich (docs/website-claims.md) und Planung zählen mit dieser Spalte.
+describe("features.csv passt zum Beta-Gate", () => {
+  const rows = readFileSync(new URL("../../../../replica/features.csv", import.meta.url), "utf8").trim().split("\n").slice(1).map((line) => {
+    const cells: string[] = [];
+    let cur = "", quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i]!;
+      if (quoted) {
+        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') quoted = false; else cur += c;
+      } else if (c === '"') quoted = true;
+      else if (c === ",") { cells.push(cur); cur = ""; } else cur += c;
+    }
+    cells.push(cur);
+    return { feature: cells[0]!, area: cells[1]!, ts: cells[6]!, beta: cells[7]! };
+  });
+  const beta = rows.filter((r) => r.beta === "beta");
+
+  it("jede Zeile hat 8 Spalten und einen bekannten Wert in beta", () => {
+    expect(rows.length).toBeGreaterThan(200);
+    for (const r of rows) expect(["beta", "labs", "after", ""], r.feature).toContain(r.beta);
+  });
+
+  it("keine beta-Zeile ist ungebaut (ts = no)", () => {
+    expect(beta.filter((r) => /^no\b/.test(r.ts)).map((r) => r.feature)).toEqual([]);
+  });
+
+  it("keine AI-/Agenten-Zeile auf beta – der AI-Schalter fehlt dort (shell/ai.ts)", () => {
+    expect(beta.filter((r) => r.area === "ai" || r.area === "agents").map((r) => r.feature)).toEqual([]);
+  });
+
+  it("ausgeblendete Funktionen stehen nicht auf beta", () => {
+    const hidden = ["AI meeting notes (/meet)", "Real-time multi-user collaboration", "Sharing and permissions", "Coding-agent sessions (Happier / ACP)"];
+    for (const f of hidden) expect(rows.find((r) => r.feature === f)?.beta, f).not.toBe("beta");
   });
 });

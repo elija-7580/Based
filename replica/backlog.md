@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 38 (Nachtlauf 2026-11-17, TS-Stack, Abschnitt direkt unten; Pass 37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 39 (Nachtlauf 2026-11-17/18, TS-Stack, Abschnitt direkt unten; Pass 38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,22 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-17/18 (Pass 39, TS-Stack, Beta-Sprint, Lauf ab 12:20)
+
+Merges nach main: 211f5bdd (Hauptlauf BSD-475 + b5cdae49 BSD-453 von außen), 81fc237f (Schicht B bis BSD-476, Fast-Forward), danach Schicht A bis BSD-472/473; jeweils run-ts --fast (typecheck, lint, Unit beider Formate, @smoke 29/29) grün, betroffene E2E in Chromium + WebKit grün. Schicht A 12:21–13:15, Schicht B 12:22–13:08.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-475 CI rot: kit-states-Bildvergleich auf dem Runner | ✅ | Pixelvergleich nur, wo die Grundbilder entstanden (ohne GITHUB_ACTIONS oder BASED_VISUAL=1); Zustandsprüfungen laufen überall |
+| BSD-467 Problem melden → Mail an hello@basednotes.app | 🟡 | „Email report“ (mailto, nur Version/Kanal/System/Bericht-ID, kein Inhalt); Adresse in packages/core/src/bugReport.ts; Opener nur mailto:*; Mac-Test mit Mail.app |
+| BSD-471 features.csv Spalte beta | ✅ | 179 statt 200 beta-Zeilen (15 → labs, 6 → after); Test in beta.test.ts |
+| BSD-476 website waitlist-Test wackelig | ✅ | busy_timeout 5000, Test wartet auf Prozessende; 20/20 unter Last |
+| BSD-469 Beta-Weg 2: Import → Export → Wiederimport | ✅ | e2e/beta-data.spec.ts, normal und BASED_CHANNEL=beta, Chromium + WebKit; Archiv und Sicherung vor Update exakt gleich |
+| BSD-468 Release Notes und Tester-Anleitung RC | ✅ | docs/beta/RELEASE_NOTES.md „0.2 – release candidate“, README ergänzt |
+| BSD-472 Markdown-Export ohne Zeileninhalt (P1) | ✅ | <Datenbank>/<Zeile>.md wie Notion |
+| BSD-473 Markdown-Export: Datenbank-Link/-Position | ✅ | Link zeigt richtig, Datenbank bleibt beim Wiederimport an ihrem Platz |
+| BSD-474 Based-HTML-Export → Datenbanken beim Wiederimport | ❌ | Blockiert, Frage an Elija: HTML als Leseformat oder Rundreise? |
 
 ## Nachtlauf 2026-11-17 (Pass 38, TS-Stack, Beta-Sprint)
 

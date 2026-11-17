@@ -23,7 +23,10 @@ const RETENTION_DAYS = 730;
 
 mkdirSync(dirname(DB_PATH), { recursive: true });
 const db = new DatabaseSync(DB_PATH);
+// BSD-476: wait for a lock instead of failing at once – the CLI (export, ideas, delete, prune) runs next to the live
+// service, and both touch the file on open (journal mode) and close (WAL checkpoint).
 db.exec(`
+  PRAGMA busy_timeout = 5000;
   PRAGMA journal_mode = WAL;
   CREATE TABLE IF NOT EXISTS waitlist (
     email      TEXT PRIMARY KEY,

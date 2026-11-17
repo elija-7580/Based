@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkReleasesFallback, compareVersions, isMissingUpdateManifest, newestNextVersion } from "./updateFallback.js";
+import { checkReleasesFallback, compareVersions, isMissingUpdateManifest, newestNextVersion, releaseLine } from "./updateFallback.js";
 
 describe("updateFallback", () => {
   it("vergleicht Versionen numerisch", () => {
@@ -14,6 +14,19 @@ describe("updateFallback", () => {
       { tag_name: "next-0.1.99", draft: true }, { tag_name: 3 },
     ])).toBe("0.1.12");
     expect(newestNextVersion([])).toBeUndefined();
+  });
+
+  it("Based Beta sucht nur in der eigenen Linie beta-v<version>, Based Next nur in next-<version>", async () => {
+    const all = [{ tag_name: "next-0.1.155" }, { tag_name: "beta-v0.2.2" }, { tag_name: "beta-v0.2.10" }, { tag_name: "beta-latest" }];
+    const beta = releaseLine("beta");
+    expect(newestNextVersion(all, beta.tagPrefix)).toBe("0.2.10");
+    expect(newestNextVersion(all, releaseLine("dev").tagPrefix)).toBe("0.1.155");
+    expect(beta.downloadPage).toMatch(/beta-latest$/);
+    expect(releaseLine("dev").downloadPage).toMatch(/next-latest$/);
+    const ok = (async () => new Response(JSON.stringify(all), { status: 200 })) as unknown as typeof fetch;
+    // 0.2.2 ist in der Beta-Linie nicht „älter als next-0.1.155“ und nicht „neuer“ – es zählt nur die eigene Linie.
+    expect(await checkReleasesFallback("0.2.10", ok, beta.tagPrefix)).toEqual({ kind: "current" });
+    expect(await checkReleasesFallback("0.2.2", ok, beta.tagPrefix)).toEqual({ kind: "newer", version: "0.2.10" });
   });
 
   it("erkennt die Meldung „kein Update-Kanal“", () => {

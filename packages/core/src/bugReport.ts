@@ -341,6 +341,59 @@ export function summarizeBundle(b: BugBundle): BugBundleSummary {
   return { id: b.id, createdAt: b.createdAt, note: b.note, events: b.recording.events.length, issues: b.layout.issues.length, screenshot: !!b.screenshot, realText: b.realText };
 }
 
+// MARK: Mail an uns (BSD-467)
+
+/** Adresse für Beta-Rückmeldungen – eine Stelle, alle Kanäle (Release-Plan, docs/beta/README.md, Download-Seite). */
+export const FEEDBACK_EMAIL = "hello@basednotes.app";
+
+/** Grobes System aus Plattform/User-Agent. Keine Versionsnummer: WebKit friert „Mac OS X 10_15_7“ ein, die wäre falsch. */
+export function systemLabel(app: Pick<BugApp, "platform" | "userAgent">): string {
+  const s = `${app.platform ?? ""} ${app.userAgent ?? ""}`;
+  if (/iPhone|iPad|iOS/i.test(s)) return "iOS";
+  if (/Mac/i.test(s)) return "macOS";
+  if (/Win/i.test(s)) return "Windows";
+  if (/Linux|X11/i.test(s)) return "Linux";
+  return "unknown";
+}
+
+export interface ReportEmailInput {
+  /** Name der App im Kanal („Based Beta“). */
+  appName: string;
+  channel: string;
+  app: BugApp;
+  /** Bündel-ID (Ordnername bzw. Dateiname), damit wir Mail und Anhang zusammenbringen. */
+  reportID: string;
+  /** Was der Tester anhängen soll (Ordner-Pfad oder Dateiname). */
+  attach: string;
+}
+
+export interface ReportEmail { to: string; subject: string; body: string; href: string }
+
+/**
+ * BSD-467: Mail zum gespeicherten Bericht. Nur Version, Kanal und System – kein Seiteninhalt, keine Notiz (die kann
+ * Inhalt enthalten), kein User-Agent; der Bericht selbst geht als Anhang mit. `href` ist eine mailto-Adresse nach
+ * RFC 6068 (Leerzeichen als %20, Zeilen als %0D%0A).
+ */
+export function reportEmail(i: ReportEmailInput): ReportEmail {
+  const build = i.app.version ? `${i.app.version}${i.app.commit ? ` (${i.app.commit})` : ""}` : `dev build${i.app.commit ? ` (${i.app.commit})` : ""}`;
+  const subject = `${i.appName} ${i.app.version || "dev"} – problem report`;
+  const body = [
+    "What did you do, and what happened?",
+    "",
+    "",
+    "",
+    `Please attach the saved report: ${i.attach}`,
+    "",
+    "—",
+    `App: ${i.appName} ${build}`,
+    `Channel: ${i.channel}`,
+    `System: ${systemLabel(i.app)}`,
+    `Report: ${i.reportID}`,
+  ].join("\n");
+  const enc = (s: string) => encodeURIComponent(s).replace(/%0A/g, "%0D%0A");
+  return { to: FEEDBACK_EMAIL, subject, body, href: `mailto:${FEEDBACK_EMAIL}?subject=${enc(subject)}&body=${enc(body)}` };
+}
+
 /** Prüft ein geladenes JSON auf das Bündel-Format. */
 export function parseBugBundle(json: unknown): BugBundle | undefined {
   const b = json as Partial<BugBundle> | null;
