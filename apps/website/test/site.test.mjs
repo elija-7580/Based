@@ -37,6 +37,19 @@ test("build: every page exists, nothing points back to the design canvas or to G
   assert.match(readFileSync(join(out, "assets", runtime), "utf8"), /mq\.addEventListener\("change"/,
     "home swaps desktop/phone version when the window crosses the breakpoint");
   assert.match(home, /href="\/privacy"/);
+  // Logo intro: only the home page types the mark; every page carries the same mark (line, stem, bowl, caret).
+  assert.match(home, /<html lang="en" class="lg-intro" data-lg-intro-ms="\d+">/, "home plays the logo intro");
+  const workspace = readFileSync(join(out, "workspace", "index.html"), "utf8");
+  assert.ok(!workspace.includes("lg-intro\""), "other pages keep the resting mark");
+  for (const [name, html] of [["home", home], ["workspace", workspace]]) {
+    for (const cls of ["lg-base", "lg-stem", "lg-bowl", "lg-caret"]) assert.ok(html.includes(`class="${cls}"`), `${name}: ${cls} in the header mark`);
+  }
+  const sheet = readFileSync(join(out, "assets", readdirSync(join(out, "assets")).find((f) => /^site\..*\.css$/.test(f))), "utf8");
+  for (const k of ["bsdLgLine", "bsdLgStem", "bsdLgBowl", "bsdLgCaret", "bsdLgDip"]) assert.match(sheet, new RegExp("@keyframes " + k + "\\{"), k);
+  assert.match(sheet, /\.lg-caret\{opacity:0\}/, "caret hidden when the intro does not run");
+  const siteJs = readFileSync(join(out, "assets", readdirSync(join(out, "assets")).find((f) => /^site\..*\.js$/.test(f))), "utf8");
+  assert.match(siteJs, /classList\.remove\("lg-intro"\); root\.classList\.add\("lg-rest"\)/, "the mark rests when the intro is over");
+  assert.match(sheet, /html\.lg-rest \.bsd \.logo-link:not\(:hover\) \.lg-stem/, "no second animation after the intro");
   const imprint = readFileSync(join(out, "imprint", "index.html"), "utf8");
   assert.match(imprint, /Offenlegung gemäß § 25 Mediengesetz/);
   assert.match(imprint, /hello@basednotes\.app/);
