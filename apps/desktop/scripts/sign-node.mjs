@@ -25,6 +25,9 @@ export function signTargets(dist) {
   const out = [];
   const node = join(dist, "node", "bin", "node");
   if (existsSync(node)) out.push({ path: node, entitlements: true });
+  // BSD-231: whisper-cli (build-whisper.mjs) – Hardened Runtime, keine besonderen Rechte (kein JIT, keine Geräte).
+  const whisper = join(dist, "whisper", "whisper-cli");
+  if (existsSync(whisper)) out.push({ path: whisper, entitlements: false });
   const walk = (dir) => {
     if (!existsSync(dir)) return;
     for (const name of readdirSync(dir).sort()) {

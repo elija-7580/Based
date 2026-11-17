@@ -38,6 +38,11 @@ export interface MeetingHost {
   hasTranscriber(): boolean;
   /** Eine KI für die Zusammenfassung ist eingerichtet. */
   hasSummaryEngine(): boolean;
+  /**
+   * Elija 17.11. (Meeting-Notizen in der Beta): `false`, wenn es in diesem Build gar keine KI gibt – dann fehlt der
+   * Reiter „Summary“ (kein Hinweis auf Einstellungen, die es nicht gibt). Eine vorhandene Zusammenfassung bleibt sichtbar.
+   */
+  summaryAvailable?(): boolean;
   /** Letzter Fehler dieses Meetings (Aufnahme, Transkription). */
   errorFor(meetingID: string): string | undefined;
   start(store: WorkspaceStore, meetingID: string, opts: { systemAudio: boolean }): Promise<void>;

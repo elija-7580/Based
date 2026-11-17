@@ -40,7 +40,7 @@ verweigert den Start.
 | GET | `/sync/v2/info` | Owner, Gast | | `{protocol, seq, oldestSeq}` |
 | POST | `/sync/v2/push` | Owner, Gast | 32 MiB | `{records, deletions}` → `{newer, seq, deleted}`; Gäste nach Rolle geprüft |
 | GET, POST | `/local/transcribe` | Owner | 16 MiB | Nur mit `BASED_WHISPER_*`. GET → `{engine, ready}`; POST: WAV 16 kHz mono 16 Bit (`?language=de\|auto&prompt=…`) → JSON von `whisper-cli -oj`; ein Lauf nach dem anderen |
-| POST | `/local/transcribe/model` | Owner | 1 KiB | `{action: download\|cancel\|remove}` für whisper-base aus dem Katalog; GET `/local/transcribe` zeigt `model` (installed, downloading, loaded, error) |
+| POST | `/local/transcribe/model` | Owner | 1 KiB | `{action: download\|select\|cancel\|remove, id?}` für die Modelle aus dem Katalog (whisper-base, whisper-small – Standard –, whisper-large-v3-turbo); `download` und `select` machen das Modell zum gewählten. GET `/local/transcribe` zeigt `model` (das gewählte) und `models` (alle: installed, downloading, loaded, error, active). Dateien werden direkt auf die Platte geladen (Fortsetzen per Range) |
 | GET | `/sync/v2/pull?after&limit` | Owner, Gast | | Seiten, `limit` 1…5000 (Standard 500); Gäste gefiltert |
 | GET | `/sync/v2/wait?after&timeout` | Owner, Gast | | Long-Poll, 1…55 s (Standard 25) |
 | GET | `/p/<id>[/<page>]`, `/s/<secret>` | öffentlich | | Publish to web, Link-Landeseiten ([sharing.md](sharing.md)) |

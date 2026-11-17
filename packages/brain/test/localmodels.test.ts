@@ -99,6 +99,13 @@ describe("Katalog (BSD-231 Teil 2a)", () => {
       expect(spec.license).toMatch(/MIT|Apache/);
     }
     expect(lm.catalogFor("transcription")?.id).toBe("whisper-base");
+    // Elija 17.11.: drei Stufen, Small vorausgewählt; alle gepinnt auf denselben Stand der Quelle
+    expect(lm.catalogAll("transcription").map((m) => m.id)).toEqual(["whisper-base", "whisper-small", "whisper-large-v3-turbo"]);
+    expect(lm.catalogAll("transcription").some((m) => m.id === lm.DEFAULT_TRANSCRIPTION_MODEL)).toBe(true);
+    for (const m of lm.catalogAll("transcription")) {
+      expect(lm.validateSpec(m)).toEqual([]);
+      expect(m.files[0]!.url).toMatch(/^https:\/\/huggingface\.co\/ggerganov\/whisper\.cpp\/resolve\/[0-9a-f]{40}\/ggml-/);
+    }
     expect(lm.catalogFor("embeddings")?.id).toBe("multilingual-e5-small");
   });
 

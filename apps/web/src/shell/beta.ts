@@ -21,8 +21,10 @@ export const CHANNEL: Channel = typeof __BASED_CHANNEL__ === "string" && __BASED
 export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing" | "agentMarks" | "whiteboard";
 
 /** Auf beta ausgeblendet, mit Grund (für Menschen; wird nicht angezeigt). */
-export const BETA_HIDDEN: Readonly<Record<GatedFeature, string>> = {
-  meetings: "Labs (features.csv) und offener Bug BSD-453 (Aufnahme in der Mac-App)",
+// Elija 17.11.: Meeting-Notizen sind in der Beta – Aufnahme, Notizen mit Zeit, Transkript auf dem Mac (BSD-453 behoben,
+// whisper.cpp liegt der App bei, BSD-231). Die AI-Zusammenfassung bleibt auf beta weg (kein AI-Schalter): der Reiter
+// „Summary“ fehlt dort (meeting/host.ts → summaryAvailable). Wieder ausblenden: `meetings: "<Grund>"` hier eintragen.
+export const BETA_HIDDEN: Readonly<Partial<Record<GatedFeature, string>>> = {
   graph: "BSD-420: Graph laut Mac-Abnahme buggy und langsam",
   realtimeText: "Echtzeit-Text ist „after“ (features.csv), braucht einen Server",
   coding: "Labs, hängt an AI",

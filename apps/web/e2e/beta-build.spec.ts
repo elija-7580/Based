@@ -10,7 +10,7 @@ import { overflows, overlaps } from "./layout-checks.js";
 // (eigener Port, damit kein Dev-Server wiederverwendet wird). Sonst übersprungen (run-ts, CI). Prüft, was Tester auf
 // beta sehen: erster Start (Willkommen mit Vorlagen, ohne AI), Home = Willkommensseite (BSD-461), Seitenkopf ohne Share
 // (BSD-460), Einstellungen ohne „Not yet“- und AI-Seiten, My settings ohne Agenten-Begriffe (BSD-459), Slash-Menü
-// ohne Meeting und Ask AI; jeweils ohne Überlauf und sich überdeckenden Text, Fotos 1280 × 820 hell/dunkel.
+// mit Meeting notes (Elija 17.11.), ohne Ask AI; Meeting-Block ohne Reiter „Summary“; jeweils ohne Überlauf und sich überdeckenden Text, Fotos 1280 × 820 hell/dunkel.
 
 const BETA = process.env.BASED_CHANNEL === "beta";
 const SHOTS = "../../docs/design/screens/";
@@ -66,15 +66,26 @@ for (const theme of ["light", "dark"] as const) {
       await page.getByRole("button", { name: "Home" }).click();
       await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
 
-      // Slash-Menü: weder Meeting notes noch Ask AI
+      // Slash-Menü: Meeting notes ja (Elija 17.11.), Ask AI nein
       await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
       await page.keyboard.type("/");
       const menu = page.getByTestId("slash-menu");
       await expect(menu).toBeVisible();
-      await expect(menu.getByText("Meeting notes")).toHaveCount(0);
       await expect(menu.getByText("Ask AI")).toHaveCount(0);
       await shoot(page, "slash-menu");
-      await page.keyboard.press("Escape");
+      // Meeting-Block auf beta: Aufnahme, Notizen, Transkript – kein Reiter „Summary“, kein Hinweis auf AI-Einstellungen
+      await page.keyboard.type("meet");
+      await expect(menu.getByRole("option", { name: /Meeting notes/ })).toBeVisible();
+      await page.keyboard.press("Enter");
+      const meeting = page.getByTestId("meeting-block");
+      await expect(meeting).toBeVisible();
+      await expect(meeting.getByRole("tab")).toHaveText([/Notes/, /Transcript/]);
+      await expect(meeting.getByRole("tab", { name: "Summary" })).toHaveCount(0);
+      await meeting.getByRole("tab", { name: "Transcript" }).click();
+      await expect(page.getByTestId("meeting-transcript-empty")).toContainText("Set it up in Settings → Meeting notes");
+      await expect(meeting).not.toContainText(/\bAI\b|agent/i);
+      await clean(page, "Meeting-Block");
+      await shoot(page, "meeting");
 
       // Einstellungen: keine „Not yet“-Seiten, keine AI-Seiten; My settings ohne Agenten-Begriffe
       await page.goto("/#prefs-my-settings");
@@ -84,21 +95,23 @@ for (const theme of ["light", "dark"] as const) {
       for (const hidden of ["My connections", "People", "Teamspaces", "Security", "Agents & AI", "Connections", "My notifications"]) await expect(nav.getByRole("button", { name: hidden, exact: true })).toHaveCount(0);
       const settings = page.getByTestId("settings-page");
       await expect(settings).not.toContainText(/agent|marker|calm mode/i);
+      // Meeting notes in den Einstellungen: im Browser ohne Server steht, was fehlt
+      await expect(page.getByTestId("settings-section-meetings")).toContainText("Transcription");
       await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
       await clean(page, "My settings");
       await shoot(page, "settings");
 
-      // Library ohne Graph und Meetings; ⌘N ohne Meeting und AI-Chat, mit den Vorlagen
+      // Library ohne Graph, mit Meetings; ⌘N mit Meeting notes, ohne AI-Chat, mit den Vorlagen
       await page.goto("/#library");
       await expect(page.getByRole("heading", { name: "Library" })).toBeVisible();
       await expect(page.getByText(/^Loading/)).toHaveCount(0, { timeout: 15_000 });
       await expect(page.getByText("Graph", { exact: true })).toHaveCount(0);
-      await expect(page.getByText("Meetings", { exact: true })).toHaveCount(0);
+      await expect(page.getByText("Meetings", { exact: true })).toHaveCount(1);
       await clean(page, "Library");
       await shoot(page, "library");
       await page.keyboard.press("ControlOrMeta+n");
       const palette = page.getByTestId("new-palette");
-      await expect(palette.getByRole("option")).toHaveText([/New page/, /New database/, /Import/, /Tasks template/, /Notes template/, /Journal template/, /Wiki template/]);
+      await expect(palette.getByRole("option")).toHaveText([/New page/, /meeting notes/i, /New database/, /Import/, /Tasks template/, /Notes template/, /Journal template/, /Wiki template/]);
       await page.keyboard.type("tasks");
       await page.keyboard.press("Enter");
       await expect(page.locator(".shell-database.full")).toBeVisible();
