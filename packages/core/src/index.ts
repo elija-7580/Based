@@ -199,6 +199,20 @@ export {
   type ConnectorEnd, type ConnectorShape, type ConnectorSide, type WBConnector, type WBKind, type WBObject, type WBShape, type WBStyleValue,
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
+// BSD-264 (Whiteboard 2): Kamera, Geometrie, Raumindex und Board-Objekte als Records
+export {
+  centerOn, clampZoom, DEFAULT_CAMERA, fitCamera, GRID_STEP, gridStepFor, MAX_ZOOM, MIN_ZOOM, panBy, rectContains, rectFromPoints, rectsIntersect, screenToWorld,
+  unionRect, visibleRect, worldRectToScreen, worldToScreen, ZOOM_STEPS, zoomByWheel, zoomLabel, zoomStep, zoomTo,
+  type Camera, type Point as BoardPoint, type Rect as BoardRect, type Size as BoardSize,
+} from "./whiteboard/viewport.js";
+export {
+  BoardIndex, connectorPoints, duplicateObjects, facingSide, frontZs, HANDLES, handlePoint, hitHandle, hitsObject, hitTest, indexByID, isConnector, isShape,
+  MIN_OBJECT_SIZE, nudgeDelta, objectBounds, objectsInRect, readingOrder, resizeRect, scaleInto, selectionBounds, type Handle,
+} from "./whiteboard/geometry.js";
+export {
+  BOARD_FORMAT, BOARD_OBJECT_TYPE, boardObjectFromBlock, boardObjectProps, boardObjectsOf, boardObjectToBlock, createBoardPage, insertBoardPage, isBoardObjectBlock,
+  isBoardPage, sameBoardObject,
+} from "./whiteboard/records.js";
 export {
   BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
   buildBugBundle, bundleID, comboFor, exportEvent, layoutIssues, mapStrings, normalizeDoc, parseBugBundle, replayPlan, scrambleDeep, scrambleHTML, scrambleText, summarizeBundle,
