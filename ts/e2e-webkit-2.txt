@@ -1,61 +1,61 @@
-failure df2b1b1d04f05b484946fa9894a609af1549bb1b
-  ✓  221 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.3s)
-
-
-  1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
-      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-
-
-      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
-      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
-    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
-          |                                           ^
-      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
-      363 |   expect(posts).toEqual([]);
-      364 |   await shot("choose");
-        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
-
-    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
-      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
-
-
-      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
-      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
-    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
-          |                                           ^
-      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
-      363 |   expect(posts).toEqual([]);
-      364 |   await shot("choose");
-        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
-
-    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
-  32 skipped
-  187 passed (8.3m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+cancelled b01bc6bca8f98e541aa95acf04345f70c2eefce5
+  ✓  157 [webkit] › e2e/shortcut-toggle.spec.ts:52:1 › ⌘N zweimal: Neu-Palette zu, Schreibmarke zurück (3.2s)
+  ✓  158 [webkit] › e2e/shortcuts.spec.ts:64:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs (2.8s)
+  ✓  159 [webkit] › e2e/shortcut-toggle.spec.ts:62:1 › ⌘, zweimal: Einstellungen auf und zurück zur Seite (2.8s)
+  ✓  160 [webkit] › e2e/shortcuts.spec.ts:87:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen (4.0s)
+  ✓  161 [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen (2.6s)
+  ✓  163 [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen (2.1s)
+  ✓  164 [webkit] › e2e/shortcut-toggle.spec.ts:110:1 › Quick Find: nach Weitertippen ist der erste Eintrag ausgewählt, Enter öffnet ihn (1.6s)
+  ✓  162 [webkit] › e2e/sidebar-inline-db.spec.ts:9:1 › Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich als ganze Seite (6.3s)
+  ✓  165 [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown (5.2s)
+  ✓  166 [webkit] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (5.7s)
+  ✓  168 [webkit] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (2.8s)
+  ✓  167 [webkit] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links (5.4s)
+  ✓  170 [webkit] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar (3.5s)
+  ✓  169 [webkit] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (6.9s)
+  ✓  171 [webkit] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (7.0s)
+  ✓  172 [webkit] › e2e/sidebar-scroll.spec.ts:10:1 › Aufklappen oberhalb der aktiven Seite: Liste bleibt stehen, Zeile bleibt unter der Maus (4.9s)
+  ✓  174 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (2.3s)
+  ✓  173 [webkit] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (6.6s)
+  ✓  175 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (3.3s)
+  -  176 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light)
+  -  178 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark)
+  ✓  177 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (5.5s)
+  ✘  179 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (7.2s)
+  ✓  180 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (3.0s)
+  ✓  182 [webkit] › e2e/startup-perf.spec.ts:132:1 › Tippen zeichnet nur das eigene Textfeld neu (4.5s)
+  ✓  181 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (retry #1) (6.7s)
+  ✓  184 [webkit] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (5.1s)
+  ✓  183 [webkit] › e2e/storage.spec.ts:51:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (8.7s)
+  ✓  185 [webkit] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (3.5s)
+  ✓  186 [webkit] › e2e/storage.spec.ts:72:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (3.2s)
+  -  188 [webkit] › e2e/storage.spec.ts:88:1 › Screenshots web-storage-warning-*
+  ✓  187 [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (2.6s)
+(node:19163) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  190 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (7.1s)
+  ✓  191 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (7.8s)
+  -  192 [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
+  ✓  189 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (20.4s)
+(node:19914) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  193 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (5.6s)
+  ✓  194 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (5.0s)
+  ✓  195 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (15.4s)
+  ✓  197 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.7s)
+  ✓  196 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (15.9s)
+  ✓  198 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.4s)
+  ✓  199 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (5.5s)
+  -  201 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  202 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  200 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.4s)
+  ✓  204 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (3.8s)
+  ✓  205 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.9s)
+  ✓  203 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (6.8s)
+  ✓  206 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.1s)
+  ✓  207 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.2s)
+  ✓  208 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.8s)
+  ✓  210 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (4.6s)
+  ✓  211 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (3.9s)
+  ✓  209 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (9.4s)
+  ✓  213 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.4s)
