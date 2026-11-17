@@ -1,5 +1,5 @@
-failure 589c1931e3ae867106f0612e25c1844aef644fb6
-  ✓  219 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.3s)
+failure 9b6fea5ca1fde5aa977b3eff914f6aa75797052d
+  ✓  219 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.7s)
 
 
   1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
@@ -55,7 +55,7 @@ failure 589c1931e3ae867106f0612e25c1844aef644fb6
   1 failed
     [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
   32 skipped
-  185 passed (8.1m)
+  185 passed (8.2m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
