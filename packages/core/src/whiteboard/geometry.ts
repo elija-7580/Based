@@ -4,6 +4,11 @@ import RBush from "rbush";
 import { keyBetween } from "../sortkeys.js";
 import { bounds, sortByZ, type ConnectorSide, type WBConnector, type WBObject, type WBShape } from "./model.js";
 import { rectsIntersect, unionRect, type Point, type Rect } from "./viewport.js";
+import { distanceToInk, inkPointsOf } from "./stroke.js";
+
+/** Höhe der Titelzeile eines Frames und Breite seines greifbaren Rands (Welt-px). */
+export const FRAME_TITLE_HEIGHT = 40;
+export const FRAME_EDGE = 10;
 
 export const isConnector = (o: WBObject): o is WBConnector => o.kind === "connector";
 export const isShape = (o: WBObject): o is WBShape => o.kind !== "connector";
@@ -84,6 +89,17 @@ export function hitsObject(o: WBObject, p: Point, byID: ReadonlyMap<string, WBOb
   const lx = dx * Math.cos(r) - dy * Math.sin(r), ly = dx * Math.sin(r) + dy * Math.cos(r);
   const hw = o.w / 2 + tolerance, hh = o.h / 2 + tolerance;
   if (Math.abs(lx) > hw || Math.abs(ly) > hh) return false;
+  if (o.kind === "ink" && o.ink) {
+    // Tinte: nur der Strich selbst zählt, nicht sein Rahmen – sonst verdeckt eine große Skizze alles darunter.
+    const bw = Number(o.style?.bw) || o.w || 1, bh = Number(o.style?.bh) || o.h || 1;
+    const sx = o.w > 0 ? bw / o.w : 1, sy = o.h > 0 ? bh / o.h : 1;
+    const reach = Number(o.style?.width ?? 2.6) / 2 + Math.max(4, tolerance);
+    return distanceToInk(inkPointsOf(o.ink), { x: (lx + o.w / 2) * sx, y: (ly + o.h / 2) * sy }) <= reach * Math.max(sx, sy);
+  }
+  if (o.kind === "frame") {
+    // Frame: greifbar an Titelzeile und Rand; die Fläche innen gehört den Objekten darin (Aufziehen, Zeichnen).
+    return ly + o.h / 2 <= FRAME_TITLE_HEIGHT || Math.abs(lx) >= o.w / 2 - FRAME_EDGE || ly >= o.h / 2 - FRAME_EDGE;
+  }
   if (o.kind === "shape" && o.style?.shape === "oval") return hw > 0 && hh > 0 && (lx * lx) / (hw * hw) + (ly * ly) / (hh * hh) <= 1;
   if (o.kind === "shape" && o.style?.shape === "diamond") return hw > 0 && hh > 0 && Math.abs(lx) / hw + Math.abs(ly) / hh <= 1;
   return true;

@@ -8,6 +8,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, typ
 import { flushSync } from "react-dom";
 import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
 import { BlockView } from "../components/BlockView.js";
+import { assets } from "../assetBridge.js";
 import { aiSetting } from "../shell/ai.js";
 import { openPageWindow } from "../desktop.js";
 import { FindBar } from "../components/FindBar.js";
@@ -182,7 +183,10 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   else if (!page) body = <p className="t-desc">This page was deleted.</p>;
   else if (board) {
     // BSD-264: Board-Seite – die Fläche füllt das Panel (kein Seitenkopf; umbenennen über die Seitenleiste).
-    body = <BoardView store={store} pageID={pageID} readOnly={readOnly} />;
+    // BSD-266: Dateien auf dem Board liegen im selben Dateispeicher wie Bilder im Editor (nur die Adresse im Record).
+    const files = assets();
+    body = <BoardView store={store} pageID={pageID} readOnly={readOnly}
+      {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />;
   } else if (dbID) {
     const View = slots.DatabaseView;
     body = View

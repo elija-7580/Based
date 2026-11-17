@@ -14,7 +14,8 @@ export function PromptHost() {
         <BasedButton label={p.okLabel} variant="primary" onClick={() => answer(true)} />
       </>}>
       {/* Mehrzeilig (Update-Hinweis mit „What’s new“): Zeilenumbrüche bleiben. */}
-      <p className="t-body prompt-text" data-testid="prompt-text">{p.text}</p>
+      {/* Scrollt bei langem Text (tabIndex: auch mit der Tastatur); die Knöpfe stehen darunter immer im Fenster. */}
+      <p className="t-body prompt-text" data-testid="prompt-text" tabIndex={0}>{p.text}</p>
     </BasedDialog>
   );
 }

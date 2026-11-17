@@ -746,7 +746,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
 }
 
 /* Rückfragen der App (components/PromptHost.tsx): Zeilenumbrüche des Hinweistexts bleiben. */
-.prompt-text { margin: 0; white-space: pre-line; }
+/* Elija 17.11.: lange Update-Notizen schoben „Install and Restart“ aus dem Fenster – der Text scrollt, die Knöpfe bleiben. */
+.prompt-text { margin: 0; white-space: pre-line; max-height: 45vh; overflow-y: auto; overscroll-behavior: contain; }
 
 /* BSD-422: Karte am Sync-Status (Überfahren, Tastaturfokus) – Fläche wie die Menüs, über dem Status */
 .synced { cursor: pointer; border-radius: var(--radius-md); }

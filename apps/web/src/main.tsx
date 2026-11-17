@@ -1,3 +1,4 @@
+import { askUser } from "./shell/prompts.js";
 // BSD-153: Start der Web-Shell. Der Store läuft in einem Dedicated Worker (SQLite-WASM auf OPFS); die UI spricht mit
 // ihm über StoreClient. Mehrere Browser-Tabs: nur ein Tab startet den Worker, die anderen reden über ihn
 // (worker/leader.ts). Gerätekennung im localStorage, Sync-Server verschlüsselt in IndexedDB (shell/secrets.ts).
@@ -213,7 +214,7 @@ function start(guest: GuestBoot | undefined) {
     .catch(() => undefined);
 
   // Für E2E-Tests und Messungen (Playwright): Zugriff auf Client, Verlauf und Tab-Verbindung.
-  (globalThis as { __based?: unknown }).__based = { client, history, link, registerSettingsSection, guest: guest ? { id: guest.id, server: guest.config.server, me: guest.me } : undefined };
+  (globalThis as { __based?: unknown }).__based = { client, history, link, registerSettingsSection, askUser, guest: guest ? { id: guest.id, server: guest.config.server, me: guest.me } : undefined };
 
   /**
    * Astryx folgt dem Appearance-Umschalter: Hell/Dunkel über `mode` (Astryx setzt damit selbst `data-theme` am

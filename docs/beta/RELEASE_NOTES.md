@@ -1,9 +1,19 @@
 # Based Beta – release notes
 
-The build workflow puts the top section into the release and the update dialog. Newest first; keep it short and
-written for testers.
+The build workflow puts the **top section** into the update dialog and the release. Keep it short: at most 8 lines,
+one line per point (no wrapped lines), each at most 110 characters – a test checks this
+(`apps/desktop/test/config.test.mjs`). Details go into the section below it. Newest first; written for testers.
 
 ## 0.2 – release candidate
+
+- Meeting notes: type /meet to record, take timestamped notes and get a transcript made on your Mac
+- Start from a template: Tasks, Notes, Journal or Wiki
+- Video and audio blocks with their own controls
+- Backups to a folder you choose, and a backup before every update
+- Smoother typing on long pages; spelling suggestions on right-click
+- Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
+
+## 0.2 – release candidate, in detail
 
 New since the first test build (0.2.2):
 

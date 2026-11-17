@@ -20,7 +20,36 @@
 }
 
 /* Werkzeuge: unten in der Mitte; das gewählte Werkzeug liegt auf einer eigenen Fläche. */
-.wb-tools { left: 50%; bottom: var(--space-4); transform: translateX(-50%); padding: var(--space-2); gap: var(--space-1); }
+.wb-tools {
+  left: 50%; bottom: var(--space-4); transform: translateX(-50%); padding: var(--space-2); gap: var(--space-1);
+  max-width: calc(100% - var(--space-4) * 2); overflow-x: auto; scrollbar-width: none;
+}
+.wb-tools::-webkit-scrollbar { display: none; }
+.wb-tools > * { flex: none; }
+.wb-tools .wb-sep { height: var(--space-5); }
+
+/* Optionen des Zeichenwerkzeugs (Farbe, Stärke): über dem Hinweis. */
+.wb-options {
+  left: 50%; bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-4) + var(--space-6) + var(--space-2)); transform: translateX(-50%);
+  max-width: calc(100% - var(--space-4) * 2);
+}
+.wb-options [aria-pressed="true"] { background: var(--selected); }
+.wb-swatch { display: block; flex: none; width: var(--space-4); height: var(--space-4); aspect-ratio: 1; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--line); }
+.wb-options .bx-icon-slot, .wb-options [class*="icon"] { overflow: visible; }
+[aria-pressed="true"] > .wb-swatch, [aria-pressed="true"] .wb-swatch { box-shadow: 0 0 0 var(--space-half) var(--bg), 0 0 0 var(--space-1) var(--ink); }
+.wb-dot { display: block; border-radius: var(--radius-pill); background: var(--ink); width: var(--space-2); height: var(--space-2); }
+.wb-dot[data-size="0"] { width: var(--space-1); height: var(--space-1); }
+.wb-dot[data-size="2"] { width: var(--space-3); height: var(--space-3); }
+
+/* Eingabefeld für Text auf der Fläche: liegt genau über dem Objekt, in dessen Schrift (Maße setzt die Ansicht). */
+.wb-edit {
+  position: absolute; z-index: 1; box-sizing: border-box; margin: 0; border: 0; outline: none; resize: none; overflow: hidden; background: transparent;
+  color: var(--ink); font-family: inherit; transform-origin: 0 0; user-select: text; -webkit-user-select: text; caret-color: var(--ink);
+}
+.wb-edit[data-kind="note"] { color: var(--ink-on-tint, var(--ink)); }
+.wb-edit[data-kind="shape"] { text-align: center; }
+.wb-edit[data-kind="frame"], .wb-edit[data-kind="connector"] { white-space: nowrap; }
+.wb-edit[data-kind="connector"] { text-align: center; border-radius: var(--radius-pill); background: var(--surface-raised); }
 .wb-tools [aria-pressed="true"] { background: var(--selected); color: var(--ink); }
 .wb-pill .bx-menu-icon { width: var(--icon-md); height: var(--icon-md); display: block; }
 
@@ -57,6 +86,7 @@
 /* Schmale Fläche (halbe Bildschirmbreite, kleinstes Fenster): Minimap und Hinweis weichen, die Pillen bleiben. */
 @container (max-width: 48em) {
   .wb-hint { display: none; }
+  .wb-options { bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-4)); }
 }
 @container (max-width: 36em) {
   .wb-minimap { display: none; }

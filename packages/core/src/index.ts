@@ -199,6 +199,8 @@ export {
   type ConnectorEnd, type ConnectorShape, type ConnectorSide, type WBConnector, type WBKind, type WBObject, type WBShape, type WBStyleValue,
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
+// BSD-265 (Whiteboard 3): Tinte – ausdünnen, Treffer, Lasso
+export { distanceToInk, inkBounds, inkObjectGeometry, inkPointsOf, pointInPolygon, shareInside, simplifyInk } from "./whiteboard/stroke.js";
 // BSD-264 (Whiteboard 2): Kamera, Geometrie, Raumindex und Board-Objekte als Records
 export {
   centerOn, clampZoom, DEFAULT_CAMERA, fitCamera, GRID_STEP, gridStepFor, MAX_ZOOM, MIN_ZOOM, panBy, rectContains, rectFromPoints, rectsIntersect, screenToWorld,
@@ -206,7 +208,7 @@ export {
   type Camera, type Point as BoardPoint, type Rect as BoardRect, type Size as BoardSize,
 } from "./whiteboard/viewport.js";
 export {
-  BoardIndex, connectorPoints, duplicateObjects, facingSide, frontZs, HANDLES, handlePoint, hitHandle, hitsObject, hitTest, indexByID, isConnector, isShape,
+  BoardIndex, connectorPoints, duplicateObjects, facingSide, FRAME_EDGE, FRAME_TITLE_HEIGHT, frontZs, HANDLES, handlePoint, hitHandle, hitsObject, hitTest, indexByID, isConnector, isShape,
   MIN_OBJECT_SIZE, nudgeDelta, objectBounds, objectsInRect, readingOrder, resizeRect, scaleInto, selectionBounds, type Handle,
 } from "./whiteboard/geometry.js";
 export {
