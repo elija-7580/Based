@@ -293,6 +293,14 @@ export function structureSignature(b: Block | undefined): string {
 }
 
 /** Kette der Seiten über `id` (ohne `id`), oberste zuerst; Datenbankzeilen gehen über ihre Datenbank. */
+/**
+ * Wo eine Seite liegt, als eine Zeile für Suchergebnisse: „Eltern / Großeltern“ von oben nach unten; bei einer
+ * Datenbankzeile endet der Weg bei der Datenbank. Leer, wenn die Seite ganz oben liegt.
+ */
+export function pageLocation(store: WorkspaceStore, id: string): string {
+  return pageAncestors(store, id).map((a) => titleOf(store, a) || "Untitled").join(" / ");
+}
+
 export function pageAncestors(store: WorkspaceStore, id: string): string[] {
   const out: string[] = [];
   let p = store.blocks.get(id)?.parent;

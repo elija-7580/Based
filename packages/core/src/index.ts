@@ -44,7 +44,7 @@ export { ForceLayout, hashID, layoutBounds, nodeAtPoint } from "./graph/layout.j
 export type { LayoutOptions, Point } from "./graph/layout.js";
 export { treeLayout } from "./graph/tree-layout.js";
 export type { TreeLayout, TreeLayoutOptions } from "./graph/tree-layout.js";
-export { PRIVATE_SECTION, SHARED_SECTION, buildOutline, buildOutlineByWalk, iconText, pageAncestors, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
+export { PRIVATE_SECTION, SHARED_SECTION, buildOutline, buildOutlineByWalk, iconText, pageAncestors, pageLocation, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
 export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/outline.js";
 // BSD-156: Import und Export (Notion-HTML, Markdown/CSV, Workspace-Archiv, ZIP)
 export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFingerprint, IMPORT_FINGERPRINT_KEY, notionIDInName, notionUUID, versionHash } from "./interop/importids.js";

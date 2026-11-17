@@ -298,14 +298,17 @@ export function createMcpServer(pages: Pages): McpServer {
   server.registerTool(
     "search",
     {
-      description: "Search titles and full text of pages and database rows. Returns ids and snippets.",
-      inputSchema: { query: z.string().min(1), limit },
+      description:
+        "Find pages and database rows by title, text, or row values (including the titles of related rows, people and options). " +
+        "Words may be spread over a page and may contain typos. Returns ids, where each page lives, and a snippet. " +
+        "Use `within` to search below one page or database, `title_only` for titles. For how pages are connected use `backlinks`.",
+      inputSchema: { query: z.string().min(1), limit, within: z.string().optional(), title_only: z.boolean().optional() },
       annotations: { readOnlyHint: true },
     },
-    guarded(({ query, limit: n }: { query: string; limit?: number | undefined }) => {
-      const hits = pages.searchPages(query, n ?? 20);
+    guarded(({ query, limit: n, within, title_only }: { query: string; limit?: number | undefined; within?: string | undefined; title_only?: boolean | undefined }) => {
+      const hits = pages.searchPages(query, n ?? 20, { within, titleOnly: title_only });
       if (hits.length === 0) return text("No matches.");
-      return text(hits.map((h) => `- ${h.title} (id: ${h.id})${h.snippet ? ` — ${h.snippet}` : ""}`).join("\n"));
+      return text(hits.map((h) => `- ${h.title} (id: ${h.id})${h.location ? ` · ${h.row ? "row in" : "in"} ${h.location}` : ""}${h.snippet ? ` — ${h.snippet}` : ""}`).join("\n"));
     }),
   );
 

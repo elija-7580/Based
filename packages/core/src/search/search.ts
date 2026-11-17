@@ -52,7 +52,7 @@ export interface SearchOptions {
 }
 
 /** BSD-425: Punkte der zusätzlichen Treffer (unter Inhalt 20 und Zeile 15 aus der Swift-Suche). */
-export const EXTENDED_SCORES = { spread: 12, extraContent: 18, extraRow: 14, fuzzyTitle: 8 } as const;
+export const EXTENDED_SCORES = { spread: 12, extraContent: 18, extraRow: 14, fuzzyTitle: 8, joinedTitle: 7, fuzzy: 6 } as const;
 
 /** Was die Suche aus dem Arbeitsbereich braucht (ein `WorkspaceStore` passt). */
 export interface SearchSource {
@@ -236,7 +236,7 @@ export function rowText(b: Block): string {
 }
 
 /** BSD-425: weitere Zeilenwerte für Quick Find – Optionsnamen (Auswahl, Status, Mehrfachauswahl), Zahlen, Dateinamen. */
-export function rowExtraText(b: Block, db: Database | undefined): string {
+export function rowExtraText(b: Block, db: Database | undefined, src?: SearchSource): string {
   const values = b.values ?? {};
   const optionName = (prop: string, id: string) => db?.properties.find((p) => p.id === prop)?.options?.find((o) => o.id === id)?.name ?? "";
   return Object.keys(values).sort().flatMap((k) => {
@@ -248,9 +248,12 @@ export function rowExtraText(b: Block, db: Database | undefined): string {
       case "multiSelect": return Array.isArray(x) ? x.map((id) => optionName(k, String(id))) : [];
       case "number": return typeof x === "number" && Number.isFinite(x) ? [String(x)] : [];
       case "files": return Array.isArray(x) ? x.map((f) => (f && typeof f === "object" && typeof (f as { name?: unknown }).name === "string" ? (f as { name: string }).name : "")) : [];
+      // Eine Zeile findet man auch über das, worauf sie zeigt: Titel der verknüpften Zeilen und Seiten, Personen.
+      case "relation": return src && Array.isArray(x) ? x.map((id) => (typeof id === "string" && src.blocks.has(id) ? searchTitle(src, id) : "")) : [];
+      case "person": return Array.isArray(x) ? x.filter((p): p is string => typeof p === "string") : [];
       default: return [];
     }
-  }).filter(Boolean).join(" ");
+  }).concat(src && db ? [richPlain(db.title)] : []).filter(Boolean).join(" ");
 }
 
 /** BSD-425: Dateiname und Link eines Blocks (Datei, Bild, Lesezeichen, Embed) – Swift sucht hier nicht. */
@@ -262,6 +265,55 @@ export function blockExtraText(b: Block): string {
   if (typeof title === "string") parts.push(title);
   return parts.join(" ");
 }
+
+/** Seiten und Zeilen, auf die die Relationen einer Zeile zeigen. */
+export function relationTargets(b: Block): string[] {
+  const out: string[] = [];
+  for (const v of Object.values(b.values ?? {})) {
+    const x = (v as { relation?: { _0?: unknown } }).relation?._0;
+    if (Array.isArray(x)) for (const id of x) if (typeof id === "string") out.push(id);
+  }
+  return out;
+}
+
+/**
+ * Abstand zweier Wörter in Tippfehlern (fehlend, zusätzlich, falsch, zwei vertauscht), höchstens `max`; sonst
+ * `max + 1`. Für die Suche mit Tippfehlern im ganzen Text.
+ */
+const ROWS = [new Int16Array(64), new Int16Array(64), new Int16Array(64)];
+export function typoDistance(a: string, b: string, max: number): number {
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > max || lb >= 63) return max + 1;
+  // Drei wiederverwendete Zeilen statt neuer Arrays je Vergleich (das Wörterbuch hat schnell 100 000 Wörter).
+  let prev2 = ROWS[0]!, prev = ROWS[1]!, cur = ROWS[2]!;
+  for (let j = 0; j <= lb; j++) prev[j] = j;
+  for (let i = 1; i <= la; i++) {
+    cur[0] = i;
+    let best = i;
+    const ca = a.charCodeAt(i - 1);
+    for (let j = 1; j <= lb; j++) {
+      const cb = b.charCodeAt(j - 1);
+      let d = Math.min(prev[j]! + 1, cur[j - 1]! + 1, prev[j - 1]! + (ca === cb ? 0 : 1));
+      if (i > 1 && j > 1 && ca === b.charCodeAt(j - 2) && a.charCodeAt(i - 2) === cb) d = Math.min(d, prev2[j - 2]! + 1);
+      cur[j] = d;
+      if (d < best) best = d;
+    }
+    if (best > max) return max + 1;
+    const t = prev2;
+    prev2 = prev;
+    prev = cur;
+    cur = t;
+  }
+  return Math.min(prev[lb]!, max + 1);
+}
+
+/** Wie viele Tippfehler ein Begriff haben darf: kurze genau, ab 4 Zeichen einer, ab 8 zwei. Ziffern immer genau. */
+export const typoBudget = (term: string): number => (/\p{N}/u.test(term) || term.length < 4 ? 0 : term.length < 8 ? 1 : 2);
+
+const WORDS = /[^\p{L}\p{N}]+/u;
+// Wörter mit Ziffern (Nummern, IDs, Daten) gehören nicht ins Wörterbuch: sie werden nie ungefähr gesucht, wären aber
+// in großen Workspaces der größte Teil davon.
+const vocabWords = (folded: string) => folded.split(WORDS).filter((w) => w.length >= 4 && w.length <= 40 && !/\p{N}/u.test(w));
 
 /** BSD-425: Wort ≈ Begriff – höchstens eine Änderung (fehlend, zusätzlich, falsch, vertauscht); kurze Begriffe genau. */
 export function nearWord(word: string, term: string): boolean {
@@ -331,6 +383,7 @@ export class SearchIndex implements SearchSource {
   /** Ersetzt den Inhalt durch einen vollständigen Stand. */
   load(src: SearchSource) {
     for (const m of [this.blocks, this.databases, this.children, this.mentionedBy, this.mentionsOf, this.titles, this.contentEntries, this.rows, this.extraEntries, this.extraRows, this.titleWords]) m.clear();
+    this.vocabulary.clear();
     for (const d of src.databases.values()) this.databases.set(d.id, d);
     for (const b of src.blocks.values()) this.putBlock(b);
     for (const id of this.blocks.keys()) this.recompute(id);
@@ -385,7 +438,8 @@ export class SearchIndex implements SearchSource {
           mentioning(owner);
         }
         // BSD-425: Optionsnamen stehen in der Datenbank – ihre Zeilen neu (nur bei geänderten Properties)
-        if (!old || old.blockID !== d.blockID || old.properties !== d.properties) databaseRows(d.id);
+        // … und der Datenbankname gehört zum Suchtext ihrer Zeilen.
+        if (!old || old.blockID !== d.blockID || old.properties !== d.properties || JSON.stringify(old.title) !== JSON.stringify(d.title)) databaseRows(d.id);
       }
     }
     for (const key of delta.deletions) {
@@ -417,7 +471,9 @@ export class SearchIndex implements SearchSource {
     let set = this.children.get(b.parent);
     if (!set) this.children.set(b.parent, (set = new Set()));
     set.add(b.id);
-    this.setMentions(b.id, mentionTargets(b.text));
+    // Relationen zählen wie Erwähnungen: ändert sich der Titel des Ziels, wird die Zeile neu eingearbeitet.
+    const targets = relationTargets(b);
+    this.setMentions(b.id, targets.length ? [...mentionTargets(b.text), ...targets] : mentionTargets(b.text));
   }
 
   private removeBlock(id: string) {
@@ -451,6 +507,56 @@ export class SearchIndex implements SearchSource {
 
   /** Einträge eines Blocks neu (Swift `SearchCorpus.build` für einen Block). */
   private recompute(id: string) {
+    for (const old of [this.titles.get(id), this.contentEntries.get(id)?.folded, this.rows.get(id), this.extraEntries.get(id)?.folded, this.extraRows.get(id)]) {
+      if (old) this.countWords(old, -1);
+    }
+    this.recomputeEntries(id);
+    for (const cur of [this.titles.get(id), this.contentEntries.get(id)?.folded, this.rows.get(id), this.extraEntries.get(id)?.folded, this.extraRows.get(id)]) {
+      if (cur) this.countWords(cur, 1);
+    }
+  }
+
+  /** Wörter (ab 4 Zeichen) aller Einträge mit ihrer Häufigkeit – das Wörterbuch für die Suche mit Tippfehlern. */
+  private readonly vocabulary = new Map<string, number>();
+  private countWords(folded: string, by: 1 | -1) {
+    for (const w of vocabWords(folded)) {
+      const n = (this.vocabulary.get(w) ?? 0) + by;
+      if (n > 0) this.vocabulary.set(w, n);
+      else this.vocabulary.delete(w);
+    }
+  }
+
+  /**
+   * Wörter aus dem Workspace, die ein Begriff gemeint haben könnte: mit Tippfehlern (auch wenn erst der Anfang des
+   * Wortes getippt ist) oder in anderer Wortform (gleicher Wortstamm). Die nächsten zuerst, häufigere vor seltenen.
+   */
+  alternatives(term: string, max = 6): { word: string; distance: number }[] {
+    const budget = typoBudget(term);
+    if (budget === 0) return [];
+    const out: { word: string; distance: number; n: number }[] = [];
+    const lt = term.length;
+    for (const [word, n] of this.vocabulary) {
+      if (word.includes(term)) continue; // das findet schon die genaue Suche
+      const lw = word.length;
+      let d = budget + 1;
+      if (lw >= lt - budget) {
+        d = lw <= lt + budget ? typoDistance(word, term, budget) : budget + 1;
+        // erst der Anfang getippt: gegen den Wortanfang gleicher Länge prüfen
+        if (d > budget && lw > lt) d = Math.min(typoDistance(word.slice(0, lt), term, budget), typoDistance(word.slice(0, lt + 1), term, budget));
+      }
+      if (d > budget && lt >= 6 && lw >= 6) {
+        // andere Wortform: langer gemeinsamer Anfang (collection/collected, Rechnung/Rechnungen)
+        let i = 0;
+        while (i < lt && i < lw && word[i] === term[i]) i++;
+        if (i >= Math.max(5, Math.ceil(Math.min(lt, lw) * 0.7))) d = budget + 0.5;
+      }
+      if (d <= budget + 0.5) out.push({ word, distance: d, n });
+    }
+    out.sort((a, b) => a.distance - b.distance || b.n - a.n || (a.word < b.word ? -1 : 1));
+    return out.slice(0, max).map(({ word, distance }) => ({ word, distance }));
+  }
+
+  private recomputeEntries(id: string) {
     this.titles.delete(id);
     this.contentEntries.delete(id);
     this.rows.delete(id);
@@ -481,7 +587,7 @@ export class SearchIndex implements SearchSource {
     if (isRowBlock(b) && b.values && Object.keys(b.values).length > 0 && isLive()) {
       const text = rowText(b);
       if (text) this.rows.set(id, fold(text));
-      const extra = rowExtraText(b, this.databases.get(b.parent.slice(2)));
+      const extra = rowExtraText(b, this.databases.get(b.parent.slice(2)), this);
       if (extra) this.extraRows.set(id, fold(extra));
     }
   }
@@ -617,7 +723,7 @@ export class SearchIndex implements SearchSource {
         if (terms.every((t) => both.includes(t))) {
           const b = blocks.get(id);
           // wie die Zeilen-Treffer der Swift-Suche ohne Aktualitäts-Punkte
-          if (b) add(id, EXTENDED_SCORES.extraRow, undefined, () => snippet(rowText(b) + " " + rowExtraText(b, this.databases.get(b.parent.slice(2))), both, terms[0]!), false);
+          if (b) add(id, EXTENDED_SCORES.extraRow, undefined, () => snippet(rowText(b) + " " + rowExtraText(b, this.databases.get(b.parent.slice(2)), this), both, terms[0]!), false);
         }
       }
       // Begriffe über Titel, Blöcke und Zeilenwerte einer Seite verteilt. Begriff für Begriff (der längste, meist
@@ -664,6 +770,58 @@ export class SearchIndex implements SearchSource {
         if (hits.has(id)) continue;
         if (words.length && terms.every((t) => words.some((w) => w.startsWith(t) || nearWord(w, t) || (w.length > t.length && nearWord(w.slice(0, t.length + 1), t)))))
           add(id, EXTENDED_SCORES.fuzzyTitle);
+      }
+    }
+    // Zusammengeschrieben getippt („syncarchitecture“): Titel ohne Leerzeichen.
+    if (hits.size < limit && terms.length === 1 && q.length >= 8) {
+      for (const [id, folded] of this.titles) {
+        if (tick()) return undefined;
+        if (!hits.has(id) && folded.includes(" ") && folded.replaceAll(" ", "").includes(q)) add(id, EXTENDED_SCORES.joinedTitle);
+      }
+    }
+    // Tippfehler und andere Wortformen im ganzen Text: Jeder Begriff darf auch eines der Wörter aus dem Workspace
+    // sein, die er gemeint haben könnte. Nur wenn die genauen Treffer die Liste nicht füllen; je weniger Abweichung,
+    // desto weiter oben.
+    if (hits.size < limit && terms.length <= 8) {
+      const needles = terms.map((t) => ({ term: t, alts: this.alternatives(t) }));
+      if (needles.some((x) => x.alts.length > 0)) {
+        const rare = (t: string) => (/\p{N}/u.test(t) ? 1000 : 0) + t.length;
+        needles.sort((a, b) => rare(b.term) - rare(a.term));
+        let cand: Map<string, number> | undefined; // Seite → Summe der Abweichungen
+        const firstEntry = new Map<string, { entry: ContentEntry; word: string }>();
+        for (const { term, alts } of needles) {
+          const next = new Map<string, number>();
+          const visit = (page: string, folded: string, entry?: ContentEntry) => {
+            if (hits.has(page) || (titleOnly && entry) || (cand && !cand.has(page))) return;
+            let d: number | undefined, word = term;
+            if (folded.includes(term)) d = 0;
+            else for (const a of alts) if (folded.includes(a.word)) { d = a.distance; word = a.word; break; }
+            if (d === undefined) return;
+            const before = next.get(page);
+            if (before === undefined || d < before) next.set(page, d);
+            if (entry && d > 0) {
+              const best = firstEntry.get(page);
+              if (!best || comparePaths(entry.path, best.entry.path) < 0) firstEntry.set(page, { entry, word });
+            }
+          };
+          for (const [id, folded] of this.titles) { if (tick()) return undefined; visit(id, folded); }
+          if (!titleOnly) {
+            for (const map of [this.contentEntries, this.extraEntries]) {
+              for (const e of map.values()) { if (tick()) return undefined; visit(e.page, e.folded, e); }
+            }
+            for (const [id, folded] of this.rows) { if (tick()) return undefined; visit(id, folded); }
+            for (const [id, folded] of this.extraRows) { if (tick()) return undefined; visit(id, folded); }
+          }
+          if (cand) for (const [page, d] of next) next.set(page, d + (cand.get(page) ?? 0));
+          cand = next;
+          if (cand.size === 0) break;
+        }
+        for (const [page, d] of cand ?? []) {
+          const first = firstEntry.get(page);
+          const b = first ? blocks.get(first.entry.blockID) : undefined;
+          add(page, Math.max(1, EXTENDED_SCORES.fuzzy - d), first?.entry.blockID,
+            first && b ? () => snippet(this.extraEntries.get(b.id) === first.entry ? blockExtraText(b) : contentText(this, b), first.entry.folded, first.word) : undefined);
+        }
       }
     }
     return true;

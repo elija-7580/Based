@@ -6,7 +6,7 @@
 // Rumpf, dreht der Store alles zurück; kein Zwischenstand im Sync). `find_replace` ersetzt lauf-weise im RichText
 // (`replaceInRichText`), Fett/Kursiv/Links/Erwähnungen bleiben.
 import {
-  attachSearchIndex, addRow, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
+  attachSearchIndex, addRow, pageLocation, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
   parseCSVValue, plainText, QueryEngine, replaceInRichText, rowsOf, sortKeys, titleOf, titleProperty, toRichText,
   type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
@@ -138,7 +138,8 @@ export class WorkspaceTools implements ToolHost {
   private search(query: string, limit: number): { pageID: string; snippet?: string | undefined }[] {
     if (this.opts.search) return this.opts.search(query, limit);
     this.ownIndex ??= attachSearchIndex(this.store);
-    return this.ownIndex.index.search(query, {}, "bestMatch", limit * 2);
+    // wie Quick Find: verteilte Begriffe, Tippfehler, Zeilen über Relationen
+    return this.ownIndex.index.run(query, { limit: limit * 2, extended: true }) ?? [];
   }
 
   /** Inhaltsblöcke einer Seite in Dokumentreihenfolge, ohne Unterseiten und deren Inhalt. */
@@ -212,7 +213,7 @@ export class WorkspaceTools implements ToolHost {
     return [
       {
         write: false,
-        spec: { name: "search", description: "Search titles and full text of pages and database rows. Returns ids and snippets.", inputSchema: obj({ query: S, limit: limitSchema }, ["query"]) },
+        spec: { name: "search", description: "Find pages and database rows by title, text, or row values (including related rows, people, options). Words may be spread over a page and may contain typos. Returns ids, where each page lives, and snippets.", inputSchema: obj({ query: S, limit: limitSchema }, ["query"]) },
         run: (a) => {
           const limit = Math.max(1, num(a, "limit", 20));
           const seen = new Set<string>();
@@ -220,7 +221,8 @@ export class WorkspaceTools implements ToolHost {
           for (const h of this.search(need(a, "query"), limit)) {
             if (seen.has(h.pageID) || !isPageLike(store.blocks.get(h.pageID)) || isTrashed(store, h.pageID)) continue;
             seen.add(h.pageID);
-            lines.push(this.line(h.pageID) + (h.snippet ? `\n  ${h.snippet.replace(/\n/g, " ")}` : ""));
+            const where = pageLocation(store, h.pageID);
+            lines.push(this.line(h.pageID) + (where ? ` · in ${where}` : "") + (h.snippet ? `\n  ${h.snippet.replace(/\n/g, " ")}` : ""));
             if (lines.length >= limit) break;
           }
           return lines.length > 0 ? lines.join("\n") : "No pages found.";

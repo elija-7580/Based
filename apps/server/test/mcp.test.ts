@@ -127,6 +127,10 @@ describe("MCP über Streamable HTTP", () => {
     await call("append_markdown", { id, markdown: "## Nachtrag\n\nMehr Text mit Suchwort Zebrafink" });
     expect(textOf(await call("read_page", { id }))).toContain("## Nachtrag");
     expect(textOf(await call("search", { query: "Zebrafink" }))).toContain(`(id: ${id})`);
+    // Tippfehler, Ort der Seite, nur unterhalb einer Seite, nur Titel (wie Quick Find in der App)
+    expect(textOf(await call("search", { query: "Zebrafnik" }))).toContain(`(id: ${id})`);
+    expect(textOf(await call("search", { query: "Zebrafink", title_only: true }))).toMatch(/\(id: |No matches\./);
+    expect(textOf(await call("search", { query: "Zebrafink", within: "nicht-vorhanden" }))).toBe("No matches.");
 
     await call("replace_page_content", { id, markdown: "Nur noch das" });
     const md = textOf(await call("read_page", { id }));
