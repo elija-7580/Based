@@ -198,7 +198,7 @@ function start(guest: GuestBoot | undefined) {
   // BSD-164: in der Tauri-Hülle Titelleiste, Updates und ⌘W aus dem Menü (im Browser ohne Wirkung).
   void startDesktop({ close: () => history.close(), count: () => history.tabs.length }).catch(() => undefined);
   // BSD-456: Sicherung vor App-Updates = Based-Archiv des ganzen Workspaces (nicht im Gast-Tab).
-  if (isTauri() && !guest) void import("./desktop/preUpdate.js").then((m) => m.setPreUpdateArchive(async () => (await client.exportWorkspace("archive")).data));
+  if (isTauri() && !guest) void import("./desktop/preUpdate.js").then((m) => m.setPreUpdateArchive(async () => (await client.exportWorkspace("pre-update")).data));
 
   // Startwerte holt der Store-Tab selbst (initParams); `init` verbindet nur.
   void client

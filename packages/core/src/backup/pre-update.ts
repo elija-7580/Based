@@ -1,7 +1,8 @@
 // BSD-456: Sicherung vor jedem App-Update – auch ohne lokalen Server. Bevor die Desktop-App ein Update installiert,
 // legt sie den ganzen Workspace als Based-Archiv (`.based.zip`, wie „Export → Based archive“: alle Records und Dateien)
 // in einen Ordner je App (Hülle: ~/Library/Application Support/<bundle-id>/pre-update) und behält die letzten drei.
-// Die Datei wird nach dem Schreiben zurückgelesen und geprüft; geht etwas schief, installiert die Hülle das Update
+// Bei sehr vielen Dateien (> 300 MB) sichert die App nur die Records (`.based.jsonl`) – die Dateien bleiben beim
+// Update im App-Speicher. Die Datei wird nach dem Schreiben zurückgelesen und geprüft; geht etwas schief, installiert die Hülle das Update
 // nicht und sagt in einem Satz, warum. Wiederherstellen: über den normalen Archiv-Import (Settings → Import).
 // Plattformneutral: das Dateisystem liefert die Hülle (`BackupTarget`, Pfade relativ zum pre-update-Ordner).
 import { isArchive, loadArchive } from "../interop/archive.js";
@@ -9,15 +10,17 @@ import type { BackupTarget } from "./backup.js";
 
 export const PRE_UPDATE_DIR = "pre-update";
 export const PRE_UPDATE_KEEP = 3;
-const SUFFIX = ".based.zip";
-const NAME = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z) .+\.based\.zip$/;
+const NAME = /^(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z) .+\.based\.(zip|jsonl)$/;
 
 const safeVersion = (v: string) => (v.trim().replace(/[^0-9A-Za-z.+-]/g, "_").slice(0, 40) || "unknown");
 
-/** `2026-11-17T03-30-00Z Based 0.2.2 before 0.2.3.based.zip` – sortiert nach Zeit, sagt, welches Update folgte. */
-export function preUpdateName(at: Date, from: string, to: string): string {
+/**
+ * `2026-11-17T03-30-00Z Based 0.2.2 before 0.2.3.based.zip` – sortiert nach Zeit, sagt, welches Update folgte.
+ * `.based.jsonl`, wenn nur die Records gesichert wurden (großer Workspace, siehe apps/web worker/interop.ts).
+ */
+export function preUpdateName(at: Date, from: string, to: string, recordsOnly = false): string {
   const stamp = at.toISOString().slice(0, 19).replace(/:/g, "-") + "Z";
-  return `${stamp} Based ${safeVersion(from)} before ${safeVersion(to)}${SUFFIX}`;
+  return `${stamp} Based ${safeVersion(from)} before ${safeVersion(to)}${recordsOnly ? ".based.jsonl" : ".based.zip"}`;
 }
 
 /** Zu löschende Sicherungen: alle eigenen außer den neuesten `keep`; fremde Dateien bleiben. */
@@ -50,7 +53,8 @@ export async function writePreUpdateBackup(
   }
   if (!isArchive(zip)) return fail("The copy of your workspace was incomplete");
   const expected = loadArchive(zip).read.records.length;
-  const name = preUpdateName(input.now ?? new Date(), input.from, input.to);
+  const isZip = zip.length >= 4 && zip[0] === 0x50 && zip[1] === 0x4b;
+  const name = preUpdateName(input.now ?? new Date(), input.from, input.to, !isZip);
   try {
     await target.write(name, zip);
   } catch (e) {

@@ -149,6 +149,9 @@ describe("Import", () => {
     const id = await a.client.command<string>({ op: "createPage", title: "Archived page" });
     const file = await a.client.exportWorkspace("archive");
     expect(file.name).toMatch(/\.based\.zip$/);
+    // BSD-456: Sicherung vor dem Update – kleiner Workspace: volles Archiv (ZIP mit Records)
+    const pre = await a.client.exportWorkspace("pre-update");
+    expect([pre.data[0], pre.data[1]]).toEqual([0x50, 0x4b]);
     const payload = prepareFiles([{ path: file.name, data: file.data }]);
     expect(payload.archives).toHaveLength(1);
 

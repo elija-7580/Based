@@ -57,6 +57,18 @@ describe("Sicherung vor dem Update (BSD-456)", () => {
     expect(norm(fresh)).toEqual(norm(s));
   });
 
+  it("nur Records (großer Workspace): .based.jsonl, wieder einspielbar", async () => {
+    const s = workspace();
+    const t = memoryTarget();
+    const { writeArchive } = await import("../src/index.js");
+    const r = await writePreUpdateBackup(t, { archive: async () => new TextEncoder().encode(writeArchive(s)), from: "1", to: "2", now: new Date("2026-11-17T03:30:00Z") });
+    expect(r).toMatchObject({ ok: true, name: "2026-11-17T03-30-00Z Based 1 before 2.based.jsonl", records: s.exportRecords().length });
+    const fresh = new WorkspaceStore({ node: "m" });
+    applyImportedRecords(fresh, loadArchive(t.files.get((r as { name: string }).name)!).read.records);
+    expect(norm(fresh)).toEqual(norm(s));
+    expect(preUpdateToPrune(["2026-11-01T00-00-00Z Based 1 before 2.based.jsonl", ...["02", "03", "04"].map((d) => `2026-11-${d}T00-00-00Z Based x before y.based.zip`)])).toEqual(["2026-11-01T00-00-00Z Based 1 before 2.based.jsonl"]);
+  });
+
   it("behält nur die letzten drei Sicherungen", async () => {
     const s = workspace();
     const t = memoryTarget();
