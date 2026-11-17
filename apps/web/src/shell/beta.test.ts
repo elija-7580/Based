@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { slashItemsFor } from "@based/editor";
 import { BETA_HIDDEN, BETA_HIDDEN_SETTINGS, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes, settingsPageVisible } from "./beta.js";
+import { SETTINGS_PAGES } from "./settings.js";
 import { matchCommands, navAvailable, NAV_COMMANDS } from "./sidebarNav.js";
 
 describe("Beta-Gate", () => {
@@ -16,6 +17,7 @@ describe("Beta-Gate", () => {
     expect(featureVisible("graph", "beta")).toBe(false);
     expect(featureVisible("realtimeText", "beta")).toBe(false);
     expect(featureVisible("coding", "beta")).toBe(false);
+    expect(featureVisible("sharing", "beta")).toBe(false);
     for (const id of ["meetings", "meeting", "graph", "coding"]) expect(commandVisible(id, "beta")).toBe(false);
     for (const id of ["home", "library", "trash", "settings", "report"]) expect(commandVisible(id, "beta")).toBe(true);
   });
@@ -55,6 +57,31 @@ describe("Beta-Gate: Einstellungen", () => {
       expect(settingsPageVisible(id, "dev"), id).toBe(true);
     }
     for (const id of ["my-settings", "import", "sync", "updates", "diagnostics", "about"]) expect(settingsPageVisible(id, "beta"), id).toBe(true);
-    expect(BETA_HIDDEN_SETTINGS.size).toBe(3);
+    expect(BETA_HIDDEN_SETTINGS.size).toBe(7);
+  });
+
+  it("BSD-460: „Not yet“-Seiten ohne eigene Einstellungen fehlen auf beta, in dev bleiben sie", () => {
+    for (const id of ["my-connections", "people", "teamspaces", "security"]) {
+      expect(settingsPageVisible(id, "beta"), id).toBe(false);
+      expect(settingsPageVisible(id, "dev"), id).toBe(true);
+    }
+    const beta = SETTINGS_PAGES.filter((p) => settingsPageVisible(p.id, "beta")).map((p) => p.id);
+    expect(beta).toEqual(["account", "my-settings", "language", "workspace", "import", "sync", "billing", "updates", "diagnostics", "about"]);
+    expect(SETTINGS_PAGES.filter((p) => settingsPageVisible(p.id, "dev")).length).toBe(SETTINGS_PAGES.length);
+  });
+});
+
+describe("Beta-Gate: Agenten-Markierungen (BSD-459)", () => {
+  it("Marker und Calm mode nur auf beta ausgeblendet", () => {
+    expect(featureVisible("agentMarks", "beta")).toBe(false);
+    expect(featureVisible("agentMarks", "dev")).toBe(true);
+  });
+});
+
+describe("Beta-Gate: Teilen (BSD-460)", () => {
+  it("Share ist nur auf beta ausgeblendet", () => {
+    expect(featureVisible("sharing", "beta")).toBe(false);
+    expect(featureVisible("sharing", "dev")).toBe(true);
+    expect(BETA_HIDDEN.sharing).toMatch(/after/);
   });
 });

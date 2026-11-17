@@ -19,7 +19,7 @@ import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { HangsSection } from "./hangs.js";
-import { autoUpdatePref, deviceNode, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, fallbackHomePage, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
@@ -53,7 +53,7 @@ function AppearanceSection({ appearance, setAppearance }: SettingsSectionProps) 
   return (
     <VStack gap={4}>
       <Group>
-        {CHOICES.map((c) => (
+        {CHOICES.filter((c) => c.key !== "marker" || featureVisible("agentMarks")).map((c) => (
           <Row key={c.key} label={c.label} hint={c.hint}>
             {/* BSD-301: Die Wahl behält ihre volle Breite und bricht bei Platzmangel unter die Beschriftung, statt die
                 Namen („Mint“, „Sky“) zu kürzen. */}
@@ -67,10 +67,13 @@ function AppearanceSection({ appearance, setAppearance }: SettingsSectionProps) 
           </Row>
         ))}
       </Group>
-      <Group>
-        {toggle("calm", "Calm mode", "Agent marks turn grey — on with Focus")}
-        {ai ? toggle("agentDetails", "Show agent details", "Models, run times and permissions on Home") : null}
-      </Group>
+      {/* BSD-459: Marker und Calm mode handeln nur von Agenten – auf beta ausgeblendet (Beta-Gate). */}
+      {featureVisible("agentMarks") || ai ? (
+        <Group>
+          {featureVisible("agentMarks") ? toggle("calm", "Calm mode", "Agent marks turn grey — on with Focus") : null}
+          {ai ? toggle("agentDetails", "Show agent details", "Models, run times and permissions on Home") : null}
+        </Group>
+      ) : null}
     </VStack>
   );
 }
@@ -358,7 +361,9 @@ function StartPageSection({ state }: SettingsSectionProps) {
   const node = value ? state.outline?.nodes[value] : undefined;
   const trashed = value ? (state.outline?.trash ?? []).some((t) => t.id === value) : false;
   const current = value && node && !trashed ? state.titles.get(value) || "Untitled" : undefined;
-  const fallback = ai ? "Dashboard" : "A new page called Home";
+  // BSD-461: ohne AI wird keine Seite „Home“ mehr angelegt, sondern eine vorhandene Seite Home.
+  const firstPage = !ai && state.outline ? fallbackHomePage(state.outline, state.titles) : undefined;
+  const fallback = ai ? "Dashboard" : firstPage ? state.titles.get(firstPage) || "Untitled" : "A new page called Home";
   return (
     <Group>
       <Row label="Home" hint={ai

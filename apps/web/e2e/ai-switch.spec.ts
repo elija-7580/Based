@@ -21,16 +21,18 @@ const topNames = async (page: Page) => (await nav(page).locator(":scope > .nav-i
 
 test("ohne AI: kein Chat, keine Agenten, Home ist eine Seite", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
-  // Home legt einmal eine Seite „Home“ an und zeigt sie
-  await expect(page.getByLabel("Page title")).toHaveValue("Home");
+  // BSD-461: Home ist die vorhandene Willkommensseite – keine leere Seite „Home“ mehr
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  await expect(page.getByRole("treeitem", { name: "Home", exact: true })).toHaveCount(0);
   await expect(page.getByTestId("topbar-ai")).toHaveCount(0);
   expect(await topNames(page)).toEqual(["Search", "Home"]);
 
-  // Neuladen: dieselbe Seite, keine zweite
+  // Neuladen: dieselbe Seite, keine neue
   const url = page.url();
   await page.reload();
-  await expect(page.getByLabel("Page title")).toHaveValue("Home");
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
   expect(page.url()).toBe(url);
+  await expect(page.getByRole("treeitem", { name: "Home", exact: true })).toHaveCount(0);
 
   // ⌘K kennt Chat, Tasks, Coding und Dashboard nicht
   for (const q of ["chat", "tasks", "coding", "dashboard"]) {
@@ -42,7 +44,14 @@ test("ohne AI: kein Chat, keine Agenten, Home ist eine Seite", { tag: "@smoke" }
 
   // Alte AI-Links führen nach Home
   await page.goto("/#chat");
-  await expect(page.getByLabel("Page title")).toHaveValue("Home");
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+
+  // BSD-461: Einstellungen → Home nennt die Seite, die Home ist (keine „neue Seite Home“ mehr)
+  await page.evaluate(() => localStorage.removeItem("based.startPage"));
+  await page.goto("/#prefs-my-settings");
+  await page.reload();
+  await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
+  await expect(page.getByTestId("settings-section-start-page")).not.toContainText("A new page called Home");
 });
 
 test("Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections", async ({ page }) => {
@@ -78,7 +87,7 @@ for (const theme of ["light", "dark"] as const) {
     for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
       await page.setViewportSize({ width: w, height: h });
       await page.goto("/#home");
-      await expect(page.getByLabel("Page title")).toHaveValue("Home");
+      await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
       await page.mouse.move(0, 0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
       await page.screenshot({ path: `../../docs/design/screens/web-ai-off-home-${w}x${h}-${theme}.png` });

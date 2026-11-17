@@ -1,7 +1,7 @@
 // BSD-153: Nachrichten zwischen UI (Hauptthread) und Store-Worker. Der WorkspaceStore liegt im Worker (SQLite-WASM
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
-import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, HybridPageContent, HybridStructureWire, Outline, PageGraph, RecordKeyString, SearchFilters, SearchSort, WireRecord } from "@based/core";
+import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, HybridPageContent, HybridStructureWire, Outline, PageGraph, RecordKeyString, SearchFilters, SearchSort, StarterTemplateID, WireRecord } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { PageExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 import type { ChatAction } from "./chat.js";
@@ -81,6 +81,8 @@ export type Command =
   | { op: "createMeetingPage" }
   /** BSD-275: Willkommensseiten (Basics, Databases, Keyboard, Your data) unter der Willkommensseite; gibt neue IDs zurück. */
   | { op: "addWelcomeGuides"; parent: string }
+  /** BSD-436: Startvorlage (Tasks, Notes, Journal, Wiki) oben unter Private anlegen; Antwort: ID der Seite. */
+  | { op: "addStarterTemplate"; template: StarterTemplateID }
   /** BSD-168: Seiten über einer Seite (oberste zuerst), auch für Datenbank-Zeilen – Breadcrumb und ⇧⌘U. */
   | { op: "pageAncestors"; id: string }
   | { op: "rename"; id: string; title: string }

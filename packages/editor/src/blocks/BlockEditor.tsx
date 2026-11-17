@@ -19,7 +19,7 @@ import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
 import { PageOutline } from "../ui/Outline.js";
 import { DatabasePicker, MovePicker, PageTargetPicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
-import { BasedButton, BasedIconButton } from "@based/ui/astryx";
+import { BasedButton, BasedIconButton, BasedMediaPlayer } from "@based/ui/astryx";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
@@ -1985,8 +1985,8 @@ function FileBlock({ block: b }: { block: Block }) {
     );
   }
   const name = b.props?.asset?.name ?? (b.props?.url ? b.props.url.split("/").pop() : undefined) ?? labelOf(b);
-  if (b.type === "video" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><video className="bx2-media" src={src} controls preload="metadata" /></div>;
-  if (b.type === "audio" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><audio className="bx2-media" src={src} controls preload="metadata" /></div>;
+  // BSD-447: Based-Leiste statt der Browser-Steuerung (System-Element)
+  if ((b.type === "video" || b.type === "audio") && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><BasedMediaPlayer src={src} kind={b.type === "video" ? "video" : "audio"} label={name} testID="media-player" /></div>;
   // BSD-407: PDF mit Vorschau (wie der alte Editor); der Link darunter öffnet es ganz
   if (b.type === "pdf" && src) {
     return (

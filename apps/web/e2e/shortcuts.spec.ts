@@ -15,7 +15,8 @@ test("⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; �
   await page.keyboard.press("ControlOrMeta+n");
   const palette = page.getByTestId("new-palette");
   await expect(palette).toBeVisible();
-  await expect(palette.getByRole("option")).toHaveCount(5);
+  // Seite, AI-Chat, Meeting, Datenbank, Import und die vier Startvorlagen (BSD-436)
+  await expect(palette.getByRole("option")).toHaveCount(9);
   await page.keyboard.type("datab");
   await expect(palette.getByRole("option")).toHaveCount(1);
   await page.keyboard.press("Enter");
@@ -36,7 +37,7 @@ test("⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; 
   const palette = page.getByTestId("new-palette");
   await page.keyboard.press("ControlOrMeta+n");
   await expect(palette.getByRole("option").nth(2)).toContainText("meeting notes");
-  await expect(palette.locator(".qf-digit")).toHaveText(["1", "2", "3", "4", "5"]);
+  await expect(palette.locator(".qf-digit")).toHaveText(["1", "2", "3", "4", "5", "6", "7", "8", "9"]);
   await page.keyboard.press("1");
   await expect(palette).toBeHidden();
   await expectEditable(page);

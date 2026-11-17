@@ -3,6 +3,7 @@
 // Titel (nur geänderte), Status und die Records offener Seiten. Ohne Worker-Globals, damit er in Node testbar ist
 // (die Worker-Datei `store.worker.ts` verbindet ihn nur mit `self`).
 import {
+  addStarterTemplate,
   buildOutline,
   buildPageGraph,
   createPage,
@@ -384,6 +385,7 @@ export class StoreHost {
       }
       case "pageAncestors": return pageAncestors(store, c.id);
       case "addWelcomeGuides": return addWelcomeGuides(store, c.parent);
+      case "addStarterTemplate": return addStarterTemplate(store, c.template);
       case "createMeetingPage": {
         const id = createPage(store, { title: meetingTitleFor(new Date()) });
         createMeeting(store, { parent: "b:" + id });
