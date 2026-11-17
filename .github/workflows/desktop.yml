@@ -85,6 +85,10 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          # BSD-433: Node, whisper-cli und node-pty vor dem Bundle signieren (Hardened Runtime) – wie in desktop-beta.yml.
+          # Ohne das lehnt Apple die Notarisierung ab („The binary is not signed“ für pty.node und spawn-helper), seit
+          # dieser Workflow mit Developer ID signiert. Mit Developer ID für die Notarisierung, sonst ad hoc.
+          BASED_SIGN_NODE: "1"
         run: |
           CONF="$RUNNER_TEMP/tauri.ci.json"
           UPD=false
