@@ -125,7 +125,7 @@ Every enabled skill is a prompt (name, description, optional argument `input`).
 - `ask_main_agent` in the app's local MCP host (only the server offers it).
 - Server-sent notifications (`listChanged`, resource subscriptions).
 
-## Whiteboards (BSD-494)
+## Whiteboards (BSD-508)
 
 Agents draw as text – few tokens, no coordinates, no browser. Based lays the objects out and writes them as records,
 so an open board updates at once and sync, history and search apply as for any edit.

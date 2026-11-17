@@ -399,7 +399,7 @@ describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
   });
 });
 
-// BSD-494: Whiteboards über MCP – zeichnen als Text, knapp zurücklesen.
+// BSD-508: Whiteboards über MCP – zeichnen als Text, knapp zurücklesen.
 describe("Whiteboard über MCP", () => {
   it("draw_board legt ein Board an und verknüpft eine Seite; read_board liest es knapp", async () => {
     const { call } = await httpClient();

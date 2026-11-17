@@ -339,7 +339,7 @@ export function createMcpServer(pages: Pages): McpServer {
     }),
   );
 
-  // BSD-494: Whiteboards als Text (wenige Token, keine Koordinaten – die Anordnung rechnet Based). Dieselbe Logik wie
+  // BSD-508: Whiteboards als Text (wenige Token, keine Koordinaten – die Anordnung rechnet Based). Dieselbe Logik wie
   // für Baseds eigene Agenten (WorkspaceTools), damit beide Wege genau dasselbe können.
   const boards = new WorkspaceTools(pages.store);
   const board = (name: string, input: Record<string, unknown>): CallToolResult => {
