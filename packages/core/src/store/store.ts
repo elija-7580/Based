@@ -386,6 +386,8 @@ export class WorkspaceStore {
    * die Testsuite auch mit Laden nach Bedarf (ci/typecheck/run-ts.sh).
    */
   static lazyByDefault = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.BASED_LAZY_STORE === "1";
+  /** Nur für die Testsuite (BASED_LAZY_STORE=1): auch eine leere Datei nach Bedarf öffnen, damit jeder Test den Weg nimmt. */
+  static lazyEvenWhenEmpty = WorkspaceStore.lazyByDefault;
   /** Quelle für Laden nach Bedarf; `undefined`, sobald alles im Speicher liegt (dann verhält sich der Store wie immer). */
   private lazySource: LazyPersistence | undefined;
   /** Eltern, deren Kinder vollständig im Speicher und in `childIndex` sind. Eine Kinderliste ist ganz da oder gar nicht. */
@@ -464,7 +466,7 @@ export class WorkspaceStore {
     const t = this.now();
     this.workspace = ws ?? { id: WORKSPACE_ID, name: "My Workspace", favorites: [], createdAt: t, updatedAt: t, stamp: { ...ZERO_STAMP } };
     // Eine leere Datei ist vollständig geladen (erster Sync, Import: keine Rückfragen an die Datei je neuem Block).
-    if (source && source.countBlocks() === 0) source = undefined;
+    if (source && source.countBlocks() === 0 && !WorkspaceStore.lazyEvenWhenEmpty) source = undefined;
     if (source) {
       // Ab hier nach Bedarf: Was geladen ist, wartet je Elternteil, bis dessen Kinder vollständig geholt werden.
       this.lazySource = source;

@@ -3,6 +3,7 @@
 // Ein Verweis ist ein Objekt mit `id` und `name` (AssetRef: Bild-/Dateiblock, Icon, Cover, Datei-Property, Spuren).
 import type { WorkspaceStore } from "../store/store.js";
 
+const REF_HINTS = ['"name"'] as const;
 const isRef = (o: Record<string, unknown>) => typeof o.id === "string" && typeof o.name === "string";
 
 /** Tiefe Kopie, in der jeder AssetRef mit einer ID aus `map` die neue ID bekommt. Ohne Treffer: dasselbe Objekt. */
@@ -43,7 +44,8 @@ export function assetIDsInStore(store: WorkspaceStore): Set<string> {
       for (const x of Object.values(o)) walk(x);
     }
   };
-  for (const b of store.blocks.values()) { walk(b.props); walk(b.values); }
+  // Ein Verweis hat immer ein Feld `name`: mit Laden nach Bedarf sucht die Datei danach, statt alles zu laden.
+  store.scanBlocks(REF_HINTS, (b) => { walk(b.props); walk(b.values); });
   return out;
 }
 
@@ -51,9 +53,9 @@ export function assetIDsInStore(store: WorkspaceStore): Set<string> {
 export function remapStoreAssets(store: WorkspaceStore, map: ReadonlyMap<string, string>): number {
   if (map.size === 0) return 0;
   const hits: string[] = [];
-  for (const b of store.blocks.values()) {
+  store.scanBlocks(REF_HINTS, (b) => {
     if (remapAssetRefs(b.props, map) !== b.props || remapAssetRefs(b.values, map) !== b.values) hits.push(b.id);
-  }
+  });
   if (hits.length === 0) return 0;
   store.transact("Move files to synced storage", (tx) => {
     for (const id of hits) {

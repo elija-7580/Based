@@ -163,7 +163,10 @@ auf seinem echten Workspace nach main.
 | A7 Zeitmessung `@perf` mit 100 000 Records | auf main (17.11., BSD-495: `scale-perf`) | Schwellen: Start 5 s (WebKit 7 s), Schreiben 9 s; Unit: erster Sync 6 s, Start 4 s, Heap 150 MB |
 | A2 Zod beim Laden überspringen | gestrichen | Prüfung beim Laden bleibt (Sicherheit vor Tempo); der Gewinn kommt mit Stufe B |
 | A5 Gliederung als Änderung, A6 Ordner-Segmente komprimiert | offen | A6 zuerst nur lesen beider Formen |
-| B, C, D, Bereiche | offen | – |
+| B1 Store lädt nach Bedarf: Gerüst im Speicher, Inhalt beim Öffnen; zwei Indizes über dem JSON, keine Zeile umgeschrieben | auf main (17.11.), **Standard aus** – Einstellungen → Sync & server → „Fast start (beta)“ | 520 000 Records (Node): Öffnen 4,4 s → 0,3 s, Heap 290 MB → 29 MB; 50 Seiten öffnen 25 ms. Einmalig beim ersten Start: Indizes 2,5 s; Datei +8 % (324 → 350 MB). 100 000 Records: 78 ms / 1 MB statt 1,1 s / 41 MB |
+| B2 Suche, Bibliothek, Graph über SQLite (FTS5, Link-Tabelle) | offen – Voraussetzung, damit B1 Standard wird | Mit „Fast start“ lädt heute die erste Suche (⌘K) noch alles; unverlinkte Erwähnungen sind dort aus (1 s je Seite bei 520 000); der Link-Index kostet einmal je Sitzung 1,8 s |
+| B3 Obergrenze im Speicher (Geladenes wieder entlassen), natives SQLite in den Apps | offen | – |
+| C, D, Bereiche | offen | – |
 
 ## Entscheidungen (Elija, 17.11.2026)
 

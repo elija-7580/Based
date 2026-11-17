@@ -223,7 +223,9 @@ export class StoreHost {
         case "listDatabases": reply(this.listDatabases(msg.query)); break;
         case "dueItems": reply(dueItems(this.store, msg.fromMs, msg.toMs)); break;
         case "meetings": reply(this.meetings()); break;
-        case "unlinkedMentions": reply(unlinkedMentions(this.store, msg.pageID).map((m) => ({ ...m, pageTitle: titleOf(this.store, m.pageID) || "Untitled" }))); break;
+        // ADR 0017 Stufe B: Mit Laden nach Bedarf müsste jede Seitenöffnung die ganze Datei absuchen (gemessen 1 s bei
+        // 520 000 Records). Bis die Suche über einen Index in SQLite läuft, gibt es dort keine unverlinkten Erwähnungen.
+        case "unlinkedMentions": reply(this.store.isPartial ? [] : unlinkedMentions(this.store, msg.pageID).map((m) => ({ ...m, pageTitle: titleOf(this.store, m.pageID) || "Untitled" }))); break;
         case "applyLocal": this.applyLocal(msg.lww ? this.newerOnly(msg.upserts) : msg.upserts, msg.lww ? [] : msg.deletions, msg.derived === true); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
@@ -329,9 +331,11 @@ export class StoreHost {
     // `asset` umstellen (Exporte, Archive und die Swift-App sehen die Datei sonst nicht).
     // Einmal je Datei (ADR 0017 Stufe B: der Durchlauf über alle Blöcke lüde sonst bei jedem Start den ganzen Workspace).
     // Neue Blöcke in der alten Form entstehen nicht mehr; kommen sie von einem alten Gerät, stellt dessen Update sie um.
-    if (!store.isReadOnly && this.ws.persistence.meta(ASSET_URL_MIGRATED) !== "1") {
+    // Voll geladen wie bisher bei jedem Start (auch Blöcke aus einem alten Archiv oder von einem alten Gerät).
+    if (!store.isReadOnly && (!store.isPartial || this.ws.persistence.meta(ASSET_URL_MIGRATED) !== "1")) {
+      const partial = store.isPartial;
       migrateAssetURLBlocks(store);
-      if (!store.isReadOnly) this.ws.persistence.setMeta(ASSET_URL_MIGRATED, "1");
+      if (partial && !store.isReadOnly) this.ws.persistence.setMeta(ASSET_URL_MIGRATED, "1");
     }
     store.observe((c) => this.onChange(c));
     this.assets = new AssetSync(this.ws.assets ?? new MemoryAssetBlobStore(), this.ws.persistence, {
@@ -519,8 +523,11 @@ export class StoreHost {
   meetings(): MeetingListItem[] {
     const store = this.store;
     const out: MeetingListItem[] = [];
-    for (const b of store.blocks.values()) {
-      if (b.type !== "meeting" || isTrashed(store, b.id)) continue;
+    // Meeting-Blöcke sind Inhalt: mit Laden nach Bedarf aus der Datei suchen (nach dem Typ), geprüft wird hier.
+    const found: Block[] = [];
+    store.scanBlocks(['"meeting"'], (b) => { if (b.type === "meeting") found.push(b); });
+    for (const b of found) {
+      if (isTrashed(store, b.id)) continue;
       const pageID = store.containingPage(b.id);
       if (!pageID) continue;
       const info = b.props?.meeting;

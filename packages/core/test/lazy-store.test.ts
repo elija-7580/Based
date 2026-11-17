@@ -77,8 +77,14 @@ describe("Laden nach Bedarf (ADR 0017 Stufe B)", () => {
   });
 
   it("leere Datei: von Anfang an vollständig (erster Sync ohne Rückfragen)", () => {
-    const s = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "dev", lazy: true });
-    expect(s.isPartial).toBe(false);
+    const forced = WorkspaceStore.lazyEvenWhenEmpty;
+    WorkspaceStore.lazyEvenWhenEmpty = false; // die Testsuite mit BASED_LAZY_STORE=1 schaltet das sonst ab
+    try {
+      const s = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "dev", lazy: true });
+      expect(s.isPartial).toBe(false);
+    } finally {
+      WorkspaceStore.lazyEvenWhenEmpty = forced;
+    }
   });
 
   it("entfernt und vor dem Speichern wieder gefragt: bleibt entfernt; zurückgerollt: wieder da", () => {

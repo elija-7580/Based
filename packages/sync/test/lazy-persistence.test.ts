@@ -123,5 +123,47 @@ for (const [name, open] of [["node:sqlite", async () => openNodeDatabase()], ["S
       for (const parent of ["w", ...workspace().map((r) => "b:" + r.data.id)]) expect(lazy().children(parent)).toEqual(eager.children(parent));
       db.close();
     });
+
+    it("Suche in der Datei: Groß/Klein egal, % und _ wörtlich, leere Liste = alle Blöcke", async () => {
+      const db = await open();
+      const p = seeded(db);
+      p.write([block("pct", "text", "b:P0", "z1", { text: "Rabatt 100% sicher" }), block("und", "text", "b:P0", "z2", { text: "snake_case Name" }), block("x", "text", "b:P0", "z3", { text: "100 Prozent, snakeXcase" })], [], new Map(), true);
+      const ids = (containing: string[], ignoreCase = false) => { const out: string[] = []; p.lazy.scanBlocks(containing, (b) => out.push(b.id), { ignoreCase }); return out.sort(); };
+      expect(ids(["100% SICHER"], true)).toEqual(["pct"]);
+      expect(ids(["100% SICHER"])).toEqual([]);
+      expect(ids(["SNAKE_case"], true)).toEqual(["und"]);
+      expect(ids([]).length).toBe(59);
+      db.close();
+    });
+
+    it("der gemerkte neueste Stempel bleibt gültig: nach Ändern, Löschen und Neuöffnen wird die Datei nicht neu abgesucht", async () => {
+      const db = await open();
+      seeded(db);
+      const lazy = () => openWorkspace(db, { node: "dev", lazy: true, propertyRecords: false });
+      const first = lazy(); // bestimmt den Stempel einmal und merkt ihn
+      first.store.transact("t", (tx) => { tx.update("P0-1", (b) => { b.text = "neu"; }); tx.remove("block:P0-2"); });
+      first.persistence.promoteDerived();
+      const scans: string[] = [];
+      const all = db.all.bind(db);
+      db.all = (sql, params) => { if (/ORDER BY json_extract/.test(sql)) scans.push(sql); return all(sql, params); };
+      const again = lazy();
+      expect(scans).toEqual([]);
+      // die Uhr steht mindestens beim Stempel der Änderung (der Stempel der Löschung zählt nicht, wie beim vollen Laden)
+      const edited = first.store.blocks.get("P0-1")!.stamp as { millis: number };
+      expect(again.store.clock.current.millis).toBeGreaterThanOrEqual(edited.millis);
+      db.close();
+    });
+
+    it("ohne Laden nach Bedarf geöffnet: die Indizes verschwinden wieder (Rückweg ohne Zutun)", async () => {
+      const db = await open();
+      seeded(db);
+      const names = () => db.all("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'records_%'").map((r) => r.name);
+      openWorkspace(db, { node: "dev", lazy: true, propertyRecords: false });
+      expect(names().length).toBe(2);
+      const eager = openWorkspace(db, { node: "dev", lazy: false, propertyRecords: false }).store;
+      expect(names()).toEqual([]);
+      expect(eager.blocks.size).toBe(56);
+      db.close();
+    });
   });
 }

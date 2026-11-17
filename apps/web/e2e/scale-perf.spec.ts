@@ -10,14 +10,14 @@ import { join } from "node:path";
 // bis die Seitenleiste steht; dazu die Zeit fürs Schreiben in einem Zug (ADR 0017 A1). Die Unit-Seite (openWorkspace, Heap, erster Sync) misst packages/sync/test/scale-perf.test.ts.
 // Ausgangswerte 17.11. (Linux-Container): siehe Kommentar an den Schwellen. Lokal hart, in der CI Warnung (perf.ts).
 
-test("Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden", { tag: "@perf" }, async ({ playwright, browserName, baseURL }, info) => {
+for (const lazy of [false, true]) test(`Start mit 100 000 Records${lazy ? ", nach Bedarf geladen (Fast start)" : ""}: bereit und Seitenleiste in wenigen Sekunden`, { tag: "@perf" }, async ({ playwright, browserName, baseURL }, info) => {
   test.setTimeout(300_000);
   const dir = mkdtempSync(join(tmpdir(), "based-scale-"));
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
   try {
     const page = ctx.pages()[0] ?? (await ctx.newPage());
-    // ADR 0017 Stufe B: mit Laden nach Bedarf (Einstellung „Fast start“), sonst misst der Test nur das alte Laden.
-    await page.addInitScript(() => localStorage.setItem("based.lazyStore", "true"));
+    // ADR 0017 Stufe B: einmal wie ausgeliefert (alles laden), einmal mit der Einstellung „Fast start“.
+    if (lazy) await page.addInitScript(() => localStorage.setItem("based.lazyStore", "true"));
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
     // ADR 0017 A1: Schreiben in einem Zug (wie erster Sync oder Import) – bis alles auf der Platte liegt.
@@ -49,10 +49,12 @@ test("Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden", {
     type Info = { partial: boolean; loadedBlocks: number; totalBlocks: number; fullLoads: string[] };
     const info0 = () => page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<unknown> } } }).__based.client.command({ op: "storeInfo" })) as Promise<Info>;
     const booted = await info0();
-    expect(booted.fullLoads, "beim Start nicht alles geladen").toEqual([]);
-    expect(booted.partial).toBe(true);
+    expect(booted.partial).toBe(lazy);
     expect(booted.totalBlocks).toBeGreaterThanOrEqual(100_000);
-    expect(booted.loadedBlocks).toBeLessThan(51_000);
+    if (lazy) {
+      expect(booted.fullLoads, "beim Start nicht alles geladen").toEqual([]);
+      expect(booted.loadedBlocks).toBeLessThan(51_000);
+    }
     await page.getByRole("treeitem", { name: "Page 00001" }).click();
     await expect(page.getByLabel("Page title")).toHaveValue("Page 00001");
     await expectEditable(page);
@@ -62,8 +64,14 @@ test("Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden", {
     await expect(page.getByLabel("Page title")).toHaveValue("Page 00002");
     await page.evaluate(() => (globalThis as unknown as { __based: { client: { settled(): Promise<void> } } }).__based.client.settled());
     const used = await info0();
-    expect(used.fullLoads, "Alltagswege laden nicht alles").toEqual([]);
-    expect(used.loadedBlocks).toBeLessThan(51_000);
+    if (lazy) {
+      // auch die Aufgaben im Hintergrund (2 s nach dem Start) holen nicht alles
+      await page.waitForTimeout(2500);
+      const later = await info0();
+      expect(later.fullLoads, "Alltagswege laden nicht alles").toEqual([]);
+      expect(later.loadedBlocks).toBeLessThan(51_000);
+    }
+    void used;
     // Der getippte Text ist gespeichert und nach einem Neustart da.
     await page.reload();
     await page.getByRole("treeitem", { name: "Page 00001" }).click();
@@ -73,7 +81,8 @@ test("Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden", {
     expect(count).toBeGreaterThanOrEqual(50_000);
     // Ausgangswerte 17.11.: vor A1 Chromium 6,2 s / WebKit 6,0 s, mit vorbereiteten Anweisungen 4,3 s / 4,0 s.
     console.log(`[${info.project.name}] 100 000 Records schreiben: ${Math.round(write)} ms`);
-    expectFaster(info, "100 000 Records schreiben", write, 9000);
+    // Mit Laden nach Bedarf kostet das Schreiben mehr (zwei Indizes, je neuem Block eine Rückfrage): 17.11. 5,7 s.
+    expectFaster(info, "100 000 Records schreiben", write, lazy ? 12_000 : 9000);
   } finally {
     await ctx.close();
     rmSync(dir, { recursive: true, force: true });

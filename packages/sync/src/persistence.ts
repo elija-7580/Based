@@ -80,6 +80,7 @@ export function decodeStamp(text: string | undefined): Stamp | undefined {
 export class SqlitePersistence implements Persistence {
   /** Zeilen, die diese Version nicht lesen kann: bleiben unangetastet in der Datei und werden nie gepusht (BSD-16). */
   undecodable: UndecodableRow[] = [];
+  private undecodableKeys = new Set<RecordKeyString>();
 
   constructor(readonly db: SqlDatabase) {
     migrate(db);
@@ -91,7 +92,10 @@ export class SqlitePersistence implements Persistence {
     const id = asText(row.id) ?? "";
     const key = keyOf(kind, id);
     const fail = (error: string) => {
-      if (!this.undecodable.some((u) => u.key === key)) this.undecodable.push({ key, error });
+      if (!this.undecodableKeys.has(key)) {
+        this.undecodableKeys.add(key);
+        this.undecodable.push({ key, error });
+      }
       return undefined;
     };
     if (!KINDS.has(kind)) return fail(`unknown record kind ${kind}`);
@@ -242,6 +246,7 @@ export class SqlitePersistence implements Persistence {
     return this.guard("load", () => {
       const out: WireRecord[] = [];
       this.undecodable = [];
+      this.undecodableKeys.clear();
       // ADR 0017 A1: Zeile für Zeile (wo der Treiber es kann) – sonst liegen alle Zeilen als BLOB, als Text und als
       // Objekt gleichzeitig im Speicher.
       // In Stücken von 4096 Zeilen: der Speicher bleibt begrenzt, und SQLite (WASM) und JSON/Zod wechseln sich nicht je
@@ -371,6 +376,7 @@ export class SqlitePersistence implements Persistence {
           this.db.run("DELETE FROM changes WHERE kind = ? AND id = ?", [r.kind ?? null, r.id ?? null]);
           this.db.run("INSERT INTO changes(kind, id, deleted, local, deleted_stamp) VALUES(?, ?, ?, 1, ?)", [r.kind ?? null, r.id ?? null, r.deleted ?? 0, r.deleted_stamp ?? null]);
         }
+        if (this.tracksClock) this.saveClockMax(); // das Log ist weitergelaufen: der gemerkte Stempel gilt weiter
         this.db.exec("COMMIT");
       } catch (e) {
         try {
@@ -466,6 +472,15 @@ export function openWorkspace(
   if (!id) {
     id = persistence.meta("node") ?? newNode();
     if (!persistence.meta("node")) persistence.setMeta("node", id);
+  }
+  // ADR 0017 Stufe B, Rückweg: Ohne Laden nach Bedarf braucht die Datei die beiden Indizes nicht – sie kosten Platz und
+  // Zeit bei jedem Schreiben. Entfernen ist billig und wiederholbar; die Datei ist danach wie vorher.
+  if (!(rest.lazy ?? WorkspaceStore.lazyByDefault)) {
+    try {
+      persistence.dropLazyIndexes();
+    } catch {
+      // nicht beschreibbar: bleibt, wie es ist
+    }
   }
   const store = new WorkspaceStore({ ...rest, persistence, node: id, propertyRecords });
   return { store, persistence };
