@@ -38,10 +38,10 @@ export function Meetings({ client, state, onOpenPage, onSwitch, onNewMeeting }: 
     <div className="lib" data-testid="meetings" data-loaded={items ? "" : undefined}>
       <header className="lib-head">
         <LibraryTabs value="meetings" onNavigate={onSwitch} />
-        <h1 className="t-title">Meetings</h1>
-        <p className="t-desc" role="status" aria-live="polite">{items === undefined ? "Loading…" : `${items.length} ${items.length === 1 ? "meeting" : "meetings"}`}</p>
+        <h1 className="t-heading">Meetings</h1>
+        <p className="t-meta" role="status" aria-live="polite">{items === undefined ? "Loading…" : `${items.length} ${items.length === 1 ? "meeting" : "meetings"}`}</p>
         <span className="grow" />
-        <Button size="sm" variant="secondary" label="New meeting" onClick={onNewMeeting} />
+        <Button variant="secondary" label="New meeting" onClick={onNewMeeting} />
       </header>
       {items && items.length === 0 ? (
         <EmptyState title="No meeting notes yet" description="Start one with ⌘N → Meeting notes or /meet on any page. Recordings, notes and summaries show up here." />

@@ -55,7 +55,7 @@ export function AiSettingsSection({ config = aiConfig(), compact = false }: { co
           Use your own API key or a model on this computer. Keys are stored encrypted in this browser and only sent to the provider you choose — when you send a message.
         </p>
       </div>
-      <SegmentedControl label="Provider" value={kind} onChange={(v) => pick(v as ProviderKind)} layout={compact ? "fill" : "hug"} size="sm">
+      <SegmentedControl label="Provider" value={kind} onChange={(v) => pick(v as ProviderKind)} layout={compact ? "fill" : "hug"}>
         {PROVIDERS.map((x) => <SegmentedControlItem key={x.kind} value={x.kind} label={x.kind === "compatible" ? "Other" : x.name} />)}
       </SegmentedControl>
       <p className="t-desc">{info.hint}{kind === "ollama" ? " Ollama must allow this app's address (OLLAMA_ORIGINS)." : ""}</p>
@@ -83,7 +83,7 @@ export function AiSettingsSection({ config = aiConfig(), compact = false }: { co
       )}
       <div className="fields">
         <span className="setting-label" id="ai-permission">What Based may do alone</span>
-        <SegmentedControl label="What Based may do alone" value={state.settings.permission} onChange={(v) => config.setPermission(v as PermissionMode)} size="sm" layout={compact ? "fill" : "hug"}>
+        <SegmentedControl label="What Based may do alone" value={state.settings.permission} onChange={(v) => config.setPermission(v as PermissionMode)} layout={compact ? "fill" : "hug"}>
           {PERMISSIONS.map((x) => <SegmentedControlItem key={x.mode} value={x.mode} label={x.name} />)}
         </SegmentedControl>
         <p className="t-desc">{PERMISSIONS.find((x) => x.mode === state.settings.permission)?.desc}</p>

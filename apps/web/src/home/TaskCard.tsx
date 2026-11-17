@@ -37,7 +37,7 @@ export function TaskCard({ card, projectName, ...h }: { card: TaskCardView; proj
       <span className="input">{card.input}</span>
       <section className="phase" key={p} aria-label={p}>
         {p === "received" && card.waiting === "no model set up" ? (
-          <span className="task-actions"><Button size="sm" variant="secondary" label="Set up a model" onClick={h.onSetUpModel} /></span>
+          <span className="task-actions"><Button variant="secondary" label="Set up a model" onClick={h.onSetUpModel} /></span>
         ) : null}
 
         {p === "understanding" || p === "executing" ? (
@@ -64,8 +64,8 @@ export function TaskCard({ card, projectName, ...h }: { card: TaskCardView; proj
           <>
             <strong>{card.question.text}</strong>
             <span className="task-actions">
-              {card.question.options.map((o) => <Button key={o} size="sm" variant="secondary" label={o} onClick={() => h.onAnswer(o)} />)}
-              <Button size="sm" variant="ghost" label="File as note" onClick={h.onFile} />
+              {card.question.options.map((o) => <Button key={o} variant="secondary" label={o} onClick={() => h.onAnswer(o)} />)}
+              <Button variant="ghost" label="File as note" onClick={h.onFile} />
             </span>
           </>
         ) : null}
@@ -74,9 +74,9 @@ export function TaskCard({ card, projectName, ...h }: { card: TaskCardView; proj
           <>
             {card.reasons.length > 0 ? <ul className="task-reasons">{card.reasons.map((r) => <li key={r}>{r}</li>)}</ul> : null}
             <span className="task-actions">
-              {card.canConfirm ? <Button size="sm" variant="primary" label="Go ahead" onClick={h.onConfirm} /> : null}
-              {card.aboutBudget ? <Button size="sm" variant="secondary" label="Raise budget" onClick={h.onRaiseBudget} /> : null}
-              <Button size="sm" variant="ghost" label="File as note" onClick={h.onFile} />
+              {card.canConfirm ? <Button variant="primary" label="Go ahead" onClick={h.onConfirm} /> : null}
+              {card.aboutBudget ? <Button variant="secondary" label="Raise budget" onClick={h.onRaiseBudget} /> : null}
+              <Button variant="ghost" label="File as note" onClick={h.onFile} />
             </span>
           </>
         ) : null}
@@ -85,8 +85,8 @@ export function TaskCard({ card, projectName, ...h }: { card: TaskCardView; proj
           <>
             <span className="task-answer-x" data-testid="home-task-answer">{card.answer}</span>
             <span className="task-actions">
-              <Button size="sm" variant="secondary" label="Save as page" onClick={h.onSaveAsPage} />
-              <Button size="sm" variant="ghost" label="Continue in chat" onClick={h.onContinueInChat} />
+              <Button variant="secondary" label="Save as page" onClick={h.onSaveAsPage} />
+              <Button variant="ghost" label="Continue in chat" onClick={h.onContinueInChat} />
             </span>
           </>
         ) : null}
@@ -95,10 +95,10 @@ export function TaskCard({ card, projectName, ...h }: { card: TaskCardView; proj
           <>
             {card.result ? <span className="task-tile" style={{ alignSelf: "flex-start" }}>{p === "done" ? <Icon name="check" size={14} /> : null}<span data-testid="home-task-result">{card.result}</span></span> : null}
             <span className="task-actions">
-              {p === "done" && card.pageID ? <Button size="sm" variant="secondary" label="Open page" onClick={() => h.onOpenPage(card.pageID!)} /> : null}
-              {card.canUndo ? <Button size="sm" variant="ghost" label="Undo" onClick={h.onUndo} /> : null}
-              {card.runID ? <Button size="sm" variant="secondary" label="Open agent" onClick={() => h.onOpenRun(card.runID!)} /> : null}
-              {card.projectID && projectName(card.projectID) ? <Button size="sm" variant="ghost" label={`Open ${projectName(card.projectID)}`} onClick={() => h.onOpenProject(card.projectID!)} /> : null}
+              {p === "done" && card.pageID ? <Button variant="secondary" label="Open page" onClick={() => h.onOpenPage(card.pageID!)} /> : null}
+              {card.canUndo ? <Button variant="ghost" label="Undo" onClick={h.onUndo} /> : null}
+              {card.runID ? <Button variant="secondary" label="Open agent" onClick={() => h.onOpenRun(card.runID!)} /> : null}
+              {card.projectID && projectName(card.projectID) ? <Button variant="ghost" label={`Open ${projectName(card.projectID)}`} onClick={() => h.onOpenProject(card.projectID!)} /> : null}
             </span>
           </>
         ) : null}
@@ -106,7 +106,7 @@ export function TaskCard({ card, projectName, ...h }: { card: TaskCardView; proj
         {p === "fallback" ? (
           <>
             <span className="t-desc" data-testid="home-task-result">{card.result ?? card.error ?? "Something went wrong."}</span>
-            <span className="task-actions"><Button size="sm" variant="secondary" label="Try again" onClick={h.onRetry} /></span>
+            <span className="task-actions"><Button variant="secondary" label="Try again" onClick={h.onRetry} /></span>
           </>
         ) : null}
       </section>

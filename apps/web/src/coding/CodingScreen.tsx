@@ -132,7 +132,7 @@ function Sessions({ model }: { model: CodingModel }) {
               <Selector label="Permissions" isLabelHidden value={current.mode} width="auto"
                 options={PERMISSIONS.map((p) => ({ value: p.mode, label: p.name }))} onChange={(v) => v && void model.setMode(v)} />
               <SwitchAgent model={model} from={current.id} cwd={current.cwd} />
-              <Button size="sm" variant="ghost" onClick={() => void model.close(current.id)} isDisabled={current.state === "closed"} label="End session" />
+              <Button variant="ghost" onClick={() => void model.close(current.id)} isDisabled={current.state === "closed"} label="End session" />
             </HStack>
             <SegmentedControl label="Console view" value={view} onChange={(v) => setView(v as "transcript" | "terminal")}>
               <SegmentedControlItem value="transcript" label="Transcript" />
@@ -230,7 +230,7 @@ function History({ model, onOpened }: { model: CodingModel; onOpened: () => void
           <>
             <HStack gap={2} vAlign="center" wrap="wrap">
               <Text weight="semibold">{open.session.title}</Text>
-              <Button size="sm" variant="primary" onClick={() => void resume(open.session)} label="Continue in Based" />
+              <Button variant="primary" onClick={() => void resume(open.session)} label="Continue in Based" />
             </HStack>
             <CodeBlock code={cliResumeCommand(open.session)} language="bash" hasLanguageLabel={false} />
             <Console items={open.items} running={false} />
@@ -263,12 +263,12 @@ function Setup({ model }: { model: CodingModel }) {
       <VStack gap={2}>
         <HStack hAlign="between" vAlign="center">
           <Text weight="semibold">Agents</Text>
-          <Button size="sm" variant="ghost" onClick={load} label="Check again" />
+          <Button variant="ghost" onClick={load} label="Check again" />
         </HStack>
         <List aria-label="Agents">
           {doc.agents.map((a) => (
             <ListItem key={a.id} label={a.name} description={tests[a.id] ?? a.summary} startContent={<StatusDot variant={READY_DOT[a.state]} label={a.state} />}
-              endContent={<Button size="sm" variant="secondary" onClick={() => void test(a.id)} label="Test" />} />
+              endContent={<Button variant="secondary" onClick={() => void test(a.id)} label="Test" />} />
           ))}
         </List>
         {doc.agents.filter((a) => a.fix).map((a) => (

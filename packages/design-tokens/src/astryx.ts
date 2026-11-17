@@ -53,7 +53,7 @@ export const HUE_TO_STATUS: Record<string, string> = {
 export function controlHeights(density: Density): [number, number, number] {
   const step = px(plain(spacing, "space-1"));
   const md = px(plain(spacing, "space-6")) - (density === "compact" ? step : 0);
-  return [md - step, md, md + step];
+  return [md - step, md, md + 2 * step];
 }
 
 export function astryxThemeSpec(opts: { density?: Density } = {}): AstryxThemeSpec {

@@ -59,7 +59,7 @@ export interface BasedIconButtonProps {
 }
 
 /** Icon-Knopf (Kopfzeile, Schließen-×, Werkzeugleisten) – BSD-350. Klickfläche ≥ 24 px, Name und Tooltip immer gesetzt. */
-export function BasedIconButton({ label, icon, tooltip, variant = "ghost", size = "sm", disabled = false, pressed, menu, onClick, testID }: BasedIconButtonProps) {
+export function BasedIconButton({ label, icon, tooltip, variant = "ghost", size = "md", disabled = false, pressed, menu, onClick, testID }: BasedIconButtonProps) {
   return (
     <IconButton label={label} tooltip={tooltip ?? label} variant={variant} size={size} icon={icon} isDisabled={disabled}
       {...(pressed !== undefined ? { "aria-pressed": pressed } : {})} {...(testID ? { "data-testid": testID } : {})}

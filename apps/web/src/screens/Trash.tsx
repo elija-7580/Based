@@ -64,13 +64,13 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
                   </button>
                   {asking === e.id ? (
                     <span className="actions" data-asking={e.id}>
-                      <BasedButton label="Delete forever" size="sm" variant="danger" ariaLabel={`Delete “${title}” forever`} onClick={() => { setAsking(undefined); void client.command({ op: "deleteForever", ids: [e.id] }); }} />
-                      <BasedButton label="Cancel" size="sm" variant="ghost" onClick={() => setAsking(undefined)} />
+                      <BasedButton label="Delete forever" variant="danger" ariaLabel={`Delete “${title}” forever`} onClick={() => { setAsking(undefined); void client.command({ op: "deleteForever", ids: [e.id] }); }} />
+                      <BasedButton label="Cancel" variant="ghost" onClick={() => setAsking(undefined)} />
                     </span>
                   ) : (
                     <>
-                      <BasedButton label="Restore" size="sm" icon={<Icon name="restore" size={16} />} onClick={() => void client.command({ op: "restore", ids: [e.id] })} />
-                      {forever ? <BasedButton label="Delete forever" size="sm" variant="ghost" onClick={() => setAsking(e.id)} /> : null}
+                      <BasedButton label="Restore" icon={<Icon name="restore" size={16} />} onClick={() => void client.command({ op: "restore", ids: [e.id] })} />
+                      {forever ? <BasedButton label="Delete forever" variant="ghost" onClick={() => setAsking(e.id)} /> : null}
                     </>
                   )}
                 </li>
@@ -81,7 +81,7 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
         {entries.length > shown ? (
           <p className="t-desc trash-more" data-testid="trash-more">
             {entries.length - shown} more in Trash.{" "}
-            <BasedButton label="Show more" size="sm" variant="ghost" onClick={() => setShown((n) => n + PAGE * 5)} />
+            <BasedButton label="Show more" variant="ghost" onClick={() => setShown((n) => n + PAGE * 5)} />
           </p>
         ) : null}
       </div>

@@ -245,7 +245,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             {ai ? (
               <BasedIconButton label="AI chat" tooltip="AI chat (⌘J)" pressed={chatOpen} testID="topbar-ai" icon={<Icon name="chat" size={18} filled={chatOpen} />} onClick={toggleChatPanel} />
             ) : null}
-            <BasedButton label="Export" variant="ghost" size="sm" onClick={() => setExporting(true)} />
+            <BasedButton label="Export" variant="ghost" onClick={() => setExporting(true)} />
             <BasedIconButton label="Page menu" tooltip="More" menu={{ expanded: menu !== undefined }} icon={<Icon name="more" size={18} />} onClick={(el) => {
               const r = el.getBoundingClientRect();
               setMenu(menu ? undefined : { top: r.bottom + 4, right: window.innerWidth - r.right });

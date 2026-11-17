@@ -18,7 +18,7 @@ export function ShortcutHud({ ai }: { ai: boolean }) {
           <div className="keys-group-title t-meta">{g.title}</div>
           {g.entries.map((e) => (
             <div key={e.id} className="keys-row">
-              <span className="keys-label t-desc">{e.label}</span>
+              <span className="keys-label">{e.label}</span>
               <BasedKeys keys={e.keys} />
             </div>
           ))}

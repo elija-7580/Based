@@ -247,9 +247,9 @@ function Apex({ items, style, ...h }: { items: readonly NeedsYou[]; style: React
         <>
           <span className="body"><strong>{n.title}</strong>{` wants to use ${n.tool.replace(/_/g, " ")}.`}</span>
           <span className="buttons">
-            <Button size="sm" variant="primary" label="Allow" onClick={() => h.onApprove(n, "allow")} />
-            <Button size="sm" variant="secondary" label="Always" onClick={() => h.onApprove(n, "always")} />
-            <Button size="sm" variant="ghost" label="No" onClick={() => h.onApprove(n, "no")} />
+            <Button variant="primary" label="Allow" onClick={() => h.onApprove(n, "allow")} />
+            <Button variant="secondary" label="Always" onClick={() => h.onApprove(n, "always")} />
+            <Button variant="ghost" label="No" onClick={() => h.onApprove(n, "no")} />
           </span>
         </>
       ) : n.kind === "task" ? (
@@ -257,10 +257,10 @@ function Apex({ items, style, ...h }: { items: readonly NeedsYou[]; style: React
           <span className="body">{n.card.question ? <><strong>{n.card.question.text}</strong>{` — ${n.card.input}`}</> : <><strong>Go ahead?</strong>{` ${n.card.plan.map((a) => a.label).join(" · ")}`}</>}</span>
           <span className="buttons">
             {n.card.question
-              ? n.card.question.options.slice(0, 3).map((o) => <Button key={o} size="sm" variant="secondary" label={o} onClick={() => h.onAnswer(n.taskID, o)} />)
+              ? n.card.question.options.slice(0, 3).map((o) => <Button key={o} variant="secondary" label={o} onClick={() => h.onAnswer(n.taskID, o)} />)
               : <>
-                  {n.card.canConfirm ? <Button size="sm" variant="primary" label="Go ahead" onClick={() => h.onConfirm(n.taskID)} /> : null}
-                  <Button size="sm" variant="ghost" label="File as note" onClick={() => h.onFile(n.taskID)} />
+                  {n.card.canConfirm ? <Button variant="primary" label="Go ahead" onClick={() => h.onConfirm(n.taskID)} /> : null}
+                  <Button variant="ghost" label="File as note" onClick={() => h.onFile(n.taskID)} />
                 </>}
           </span>
         </>
@@ -268,8 +268,8 @@ function Apex({ items, style, ...h }: { items: readonly NeedsYou[]; style: React
         <>
           <span className="body"><strong>{n.title}</strong> was waiting for an approval when Based reloaded.</span>
           <span className="buttons">
-            <Button size="sm" variant="secondary" label="Open" onClick={() => h.onOpenRun(n.runID)} />
-            <Button size="sm" variant="ghost" label="Stop" onClick={() => h.onStopRun(n.runID)} />
+            <Button variant="secondary" label="Open" onClick={() => h.onOpenRun(n.runID)} />
+            <Button variant="ghost" label="Stop" onClick={() => h.onStopRun(n.runID)} />
           </span>
         </>
       )}

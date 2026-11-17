@@ -186,7 +186,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
     <div className="home" data-testid="home" ref={homeRef}>
       <div className="home-inner">
         <header className="home-head">
-          <SegmentedControl label="Time frame" size="sm" value={frame} onChange={(v) => {
+          <SegmentedControl label="Time frame" value={frame} onChange={(v) => {
             const f: Frame = v === "week" || v === "month" ? v : "today";
             setFrame(f);
             try { localStorage.setItem(FRAME_KEY, f); } catch { /* nur diese Sitzung */ }

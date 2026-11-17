@@ -452,7 +452,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     <button key={n.id} type="button" className={"nav-item" + dropClass(n.id)} aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "top")}>
       <Icon name={n.icon} filled={n.active && FILLABLE.has(n.icon)} {...(n.cut ? { cut: n.cut } : {})} />
       {n.name}
-      {n.badge ? <span className="badge" aria-label={`${n.badge} in Trash`}>{n.badge}</span> : n.key ? <span className="key t-data">{n.key}</span> : null}
+      {n.badge ? <span className="badge" aria-label={`${n.badge} in Trash`}>{n.badge}</span> : n.key ? <span className="key keycap">{n.key}</span> : null}
     </button>
   );
   const iconButton = (n: NavEntry) => (

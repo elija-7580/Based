@@ -1,8 +1,13 @@
 /* Library: Kopf, Filterleiste, Auswahl-Leiste, virtualisierte Tabelle. Nur Tokens. */
 .lib { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; padding: var(--space-6) var(--space-6) 0; gap: var(--space-3); }
 .lib-head { display: flex; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; }
-.lib-head .t-desc { color: var(--muted); }
+.lib-head { row-gap: var(--space-3); }
+.lib-head .t-meta { font-variant-numeric: tabular-nums; }
 .lib-toolbar { flex: none; }
+/* Zeile 2 nach docs/design/elements.md: links der Umschalter, rechts das Suchfeld; die Filter stehen in der Zeile darunter. */
+.lib-switch { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.lib-toolbar > .astryx-section { padding-inline: 0; }
+.lib-toolbar [role="toolbar"] > * { margin-inline: 0; }
 /* Schmale Fenster: Filter brechen um statt über die Fläche hinauszuragen (sonst schob sich die Fläche seitlich, 14.11.). */
 .lib-toolbar [role="toolbar"] { flex-wrap: wrap; height: auto; row-gap: var(--space-2); }
 .lib-toolbar [role="toolbar"] > * { flex-wrap: wrap; min-width: 0; max-width: 100%; }
@@ -38,5 +43,6 @@ button.lib-title:hover .lib-title-text { text-decoration: underline; text-underl
 .lib-head h1 { color: var(--ink); }
 .lib-bulk strong { color: var(--ink); }
 /* BSD-281: Reiter Pages/Graph über dem Titel */
-.lib-head > :first-child:not(h1) { flex-basis: 100%; max-width: max-content; }
+/* Element-System: Zeile 1 Titel + Anzahl (+ Hauptaktion), Zeile 2 Umschalter. In der Library steht er in der Filterleiste. */
+.lib-head > [role="radiogroup"] { order: 9; margin-right: 100%; }
 .lib-head .grow { flex: 1; }

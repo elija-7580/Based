@@ -673,7 +673,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
           })}
           {ctl.tool === "pen" ? (
             <BasedButton label="Snap shapes" ariaLabel={`Snap shapes: ${ctl.snapShapes ? "on" : "off"}. Hold still at the end of a stroke to turn it into a line, rectangle or oval.`}
-              variant={ctl.snapShapes ? "secondary" : "ghost"} size="sm" onClick={() => act(() => { ctl.snapShapes = !ctl.snapShapes; ctl.refresh(); })} />
+              variant={ctl.snapShapes ? "secondary" : "ghost"} onClick={() => act(() => { ctl.snapShapes = !ctl.snapShapes; ctl.refresh(); })} />
           ) : null}
           {presets.length < PRESETS_MAX && !presets.some((p) => samePreset(p, current)) ? (
             <BasedIconButton label="Save this pen" tooltip="Save this colour and stroke as a favourite" testID="board-preset-save" icon={<BlockIcon name="boardZoomIn" />}
@@ -734,8 +734,8 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
           <span className="wb-zoom-label" data-testid="board-zoom">{zoomLabel(ctl.camera.zoom)}</span>
           <BasedIconButton label="Zoom in" tooltip={`Zoom in (${modKey("+")})`} icon={<BlockIcon name="boardZoomIn" />} testID="board-zoom-in" onClick={() => act(() => ctl.zoomIn())} />
           <span className="wb-sep" aria-hidden="true" />
-          <BasedButton label="Fit" variant="ghost" size="sm" ariaLabel="Zoom to fit" onClick={() => act(() => ctl.fit())} />
-          {slideCount > 0 ? <BasedButton label="Present" variant="ghost" size="sm" ariaLabel={`Present ${slideCount} frame${slideCount === 1 ? "" : "s"} as slides`} onClick={() => act(() => ctl.present(0))} /> : null}
+          <BasedButton label="Fit" variant="ghost" ariaLabel="Zoom to fit" onClick={() => act(() => ctl.fit())} />
+          {slideCount > 0 ? <BasedButton label="Present" variant="ghost" ariaLabel={`Present ${slideCount} frame${slideCount === 1 ? "" : "s"} as slides`} onClick={() => act(() => ctl.present(0))} /> : null}
         </div>
       </div>
       {ctl.presenting !== undefined ? (
@@ -744,7 +744,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
           <span className="wb-zoom-label">{ctl.presenting + 1} / {slideCount}</span>
           <BasedIconButton label="Next slide" disabled={ctl.presenting + 1 >= slideCount} icon={<BlockIcon name="boardRedo" />} onClick={() => act(() => ctl.present(ctl.presenting! + 1))} />
           <span className="wb-sep" aria-hidden="true" />
-          <BasedButton label="Done" variant="ghost" size="sm" ariaLabel="End presentation" onClick={() => act(() => ctl.present(undefined))} />
+          <BasedButton label="Done" variant="ghost" ariaLabel="End presentation" onClick={() => act(() => ctl.present(undefined))} />
         </div>
       ) : null}
       <div className="wb-live" role="status" aria-live="polite">{ctl.announcement}</div>

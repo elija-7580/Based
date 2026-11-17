@@ -203,6 +203,11 @@
   --space-6: 32px;
   --space-7: 40px;
   --space-8: 56px;
+  --control-sm: 28px;
+  --control-md: 32px;
+  --control-lg: 40px;
+  --keycap: 20px;
+  --overlay-gap: 4px;
   --marker-width: 3px;
   --sidebar-width: 232px;
   --page-measure: 720px;
@@ -265,6 +270,10 @@
   --type-ui-leading: 1.45;
   --type-ui-weight: 400;
   --type-ui-tracking: 0;
+  --type-label-size: 14px;
+  --type-label-leading: 1.45;
+  --type-label-weight: 500;
+  --type-label-tracking: 0;
   --type-description-size: 13px;
   --type-description-leading: 1.4;
   --type-description-weight: 450;

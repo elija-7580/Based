@@ -81,8 +81,8 @@ function ToolCard({ part, approval, onAnswer }: { part: ChatPart; approval: Pend
       {approval ? (
         <div className="chat-approval" role="group" aria-label="Approval needed">
           <span className="t-desc">Based wants to {(TOOL_LABELS[part.toolName] ?? part.toolName).toLowerCase()}{part.detail ? ` “${part.detail}”` : ""}.</span>
-          <Button size="sm" variant="primary" label="Allow" onClick={() => onAnswer(part.id, true)} />
-          <Button size="sm" variant="ghost" label="Deny" onClick={() => onAnswer(part.id, false)} />
+          <Button variant="primary" label="Allow" onClick={() => onAnswer(part.id, true)} />
+          <Button variant="ghost" label="Deny" onClick={() => onAnswer(part.id, false)} />
         </div>
       ) : null}
     </div>
@@ -116,7 +116,7 @@ function AssistantTurn({ turn, last, approvals, onAnswer, onRetry, ordinal }: { 
           {turn.notices.map((n, i) => <p key={i} className="t-meta">{n}</p>)}
           {turn.error && turn.stopped ? <p className="t-meta" data-testid="stopped">Stopped.</p> : null}
           {turn.error && !turn.stopped ? (
-            <Banner status="error" title="The answer failed" description={turn.error} endContent={last ? <Button size="sm" label="Retry" onClick={onRetry} /> : undefined} />
+            <Banner status="error" title="The answer failed" description={turn.error} endContent={last ? <Button label="Retry" onClick={onRetry} /> : undefined} />
           ) : null}
           {turnExtras?.(ordinal)}
           {meta && turn.done ? <span className="t-data chat-meta" data-testid="turn-usage">{meta}</span> : null}

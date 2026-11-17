@@ -18,7 +18,7 @@ export interface BasedTabsProps {
   size?: "sm" | "md";
 }
 
-export function BasedTabs({ label, tabs, value, onChange, size = "sm" }: BasedTabsProps) {
+export function BasedTabs({ label, tabs, value, onChange, size = "md" }: BasedTabsProps) {
   return (
     <TabList role="tablist" aria-label={label} value={value} onChange={onChange} size={size}>
       {tabs.map((t) => <Tab key={t.id} value={t.id} label={t.label} {...(t.panelId ? { panelId: t.panelId } : {})} />)}

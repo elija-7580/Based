@@ -46,7 +46,7 @@ Schalter aus Einstellungen → My settings:
 | Schalter | Wirkung auf Astryx |
 |---|---|
 | Theme Hell / Dunkel / System | `<Theme mode>`; „System“ wird in `appearance.ts` aufgelöst, damit `data-theme` für tokens.css und Astryx gleich ist |
-| Dichte | eigenes Theme `based-compact` (Steuerhöhen 24/28/32 statt 28/32/36) |
+| Dichte | eigenes Theme `based-compact` (Steuerhöhen 24/28/36 statt 28/32/40) |
 | Stil Bold | über `--font-ui`, `--font-head`, `--size-title`, `--weight-title` aus tokens.css |
 | Marker, Calm | keine – der Marker ist kein Theme-Wert |
 
@@ -101,6 +101,9 @@ registerSettingsSection({ id: "ai-keys", page: "agents", title: "API keys", comp
 für Zeilen: `screens/settings/parts.tsx` (`Group`, `Row`, `Value`). Adresse einer Seite: `#prefs-<id>`.
 
 ## Regeln
+
+- Welches Element wofür, in welcher Größe und mit welchen Zuständen: [`elements.md`](elements.md). Die Bausteine
+  hier setzen das um; `size` wird weggelassen (= `md`).
 
 - Fertig gebaute CSS, kein StyleX-Compiler: keine `xstyle`-Props, keine Vorlagen, die StyleX brauchen.
 - Nichts von fremden Servern laden (Schriften, Icons). `astryx theme add` nicht benutzen, es bindet `fonts.css` ein.

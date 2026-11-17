@@ -32,7 +32,7 @@ export function AstryxKit() {
             <BasedButton label="Cancel" variant="ghost" />
             <BasedButton label="Delete" variant="danger" />
             <BasedButton label="Disabled" disabled />
-            <BasedButton label="Small" size="sm" />
+            <BasedButton label="Small" />
             <BasedIconButton label="Close" tooltip="Close (Esc)" icon={<Icon name="close" size={16} />} />
             <BasedIconButton label="Add to Favorites" pressed={false} icon={<Icon name="star" size={16} />} />
             <Badge label="3" />

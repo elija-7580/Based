@@ -29,7 +29,7 @@ function HangItem({ hang, withDay = false }: { hang: HangRecord; withDay?: boole
     <Lines gap={1} testID="hang-item">
       <Row label={label} hint={hint}>
         {hang.breadcrumbs.length ? (
-          <BasedButton label={open ? "Hide steps" : `Steps (${hang.breadcrumbs.length})`} variant="ghost" size="sm" onClick={() => setOpen((o) => !o)}
+          <BasedButton label={open ? "Hide steps" : `Steps (${hang.breadcrumbs.length})`} variant="ghost" onClick={() => setOpen((o) => !o)}
             ariaLabel={open ? "Hide the steps before this hang" : "Show the steps before this hang"} />
         ) : null}
       </Row>
@@ -45,7 +45,7 @@ function HangList({ hangs, withDay = false, testID }: { hangs: readonly HangReco
   return (
     <Lines gap={3} testID={testID}>
       {shown.map((h, i) => <HangItem key={`${h.at}-${h.source}-${i}`} hang={h} withDay={withDay} />)}
-      {newest.length > SHOWN ? <BasedButton label={all ? "Show fewer" : `Show all ${newest.length}`} variant="ghost" size="sm" onClick={() => setAll((a) => !a)} /> : null}
+      {newest.length > SHOWN ? <BasedButton label={all ? "Show fewer" : `Show all ${newest.length}`} variant="ghost" onClick={() => setAll((a) => !a)} /> : null}
     </Lines>
   );
 }
@@ -57,7 +57,7 @@ function PreviousSession({ session }: { session: HangSessionData }) {
   return (
     <Lines gap={3} testID="hang-session">
       <Row label={`Session from ${day(session.startedAt)}`} hint={hint}>
-        {session.hangs.length ? <BasedButton label={open ? "Hide hangs" : "Show hangs"} variant="ghost" size="sm" onClick={() => setOpen((o) => !o)} /> : null}
+        {session.hangs.length ? <BasedButton label={open ? "Hide hangs" : "Show hangs"} variant="ghost" onClick={() => setOpen((o) => !o)} /> : null}
       </Row>
       {open ? <HangList hangs={session.hangs} withDay testID="hang-session-list" /> : null}
     </Lines>
@@ -101,7 +101,7 @@ export function HangsSection(_: SettingsSectionProps) {
       ) : null}
       {any ? (
         <Row label="All hangs" hint="This session and earlier ones, with steps — as text">
-          <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy hangs"} variant="ghost" size="sm" onClick={copy} />
+          <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy hangs"} variant="ghost" onClick={copy} />
         </Row>
       ) : null}
       {hangs.length ? <HangList hangs={hangs} testID="hangs-list" /> : null}

@@ -126,7 +126,7 @@ function PrivacySection({ client: store }: SettingsSectionProps) {
         <Row label="What to redact" />
         <div className="brain-settings-kinds">
           {REDACT_KINDS.map((k) => (
-            <Switch key={k} size="sm" label={REDACT_KIND_LABELS[k]} value={r.kinds.includes(k)} onChange={(on) => update({ kinds: on ? [...r.kinds, k] : r.kinds.filter((x) => x !== k) })} />
+            <Switch key={k} label={REDACT_KIND_LABELS[k]} value={r.kinds.includes(k)} onChange={(on) => update({ kinds: on ? [...r.kinds, k] : r.kinds.filter((x) => x !== k) })} />
           ))}
         </div>
         <TextArea label="Names to redact" description={`One per line. People from your memories are included${known.length ? ` (${known.length})` : ""}.`} value={names} onChange={setNames}

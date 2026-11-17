@@ -487,16 +487,16 @@ pre.bx2-file-preview { font-family: var(--font-mono); font-size: var(--type-data
 
 .bx2-link { display: flex; flex-direction: column; gap: var(--space-1); min-width: 300px; }
 .bx2-link-input {
-  height: 30px;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--bg);
+  height: var(--control-md);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
   outline: none;
 }
-.bx2-link-input:focus { border-color: var(--ink-2); }
+.bx2-link-input:focus-visible { outline: var(--space-half) solid var(--focus-ring); outline-offset: calc(-1 * var(--space-half)); }
 .bx2-menu-path { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui); }
 .bx2-placeholder-btn {
   display: flex;
@@ -645,11 +645,12 @@ pre.bx2-file-preview { font-family: var(--font-mono); font-size: var(--type-data
 
 /* BSD-407: Suchfeld im Blockmenü (wie im alten Editor) */
 .bx2-menu-search {
-  width: 100%; min-height: var(--space-6); margin-bottom: var(--space-1); padding: 0 var(--space-3); border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: inherit;
+  width: 100%; min-height: var(--control-md); margin-bottom: var(--space-1); padding: 0 var(--space-3); border: 0;
+  border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font: inherit; flex: none;
 }
 .bx2-menu-search::placeholder { color: var(--muted); }
-.bx2-menu-search:focus-visible { outline: 1px solid var(--focus-ring); border-color: var(--focus-ring); }
+.bx2-menu-search:focus-visible { outline: var(--space-half) solid var(--focus-ring); outline-offset: calc(-1 * var(--space-half)); }
+.bx2-menu-check { flex: none; margin-left: auto; padding-left: var(--space-3); color: var(--ink); }
 .bx2-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }
 .bx2-menu-item:focus-visible, .bx2-menu-item:focus { outline: none; background: var(--surface-raised); }
 .bx2-image-empty { display: flex; flex-direction: column; gap: var(--space-2); }

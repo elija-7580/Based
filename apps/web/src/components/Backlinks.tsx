@@ -59,7 +59,7 @@ export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient;
                     <span className="backlink-title">{m.pageTitle}</span>
                     <span className="t-desc unlinked-snippet">{m.snippet}</span>
                   </button>
-                  <BasedButton label="Link" size="sm" variant="ghost" ariaLabel={`Link the mention in ${m.pageTitle}`} onClick={() => link(m)} />
+                  <BasedButton label="Link" variant="ghost" ariaLabel={`Link the mention in ${m.pageTitle}`} onClick={() => link(m)} />
                 </li>
               ))}
             </ul>

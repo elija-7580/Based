@@ -32,10 +32,10 @@ export function BrainComposerBar({ brain, onDecided, onUseLocal }: { brain: Brai
           <span className="t-desc">
             {check.hits.length} sensitive detail{check.hits.length === 1 ? "" : "s"}: {check.hits.slice(0, 4).map((h) => `${REDACT_KIND_LABELS[h.kind] ?? h.kind} ${mask(h.value)}`).join(", ")}{check.hits.length > 4 ? " …" : ""}
           </span>
-          <Button size="sm" variant="secondary" label="Redact and send" onClick={() => { brain.decide("redact"); onDecided?.(); }} />
-          <Button size="sm" variant="ghost" label="Send anyway" onClick={() => { brain.decide("raw"); onDecided?.(); }} />
-          {onUseLocal ? <Button size="sm" variant="ghost" label="Use local model" onClick={() => { brain.decide("raw"); onUseLocal(); onDecided?.(); }} /> : null}
-          <Button size="sm" variant="ghost" label="Cancel" onClick={() => brain.dismissPrivacyCheck()} />
+          <Button variant="secondary" label="Redact and send" onClick={() => { brain.decide("redact"); onDecided?.(); }} />
+          <Button variant="ghost" label="Send anyway" onClick={() => { brain.decide("raw"); onDecided?.(); }} />
+          {onUseLocal ? <Button variant="ghost" label="Use local model" onClick={() => { brain.decide("raw"); onUseLocal(); onDecided?.(); }} /> : null}
+          <Button variant="ghost" label="Cancel" onClick={() => brain.dismissPrivacyCheck()} />
         </div>
       </div>
     );
@@ -91,7 +91,7 @@ export function BrainComposerBar({ brain, onDecided, onUseLocal }: { brain: Brai
               : `${sensitive} sensitive detail${sensitive === 1 ? "" : "s"} in this message.`}
           </span>
           {!settings.redact.enabled ? (
-            <Button size="sm" variant={s.redactOnce ? "ghost" : "secondary"} label={s.redactOnce ? "Don't redact" : "Redact sensitive details"} onClick={() => brain.setRedactOnce(!s.redactOnce)} />
+            <Button variant={s.redactOnce ? "ghost" : "secondary"} label={s.redactOnce ? "Don't redact" : "Redact sensitive details"} onClick={() => brain.setRedactOnce(!s.redactOnce)} />
           ) : null}
         </div>
       ) : null}
@@ -125,7 +125,7 @@ export function TurnBrainExtras({ events, brain }: { events: readonly StoredChat
     <div className="brain-turn">
       {skills.length > 0 || redaction ? (
         <div className="brain-turn-chips">
-          {skills.map((k) => <Token key={k.id} size="sm" label={k.name} description={k.description} icon={<Icon name="research" size={12} />} />)}
+          {skills.map((k) => <Token key={k.id} label={k.name} description={k.description} icon={<Icon name="research" size={12} />} />)}
           {redaction ? <RedactionChip ev={redaction} /> : null}
         </div>
       ) : null}
@@ -164,8 +164,8 @@ function MemoryCard({ m, brain }: { m: PendingMemory; brain: BrainChat }) {
         collapsible={false}
         endContent={
           <span className="brain-memory-actions">
-            <Button size="sm" variant="primary" label="Save" isDisabled={busy} onClick={() => { setBusy(true); void brain.saveMemory(m).finally(() => setBusy(false)); }} />
-            <Button size="sm" variant="ghost" label="Dismiss" isDisabled={busy} onClick={() => { setBusy(true); void brain.dismissMemory(m).finally(() => setBusy(false)); }} />
+            <Button variant="primary" label="Save" isDisabled={busy} onClick={() => { setBusy(true); void brain.saveMemory(m).finally(() => setBusy(false)); }} />
+            <Button variant="ghost" label="Dismiss" isDisabled={busy} onClick={() => { setBusy(true); void brain.dismissMemory(m).finally(() => setBusy(false)); }} />
           </span>
         }
       />
