@@ -307,6 +307,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           aria-expanded={!row.collapsed}
           aria-selected={false}
           aria-label={row.name}
+          tabIndex={-1}
           data-teamspace={row.id}
           className={"tree-row tree-teamspace" + dropClass}
           style={{ ...style, paddingLeft: indent(0) }}
@@ -631,6 +632,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
             setHidden(true);
           }
         }}
+        data-arrow-nav="off"
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") resize(width - 16);
           else if (e.key === "ArrowRight") resize(width + 16);

@@ -20,7 +20,11 @@ export type ShortcutAction =
   | { kind: "find" }
   | { kind: "findStep"; delta: 1 | -1 }
   /** BSD-319: „Problem melden“ (⇧⌘B). */
-  | { kind: "reportProblem" };
+  | { kind: "reportProblem" }
+  /** Tastatur überall: Übersicht aller Kürzel (⇧⌘/ = ⌘?), in die Seitenleiste und zurück (⇧⌘E; ⌘0 bleibt dem Browser-Zoom), Startseite (⇧⌘H). */
+  | { kind: "shortcuts" }
+  | { kind: "focusSidebar" }
+  | { kind: "home" };
 
 /**
  * BSD-310: In der Desktop-App gehört ⌘W dem Menü (lib.rs „Close Tab“ → `desktop://close-tab` an das Fenster vorn,
@@ -57,6 +61,10 @@ export function matchShortcut(e: KeyLike): ShortcutAction | undefined {
     if (code === "KeyG" || k === "g") return { kind: "findStep", delta: -1 };
     if (code === "KeyB" || k === "b") return { kind: "reportProblem" };
     if (code === "KeyU" || k === "u") return { kind: "openParent" };
+    if (code === "KeyH" || k === "h") return { kind: "home" };
+    if (code === "KeyE" || k === "e") return { kind: "focusSidebar" };
+    // ⇧ macht aus „/“ ein „?“ (US) bzw. je nach Belegung etwas anderes: die physische Taste zählt
+    if (code === "Slash" || k === "?") return { kind: "shortcuts" };
     if (code === "BracketLeft" || code === "BracketRight") return { kind: "cycleTab", delta: code === "BracketRight" ? 1 : -1 };
     return undefined;
   }
