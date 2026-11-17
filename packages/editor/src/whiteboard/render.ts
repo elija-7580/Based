@@ -4,7 +4,7 @@
 import { getStroke } from "perfect-freehand";
 import {
   connectorPoints, GRID_STEP, gridStepFor, HANDLES, handlePoint, inkPointsOf, isConnector, worldRectToScreen,
-  type BoardRect as Rect, type BoardSize as Size, type InkPoint, type WBConnector, type WBObject, type WBShape,
+  type BoardRect as Rect, type BoardSize as Size, type InkPoint, type TextPreview, type WBConnector, type WBObject, type WBShape,
 } from "@based/core";
 import { minimapTransform, type BoardScene, type LiveInk } from "./controller.js";
 
@@ -64,8 +64,20 @@ export function readBoardTheme(el: Element): BoardTheme {
 
 type Ctx = CanvasRenderingContext2D;
 
-/** Geladene Bilder nach Adresse; `undefined`: (noch) nicht da – die Fläche zeigt dann einen Platzhalter. */
-export type BoardImages = (ref: string) => CanvasImageSource | undefined;
+/**
+ * Was die Fläche aus Dateien braucht, nach Adresse; `undefined`: (noch) nicht da – dann zeigt sie einen Platzhalter
+ * und die Ansicht meldet sich, sobald es geladen ist. Gefragt wird nur für Objekte, die zu sehen sind.
+ */
+export interface BoardResources {
+  image(ref: string): CanvasImageSource | undefined;
+  text?(ref: string, name: string): TextPreview | undefined;
+  /** PDF-Seite, mindestens `pxWidth` Gerätepixel breit. */
+  pdf?(ref: string, page: number, pxWidth: number): CanvasImageSource | undefined;
+}
+export type BoardImages = BoardResources | ((ref: string) => CanvasImageSource | undefined);
+const resourcesOf = (r: BoardImages | undefined): BoardResources | undefined => (typeof r === "function" ? { image: r } : r);
+/** Höhe der Kopfzeile einer Vorschau-Karte (Welt-px) – die Ansicht legt eingebettete Inhalte darunter. */
+export const PREVIEW_HEADER = 40;
 
 /** Dateigröße für Menschen. */
 export function fileSizeLabel(bytes: number): string {
@@ -230,10 +242,71 @@ export function drawLiveInk(ctx: Ctx, live: LiveInk, theme: BoardTheme, camera: 
 function farFill(theme: BoardTheme, o: WBShape): string {
   if (o.kind === "note") return theme.notes[String(o.style?.color ?? "blue")] || theme.raised;
   if (o.kind === "frame") return theme.raised;
+  if (o.kind === "file" && o.style?.view === "pdf") return "white";
   return o.kind === "ink" || o.kind === "text" ? theme.muted : theme.border;
 }
 
-function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editing = false, images?: BoardImages) {
+/** Kopfzeile einer Vorschau-Karte: Kachel mit der Art, Name, Angaben. */
+function drawPreviewFrame(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, legible: (size: number) => boolean) {
+  roundRect(ctx, o.x, o.y, o.w, o.h, 14);
+  ctx.fillStyle = theme.card;
+  ctx.fill();
+  ctx.lineWidth = 1 / zoom;
+  ctx.strokeStyle = theme.line;
+  ctx.stroke();
+  const name = String(o.style?.name ?? "File"), mime = String(o.style?.mime ?? "");
+  roundRect(ctx, o.x + 10, o.y + 9, 40, 22, 7);
+  ctx.fillStyle = theme.raised;
+  ctx.fill();
+  if (legible(10.5)) drawText(ctx, theme, fileKindLabel(name, mime), { x: o.x + 10, y: o.y + 9, w: 40, h: 22 }, { size: 10.5, weight: 600, color: theme.muted, lineHeight: 1.3, align: "center", middle: true });
+  const size = fileSizeLabel(Number(o.style?.size ?? 0));
+  if (legible(13)) drawText(ctx, theme, name, { x: o.x + 60, y: o.y + 10, w: o.w - 72 - (size ? 64 : 0), h: 20 }, { size: 13, weight: 600, color: theme.ink, lineHeight: 1.5 });
+  if (size && legible(12)) {
+    ctx.font = `500 12px ${theme.font}`;
+    ctx.fillStyle = theme.muted;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(size, o.x + o.w - 12, o.y + 20);
+  }
+}
+
+/** Textvorschau: Zeilen in fester Breite; ein Chat-/Agent-Log als Gespräch (wer in gedämpfter Zeile, darunter was). */
+function drawTextPreview(ctx: Ctx, theme: BoardTheme, o: WBShape, preview: TextPreview | undefined, legible: (size: number) => boolean) {
+  const body = { x: o.x + 14, y: o.y + PREVIEW_HEADER + 4, w: o.w - 28, h: o.h - PREVIEW_HEADER - 14 };
+  if (body.h < 16 || !legible(12)) return;
+  if (!preview) { drawText(ctx, theme, "Loading…", body, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.5 }); return; }
+  if (preview.lines.length === 0) { drawText(ctx, theme, "Empty file", body, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.5 }); return; }
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(body.x, body.y, body.w, body.h);
+  ctx.clip();
+  const font = theme.font;
+  const mono = `ui-monospace, "SF Mono", Menlo, Consolas, monospace`;
+  let y = body.y;
+  for (const line of preview.lines) {
+    if (y >= body.y + body.h) break;
+    if (preview.chat) {
+      drawText(ctx, theme, line.role ?? "", { x: body.x, y, w: body.w, h: 16 }, { size: 11, weight: 600, color: theme.muted, lineHeight: 1.45 });
+      y += 16;
+      ctx.font = `400 13px ${font}`;
+      const rows = Math.min(6, Math.max(1, wrapText((s) => ctx.measureText(s).width, line.text, body.w).length));
+      drawText(ctx, theme, line.text, { x: body.x, y, w: body.w, h: rows * 19 }, { size: 13, weight: 400, color: theme.ink, lineHeight: 19 / 13 });
+      y += rows * 19 + 8;
+    } else {
+      // Ohne Umbruch (wie in einem Editor): eine Zeile der Datei ist eine Zeile der Vorschau.
+      ctx.font = `400 12px ${mono}`;
+      ctx.fillStyle = theme.ink;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      if (line.text) ctx.fillText(line.text.length > 160 ? line.text.slice(0, 160) : line.text, body.x, y + 9);
+      y += 18;
+    }
+  }
+  ctx.restore();
+}
+
+function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editing = false, images?: BoardImages, dpr = 1) {
+  const res = resourcesOf(images);
   // Fernsicht: ein Objekt, das auf dem Bildschirm nur wenige px groß ist, wird ein Rechteck – bei Tausenden
   // sichtbaren Objekten (weit herausgezoomt) kostet sonst jeder Pfad mit Rundung und Rand.
   if (Math.max(o.w, o.h) * zoom < 8 || (zoom < 0.2 && !o.rot && o.kind !== "ink" && o.kind !== "text" && !(o.kind === "shape" && o.style?.shape && o.style.shape !== "rect"))) {
@@ -301,7 +374,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       break;
     }
     case "image": {
-      const img = o.ref ? images?.(o.ref) : undefined;
+      const img = o.ref ? res?.image(o.ref) : undefined;
       if (img) {
         ctx.drawImage(img, o.x, o.y, o.w, o.h);
         break;
@@ -314,6 +387,25 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       break;
     }
     case "file": {
+      const view = o.style?.view;
+      if (view === "pdf") {
+        // Eine Seite des Ausdrucks: weißes Blatt (auch im dunklen Thema – es ist ein Dokument), darauf die Seite.
+        ctx.fillStyle = "white";
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+        const page = Number(o.style?.page ?? 1);
+        const img = o.ref ? res?.pdf?.(o.ref, page, o.w * zoom * dpr) : undefined;
+        if (img) ctx.drawImage(img, o.x, o.y, o.w, o.h);
+        else if (legible(12)) drawText(ctx, theme, `${String(o.style?.name ?? "PDF")} · page ${page}`, { x: o.x + 16, y: o.y + 12, w: o.w - 32, h: 20 }, { size: 12, weight: 500, color: "gray", lineHeight: 1.4 });
+        ctx.lineWidth = hair;
+        ctx.strokeStyle = theme.line;
+        ctx.strokeRect(o.x, o.y, o.w, o.h);
+        break;
+      }
+      if (view === "text" || view === "html" || view === "video" || view === "audio") {
+        drawPreviewFrame(ctx, theme, o, zoom, legible);
+        if (view === "text") drawTextPreview(ctx, theme, o, o.ref ? res?.text?.(o.ref, String(o.style?.name ?? "")) : undefined, legible);
+        break;
+      }
       roundRect(ctx, o.x, o.y, o.w, o.h, 14);
       ctx.fillStyle = theme.card;
       ctx.fill();
@@ -422,6 +514,7 @@ export function drawBoard(ctx: Ctx, scene: BoardScene, theme: BoardTheme, size: 
  * eigene Ebene und legt beim Schreiben nur noch den laufenden Strich darüber (ein Bild kopieren statt alles neu).
  */
 export function drawBoardObjects(ctx: Ctx, scene: BoardScene, theme: BoardTheme, size: Size, dpr: number, images?: BoardImages) {
+  // images: Bilder, Textvorschauen und PDF-Seiten (BoardResources)
   const { camera } = scene;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = theme.bg;
@@ -432,7 +525,7 @@ export function drawBoardObjects(ctx: Ctx, scene: BoardScene, theme: BoardTheme,
   ctx.setTransform(dpr * camera.zoom, 0, 0, dpr * camera.zoom, -camera.x * camera.zoom * dpr, -camera.y * camera.zoom * dpr);
   for (const o of scene.objects) {
     if (isConnector(o)) drawConnector(ctx, theme, o, scene.byID, camera.zoom, scene.editing === o.id);
-    else drawShape(ctx, theme, o, camera.zoom, scene.editing === o.id, images);
+    else drawShape(ctx, theme, o, camera.zoom, scene.editing === o.id, images, dpr);
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }

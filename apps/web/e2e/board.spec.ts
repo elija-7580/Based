@@ -470,3 +470,60 @@ test("Dateien: Bild und HTML-Datei ablegen – Bild als Bild, Datei als Karte; b
   // Die Datei läuft nie in der App: der Titel bleibt der der Seite.
   expect(await page.title()).not.toBe("ran");
 });
+
+/** Kleinstes gültiges PDF mit `n` leeren A6-Seiten (Querverweis-Tabelle stimmt, damit pdf.js es ohne Reparatur liest). */
+function tinyPdf(n: number): Buffer {
+  const kids = Array.from({ length: n }, (_, i) => `${3 + i} 0 R`).join(" ");
+  const objs = ["<< /Type /Catalog /Pages 2 0 R >>", `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`, ...Array.from({ length: n }, () => "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 298 420] >>")];
+  let out = "%PDF-1.4\n";
+  const offsets: number[] = [];
+  objs.forEach((o, i) => { offsets.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xref = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(out, "latin1");
+}
+
+test("Dateien in drei Stufen: PDF als Ausdruck (je Seite ein Objekt), Agent-Log und HTML als Vorschau; HTML läuft ohne Skripte", async ({ page, browserName }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  const log = [{ role: "user", content: "Fix the sync bug in the queue" }, { role: "assistant", content: [{ type: "text", text: "Looking at the retry path." }, { type: "tool_use", name: "Bash" }] }, { role: "assistant", content: "Done: the queue now backs off." }]
+    .map((l) => JSON.stringify(l)).join("\n");
+  await page.getByTestId("board-file-input").setInputFiles([{ name: "slides.pdf", mimeType: "application/pdf", buffer: tinyPdf(2) }]);
+  await expect(board).toHaveAttribute("data-objects", "2");
+  await page.getByTestId("board-file-input").setInputFiles([{ name: "agent-session.jsonl", mimeType: "", buffer: Buffer.from(log) }]);
+  await expect(board).toHaveAttribute("data-objects", "3");
+  await page.getByTestId("board-file-input").setInputFiles([
+    { name: "report.html", mimeType: "text/html", buffer: Buffer.from("<h1>Weekly report</h1><p>All green.</p><script>parent.document.title='ran'</script><img src='https://example.com/x.png'>") },
+  ]);
+  await expect(board).toHaveAttribute("data-objects", "4");
+  await board.focus();
+  const embed = page.getByTestId("board-embed");
+  await expect(embed).toHaveCount(1);
+  const frame = embed.locator("iframe");
+  await expect(frame).toHaveAttribute("sandbox", "");
+  await expect(page.frameLocator('[data-testid="board-embed"] iframe').locator("h1")).toHaveText("Weekly report");
+  expect(await page.title()).not.toBe("ran");
+  // Eingebettetes fängt keine Zeiger ab, solange die Karte nicht gewählt ist.
+  await page.keyboard.press("Escape");
+  await expect(embed).not.toHaveAttribute("data-active", "");
+  await page.mouse.move(0, 0);
+  expect(await overflows(page)).toEqual([]);
+  await page.waitForTimeout(600);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-html-light.png` });
+  await page.keyboard.press("ControlOrMeta+0");
+  await page.waitForTimeout(900);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-previews-light.png` });
+});
+
+test("Einfügen: kurzer Text wird ein Text-Objekt", async ({ page }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  await board.focus();
+  await board.evaluate((el) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", "Remember: residual plots are on the exam");
+    el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
+  });
+  await expect(board).toHaveAttribute("data-objects", "1");
+  await expect(board).toHaveAttribute("data-selected", "1");
+});

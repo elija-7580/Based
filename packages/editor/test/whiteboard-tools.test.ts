@@ -244,12 +244,12 @@ describe("Dateien", () => {
     const { ctl, session } = setup();
     const ids = ctl.addFiles([
       { ref: "based-asset:aaa", name: "board.jpg", mime: "image/jpeg", size: 2_400_000, width: 4000, height: 3000 },
-      { ref: "based-asset:bbb", name: "report.html", mime: "text/html", size: 5120 },
+      { ref: "based-asset:bbb", name: "data.bin", mime: "application/octet-stream", size: 5120 },
     ], { x: 500, y: 300 });
     expect(ids).toHaveLength(2);
     const [img, file] = shapes(session);
     expect(img).toMatchObject({ kind: "image", w: 480, h: 360, ref: "based-asset:aaa", x: 260, y: 120 });
-    expect(file).toMatchObject({ kind: "file", w: 264, h: 72, ref: "based-asset:bbb", style: { name: "report.html", mime: "text/html", size: 5120 } });
+    expect(file).toMatchObject({ kind: "file", w: 264, h: 72, ref: "based-asset:bbb", style: { name: "data.bin", mime: "application/octet-stream", size: 5120 } });
     expect(file!.y).toBe(img!.y + img!.h + 16);
     expect(ctl.selection.size).toBe(2);
     ctl.undo();
@@ -275,5 +275,47 @@ describe("Dateien", () => {
     click(ctl, 300, 300);
     expect(opened).toEqual(["based-asset:eee"]);
     expect(ctl.editing).toBeUndefined();
+  });
+});
+
+describe("Dateien in drei Stufen", () => {
+  it("PDF wird ein Ausdruck: je Seite ein Objekt in ihrer Form, untereinander; ein Undo nimmt alle", () => {
+    const { ctl, session } = setup();
+    ctl.addFiles([{ ref: "based-asset:pdf", name: "slides.pdf", mime: "application/pdf", size: 90_000, pages: [{ width: 595, height: 842 }, { width: 842, height: 595 }] }], { x: 500, y: 300 });
+    const [a, b] = shapes(session);
+    expect(a).toMatchObject({ kind: "file", w: 560, h: 792, style: { view: "pdf", page: 1, pages: 2 } });
+    expect(b).toMatchObject({ w: 560, h: 396, style: { page: 2 } });
+    expect(b!.y).toBe(a!.y + a!.h + 16);
+    ctl.undo();
+    expect(session.objects).toHaveLength(0);
+  });
+  it("PDF ohne lesbare Seiten bleibt eine Dateikarte", () => {
+    const { ctl, session } = setup();
+    ctl.addFiles([{ ref: "based-asset:x", name: "locked.pdf", mime: "application/pdf", size: 1 }]);
+    expect(shapes(session)[0]).toMatchObject({ w: 264, h: 72 });
+    expect(shapes(session)[0]!.style?.view).toBeUndefined();
+  });
+  it("Agent-Log, HTML, Video und Audio bekommen eine Vorschau; Unbekanntes eine Karte", () => {
+    const { ctl, session } = setup();
+    ctl.addFiles([
+      { ref: "r1", name: "session.jsonl", mime: "", size: 10 }, { ref: "r2", name: "report.html", mime: "text/html", size: 10 },
+      { ref: "r3", name: "clip.mp4", mime: "video/mp4", size: 10 }, { ref: "r4", name: "memo.m4a", mime: "audio/mp4", size: 10 }, { ref: "r5", name: "data.xlsx", mime: "application/zip", size: 10 },
+    ]);
+    expect(shapes(session).map((o) => o.style?.view)).toEqual(["text", "html", "video", "audio", undefined]);
+    expect(shapes(session)[0]).toMatchObject({ w: 440, h: 320 });
+  });
+  it("Lasso um Handschrift auf einer PDF-Seite nimmt die Seite nicht mit", () => {
+    const { ctl } = setup();
+    ctl.addFiles([{ ref: "p", name: "a.pdf", mime: "application/pdf", size: 1, pages: [{ width: 200, height: 200 }] }], { x: 500, y: 350 });
+    ctl.setTool("pen");
+    drag(ctl, wave(420, 350, 30));
+    ctl.setTool("lasso");
+    drag(ctl, [[150, 20], [850, 20], [850, 680], [150, 680], [150, 20]]);
+    expect(ctl.selection.size).toBe(1);
+  });
+  it("eingefügter Text wird ein Text-Objekt in der Mitte", () => {
+    const { ctl, session } = setup();
+    ctl.addText("line one\r\nline two  \n");
+    expect(shapes(session)[0]).toMatchObject({ kind: "text", text: "line one\nline two", h: 52, x: 340 });
   });
 });

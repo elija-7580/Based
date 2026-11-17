@@ -4,10 +4,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { registerContextItems } from "@based/ui/native";
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
-import { screenToWorld, zoomLabel, type Camera, type WorkspaceStore } from "@based/core";
+import { boardFileView, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
 import { BlockIcon, type BlockIconName } from "../blocks/icons.js";
 import { BOARD_TOOLS, BoardController, HIGHLIGHT_COLORS, isEditTool, minimapTransform, PEN_COLORS, type BoardEdit, type BoardFile, type BoardTool } from "./controller.js";
 import { BoardImageCache } from "./images.js";
+import { BoardPdfCache, pdfPageSizes } from "./pdf.js";
+import { BoardTextCache } from "./texts.js";
+import { PREVIEW_HEADER } from "./render.js";
+import { PASTE_TEXT_MAX } from "./controller.js";
 import { drawBoardObjects, drawBoardOverlay, drawLiveInk, drawMinimap, highlightToken, penToken, readBoardTheme, type BoardTheme } from "./render.js";
 import { BoardSession } from "./session.js";
 import "./board.css";
@@ -23,6 +27,50 @@ export interface BoardViewProps {
 }
 
 interface FileHost { upload: ((file: File) => Promise<string>) | undefined; resolve: ((url: string) => Promise<string>) | undefined }
+
+/** Höchstens so viel HTML wird für die Vorschau gelesen, und so viele eingebettete Vorschauen laufen gleichzeitig. */
+const HTML_PREVIEW_BYTES = 2 * 1024 * 1024;
+const EMBEDS_MAX = 4;
+/** Vorschau ohne Netz und ohne Skripte: die Datei darf nichts nachladen und nichts ausführen. */
+const HTML_GUARD = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; media-src data: blob:; style-src 'unsafe-inline'; font-src data:"><base target="_blank">`;
+const isEmbed = (o: { kind: string; style?: Record<string, unknown> | undefined }) => o.kind === "file" && (o.style?.view === "html" || o.style?.view === "video" || o.style?.view === "audio");
+
+/** Eingebetteter Inhalt einer Vorschau-Karte (HTML, Video, Audio) – nur da, solange die Karte zu sehen ist. */
+function BoardEmbed({ obj, camera, active, resolve }: { obj: WBShape; camera: Camera; active: boolean; resolve: ((url: string) => Promise<string>) | undefined }) {
+  const view = String(obj.style?.view);
+  const [src, setSrc] = useState<{ url?: string; html?: string; failed?: boolean }>({});
+  const ref = obj.ref;
+  useEffect(() => {
+    let alive = true;
+    if (!ref || !resolve) { setSrc({ failed: true }); return; }
+    void (async () => {
+      try {
+        const url = await resolve(ref);
+        if (view !== "html") { if (alive) setSrc({ url }); return; }
+        const blob = await (await fetch(url)).blob();
+        const html = await blob.slice(0, HTML_PREVIEW_BYTES).text();
+        if (alive) setSrc({ html: HTML_GUARD + html });
+      } catch {
+        if (alive) setSrc({ failed: true });
+      }
+    })();
+    return () => { alive = false; };
+  }, [ref, resolve, view]);
+  const style = {
+    left: (obj.x - camera.x) * camera.zoom, top: (obj.y + PREVIEW_HEADER - camera.y) * camera.zoom, width: obj.w, height: Math.max(0, obj.h - PREVIEW_HEADER),
+    transform: `scale(${camera.zoom})`,
+  };
+  const name = String(obj.style?.name ?? "File");
+  return (
+    <div className="wb-embed" data-view={view} data-active={active ? "" : undefined} data-testid="board-embed" style={style}>
+      {src.failed ? <p className="wb-embed-note">This file can't be shown right now.</p>
+        : view === "html" && src.html !== undefined ? <iframe className="wb-embed-frame" title={name} sandbox="" srcDoc={src.html} loading="lazy" referrerPolicy="no-referrer" />
+          : view === "video" && src.url ? <video className="wb-embed-media" src={src.url} controls preload="metadata" playsInline aria-label={name} />
+            : view === "audio" && src.url ? <audio className="wb-embed-audio" src={src.url} controls preload="metadata" aria-label={name} />
+              : <p className="wb-embed-note">Loading…</p>}
+    </div>
+  );
+}
 
 /** Maße eines Bildes lesen, ohne es ganz zu entpacken zu behalten. */
 async function imageSize(file: File): Promise<{ width: number; height: number } | undefined> {
@@ -96,6 +144,8 @@ export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl 
 
 function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: FileHost } }) {
   const picker = useRef<HTMLInputElement>(null);
+  // Gleichbleibende Funktion für die eingebetteten Vorschauen (die App reicht bei jedem Zeichnen eine neue herein).
+  const resolveFile = useRef((url: string) => host.current.resolve?.(url) ?? Promise.reject(new Error("no file store"))).current;
   const [busyFiles, setBusyFiles] = useState(0);
   /** Dateien in den Speicher legen und als Objekte ablegen (`at`: Stelle auf der Fläche in CSS-px, sonst Mitte). */
   const addFiles = async (list: readonly File[], at?: { x: number; y: number }) => {
@@ -106,8 +156,15 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
       const done: BoardFile[] = [];
       for (const file of list) {
         try {
-          const [ref, size] = await Promise.all([upload(file), imageSize(file)]);
-          done.push({ ref, name: file.name || "Untitled", mime: file.type || "application/octet-stream", size: file.size, ...(size ?? {}) });
+          const name = file.name || "Untitled", mime = file.type || "application/octet-stream";
+          const view = boardFileView(name, mime);
+          // PDF: Seitenmaße lesen, damit jede Seite als eigenes Objekt in ihrer Form entsteht. Scheitert das
+          // (verschlüsselt, kaputt), bleibt es eine Dateikarte.
+          const [ref, size, pages] = await Promise.all([
+            upload(file), view === "image" ? imageSize(file) : undefined,
+            view === "pdf" ? file.arrayBuffer().then(pdfPageSizes).catch(() => undefined) : undefined,
+          ]);
+          done.push({ ref, name, mime, size: file.size, ...(size ?? {}), ...(pages?.length ? { pages } : {}) });
         } catch { /* diese Datei ließ sich nicht ablegen; die anderen kommen trotzdem */ }
       }
       ctl.addFiles(done, at ? screenToWorld(ctl.camera, at) : undefined);
@@ -120,10 +177,23 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
   const minimap = useRef<HTMLCanvasElement>(null);
   // Die Pillen hängen an wenigen Werten; die Fläche selbst zeichnet ohne React (requestAnimationFrame).
   const session = ctl.session;
+  // Eingebettete Vorschauen (HTML, Video, Audio) sind echte Elemente über der Fläche: nur die sichtbaren, nur wenn
+  // sie groß genug sind, höchstens EMBEDS_MAX. Gibt es auf dem Board keine, kostet das nichts.
+  const embedCount = useRef({ version: -1, any: false });
+  const visibleEmbeds = (): WBShape[] => {
+    if (embedCount.current.version !== session.version) embedCount.current = { version: session.version, any: session.objects.some(isEmbed) };
+    if (!embedCount.current.any || ctl.viewport.w <= 0) return [];
+    return ctl.scene().objects.filter((o): o is WBShape => isShape(o) && isEmbed(o) && o.w * ctl.camera.zoom >= 180).slice(-EMBEDS_MAX);
+  };
+  const embedKey = () => {
+    const list = visibleEmbeds();
+    return list.length === 0 ? "" : `${ctl.camera.x},${ctl.camera.y},${ctl.camera.zoom}|${ctl.busy ? 1 : 0}|${list.map((o) => `${o.id}:${o.x},${o.y},${o.w},${o.h}`).join(";")}`;
+  };
   useSyncExternalStore(ctl.subscribe, () =>
     [ctl.tool, zoomLabel(ctl.camera.zoom), session.canUndo, session.canRedo, session.objects.length, ctl.selection.size, ctl.announcement, ctl.hint,
-      ctl.pen.color, ctl.pen.width, ctl.highlighter.color, ctl.highlighter.width, ctl.shapeKind, ctl.editing ? `${ctl.editing.id ?? "new"}@${ctl.camera.x},${ctl.camera.y}` : ""].join("|"));
+      ctl.pen.color, ctl.pen.width, ctl.highlighter.color, ctl.highlighter.width, ctl.shapeKind, embedKey(), ctl.editing ? `${ctl.editing.id ?? "new"}@${ctl.camera.x},${ctl.camera.y}` : ""].join("|"));
   const readOnly = ctl.readOnly;
+  const embeds = visibleEmbeds();
 
   useEffect(() => {
     const el = root.current, cv = canvas.current, mm = minimap.current;
@@ -143,7 +213,11 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
     let layerKey = "";
     let themeVersion = 0;
     // Bilder: erst laden, wenn sie zu sehen sind; verkleinert entpackt; begrenzte Zahl im Speicher.
-    const images = new BoardImageCache((ref) => host.current.resolve?.(ref), () => { layerKey = ""; schedule(); });
+    const loaded = () => { layerKey = ""; schedule(); };
+    const imageCache = new BoardImageCache((ref) => host.current.resolve?.(ref), loaded);
+    const textCache = new BoardTextCache((ref) => host.current.resolve?.(ref), loaded);
+    const pdfCache = new BoardPdfCache((ref) => host.current.resolve?.(ref), loaded);
+    const images = { get: { image: imageCache.get, text: textCache.get, pdf: pdfCache.get }, destroy: () => { imageCache.destroy(); textCache.destroy(); pdfCache.destroy(); } };
 
     const draw = () => {
       frame = 0;
@@ -334,10 +408,20 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
     };
     const onPaste = (e: ClipboardEvent) => {
       if (e.target instanceof HTMLTextAreaElement) return;
+      if (ctl.readOnly) return;
       const list = [...(e.clipboardData?.files ?? [])];
-      if (list.length === 0 || !host.current.upload || ctl.readOnly) return;
+      if (list.length > 0) {
+        if (!host.current.upload) return;
+        e.preventDefault();
+        void addFiles(list);
+        return;
+      }
+      // Text: kurz als Text-Objekt, lang (ein Log, ein Chat-Verlauf) als Datei mit Vorschau – so bleibt das Board klein.
+      const text = e.clipboardData?.getData("text/plain") ?? "";
+      if (text.trim() === "") return;
       e.preventDefault();
-      void addFiles(list);
+      if (text.length <= PASTE_TEXT_MAX || !host.current.upload) ctl.addText(text.slice(0, 20_000));
+      else void addFiles([new File([text], /^\s*[{[]/.test(text) ? "Pasted text.jsonl" : "Pasted text.txt", { type: "text/plain" })]);
     };
     el.addEventListener("dragover", onDragOver);
     el.addEventListener("drop", onDrop);
@@ -439,6 +523,10 @@ function BoardSurface({ ctl, host }: { ctl: BoardController; host: { current: Fi
             else if (e.key === "Tab" && edit.kind === "note") { e.preventDefault(); commit(e.currentTarget, true); }
           }} />
       ) : null}
+      {embeds.map((o) => (
+        <BoardEmbed key={o.id} obj={o} camera={ctl.camera} resolve={resolveFile}
+          active={ctl.tool === "select" && ctl.selection.size === 1 && ctl.selection.has(o.id) && !ctl.busy} />
+      ))}
       {inkTool && !readOnly ? (
         <div className="wb-pill wb-options" role="toolbar" aria-label={ctl.tool === "pen" ? "Pen options" : "Highlighter options"} data-testid="board-options">
           {(ctl.tool === "pen" ? PEN_COLORS : HIGHLIGHT_COLORS).map((c) => (
