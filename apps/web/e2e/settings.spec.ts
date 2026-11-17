@@ -186,3 +186,14 @@ for (const theme of ["light", "dark"] as const) {
     await page.screenshot({ path: `../../docs/design/screens/web-settings-sync-${theme}.png` });
   });
 }
+
+// ADR 0017 A3: im Browser sagt Einstellungen → Sync & server, ob der Browser den Workspace behält.
+test("Sync & server zeigt, ob der Browser-Speicher geschützt ist", async ({ page, browserName }) => {
+  test.skip(browserName === "webkit", "WebKit hat im flüchtigen Testprofil kein OPFS (kein Workspace im Browser)");
+  await page.goto("/#prefs-sync");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByTestId("sync-settings-status").click(); // erste Eingabe: jetzt wird angefragt
+  const row = page.getByTestId("sync-browser-keep");
+  await expect(row).toHaveText(/^(Protected|Not protected)$/);
+  await expect(page.getByText(/This browser (keeps your workspace|may clear Based's data)/)).toBeVisible();
+});

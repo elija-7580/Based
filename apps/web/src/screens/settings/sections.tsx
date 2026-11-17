@@ -21,6 +21,7 @@ import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, Rep
 import { HangsSection } from "./hangs.js";
 import { autoUpdatePref, deviceNode, fallbackHomePage, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
+import { browserKeep, keepRow } from "../../shell/storagePersist.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { clockSkewText } from "./clockSkew.js";
@@ -110,6 +111,9 @@ function SyncSection({ client, state }: SettingsSectionProps) {
     void syncConfig.flush().then(() => client.setSync(config));
   };
   const [convert, setConvert] = useState(false);
+  // ADR 0017 A3: im Browser sagen, ob der Speicher vor dem Aufräumen des Browsers geschützt ist (nicht in der Mac-App).
+  const keepState = useSyncExternalStore(browserKeep.subscribe, browserKeep.get);
+  const keep = !isTauri() && status.persistent ? keepRow(keepState, connected) : undefined;
   const disconnect = () => {
     syncConfig.set(undefined);
     setConnected(false);
@@ -133,6 +137,7 @@ function SyncSection({ client, state }: SettingsSectionProps) {
       <Row label="Status" hint={status.persistent ? "Your workspace is saved in this browser." : "This browser can't keep your workspace — changes are lost when you close the tab."}>
         <Value testID="sync-settings-status">{SYNC_LABEL[status.state]}{status.detail && status.state !== "synced" ? ` · ${status.detail}` : ""}{status.assets ? ` · ${assetsLabel(status.assets)}` : ""}</Value>
       </Row>
+      {keep ? <Row label="Browser storage" hint={keep.hint}><Value testID="sync-browser-keep">{keep.value}</Value></Row> : null}
       {status.storageWarnings?.length ? (
         <Row label="Storage" hint="These parts start empty again after a reload. Close other Based tabs and reload; if it stays, copy the report under Diagnostics.">
           <Value testID="sync-storage-warning">{status.storageWarnings.join(" ")}</Value>
