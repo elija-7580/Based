@@ -1,0 +1,61 @@
+failure 553187d806b05c911be0c132f8b62c9e4a9ce439
+  ✓  246 [webkit] › e2e/welcome.spec.ts:256:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.0s)
+
+
+  1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
+      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+
+
+      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
+      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
+    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
+          |                                           ^
+      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
+      363 |   expect(posts).toEqual([]);
+      364 |   await shot("choose");
+        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
+
+    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
+      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+
+
+      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
+      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
+    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
+          |                                           ^
+      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
+      363 |   expect(posts).toEqual([]);
+      364 |   await shot("choose");
+        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
+
+    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
+  45 skipped
+  199 passed (8.4m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf

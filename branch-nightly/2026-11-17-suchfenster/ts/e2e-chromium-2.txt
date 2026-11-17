@@ -1,0 +1,61 @@
+failure 553187d806b05c911be0c132f8b62c9e4a9ce439
+
+      256 |       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      257 |       const after = await info();
+    > 258 |       expect(after.partial).toBe(true);
+          |                             ^
+      259 |       expect(after.totalBlocks).toBe(before);
+      260 |       expect(after.fullLoads).toEqual([]);
+      261 |       await expect(page.getByRole("switch", { name: "Fast start (beta)" })).toBeChecked();
+        at /home/runner/work/Based/Based/apps/web/e2e/settings.spec.ts:258:29
+
+    Error Context: test-results/settings-Fast-start-900×60-fc6f5-tart-lädt-Based-nach-Bedarf-chromium-retry1/error-context.md
+
+  6) [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1728×1000 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      256 |       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      257 |       const after = await info();
+    > 258 |       expect(after.partial).toBe(true);
+          |                             ^
+      259 |       expect(after.totalBlocks).toBe(before);
+      260 |       expect(after.fullLoads).toEqual([]);
+      261 |       await expect(page.getByRole("switch", { name: "Fast start (beta)" })).toBeChecked();
+        at /home/runner/work/Based/Based/apps/web/e2e/settings.spec.ts:258:29
+
+    Error Context: test-results/settings-Fast-start-1728×1-0fd47-tart-lädt-Based-nach-Bedarf-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      256 |       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      257 |       const after = await info();
+    > 258 |       expect(after.partial).toBe(true);
+          |                             ^
+      259 |       expect(after.totalBlocks).toBe(before);
+      260 |       expect(after.fullLoads).toEqual([]);
+      261 |       await expect(page.getByRole("switch", { name: "Fast start (beta)" })).toBeChecked();
+        at /home/runner/work/Based/Based/apps/web/e2e/settings.spec.ts:258:29
+
+    Error Context: test-results/settings-Fast-start-1728×1-0fd47-tart-lädt-Based-nach-Bedarf-chromium-retry1/error-context.md
+
+  6 failed
+    [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1280×820 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+    [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 900×600 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+    [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1728×1000 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+    [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1280×820 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+    [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 900×600 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+    [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1728×1000 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
+  10 skipped
+  229 passed (5.5m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
