@@ -159,10 +159,12 @@ const KIT: Item[] = [
   { name: "Icon button", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Close", exact: true }), states: ["rest", "hover", "pressed", "focus"] },
   { name: "Toggle icon button", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Add to Favorites" }), states: ["rest", "hover", "focus"] },
   { name: "Field", loc: (p) => p.getByTestId("astryx-kit").getByLabel("Page name").first(), states: ["rest", "hover", "focus"] },
+  { name: "Field error", loc: (p) => p.getByTestId("astryx-kit").getByLabel("Server URL"), states: ["rest", "hover", "focus"] },
   { name: "Field disabled", loc: (p) => p.getByTestId("astryx-kit").getByLabel("Token"), states: ["disabled"] },
   { name: "Tab", loc: (p) => p.getByTestId("astryx-kit").getByRole("tab", { name: "Summary" }), states: ["rest", "hover", "focus"] },
   { name: "Tab selected", loc: (p) => p.getByTestId("astryx-kit").getByRole("tab", { name: "Notes" }), states: ["rest", "hover"] },
   { name: "Token", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: /Ada/ }), states: ["rest", "hover", "pressed", "focus"] },
+  { name: "Token disabled", loc: (p) => p.getByTestId("astryx-kit").getByText("0:00", { exact: true }), states: ["disabled"] },
   { name: "Chip", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "In this page" }), states: ["rest", "hover", "pressed", "focus"] },
   { name: "Chip pressed", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Title only" }), states: ["rest", "hover"] },
   { name: "Chip disabled", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Shared only" }), states: ["disabled"] },
@@ -307,6 +309,53 @@ for (const theme of ["light", "dark"] as const) {
 const FORCE: Record<State, string[]> = { rest: [], hover: ["hover"], pressed: ["hover", "active"], focus: ["focus", "focus-visible"], disabled: [] };
 const MATRIX_STATES: State[] = ["rest", "hover", "pressed", "focus", "disabled"];
 
+/**
+ * BSD-302 Teil 4: offene Flächen (Menü, Popover, Dialog). Jede wird im Kit wirklich geöffnet, als Kopie in eine
+ * zweite, vorerst versteckte Galerie gelegt und wieder geschlossen. Das Menü dreimal: in Ruhe, mit überfahrener und
+ * mit per Tastatur fokussierter Zeile (erzwungen in buildMatrix).
+ */
+const OVERLAYS = ["Menu", "Menu item hover", "Menu item focus", "Popover", "Dialog"] as const;
+
+async function captureOverlays(page: Page) {
+  const kit = page.getByTestId("astryx-kit");
+  await page.evaluate(() => {
+    const grid = document.createElement("section");
+    grid.className = "kit-overlays";
+    grid.setAttribute("data-testid", "kit-overlays");
+    grid.hidden = true;
+    document.body.append(grid);
+  });
+  const keep = async (surface: Locator, names: readonly string[]) => {
+    await expect(surface).toBeVisible();
+    await settle(surface);
+    await surface.evaluate((el, list) => {
+      const grid = document.querySelector(".kit-overlays")!;
+      for (const name of list) {
+        const figure = document.createElement("span");
+        figure.className = "kit-overlay-cell";
+        const caption = document.createElement("span");
+        caption.className = "kit-matrix-head";
+        caption.textContent = name;
+        const copy = el.cloneNode(true) as Element;
+        copy.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+        copy.setAttribute("data-overlay", name);
+        // Breite kam vom Positionierer um die Fläche – mitnehmen
+        (copy as HTMLElement).style.width = `${Math.round(el.getBoundingClientRect().width)}px`;
+        figure.append(caption, copy);
+        grid.append(figure);
+      }
+    }, names);
+    await page.keyboard.press("Escape");
+    await expect(surface).toBeHidden();
+  };
+  await kit.getByRole("button", { name: "Page menu" }).click();
+  await keep(page.locator(".astryx-popover:not([data-overlay])").filter({ has: page.getByRole("menu") }), OVERLAYS.slice(0, 3));
+  await kit.getByRole("button", { name: "Popover", exact: true }).click();
+  await keep(page.locator(".astryx-popover[role=dialog]:not([data-overlay])").filter({ hasText: "The marker means one thing" }), ["Popover"]);
+  await kit.getByRole("button", { name: "Open dialog" }).click();
+  await keep(page.locator("dialog.astryx-dialog[open]:not([data-overlay])"), ["Dialog"]);
+}
+
 async function buildMatrix(page: Page) {
   // Quelle je Zeile: der Baustein selbst, bei Feld und Token die sichtbare Hülle drumherum
   const sources: { name: string; states: State[]; index: number }[] = [];
@@ -332,6 +381,14 @@ async function buildMatrix(page: Page) {
     .kit-matrix, .kit-matrix * { font-family: KitMatrix, sans-serif !important; }
     .kit-matrix .kit-matrix-head { color: var(--muted); }
     .kit-matrix .astryx-field { width: 180px; }
+    .kit-overlays { position: absolute; inset: 0 auto auto 0; z-index: 2147483647; width: 1240px; display: flex; flex-wrap: wrap;
+      align-items: flex-start; gap: 24px; padding: 20px; background: var(--bg); color: var(--ink); }
+    .kit-overlays[hidden] { display: none; }
+    .kit-overlays, .kit-overlays * { font-family: KitMatrix, sans-serif !important; }
+    .kit-overlays .kit-matrix-head { color: var(--muted); }
+    .kit-overlay-cell { display: flex; flex-direction: column; gap: 8px; }
+    .kit-overlays [data-overlay] { position: static !important; inset: auto !important; margin: 0 !important; transform: none !important;
+      translate: none !important; scale: none !important; opacity: 1 !important; animation: none !important; }
   ` });
   await page.evaluate(async () => { await Promise.all(["400", "500", "600", "700"].map((w) => document.fonts.load(`${w} 14px KitMatrix`))); await document.fonts.ready; });
   await page.getByTestId("astryx-kit").evaluate((kit, { rows, states }) => {
@@ -377,8 +434,12 @@ async function buildMatrix(page: Page) {
   const focusable = "button, input, textarea, [tabindex]";
   await force(await ids(`[data-force=focus]:is(${focusable}), [data-force=focus] :is(${focusable})`), FORCE.focus);
   await force(await ids(`[data-force=focus]:not(${focusable}), [data-force=focus] :not(${focusable}):has(:is(${focusable}))`), ["focus-within"]);
+  const items = async (overlay: string) => ids(`[data-overlay="${overlay}"] [role=menuitem]`);
+  // Astryx-Menüs führen den Fokus mit dem Zeiger (Roving Focus): überfahren = :hover + :focus
+  await force([(await items("Menu item hover"))[1]!], ["hover", "focus"]);
+  await force([(await items("Menu item focus"))[1]!], FORCE.focus);
   await page.mouse.move(1, 1);
-  return { matrix: page.getByTestId("kit-matrix"), cdp };
+  return { matrix: page.getByTestId("kit-matrix"), overlays: page.getByTestId("kit-overlays"), cdp };
 }
 
 for (const theme of ["light", "dark"] as const) for (const style of ["default", "bold"] as const) {
@@ -391,7 +452,8 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     if (style === "bold") await expect(page.locator("html")).toHaveAttribute("data-style", "bold");
     else await expect(page.locator("html")).not.toHaveAttribute("data-style", "bold");
     const allowed = await tokenColors(page);
-    const { matrix } = await buildMatrix(page);
+    await captureOverlays(page);
+    const { matrix, overlays } = await buildMatrix(page);
     await expect(matrix).toBeVisible();
 
     // Jede Farbe jeder erzwungenen Zelle ist ein Token – auch in Bold
@@ -410,6 +472,25 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
 
     await expect(matrix).toHaveScreenshot(`kit-states-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
     if (style === "default") await matrix.screenshot({ path: `../../docs/design/screens/web-kit-states-${theme}.png`, animations: "disabled" });
+
+    // Teil 4: offene Flächen – Menü (Ruhe, Zeile überfahren, Zeile fokussiert), Popover, Dialog
+    await page.evaluate(() => {
+      document.querySelector(".kit-matrix")?.remove();
+      const grid = document.querySelector<HTMLElement>(".kit-overlays")!;
+      grid.hidden = false;
+      grid.style.height = `${Math.ceil(grid.getBoundingClientRect().height)}px`;
+    });
+    await expect(overlays).toBeVisible();
+    for (const name of OVERLAYS) {
+      const copy = overlays.locator(`[data-overlay="${name}"]`);
+      await expect(copy, name).toBeVisible();
+      for (const [k, c] of Object.entries(await colorsOf(copy))) if (!transparent(c) && !isToken(c, allowed)) found.push(`${name} ${k}: ${c}`);
+    }
+    expect(found).toEqual([]);
+    const menuShot = (name: string) => overlays.locator(`[data-overlay="${name}"]`).screenshot({ animations: "disabled" });
+    expect((await menuShot("Menu")).equals(await menuShot("Menu item hover")), "Menüzeile überfahren erzwungen").toBe(false);
+    await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    if (style === "default") await overlays.screenshot({ path: `../../docs/design/screens/web-kit-overlays-${theme}.png`, animations: "disabled" });
   });
 }
 
