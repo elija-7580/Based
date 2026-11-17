@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,7 +8,7 @@ import { join } from "node:path";
 // häufigsten Bedienelemente der Shell werden in Ruhe, Überfahren, gedrückt, Tastaturfokus und deaktiviert angesehen.
 // Jede Farbe, die dabei sichtbar wird (Hintergrund, Schrift, Rand, Fokusring, Schatten), muss ein Token-Wert sein –
 // kein fremdes Blau aus einer Bibliothek; ein Token darf mit eigener Deckkraft vorkommen (Überfahren = Tinte 6 %).
-// Bildvergleich und Fotos der Zustände folgen in Teil 2.
+// Teil 2: neue Beta-Bausteine (Media-Player, Willkommens-Karten). Teil 3: erzwungene Zustände und Bildvergleich (unten).
 
 type State = "rest" | "hover" | "pressed" | "focus" | "disabled";
 
@@ -123,7 +123,24 @@ async function setState(page: Page, loc: Locator, state: State) {
     await page.keyboard.press("Tab");
     await page.keyboard.press("Shift+Tab");
   }
-  await page.waitForTimeout(220); // Übergänge (Bewegung 120/180 ms) abwarten
+  await settle(loc);
+}
+
+/**
+ * Warten, bis die Übergänge des Bausteins (und seiner Rahmen-Eltern) fertig sind – statt fest 220 ms je Zustand.
+ * BSD-302 Teil 3: Die feste Pause lag bei ~50 Zuständen allein bei 11 s; unter Last kamen je Zustand mehrere langsame
+ * Protokoll-Runden dazu, und die Galerie lief in WebKit in die 30-s-Grenze. Ohne Übergang (Ruhe, deaktiviert) geht es
+ * jetzt sofort weiter; Endlos-Animationen zählen nicht, nach 1 s geht es auf jeden Fall weiter.
+ */
+async function settle(loc: Locator) {
+  await loc.evaluate(async (root) => {
+    // zwei Frames: erst danach hat der Browser die Übergänge des neuen Zustands angelegt
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const els: Element[] = [root];
+    for (let p = root.parentElement, i = 0; p && i < 3; p = p.parentElement, i++) els.push(p);
+    const running = els.flatMap((el) => el.getAnimations({ subtree: el === root })).filter((a) => a.effect?.getTiming().iterations !== Infinity);
+    await Promise.race([Promise.all(running.map((a) => a.finished.catch(() => undefined))), new Promise((r) => setTimeout(r, 1000))]);
+  });
 }
 
 /** Gedrückt lösen, ohne zu klicken: erst wegfahren, dann loslassen (sonst öffnet z. B. „Search“ Quick Find). */
@@ -152,15 +169,21 @@ const KIT: Item[] = [
   { name: "Menu trigger", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Page menu" }), states: ["rest", "hover", "focus"] },
 ];
 
-for (const theme of ["light", "dark"] as const) {
-  test(`Zustands-Galerie: Farben der Zustände sind Tokens (${theme})`, async ({ page }) => {
+// Zwei Hälften je Theme (Knöpfe | Felder, Tabs, Token, Pillen, Menü): jede bleibt auch unter Last weit unter 30 s.
+const KIT_PARTS = [
+  { part: "Knöpfe", items: KIT.filter((it) => /button/i.test(it.name)) },
+  { part: "Felder, Tabs, Pillen", items: KIT.filter((it) => !/button/i.test(it.name)) },
+];
+
+for (const theme of ["light", "dark"] as const) for (const { part, items } of KIT_PARTS) {
+  test(`Zustands-Galerie: Farben der Zustände sind Tokens – ${part} (${theme})`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/#prefs-kit");
     await expect(page.getByTestId("astryx-kit")).toBeVisible();
     const allowed = await tokenColors(page);
     const found: string[] = [];
-    for (const it of KIT) {
+    for (const it of items) {
       const loc = it.loc(page);
       await expect(loc, it.name).toBeVisible();
       for (const st of it.states) {
@@ -172,7 +195,9 @@ for (const theme of ["light", "dark"] as const) {
     }
     expect(found).toEqual([]);
   });
+}
 
+for (const theme of ["light", "dark"] as const) {
   // Häufigste Bedienelemente der Shell und des Editors: Seitenleiste, Home-Kopf, Slash-Menü, Quick Find.
   test(`Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (${theme})`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
@@ -207,7 +232,7 @@ for (const theme of ["light", "dark"] as const) {
     await look("Slash-Menü: Zeile ausgewählt", slash.first(), ["rest"]);
     const second = slash.nth(1);
     await second.hover();
-    await page.waitForTimeout(220);
+    await settle(second);
     for (const [k, c] of Object.entries(await colorsOf(second))) if (!transparent(c) && !isToken(c, allowed)) found.push(`Slash-Menü: Zeile überfahren ${k}: ${c}`);
     await page.keyboard.press("Escape");
 
@@ -267,6 +292,124 @@ for (const theme of ["light", "dark"] as const) {
       await ctx.close();
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+}
+
+// BSD-302 Teil 3: erzwungene Zustände und Bildvergleich. Astryx kennt Zustände nur als Pseudoklassen (:hover, :active,
+// :focus-visible) – ein Attribut müsste jede Regel doppeln. Deshalb baut der Test eine Zustands-Matrix aus Kopien der
+// Kit-Bausteine; jede Zelle trägt ihren Zustand als Attribut (data-force), und Chromium erzwingt die Pseudoklassen per
+// DevTools-Protokoll (CSS.forcePseudoState). So stehen alle Zustände gleichzeitig still auf einem Bild – ohne Maus,
+// ohne Übergänge, also stabil. Hell und dunkel, Default und Bold; jede Farbe in jeder Zelle muss ein Token sein.
+// Bildvergleich nur Chromium unter Linux (Grundbilder für ubuntu-24.04 wie in der CI). Die Systemschrift ist je Rechner
+// verschieden; die Matrix nutzt deshalb die gebündelte Schibsted Grotesk (aus dist/assets) – verglichen werden Farben, Formen, Abstände.
+// Gewollte Änderung: `playwright test e2e/kit-states.spec.ts --project=chromium --update-snapshots`, Bild im selben
+// Commit ablegen und im Ergebnisfeld begründen.
+const FORCE: Record<State, string[]> = { rest: [], hover: ["hover"], pressed: ["hover", "active"], focus: ["focus", "focus-visible"], disabled: [] };
+const MATRIX_STATES: State[] = ["rest", "hover", "pressed", "focus", "disabled"];
+
+async function buildMatrix(page: Page) {
+  // Quelle je Zeile: der Baustein selbst, bei Feld und Token die sichtbare Hülle drumherum
+  const sources: { name: string; states: State[]; index: number }[] = [];
+  for (const [index, it] of KIT.entries()) {
+    const loc = it.loc(page);
+    await expect(loc, it.name).toBeVisible();
+    await loc.evaluate((el, i) => {
+      const host = el.closest(".astryx-field") ?? el.closest(".astryx-token") ?? el;
+      host.setAttribute("data-matrix-src", String(i));
+    }, index);
+    sources.push({ name: it.name, states: it.states, index });
+  }
+  // Schrift: die gebündelte Schibsted Grotesk direkt aus dem Build (Default lädt sie sonst nicht)
+  const faces = readdirSync("dist/assets").flatMap((f) => {
+    const m = /^schibsted-grotesk-latin-(\d00)-normal-.*\.woff2$/.exec(f);
+    return m ? [`@font-face { font-family: KitMatrix; font-weight: ${m[1]}; src: url(/assets/${f}) format("woff2"); }`] : [];
+  });
+  expect(faces.length, "Schibsted Grotesk im Build").toBeGreaterThan(0);
+  await page.addStyleTag({ content: `${faces.join("\n")}
+    .kit-matrix { position: absolute; inset: 0 auto auto 0; z-index: 2147483647; width: max-content; display: grid;
+      grid-template-columns: max-content repeat(5, max-content); gap: 12px 20px; align-items: center;
+      padding: 20px; background: var(--bg); color: var(--ink); }
+    .kit-matrix, .kit-matrix * { font-family: KitMatrix, sans-serif !important; }
+    .kit-matrix .kit-matrix-head { color: var(--muted); }
+    .kit-matrix .astryx-field { width: 180px; }
+  ` });
+  await page.evaluate(async () => { await Promise.all(["400", "500", "600", "700"].map((w) => document.fonts.load(`${w} 14px KitMatrix`))); await document.fonts.ready; });
+  await page.getByTestId("astryx-kit").evaluate((kit, { rows, states }) => {
+    const grid = document.createElement("section");
+    grid.className = "kit-matrix";
+    grid.setAttribute("data-testid", "kit-matrix");
+    const cell = (text = "") => { const c = document.createElement("span"); c.className = "kit-matrix-head"; c.textContent = text; grid.append(c); return c; };
+    cell();
+    for (const st of states) cell(st);
+    for (const row of rows) {
+      cell(row.name);
+      const src = kit.querySelector(`[data-matrix-src="${row.index}"]`)!;
+      for (const st of states) {
+        const own = row.states.includes(st);
+        const holder = document.createElement("span");
+        if (own) {
+          const copy = src.cloneNode(true) as Element;
+          copy.removeAttribute("data-matrix-src");
+          copy.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+          copy.setAttribute("data-force", st);
+          copy.setAttribute("data-row", row.name);
+          holder.append(copy);
+        }
+        grid.append(holder);
+      }
+    }
+    document.body.append(grid);
+    // ganze Pixel, sonst schaut am Rand eine Pixelzeile der Seite darunter ins Bild
+    grid.style.height = `${Math.ceil(grid.getBoundingClientRect().height)}px`;
+  }, { rows: sources, states: MATRIX_STATES });
+
+  // Zustände erzwingen: Überfahren/gedrückt auf der Kopie und allem darin (wie ein Zeiger über dem innersten Teil),
+  // Fokus auf dem fokussierbaren Element, :focus-within auf seinen Hüllen.
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("DOM.enable");
+  await cdp.send("CSS.enable");
+  const { root } = await cdp.send("DOM.getDocument", { depth: -1 });
+  const ids = async (sel: string) => (await cdp.send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: sel })).nodeIds;
+  const force = async (nodeIds: number[], classes: string[]) => { for (const nodeId of nodeIds) await cdp.send("CSS.forcePseudoState", { nodeId, forcedPseudoClasses: classes }); };
+  for (const st of ["hover", "pressed"] as const) {
+    await force(await ids(`[data-force=${st}], [data-force=${st}] *`), FORCE[st]);
+  }
+  const focusable = "button, input, textarea, [tabindex]";
+  await force(await ids(`[data-force=focus]:is(${focusable}), [data-force=focus] :is(${focusable})`), FORCE.focus);
+  await force(await ids(`[data-force=focus]:not(${focusable}), [data-force=focus] :not(${focusable}):has(:is(${focusable}))`), ["focus-within"]);
+  await page.mouse.move(1, 1);
+  return { matrix: page.getByTestId("kit-matrix"), cdp };
+}
+
+for (const theme of ["light", "dark"] as const) for (const style of ["default", "bold"] as const) {
+  test(`Zustands-Galerie: erzwungene Zustände im Bildvergleich (${style}, ${theme})`, async ({ page, browserName }) => {
+    test.skip(browserName !== "chromium" || process.platform !== "linux", "Bildvergleich nur Chromium unter Linux (Grundbilder wie in der CI)");
+    await page.addInitScript(({ t, s }) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t, style: s })), { t: theme, s: style });
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.goto("/#prefs-kit");
+    await expect(page.getByTestId("astryx-kit")).toBeVisible();
+    if (style === "bold") await expect(page.locator("html")).toHaveAttribute("data-style", "bold");
+    else await expect(page.locator("html")).not.toHaveAttribute("data-style", "bold");
+    const allowed = await tokenColors(page);
+    const { matrix } = await buildMatrix(page);
+    await expect(matrix).toBeVisible();
+
+    // Jede Farbe jeder erzwungenen Zelle ist ein Token – auch in Bold
+    const found: string[] = [];
+    for (const copy of await matrix.locator("[data-force]").all()) {
+      const label = `${await copy.getAttribute("data-row")} ${await copy.getAttribute("data-force")}`;
+      for (const [k, c] of Object.entries(await colorsOf(copy))) if (!transparent(c) && !isToken(c, allowed)) found.push(`${label} ${k}: ${c}`);
+    }
+    expect(found).toEqual([]);
+
+    // Das Erzwingen wirkt: Überfahren und Fokus sehen anders aus als Ruhe
+    const shot = (st: State) => matrix.locator(`[data-row="Button ghost"][data-force=${st}]`).screenshot({ animations: "disabled" });
+    const rest = await shot("rest");
+    expect(rest.equals(await shot("hover")), "Überfahren erzwungen").toBe(false);
+    expect(rest.equals(await shot("focus")), "Fokus erzwungen").toBe(false);
+
+    await expect(matrix).toHaveScreenshot(`kit-states-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
+    if (style === "default") await matrix.screenshot({ path: `../../docs/design/screens/web-kit-states-${theme}.png`, animations: "disabled" });
   });
 }
 
