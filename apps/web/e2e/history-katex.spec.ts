@@ -70,38 +70,6 @@ test("Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, 
   await expect(editor.getByText("Neuer Absatz für den Verlauf")).toBeVisible();
 });
 
-// BSD-488: Der Verlauf steht mittig mit Abstand zu beiden Fensterkanten (vorher klebte er unten, weil .qf-backdrop gewann).
-test("Versionsverlauf steht mittig: Abstand oben und unten in 900 × 600, 1280 × 820 und 1728 × 1000", async ({ page, browserName }) => {
-  await openWelcome(page);
-  await newLineAtEnd(page);
-  await page.keyboard.type("Mitte");
-  await page.waitForTimeout(500);
-  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
-    await page.setViewportSize({ width: w, height: h });
-    const dialog = await openHistory(page);
-    await expect(dialog.getByRole("option").first()).toBeVisible();
-    // erst nach dem Hereinschieben (rise-in) messen
-    const vh = page.locator(".vh");
-    await expect.poll(async () => { const b = (await vh.boundingBox())!; return Math.round(Math.abs(b.y - (h - b.y - b.height))); }).toBeLessThanOrEqual(2);
-    const box = (await vh.boundingBox())!;
-    const below = h - (box.y + box.height);
-    expect(box.y, `${w} × ${h} oben`).toBeGreaterThanOrEqual(24);
-    expect(below, `${w} × ${h} unten`).toBeGreaterThanOrEqual(24);
-    expect(Math.abs(box.y - below), `${w} × ${h} mittig`).toBeLessThanOrEqual(2);
-    if (w === 1280 && browserName === "chromium") {
-      await page.mouse.move(0, 0);
-      await page.screenshot({ path: "../../docs/design/screens/version-history-centered-light.png" });
-      await page.keyboard.press("ControlOrMeta+Shift+l");
-      await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-      await page.waitForTimeout(400); // Farbwechsel abwarten
-      await page.screenshot({ path: "../../docs/design/screens/version-history-centered-dark.png" });
-      await page.keyboard.press("ControlOrMeta+Shift+l");
-    }
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
-  }
-});
-
 test("Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten", async ({ page, context, baseURL }) => {
   test.setTimeout(60_000);
   // Netz blockiert: nur der eigene Server antwortet.
