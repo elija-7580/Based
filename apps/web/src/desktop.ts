@@ -52,10 +52,19 @@ export function upToDateText(app: AppIdentity): string {
   return `You’re on the newest version: ${app.name} ${app.version}.`;
 }
 
-/** BSD-168: Text des Update-Dialogs mit den Notizen aus latest.json (höchstens 12 Zeilen). */
+/** Längste Zeile der Notizen im Update-Dialog; längere enden mit „…“. */
+export const UPDATE_NOTE_CHARS = 110;
+/** Höchstens so viele Zeilen Notizen im Update-Dialog. */
+export const UPDATE_NOTE_LINES = 8;
+
+/**
+ * BSD-168: Text des Update-Dialogs mit den Notizen aus latest.json. Elija 17.11.: kurz halten – höchstens 8 Zeilen,
+ * jede höchstens 110 Zeichen (die Notizen kommen vom Server; der Dialog muss auch mit langen bedienbar bleiben).
+ */
 export function updatePrompt(version: string, current: string, notes?: string, name = "Based Next"): string {
-  const lines = (notes ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
-  const shown = lines.slice(0, 12);
+  const lines = (notes ?? "").split("\n").map((l) => l.trim()).filter(Boolean)
+    .map((l) => (l.length > UPDATE_NOTE_CHARS ? `${l.slice(0, UPDATE_NOTE_CHARS - 1).trimEnd()}…` : l));
+  const shown = lines.slice(0, UPDATE_NOTE_LINES);
   const more = lines.length > shown.length ? `\n… and ${lines.length - shown.length} more` : "";
   const body = shown.length ? `\n\nWhat’s new:\n${shown.join("\n")}${more}` : "";
   return `${name} ${version} is available (you have ${current}).${body}\n\nInstall it and restart now?`;

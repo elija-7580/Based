@@ -4,7 +4,8 @@
 // auch wenn zwei Geräte gleichzeitig etwas nach vorn holen. Unbekannte Felder (neuere Version) bleiben erhalten.
 import { keyBetween } from "../sortkeys.js";
 
-export const WB_KINDS = ["note", "shape", "text", "image", "ink", "frame", "page", "connector"] as const;
+// „file“ (BSD-266): jede andere Datei als Karte; ältere Versionen ohne diese Art behalten den Record unverändert.
+export const WB_KINDS = ["note", "shape", "text", "image", "file", "ink", "frame", "page", "connector"] as const;
 export type WBKind = (typeof WB_KINDS)[number];
 export type ConnectorSide = "top" | "right" | "bottom" | "left" | "auto";
 export type ConnectorShape = "curved" | "straight" | "elbow";

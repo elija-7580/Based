@@ -16,6 +16,8 @@
     "@based/design-tokens": "workspace:*",
     "@based/ui": "workspace:*",
     "mermaid": "11.17.2",
+    "pdfjs-dist": "5.4.394",
+    "perfect-freehand": "1.2.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "y-protocols": "^1.0.7",
