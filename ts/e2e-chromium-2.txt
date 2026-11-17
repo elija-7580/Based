@@ -1,61 +1,61 @@
-cancelled 13528e6b6631b204d21a0e8d1b40c3ffaae89a95
-  ✓   66 [chromium] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light) (2.4s)
-  ✓   61 [chromium] › e2e/overflow.spec.ts:85:1 › Leerer Workspace: nichts läuft über (16.5s)
-  ✓   67 [chromium] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark) (2.6s)
-  ✓   69 [chromium] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (2.0s)
-  ✓   70 [chromium] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (900 px) (1.6s)
-  ✓   71 [chromium] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1100 px) (1.7s)
-  ✓   72 [chromium] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1280 px) (1.6s)
-  ✓   73 [chromium] › e2e/panel-still.spec.ts:37:1 › schräges Wischen und Code verschieben die Fläche nicht seitlich (2.2s)
-  ✓   74 [chromium] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (900 px) (591ms)
-  ✓   75 [chromium] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (1100 px) (675ms)
-  ✓   76 [chromium] › e2e/peek-resize.spec.ts:29:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (3.0s)
-  ✓   77 [chromium] › e2e/peek-resize.spec.ts:68:1 › Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mit Fokus in der Tabelle (2.0s)
-  ✓   68 [chromium] › e2e/overflow.spec.ts:99:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (15.4s)
-  ✓   79 [chromium] › e2e/overflow.spec.ts:119:1 › Gliederung überdeckt nie den Text (1.0s)
-  ✓   78 [chromium] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (2.1s)
-  ✓   81 [chromium] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (1.8s)
-  ✓   82 [chromium] › e2e/persist-reload.spec.ts:25:1 › BSD-416: anlegen, tippen, sofort neu laden → Seite und Text da (dauerhaftes Profil) (2.2s)
-  -   83 [chromium] › e2e/persist-reload.spec.ts:59:1 › BSD-416: ohne OPFS (flüchtiges WebKit-Profil) sagt die Seitenleiste „Not saved“
-  ✓   80 [chromium] › e2e/overflow.spec.ts:151:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (7.8s)
-  ✓   84 [chromium] › e2e/phase2.spec.ts:9:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (3.3s)
-  ✓   85 [chromium] › e2e/overflow.spec.ts:172:1 › Kopfzeile bleibt in 900 × 600 einzeilig, auch 6 Ebenen tief mit langen Namen (1.1s)
-  ✓   87 [chromium] › e2e/overflow.spec.ts:201:1 › Inline-Datenbank: Werkzeugleiste in 900 × 600 einzeilig (1.2s)
-  ✓   86 [chromium] › e2e/polish.spec.ts:14:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (2.5s)
-  ✓   89 [chromium] › e2e/polish.spec.ts:28:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (822ms)
-  ✓   90 [chromium] › e2e/polish.spec.ts:40:1 › Slash-Menü: Überfahren färbt die Zeile wie das Seitenmenü, nicht mit dem Blau der Bibliothek (946ms)
-  ✓   91 [chromium] › e2e/polish.spec.ts:61:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (712ms)
-  ✓   88 [chromium] › e2e/overflow.spec.ts:227:1 › Datenbank: 1.000 Zeilen, lange Spaltennamen und Optionen (4.3s)
-  ✓   92 [chromium] › e2e/polish.spec.ts:88:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (1.5s)
-  ✓   94 [chromium] › e2e/polish.spec.ts:123:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (2.3s)
-  ✓   93 [chromium] › e2e/overflow.spec.ts:258:1 › Schmales Fenster: Seitenleiste schwebt bei Bedarf, Köpfe einzeilig (3.2s)
-  ✓   95 [chromium] › e2e/polish.spec.ts:192:1 › Fokusrahmen und Textauswahl neutral, unabhängig vom Marker (1.7s)
-  ✓   97 [chromium] › e2e/polish.spec.ts:223:1 › Icon-Auswahl: kein seitliches Rollen, Raster passt zur Breite (1.5s)
-  ✓   98 [chromium] › e2e/polish.spec.ts:245:1 › Icon-Auswahl: Rasterzellen überlappen sich nicht (1.1s)
-  ✓   96 [chromium] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (4.3s)
-  -  100 [chromium] › e2e/replay/record-sample.spec.ts:59:1 › Beispielbündel Block-Editor
-  ✓   99 [chromium] › e2e/polish.spec.ts:262:1 › Icon-Auswahl: Phosphor-Icon mit Farbe als Seiten-Icon (2.0s)
-  ✓  101 [chromium] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung (1.8s)
-  ✓  103 [chromium] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung (1.6s)
-  -  104 [chromium] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-webkit wiedergeben (input): gleicher Endzustand, keine Überdeckung
-  -  105 [chromium] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-webkit wiedergeben (steps): gleicher Endzustand, keine Überdeckung
-  ✓  102 [chromium] › e2e/polish.spec.ts:290:1 › Unterseite, Erwähnung und Datei ohne Icon: Linien-Icon statt Emoji (2.5s)
-  ✓  107 [chromium] › e2e/polish.spec.ts:333:1 › Luft unter der letzten Zeile nur auf langen Seiten (1.6s)
-  ✓  108 [chromium] › e2e/polish.spec.ts:380:1 › Sync-Status: Karte beim Überfahren und mit der Tastatur, Klick öffnet die Sync-Einstellungen (779ms)
-  ✓  106 [chromium] › e2e/report.spec.ts:30:70 › ⇧⌘B (Block-Editor): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext (3.4s)
-  ✓  109 [chromium] › e2e/polish.spec.ts:424:1 › Synced Block: Griff und Plus der Kinder schneiden die Randlinie nicht (2.5s)
-  ✓  110 [chromium] › e2e/report.spec.ts:71:1 › Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem (2.1s)
-  ✓  111 [chromium] › e2e/polish.spec.ts:463:1 › Datei-Block: Vorschau für Text und CSV (2.0s)
-  ✓  112 [chromium] › e2e/report.spec.ts:95:49 › ⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (light) (2.4s)
-(node:6679) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  114 [chromium] › e2e/report.spec.ts:95:49 › ⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (dark) (2.4s)
-  ✓  115 [chromium] › e2e/report.spec.ts:143:1 › Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht (1.5s)
-  ✓  116 [chromium] › e2e/report.spec.ts:178:1 › Entwickler-Ansicht zeigt die letzten Ereignisse live (1.4s)
-  ✓  113 [chromium] › e2e/schedules-server.spec.ts:39:1 › BSD-243: Hinweis unter Schedules – ohne Server nur bei offener App, mit Server mit Modellzugang auch geschlossen (4.7s)
-  ✓  117 [chromium] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen (1.2s)
-  ✓  119 [chromium] › e2e/report.spec.ts:213:1 › Aufzeichnung kostet beim Tippen messbar nichts (1.1s)
-  ✓  118 [chromium] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (3.4s)
-  ✓  121 [chromium] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (1.2s)
-  ✓  120 [chromium] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (2.9s)
-  ✓  122 [chromium] › e2e/settings.spec.ts:34:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (962ms)
+cancelled 1d635a18da10d999e6375d10fa6d82ab43fcb9fe
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.

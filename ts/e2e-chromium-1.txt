@@ -1,61 +1,61 @@
-cancelled 13528e6b6631b204d21a0e8d1b40c3ffaae89a95
-  ✓   40 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1280 × 820 light: leer und gefüllt, nichts läuft über oder überdeckt sich (3.2s)
-  ✓   42 [chromium] › e2e/block-editor.spec.ts:437:1 › Spaltenbreite ziehen (2.2s)
-  ✓   43 [chromium] › e2e/board.spec.ts:287:5 › Fläche 900 × 600 light: leer und gefüllt, nichts läuft über oder überdeckt sich (2.4s)
-  ✓   44 [chromium] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (light) (2.4s)
-  ✓   45 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1728 × 1000 light: leer und gefüllt, nichts läuft über oder überdeckt sich (3.3s)
-  ✓   46 [chromium] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (dark) (2.3s)
-  ✓   48 [chromium] › e2e/block-editor.spec.ts:493:1 › Blockmenü: Suchfeld filtert, Enter führt aus, Copy as Markdown (1.6s)
-  ✓   47 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1280 × 820 dark: leer und gefüllt, nichts läuft über oder überdeckt sich (3.2s)
-  ✓   50 [chromium] › e2e/board.spec.ts:287:5 › Fläche 900 × 600 dark: leer und gefüllt, nichts läuft über oder überdeckt sich (2.8s)
-  ✓   51 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1728 × 1000 dark: leer und gefüllt, nichts läuft über oder überdeckt sich (2.4s)
-  ✓   49 [chromium] › e2e/block-editor.spec.ts:540:1 › Blockmenü-Fotos: Suchfeld, gefiltert, leer (8.3s)
-  ✓   53 [chromium] › e2e/block-editor.spec.ts:584:1 › Blockmenü: Move to in eine andere Seite, Turn into page (2.1s)
-  ✓   52 [chromium] › e2e/board.spec.ts:342:1 › Stift, Textmarker, Radierer: zeichnen, Farbe wählen, radieren, Undo; nach dem Neuladen ist die Tinte da (4.2s)
-  ✓   54 [chromium] › e2e/block-editor.spec.ts:632:1 › [[ verlinkt eine Seite (2.1s)
-  ✓   55 [chromium] › e2e/board.spec.ts:372:1 › Text: Doppelklick ins Leere tippt los; Zettel nimmt sofort Text, Tab legt den nächsten an; Frame und Verbindung (2.1s)
-  ✓   56 [chromium] › e2e/block-editor.spec.ts:650:1 › URL einfügen: leere Zeile → Bookmark (1.7s)
-  ✓   58 [chromium] › e2e/block-editor.spec.ts:669:1 › Bookmark: Fetch preview holt Titel und Beschreibung (1.3s)
-  ✓   59 [chromium] › e2e/block-editor.spec.ts:694:1 › Bild per Link (1.1s)
-  ✓   57 [chromium] › e2e/board.spec.ts:408:3 › Zeichnen light: Werkzeugleiste mit Optionen passt in 1280 × 820, 900 × 600 und 390 × 760 (4.3s)
-  ✓   60 [chromium] › e2e/block-editor.spec.ts:709:1 › Inline-Gleichung anlegen und bearbeiten (1.9s)
-  ✓   62 [chromium] › e2e/block-editor.spec.ts:742:1 › Embed: YouTube als iframe, sonst Karte (1.4s)
-  ✓   61 [chromium] › e2e/board.spec.ts:408:3 › Zeichnen dark: Werkzeugleiste mit Optionen passt in 1280 × 820, 900 × 600 und 390 × 760 (4.3s)
-  ✓   63 [chromium] › e2e/block-editor.spec.ts:763:1 › Tabelle: Zeile und Spalte löschen (1.3s)
-  ✓   65 [chromium] › e2e/block-editor.spec.ts:784:1 › Copy and sync: Original und synchronisierte Kopie (2.4s)
-  ✓   64 [chromium] › e2e/board.spec.ts:453:1 › Dateien: Bild und HTML-Datei ablegen – Bild als Bild, Datei als Karte; bleibt nach dem Neuladen; im Record steht nur die Adresse (3.4s)
-  ✓   66 [chromium] › e2e/block-editor.spec.ts:821:1 › HTML-Codeblock mit Vorschau (2.2s)
-  ✓   68 [chromium] › e2e/block-editor.spec.ts:836:1 › @-Menü: New page legt eine Unterseite an und erwähnt sie (2.0s)
-  ✓   67 [chromium] › e2e/board.spec.ts:486:1 › Dateien in drei Stufen: PDF als Ausdruck (je Seite ein Objekt), Agent-Log und HTML als Vorschau; HTML läuft ohne Skripte (4.2s)
-  ✓   70 [chromium] › e2e/board.spec.ts:518:1 › Einfügen: kurzer Text wird ein Text-Objekt (2.0s)
-  ✓   69 [chromium] › e2e/block-editor.spec.ts:856:1 › @-Menü: Datum, Wochentag, getipptes Datum, Erinnerung; Wähler mit Ende und Uhrzeit (3.6s)
-  ✓   72 [chromium] › e2e/block-editor.spec.ts:908:1 › Spalten: Klick unter den letzten Block der kürzeren Spalte schreibt dort weiter (1.3s)
-  ✓   71 [chromium] › e2e/brain.spec.ts:73:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (4.0s)
-  ✓   73 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (3.6s)
-  ✓   74 [chromium] › e2e/brain.spec.ts:102:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.5s)
-  ✓   75 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (2.7s)
-  ✓   76 [chromium] › e2e/brain.spec.ts:107:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (2.7s)
-  ✓   78 [chromium] › e2e/brain.spec.ts:162:1 › workspace answer with sources: the citation jumps to the block (1.7s)
-  ✓   77 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.7s)
-  ✓   80 [chromium] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (2.2s)
-  ✓   79 [chromium] › e2e/brain.spec.ts:167:1 › memory suggestions are saved only after Save (3.4s)
-  -   82 [chromium] › e2e/brain.spec.ts:189:1 › Screenshots web-brain-*
-  ✓   81 [chromium] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (2.4s)
-  -   84 [chromium] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-  ✓   83 [chromium] › e2e/brain.spec.ts:223:1 › trashing the Agent Brain shows why it stays (2.9s)
-  -   85 [chromium] › e2e/brain.spec.ts:234:1 › Screenshots web-brain-refused-*
-(node:5662) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-(node:5679) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   87 [chromium] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (946ms)
-[onAuthenticate] Error: unauthorized
-    at Object.onAuthenticate (/home/runner/work/Based/Based/apps/server/src/collab.ts:80:94)
-    at <anonymous> (/home/runner/work/Based/Based/node_modules/.pnpm/@hocuspocus+server@4.8.0_y-protocols@1.0.7_yjs@13.6.33__yjs@13.6.33/node_modules/@hocuspocus/server/src/Hocuspocus.ts:583:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async ClientConnection.ClientConnection.handleQueueingMessage (/home/runner/work/Based/Based/node_modules/.pnpm/@hocuspocus+server@4.8.0_y-protocols@1.0.7_yjs@13.6.33__yjs@13.6.33/node_modules/@hocuspocus/server/src/ClientConnection.ts:531:5)
-  ✓   86 [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (3.7s)
-  ✓   89 [chromium] › e2e/crash-report.spec.ts:23:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (1.5s)
-  ✓   90 [chromium] › e2e/crash-report.spec.ts:45:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (2.0s)
-  ✓   88 [chromium] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (6.4s)
-  ✓   91 [chromium] › e2e/crash-report.spec.ts:81:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (3.6s)
+cancelled 1d635a18da10d999e6375d10fa6d82ab43fcb9fe
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 251 tests using 2 workers, shard 1 of 2
+
