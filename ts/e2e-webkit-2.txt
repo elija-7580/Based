@@ -1,5 +1,5 @@
-failure 017f911f56b7c6d42ee919e55ac555ac6037832d
-  ✓  232 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.3s)
+failure 7bab47151aa1b491254858f28b6e75425b1b99fd
+  ✓  232 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.5s)
 
 
   1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
