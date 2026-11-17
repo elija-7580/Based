@@ -52,8 +52,8 @@
 
 <section aria-labelledby="sw-title" class="wrap" style="padding-top: 96px; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;">
 <p class="eyebrow rise d1">Leaving Notion?</p>
-<h1 id="sw-title" class="disp packw" aria-label="Love Notion? Keep the good part." style="margin: 0; max-width: 1040px; font-size: clamp(46px, 7.6vw, 104px);"><span aria-hidden="true"><span class="w" style="animation-delay: 0ms;">Love </span><span class="w" style="animation-delay: 120ms;">Notion?</span><br><span class="hl"><span class="w" style="animation-delay: 380ms;">Keep </span><span class="w" style="animation-delay: 520ms;">the </span><span class="w" style="animation-delay: 660ms;">good </span><span class="w" style="animation-delay: 800ms;">part.</span></span></span></h1>
-<p class="lead rise d3" style="max-width: 680px;">You love how Notion works. Pages, blocks, databases, the slash menu. This page is about everything else: where your data lives, who can read it, what happens when it’s gone, and what you pay to use your own AI. We packed for you.</p>
+<h1 id="sw-title" class="disp packw" aria-label="Leaving Notion? Bring it all." style="margin: 0; max-width: 1040px; font-size: clamp(46px, 7.6vw, 104px);"><span aria-hidden="true"><span class="w" style="animation-delay: 0ms;">Leaving </span><span class="w" style="animation-delay: 120ms;">Notion?</span><br><span class="hl"><span class="w" style="animation-delay: 380ms;">Bring </span><span class="w" style="animation-delay: 520ms;">it </span><span class="w" style="animation-delay: 660ms;">all.</span></span></span></h1>
+<p class="lead rise d3" style="max-width: 680px;">Pages, blocks, databases and the slash menu are a good way to work. This page is about the rest: where your data lives, who can read it, what happens when it’s gone, and what you pay to use your own AI. We packed for you.</p>
 <div class="rise d4" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"><a href="#import" class="btn">How the move works</a><a href="#compare" class="btn2">Compare with Obsidian too</a></div>
 </section>
 
@@ -276,8 +276,8 @@
 
 <section aria-labelledby="sw-title" class="wrap" style="padding-top: 96px; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;">
 <p class="eyebrow rise d1">Leaving Notion?</p>
-<h1 id="sw-title" class="disp packw" aria-label="Love Notion? Keep the good part." style="margin: 0; max-width: 1040px; font-size: clamp(46px, 7.6vw, 104px);"><span aria-hidden="true"><sc-for list="{{hw1}}" as="w" hint-placeholder-count="2"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for><br><span class="hl"><sc-for list="{{hw2}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span></span></h1>
-<p class="lead rise d3" style="max-width: 680px;">You love how Notion works. Pages, blocks, databases, the slash menu. This page is about everything else: where your data lives, who can read it, what happens when it’s gone, and what you pay to use your own AI. We packed for you.</p>
+<h1 id="sw-title" class="disp packw" aria-label="Leaving Notion? Bring it all." style="margin: 0; max-width: 1040px; font-size: clamp(46px, 7.6vw, 104px);"><span aria-hidden="true"><sc-for list="{{hw1}}" as="w" hint-placeholder-count="2"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for><br><span class="hl"><sc-for list="{{hw2}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span></span></h1>
+<p class="lead rise d3" style="max-width: 680px;">Pages, blocks, databases and the slash menu are a good way to work. This page is about the rest: where your data lives, who can read it, what happens when it’s gone, and what you pay to use your own AI. We packed for you.</p>
 <div class="rise d4" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"><a href="#import" class="btn">How the move works</a><a href="#compare" class="btn2">Compare with Obsidian too</a></div>
 </section>
 
@@ -453,8 +453,8 @@ class Component extends DCLogic {
     return {
       theme,
       markSrc: dark ? '/mark-dark.svg' : '/mark.svg',
-      hw1: Component.words('Love Notion?', 0, 120),
-      hw2: Component.words('Keep the good part.', 380, 140),
+      hw1: Component.words('Leaving Notion?', 0, 120),
+      hw2: Component.words('Bring it all.', 380, 140),
       cats: Component.cmpData().map((c, i) => ({ label: c.k, on: this.state.cat === i ? 'true' : 'false', bg: this.state.cat === i ? 'var(--button)' : 'var(--surface-raised)', fg: this.state.cat === i ? 'var(--button-ink)' : 'var(--ink)', pick: () => this.setState({ cat: i }) })),
       catLabel: Component.cmpData()[this.state.cat].k,
       cmp: (() => {

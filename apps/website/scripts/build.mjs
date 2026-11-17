@@ -219,6 +219,9 @@ const BETA_LIST_OLD = ["Sync between your Apple devices through iCloud", "Agents
 const CLAIMS = {
   // Main.dc.html and Mobile.dc.html: reframed on 17.11.2026 ("Your data. Based."); their texts already keep to the beta.
   "Workspace.dc.html": [
+    // 17.11. (framing): phone and encrypted server come with the release, so the heading says so
+    ['<h2 id="sync-title" class="h2">Your phone gets everything. The server gets gibberish.</h2>',
+      '<h2 id="sync-title" class="h2">At release, your phone gets everything. The server gets gibberish.</h2>'],
     ["The beta syncs your Apple devices through iCloud.", "In the beta, your Macs can sync through iCloud Drive as a preview."],
     ["by release. iCloud in the beta.</span>", "by release. iCloud Drive sync as a preview in the beta.</span>"],
     ["d: 'iCloud in the beta. At release, Based Cloud on EU servers, end-to-end encrypted. Lose your laptop, keep your work.'",
@@ -232,6 +235,12 @@ const CLAIMS = {
     ["d: 'Every row opens as a full page with blocks, sub-pages and comments.'", "d: 'Every row opens as a full page with blocks and sub-pages.'"]
   ],
   "Switch.dc.html": [
+    // 17.11. (framing): a moving guide, not "Based is the good part of Notion"
+    ['aria-label="Love Notion? Keep the good part."', 'aria-label="Leaving Notion? Bring it all."'],
+    ["hw1: Component.words('Love Notion?', 0, 120)", "hw1: Component.words('Leaving Notion?', 0, 120)"],
+    ["hw2: Component.words('Keep the good part.', 380, 140)", "hw2: Component.words('Bring it all.', 380, 140)"],
+    ["You love how Notion works. Pages, blocks, databases, the slash menu. This page is about everything else:",
+      "Pages, blocks, databases and the slash menu are a good way to work. This page is about the rest:"],
     ["b: [3, 'Every version kept, three copies, restore in one click.']",
       "b: [3, 'Every version kept, automatic backups on your Mac, the encrypted cloud copy at release.']"],
     ["b: [1, 'Beta is Mac only with iCloud. Phone, web and Based Cloud come with the release.']",
@@ -243,6 +252,9 @@ const CLAIMS = {
       "based: 'After the beta: the ChatGPT login or Claude Code CLI you already have, or an API key. Local models later. Or keep AI off entirely.'"]
   ],
   "Agents.dc.html": [
+    // 17.11. (framing): the notes app comes first, agents are the next chapter after the beta
+    ['<span class="bar" style="height: 14px;"></span>Opt-in. Off until you switch it on.</p>',
+      '<span class="bar" style="height: 14px;"></span>After the beta, and only if you want them.</p>'],
     ["Connect the ChatGPT or Claude account you already pay for, plug in an API key, or drive the coding CLIs you already use.",
       "Use the ChatGPT login or the Claude Code CLI you already have, plug in an API key, or drive the coding CLIs you already use."],
     ["Pick per task: Auto, Fast, Deep or a specific model. Or run one locally.", "Pick per task: Auto, Fast, Deep or a specific model. Local models come after the beta."],

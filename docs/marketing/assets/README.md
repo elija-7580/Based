@@ -1,5 +1,7 @@
 # Based · Marketing- und Profil-Assets
 
+Linie seit 17.11.2026: eigene Marke zuerst („Your data. Based.“), Notizen und Datenbanken vor Agenten, Notion nur als Umzugsweg.
+
 Alle Bilder entstehen aus `src/asset.html` (Design „Based Default“: Canvas #F1F1EE, Tinte #1F1F1D, Marker #F1DE8A,
 Schrift Schibsted Grotesk). Neu erzeugen: `src/render.sh` (braucht Google Chrome). Die App-Ansicht in den Bildern ist
 eine gezeichnete Darstellung im Stil von Based Next, kein Screenshot.
@@ -28,26 +30,26 @@ eine gezeichnete Darstellung im Stil von Based Next, kein Screenshot.
 **Name:** Based · **Handle-Vorschlag:** `basednotes` (überall gleich, passt zur Domain)
 
 **Bio kurz (X, Bluesky, Mastodon, max. 160 Zeichen):**
-Databases, docs and agents. Instant, private, everywhere. A Notion alternative built in Europe. Mac beta soon. basednotes.app
+Your data. Based. Fast, private notes and databases on your own Mac. Open source, built in Europe. Mac beta soon. basednotes.app
 
 **Bio sehr kurz (Instagram, TikTok, Reddit):**
-Your data. Based. Databases, docs and agents. Mac beta soon.
+Your data. Based. Notes and databases on your Mac. Beta soon.
 
 **GitHub-Repo-Beschreibung:**
-Local-first workspace for databases, docs and agents. Open source, built in Europe. Join the beta at basednotes.app
+Fast, private notes and databases on your own devices. Open source, built in Europe. Join the beta at basednotes.app
 
 **Product Hunt Tagline (max. 60 Zeichen):**
-Databases, docs and agents. Instant, private, everywhere.
+Your data. Based. Notes and databases on your Mac.
 
 **Product Hunt Beschreibung (max. 260 Zeichen):**
-Based is a workspace for people who love how Notion works, not how it's run. Huge databases that stay instant, your data on your own devices, EU servers, version history that never deletes, and agents that only work when you let them. Open source.
+Based is a fast, private home for your notes and databases. Everything lives on your own Mac, big databases stay instant, every version is kept, and you can bring your whole Notion workspace. Open source, built in Europe, shaped by its testers.
 
 **LinkedIn Seiten-Slogan:**
-Databases, docs and agents. Instant, private, everywhere.
+Your data. Based. Notes and databases on your own Mac.
 
 **Angepinnter erster Post (X/Bluesky):**
-I'm building Based: a workspace for people who love how Notion works, not how it's run.
-Databases that stay fast at any size, your data on your devices, EU servers, and AI that only touches your pages when you ask.
-Mac beta soon. Waitlist: basednotes.app
+I'm building Based: notes and databases that live on your own Mac and stay fast at any size.
+Bring your whole Notion workspace. Open source, built in Austria, and the roadmap comes from the people testing it.
+Mac beta soon: basednotes.app
 
 **Hashtags (sparsam):** #buildinpublic #pkm #notion #opensource #privacy
