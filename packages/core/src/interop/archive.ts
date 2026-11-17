@@ -7,7 +7,7 @@
 import type { ByteSource } from "./files.js";
 import { canonicalStringify } from "../json.js";
 import { compareStamps, ZERO_STAMP, type Stamp } from "../hlc.js";
-import type { BlockProps, Workspace, WireRecord } from "../model/records.js";
+import type { Block, BlockProps, Database, Workspace, WireRecord } from "../model/records.js";
 import { safeParseRecord } from "../model/records.js";
 import { recordKey, type RecordKeyString, type WorkspaceStore } from "../store/store.js";
 import { DEFAULT_ZIP_LIMITS, isZip, readZipEntries, writeZip, ZipError, zipEntryData, type ZipLimits, type ZipWriteEntry } from "./zip.js";
@@ -244,7 +244,7 @@ export interface ApplyImportedOptions {
 export interface ApplyImportedResult {
   /** Lokal neuer (bleiben). */
   stale: RecordKeyString[];
-  /** Hier gelöscht, nachdem die Archivversion entstand (bleiben gelöscht; nur ohne `restoreDeleted`). */
+  /** Hier gelöscht, nachdem die Archivversion entstand (bleiben gelöscht; mit `restoreDeleted` nur Inhalt noch vorhandener Seiten, BSD-478). */
   tombstoned: RecordKeyString[];
   /** Aus Papierkorb bzw. Löschung zurückgeholt (mit `restoreDeleted`). */
   restored: RecordKeyString[];
@@ -260,10 +260,55 @@ export function applyImported(store: WorkspaceStore, records: WireRecord[]): Rec
   return applyImportedRecords(store, records).stale;
 }
 
+/**
+ * BSD-478: Zurückgeholt wird in Papierkorb-Einheiten (Seite, Datenbank-Seite, eigene Inline-Datenbank, Zeile – wie
+ * `isTrashable`). Ein Inhaltsblock, eine Ansicht oder eine Spalte (Property-Record), die hier gelöscht wurde, während
+ * ihre Seite bzw. Datenbank weiter da ist, war eine Bearbeitung und bleibt gelöscht – sonst kämen beim erneuten Import
+ * eines Archivs gelöschte Sätze mitten in bearbeiteten Seiten zurück. Gibt die Schlüssel zurück, die zurückkommen.
+ */
+function revivable(store: WorkspaceStore, records: readonly WireRecord[], candidates: readonly { key: RecordKeyString; r: WireRecord }[]): Set<RecordKeyString> {
+  const archived = new Map<string, Block>();
+  const archivedDBs = new Map<string, Database>();
+  for (const r of records) {
+    if (r.kind === "block") archived.set(r.data.id, r.data);
+    else if (r.kind === "database") archivedDBs.set(r.data.id, r.data);
+  }
+  const reviving = new Set(candidates.map((c) => c.key));
+  const blockOf = (id: string) => store.blocks.get(id) ?? archived.get(id);
+  const dbBlock = (databaseID: string) => (store.databases.get(databaseID) ?? archivedDBs.get(databaseID))?.blockID;
+  const unit = (b: Block) => b.type === "page" || b.type === "databasePage" || b.parent.startsWith("d:") ||
+    (b.type === "databaseInline" && b.props?.databaseID !== undefined && dbBlock(b.props.databaseID) === b.id);
+  /** Ist die Papierkorb-Einheit, zu der Block `id` gehört, hier lebendig (da, nicht im Papierkorb, kommt nicht erst zurück)? */
+  const unitAlive = (id: string | undefined): boolean => {
+    const seen = new Set<string>();
+    let cur = id;
+    while (cur !== undefined && !seen.has(cur)) {
+      seen.add(cur);
+      const b = blockOf(cur);
+      if (!b) return false;
+      if (unit(b)) {
+        const here = store.blocks.get(cur);
+        return here !== undefined && here.trashedAt === undefined && !reviving.has(recordKey({ kind: "block", data: here }));
+      }
+      cur = b.parent.startsWith("b:") ? b.parent.slice(2) : undefined;
+    }
+    return false;
+  };
+  const out = new Set<RecordKeyString>();
+  for (const { key, r } of candidates) {
+    let keep = true;
+    if (r.kind === "block") keep = unit(r.data) || !unitAlive(r.data.parent.startsWith("b:") ? r.data.parent.slice(2) : undefined);
+    else if (r.kind === "view") keep = !unitAlive(r.data.blockID);
+    else if (r.kind === "property") { const b = dbBlock(r.data.databaseID); keep = b === undefined || !unitAlive(b); }
+    if (keep) out.add(key);
+  }
+  return out;
+}
+
 /** Wie `applyImported`, mit Bericht und optional Wiederherstellen gelöschter Records (BSD-423). */
 export function applyImportedRecords(store: WorkspaceStore, records: WireRecord[], opts: ApplyImportedOptions = {}): ApplyImportedResult {
   const puts: WireRecord[] = [];
-  const revive: WireRecord[] = [];
+  const candidates: { key: RecordKeyString; r: WireRecord; trashedHere: boolean }[] = [];
   const stale: RecordKeyString[] = [];
   const tombstoned: RecordKeyString[] = [];
   for (const r of records) {
@@ -276,7 +321,7 @@ export function applyImportedRecords(store: WorkspaceStore, records: WireRecord[
       if (compareStamps(stampOf(local), stampOf(r)) > 0) {
         // Lokal neuer, aber im Papierkorb: die lokale Fassung ohne Papierkorb-Markierung zurückholen – nicht die ältere
         // Archivfassung, sonst gingen Änderungen nach dem Export verloren (Prüfung Pass 37).
-        if (opts.restoreDeleted && trashed(local) && !trashed(r)) revive.push(untrashed(local));
+        if (opts.restoreDeleted && trashed(local) && !trashed(r)) candidates.push({ key, r: untrashed(local), trashedHere: true });
         else stale.push(key);
         continue;
       }
@@ -284,11 +329,21 @@ export function applyImportedRecords(store: WorkspaceStore, records: WireRecord[
       const ts = store.persistence?.tombstone(key);
       if (ts && compareStamps(ts, stampOf(r)) >= 0) {
         // hier gelöscht, nachdem diese Version entstand
-        if (opts.restoreDeleted) revive.push(r); else tombstoned.push(key);
+        if (opts.restoreDeleted) candidates.push({ key, r, trashedHere: false }); else tombstoned.push(key);
         continue;
       }
     }
     puts.push(r);
+  }
+  // BSD-478: nur ganze Papierkorb-Einheiten zurückholen; der Rest bleibt wie ohne `restoreDeleted`.
+  const revive: WireRecord[] = [];
+  if (candidates.length > 0) {
+    const ok = revivable(store, records, candidates);
+    for (const c of candidates) {
+      if (ok.has(c.key)) revive.push(c.r);
+      else if (c.trashedHere) stale.push(c.key);
+      else tombstoned.push(c.key);
+    }
   }
   // Öffentlicher Weg: `keepStamps` speichert mit Herkunft „import“ (kein Neustempeln, kein Undo, wird gesynct).
   const rejected = store.writeFailure?.rejected ?? 0;
