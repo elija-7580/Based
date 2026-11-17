@@ -120,6 +120,29 @@ test("claims (BSD-434): no promise the Mac beta can't keep", () => {
   assert.match(home, /Math\.round\(236 \* ease\)/);
 });
 
+test("framing (17.11.2026): the home page leads with the notes app, agents come after the beta", () => {
+  const out = mkdtempSync(join(tmpdir(), "based-site-framing-"));
+  execFileSync(process.execPath, [join(ROOT, "scripts", "build.mjs")], { env: { ...process.env, WEBSITE_OUT: out, NO_PRERENDER: "1" }, stdio: "pipe" });
+  const home = readFileSync(join(out, "index.html"), "utf8");
+  assert.match(home, /aria-label="\{\{heroLabel\}\}"/);
+  assert.match(home, /heroLabel: 'Notion, but yours\.'/, "desktop headline");
+  assert.match(home, /Notion,<br><span class="hl">but yours\.<\/span>/, "phone headline");
+  assert.ok(!home.includes("Databases, docs and agents"), "old agent-first headline is gone");
+  assert.ok(!home.includes("Based on nobody's cloud"), "closing line fits iCloud sync in the beta");
+  // order: workspace, moving in, your data, Notion pains, open, agents later
+  const order = ["Based workspace preview", "pillars-title", "yours-title", "pain-title", "open-title", "later-title", "cta-title"].map((k) => home.indexOf(k));
+  assert.ok(order.every((v, i) => v > 0 && (i === 0 || v > order[i - 1])), "section order " + order.join(","));
+  // header menus without Agents, footer keeps it
+  for (const p of ["index.html", "workspace/index.html", "imprint/index.html"]) {
+    const s = readFileSync(join(out, p), "utf8");
+    const header = /<header[\s\S]*?<\/header>/.exec(s)[0];
+    assert.ok(!header.includes('href="/agents"'), `${p}: Agents in the header`);
+    assert.match(/<footer[\s\S]*?<\/footer>/.exec(s)[0], /href="\/agents"/, `${p}: Agents in the footer`);
+  }
+  // no dashes as punctuation in the home copy (writing rules)
+  assert.ok(!/[–—]/.test(home), "no en or em dashes on the home page");
+});
+
 async function withServer(fn) {
   const dir = mkdtempSync(join(tmpdir(), "based-wl-"));
   // Port 0: the system picks a free port (a random one collided under load, „server exited 1“)

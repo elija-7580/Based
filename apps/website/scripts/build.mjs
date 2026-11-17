@@ -37,7 +37,7 @@ LINKS["Mobile.dc.html"] = "/";
 const META = {
   "/": {
     title: "Based Notes · The local-first Notion alternative for Mac",
-    description: "Pages and fast databases that stay on your Mac. Import your Notion workspace, no account needed. Join the free Mac beta."
+    description: "Pages and databases like Notion, stored on your own Mac. Import your whole Notion workspace, no account needed. Open source, free Mac beta."
   },
   "/workspace": {
     title: "Based Workspace · Big databases, zero waiting",
@@ -133,6 +133,15 @@ function patchLinks(s) {
   if (s.includes("[LINK]")) throw new Error("a [LINK] placeholder is left");
   return s;
 }
+// Header menus (desktop and phone sheet) lead with the notes app; Agents stays in the footer and on the home page.
+// The footer tagline follows the same framing on every page.
+function patchNav(s) {
+  s = s.split("Databases, docs and agents. Instant, private, everywhere. Built in Vienna.")
+    .join("Notion, but yours. Pages and databases on your own Mac. Built in Vienna.");
+  return s.replace(/<header[\s\S]*?<\/header>/, (h) => h
+    .replace(/<a href="\/agents" class="navlink[^"]*">Agents<\/a>\n?/, "")
+    .replace(/<a href="\/agents">Agents<\/a>\n?/, ""));
+}
 const patchAssets = (s) => s.split(MARK_LIGHT).join("/mark.svg").split(MARK_DARK).join("/mark-dark.svg");
 
 // ---- logo intro (Elija 17.11.): the mark in the header "types" itself once on every page ----
@@ -208,36 +217,7 @@ const PAGE_PATCHES = {
 // Strings inside the page scripts are single-quoted JavaScript: no plain apostrophes in replacements.
 const BETA_LIST_OLD = ["Sync between your Apple devices through iCloud", "Agents with your own keys, opt-in", "Meeting notes transcribed on your Mac, offline"];
 const CLAIMS = {
-  "Main.dc.html": [
-    ["<li>Sync between your Apple devices through iCloud</li><li>Databases, pages, import from Notion</li><li>Agents with your own keys, opt-in</li><li>Meeting notes transcribed on your Mac, offline</li>",
-      "<li>Databases, pages, import from Notion</li><li>Every version of every page, backups to a folder on your Mac</li><li>Sync between your Macs through iCloud Drive (preview)</li>"],
-    ["<li>MCP for every AI you use</li>",
-      "<li>Opt-in agents with your own keys, MCP for every AI you use</li><li>Meeting notes transcribed on your device</li>"],
-    ["<span>Built in Vienna, EU servers</span>", "<span>Built in Vienna, EU cloud at release</span>"],
-    ["Bring your own keys, or run models locally.", "Bring your own keys when agents arrive after the beta."],
-    ["Every version is kept and snapshots go to a drive you choose.", "Every version is kept and snapshots go to a folder on your Mac."],
-    ["fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.'",
-      "fixTitle: 'Only when you ask', fix: 'Meeting notes only when you start them. On-device transcription comes after the beta, and the audio stays on your Mac.'"],
-    ["foot: 'Agents never delete or share anything without asking.'",
-      "foot: 'Agents never delete for good or send anything out without asking, unless you allow it.'"],
-    ["Math.round(221 * ease)", "Math.round(236 * ease)"],
-    ["Math.round(178 * ease)", "Math.round(185 * ease)"]
-  ],
-  "Mobile.dc.html": [
-    ["['Mac app, data stored locally', 'Sync between your Apple devices through iCloud', 'Databases, pages, import from Notion', 'Agents with your own keys, opt-in', 'Meeting notes transcribed on your Mac, offline']",
-      "['Mac app, data stored locally', 'Databases, pages, import from Notion', 'Every version of every page, backups to a folder on your Mac', 'Sync between your Macs through iCloud Drive (preview)']"],
-    ["'MCP for every AI you use',", "'Opt-in agents with your own keys, MCP for every AI you use', 'Meeting notes transcribed on your device',"],
-    ["<span>EU servers</span>", "<span>EU cloud at release</span>"],
-    ["Your device, your encrypted cloud and snapshots in a folder you choose. Restore is one click.",
-      "Your Mac and a backup folder today, an encrypted cloud copy at release. Restore from any snapshot."],
-    ["Every version is kept and snapshots go to a drive you choose.", "Every version is kept and snapshots go to a folder on your Mac."],
-    ["fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.'",
-      "fixTitle: 'Only when you ask', fix: 'Meeting notes only when you start them. On-device transcription comes after the beta, and the audio stays on your Mac.'"],
-    ["foot: 'Agents never delete or share anything without asking.'",
-      "foot: 'Agents never delete for good or send anything out without asking, unless you allow it.'"],
-    ["One session across laptop, cloud sandbox and phone. Any AI can join through MCP.",
-      "At release: one session across laptop, cloud sandbox and phone. Any AI can join through MCP."]
-  ],
+  // Main.dc.html and Mobile.dc.html: reframed on 17.11.2026 ("Notion, but yours"); their texts already keep to the beta.
   "Workspace.dc.html": [
     ["The beta syncs your Apple devices through iCloud.", "In the beta, your Macs can sync through iCloud Drive as a preview."],
     ["by release. iCloud in the beta.</span>", "by release. iCloud Drive sync as a preview in the beta.</span>"],
@@ -318,7 +298,7 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 <meta property="og:image" content="${SITE}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Your data. Based. Databases, docs and agents. Join the beta at basednotes.app">
+<meta property="og:image:alt" content="Based Notes: Notion, but yours. Pages and databases on your own Mac. Join the beta at basednotes.app">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -379,7 +359,7 @@ function main() {
   const parsed = {};
   for (const f of readdirSync(join(SRC, "pages")).filter((x) => x.endsWith(".dc.html"))) {
     const p = parse(f);
-    p.body = patchAssets(patchLinks(p.body));
+    p.body = patchNav(patchAssets(patchLinks(p.body)));
     p.code = patchAssets(p.code);
     if (PAGE_PATCHES[f]) PAGE_PATCHES[f](p);
     p.body = must(p.body, LOGO_SVG_OLD, LOGO_SVG_NEW, "logo intro " + f);

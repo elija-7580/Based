@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Based · Databases, docs and agents. Instant, private, everywhere.</title>
+<title>Based Notes · Notion, but yours (phone)</title>
 <meta name="description" content="Easy like Notion, private like Obsidian. Your data on your devices, huge databases that stay instant, EU servers, opt-in agents. Join the beta.">
 <script src="./support.js"></script>
 </head>
@@ -257,6 +257,24 @@ footer a{display:inline-block;padding:6px 0}
 @keyframes bsdSheet{from{transform:translateY(100%)}to{transform:none}}
 @media (prefers-reduced-motion: reduce){.bsd .mb-sheet,.bsd .mb-backdrop{animation:none}}
 
+.bsd .ws-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bsd .ws-item.on{background:var(--bg);color:var(--ink);font-weight:600;box-shadow:var(--shadow-panel)}
+.bsd .ws-ic{flex:0 0 16px;width:16px;height:16px;border-radius:5px;background:var(--selected)}
+.bsd .ws-label{margin:16px 10px 6px;font-size:12px;font-weight:600;color:var(--muted)}
+.bsd .ws-t{padding:5px 12px;border-radius:999px;background:var(--surface-raised);color:var(--ink);font-size:13px;font-weight:600}
+.bsd .ws-t1{background:var(--button);color:var(--button-ink)}
+.bsd .ws-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 110px 90px;gap:12px;padding:11px 4px;border-top:1px solid var(--line);font-size:14px;align-items:center}
+.bsd .ws-head{border-top:0;font-size:12px;font-weight:600;color:var(--muted)}
+.bsd .imp-bar{display:block;height:4px;margin:0 0 8px;border-radius:4px;background:var(--surface-raised);overflow:hidden}
+.bsd .imp-bar>span{display:block;height:100%;background:var(--marker-strong);transform-origin:0 50%}
+@media (prefers-reduced-motion: no-preference){
+.bsd .ws-t1{animation:bsdT1 12s infinite}.bsd .ws-t2{animation:bsdT2 12s infinite}.bsd .ws-t3{animation:bsdT3 12s infinite}
+.bsd .imp-bar>span{animation:bsdLoopGrow 6s cubic-bezier(.4,0,.2,1) infinite}
+}
+@keyframes bsdT1{0%,31%{background:var(--button);color:var(--button-ink)}33%,100%{background:var(--surface-raised);color:var(--ink)}}
+@keyframes bsdT2{0%,31%{background:var(--surface-raised);color:var(--ink)}33%,64%{background:var(--button);color:var(--button-ink)}66%,100%{background:var(--surface-raised);color:var(--ink)}}
+@keyframes bsdT3{0%,64%{background:var(--surface-raised);color:var(--ink)}66%,97%{background:var(--button);color:var(--button-ink)}100%{background:var(--surface-raised);color:var(--ink)}}
+@media (max-width:900px){.bsd .ws-side,.bsd .ws-due{display:none !important}.bsd .ws-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 96px}}
 </style>
 </helmet>
 <div class="bsd" data-theme="{{theme}}" style="min-height: 100vh; display: flex; flex-direction: column;">
@@ -288,73 +306,45 @@ footer a{display:inline-block;padding:6px 0}
 
 <section class="mb-hero" aria-labelledby="mb-title">
 <p class="mb-pill rise d1"><span>Your data. Based.</span></p>
-<h1 id="mb-title" class="disp rise d2" style="margin: 0; font-size: 40px; line-height: 1.02;">Databases, docs and agents. <span class="hl">Instant. Private. Everywhere.</span></h1>
+<h1 id="mb-title" class="disp rise d2" style="margin: 0; font-size: 52px; line-height: 1.0;">Notion,<br><span class="hl">but yours.</span></h1>
 <p class="rise d3" style="margin: 0; font-family: var(--display); font-size: 21px; font-weight: 700; letter-spacing: -0.02em;">A home for your <span class="sentflip {{flipCls}}" style="color: var(--muted);">{{flapWord}}</span>.</p>
-<p class="rise d4" style="margin: 0; font-size: 16px; line-height: 1.55; color: var(--ink-2);">Your data lives on your devices and nothing gets lost. Databases with a hundred thousand rows stay instant. Agents only work if you switch them on.</p>
+<p class="rise d4" style="margin: 0; font-size: 16px; line-height: 1.55; color: var(--ink-2);">Pages and databases like Notion, stored on your own Mac and fast at a hundred thousand rows. Bring your whole Notion workspace, databases included.</p>
 <div class="rise d5" style="display: flex; flex-direction: column; gap: 10px;">
 <a href="#waitlist" class="btn mb-full">Join the beta</a>
-<a href="#today" class="btn2 mb-full">See it work</a>
+<a href="#today" class="btn2 mb-full">See it</a>
 </div>
-<p class="mb-trust rise d6"><span>Open source</span><span>EU servers</span><span>AI only if you want it</span></p>
+<p class="mb-trust rise d6"><span>Open source</span><span>Your data on your Mac</span><span>Built in Vienna</span></p>
 </section>
-
 <section id="today" class="mb-sec" aria-labelledby="mb-today">
 <div class="mb-card" style="padding: 18px 16px 16px;">
-<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
-<h2 id="mb-today" style="margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">Today</h2>
-<span class="mono" style="padding: 2px 8px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600;">{{nowTxt}}</span>
-</div>
-<div class="mb-scroll" style="margin: 12px -16px 6px; padding: 0 16px; gap: 6px;"><sc-for list="{{legend}}" as="g" hint-placeholder-count="4"><span style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{g.dot}};"></span>{{g.t}}</span></sc-for></div>
-<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;">
-<sc-for list="{{lanes}}" as="l" hint-placeholder-count="6"><li style="padding: 11px 0; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px;">
-<span aria-hidden="true" style="flex: 0 0 10px; height: 10px; border-radius: 50%; background: {{l.dot}}; transition: background-color 500ms ease;"></span>
-<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
-<span style="display: flex; justify-content: space-between; gap: 8px;"><b style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.t}}</b><span class="mono" style="flex: 0 0 auto; font-size: 12px; color: var(--muted);">{{l.when}}</span></span>
-<span style="font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.who}}</span>
-<span aria-hidden="true" style="display: block; height: 4px; border-radius: 4px; background: var(--surface-raised); overflow: hidden;"><span style="display: block; height: 100%; width: {{l.fill}}; background: {{l.barBg}}; transition: width 900ms linear, background-color 500ms ease;"></span></span>
-</span>
-<span style="flex: 0 0 auto; padding: 4px 9px; border-radius: 999px; background: {{l.chipBg}}; color: {{l.chipFg}}; font-size: 12px; font-weight: 600; min-width: 64px; text-align: center; box-sizing: border-box;">{{l.status}}</span>
-</li></sc-for>
+<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Private / Projects</p>
+<h2 id="mb-today" style="margin: 4px 0 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">Projects</h2>
+<div style="margin: 12px 0 10px; display: flex; gap: 6px;"><span class="ws-t ws-t1">Table</span><span class="ws-t ws-t2">Board</span><span class="ws-t ws-t3">Timeline</span></div>
+<div style="position: relative; min-height: 380px;">
+<ul class="v1" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;">
+<sc-for list="{{projRows}}" as="r" hint-placeholder-count="6"><li style="padding: 11px 0; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px;"><span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><b style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.t}}</b><span style="font-size: 13px; color: var(--muted);">{{r.a}}</span></span><span style="flex: 0 0 auto; padding: 2px 8px; border-radius: 3px; font-size: 12px; background: {{r.bg}};">{{r.s}}</span></li></sc-for>
 </ul>
+<div class="v2" style="display: flex; flex-direction: column; gap: 8px; opacity: 0;">
+<sc-for list="{{projCols}}" as="c" hint-placeholder-count="3"><div style="padding: 10px; border-radius: 14px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 6px;"><p style="margin: 0; font-size: 13px; font-weight: 600;">{{c.t}}</p><sc-for list="{{c.items}}" as="i" hint-placeholder-count="2"><p style="margin: 0; padding: 7px 10px; border-radius: 10px; background: var(--bg); font-size: 13px; box-shadow: var(--shadow-panel);">{{i}}</p></sc-for></div></sc-for>
 </div>
-
-<p style="margin: 26px 0 12px; font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; text-align: center;">What should we do today?</p>
-<div class="mb-card" style="padding: 6px; background: var(--surface-raised);">
-<div style="padding: 14px 14px 10px; border-radius: 18px; background: var(--bg); display: flex; flex-direction: column; gap: 12px;">
-<p style="margin: 0; min-height: 50px; font-size: 16px; line-height: 1.5;">{{promptShown}}<span class="caret" aria-hidden="true"></span></p>
-<div style="display: flex; align-items: center; gap: 8px;">
-<div class="mb-scroll" style="flex: 1 1 auto; gap: 6px;"><sc-for list="{{pills}}" as="p" hint-placeholder-count="5"><button type="button" aria-haspopup="dialog" aria-pressed="{{p.pressed}}" onClick="{{p.open}}" class="mb-chip"><span aria-hidden="true" style="font-size: 10px;">{{p.icon}}</span><span style="color: var(--muted);">{{p.k}}</span> {{p.v}}</button></sc-for></div>
-<span aria-hidden="true" style="flex: 0 0 38px; height: 38px; border-radius: 50%; background: var(--button); color: var(--button-ink); display: inline-flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg></span>
+<div class="v3" style="display: flex; flex-direction: column; gap: 12px; padding-top: 6px; opacity: 0;">
+<div class="mono" style="display: flex; justify-content: space-between; font-size: 11px; color: var(--muted);"><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span></div>
+<sc-for list="{{projBars}}" as="b" hint-placeholder-count="5"><div style="height: 30px; width: {{b.w}}; min-width: 46%; margin-left: {{b.x}}; border-radius: 8px; background: {{b.bg}}; font-size: 13px; padding: 6px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.t}}</div></sc-for>
 </div>
 </div>
 </div>
-<p style="margin: 10px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Tap a setting. Every choice is yours: agent, model, permissions, tools, privacy. Sample data.</p>
-
-<sc-if value="{{sheetOpen}}" hint-placeholder-val="{{ false }}">
-<div class="mb-sheet-wrap">
-<button type="button" class="mb-backdrop" aria-label="Close" onClick="{{closeSheet}}"></button>
-<div class="mb-sheet" role="dialog" aria-modal="true" aria-label="{{sheet.title}}">
-<span aria-hidden="true" style="display: block; width: 40px; height: 5px; margin: 0 auto 14px; border-radius: 5px; background: var(--selected);"></span>
-<p style="margin: 0 4px 10px; display: flex; justify-content: space-between; gap: 10px; font-size: 15px;"><b>{{sheet.title}}</b><span style="color: var(--muted); font-size: 13px;">{{sheet.hint}}</span></p>
-<sc-for list="{{sheet.options}}" as="o" hint-placeholder-count="4"><div style="padding: 10px; border-radius: 14px; background: {{o.bg}}; display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 36px; height: 36px; border-radius: 10px; background: {{o.tileBg}}; color: {{o.tileFg}}; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{o.icon}}</span><span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><b style="font-size: 15px; font-weight: 600;">{{o.n}}</b><span style="font-size: 13px; color: var(--muted);">{{o.d}}</span></span><span aria-hidden="true">{{o.check}}</span></div></sc-for>
-<p style="margin: 10px 4px 6px; font-size: 13px; color: var(--muted);">{{sheet.foot}}</p>
-<button type="button" class="btn mb-full" onClick="{{closeSheet}}" style="margin-top: 6px;">Done</button>
-</div>
-</div>
-</sc-if>
+<p style="margin: 10px 0 0; text-align: center; font-size: 13px; color: var(--muted);">One database, three views of the same rows. Sample data.</p>
 </section>
-
 <section class="mb-sec" aria-labelledby="mb-two">
-<p class="eyebrow">Two things, done properly</p>
-<h2 id="mb-two" class="mb-h2">A workspace that never waits. Agents that never go behind your back.</h2>
+<p class="eyebrow">Moving in</p>
+<h2 id="mb-two" class="mb-h2">Bring everything over. Then stop waiting.</h2>
 <div class="mb-scroll mb-snap" style="margin: 0 -20px; padding: 4px 20px 8px; gap: 12px;">
-<a href="Workspace.dc.html" class="mb-slide card" style="text-decoration: none; color: inherit;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">01 The workspace</p><p class="mb-h3">Databases at the heart of it.</p><p class="mb-p">Tables, boards, timelines and calendars over the same data. Local, so a hundred thousand rows feel like ten.</p><span class="mb-more">Explore the workspace →</span></a>
-<a href="Agents.dc.html" class="mb-slide ink-panel" style="text-decoration: none;"><p class="mono" style="margin: 0; font-size: 12px; opacity: .7;">02 The agents, opt-in</p><p class="mb-h3">A crew that comes to you.</p><p class="mb-p" style="color: inherit; opacity: .85;">One main agent plans, hands work to specialists and checks back. Every line they write is signed.</p><span class="mb-more">Meet mission control →</span></a>
-<div class="mb-slide card"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">03 Your data</p><p class="mb-h3">Three copies. Zero panic.</p><p class="mb-p">Your device, your encrypted cloud and snapshots in a folder you choose. Restore is one click.</p></div>
-<div class="mb-slide card"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">04 Everywhere</p><p class="mb-h3">Start in the terminal. Finish on your phone.</p><p class="mb-p">One session across laptop, cloud sandbox and phone. Any AI can join through MCP.</p></div>
+<a href="Switch.dc.html" class="mb-slide card" style="text-decoration: none; color: inherit;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">01 Your Notion</p><p class="mb-h3">Your whole workspace, moved in.</p><p class="mb-p">Drop your Notion export into Based. Pages, databases, relations and nesting come back on your Mac, with real file names.</p><span class="mb-more">Leaving Notion? →</span></a>
+<a href="Workspace.dc.html" class="mb-slide card" style="text-decoration: none; color: inherit;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">02 Your databases</p><p class="mb-h3">Databases at the heart of it.</p><p class="mb-p">Tables, boards, timelines and calendars over the same rows. Local, so a hundred thousand rows feel like ten.</p><span class="mb-more">Explore the workspace →</span></a>
+<div class="mb-slide card"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">03 Your data</p><p class="mb-h3">Two copies. Zero panic.</p><p class="mb-p">Your Mac and a backup folder today, with every version of every page. An encrypted copy on EU servers or your own server at release.</p></div>
+<a href="Agents.dc.html" class="mb-slide ink-panel" style="text-decoration: none;"><p class="mono" style="margin: 0; font-size: 12px; opacity: .7;">04 After the beta</p><p class="mb-h3">Later, if you want them: agents.</p><p class="mb-p" style="color: inherit; opacity: .85;">Opt-in agents that work inside your pages and use the AI you already pay for. Off until you switch them on.</p><span class="mb-more">Where this is going →</span></a>
 </div>
 </section>
-
 <section class="mb-sec" aria-labelledby="mb-between">
 <p class="eyebrow">Where Based sits</p>
 <h2 id="mb-between" class="mb-h2">Easy like Notion. Private like Obsidian.</h2>
@@ -378,17 +368,23 @@ footer a{display:inline-block;padding:6px 0}
 </section>
 
 <section class="mb-sec" aria-labelledby="mb-when">
-<h2 id="mb-when" class="mb-h2">What you get, and when.</h2>
+<p class="eyebrow">Your data</p>
+<h2 id="mb-when" class="mb-h2">You always know where your data is.</h2>
 <div role="tablist" aria-label="Beta or release" style="display: flex; padding: 4px; border-radius: 999px; background: var(--surface-raised);"><sc-for list="{{whenTabs}}" as="w" hint-placeholder-count="2"><button type="button" role="tab" aria-selected="{{w.sel}}" onClick="{{w.pick}}" style="flex: 1 1 0; min-height: 40px; border: 0; border-radius: 999px; background: {{w.bg}}; box-shadow: {{w.sh}}; font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer;">{{w.t}}</button></sc-for></div>
 <div class="mb-card" style="margin-top: 12px; padding: 20px;">
 <p class="mb-h3" style="margin-bottom: 10px;">{{whenTitle}}</p>
 <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.45;"><sc-for list="{{whenItems}}" as="i" hint-placeholder-count="5"><li>{{i}}</li></sc-for></ul>
 </div>
 </section>
-
+<section class="mb-sec" aria-labelledby="mb-open">
+<p class="eyebrow">Built in the open</p>
+<h2 id="mb-open" class="mb-h2">Built with the people who use it.</h2>
+<p class="mb-p" style="margin-top: 4px;">Based is open source and made by one person in Vienna. The roadmap is public, so you can see what is next, vote on it and add what you are missing. What testers run into decides the order.</p>
+<a href="Roadmap.dc.html" class="btn2 mb-full" style="margin-top: 14px;">See the roadmap →</a>
+</section>
 <section id="waitlist" class="mb-sec" aria-labelledby="mb-join">
 <div class="ink-panel" style="padding: 26px 20px; border-radius: 26px; display: flex; flex-direction: column; gap: 16px;">
-<h2 id="mb-join" class="disp" style="margin: 0; font-size: 30px; line-height: 1.08;">Based on your devices. Based in Europe. <span class="hl">Based on nobody's cloud.</span></h2>
+<h2 id="mb-join" class="disp" style="margin: 0; font-size: 30px; line-height: 1.08;">Based on your Mac. Based in Europe. <span class="hl">Based on your feedback.</span></h2>
 <p style="margin: 0; font-size: 15px; line-height: 1.55; opacity: .85;">The beta starts on the Mac. Tell us who you are and Based writes back.</p>
 <sc-if value="{{showForm}}" hint-placeholder-val="{{ true }}">
 <form aria-label="Join the beta" onSubmit="{{join}}" style="display: flex; flex-direction: column; gap: 10px;">
@@ -465,20 +461,14 @@ footer a{display:inline-block;padding:6px 0}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', reply2: 0, clock: 0, flapI: 0, promptI: 0, promptN: 0, sheet: -1, pain: 0, when: 'beta' };
+    this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flapI: 0, when: 'beta' };
     this.timers = { reply: [], loop: [] };
-    this.prompts = ['Prepare my week: deadlines first, then the Acme proposal', 'Summarise yesterday\u2019s calls into the Clients database', 'Find sources for thesis chapter 2 and add them to Reading', 'Draft the investor update from the Metrics database'];
-    this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'log files', 'reading list'];
+    this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'reading list'];
   }
   componentDidMount() {
-    this.tick = setInterval(() => this.setState({ clock: (this.state.clock + 1) % 60, flapI: this.state.flapI + 1 }), 2600);
-    this.typeTimer = setInterval(() => {
-      const p = this.prompts[this.state.promptI % this.prompts.length];
-      if (this.state.promptN < p.length) this.setState({ promptN: this.state.promptN + 1 });
-      else if (!this.hold) { this.hold = setTimeout(() => { this.hold = null; this.setState({ promptI: this.state.promptI + 1, promptN: 0 }); }, 2400); }
-    }, 55);
+    this.tick = setInterval(() => this.setState({ flapI: this.state.flapI + 1 }), 2600);
   }
-  componentWillUnmount() { clearInterval(this.tick); clearInterval(this.typeTimer); clearTimeout(this.hold); this.clearTimers(); }
+  componentWillUnmount() { clearInterval(this.tick); this.clearTimers(); }
   clearTimers(g) { (g ? [g] : ['reply', 'loop']).forEach((k) => { this.timers[k].forEach((t) => clearTimeout(t)); this.timers[k] = []; }); }
   later(fn, ms, g) { const k = g || 'loop'; const t = setTimeout(fn, ms); this.timers[k].push(t); return t; }
   reduced() { return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
@@ -493,111 +483,93 @@ class Component extends DCLogic {
       this.later(step, /[.,:\n]/.test(ch) ? sp * 6 : sp + Math.random() * sp, 'reply');
     };
     step();
-  }  firstName() {
+  }
+  firstName() {
     const n = (this.state.name || '').trim();
     if (n) return n.split(/\s+/)[0];
     const local = (this.state.email.split('@')[0] || '').split(/[._+\-0-9]/)[0];
     if (local.length < 2) return '';
     return local.charAt(0).toUpperCase() + local.slice(1).toLowerCase();
-  }  org() {
+  }
+  org() {
     const domain = (this.state.email.split('@')[1] || '').toLowerCase();
     if (!domain || /^(gmail|googlemail|icloud|me|mac|outlook|hotmail|live|yahoo|gmx|web|proton|protonmail|aol)\./.test(domain)) return '';
     const parts = domain.split('.').filter((p) => !['edu', 'ac', 'at', 'de', 'ch', 'uk', 'com', 'org', 'net', 'io', 'co', 'student', 'students', 'mail', 'eu'].includes(p));
     const label = parts[parts.length - 1] || '';
     if (!label) return '';
     return label.length <= 4 ? label.toUpperCase() : label.charAt(0).toUpperCase() + label.slice(1);
-  }  composeReply() {
+  }
+  composeReply() {
     const name = this.firstName();
     const hi = name ? 'Hi ' + name + ', ' : 'Hi, ';
     const org = this.org();
     const r = this.state.role;
-    const tail = "\n\nHomework for today: export your Notion as HTML. I'll bring it over on day one, databases included, without the 32-character file names.";
+    const tail = "\n\nHomework for today: export your Notion as HTML. It comes over on day one, databases included, and the files keep their real names.\n\nWhen something annoys you in the beta, tell me. That is how the roadmap gets made.";
     if (r === 'business') {
-      return hi + "you're in" + (org ? ', and nice to meet the team at ' + org : '') + ".\n\nWhen the beta opens, point me at your clients and projects database. I'll keep it current, prepare a briefing every morning and tell you when something needs a decision. Your data stays on your devices, and every line I write is marked." + tail;
+      return hi + "you're in" + (org ? ', and nice to meet the team at ' + org : '') + ".\n\nWhen the beta opens, bring your clients and projects databases. They stay on your Mac, they stay fast, and nothing gets deleted behind your back." + tail;
     }
     if (r === 'study') {
-      return hi + "you're in" + (org ? ', and nice to meet someone from ' + org : '') + ".\n\nWhen the beta opens, bring me your next lecture. I'll write the notes while you listen, pull out the formulas and file everything into your course database." + tail;
+      return hi + "you're in" + (org ? ', and nice to meet someone from ' + org : '') + ".\n\nWhen the beta opens, bring your lecture notes and reading lists. Courses, sources and deadlines in databases that link to each other, and it all works offline in the lecture hall." + tail;
     }
     if (r === 'dev') {
-      return hi + "you're in.\n\nWhen the beta opens, talk to me from your terminal, let me keep working in the cloud sandbox and check in from your phone. Same session, same workspace, reachable over MCP from whatever AI you already use." + tail;
+      return hi + "you're in.\n\nWhen the beta opens, take it apart. The code is open, your data stays on your Mac, and the roadmap is public. If something is missing, open an issue or tell me directly." + tail;
     }
-    return hi + "you're in" + (org ? ', and hello to everyone at ' + org : '') + ".\n\nWhen the beta opens, I'll help you turn scattered notes into a second brain that stays fast at any size. I'm off by default, I write in the margin and I sign everything." + tail;
-  }  join(e) {
+    return hi + "you're in" + (org ? ', and hello to everyone at ' + org : '') + ".\n\nWhen the beta opens, bring your scattered notes and turn them into a second brain that stays fast at any size. It all stays on your Mac." + tail;
+  }
+  join(e) {
     e.preventDefault();
     if (!this.state.email || this.state.email.indexOf('@') < 1) return;
     this.clearTimers('reply');
     const reply = this.composeReply();
     this.setState({ phase: 'thinking', reply, replyChars: 0 });
     this.later(() => { this.setState({ phase: 'writing' }); this.typeReply(reply.length); }, this.reduced() ? 0 : 1200, 'reply');
-  }  renderVals() {
+  }
+  renderVals() {
     const theme = this.props.theme ?? 'light';
     const s = this.state;
     const ph = s.phase;
     const now = new Date();
     const hhmm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     const painsRaw = [
-      { title: 'Your data, in Oregon', joke: 'By default your Notion workspace lives in the United States. EU storage? That\u2019s an Enterprise conversation with a sales team.', fixTitle: 'Your devices, EU servers', fix: 'Your workspace lives on your devices. Based Cloud runs in the EU and will be end-to-end encrypted, so not even we can read it.', src: 'Notion help center: data residency.' },
+      { title: 'Your data, in Oregon', joke: 'By default your Notion workspace lives in the United States. EU storage? That’s an Enterprise conversation with a sales team.', fixTitle: 'On your Mac, EU at release', fix: 'In the beta your workspace lives on your Mac. At release, Based Cloud runs on EU servers with end-to-end encryption, so not even we can read it.', src: 'Notion help center: data residency.' },
       { title: 'The grey skeleton', joke: 'You know its shape by heart. It has been your most reliable coworker for years.', fixTitle: 'Opens like a file', fix: 'Local first, so pages open before you let go of the click. Online, offline, in a tunnel.', src: 'Notion help center: large databases slow pages down.' },
       { title: '“Available offline”*', joke: '*Pick your pages in advance. Databases: first 50 rows. Formulas and rollups: see you back online.', fixTitle: 'Offline is just on', fix: 'Every page, every row, every formula. There is no offline mode because nothing needs to be online.', src: 'Notion offline mode documentation and guides.' },
-      { title: 'The backup that isn\u2019t', joke: 'Notion\u2019s export can\u2019t recreate your workspace. So you pay a second company to back up the first.', fixTitle: 'You own it. It stays.', fix: 'Your data sits on your own devices. Every version is kept and snapshots go to a drive you choose. Nothing gets deleted behind your back.', src: 'Notion help center on exports; Reddit, 2026.' },
-      { title: 'In a meeting? Notion noticed.', joke: 'Join a call and the desktop app offers to take AI meeting notes. Helpful. Slightly unsettling.', fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.', src: 'Hacker News thread on Notion Desktop.' },
-      { title: 'Ask AI → “Upgrade”', joke: 'Full Notion AI lives on Business at $20 a seat. Custom agents run on credits. Your OpenAI plan? Irrelevant, apparently.', fixTitle: 'Bring the AI you pay for', fix: 'Connect ChatGPT, Claude, an API key or a local model. No second AI subscription, no credits.', src: 'Notion pricing, November 2026.' }
+      { title: 'The backup that isn’t', joke: 'Notion’s export can’t recreate your workspace. So you pay a second company to back up the first.', fixTitle: 'You own it. It stays.', fix: 'Your data sits on your own Mac. Every version is kept and snapshots go to a folder on your Mac. Nothing gets deleted behind your back.', src: 'Notion help center on exports; Reddit, 2026.' },
+      { title: 'Page 3f9a2c…e81.md', joke: 'Export your workspace and you get thousands of files with a 32-character ID glued to every name. Good luck finding anything.', fixTitle: 'Real file names', fix: 'Markdown export with the names you gave your pages, plus a lossless archive that brings everything back. Leaving takes one click.', src: 'Notion help center on exports.' },
+      { title: 'Ask AI → “Upgrade”', joke: 'Full Notion AI lives on Business at $20 a seat. Custom agents run on credits. Your OpenAI plan? Irrelevant, apparently.', fixTitle: 'Bring the AI you pay for', fix: 'After the beta, AI is opt-in: use the ChatGPT or Claude Code login you already have, or an API key. No second subscription, no credits.', src: 'Notion pricing, November 2026.' }
     ];
-    const menus = [
-      { k: 'Agent', v: 'Main', icon: '\u25cf', title: 'Agent', hint: 'who takes this', foot: 'The main agent can hand work to the others.', options: [
-        { n: 'Main', d: 'Plans, delegates, writes updates', icon: 'M', on: true }, { n: 'Tutor', d: 'Explains and quizzes you', icon: 'T' }, { n: 'Researcher', d: 'Reads sources, cites them', icon: 'R' }, { n: 'Night shift', d: 'Works through your backlog at night', icon: 'N' } ] },
-      { k: 'Model', v: 'Auto', icon: '\u25c6', title: 'Compute', hint: 'how hard Based thinks', foot: 'Use your ChatGPT or Claude account, an API key or a local model.', options: [
-        { n: 'Auto', d: 'Picks per task, recommended', icon: 'A', on: true }, { n: 'Fast', d: 'Quick answers, light tasks', icon: 'F' }, { n: 'Deep', d: 'Long reasoning, big documents', icon: 'D' }, { n: 'Specific model', d: 'Claude, GPT, Gemini or local', icon: '\u2026' } ] },
-      { k: 'Permission', v: 'Ask before edits', icon: '\u25b2', title: 'Permission', hint: 'what Based may do alone', foot: 'Agents never delete or share anything without asking.', options: [
-        { n: 'Ask every time', d: 'Every step needs your OK', icon: '1' }, { n: 'Ask before edits', d: 'Research freely, ask before changing pages', icon: '2', on: true }, { n: 'Work freely', d: 'Within budget and scope, all edits marked', icon: '3' } ] },
-      { k: 'Tools', v: '4 on', icon: '\u25a0', title: 'Tools and connectors', hint: 'what Based can reach', foot: 'Any MCP server works. Add your own in settings.', options: [
-        { n: 'Your workspace', d: 'Pages, databases, files', icon: 'W', on: true }, { n: 'Web search', d: 'With sources', icon: 'S', on: true }, { n: 'Calendar and mail', d: 'Through MCP', icon: 'C', on: true }, { n: 'Code sandbox', d: 'Runs scripts in the cloud, opt-in', icon: '>', on: true } ] },
-      { k: 'Privacy', v: 'Check on', icon: '\u2726', title: 'Before sending', hint: 'runs on your device', foot: 'Planned: a local check flags private details before a prompt leaves your Mac.', options: [
-        { n: 'Privacy check', d: 'Finds names, numbers, health and money details', icon: 'P', on: true }, { n: 'Memory', d: 'Remember what matters across chats', icon: 'M', on: true }, { n: 'Skills', d: '3 active: client updates, lecture notes, weekly review', icon: 'K', on: true } ] }
-    ];
-    const hNow = 12.4 + (s.clock / 59) * 4.2;
-    const hm = (h) => String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0');
-    const ST = {
-      sched: { status: 'Scheduled', dot: '#7C9BD6', chipBg: 'var(--status-ready)', chipFg: 'var(--ink)' },
-      work: { status: 'Working', dot: 'var(--marker-strong)', chipBg: 'var(--marker)', chipFg: 'var(--ink)' },
-      done: { status: 'Done', dot: 'var(--synced)', chipBg: '#DCEFE3', chipFg: '#2F6B47' },
-      need: { status: 'Needs you', dot: '#D9739A', chipBg: 'var(--status-review)', chipFg: '#8A2F52' }
-    };
-    const lanes = [
-      { t: 'Morning briefing', who: 'Main agent', a: 7.5, b: 8.25 },
-      { t: 'Thesis sources', who: 'Researcher, local model', a: 8, b: 11.5 },
-      { t: 'Acme proposal draft', who: 'Writer, Claude', a: 9.5, b: 13, ask: true },
-      { t: 'Q4 metrics', who: 'Coder, GPT', a: 12, b: 15.5 },
-      { t: 'Northwind call notes', who: 'Transcribed on your Mac', a: 14, b: 15 },
-      { t: 'Night shift', who: 'Backlog, tests, build log', a: 23, b: 24 }
-    ].map((l) => {
-      const k = hNow < l.a ? 'sched' : hNow < l.b ? 'work' : l.ask ? 'need' : 'done';
-      const st = ST[k];
-      const f = k === 'work' ? Math.round(((hNow - l.a) / (l.b - l.a)) * 100) : k === 'sched' ? 0 : 100;
-      return { t: l.t, who: l.who, when: hm(l.a), dot: st.dot, status: k === 'work' ? f + ' %' : st.status, chipBg: st.chipBg, chipFg: st.chipFg, fill: f + '%', barBg: st.dot };
-    });
-    const open = s.sheet;
-    const sheetMenu = open >= 0 ? menus[open] : null;
     return {
       theme,
       markSrc: '/_blob/c3ccc021887376abcf7fe08d0002d913',
       markDarkSrc: '/_blob/60426240b69c9dab9372c2741257d898',
       flapWord: this.flapWords[s.flapI % this.flapWords.length],
       flipCls: s.flapI % 2 === 0 ? 'fa' : 'fb',
-      nowTxt: hm(hNow),
-      lanes,
-      legend: [['Done', 'var(--synced)'], ['Working', 'var(--marker-strong)'], ['Needs you', '#D9739A'], ['Scheduled', '#7C9BD6']].map(([t, dot]) => ({ t, dot })),
-      promptShown: this.prompts[s.promptI % this.prompts.length].slice(0, s.promptN),
-      pills: menus.map((m, i) => ({ k: m.k, v: m.v, icon: m.icon, open: () => this.setState({ sheet: i }), pressed: open === i ? 'true' : 'false' })),
-      sheetOpen: !!sheetMenu,
-      sheet: sheetMenu ? { title: sheetMenu.title, hint: sheetMenu.hint, foot: sheetMenu.foot, options: sheetMenu.options.map((o) => ({ n: o.n, d: o.d, icon: o.icon, check: o.on ? '\u2713' : '', bg: o.on ? 'var(--surface-raised)' : 'transparent', tileBg: o.on ? 'var(--button)' : 'var(--surface-raised)', tileFg: o.on ? 'var(--button-ink)' : 'var(--ink)' })) } : { title: '', hint: '', foot: '', options: [] },
-      closeSheet: () => this.setState({ sheet: -1 }),
+      projRows: [
+        { t: 'Thesis: cell simulation', a: 'Research', s: 'Active', bg: 'var(--status-ready)', d: 'Feb 12' },
+        { t: 'Client onboarding', a: 'Business', s: 'Active', bg: 'var(--status-ready)', d: 'Nov 28' },
+        { t: 'Reading list', a: 'Second brain', s: 'Ongoing', bg: 'var(--selected)', d: '' },
+        { t: 'Q1 roadmap', a: 'Product', s: 'Draft', bg: 'var(--marker)', d: 'Dec 15' },
+        { t: 'Lecture notes, week 6', a: 'Study', s: 'Review', bg: 'var(--status-review)', d: 'Nov 21' },
+        { t: 'Grant application', a: 'Research', s: 'Paused', bg: 'var(--status-blocked)', d: 'Jan 30' }
+      ],
+      projCols: [
+        { t: 'Draft', items: ['Q1 roadmap', 'Grant application'] },
+        { t: 'Active', items: ['Thesis: cell simulation', 'Client onboarding'] },
+        { t: 'Review', items: ['Lecture notes, week 6'] }
+      ],
+      projBars: [
+        { t: 'Lecture notes, week 6', x: '2%', w: '22%', bg: 'var(--status-review)' },
+        { t: 'Client onboarding', x: '8%', w: '30%', bg: 'var(--status-ready)' },
+        { t: 'Q1 roadmap', x: '26%', w: '34%', bg: 'var(--marker)' },
+        { t: 'Grant application', x: '44%', w: '40%', bg: 'var(--status-blocked)' },
+        { t: 'Thesis: cell simulation', x: '18%', w: '78%', bg: 'var(--status-ready)' }
+      ],
       pains: painsRaw.map((p, i) => ({ n: String(i + 1).padStart(2, '0'), title: p.title, joke: p.joke, fixTitle: p.fixTitle, fix: p.fix })),
-      whenTabs: [['beta', 'Beta on the Mac'], ['release', 'Release']].map(([id, t]) => ({ t, sel: s.when === id ? 'true' : 'false', bg: s.when === id ? 'var(--bg)' : 'transparent', sh: s.when === id ? 'var(--shadow-panel)' : 'none', pick: () => this.setState({ when: id }) })),
-      whenTitle: s.when === 'beta' ? 'The fast local workspace.' : 'Everywhere, encrypted.',
+      whenTabs: [['beta', 'Now, in the Mac beta'], ['release', 'At release']].map(([id, t]) => ({ t, sel: s.when === id ? 'true' : 'false', bg: s.when === id ? 'var(--bg)' : 'transparent', sh: s.when === id ? 'var(--shadow-panel)' : 'none', pick: () => this.setState({ when: id }) })),
+      whenTitle: s.when === 'beta' ? 'On your Mac.' : 'Our cloud or your server.',
       whenItems: s.when === 'beta'
-        ? ['Mac app, data stored locally', 'Sync between your Apple devices through iCloud', 'Databases, pages, import from Notion', 'Agents with your own keys, opt-in', 'Meeting notes transcribed on your Mac, offline']
-        : ['Based Cloud on EU servers, end-to-end encrypted', 'iPhone, iPad, web, then Windows, Linux and Android', 'One agent session across terminal, cloud and phone', 'MCP for every AI you use', 'Self-hosting for anyone who wants it'],
+        ? ['Pages and databases stored locally, offline by default', 'Every version of every page, backups to a folder on your Mac', 'Sync between your Macs through iCloud Drive (preview)', 'Export to Markdown with real file names, or a lossless archive', 'Open source under the AGPL, so you can read every line']
+        : ['Based Cloud on EU servers, end-to-end encrypted', 'Self-hosting on a server of your own', 'iPhone, iPad and web, then Windows, Linux and Android'],
       name: s.name, email: s.email,
       setName: (e) => this.setState({ name: e.target.value }),
       setEmail: (e) => this.setState({ email: e.target.value }),
@@ -610,7 +582,7 @@ class Component extends DCLogic {
       reset: () => { this.clearTimers('reply'); this.setState({ phase: 'form', replyChars: 0 }); },
       showForm: ph === 'form', showReply: ph !== 'form', thinking: ph === 'thinking', typing: ph === 'writing', replyDone: ph === 'done',
       replyShown: s.reply.slice(0, s.replyChars),
-      replyMeta: ph === 'thinking' ? 'is writing\u2026' : 'to you, ' + hhmm
+      replyMeta: ph === 'thinking' ? 'is writing…' : 'to you, ' + hhmm
     };
   }
 }
