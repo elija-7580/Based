@@ -1,17 +1,21 @@
-success dee6b7c74adf3cafc70111978a25196207a076d9 (nicht blockierend)
-perf 5000: {"mapOpen":[],"idleBeforePan":[159],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3820,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":9,"peekLong":[],"formSubmitMs":72,"formLong":[]}
-BSD-215 chromium: 100000 Zeilen öffnen 1842 ms, ans Ende scrollen 59 ms, Zelle ändern 309 ms
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 6.8, 7, 9.3, 10.4, 13.7
-  ✓   6 [chromium] › e2e/shell.spec.ts:107:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.9s)
-[chromium] Start mit 5.000 Seiten: Seitenleiste nach 490 ms, längste Aufgabe 0 ms
-  ✓   8 [chromium] › e2e/startup-perf.spec.ts:13:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (3.5s)
-[chromium] Seitenwechsel (300 Blöcke): 177, 182, 194, 213 ms · Tastendruck p50 17 p95 31 max 40 ms (45 Tasten)
-  ✓  10 [chromium] › e2e/startup-perf.spec.ts:78:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (4.4s)
-BSD-215 webkit: 100000 Zeilen öffnen 2167 ms, ans Ende scrollen 1230 ms, Zelle ändern 657 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 5, 11, 14, 19, 20
-  ✓  15 [webkit] › e2e/shell.spec.ts:107:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (5.2s)
-[webkit] Start mit 5.000 Seiten: Seitenleiste nach 1346 ms, längste Aufgabe 0 ms
-  ✓  17 [webkit] › e2e/startup-perf.spec.ts:13:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (6.7s)
-[webkit] Seitenwechsel (300 Blöcke): 582, 821, 832, 932 ms · Tastendruck p50 67 p95 204 max 340 ms (45 Tasten)
-  ✓  18 [webkit] › e2e/startup-perf.spec.ts:78:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (9.2s)
-  17 passed (2.5m)
+success 1643398418ea2526b6037da88f4c72b25e9423c9 (nicht blockierend)
+perf 5000: {"mapOpen":[],"idleBeforePan":[165],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3842,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":7.25,"peekLong":[],"formSubmitMs":62,"formLong":[]}
+BSD-215 chromium: 100000 Zeilen öffnen 1952 ms, ans Ende scrollen 50 ms, Zelle ändern 158 ms
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 5.8, 8.2, 8.9, 9.9, 10.9
+  ✓   7 [chromium] › e2e/shell.spec.ts:107:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (2.3s)
+[chromium] Start mit 100 000 Records: 2281/2287, 2020/2043, 2039/2051 ms (bereit/Seitenleiste)
+  ✓   5 [chromium] › e2e/scale-perf.spec.ts:12:1 › Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden @perf (15.9s)
+[chromium] Start mit 5.000 Seiten: Seitenleiste nach 449 ms, längste Aufgabe 0 ms
+  ✓   9 [chromium] › e2e/startup-perf.spec.ts:13:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (3.8s)
+[chromium] Seitenwechsel (300 Blöcke): 164, 183, 184, 215 ms · Tastendruck p50 19 p95 29 max 35 ms (45 Tasten)
+  ✓  11 [chromium] › e2e/startup-perf.spec.ts:78:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (4.2s)
+BSD-215 webkit: 100000 Zeilen öffnen 2766 ms, ans Ende scrollen 272 ms, Zelle ändern 607 ms
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 5, 6, 12, 14, 15
+  ✓  17 [webkit] › e2e/shell.spec.ts:107:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.4s)
+[webkit] Start mit 100 000 Records: 2944/2953, 3948/3960, 3898/3907 ms (bereit/Seitenleiste)
+  ✓  15 [webkit] › e2e/scale-perf.spec.ts:12:1 › Start mit 100 000 Records: bereit und Seitenleiste in wenigen Sekunden @perf (23.0s)
+[webkit] Start mit 5.000 Seiten: Seitenleiste nach 1127 ms, längste Aufgabe 0 ms
+  ✓  19 [webkit] › e2e/startup-perf.spec.ts:13:1 › Start mit 5.000 Seiten: Seitenleiste schnell da, kein langer Hänger im Hauptthread @perf (5.2s)
+[webkit] Seitenwechsel (300 Blöcke): 422, 427, 450, 744 ms · Tastendruck p50 45 p95 114 max 220 ms (45 Tasten)
+  ✓  20 [webkit] › e2e/startup-perf.spec.ts:78:1 › Seitenwechsel und Tippen auf großen Seiten bleiben flüssig @perf (6.3s)
+  19 passed (2.1m)
