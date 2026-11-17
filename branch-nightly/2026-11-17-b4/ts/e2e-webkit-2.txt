@@ -1,61 +1,61 @@
-cancelled 10bb04b8b19bc36151f5c911d369b0df4f5e3104
-  ✓   89 [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (20.6s)
-  -   94 [webkit] › e2e/replay/record-sample.spec.ts:59:1 › Beispielbündel Block-Editor
-  -   95 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung
-  -   96 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung
-  ✓   93 [webkit] › e2e/polish.spec.ts:88:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (10.1s)
-  ✓   97 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-webkit wiedergeben (input): gleicher Endzustand, keine Überdeckung (12.1s)
-  ✓   99 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-webkit wiedergeben (steps): gleicher Endzustand, keine Überdeckung (5.5s)
-  ✓   98 [webkit] › e2e/polish.spec.ts:123:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (12.6s)
-  ✓  101 [webkit] › e2e/polish.spec.ts:192:1 › Fokusrahmen und Textauswahl neutral, unabhängig vom Marker (5.0s)
-  ✓  100 [webkit] › e2e/report.spec.ts:30:70 › ⇧⌘B (Block-Editor): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext (14.5s)
-  ✓  102 [webkit] › e2e/polish.spec.ts:223:1 › Icon-Auswahl: kein seitliches Rollen, Raster passt zur Breite (9.9s)
-  ✓  104 [webkit] › e2e/polish.spec.ts:245:1 › Icon-Auswahl: Rasterzellen überlappen sich nicht (6.0s)
-  ✓  103 [webkit] › e2e/report.spec.ts:71:1 › Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem (9.9s)
-  ✓  106 [webkit] › e2e/report.spec.ts:95:49 › ⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (light) (8.6s)
-  ✓  105 [webkit] › e2e/polish.spec.ts:262:1 › Icon-Auswahl: Phosphor-Icon mit Farbe als Seiten-Icon (8.9s)
-  ✓  108 [webkit] › e2e/polish.spec.ts:290:1 › Unterseite, Erwähnung und Datei ohne Icon: Linien-Icon statt Emoji (4.2s)
-  ✓  107 [webkit] › e2e/report.spec.ts:95:49 › ⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (dark) (7.0s)
-  ✓  109 [webkit] › e2e/polish.spec.ts:333:1 › Luft unter der letzten Zeile nur auf langen Seiten (4.7s)
-  ✓  111 [webkit] › e2e/polish.spec.ts:380:1 › Sync-Status: Karte beim Überfahren und mit der Tastatur, Klick öffnet die Sync-Einstellungen (4.3s)
-  ✓  110 [webkit] › e2e/report.spec.ts:143:1 › Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht (9.2s)
-  ✓  113 [webkit] › e2e/report.spec.ts:178:1 › Entwickler-Ansicht zeigt die letzten Ereignisse live (6.8s)
-  ✓  114 [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen (4.6s)
-  ✓  112 [webkit] › e2e/polish.spec.ts:424:1 › Synced Block: Griff und Plus der Kinder schneiden die Randlinie nicht (15.6s)
-  ✓  115 [webkit] › e2e/report.spec.ts:213:1 › Aufzeichnung kostet beim Tippen messbar nichts (5.2s)
-  ✓  116 [webkit] › e2e/polish.spec.ts:463:1 › Datei-Block: Vorschau für Text und CSV (6.7s)
-(node:13983) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  118 [webkit] › e2e/polish.spec.ts:508:1 › Slash-Menü: Gruppenköpfe kommen je einmal vor, auch beim Filtern (3.9s)
-  ✓  117 [webkit] › e2e/schedules-server.spec.ts:39:1 › BSD-243: Hinweis unter Schedules – ohne Server nur bei offener App, mit Server mit Modellzugang auch geschlossen (10.2s)
-  ✓  119 [webkit] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster (10.6s)
-  ✘  120 [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (8.0s)
-  ✓  121 [webkit] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (12.8s)
-  ✘  122 [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (retry #1) (8.0s)
-  ✓  123 [webkit] › e2e/settings-region.spec.ts:41:1 › Workspace-Name in Einstellungen → General (2.8s)
-  ✓  124 [webkit] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (4.3s)
-  ✓  125 [webkit] › e2e/settings-region.spec.ts:53:1 › Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205) (5.7s)
-  ✓  126 [webkit] › e2e/settings.spec.ts:34:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (3.6s)
-(node:14739) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  128 [webkit] › e2e/settings.spec.ts:65:1 › Seiten mit echten Einstellungen zeigen keine Liste offener Punkte (Updates: kein „Update channel“) (2.6s)
-  ✓  129 [webkit] › e2e/settings.spec.ts:77:1 › Sync-Formular prüft die Adresse, bevor es verbindet (5.6s)
-  ✓  130 [webkit] › e2e/settings.spec.ts:95:1 › General: Zahlen aus dem Workspace, Papierkorb leeren mit Rückfrage (5.7s)
-  ✓  127 [webkit] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 (15.3s)
-  ✓  131 [webkit] › e2e/settings.spec.ts:121:1 › Account und Diagnostics zeigen echten Gerätezustand (4.0s)
-  ✓  133 [webkit] › e2e/settings.spec.ts:130:1 › Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token (3.1s)
-  ✓  134 [webkit] › e2e/settings.spec.ts:157:1 › Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen (2.5s)
-  -  135 [webkit] › e2e/settings.spec.ts:177:3 › Screenshot Einstellungen (light)
-  -  136 [webkit] › e2e/settings.spec.ts:177:3 › Screenshot Einstellungen (dark)
-  ✓  137 [webkit] › e2e/shell-layout.spec.ts:12:1 › Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen (5.3s)
-  ✓  138 [webkit] › e2e/shell-layout.spec.ts:31:1 › Seitenleiste: Breite ziehen (gemerkt), ⌘\ blendet aus und ein (4.3s)
-  ✓  132 [webkit] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis (19.4s)
-  ✓  139 [webkit] › e2e/shell-layout.spec.ts:54:1 › „/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten nutzen die volle Breite (10.1s)
-  ✓  141 [webkit] › e2e/shell-layout.spec.ts:74:1 › Fokusrahmen per Tastatur neutral (Token focus-ring, nicht Marker – BSD-367) (2.4s)
-  ✓  140 [webkit] › e2e/shell-parity.spec.ts:71:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (16.0s)
-  ✓  142 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (6.5s)
-  ✓  144 [webkit] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) (9.9s)
-  ✓  143 [webkit] › e2e/shell-parity.spec.ts:109:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (17.8s)
-  ✓  146 [webkit] › e2e/shell-parity.spec.ts:168:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (7.3s)
-  ✓  145 [webkit] › e2e/shell.spec.ts:34:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (14.2s)
-  ✓  147 [webkit] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher (7.3s)
+failure 5a52c7ab89c15883c6baf0620592a976c94085b4
+  ✓  222 [webkit] › e2e/welcome.spec.ts:239:1 › Vorlagen auch später über ⌘N: Journal (1.4s)
+
+
+  1) [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
+      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+
+
+      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
+      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
+    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
+          |                                           ^
+      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
+      363 |   expect(posts).toEqual([]);
+      364 |   await shot("choose");
+        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
+
+    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' }) with timeout 5000ms
+      - waiting for getByTestId('settings-section-meetings').getByRole('button', { name: 'Balanced · 488 MB' })
+
+
+      359 |   // vorausgewählt: Balanced (small); nichts wird von selbst geladen
+      360 |   const pick = (label: RegExp | string) => section.getByRole("button", { name: label });
+    > 361 |   await expect(pick("Balanced · 488 MB")).toBeVisible();
+          |                                           ^
+      362 |   await expect(section).toContainText("Download a speech model once from huggingface.co");
+      363 |   expect(posts).toEqual([]);
+      364 |   await shot("choose");
+        at /home/runner/work/Based/Based/apps/web/e2e/meeting.spec.ts:361:43
+
+    Error Context: test-results/meeting-Elija-17-11-Einste-356ea-it-anderes-Modell-entfernen-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen 
+  32 skipped
+  188 passed (8.3m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
