@@ -215,6 +215,7 @@ export {
   MIN_OBJECT_SIZE, nudgeDelta, objectBounds, objectsInRect, readingOrder, resizeRect, scaleInto, selectionBounds, type Handle,
 } from "./whiteboard/geometry.js";
 export {
+  BOARD_BACKGROUNDS, boardBackground, setBoardBackground, type BoardBackground,
   BOARD_FORMAT, BOARD_OBJECT_TYPE, boardObjectFromBlock, boardObjectProps, boardObjectsOf, boardObjectToBlock, createBoardPage, insertBoardPage, isBoardObjectBlock,
   isBoardPage, sameBoardObject,
 } from "./whiteboard/records.js";

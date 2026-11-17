@@ -321,10 +321,10 @@ for (const theme of ["light", "dark"] as const) {
         expect(r.y + r.height, sel).toBeLessThanOrEqual(box.y + box.height + 0.5);
       }
       // Hinweis und Minimap überdecken sich nicht (900 × 600: der Hinweis weicht).
-      const hint = await page.locator(".wb-hint").boundingBox();
+      // Der Hinweis erscheint nur beim ersten Mal je Werkzeug (Elija 17.11.) – gibt es ihn, überdeckt er nichts.
+      const hint = (await page.locator(".wb-hint").count()) ? await page.locator(".wb-hint").boundingBox() : null;
       const map = await page.locator(".wb-minimap").boundingBox();
       if (hint && map) expect(hint.x + hint.width, "Hinweis endet vor der Minimap").toBeLessThanOrEqual(map.x);
-      if (w === 1280) await expect(page.locator(".wb-hint")).toBeVisible();
       if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-${w}x${h}-${theme}.png` });
     });
   }
@@ -528,23 +528,29 @@ test("Einfügen: kurzer Text wird ein Text-Objekt", async ({ page }) => {
   await expect(board).toHaveAttribute("data-selected", "1");
 });
 
-test("Seitenkarte über @, Untergrund liniert, gemerkter Stift", async ({ page, browserName }) => {
+test("Seite über @ (Suche wie ⌘K) als ganze Seite, Untergrund im •••-Menü, gemerkter Stift", async ({ page, browserName }) => {
   await fresh(page);
   const board = await newBoard(page);
   await board.focus();
-  // @ öffnet die Suche; Enter legt die erste Seite als Karte ab
+  // @ öffnet die Suche der App (wie ⌘K); Enter legt die gewählte Seite als ganze Seite aufs Board
   await page.keyboard.press("@");
-  const pick = page.getByTestId("board-pagepick");
-  await expect(pick).toBeVisible();
+  const qf = page.getByRole("dialog", { name: "Quick Find" });
+  await expect(qf).toBeVisible();
   await page.keyboard.type("Welcome");
-  await expect(pick.getByRole("button", { name: "Welcome to Based" })).toBeVisible();
-  await page.keyboard.press("Enter");
-  await expect(pick).toHaveCount(0);
+  await qf.getByRole("option", { name: /Welcome to Based/ }).first().click();
+  await expect(qf).toHaveCount(0);
   await expect(board).toHaveAttribute("data-objects", "1");
-  // Untergrund über das Based-Menü
-  const c = await center(page);
-  await page.mouse.click(c.x + 300, c.y - 200, { button: "right" });
-  await page.getByRole("menuitem", { name: "Background: Ruled lines" }).click();
+  // Die Seite steht als ganze darauf: Inhalt der Seite ist zu sehen.
+  await expect(page.getByTestId("board-embed")).toHaveCount(1);
+  await expect(page.getByTestId("board-embed").locator(".bx2-editor")).toBeVisible();
+  // Untergrund über das •••-Menü der Seite (nicht mehr im Rechtsklick); dort keine Wortzahl, kein „Find in page“
+  await page.getByRole("button", { name: "Page menu" }).click();
+  const menu = page.getByRole("menu", { name: "Page menu" });
+  await expect(menu.getByRole("menuitem", { name: "Find in page" })).toHaveCount(0);
+  await expect(menu.getByTestId("page-menu-words")).toHaveCount(0);
+  await menu.getByTestId("board-bg-lines").click();
+  await expect(menu.getByTestId("board-bg-lines")).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
   // Stift merken und wiederfinden
   await board.focus();
   await page.keyboard.press("p");
@@ -584,4 +590,77 @@ test("Present: Frames als Folien – Knopf erscheint mit dem ersten Frame, Pfeil
   await page.keyboard.press("Escape");
   await expect(board).not.toHaveAttribute("data-present", /./);
   await expect(page.locator(".wb-tools")).toBeVisible();
+});
+
+// Elija 17.11.: Text-Werkzeug – klicken und tippen; Auswahl umfärben; Rechtsklick nur mit Board-Einträgen.
+test("Text-Werkzeug: klicken und tippen legt Text an; T und einfach lostippen auch", async ({ page }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  const c = await center(page);
+  await page.getByTestId("board-tool-text").click();
+  await page.mouse.click(c.x - 200, c.y - 100);
+  await expect(page.getByTestId("board-edit")).toBeFocused();
+  await page.keyboard.type("Hello board");
+  await page.keyboard.press("Escape");
+  await expect(board).toHaveAttribute("data-objects", "1");
+  await board.focus();
+  await page.keyboard.press("t");
+  await page.mouse.move(c.x + 100, c.y + 80);
+  await page.keyboard.type("Second");
+  await expect(page.getByTestId("board-edit")).toBeFocused();
+  await expect(page.getByTestId("board-edit")).toHaveValue("Second");
+  await page.keyboard.press("Escape");
+  await expect(board).toHaveAttribute("data-objects", "2");
+});
+
+test("Auswahl umfärben über die Farbleiste; Rechtsklick zeigt nur Board-Einträge", async ({ page, browserName }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  const c = await center(page);
+  await board.focus();
+  await page.keyboard.press("p");
+  await stroke(page, curve(c.x - 260, c.y - 60));
+  await page.keyboard.press("v");
+  await page.keyboard.press("ControlOrMeta+a");
+  const bar = page.getByTestId("board-selbar");
+  await expect(bar).toBeVisible();
+  await page.getByTestId("board-sel-stroke-red").click();
+  await expect(page.getByTestId("board-sel-stroke-red")).toHaveAttribute("aria-pressed", "true");
+  await page.mouse.move(0, 0);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-selbar-light.png` });
+  await page.mouse.click(c.x + 250, c.y + 150, { button: "right" });
+  const ctx = page.getByRole("menu").last();
+  await expect(ctx.getByRole("menuitem", { name: "Select all" })).toBeVisible();
+  await expect(ctx.getByRole("menuitem", { name: "Settings" })).toHaveCount(0);
+  await expect(ctx.getByRole("menuitem", { name: /^Background/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+});
+
+test("Whiteboard in einer Seite: /whiteboard legt ein Board an, das in der Seite als Fläche erscheint", async ({ page, browserName }) => {
+  await fresh(page);
+  const id = await page.evaluate(async () => {
+    const b = (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based;
+    return b.client.command({ op: "createPage", title: "Notes with a board" });
+  });
+  await page.goto(`/#page-${id}`);
+  const editor = page.getByTestId("block-editor");
+  await expect(editor).toBeVisible();
+  await editor.getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/whiteboard");
+  await page.keyboard.press("Enter");
+  const block = page.getByTestId("board-block");
+  await expect(block).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(id)); // in der Seite geblieben
+  await expect(block.getByTestId("board")).toBeVisible();
+  // Auf der eingebetteten Fläche zeichnen
+  const b = (await block.getByTestId("board").boundingBox())!;
+  await block.getByTestId("board").focus();
+  await page.keyboard.press("n");
+  await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  await page.keyboard.type("inside");
+  await page.keyboard.press("Escape");
+  await expect(block.getByTestId("board")).toHaveAttribute("data-objects", "1");
+  await page.mouse.move(0, 0);
+  expect(await overflows(page)).toEqual([]);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-in-page-light.png` });
 });

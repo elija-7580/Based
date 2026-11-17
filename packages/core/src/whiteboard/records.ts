@@ -115,6 +115,22 @@ export function boardObjectsOf(store: WorkspaceStore, pageID: string): WBObject[
   return out;
 }
 
+/** Untergrund der Fläche (an der Seite, `props.board.bg`). */
+export type BoardBackground = "dots" | "lines" | "grid" | "plain";
+export const BOARD_BACKGROUNDS: readonly { id: BoardBackground; label: string }[] = [
+  { id: "dots", label: "Dots" }, { id: "lines", label: "Lines" }, { id: "grid", label: "Grid" }, { id: "plain", label: "Plain" },
+];
+export function boardBackground(store: WorkspaceStore, pageID: string): BoardBackground {
+  const bg = ((store.blocks.get(pageID)?.props as { board?: { bg?: unknown } } | undefined)?.board)?.bg;
+  return bg === "lines" || bg === "grid" || bg === "plain" ? bg : "dots";
+}
+export function setBoardBackground(store: WorkspaceStore, pageID: string, bg: BoardBackground) {
+  store.transact("Board background", (tx) => tx.update(pageID, (b) => {
+    const props = (b.props ?? {}) as Record<string, unknown>;
+    b.props = { ...props, board: { ...((props.board as Record<string, unknown> | undefined) ?? {}), bg } } as Block["props"];
+  }));
+}
+
 /** Board-Seite in einer laufenden Transaktion anlegen. */
 export function insertBoardPage(store: WorkspaceStore, tx: Tx, opts: CreatePageOptions = {}): string {
   const id = insertPage(store, tx, opts);

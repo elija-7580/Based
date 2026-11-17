@@ -22,6 +22,8 @@ export interface PageEditorProps {
   onOpenPage: (pageID: string) => void;
   /** BSD-101: zu diesem Block springen (Link auf einen Block). */
   focusBlock?: string | undefined;
+  /** Eingebettet (ganze Seite auf einem Board): ohne Backlinks darunter. */
+  embedded?: boolean;
 }
 
 export interface DatabaseViewProps {

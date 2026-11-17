@@ -9,6 +9,7 @@ import { ImportDialog } from "./components/ImportExport.js";
 import { hybridImport } from "./worker/notionHybridClient.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
+import { pagePick } from "./shell/pagePick.js";
 import { DevOverlay } from "./components/DevOverlay.js";
 import { ReportProblemDialog } from "./components/ReportProblem.js";
 import { ShortcutHud } from "./components/ShortcutHud.js";
@@ -76,6 +77,8 @@ export function App({ client, history }: { client: StoreClient; history: History
   const state = useSyncExternalStore(client.subscribe, client.getState);
   const route = useSyncExternalStore(history.subscribe, () => history.route);
   const [quickFind, setQuickFind] = useState(false);
+  // Seite wählen wie mit ⌘K (Board: Seite aufs Board legen) – dieselbe Suche, die gewählte Seite geht an den Fragenden.
+  const pick = useSyncExternalStore(pagePick.subscribe, pagePick.get);
   const [recent, setRecent] = useState<RecentEntry[]>(recentPages.get);
   const welcome = useSyncExternalStore(firstRun.subscribe, firstRun.get);
 
@@ -193,6 +196,8 @@ export function App({ client, history }: { client: StoreClient; history: History
   // Rechtsklick auf freie Flächen: die wichtigsten Wege der App (in Textfeldern stehen dort nur die Text-Einträge).
   useEffect(() => registerContextItems((info) => {
     if (info.editable || info.selection) return [];
+    // Auf einem Board gilt nur das Menü des Boards (Elija 17.11.: Menüs je Seitentyp).
+    if (info.target.closest(".wb-root")) return [];
     const mod = shortcutLabel;
     const apple = /Mac|iPhone|iPad/.test(navigator.platform);
     return [
@@ -368,6 +373,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       <ShortcutHud ai={ai} />
       <ReportProblemDialog onOpenDiagnostics={() => history.navigate({ name: "settings", page: "diagnostics" })} />
       {importing ? <ImportDialog client={client} initial={importing} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
+      {pick ? <QuickFind client={client} titles={state.titles} recent={recent} onOpen={(id) => pick.resolve(id)} onClose={() => pick.resolve(undefined)} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}
         onCommand={(id) => {
           setQuickFind(false);

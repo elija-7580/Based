@@ -304,14 +304,15 @@ describe("Dateien in drei Stufen", () => {
     expect(shapes(session).map((o) => o.style?.view)).toEqual(["text", "html", "video", "audio", undefined]);
     expect(shapes(session)[0]).toMatchObject({ w: 440, h: 320 });
   });
-  it("Lasso um Handschrift auf einer PDF-Seite nimmt die Seite nicht mit", () => {
+  it("Lasso um eine PDF-Seite mit Handschrift nimmt beides", () => {
     const { ctl } = setup();
     ctl.addFiles([{ ref: "p", name: "a.pdf", mime: "application/pdf", size: 1, pages: [{ width: 200, height: 200 }] }], { x: 500, y: 350 });
     ctl.setTool("pen");
     drag(ctl, wave(420, 350, 30));
     ctl.setTool("lasso");
     drag(ctl, [[150, 20], [850, 20], [850, 680], [150, 680], [150, 20]]);
-    expect(ctl.selection.size).toBe(1);
+    // Seit 17.11. lassen sich PDF-Seiten wählen: das Lasso nimmt Seite und Handschrift.
+    expect(ctl.selection.size).toBe(2);
   });
   it("eingefügter Text wird ein Text-Objekt in der Mitte", () => {
     const { ctl, session } = setup();
@@ -321,21 +322,28 @@ describe("Dateien in drei Stufen", () => {
 });
 
 describe("Sperren, Untergrund, Seitenkarte", () => {
-  it("PDF-Seiten liegen fest: Klick und Aufziehen greifen hindurch; ⌘A wählt sie, Entsperren macht sie greifbar", () => {
+  it("PDF-Seiten lassen sich wählen und verschieben; festgesteckt greifen Klick und Aufziehen hindurch", () => {
     const { ctl, session } = setup();
     ctl.addFiles([{ ref: "p", name: "a.pdf", mime: "application/pdf", size: 1, pages: [{ width: 300, height: 300 }] }], { x: 500, y: 350 });
     ctl.clearSelection();
     click(ctl, 500, 350);
-    expect(ctl.selection.size).toBe(0);
-    drag(ctl, [[100, 20], [600, 300], [900, 680]]);
+    expect(ctl.selection.size).toBe(1);
+    const x0 = shapes(session)[0]!.x;
+    drag(ctl, [[500, 350], [540, 350], [600, 350]]);
+    expect(shapes(session)[0]!.x).toBe(x0 + 100);
+    expect(ctl.setLocked(true)).toBe(true);
+    click(ctl, 500, 350);
     expect(ctl.selection.size).toBe(0);
     ctl.selectAll();
     expect(ctl.selectionLocked).toBe(true);
     expect(ctl.setLocked(false)).toBe(true);
-    ctl.clearSelection();
-    click(ctl, 500, 350);
-    expect(ctl.selection.size).toBe(1);
-    expect(shapes(session)[0]!.style?.locked).toBe(false);
+    expect(shapes(session)[0]!.style?.pin).toBe(false);
+  });
+  it("ein früheres „locked“ auf PDF-Seiten hält sie nicht mehr fest", () => {
+    const { ctl, session } = setup();
+    session.add([{ id: "old", kind: "file", z: "a0", x: 0, y: 0, w: 400, h: 500, rot: 0, ref: "p", style: { view: "pdf", page: 1, locked: true } }]);
+    click(ctl, 100, 100);
+    expect(ctl.selection.has("old")).toBe(true);
   });
   it("Untergrund steht an der Seite und überlebt eine neue Sitzung", () => {
     const { store, page, session, ctl } = setup();
@@ -349,7 +357,9 @@ describe("Sperren, Untergrund, Seitenkarte", () => {
   it("Seitenkarte trägt die Seite und ihren Titel", () => {
     const { ctl, session } = setup();
     const id = ctl.addPage("page-1", "Lecture 5")!;
-    expect(session.get(id)).toMatchObject({ kind: "page", ref: "page-1", text: "Lecture 5", w: 240 });
+    expect(session.get(id)).toMatchObject({ kind: "page", ref: "page-1", text: "Lecture 5", w: 520, style: { full: true } });
+    expect(ctl.togglePageFull()).toBe(true);
+    expect(session.get(id)).toMatchObject({ w: 240, h: 72, style: { full: false } });
   });
 });
 
@@ -410,5 +420,50 @@ describe("Snap shapes, Present, Vorschau rollen", () => {
     const cam = ctl.camera;
     ctl.wheel({ x: 500, y: 350, deltaX: 0, deltaY: 120, zoom: false });
     expect(ctl.camera.y).toBe(cam.y + 120);
+  });
+});
+
+describe("Farben der Auswahl, Text tippen, Snap-Vorschau", () => {
+  it("Auswahl umfärben: Striche bekommen Textfarben, Zettel Hintergründe, ein Undo-Schritt", () => {
+    const { ctl, session } = setup();
+    ctl.setTool("pen");
+    drag(ctl, wave(100, 200));
+    ctl.setTool("note");
+    click(ctl, 600, 300);
+    ctl.commitEdit("x");
+    ctl.selectAll();
+    expect(ctl.colorRows()).toEqual(["stroke", "fill"]);
+    expect(ctl.setColor("stroke", "red")).toBe(true);
+    expect(ctl.setColor("fill", "green")).toBe(true);
+    const [ink, note] = shapes(session);
+    expect(ink!.style?.color).toBe("red");
+    expect(note!.style?.color).toBe("green");
+    expect(ctl.selectionColor("stroke")).toBe("red");
+    ctl.undo();
+    expect(shapes(session)[1]!.style?.color).not.toBe("green");
+  });
+  it("Text-Werkzeug gewählt und losgetippt: der Text beginnt mit der Taste, dort wo der Zeiger ist", () => {
+    const { ctl } = setup();
+    ctl.setTool("text");
+    ctl.hover = { x: 250, y: 120 };
+    expect(ctl.keyDown({ key: "H" })).toBe(true);
+    expect(ctl.editing).toMatchObject({ kind: "text", text: "H", rect: { x: 250 } });
+  });
+  it("Snap-Vorschau: nach dem Halten zeigt die Szene die Form, Weiterzeichnen hebt sie auf, Loslassen übernimmt sie", () => {
+    const { ctl, session, tick } = setup();
+    const loop: [number, number][] = Array.from({ length: 50 }, (_, i) => [400 + Math.cos((i / 49) * Math.PI * 2) * 120, 300 + Math.sin((i / 49) * Math.PI * 2) * 70]);
+    ctl.setTool("pen");
+    ctl.pointerDown({ x: loop[0]![0], y: loop[0]![1], button: 0 });
+    for (const [x, y] of loop.slice(1)) ctl.pointerMove({ x, y });
+    expect(ctl.tick()).toBe(false);
+    tick(600);
+    expect(ctl.tick()).toBe(true);
+    expect(ctl.scene().snap?.kind).toBe("oval");
+    ctl.pointerMove({ x: 700, y: 500 });
+    expect(ctl.scene().snap).toBeUndefined();
+    tick(600);
+    ctl.tick();
+    ctl.pointerUp({ x: 700, y: 500 });
+    expect(session.objects).toHaveLength(1);
   });
 });
