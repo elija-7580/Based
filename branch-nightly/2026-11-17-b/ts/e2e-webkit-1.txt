@@ -1,0 +1,61 @@
+success fe41469eef7b957a97a259be9f582e11e5225b36
+  ✓  189 [webkit] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (6.3s)
+  ✓  190 [webkit] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (9.3s)
+  ✓  191 [webkit] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (5.8s)
+  ✓  192 [webkit] › e2e/hangs.spec.ts:156:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (4.7s)
+hang monitor idle: 96 ticks in 5005 ms, 0.00 ms busy (0.000 %)
+  ✓  194 [webkit] › e2e/hangs.spec.ts:172:1 › Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads) (7.0s)
+  ✓  195 [webkit] › e2e/hangs.spec.ts:183:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (5.3s)
+  ✓  193 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (17.7s)
+  ✓  196 [webkit] › e2e/hangs.spec.ts:209:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (5.9s)
+  ✓  197 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.6s)
+  ✓  199 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.7s)
+  ✓  198 [webkit] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (6.7s)
+  ✓  200 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.0s)
+  -  202 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  203 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  204 [webkit] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (3.6s)
+  ✓  205 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (4.9s)
+  ✓  201 [webkit] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (10.2s)
+  ✓  206 [webkit] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (5.1s)
+  ✓  207 [webkit] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (5.4s)
+  -  209 [webkit] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  208 [webkit] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (3.9s)
+  ✓  210 [webkit] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (2.9s)
+  ✓  211 [webkit] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (2.6s)
+  ✓  212 [webkit] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (2.5s)
+  ✓  213 [webkit] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.5s)
+  ✓  214 [webkit] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (3.8s)
+  ✓  215 [webkit] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (2.5s)
+  ✓  216 [webkit] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.6s)
+  ✓  217 [webkit] › e2e/interop.spec.ts:309:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (2.5s)
+  ✓  218 [webkit] › e2e/interop.spec.ts:328:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.4s)
+  ✓  219 [webkit] › e2e/interop.spec.ts:354:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (3.0s)
+
+
+  1) [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Row 21"
+    Received: "Row 37"
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      26 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
+      27 |   await page.mouse.click(x, y);
+    > 28 |   await expect.poll(() => activeRow(page)).toBe(under);
+         |                                            ^
+      29 |   await page.keyboard.press("Escape"); // Zelleneditor zu
+      30 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
+      31 | }
+        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:28:44)
+        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:47:40
+
+    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+  21 skipped
+  196 passed (10.9m)
