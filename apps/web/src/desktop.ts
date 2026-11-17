@@ -5,7 +5,8 @@
 // - Updates: beim Start still prüfen, über „Check for Updates…“ im App-Menü auch mit Antwort, wenn alles aktuell ist.
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
-import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from "./shell/updateFallback.js";
+import { checkReleasesFallback, isMissingUpdateManifest, releaseLine } from "./shell/updateFallback.js";
+import { CHANNEL } from "./shell/beta.js";
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
 import { askUser, showMessage } from "./shell/prompts.js";
@@ -33,13 +34,31 @@ export function applyDesktopShell(root: HTMLElement = document.documentElement) 
 
 let checking = false;
 
+/** Name und Version dieser App, wie sie im Bundle stehen („Based Next“ 0.1.155, „Based Beta“ 0.2.3). */
+export interface AppIdentity { name: string; version: string }
+let identity: Promise<AppIdentity> | undefined;
+export function appIdentity(): Promise<AppIdentity> {
+  identity ??= (async () => {
+    const { getName, getVersion } = await import("@tauri-apps/api/app");
+    const [name, version] = await Promise.all([getName(), getVersion()]);
+    return { name, version };
+  })();
+  identity.catch(() => { identity = undefined; });
+  return identity;
+}
+
+/** Antwort auf „Check for updates…“, wenn nichts Neueres da ist – immer mit der Version, die läuft. */
+export function upToDateText(app: AppIdentity): string {
+  return `You’re on the newest version: ${app.name} ${app.version}.`;
+}
+
 /** BSD-168: Text des Update-Dialogs mit den Notizen aus latest.json (höchstens 12 Zeilen). */
-export function updatePrompt(version: string, current: string, notes?: string): string {
+export function updatePrompt(version: string, current: string, notes?: string, name = "Based Next"): string {
   const lines = (notes ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
   const shown = lines.slice(0, 12);
   const more = lines.length > shown.length ? `\n… and ${lines.length - shown.length} more` : "";
   const body = shown.length ? `\n\nWhat’s new:\n${shown.join("\n")}${more}` : "";
-  return `Based Next ${version} is available (you have ${current}).${body}\n\nInstall it and restart now?`;
+  return `${name} ${version} is available (you have ${current}).${body}\n\nInstall it and restart now?`;
 }
 
 /** Fragt die next-Releases nach einer neueren Version; bei Ja: laden, installieren, neu starten. */
@@ -50,10 +69,10 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
     const { check } = await import("@tauri-apps/plugin-updater");
     const update = await check();
     if (!update) {
-      if (opts.interactive) await showMessage("You’re on the newest version of Based Next.", { title: "No update available" });
+      if (opts.interactive) await showMessage(upToDateText(await appIdentity()), { title: "No update available" });
       return;
     }
-    const yes = await askUser(updatePrompt(update.version, update.currentVersion, update.body), {
+    const yes = await askUser(updatePrompt(update.version, update.currentVersion, update.body, (await appIdentity()).name), {
       title: "Update available",
       okLabel: "Install and Restart",
       cancelLabel: "Later",
@@ -82,18 +101,19 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
     const message = e instanceof Error ? e.message : String(e);
     if (isMissingUpdateManifest(message)) {
       // Noch kein signiertes Update-Paket (Secret fehlt): wenigstens sagen, ob eine neuere DMG bereitliegt.
-      const { getVersion } = await import("@tauri-apps/api/app");
-      const current = await getVersion();
-      const found = await checkReleasesFallback(current);
+      const app = await appIdentity();
+      const line = releaseLine(CHANNEL);
+      const found = await checkReleasesFallback(app.version, fetch, line.tagPrefix);
       const text = found.kind === "newer"
-        ? `Based Next ${found.version} is available (you have ${current}). Automatic install isn’t set up yet — download the new DMG from ${DOWNLOAD_PAGE}`
+        ? `${app.name} ${found.version} is available (you have ${app.version}). Automatic install isn’t set up yet — download the new DMG from ${line.downloadPage}`
         : found.kind === "current"
-          ? `You’re on the newest version of Based Next (${current}).`
-          : `Automatic updates aren’t set up yet. The newest DMG is always at ${DOWNLOAD_PAGE}`;
+          ? upToDateText(app)
+          : `You have ${app.name} ${app.version}. Automatic updates aren’t set up yet. The newest DMG is always at ${line.downloadPage}`;
       await showMessage(text, { title: found.kind === "newer" ? "Update available" : "Updates" });
       return;
     }
-    await showMessage(`Could not check for updates: ${message}`, { title: "Update failed" });
+    const app = await appIdentity().catch(() => undefined);
+    await showMessage(`Could not check for updates${app ? ` (you have ${app.name} ${app.version})` : ""}: ${message}`, { title: "Update failed" });
   } finally {
     checking = false;
   }

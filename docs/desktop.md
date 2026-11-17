@@ -89,6 +89,20 @@ Hauptthread erzwingen (braucht COOP/COEP und einen eigenen Proxy) – mehr Hüll
 als der erprobte OPFS-Weg. Ein eigener Treiber `@based/sync/tauri` lohnt sich erst, wenn der Store asynchron
 schreiben kann oder die Datei für andere Programme (Swift-App, Backups) sichtbar sein muss.
 
+## Mikrofon (Meeting-Notizen, BSD-453)
+
+Die App ist mit Hardened Runtime signiert (auch ad hoc). Dafür braucht sie zwei Dinge, sonst endet die Aufnahme mit
+„Microphone access is blocked“, ohne dass macOS je fragt:
+
+- `src-tauri/Info.plist`: `NSMicrophoneUsageDescription` (Text der Rückfrage)
+- `src-tauri/Entitlements.plist`: `com.apple.security.device.audio-input`, eingebunden über
+  `bundle.macOS.entitlements` in `tauri.conf.json` (gilt auch für das Beta-Overlay)
+
+`scripts/check-mac-signature.sh` bricht den Build ab, wenn das Recht in der fertigen App fehlt. Solange ad hoc
+signiert wird, kann macOS nach einem Update erneut fragen (jeder Build hat eine andere Signatur); hat man einmal
+abgelehnt: Systemeinstellungen → Datenschutz & Sicherheit → Mikrofon, oder im Terminal
+`tccutil reset Microphone com.friedrich-ulrich.based.next`.
+
 ## Fenster, Menüs, Kürzel
 
 - Titelleiste im Overlay-Stil: die Ampel-Knöpfe liegen über der Seitenleiste, die Fläche darüber und der obere Rand
