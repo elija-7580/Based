@@ -86,10 +86,12 @@ function fallbackAssetName(type: string, id: string): string {
  */
 export function migrateAssetURLBlocks(store: WorkspaceStore, info?: (id: string) => { name?: string; mime?: string; size?: number } | undefined): number {
   const hits: string[] = [];
-  for (const b of store.blocks.values()) {
+  // Mit Laden nach Bedarf sucht die Datei nach dem Schema, statt den ganzen Workspace in den Speicher zu holen
+  // (ADR 0017 Stufe B) – sonst wäre der erste Start mit „Fast start“ gar kein schneller.
+  store.scanBlocks([ASSET_URL_SCHEME], (b) => {
     const url = b.props?.url;
     if (typeof url === "string" && url.startsWith(ASSET_URL_SCHEME) && url.length > ASSET_URL_SCHEME.length && !b.props?.asset) hits.push(b.id);
-  }
+  });
   if (hits.length === 0 || store.isReadOnly) return 0;
   const rejected = store.writeFailure?.rejected ?? 0;
   store.transact("Fix uploaded files", (tx) => {
