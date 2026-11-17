@@ -46,13 +46,15 @@ It's open source, built in Austria by one person and a night shift of agents, an
 
 ## What's in the beta, and what comes later
 
-| Now, in the Mac beta | At release | After that, opt-in |
-| --- | --- | --- |
-| Pages, block editor, slash menu, ⌘K search | Based Cloud on EU servers, end-to-end encrypted | Agents that work inside your pages and mark every line they write |
-| Databases with table, board, timeline, calendar, list and gallery views | Self-hosting with `based-server` | Bring your own AI: ChatGPT login, Claude Code CLI or an API key |
-| Notion import, Markdown export, lossless archive | iPhone, iPad and web, then Windows, Linux and Android | Morning briefings, scheduled runs, MCP for every AI you use |
-| Version history, backups to a folder on your Mac | | |
-| Sync between your Macs through iCloud Drive (preview) | | |
+**Now, in the Mac beta:** pages and the block editor with slash menu and ⌘K search, databases in table, board,
+timeline, calendar, list and gallery views, Notion import, Markdown export and a lossless archive, version history,
+backups to a folder on your Mac, and sync between your Macs through iCloud Drive (preview).
+
+**At release:** Based Cloud on EU servers with end-to-end encryption, self-hosting with `based-server`, and apps for
+iPhone, iPad and the web, then Windows, Linux and Android.
+
+**After that, opt-in:** agents that work inside your pages and mark every line they write, using the AI you already have
+(ChatGPT login, Claude Code CLI or an API key), plus morning briefings, scheduled runs and MCP for every AI you use.
 
 AI is off by default and the beta ships without it. Based is a complete workspace without a single model connected.
 
