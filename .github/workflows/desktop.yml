@@ -20,9 +20,12 @@ on:
       - ".github/workflows/desktop.yml"
   workflow_dispatch:
 
+# Ein laufender Build wird zu Ende gebaut (mit Notarisierung dauert er rund 25 Minuten). Vorher brach jeder neue Push
+# auf main den laufenden ab – bei Pushes im Viertelstundentakt wurde so nie eine Version fertig (17.11.). Von den
+# wartenden Läufen bleibt nur der neueste.
 concurrency:
   group: desktop-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
