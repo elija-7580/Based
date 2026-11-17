@@ -27,8 +27,8 @@ export function keepRow(state: KeepState, hasServer: boolean): { value: string; 
   return {
     value: "Not protected",
     hint: hasServer
-      ? "This browser may clear Based's data if you don't open it for a while. Your server keeps a copy, so nothing is lost."
-      : "This browser may clear Based's data if you don't open it for a while. Connect a server or export a Based archive now and then.",
+      ? "Browsers may clear unused data. Your server keeps a copy."
+      : "Browsers may clear unused data. Connect a server or export an archive.",
   };
 }
 

@@ -195,5 +195,37 @@ test("Sync & server zeigt, ob der Browser-Speicher geschützt ist", async ({ pag
   await page.getByTestId("sync-settings-status").click(); // erste Eingabe: jetzt wird angefragt
   const row = page.getByTestId("sync-browser-keep");
   await expect(row).toHaveText(/^(Protected|Not protected)$/);
-  await expect(page.getByText(/This browser (keeps your workspace|may clear Based's data)/)).toBeVisible();
+  await expect(page.getByText(/This browser keeps your workspace|Browsers may clear unused data/)).toBeVisible();
 });
+
+// ADR 0017 A3, Checkliste: die Zeile „Browser storage“ in drei Fenstergrößen, hell und dunkel – nichts gekürzt,
+// kein waagrechter Rollbalken, Zeile ganz im Abschnitt.
+for (const theme of ["light", "dark"] as const) {
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    test(`Browser storage: ${w}×${h} ${theme} – Zeile vollständig, nichts gekürzt`, async ({ page, browserName }) => {
+      test.skip(browserName === "webkit", "WebKit hat im flüchtigen Testprofil kein OPFS (kein Workspace im Browser)");
+      await page.setViewportSize({ width: w, height: h });
+      await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.goto("/#prefs-sync");
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await page.getByTestId("sync-settings-status").click();
+      const row = page.getByTestId("sync-browser-keep");
+      await expect(row).toHaveText(/^(Protected|Not protected)$/);
+      await row.scrollIntoViewIfNeeded();
+      const hint = page.getByText(/This browser keeps your workspace|Browsers may clear unused data/);
+      await expect(hint).toBeVisible();
+      for (const el of [row, hint]) {
+        expect(await el.evaluate((e) => e.scrollWidth <= e.clientWidth + 1), "Text nicht abgeschnitten").toBe(true);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "kein waagrechter Rollbalken").toBe(true);
+      // Ab dem Startfenster steht der Wert rechts neben der Beschriftung, wie bei „Status“ (nicht darunter umgebrochen).
+      if (w >= 1280) {
+        const label = (await page.getByText("Browser storage", { exact: true }).boundingBox())!;
+        const value = (await row.boundingBox())!;
+        expect(value.x, "Wert rechts").toBeGreaterThan(label.x + label.width);
+        expect(value.y, "Wert auf Höhe der Zeile").toBeLessThan(label.y + label.height * 2.5);
+      }
+      if (process.env.BASED_SCREENSHOTS) await page.screenshot({ path: `../../docs/design/screens/web-settings-browser-storage-${theme}-${w}x${h}.png` });
+    });
+  }
+}
