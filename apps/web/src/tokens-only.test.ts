@@ -64,11 +64,12 @@ describe("nur Tokens", () => {
   });
 
   it("SVG-Icons nur aus den Icon-Dateien", () => {
-    // Ausnahmen mit Grund: die Icon-Sätze selbst; der Zeitbogen auf Home und Diagramme sind Grafiken, keine Icons;
+    // Ausnahmen mit Grund: die Icon-Sätze selbst; der Zeitbogen auf Home, Diagramme und das Logo-Intro
+    // (das Zeichen selbst, components/LogoIntro.tsx) sind Grafiken, keine Icons;
     // @based/database-ui und @based/editor sind Pakete ohne Zugriff auf apps/web und haben je einen eigenen Satz auf demselben Raster
     // (Editor: `icons.tsx` und die Menü-Icons im Blockmenü und im Codeblock, `menuIcons.tsx`; Slash-/Blockmenü des Block-Editors,
     // `blocks/icons.tsx`; Phosphor-Seiten-Icons, `phosphor.tsx`); @based/ui für den Media-Player (`astryx/mediaIcons.tsx`, BSD-447).
-    const allowed = ["apps/web/src/icons.tsx", "apps/web/src/astryxIcons.tsx", "apps/web/src/home/TimeArc.tsx", "packages/database-ui/src/layouts/Chart.tsx", "packages/database-ui/src/ui.tsx", "packages/editor/src/ui/icons.tsx", "packages/editor/src/ui/menuIcons.tsx", "packages/editor/src/blocks/icons.tsx", "packages/editor/src/ui/phosphor.tsx", "packages/ui/src/astryx/mediaIcons.tsx"];
+    const allowed = ["apps/web/src/icons.tsx", "apps/web/src/astryxIcons.tsx", "apps/web/src/home/TimeArc.tsx", "apps/web/src/components/LogoIntro.tsx", "packages/database-ui/src/layouts/Chart.tsx", "packages/database-ui/src/ui.tsx", "packages/editor/src/ui/icons.tsx", "packages/editor/src/ui/menuIcons.tsx", "packages/editor/src/blocks/icons.tsx", "packages/editor/src/ui/phosphor.tsx", "packages/ui/src/astryx/mediaIcons.tsx"];
     const offenders = lines((f) => f.endsWith(".tsx")).filter(([f, , l]) => /<svg\b/.test(l) && !allowed.includes(f));
     expect(offenders).toEqual([]);
   });

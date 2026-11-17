@@ -132,6 +132,7 @@ test("Willkommen: Bildschirmfotos", async ({ playwright, browserName, baseURL })
     await page.goto("/");
     await ready(page);
     await expect(welcome(page)).toBeVisible();
+    await expect(welcome(page).getByTestId("logo-intro")).toHaveAttribute("data-state", "done"); // Logo-Intro abwarten
     const sizes = [{ w: 1280, h: 820, s: "" }, { w: 900, h: 600, s: "-900" }, { w: 1728, h: 1000, s: "-1728" }];
     const shoot = async (name: string, all = true) => {
       for (const theme of ["light", "dark"] as const) {
@@ -209,6 +210,7 @@ test("Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen ber
       await expect(tpl.getByRole("button")).toHaveText(["Tasks", "Notes", "Journal", "Wiki"]);
       if (browserName === "chromium") {
         await page.mouse.move(0, 0);
+        await expect(welcome(page).getByTestId("logo-intro")).toHaveAttribute("data-state", "done"); // Logo-Intro abwarten
         await page.screenshot({ path: `${SHOTS}web-welcome-templates-${theme}.png` });
       }
       const t0 = Date.now();
@@ -249,4 +251,31 @@ test("Vorlagen auch später über ⌘N: Journal", async ({ playwright, browserNa
   } finally {
     await close();
   }
+});
+
+test("Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen", async ({ playwright, browserName, baseURL }) => {
+  const { page, close } = await fresh(playwright, browserName, baseURL!);
+  try {
+    await page.goto("/");
+    await ready(page);
+    const logo = welcome(page).getByTestId("logo-intro");
+    await expect(logo).toHaveAttribute("aria-label", "Based");
+    await expect(logo).toHaveAttribute("data-state", "done");
+    const rest = () => logo.evaluate((el) => ({
+      base: el.querySelector(".base")!.getAttribute("width"),
+      caret: el.querySelector(".caret")!.getAttribute("opacity"),
+      blocks: [...el.querySelectorAll("g[opacity]")].map((g) => g.getAttribute("opacity")),
+    }));
+    const played = await rest();
+    expect(Number(played.base)).toBe(80);
+    expect(Number(played.caret)).toBe(0);
+    expect(played.blocks).toEqual(["1", "1"]);
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    await ready(page);
+    await expect(logo).toBeVisible();
+    expect(await logo.getAttribute("data-state")).toBe("done"); // ohne Warten
+    expect(await rest()).toEqual(played);
+  } finally { await close(); }
 });

@@ -1,0 +1,7 @@
+/* Logo-Intro (components/LogoIntro.tsx). Nur Tokens: Blöcke in Tinte, Seitenflächen gedämpft, Basis im festen Logo-Gelb
+   (bleibt gelb, egal welche Marker-Farbe gewählt ist). Die Einfügemarke hat die Farbe der Blöcke, nicht Gelb. */
+.logo-intro { display: block; width: calc(var(--space-8) + var(--space-4)); height: auto; aspect-ratio: 1; overflow: visible; user-select: none; }
+.logo-intro .face, .logo-intro .caret { fill: var(--ink); }
+.logo-intro .side { fill: var(--muted); }
+.logo-intro .base { fill: var(--logo-base); }
+.logo-intro .base-side { fill: var(--marker-deep); }
