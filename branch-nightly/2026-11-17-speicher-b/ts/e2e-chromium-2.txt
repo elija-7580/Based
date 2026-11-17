@@ -1,4 +1,4 @@
-failure 3d94ea52f223b20ff04422a5444c0b6c9be86c25
+failure 2f87b04e23edd1349d464ccf9467b8b41fff092a
 
       256 |       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
       257 |       const after = await info();
@@ -55,7 +55,7 @@ failure 3d94ea52f223b20ff04422a5444c0b6c9be86c25
     [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 900×600 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
     [chromium] › e2e/settings.spec.ts:236:5 › Fast start: 1728×1000 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf 
   10 skipped
-  221 passed (4.7m)
+  221 passed (6.2m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
