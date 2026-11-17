@@ -1,61 +1,61 @@
-cancelled d8099c335932fee3d33c3153671c8517b1f40b84
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-
-Running 264 tests using 2 workers, shard 1 of 2
-
-  ✓    2 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (light) (19.8s)
+cancelled 88b6015812df3bd65d246b4050d0e8fca45db915
+  ✓   92 [webkit] › e2e/board.spec.ts:639:1 › Whiteboard in einer Seite: /whiteboard legt ein Board an, das in der Seite als Fläche erscheint (3.1s)
+(node:12154) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[onAuthenticate] Error: unauthorized
+    at Object.onAuthenticate (/home/runner/work/Based/Based/apps/server/src/collab.ts:80:94)
+    at <anonymous> (/home/runner/work/Based/Based/node_modules/.pnpm/@hocuspocus+server@4.8.0_y-protocols@1.0.7_yjs@13.6.33__yjs@13.6.33/node_modules/@hocuspocus/server/src/Hocuspocus.ts:583:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async ClientConnection.ClientConnection.handleQueueingMessage (/home/runner/work/Based/Based/node_modules/.pnpm/@hocuspocus+server@4.8.0_y-protocols@1.0.7_yjs@13.6.33__yjs@13.6.33/node_modules/@hocuspocus/server/src/ClientConnection.ts:531:5)
+  ✓   94 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.2s)
+  ✓   93 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (8.1s)
+  ✓   96 [webkit] › e2e/crash-report.spec.ts:23:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (4.1s)
+  ✓   95 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (12.4s)
+  ✓   97 [webkit] › e2e/crash-report.spec.ts:45:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (4.6s)
+  ✓   98 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (8.6s)
+  ✓   99 [webkit] › e2e/crash-report.spec.ts:81:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (12.1s)
+  ✓  100 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (9.2s)
+  ✓  102 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (9.2s)
+  ✓  103 [webkit] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (6.3s)
+  ✘  104 [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus (9.0s)
+  ✓  105 [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus (retry #1) (7.9s)
+  ✓  106 [webkit] › e2e/database-click.spec.ts:65:1 › Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite (6.3s)
+  ✓  107 [webkit] › e2e/database-click.spec.ts:100:1 › Kästchen der ausgewählten Zeile ist gesetzt (3.4s)
+  ✓  108 [webkit] › e2e/database-columns.spec.ts:45:1 › Inline-Datenbanken in Spalten: nichts ragt in die Nachbarspalte, lange Titel brechen um (5.4s)
+  ✓  109 [webkit] › e2e/database-columns.spec.ts:90:1 › Inline-Datenbank als ganze Seite: Knopf und Blockmenü, Titel der Datenbank überall (7.0s)
+  ✓  110 [webkit] › e2e/database-create.spec.ts:20:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (7.3s)
+  ✓  111 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (6.7s)
+  ✓  112 [webkit] › e2e/database-edges.spec.ts:45:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (3.8s)
+  ✓  113 [webkit] › e2e/database-edges.spec.ts:66:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (5.0s)
+  ✓  114 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (7.7s)
+  ✓  115 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (6.5s)
+  ✓  116 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (6.7s)
+  ✓  117 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (6.7s)
+  ✓  118 [webkit] › e2e/database-inline.spec.ts:129:1 › Inline-Liste: Titel ausblenden, keine Tabellenlinien (9.5s)
+  ✓  119 [webkit] › e2e/database-look.spec.ts:23:1 › Section mit Inline-Datenbank: Fläche, kein Einzel-Tab, Daten in UI-Schrift (3.0s)
+  ✓  120 [webkit] › e2e/database-look.spec.ts:65:1 › Daten in UI-Schrift, IDs in Monospace (1.7s)
+  ✓  121 [webkit] › e2e/database-look.spec.ts:76:1 › Ansichts-Tab: Klick auf den aktiven Tab öffnet das Menü – umbenennen, duplizieren, löschen (4.7s)
+  ✓  122 [webkit] › e2e/database-polish.spec.ts:7:1 › Inline-Tabelle: leere Titel bleiben leer, Zelleneditor ist ein BasedField, kein Rahmen um den Block (5.4s)
+  ✓  123 [webkit] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (4.7s)
+[webkit] Klick-Durchlauf: 106 Klicks, 4 ausgelassen
+  ✓  101 [webkit] › e2e/crawl.spec.ts:204:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (2.3m)
+  ✓  125 [webkit] › e2e/crawl.spec.ts:248:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (5.1s)
+  ✓  126 [webkit] › e2e/crawl.spec.ts:263:1 › Ein eingeschleuster toter Knopf fällt auf (4.8s)
+  -  127 [webkit] › e2e/crawl.spec.ts:283:1 › Fotos: Home, Chat, Diagnose
+  ✓  128 [webkit] › e2e/editor-ai.spec.ts:25:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (3.9s)
+  ✓  124 [webkit] › e2e/database-views.spec.ts:110:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (15.4s)
+  ✓  129 [webkit] › e2e/editor-ai.spec.ts:43:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (7.5s)
+  ✓  131 [webkit] › e2e/editor-ai.spec.ts:68:1 › /Ask AI im Slash-Menü öffnet das Feld; Escape schließt ohne Änderung (2.7s)
+  ✓  130 [webkit] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (11.4s)
+  ✓  133 [webkit] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (2.8s)
+  ✓  132 [webkit] › e2e/editor-bookmark.spec.ts:67:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (7.8s)
+  ✓  134 [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (5.5s)
+  ✓  135 [webkit] › e2e/editor-bookmark.spec.ts:96:1 › Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App) (4.5s)
+  -  137 [webkit] › e2e/editor-bookmark.spec.ts:104:1 › Bildschirmfotos: Bookmark mit Vorschau
+  ✓  136 [webkit] › e2e/database-views.spec.ts:380:1 › Karte: kein Land-Band über die ganze Welt (Datumsgrenze) (3.7s)
+  ✓  139 [webkit] › e2e/database-views.spec.ts:509:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (4.3s)
+  ✓  138 [webkit] › e2e/editor-corpus.spec.ts:67:1 › Swift-Korpus: jeder Blocktyp erscheint im Block-Editor, Öffnen und Neuladen ändern keinen Record (6.9s)
+  ✓  141 [webkit] › e2e/editor-default.spec.ts:39:1 › frisches Gerät: Block-Editor (2.6s)
+  ✓  142 [webkit] › e2e/editor-default.spec.ts:44:1 › früher „New editor: aus“ (bewusst false): einmalig auf den Block-Editor umgestellt, alter Schlüssel weg (3.3s)
+  ✓  140 [webkit] › e2e/database-views.spec.ts:539:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (8.0s)
+  ✓  143 [webkit] › e2e/editor-default.spec.ts:61:1 › früher Notausgang „Old editor“ an: Block-Editor, Schlüssel weg, kein Schalter mehr in Diagnostics (3.3s)
