@@ -79,6 +79,9 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          # BSD-433: Node und node-pty vor dem Bundle signieren (Hardened Runtime, src-tauri/node.entitlements);
+          # mit Developer ID (APPLE_SIGNING_IDENTITY unten) für die Notarisierung, sonst ad hoc.
+          BASED_SIGN_NODE: "1"
         run: |
           CONF="$RUNNER_TEMP/tauri.ci.json"
           UPD=false
@@ -116,6 +119,8 @@ jobs:
           codesign -dv "$APP" 2>&1 | grep -E "Identifier|Signature|TeamIdentifier" || true
           lipo -archs "$APP/Contents/MacOS/"*
           bash scripts/check-mac-signature.sh "$APP"
+          # BSD-433/452: Node signiert (runtime + allow-jit), arm64 + x86_64, lokaler Server startet aus dem Bundle ohne PATH
+          node apps/desktop/scripts/verify-app.mjs "$APP"
 
       - name: DMG
         env:

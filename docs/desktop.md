@@ -140,6 +140,15 @@ Node.js v24 LTS, MIT-Lizenz in `node/LICENSE`). Zur Laufzeit lädt die App nicht
   bei falscher Summe oder mit `BASED_SKIP_NODE=1` bricht nichts ab – dann fehlt die Laufzeit und die App nimmt die
   Node des Nutzers. Version aktualisieren: `NODE_VERSION` und die drei Summen aus `SHASUMS256.txt` im Skript
   ersetzen. Signieren/Notarisieren der Binärdatei gehört zu BSD-272 (heute ad hoc wie die App).
+- **Node signieren (BSD-433, vorbereitet):** `apps/desktop/scripts/sign-node.mjs` läuft im Sidecar-Schritt nach
+  fetch-node, aber nur mit `BASED_SIGN_NODE=1` (CI-Vorlage `ci/github-actions-desktop-beta.yml`; lokale Builds
+  unverändert). Es signiert `node/bin/node` mit Hardened Runtime und `src-tauri/node.entitlements` (allow-jit,
+  allow-unsigned-executable-memory, disable-library-validation für node-pty) sowie die Mac-Prebuilds von node-pty
+  (`pty.node`, `spawn-helper`) – ad hoc ohne Secrets, mit `APPLE_SIGNING_IDENTITY` + `APPLE_CERTIFICATE` (BSD-272)
+  als Developer ID mit Zeitstempel über einen temporären Schlüsselbund (Tauri lädt das Zertifikat erst später).
+  Prüfschritt nach dem Build: `node apps/desktop/scripts/verify-app.mjs "…/Based Beta.app"` – codesign --verify
+  --deep --strict, Node mit runtime + allow-jit, beide Architekturen, und der lokale Server startet aus dem Bundle
+  mit leerem PATH (BASED_LOCAL_READY). Elija: Vorlage nach `.github/workflows/desktop-beta.yml` übernehmen.
 - **Node finden:** zuerst die mitgelieferte (`/bin/sh -c '… exec "$BASED_NODE" --version'`, Pfad über
   `resolveResource("node/bin/node")`); fehlt sie (Entwickler-Build ohne Netz) oder läuft sie nicht, über die
   Login-Shell wie im Terminal (`/bin/zsh -ilc 'command -v node && node --version'`, ≥ 22), damit Homebrew/nvm

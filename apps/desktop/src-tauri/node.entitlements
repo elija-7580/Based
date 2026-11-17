@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  BSD-433: Rechte der mitgelieferten Node (Resource node/bin/node) unter Hardened Runtime – nur so viel wie nötig:
+  - allow-jit: V8 erzeugt Maschinencode zur Laufzeit (MAP_JIT); ohne stürzt Node unter Hardened Runtime sofort ab.
+  - allow-unsigned-executable-memory: V8 auf x86_64 (Intel-Slice) schreibt ausführbaren Speicher ohne MAP_JIT.
+  - disable-library-validation: node-pty (Terminal, BSD-314) lädt pty.node aus node_modules; mit Ad-hoc-Signatur
+    hat es keine Team-ID, die zur Node passen könnte.
+  Kein get-task-allow, kein Debugger, keine Geräte. Signiert von apps/desktop/scripts/sign-node.mjs.
+-->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+</dict>
+</plist>

@@ -42,7 +42,7 @@ test("BSD-138/414: Bundle und Node als Resource (kein externalBin); Shell-Plugin
   // BSD-414: die mitgelieferte Node liegt als Resource node/ bei (fetch-node.mjs), weiter kein externalBin.
   assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/", "../dist-sidecar/node/": "node/" });
   assert.match(conf.build.beforeBuildCommand, /@based\/desktop sidecar/);
-  assert.match(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.sidecar, /fetch-node\.mjs/);
+  assert.match(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.sidecar, /fetch-node\.mjs && node scripts\/sign-node\.mjs/);
   assert.match(conf.build.beforeDevCommand, /@based\/desktop sidecar/);
   const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/local-server.json", import.meta.url), "utf8"));
   assert.deepEqual(cap.windows, ["main"]);
@@ -210,3 +210,68 @@ test("BSD-452: Mach-O universal – zusammenfügen, Slices ausgerichtet, Prüfsc
   assert.deepEqual(checkNode(cut).broken, ["arm64"]);
   assert.equal(nodePath("/nonexistent/Based Beta.app/x"), "/nonexistent/Based Beta.app/x");
 });
+
+// BSD-433: Node signieren (Hardened Runtime, Entitlements) und die fertige App prüfen – vorbereitet, ohne Secrets.
+test("BSD-433: Entitlements nur so weit wie nötig, Signierplan, Server startet aus dem Bundle mit leerem PATH", async () => {
+  const { mkdtempSync, mkdirSync, rmSync, symlinkSync, copyFileSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { execFileSync } = await import("node:child_process");
+  const { fileURLToPath } = await import("node:url");
+  const ent = readFileSync(new URL("../src-tauri/node.entitlements", import.meta.url), "utf8");
+  const keys = [...ent.matchAll(/<key>([^<]+)<\/key>\s*<true\/>/g)].map((m) => m[1]).sort();
+  assert.deepEqual(keys, ["com.apple.security.cs.allow-jit", "com.apple.security.cs.allow-unsigned-executable-memory", "com.apple.security.cs.disable-library-validation"]);
+  assert.equal([...ent.matchAll(/<key>/g)].length, 3); // nichts sonst (kein get-task-allow, kein Debugger)
+
+  const { keychainCommands, signCommands, signTargets, ENTITLEMENTS } = await import("../scripts/sign-node.mjs");
+  // Developer ID: eigener temporärer Schlüsselbund, codesign darf ohne Rückfrage, danach gelöscht
+  const kc = keychainCommands("/tmp/k.keychain-db", "/tmp/c.p12", "pw", "kpw");
+  assert.deepEqual(kc.setup.map((a) => a[0]), ["create-keychain", "set-keychain-settings", "unlock-keychain", "import", "set-key-partition-list"]);
+  assert.ok(kc.setup[3].includes("/usr/bin/codesign"));
+  assert.deepEqual(kc.cleanup, [["delete-keychain", "/tmp/k.keychain-db"]]);
+  const dist = mkdtempSync(join(tmpdir(), "based-sign-"));
+  try {
+    mkdirSync(join(dist, "node", "bin"), { recursive: true });
+    writeFileSync(join(dist, "node", "bin", "node"), "");
+    for (const a of ["darwin-arm64", "darwin-x64", "linux-x64"]) {
+      const d = join(dist, "node_modules", "@homebridge", "node-pty-prebuilt-multiarch", "prebuilds", a);
+      mkdirSync(d, { recursive: true });
+      writeFileSync(join(d, "pty.node"), "");
+      if (a.startsWith("darwin")) writeFileSync(join(d, "spawn-helper"), "");
+    }
+    const targets = signTargets(dist);
+    assert.equal(targets.length, 5); // node + 2 × (pty.node, spawn-helper); Linux-Prebuilds nicht
+    assert.deepEqual(targets[0], { path: join(dist, "node", "bin", "node"), entitlements: true });
+    assert.ok(targets.slice(1).every((t) => !t.entitlements && /darwin-/.test(t.path)));
+    const adhoc = signCommands(targets, "-");
+    assert.deepEqual(adhoc[0], ["--force", "--options", "runtime", "--entitlements", ENTITLEMENTS, "--sign", "-", targets[0].path]);
+    assert.ok(adhoc.every((a) => !a.includes("--timestamp")));
+    const devid = signCommands(targets, "Developer ID Application: X (TEAM123456)");
+    assert.ok(devid.every((a) => a.includes("--timestamp") && a.includes("runtime")));
+    assert.ok(devid.slice(1).every((a) => !a.includes("--entitlements")));
+  } finally {
+    rmSync(dist, { recursive: true, force: true });
+  }
+  // ohne BASED_SIGN_NODE=1 tut das Skript nichts (lokale Builds unverändert)
+  const dir = fileURLToPath(new URL("..", import.meta.url));
+  const skipped = execFileSync(process.execPath, ["scripts/sign-node.mjs"], { cwd: dir, encoding: "utf8", env: { PATH: process.env.PATH } });
+  assert.match(skipped, /skipped/);
+
+  // Server aus einer nachgebauten .app, Node aus dem Bundle, ohne PATH
+  const { startBundledServer } = await import("../scripts/verify-app.mjs");
+  execFileSync(process.execPath, ["scripts/build-sidecar.mjs"], { cwd: dir, stdio: "ignore" });
+  const app = mkdtempSync(join(tmpdir(), "based-app-"));
+  try {
+    const res = join(app, "Contents", "Resources");
+    mkdirSync(join(res, "node", "bin"), { recursive: true });
+    symlinkSync(process.execPath, join(res, "node", "bin", "node"));
+    copyFileSync(join(dir, "dist-sidecar", "based-server.cjs"), join(res, "based-server.cjs"));
+    assert.match(await startBundledServer(app), /^http:\/\/127\.0\.0\.1:\d+$/);
+    // ohne Bundle: klare Meldung statt Hängen
+    rmSync(join(res, "based-server.cjs"));
+    await assert.rejects(startBundledServer(app, { timeoutMs: 10_000 }), /exited/);
+  } finally {
+    rmSync(app, { recursive: true, force: true });
+  }
+});
+
