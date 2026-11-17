@@ -1,61 +1,61 @@
-cancelled b01bc6bca8f98e541aa95acf04345f70c2eefce5
-  ✓  136 [webkit] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (3.9s)
-  ✓  137 [webkit] › e2e/editor-default.spec.ts:39:1 › frisches Gerät: Block-Editor (2.2s)
-  ✓  138 [webkit] › e2e/editor-embed.spec.ts:7:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (2.7s)
-  ✓  139 [webkit] › e2e/editor-default.spec.ts:44:1 › früher „New editor: aus“ (bewusst false): einmalig auf den Block-Editor umgestellt, alter Schlüssel weg (2.8s)
-  ✓  140 [webkit] › e2e/editor-menus.spec.ts:40:3 › Slash-Menü: Based-Icons als SVG, Kachel ohne Haarlinie (1280x820, light) (2.2s)
-  ✓  142 [webkit] › e2e/editor-menus.spec.ts:40:3 › Slash-Menü: Based-Icons als SVG, Kachel ohne Haarlinie (900x600, light) (1.7s)
-  ✓  141 [webkit] › e2e/editor-default.spec.ts:61:1 › früher Notausgang „Old editor“ an: Block-Editor, Schlüssel weg, kein Schalter mehr in Diagnostics (2.4s)
-  ✓  143 [webkit] › e2e/editor-menus.spec.ts:40:3 › Slash-Menü: Based-Icons als SVG, Kachel ohne Haarlinie (1728x1000, light) (2.3s)
-  ✓  145 [webkit] › e2e/editor-menus.spec.ts:40:3 › Slash-Menü: Based-Icons als SVG, Kachel ohne Haarlinie (1280x820, dark) (1.7s)
-  ✓  146 [webkit] › e2e/editor-menus.spec.ts:40:3 › Slash-Menü: Based-Icons als SVG, Kachel ohne Haarlinie (900x600, dark) (1.6s)
-  ✓  147 [webkit] › e2e/editor-menus.spec.ts:40:3 › Slash-Menü: Based-Icons als SVG, Kachel ohne Haarlinie (1728x1000, dark) (1.5s)
-  ✓  144 [webkit] › e2e/editor-mermaid.spec.ts:62:1 › Mermaid: Diagramm als Bild ohne Netz, Fehler in einem Satz, nach dem Neuladen wieder da (8.4s)
-  ✓  148 [webkit] › e2e/editor-menus.spec.ts:73:49 › Blockmenü: Aktionen mit Icons, „Turn into“ mit den Slash-Icons, Farbfelder zeigen ihre Farbe (light) (3.6s)
-  ✓  149 [webkit] › e2e/editor-mermaid.spec.ts:98:1 › Mermaid: beim Umschalten auf dunkel zeichnet sich die Vorschau in den dunklen Farben neu (4.0s)
-  ✓  150 [webkit] › e2e/editor-menus.spec.ts:73:49 › Blockmenü: Aktionen mit Icons, „Turn into“ mit den Slash-Icons, Farbfelder zeigen ihre Farbe (dark) (2.5s)
-  -  151 [webkit] › e2e/editor-mermaid.spec.ts:112:1 › Bildschirmfotos: Mermaid-Vorschau
-  ✓  152 [webkit] › e2e/editor-menus.spec.ts:99:1 › Slash-Menü schließt bei Klick daneben, der Text bleibt (2.3s)
-  ✓  153 [webkit] › e2e/editor-notion.spec.ts:50:1 › Titel und Text: Enter teilt, ↓ und ↑ wechseln (3.5s)
-  ✓  154 [webkit] › e2e/editor-menus.spec.ts:111:1 › Griff geklickt: Entf und ⌫ löschen den Block (4.3s)
-  ✓  155 [webkit] › e2e/editor-notion.spec.ts:69:1 › Enter im Titel nimmt die leere erste Zeile, statt eine weitere anzulegen (3.3s)
-  ✓  157 [webkit] › e2e/editor-notion.spec.ts:79:1 › Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text (3.9s)
-  ✓  156 [webkit] › e2e/editor-parity.spec.ts:113:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (6.1s)
-  ✓  158 [webkit] › e2e/editor-notion.spec.ts:99:1 › Klick unter den Inhalt setzt die Schreibmarke ans Ende (3.5s)
-  ✓  159 [webkit] › e2e/editor-parity.spec.ts:169:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz (4.7s)
-  ✓  160 [webkit] › e2e/editor-notion.spec.ts:116:1 › Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf (4.5s)
-  -  162 [webkit] › e2e/editor-notion.spec.ts:137:1 › Beim Öffnen einer Seite springt der Titel nicht
-  ✓  161 [webkit] › e2e/editor-parity.spec.ts:212:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (4.6s)
-  ✓  163 [webkit] › e2e/editor-notion.spec.ts:160:1 › Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl (3.1s)
-  ✓  165 [webkit] › e2e/editor-notion.spec.ts:181:1 › Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl (5.2s)
-  ✓  164 [webkit] › e2e/editor-parity.spec.ts:236:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (11.8s)
-  ✓  166 [webkit] › e2e/editor-notion.spec.ts:215:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus, Tastatur im Untermenü (6.0s)
-  ✓  168 [webkit] › e2e/editor-notion.spec.ts:252:1 › Blockmenü bleibt offen, wenn der Editor neu zeichnet (4.3s)
-  ✓  167 [webkit] › e2e/editor-parity.spec.ts:312:1 › @ erwähnt Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (6.1s)
-  ✓  169 [webkit] › e2e/editor-notion.spec.ts:271:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (5.8s)
-  ✓  170 [webkit] › e2e/editor-parity.spec.ts:349:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, Inhaltsverzeichnis, pro Seite abschaltbar (10.1s)
-  ✓  171 [webkit] › e2e/editor-notion.spec.ts:293:1 › Codeblock: Standard ohne Umbruch, „Wrap code“ bricht um und bleibt nach dem Neuladen (6.7s)
-  ✓  173 [webkit] › e2e/editor-notion.spec.ts:321:1 › Codeblock: Sprache wählen mit Suche (wie im alten Editor) (2.9s)
-  ✓  174 [webkit] › e2e/editor-notion.spec.ts:333:1 › Formatleiste: kompaktes Feld, ganz im Fenster (4.9s)
-  ✓  172 [webkit] › e2e/editor-parity.spec.ts:416:1 › Synced Block: zwei Seiten, Bearbeiten in beide Richtungen, zweite Kopie abgelehnt, Unsync, Hinweis bei Original im Papierkorb (11.6s)
-  ✓  175 [webkit] › e2e/editor-notion.spec.ts:350:1 › Formatleiste: Blocktyp „Text“ mit Turn into, gedrückte Knöpfe, Inline-Code und Gleichung (7.6s)
-  -  177 [webkit] › e2e/editor-notion.spec.ts:402:1 › Fotos: Codeblock-Leiste
-  -  178 [webkit] › e2e/editor-notion.spec.ts:414:1 › Fotos: @-Menü, Datums-Wähler, Button-Einrichtung, Ask AI
-  -  179 [webkit] › e2e/editor-notion.spec.ts:451:1 › Fotos: Formatleiste und Farbe
-  ✓  176 [webkit] › e2e/editor-parity.spec.ts:487:1 › Blockmenü: Turn into Heading 2 und Block equation, Duplicate, ⌘D (8.5s)
-  ✓  181 [webkit] › e2e/editor-parity.spec.ts:520:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (5.8s)
-  ✓  180 [webkit] › e2e/editor-passthrough.spec.ts:64:1 › Nicht bearbeitbare Blöcke: angezeigt und beim Tippen und Neuladen unverändert (7.5s)
-  ✓  182 [webkit] › e2e/editor-parity.spec.ts:544:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (6.5s)
-  ✓  183 [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records (10.0s)
-  ✓  184 [webkit] › e2e/editor-parity.spec.ts:587:1 › Duplicate kopiert Unterseiten tief (8.1s)
-  ✓  186 [webkit] › e2e/editor-parity.spec.ts:616:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (5.4s)
-  ✓  187 [webkit] › e2e/editor-parity.spec.ts:659:1 › Callout-Icon aus dem Emoji-Picker mit Suche (6.1s)
-  ✓  188 [webkit] › e2e/editor-parity.spec.ts:691:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (6.6s)
-  ✓  185 [webkit] › e2e/editor-polish.spec.ts:56:1 › Editor in Ruhe und in seinen Zuständen (27.9s)
-  ✓  189 [webkit] › e2e/editor-parity.spec.ts:725:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (7.8s)
-  ✓  190 [webkit] › e2e/editor-polish.spec.ts:145:1 › Links und Häkchen im Editor ohne Browser-Blau (3.0s)
-  -  191 [webkit] › e2e/editor-parity.spec.ts:767:1 › Fotos: Synced-Block-Kopie, Hinweis am Editor
-  ✓  192 [webkit] › e2e/editor-polish.spec.ts:167:1 › Blockfarben im Dunkelmodus aus den Tokens (3.3s)
-  -  193 [webkit] › e2e/editor-parity.spec.ts:818:1 › Rechtsklick → Paste behält die Formatierung
-  ✓  195 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (2.0s)
-  ✓  194 [webkit] › e2e/editor-polish.spec.ts:197:1 › Slash ohne Treffer: „No results“, Enter macht eine neue Zeile (3.0s)
+cancelled 13528e6b6631b204d21a0e8d1b40c3ffaae89a95
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 249 tests using 2 workers, shard 1 of 2
+
+  ✓    2 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (light) (25.3s)
+  ✓    3 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (dark) (12.3s)
+  ✓    4 [webkit] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (2.2s)
+
+  ✓    1 [webkit] › e2e/a11y.spec.ts:126:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (41.8s)
+  -    6 [webkit] › e2e/a11y.spec.ts:165:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓    5 [webkit] › e2e/ai-switch.spec.ts:57:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (3.6s)
+  -    8 [webkit] › e2e/ai-switch.spec.ts:84:3 › Screenshots ohne AI (light)
+  -    9 [webkit] › e2e/ai-switch.spec.ts:84:3 › Screenshots ohne AI (dark)
+  ✓    7 [webkit] › e2e/a11y.spec.ts:206:1 › Quick Find: Esc gibt den Fokus zurück (2.4s)
+  ✓   10 [webkit] › e2e/ai-switch.spec.ts:104:1 › ohne AI: kein Ask AI im Block-Editor (1.8s)
+(node:6299) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   11 [webkit] › e2e/a11y.spec.ts:222:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (4.9s)
+  -   13 [webkit] › e2e/beta-build.spec.ts:39:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (light)
+  -   14 [webkit] › e2e/beta-build.spec.ts:39:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (dark)
+  -   15 [webkit] › e2e/beta-build.spec.ts:128:1 › Beta-Build: Problem melden führt zur Mail an hello@basednotes.app
+  -   16 [webkit] › e2e/beta-build.spec.ts:157:1 › Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home
+  ✓   12 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (9.2s)
+(node:6578) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   18 [webkit] › e2e/backups.spec.ts:114:1 › BSD-449: gewählter Backup-Ordner – Backup landet dort, fehlender Ordner sichtbar, kein stiller Rückfall (6.7s)
+(node:6656) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   17 [webkit] › e2e/beta-data.spec.ts:129:1 › BSD-469 Beta-Weg 2: Notion-Export importieren, als Markdown/HTML/Archiv exportieren und wieder importieren, Sicherung vor dem Update zurückspielen (25.1s)
+  ✓   20 [webkit] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (2.3s)
+  ✓   19 [webkit] › e2e/block-editor-collab.spec.ts:61:1 › Neuer Editor, Echtzeit: zwei Geräte im selben Block, live, nichts doppelt, Schreibmarke des anderen (16.0s)
+  ✓   21 [webkit] › e2e/block-editor.spec.ts:64:1 › Nach dem Neuladen ist alles da (dauerhaftes Profil, Records über den Store-Worker) (5.9s)
+  ✓   23 [webkit] › e2e/block-editor.spec.ts:86:1 › Tab rückt ein, ⇧Tab aus; Pfeile wechseln zwischen Blöcken (2.3s)
+  ✓   22 [webkit] › e2e/block-link.spec.ts:10:1 › Link zu einem Block kopieren und öffnen (5.5s)
+  ✓   24 [webkit] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (5.9s)
+  ✓   25 [webkit] › e2e/board.spec.ts:46:1 › Board anlegen: leere Fläche erklärt den nächsten Schritt; Zettel setzen, verschieben, Undo/Redo @smoke (5.9s)
+  ✓   26 [webkit] › e2e/block-editor.spec.ts:155:1 › Ziehen am Griff: davor/danach, Spalte rechts daneben und wieder heraus (4.6s)
+  ✓   27 [webkit] › e2e/board.spec.ts:83:1 › Board bleibt nach sofortigem Neuladen: Zettel und Lage sind da (5.9s)
+  ✓   28 [webkit] › e2e/block-editor.spec.ts:182:1 › Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, ⌫ löscht (2.8s)
+  ✓   29 [webkit] › e2e/board.spec.ts:115:1 › Tastatur: N + Enter legt an, Tab wählt in Leserichtung und sagt es an, Pfeile schieben, Entf löscht, ⌘Z holt zurück (3.5s)
+  ✓   30 [webkit] › e2e/block-editor.spec.ts:220:1 › Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift (3.7s)
+  ✓   32 [webkit] › e2e/block-editor.spec.ts:250:1 › Formatierung: ⌘B auf Auswahl, Formatleiste erscheint (2.1s)
+  ✓   33 [webkit] › e2e/block-editor.spec.ts:277:1 › Einfügen aus dem Web: HTML wird zu Blöcken, URL über Auswahl wird Link; ⌘K setzt Link (2.4s)
+  ✓   34 [webkit] › e2e/block-editor.spec.ts:300:1 › @ erwähnt eine Seite (1.9s)
+  ✓   31 [webkit] › e2e/board.spec.ts:147:1 › Zoom: Knöpfe, ⌘+Rad um den Zeiger, Fit; waagrechtes Wischen auf der Fläche blättert nicht zurück (8.3s)
+  ✓   35 [webkit] › e2e/block-editor.spec.ts:321:1 › Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel (1.9s)
