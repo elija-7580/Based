@@ -36,7 +36,7 @@ LINKS["Mobile.dc.html"] = "/";
 // Descriptions stay ≤ 155 characters and only promise what the Mac beta can do (docs/website-claims.md).
 const META = {
   "/": {
-    title: "Based · The local-first Notion alternative for Mac",
+    title: "Based Notes · The local-first Notion alternative for Mac",
     description: "Pages and fast databases that stay on your Mac. Import your Notion workspace, no account needed. Join the free Mac beta."
   },
   "/workspace": {
@@ -65,8 +65,8 @@ const META = {
 const APP_LD = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "Based",
-  alternateName: "Based notes",
+  name: "Based Notes",
+  alternateName: "Based",
   url: SITE + "/",
   applicationCategory: "ProductivityApplication",
   operatingSystem: "macOS 13 or later",
@@ -80,10 +80,10 @@ const ldScript = (data) => `<script type="application/ld+json">${JSON.stringify(
 // download stays out of search and the sitemap until Elija links it from the invitations.
 const INFO = [
   { name: "faq", path: "/faq", index: true,
-    title: "Based FAQ · Questions about the Mac beta",
+    title: "Based Notes FAQ · Questions about the Mac beta",
     description: "Is the Based beta free, where is my data, can I import from Notion, what is not in the beta yet? Short answers." },
   { name: "download", path: "/download", index: false,
-    title: "Download the Based beta for Mac",
+    title: "Download the Based Notes beta for Mac",
     description: "Download Based Beta for macOS, install it and send feedback." }
 ];
 
@@ -277,7 +277,7 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#F1F1EE">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Based">
+<meta property="og:site_name" content="Based Notes">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:url" content="${url}">
@@ -380,7 +380,7 @@ function main() {
     console.log("built", page.path);
   }
 
-  // Legal pages are plain HTML (German, with an English note), no runtime.
+  // Legal pages are plain HTML in English (Austrian legal terms in brackets), no runtime.
   const shell = read(join(SRC, "legal", "_shell.html"));
   const footer = /<footer[\s\S]*?<\/footer>/.exec(parsed["Workspace.dc.html"].body)[0]
     .replace(/\{\{markSrc\}\}/g, "/mark.svg");
@@ -390,9 +390,9 @@ function main() {
     const src = read(join(SRC, "legal", name + ".html"));
     const title = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(src)[1].replace(/<[^>]+>/g, "");
     const html = shell
-      .replace("%LANG%", "de")
+      .replace("%LANG%", "en")
       .replace("%HEAD%", "")
-      .replace(/%TITLE%/g, title + " · Based")
+      .replace(/%TITLE%/g, title + " · Based Notes")
       .replace("%CANONICAL%", SITE + path)
       .replace("%CSS%", cssHref)
       .replace("%HEADER%", header)

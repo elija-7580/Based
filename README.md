@@ -1,6 +1,6 @@
-# Based
+# Based Notes
 
-Local-first notes, databases and opt-in agents — everything Notion can do and a bit more, with your data on your
+**Based Notes** (short: **Based**): local-first notes, databases and opt-in agents — everything Notion can do and a bit more, with your data on your
 device. Built clean-room from public documentation. Website: **[basednotes.app](https://basednotes.app)**.
 
 **Based Next** is the app: a TypeScript stack (ADR [0011](docs/adr/0011-typescript-stack.md)) with one interface
@@ -24,7 +24,7 @@ open it → drag *Based Next* into Applications. macOS 13 or later, Apple silico
 | `packages/core` | Model, store, editing, databases, formulas, import/export, search (platform-free) |
 | `packages/sync` | Sync v2 client, SQLite persistence |
 | `packages/editor` | Block editor (own block layer on Yjs, ADR 0016), whiteboard |
-| `packages/database-ui`, `packages/ui`, `packages/design-tokens` | Database views, shared UI, design language „Based Default“ |
+| `packages/database-ui`, `packages/ui`, `packages/design-tokens` | Database views, shared UI, design language "Based Default" |
 | `packages/brain` | Chat engines, agents, runs, permissions, skills, MCP connections |
 | `apps/web` | The app (React + Vite); Playwright on WebKit and Chromium |
 | `apps/desktop` | Tauri 2 shell for the Mac ([docs/desktop.md](docs/desktop.md)) |
@@ -57,7 +57,7 @@ runs Based Cloud. If you run a modified version as a network service, you must o
 **Earlier versions:** everything up to and including commit `13528e6` (17 November 2026) was released under the MIT
 license. Those copies stay MIT; all later versions are AGPL-3.0-or-later.
 
-- **Name and logo:** the license covers the code, not the name. Forks may not call themselves „Based“ — see
+- **Name and logo:** the license covers the code, not the name. Forks may not call themselves "Based Notes" or "Based" — see
   [`TRADEMARK.md`](TRADEMARK.md).
 - **Contributing:** external contributions need the Contributor License Agreement ([`CLA.md`](CLA.md)); details in
   [`CONTRIBUTING.md`](CONTRIBUTING.md).

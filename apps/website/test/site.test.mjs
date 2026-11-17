@@ -80,7 +80,8 @@ test("seo (BSD-457): short descriptions, structured data, FAQ indexed, download 
   const sitemap = readFileSync(join(out, "sitemap.xml"), "utf8");
   assert.match(sitemap, /basednotes\.app\/faq</);
   assert.doesNotMatch(sitemap, /download/);
-  assert.match(readFileSync(join(out, "imprint", "index.html"), "utf8"), /<html lang="de">/);
+  assert.match(readFileSync(join(out, "imprint", "index.html"), "utf8"), /<html lang="en">/);
+  assert.match(readFileSync(join(out, "imprint", "index.html"), "utf8"), /§ 25 Mediengesetz/);
 });
 
 test("claims (BSD-434): no promise the Mac beta can't keep", () => {
