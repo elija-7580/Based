@@ -552,6 +552,21 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     expect(found).toEqual([]);
     await expect(nav).toHaveScreenshot(`sidebar-states-${style}-${theme}.png`, SHOT);
     if (style === "default") await nav.screenshot({ path: `../../docs/design/screens/web-kit-sidebar-states-${theme}.png`, animations: "disabled" });
+
+    // Teil 8: Segmentwahl auf Home – „Today“ gewählt, „Week“ überfahren, „Month“ mit Tastaturfokus
+    const seg = (name: string) => page.getByRole("radio", { name }).or(page.getByRole("tab", { name })).first();
+    const group = page.getByRole("radiogroup", { name: "Time frame" }).or(page.getByRole("tablist", { name: "Time frame" })).or(page.getByLabel("Time frame")).first();
+    await expect(group).toBeVisible();
+    await page.addStyleTag({ content: `.home-head [role=radiogroup], .home-head [role=radiogroup] *, .home-head [role=tablist], .home-head [role=tablist] * { font-family: KitMatrix, sans-serif !important; }` });
+    await mark(seg("Week"), "seg-hover");
+    await mark(seg("Month"), "seg-focus");
+    await force(await ids("[data-force=seg-hover], [data-force=seg-hover] *"), FORCE.hover);
+    await force(await ids("[data-force=seg-focus]"), FORCE.focus);
+    for (const name of ["Today", "Week", "Month"]) {
+      for (const [k, c] of Object.entries(await colorsOf(seg(name)))) if (!transparent(c) && !isToken(c, allowed)) found.push(`Segmentwahl ${name} ${k}: ${c}`);
+    }
+    expect(found).toEqual([]);
+    await expect(group).toHaveScreenshot(`home-segments-${style}-${theme}.png`, SHOT);
   });
 }
 
