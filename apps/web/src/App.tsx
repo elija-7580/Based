@@ -33,7 +33,7 @@ import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
-import { homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
+import { fallbackHomePage, homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
 // BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
@@ -102,18 +102,25 @@ export function App({ client, history }: { client: StoreClient; history: History
     return t.name === "page" ? t.id : undefined;
   })();
   const goHome = useCallback(() => navigate(homePage ? { name: "page", id: homePage } : { name: "home" }), [navigate, homePage]);
-  // Ohne AI ist Home einfach eine Seite: fehlt eine gewählte Home-Seite, legt Based einmal eine Seite „Home“ an.
+  // Ohne AI ist Home einfach eine Seite. BSD-461: fehlt eine gewählte Home-Seite, wird eine vorhandene Seite Home
+  // („Welcome to Based“, sonst die erste unter Private) – keine leere Seite „Home“ mehr. Nur ein Workspace ganz ohne
+  // Seiten bekommt einmal eine. Schon angelegte Home-Seiten älterer Starts bleiben, wie sie sind.
   const creatingHome = useRef(false);
   const aiRoute = route.name === "chat" || route.name === "tasks" || route.name === "coding" || route.name === "agent" || route.name === "project";
   const wantsHome = route.name === "home" || (!ai && aiRoute);
   useEffect(() => {
     if (ai || !wantsHome || homePage || !state.ready || !state.outline || welcome || creatingHome.current) return;
+    const existing = fallbackHomePage(state.outline, state.titles);
+    if (existing) {
+      startPage.set(existing);
+      return;
+    }
     creatingHome.current = true;
     void client.command<string | undefined>({ op: "createPage", title: "Home" })
       .then((id) => { if (id) startPage.set(id); })
       .catch(() => undefined)
       .finally(() => { creatingHome.current = false; });
-  }, [ai, wantsHome, homePage, state.ready, state.outline, welcome, client]);
+  }, [ai, wantsHome, homePage, state.ready, state.outline, state.titles, welcome, client]);
   useEffect(() => installNewTabIntent(), []);
   // BSD-168: Rechtschreibprüfung (Einstellungen → My settings); contenteditable erbt `spellcheck` vom body.
   const spellCheck = useSyncExternalStore(spellCheckPref.subscribe, spellCheckPref.get);

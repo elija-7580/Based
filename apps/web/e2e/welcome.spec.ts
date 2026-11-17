@@ -159,3 +159,37 @@ test("Willkommen: Bildschirmfotos", async ({ playwright, browserName, baseURL })
     await close();
   }
 });
+
+// BSD-461 (Mac-Beta, AI aus wie auf beta): nach „Start empty“ ist Home die Willkommensseite – keine leere Seite „Home“
+// daneben, auch nicht nach dem Neuladen. Bildschirmfotos 1280 × 820 hell/dunkel.
+test("ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“", async ({ playwright, browserName, baseURL }) => {
+  for (const theme of ["light", "dark"] as const) {
+    const { page, close } = await fresh(playwright, browserName, baseURL!);
+    try {
+      await page.addInitScript((t) => {
+        if (localStorage.getItem("based.ai") === null) localStorage.setItem("based.ai", "false");
+        localStorage.setItem("based.appearance", JSON.stringify({ theme: t }));
+      }, theme);
+      await page.goto("/");
+      await ready(page);
+      await welcome(page).getByRole("button", { name: /Start empty/ }).click();
+      await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+      await page.getByRole("button", { name: "Home" }).click();
+      await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+      await expect(page.getByTestId("page-content").getByText("Your data", { exact: true })).toBeVisible();
+      await expect(page.getByRole("treeitem", { name: "Home", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(1);
+      await page.reload();
+      await ready(page);
+      await page.getByRole("button", { name: "Home" }).click();
+      await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+      await expect(page.getByRole("treeitem", { name: "Home", exact: true })).toHaveCount(0);
+      if (browserName === "chromium") {
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: `${SHOTS}beta-first-start-home-${theme}.png` });
+      }
+    } finally {
+      await close();
+    }
+  }
+});

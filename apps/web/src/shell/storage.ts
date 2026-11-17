@@ -142,6 +142,32 @@ export function homeTarget(chosen: string | undefined, live?: { has(id: string):
   return chosen && (!live || live.has(chosen)) ? { name: "page", id: chosen } : { name: "home" };
 }
 
+/** Die Willkommensseite, die der Store-Worker in einem frischen Workspace anlegt (worker/host.ts). */
+export const WELCOME_TITLE = "Welcome to Based";
+
+/**
+ * BSD-461: Home ohne AI und ohne gewählte Home-Seite. Statt eine leere Seite „Home“ anzulegen, wird eine vorhandene
+ * Seite Home: „Welcome to Based“ oben unter Private, sonst die erste Seite unter Private, sonst die erste Seite
+ * irgendwo oben in der Seitenleiste. Nur Seiten (keine Datenbanken), nichts aus dem Papierkorb. `undefined` = der
+ * Workspace hat keine Seite – dann (und nur dann) legt die Shell eine an.
+ */
+export function fallbackHomePage(
+  outline: { sections: readonly { id: string }[]; children: Readonly<Record<string, readonly string[]>>; nodes: Readonly<Record<string, { kind: string }>>; trash: readonly { id: string }[] },
+  titles: ReadonlyMap<string, string>,
+): string | undefined {
+  const trashed = new Set(outline.trash.map((t) => t.id));
+  const pages = (key: string) => (outline.children[key] ?? []).filter((id) => outline.nodes[id]?.kind === "page" && !trashed.has(id));
+  const priv = pages("section:private");
+  const welcome = priv.find((id) => titles.get(id) === WELCOME_TITLE);
+  if (welcome) return welcome;
+  if (priv[0]) return priv[0];
+  for (const s of outline.sections) {
+    const first = pages("section:" + s.id)[0];
+    if (first) return first;
+  }
+  return undefined;
+}
+
 export const expandedPages = {
   get: (): Set<string> => new Set(read<string[]>("based.expanded", [])),
   set: (s: ReadonlySet<string>) => write("based.expanded", [...s]),
