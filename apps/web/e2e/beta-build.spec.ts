@@ -167,3 +167,25 @@ test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async
     await close();
   }
 });
+
+// BSD-486: alte Links auf ausgeblendete Ansichten (#meetings, #graph, #coding) und auf AI (#chat, #agents, #ai) führen
+// auf Home = Willkommensseite und die Adresse wird #home – nicht die Library, kein stehengebliebener Hash.
+test("Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(120_000);
+  const { page, close } = await fresh(playwright, browserName, baseURL!, "light");
+  try {
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
+    await expect(page.getByLabel("Page title")).toBeVisible();
+    for (const hash of ["meetings", "graph", "coding", "chat", "tasks", "agents", "ai"]) {
+      await page.goto("/#" + hash);
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await expect(page, hash).toHaveURL(/#home$/);
+      await expect(page.getByLabel("Page title"), hash).toHaveValue("Welcome to Based");
+      await expect(page.getByTestId("library"), hash).toHaveCount(0);
+    }
+  } finally {
+    await close();
+  }
+});

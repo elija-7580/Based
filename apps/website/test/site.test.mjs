@@ -106,14 +106,16 @@ test("claims (BSD-434): no promise the Mac beta can't keep", () => {
 
 async function withServer(fn) {
   const dir = mkdtempSync(join(tmpdir(), "based-wl-"));
-  const port = 20000 + Math.floor(Math.random() * 20000);
+  // Port 0: the system picks a free port (a random one collided under load, „server exited 1“)
   const child = spawn(process.execPath, ["--no-warnings", join(ROOT, "server", "waitlist.mjs")], {
-    env: { ...process.env, PORT: String(port), WAITLIST_DB: join(dir, "w.sqlite"), WAITLIST_ORIGINS: "https://basednotes.app" },
+    env: { ...process.env, PORT: "0", WAITLIST_DB: join(dir, "w.sqlite"), WAITLIST_ORIGINS: "https://basednotes.app" },
     stdio: ["ignore", "pipe", "pipe"]
   });
-  await new Promise((resolve, reject) => {
-    child.stdout.on("data", (d) => String(d).includes("waitlist service") && resolve());
-    child.on("exit", (c) => reject(new Error("server exited " + c)));
+  let stderr = "";
+  child.stderr.on("data", (d) => { stderr += d; });
+  const port = await new Promise((resolve, reject) => {
+    child.stdout.on("data", (d) => { const m = /waitlist service on :(\d+)/.exec(String(d)); if (m) resolve(Number(m[1])); });
+    child.on("exit", (c) => reject(new Error(`server exited ${c}: ${stderr.trim().split("\n").slice(-3).join(" | ")}`)));
   });
   const post = (path, body, headers = {}) => fetch(`http://127.0.0.1:${port}${path}`, {
     method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body)

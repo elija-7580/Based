@@ -134,7 +134,7 @@ Zwei Schichten (A Kern & Server, B Oberfläche) 05:07–08:49, alles auf `main` 
 | Startseite / Shell | 🟡 | BSD-278 Startseite, 281 Seitenleiste neu (Mac-Test), 238 Tastatur fertig, 205 Teil 3, 270 ⌘-Halten (Mac-Test), 280 Teil 1 Bundle-Budget, 262 Teil 1 Graph-Layout |
 | Editor | 🟡 | BSD-249 fertig, 258 Mausauswahl, 289 (P0), 201 Teil 3 Cover-Galerie, 90 Wikilinks fertig, 101 Link zu Block; 209 blockiert (Lizenz-/Netzfrage) |
 | Datenbanken | 🟡 | BSD-255 Teil 1/2 Inline (Mac-Test), 225 Autofill, 293 ⌘Z in Ansichten, 216 Teil 1–3 Dashboard/Chart/Personen |
-| Whiteboard | 🟡 | BSD-263 Datenmodell, Yjs-Schema, Tinten-Codec (ohne Oberfläche) |
+| Whiteboard | 🟡 | BSD-263 Datenmodell, Yjs-Schema, Tinten-Codec; BSD-264 Board-Seite mit Fläche, Zettel, Rechteck (auf beta ausgeblendet); offen: Stift BSD-265, Text BSD-266, Verbindungen BSD-267 |
 | Tests | ✅ | BSD-294 notion-api-E2E, 295 Quick-Find-Zeitmessung robust, 292 Spalte beta in features.csv |
 
 ## Lauf 2026-11-09 (Pass 25)

@@ -170,3 +170,20 @@ test("Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten", async (
 
   expect(outside).toEqual([]);
 });
+
+// BSD-488: Der Dialog stand 12vh unter dem oberen Rand (Regel von .qf-backdrop gewann) und schloss unten bündig mit dem
+// Fenster ab – ohne Rundung und Schatten. Jetzt mittig mit Abstand oben und unten, in allen drei Prüfgrößen.
+for (const [w, h] of [[900, 600], [1280, 820], [1728, 1000]] as const) {
+  test(`Versionsverlauf steht mittig mit Abstand zu beiden Rändern (${w} × ${h}, BSD-488)`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await openWelcome(page);
+    const dialog = await openHistory(page);
+    await page.waitForTimeout(300); // rise-in
+    const box = (await dialog.boundingBox())!;
+    const top = box.y;
+    const bottom = h - (box.y + box.height);
+    expect(top).toBeGreaterThan(8);
+    expect(bottom).toBeGreaterThan(8);
+    expect(Math.abs(top - bottom)).toBeLessThanOrEqual(2);
+  });
+}

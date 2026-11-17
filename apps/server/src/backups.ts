@@ -6,7 +6,7 @@
 // die Dateien aus dem Asset-Speicher.
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { applyRestore, listSnapshots, planRestore, pruneBackups, readSnapshot, snapshotAssetIDs, writeSnapshot, type BackupTarget, type SnapshotInfo, type WorkspaceStore } from "@based/core";
+import { applyRestore, listSnapshots, planRestore, pruneBackups, readSnapshot, snapshotAssetIDs, writeSnapshot, type BackupTarget, type SnapshotAssetCache, type SnapshotInfo, type WorkspaceStore } from "@based/core";
 import type { AssetStore } from "./assets.js";
 import type { Logger } from "./log.js";
 
@@ -47,6 +47,8 @@ export class Backups {
   private digest: string | undefined;
   private timer: NodeJS.Timeout | undefined;
   private running: Promise<SnapshotInfo | undefined> | undefined;
+  /** BSD-491: Datei-IDs je Stand – das Aufräumen liest jeden Stand nur einmal je Serverlauf. */
+  private readonly assetCache: SnapshotAssetCache = new Map();
   last: { at: number; name: string } | undefined;
   lastError: string | undefined;
 
@@ -84,11 +86,11 @@ export class Backups {
       try {
         const records = this.store.exportRecords();
         const assets = snapshotAssetIDs(records).map((id) => ({ id, read: async () => { const f = this.assets.locate(id); return f ? new Uint8Array(await readFile(f.path)) : undefined; } }));
-        const info = await writeSnapshot(this.target, { records, workspaceName: this.store.workspace.name, assets, ...(this.digest !== undefined ? { previousDigest: this.digest } : {}), force });
+        const info = await writeSnapshot(this.target, { records, workspaceName: this.store.workspace.name, assets, ...(this.digest !== undefined ? { previousDigest: this.digest } : {}), force, cache: this.assetCache });
         if (info) {
           this.digest = info.digest;
           this.last = { at: info.at, name: info.name };
-          await pruneBackups(this.target);
+          await pruneBackups(this.target, undefined, this.assetCache);
           this.log.info("backup written", { records: info.records, assets: info.assetsWritten, missing: info.missing.length });
         }
         this.lastError = undefined;

@@ -111,14 +111,14 @@ async function exportWorkspace(page: Page, format: RegExp): Promise<{ name: stri
 // Bekannte Unterschiede nach dem Wiederimport eines Markdown-Exports. Sie werden auf beiden Seiten gleich gemacht, damit
 // der Vergleich alles andere streng prüft und eine Behebung den Test nicht rot macht.
 //  (Behoben in BSD-472/473: Zeileninhalt fehlte, eingebettete Datenbank rutschte ans Seitenende, eine verlinkte oberste
-//  Datenbank landete unter der verlinkenden Seite – jetzt streng verglichen.)
-//  - Unique-ID: der Export schreibt „TASK-7“, der Import liest den Text als Wert (Zeile zeigt „TASK-7“ statt „7“).
+//  Datenbank landete unter der verlinkenden Seite – jetzt streng verglichen. BSD-487: Unique-ID „TASK-7“ kommt als
+//  Unique-ID mit Präfix zurück, nicht mehr als Text – ebenfalls streng.)
 //  - Created einer Zeile ohne Wert in Notion = Importzeit; Leerzeilen um Bilder und Links (nur Darstellung).
 function normalizeMarkdownRoundTrip(s: Snapshot): Snapshot {
   const out: Snapshot = {};
   for (const [key, text] of Object.entries(s)) {
     const kind = key.split(" ")[0];
-    let t = text.replace(/^Created: .*$/gm, "").replace(/^ID: (TASK-)?(\d+)$/gm, "ID: $2");
+    let t = text.replace(/^Created: .*$/gm, "");
     if (kind === "database") t = t.split("\n").map((l) => l.replace(/,"[A-Z][a-z]+ \d+, \d{4} \d+:\d\d [AP]M",/, ",,")).join("\n");
     t = t.replace(/\n{2,}/g, "\n").trim();
     out[key] = t;
