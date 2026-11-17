@@ -1,11 +1,12 @@
 // BSD-264 (Whiteboard 2): die Board-Fläche zeichnen (Canvas 2D). Gezeichnet wird nur, was die Szene als sichtbar
 // liefert (Raumindex im Controller). Farben und Schrift kommen zur Laufzeit aus den Design-Tokens (`readBoardTheme`),
 // hier steht kein Farbwert. Maße in Welt-px (bei 100 % = CSS-px), Linienstärken in Bildschirm-px.
+import { getStroke } from "perfect-freehand";
 import {
-  connectorPoints, decodeInk, GRID_STEP, gridStepFor, HANDLES, handlePoint, isConnector, worldRectToScreen,
+  connectorPoints, GRID_STEP, gridStepFor, HANDLES, handlePoint, inkPointsOf, isConnector, worldRectToScreen,
   type BoardRect as Rect, type BoardSize as Size, type InkPoint, type WBConnector, type WBObject, type WBShape,
 } from "@based/core";
-import { minimapTransform, type BoardScene } from "./controller.js";
+import { minimapTransform, type BoardScene, type LiveInk } from "./controller.js";
 
 /** Farben und Schrift der Fläche, aus den Tokens gelesen. */
 export interface BoardTheme {
@@ -23,7 +24,27 @@ export interface BoardTheme {
   peer: string;
   font: string;
   notes: Record<string, string>;
+  /** Stiftfarben und Textmarker-Tönungen nach Namen (PEN_COLORS, HIGHLIGHT_COLORS). */
+  pens: Record<string, string>;
+  highlights: Record<string, string>;
+  /** Dunkles Thema: der Textmarker hellt auf statt abzudunkeln. */
+  dark: boolean;
 }
+
+/** Token je Stiftfarbe bzw. Textmarker-Tönung (kein Gelb: die Marker-Farbe gehört den Agenten). */
+const PEN_TOKENS: Record<string, string> = { ink: "--ink", blue: "--block-blue-text", red: "--block-red-text", green: "--block-green-text", purple: "--block-purple-text" };
+const HIGHLIGHT_TOKENS: Record<string, string> = { sky: "--marker-sky", rose: "--marker-rose", mint: "--marker-mint", lilac: "--block-purple" };
+export const penToken = (name: string) => PEN_TOKENS[name] ?? PEN_TOKENS.ink!;
+export const highlightToken = (name: string) => HIGHLIGHT_TOKENS[name] ?? HIGHLIGHT_TOKENS.sky!;
+
+/** Ist die Farbe (Hex-Wert oder Dezimal-Tripel) dunkel? */
+function isDark(color: string): boolean {
+  const hex = /^#([0-9a-f]{6})$/i.exec(color);
+  const rgb = hex ? [0, 2, 4].map((i) => parseInt(hex[1]!.slice(i, i + 2), 16)) : (/(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(color)?.slice(1, 4).map(Number) ?? [255, 255, 255]);
+  return (rgb[0]! * 299 + rgb[1]! * 587 + rgb[2]! * 114) / 1000 < 128;
+}
+const tokensOf = (v: (name: string) => string, map: Record<string, string>) => Object.fromEntries(Object.entries(map).map(([k, token]) => [k, v(token)]));
+
 
 /** Token je Zettelfarbe (kein Gelb: die Marker-Farbe gehört den Agenten). */
 const NOTE_TOKENS: Record<string, string> = {
@@ -37,11 +58,27 @@ export function readBoardTheme(el: Element): BoardTheme {
     bg: v("--bg"), dot: v("--selection-bg"), ink: v("--ink"), muted: v("--muted"), card: v("--surface-card"), raised: v("--surface-raised"), line: v("--line"),
     border: v("--control-border"), select: v("--focus-ring"), selectFill: v("--selected"), peer: v("--synced"),
     font: cs.fontFamily || "system-ui, sans-serif",
-    notes: Object.fromEntries(Object.entries(NOTE_TOKENS).map(([k, token]) => [k, v(token)])),
+    notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), dark: isDark(v("--bg")),
   };
 }
 
 type Ctx = CanvasRenderingContext2D;
+
+/** Geladene Bilder nach Adresse; `undefined`: (noch) nicht da – die Fläche zeigt dann einen Platzhalter. */
+export type BoardImages = (ref: string) => CanvasImageSource | undefined;
+
+/** Dateigröße für Menschen. */
+export function fileSizeLabel(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+/** Kurze Art einer Datei für die Kachel der Karte („PDF“, „HTML“). */
+export function fileKindLabel(name: string, mime: string): string {
+  const ext = /\.([A-Za-z0-9]{1,5})$/.exec(name)?.[1];
+  return (ext ?? mime.split("/")[1] ?? "file").slice(0, 4).toUpperCase();
+}
 
 function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.max(0, Math.min(r, w / 2, h / 2));
@@ -110,14 +147,83 @@ function drawText(ctx: Ctx, theme: BoardTheme, text: string, box: Rect, opts: { 
   }
 }
 
-const inkCache = new WeakMap<Uint8Array, InkPoint[]>();
-function inkPoints(bytes: Uint8Array): InkPoint[] {
-  let pts = inkCache.get(bytes);
-  if (!pts) {
-    try { pts = decodeInk(bytes); } catch { pts = []; }
-    inkCache.set(bytes, pts);
+// MARK: Tinte
+
+/** Umriss eines Stiftstrichs (Vieleck um die Punkte, Breite folgt dem Druck). Exportiert für Tests. */
+export function inkOutline(points: readonly InkPoint[], width: number, sim: boolean, done = true): number[] {
+  const outline = getStroke(points.map((p) => [p.x, p.y, p.p]), {
+    // Bei mittlerem Druck (0.5) ergibt das genau `width`.
+    size: width * 1.2, thinning: 0.55, smoothing: 0.5, streamline: 0.32, simulatePressure: sim, last: done,
+  });
+  const flat: number[] = new Array(outline.length * 2);
+  for (let i = 0; i < outline.length; i++) { flat[i * 2] = outline[i]![0]!; flat[i * 2 + 1] = outline[i]![1]!; }
+  return flat;
+}
+
+// Umriss je Strich einmal rechnen: die Bytes eines Strichs ändern sich nie (ein geänderter Strich hat neue Bytes).
+const outlineCache = new WeakMap<Uint8Array, Map<string, number[]>>();
+function cachedOutline(bytes: Uint8Array, width: number, sim: boolean): number[] {
+  let per = outlineCache.get(bytes);
+  if (!per) outlineCache.set(bytes, (per = new Map()));
+  const key = `${width}|${sim ? 1 : 0}`;
+  let o = per.get(key);
+  if (!o) per.set(key, (o = inkOutline(inkPointsOf(bytes), width, sim)));
+  return o;
+}
+
+function fillOutline(ctx: Ctx, o: readonly number[]) {
+  const n = o.length / 2;
+  if (n < 3) return;
+  // Glatte Kante: quadratische Bögen durch die Mittelpunkte.
+  ctx.beginPath();
+  ctx.moveTo((o[0]! + o[2]!) / 2, (o[1]! + o[3]!) / 2);
+  for (let i = 1; i < n; i++) {
+    const j = (i + 1) % n;
+    ctx.quadraticCurveTo(o[i * 2]!, o[i * 2 + 1]!, (o[i * 2]! + o[j * 2]!) / 2, (o[i * 2 + 1]! + o[j * 2 + 1]!) / 2);
   }
-  return pts;
+  ctx.closePath();
+  ctx.fill();
+}
+
+function strokeLine(ctx: Ctx, pts: readonly InkPoint[], width: number) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0]!.x, pts[0]!.y);
+  if (pts.length === 1) ctx.lineTo(pts[0]!.x + 0.01, pts[0]!.y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]!.x, pts[i]!.y);
+  ctx.lineWidth = width;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.stroke();
+}
+
+/**
+ * Einen Strich im eigenen Koordinatensystem zeichnen. Stift: gefüllter Umriss (Druck); Textmarker: breite Linie, die
+ * durchscheint (hell: abdunkeln, dunkel: aufhellen). Weit herausgezoomt reicht eine einfache Linie.
+ */
+function paintInk(ctx: Ctx, theme: BoardTheme, pts: readonly InkPoint[], style: { tool: "pen" | "highlighter"; color: string; width: number; sim: boolean }, zoom: number, outline: () => number[]) {
+  if (pts.length === 0) return;
+  if (style.tool === "highlighter") {
+    const before = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = theme.dark ? "screen" : "multiply";
+    ctx.strokeStyle = theme.highlights[style.color] || theme.highlights.sky || theme.muted;
+    strokeLine(ctx, pts, style.width);
+    ctx.globalCompositeOperation = before;
+    return;
+  }
+  const color = theme.pens[style.color] || theme.ink;
+  if (style.width * zoom < 1.3) {
+    ctx.strokeStyle = color;
+    strokeLine(ctx, pts, Math.max(1 / zoom, style.width));
+    return;
+  }
+  ctx.fillStyle = color;
+  fillOutline(ctx, outline());
+}
+
+/** Den Strich zeichnen, der gerade entsteht (über der fertigen Fläche). */
+export function drawLiveInk(ctx: Ctx, live: LiveInk, theme: BoardTheme, camera: { x: number; y: number; zoom: number }, dpr: number) {
+  ctx.setTransform(dpr * camera.zoom, 0, 0, dpr * camera.zoom, -camera.x * camera.zoom * dpr, -camera.y * camera.zoom * dpr);
+  paintInk(ctx, theme, live.points, live, camera.zoom, () => inkOutline(live.points, live.width, live.sim, false));
 }
 
 /** Füllfarbe eines Objekts in der Fernsicht (ohne Rundung, Rand und Text). */
@@ -127,7 +233,7 @@ function farFill(theme: BoardTheme, o: WBShape): string {
   return o.kind === "ink" || o.kind === "text" ? theme.muted : theme.border;
 }
 
-function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number) {
+function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editing = false, images?: BoardImages) {
   // Fernsicht: ein Objekt, das auf dem Bildschirm nur wenige px groß ist, wird ein Rechteck – bei Tausenden
   // sichtbaren Objekten (weit herausgezoomt) kostet sonst jeder Pfad mit Rundung und Rand.
   if (Math.max(o.w, o.h) * zoom < 8 || (zoom < 0.2 && !o.rot && o.kind !== "ink" && o.kind !== "text" && !(o.kind === "shape" && o.style?.shape && o.style.shape !== "rect"))) {
@@ -142,8 +248,8 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number) {
     ctx.translate(-(o.x + o.w / 2), -(o.y + o.h / 2));
   }
   const hair = 1 / zoom;
-  // Text erst zeichnen, wenn er auf dem Bildschirm lesbar wäre.
-  const legible = (size: number) => size * zoom >= 5;
+  // Text erst zeichnen, wenn er auf dem Bildschirm lesbar wäre – und nicht, solange er im Eingabefeld steht.
+  const legible = (size: number) => !editing && size * zoom >= 5;
   switch (o.kind) {
     case "note": {
       roundRect(ctx, o.x, o.y, o.w, o.h, 10);
@@ -174,27 +280,59 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number) {
       roundRect(ctx, o.x, o.y, o.w, o.h, 18);
       ctx.fillStyle = theme.raised;
       ctx.fill();
-      if (o.text && legible(13)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 12, w: o.w - 28, h: 20 }, { size: 13, weight: 600, color: theme.ink, lineHeight: 1.4 });
+      if (o.text && legible(13)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 11, w: o.w - 28, h: 20 }, { size: 13, weight: 600, color: theme.ink, lineHeight: 1.4 });
       break;
     }
     case "text":
       if (o.text && legible(17)) drawText(ctx, theme, o.text, { x: o.x, y: o.y, w: o.w, h: Math.max(o.h, 26) }, { size: 17, weight: 400, color: theme.ink, lineHeight: 1.5 });
       break;
     case "ink": {
-      const pts = o.ink ? inkPoints(o.ink) : [];
-      if (pts.length === 0) break;
-      ctx.beginPath();
-      ctx.moveTo(o.x + pts[0]!.x, o.y + pts[0]!.y);
-      for (let i = 1; i < pts.length; i++) ctx.lineTo(o.x + pts[i]!.x, o.y + pts[i]!.y);
-      ctx.lineWidth = Math.max(hair, Number(o.style?.width ?? 2.6));
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.strokeStyle = theme.ink;
+      const bytes = o.ink;
+      const pts = bytes ? inkPointsOf(bytes) : [];
+      if (!bytes || pts.length === 0) break;
+      const width = Number(o.style?.width ?? 2.6), sim = o.style?.sim === true;
+      // Punkte liegen relativ zur Grundgröße (bw × bh); ein skalierter Strich wird gestreckt gezeichnet.
+      const sx = o.w / (Number(o.style?.bw) || o.w || 1), sy = o.h / (Number(o.style?.bh) || o.h || 1);
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      if (sx !== 1 || sy !== 1) ctx.scale(sx, sy);
+      paintInk(ctx, theme, pts, { tool: o.style?.tool === "hl" ? "highlighter" : "pen", color: String(o.style?.color ?? "ink"), width, sim }, zoom * Math.min(sx, sy), () => cachedOutline(bytes, width, sim));
+      ctx.restore();
+      break;
+    }
+    case "image": {
+      const img = o.ref ? images?.(o.ref) : undefined;
+      if (img) {
+        ctx.drawImage(img, o.x, o.y, o.w, o.h);
+        break;
+      }
+      // Noch nicht geladen (oder auf diesem Gerät nicht vorhanden): ruhige Fläche mit dem Namen.
+      roundRect(ctx, o.x, o.y, o.w, o.h, 12);
+      ctx.fillStyle = theme.raised;
+      ctx.fill();
+      if (legible(12)) drawText(ctx, theme, String(o.style?.name ?? "Image"), { x: o.x + 12, y: o.y + 8, w: o.w - 24, h: o.h - 16 }, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.35, align: "center", middle: true });
+      break;
+    }
+    case "file": {
+      roundRect(ctx, o.x, o.y, o.w, o.h, 14);
+      ctx.fillStyle = theme.card;
+      ctx.fill();
+      ctx.lineWidth = hair;
+      ctx.strokeStyle = theme.line;
       ctx.stroke();
+      const name = String(o.style?.name ?? "File"), mime = String(o.style?.mime ?? "");
+      const tile = Math.min(48, o.h - 24);
+      roundRect(ctx, o.x + 12, o.y + (o.h - tile) / 2, tile, tile, 10);
+      ctx.fillStyle = theme.raised;
+      ctx.fill();
+      if (legible(11)) drawText(ctx, theme, fileKindLabel(name, mime), { x: o.x + 12, y: o.y + (o.h - tile) / 2, w: tile, h: tile }, { size: 11, weight: 600, color: theme.muted, lineHeight: 1.3, align: "center", middle: true });
+      const left = o.x + 12 + tile + 12, width = o.w - tile - 36;
+      if (legible(13.5)) drawText(ctx, theme, name, { x: left, y: o.y + o.h / 2 - 20, w: width, h: 20 }, { size: 13.5, weight: 600, color: theme.ink, lineHeight: 1.4 });
+      if (legible(12)) drawText(ctx, theme, [mime || "File", fileSizeLabel(Number(o.style?.size ?? 0))].filter(Boolean).join(" · "), { x: left, y: o.y + o.h / 2 + 1, w: width, h: 18 }, { size: 12, weight: 500, color: theme.muted, lineHeight: 1.4 });
       break;
     }
     default: {
-      // Seitenkarte, Bild: kommen in Whiteboard 4 (BSD-266); bis dahin eine Karte mit Namen, damit nichts unsichtbar ist.
+      // Seitenkarte: kommt noch (BSD-266); bis dahin eine Karte mit Namen, damit nichts unsichtbar ist.
       roundRect(ctx, o.x, o.y, o.w, o.h, 14);
       ctx.fillStyle = theme.card;
       ctx.fill();
@@ -207,7 +345,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number) {
   if (o.rot) ctx.restore();
 }
 
-function drawConnector(ctx: Ctx, theme: BoardTheme, c: WBConnector, byID: ReadonlyMap<string, WBObject>, zoom: number) {
+function drawConnector(ctx: Ctx, theme: BoardTheme, c: WBConnector, byID: ReadonlyMap<string, WBObject>, zoom: number, editing = false) {
   const p = connectorPoints(c, byID);
   if (!p) return;
   const { from, to } = p;
@@ -239,7 +377,7 @@ function drawConnector(ctx: Ctx, theme: BoardTheme, c: WBConnector, byID: Readon
   ctx.lineTo(to.x, to.y);
   ctx.lineTo(to.x - a * Math.cos(angle + 0.45), to.y - a * Math.sin(angle + 0.45));
   ctx.stroke();
-  if (c.label && 12 * zoom >= 5) {
+  if (c.label && !editing && 12 * zoom >= 5) {
     const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
     ctx.font = `500 12px ${theme.font}`;
     const w = ctx.measureText(c.label).width + 18;
@@ -274,7 +412,16 @@ function drawGrid(ctx: Ctx, theme: BoardTheme, scene: BoardScene, size: Size) {
 }
 
 /** Die ganze Fläche zeichnen. `size` in CSS-px, `dpr` = Gerätepixel je CSS-px. */
-export function drawBoard(ctx: Ctx, scene: BoardScene, theme: BoardTheme, size: Size, dpr: number, peers: readonly { x: number; y: number; name?: string }[] = []) {
+export function drawBoard(ctx: Ctx, scene: BoardScene, theme: BoardTheme, size: Size, dpr: number, peers: readonly { x: number; y: number; name?: string }[] = [], images?: BoardImages) {
+  drawBoardObjects(ctx, scene, theme, size, dpr, images);
+  drawBoardOverlay(ctx, scene, theme, dpr, peers);
+}
+
+/**
+ * Untergrund und Objekte – alles, was sich während eines Strichs nicht ändert. Die Ansicht zeichnet das in eine
+ * eigene Ebene und legt beim Schreiben nur noch den laufenden Strich darüber (ein Bild kopieren statt alles neu).
+ */
+export function drawBoardObjects(ctx: Ctx, scene: BoardScene, theme: BoardTheme, size: Size, dpr: number, images?: BoardImages) {
   const { camera } = scene;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = theme.bg;
@@ -284,12 +431,52 @@ export function drawBoard(ctx: Ctx, scene: BoardScene, theme: BoardTheme, size: 
   // Welt
   ctx.setTransform(dpr * camera.zoom, 0, 0, dpr * camera.zoom, -camera.x * camera.zoom * dpr, -camera.y * camera.zoom * dpr);
   for (const o of scene.objects) {
-    if (isConnector(o)) drawConnector(ctx, theme, o, scene.byID, camera.zoom);
-    else drawShape(ctx, theme, o, camera.zoom);
+    if (isConnector(o)) drawConnector(ctx, theme, o, scene.byID, camera.zoom, scene.editing === o.id);
+    else drawShape(ctx, theme, o, camera.zoom, scene.editing === o.id, images);
   }
-
-  // Bildschirm: Auswahl, Griffe, Aufziehen, fremde Zeiger – immer gleich groß, egal wie weit gezoomt ist.
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+/** Auswahl, Griffe, Aufziehen, Lasso, Verbindung in Arbeit, fremde Zeiger – in Bildschirm-px, immer gleich groß. */
+export function drawBoardOverlay(ctx: Ctx, scene: BoardScene, theme: BoardTheme, dpr: number, peers: readonly { x: number; y: number; name?: string }[] = []) {
+  const { camera } = scene;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (scene.lasso && scene.lasso.length > 1) {
+    ctx.beginPath();
+    scene.lasso.forEach((p, i) => {
+      const x = (p.x - camera.x) * camera.zoom, y = (p.y - camera.y) * camera.zoom;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = theme.selectFill;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = theme.muted;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  if (scene.connecting) {
+    const c = scene.connecting;
+    const a = worldRectToScreen(camera, c.from);
+    const to = c.target ? worldRectToScreen(camera, c.target) : undefined;
+    const end = to ? { x: to.x + to.w / 2, y: to.y + to.h / 2 } : { x: (c.to.x - camera.x) * camera.zoom, y: (c.to.y - camera.y) * camera.zoom };
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = theme.border;
+    ctx.beginPath();
+    ctx.moveTo(a.x + a.w / 2, a.y + a.h / 2);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    for (const r of to ? [a, to] : [a]) {
+      ctx.strokeStyle = theme.select;
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, r.x - 3, r.y - 3, r.w + 6, r.h + 6, 8);
+      ctx.stroke();
+    }
+  }
   if (scene.marquee) {
     const m = worldRectToScreen(camera, scene.marquee);
     ctx.globalAlpha = 0.5;
