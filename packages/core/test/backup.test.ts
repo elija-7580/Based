@@ -138,4 +138,20 @@ describe("Backups (BSD-274)", () => {
     expect(await t2.list("assets")).toEqual([HASH]);
     expect(cache.size).toBe(3);
   });
+
+  it("Aufräumen: ein Stand mit gleichem Namen (dieselbe Sekunde) ersetzt den gemerkten Inhalt (BSD-491)", async () => {
+    const { s } = workspace();
+    const t = memoryTarget();
+    const cache: SnapshotAssetCache = new Map();
+    const other = "d".repeat(64);
+    const at = (h: number) => new Date(Date.parse("2026-11-12T00:00:00Z") + h * 3_600_000);
+    for (let h = 0; h < 3; h++) await writeSnapshot(t, { records: s.exportRecords(), workspaceName: "W", assets: [{ id: HASH, read: () => new Uint8Array([1]) }], now: at(h), force: true, cache });
+    await pruneBackups(t, { recent: 2, hourly: 0, daily: 0, monthly: 0 }, cache);
+    // gleiche Sekunde wie der neueste Stand, jetzt mit einer anderen Datei statt HASH
+    s.transact("swap", (tx) => tx.update("img1", (b) => { b.props = { asset: { id: other, name: "dog.png" } }; }));
+    await writeSnapshot(t, { records: s.exportRecords(), workspaceName: "W", assets: [{ id: other, read: () => new Uint8Array([2]) }], now: at(2), force: true, cache });
+    await writeSnapshot(t, { records: s.exportRecords(), workspaceName: "W", assets: [{ id: other, read: () => new Uint8Array([2]) }], now: at(3), force: true, cache });
+    await pruneBackups(t, { recent: 2, hourly: 0, daily: 0, monthly: 0 }, cache);
+    expect((await t.list("assets")).sort()).toEqual([other]);
+  });
 });

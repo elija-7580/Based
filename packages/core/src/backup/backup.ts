@@ -76,7 +76,7 @@ function digestOf(text: string): string {
  * Einen Stand schreiben. `previousDigest`: Fingerabdruck des letzten Stands – ist der Inhalt gleich, wird nichts
  * geschrieben (`undefined`), außer `force`.
  */
-export async function writeSnapshot(target: BackupTarget, input: { records: WireRecord[]; workspaceName: string; assets: readonly BackupAsset[]; now?: Date; previousDigest?: string; force?: boolean }): Promise<SnapshotInfo | undefined> {
+export async function writeSnapshot(target: BackupTarget, input: { records: WireRecord[]; workspaceName: string; assets: readonly BackupAsset[]; now?: Date; previousDigest?: string; force?: boolean; cache?: SnapshotAssetCache }): Promise<SnapshotInfo | undefined> {
   const now = input.now ?? new Date();
   const body = encodeArchive(input.records, input.workspaceName, ARCHIVE_VERSION, input.assets.length, new Date(0));
   const digest = digestOf(body + "\n" + input.assets.map((a) => a.id).sort().join(","));
@@ -95,6 +95,8 @@ export async function writeSnapshot(target: BackupTarget, input: { records: Wire
   const name = snapshotName(now);
   const text = encodeArchive(input.records, input.workspaceName, ARCHIVE_VERSION, input.assets.length, now);
   await target.write(`${SNAPSHOT_DIR}/${name}`, enc.encode(text));
+  // BSD-491: zwei Stände in derselben Sekunde tragen denselben Namen – der gemerkte Inhalt des alten gilt nicht mehr.
+  input.cache?.delete(name);
   return { name, at: now.getTime(), records: input.records.length, assetsWritten: written, assetsKept: kept, missing, digest };
 }
 

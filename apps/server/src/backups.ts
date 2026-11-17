@@ -86,7 +86,7 @@ export class Backups {
       try {
         const records = this.store.exportRecords();
         const assets = snapshotAssetIDs(records).map((id) => ({ id, read: async () => { const f = this.assets.locate(id); return f ? new Uint8Array(await readFile(f.path)) : undefined; } }));
-        const info = await writeSnapshot(this.target, { records, workspaceName: this.store.workspace.name, assets, ...(this.digest !== undefined ? { previousDigest: this.digest } : {}), force });
+        const info = await writeSnapshot(this.target, { records, workspaceName: this.store.workspace.name, assets, ...(this.digest !== undefined ? { previousDigest: this.digest } : {}), force, cache: this.assetCache });
         if (info) {
           this.digest = info.digest;
           this.last = { at: info.at, name: info.name };
