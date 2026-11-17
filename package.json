@@ -1,6 +1,7 @@
 {
   "name": "based",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "description": "Based – TypeScript-Stack nach ADR 0011 (neben der eingefrorenen Swift-App)",
   "packageManager": "pnpm@10.28.0",
   "engines": {
