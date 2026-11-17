@@ -142,6 +142,7 @@ test("Neue Seite: Schreibmarke steht im Titel, Enter geht in den Text; Öffnen e
     await page.keyboard.press("ControlOrMeta+Shift+l");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expect(title).toBeFocused();
+    await page.waitForTimeout(400); // Farbwechsel abwarten
     await page.screenshot({ path: "../../docs/design/screens/new-page-title-focus-dark.png" });
     await page.keyboard.press("ControlOrMeta+Shift+l");
   }
