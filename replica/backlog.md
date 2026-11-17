@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 39 (Nachtlauf 2026-11-17/18, TS-Stack, Abschnitt direkt unten; Pass 38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 40 (Nachtlauf 2026-11-17, Lauf ab 14:01, TS-Stack, Abschnitt direkt unten; Pass 39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,30 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-17 (Pass 40, TS-Stack, Beta-Sprint, Lauf ab 14:01)
+
+Merges nach main: 16433984 (Schicht A bis 9b6fea5c + Schicht C des Zweitlaufs bis 8fd8a40d), 1d635a18 (Schicht B bis a6a48324, mit origin/main inkl. Whiteboard und ADR-0017-Stufe-A); jeweils run-ts --fast grün (@smoke 30/30), betroffene E2E in Chromium + WebKit grün, beta-build.spec im Beta-Kanal 8/8. Schicht A 14:05–15:50, Schicht B 14:05–16:36. Commit-Titel 465d8a29/10bb04b8/5a52c7ab tragen falsche Nummern (BSD-491/492/493 statt 498/503/504).
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-478 Archiv-Import holt gelöschte Absätze/Ansichten/Spalten zurück (P1) | ✅ | nur ganze Papierkorb-Einheiten kommen zurück; Unterseite bringt ihren Behälter mit |
+| BSD-491 Backups: Aufräumen liest alle Stände bei jedem Lauf | ✅ | Cache je Stand + Textsuche nach Datei-IDs; 15,8 s → 4,2 s einmal je Serverlauf |
+| BSD-495 Zeitmessung 100 000 Records ins Gate | ✅ | scale-perf (Unit + @perf); Heap im Browser-Worker nicht messbar |
+| BSD-501 website waitlist-Test „server exited 1“ | ✅ | PORT=0, echter Port vom System |
+| BSD-481 features.csv/editor-parity Whiteboard | ✅ | Zeile ts=partial, beta=after |
+| BSD-482 Neue Seite: Schreibmarke im Titel (P1) | ✅ | ⌘N, ⌥⌘N, „+“ |
+| BSD-483/485 Einstellungen und Über-Seite im Beta-Build | ✅ | kein Teilen, hello@basednotes.app, „Based Beta“ ohne Agenten, „1 note“ |
+| BSD-484 Slash-Menü: Gruppenkopf doppelt | ✅ | |
+| BSD-486/487/488 (Schicht C) | ✅ | alte Links auf ausgeblendete Ansichten, Unique-ID-Wiederimport, Versionsverlauf mittig (488 doppelt umgesetzt, zusammengeführt) |
+| BSD-498 Slash/@-Menü überdeckt unten die Zeile | ✅ | |
+| BSD-503 Karten-Ansicht: Streifen über die Datumsgrenze | ✅ | |
+| BSD-504 Ohne AI: „Use dashboard as Home“ ohne Wirkung | ✅ | Eintrag ausgeblendet |
+| BSD-505 Papierkorb: „Delete forever“ ohne Rückfrage (P1) | ✅ | fragt nach |
+| BSD-507 beta-build.spec rot nach BSD-231 + BSD-486 | ✅ | prüft jetzt die Meetings-Liste |
+| BSD-502 Website: Transkription „after the beta“ | ❌ | Blockiert, Frage an Elija |
+| BSD-489/490 Feinschliff Versionsverlauf/Board-Kante | ❌ | nach dem 23.11. |
+| BSD-477 beta vorspulen + Pre-Release | ❌ | nur Beta-Agent (Nachtschicht darf beta nicht anfassen) |
 
 ## Nachtlauf 2026-11-17/18 (Pass 39, TS-Stack, Beta-Sprint, Lauf ab 12:20)
 
