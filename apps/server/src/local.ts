@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { chmodSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { desktopPlaces, type DesktopChannel } from "@based/core";
 
 export interface LocalDiscovery {
   v: 1;
@@ -20,11 +21,14 @@ export interface LocalDiscovery {
   owner: string;
 }
 
-/** Feste Orte (wie `~/.config/based/config.json` der CLI). */
-export const localPaths = (home: string) => ({
-  discovery: join(home, ".config", "based", "local.json"),
-  token: join(home, ".config", "based", "local-token"),
-});
+/**
+ * Feste Orte (wie `~/.config/based/config.json` der CLI). BSD-455: pro Kanal eigene Dateien (Based Next: local.json,
+ * Based Beta: local-beta.json), damit zwei Apps nebeneinander sich die Discovery nicht gegenseitig überschreiben.
+ */
+export const localPaths = (home: string, channel: DesktopChannel = "next") => {
+  const p = desktopPlaces(channel);
+  return { discovery: join(home, ".config", "based", p.discoveryFile), token: join(home, ".config", "based", p.tokenFile) };
+};
 
 /** Zufälliger Token (32 Byte, base64url), falls die Hülle keinen mitgibt. */
 export const newLocalToken = () => randomBytes(32).toString("base64url");
@@ -38,8 +42,8 @@ function writePrivate(path: string, contents: string) {
   renameSync(tmp, path);
 }
 
-export function writeLocalDiscovery(home: string, input: { port: number; token: string; pid?: number; owner?: string; now?: Date }): LocalDiscovery {
-  const p = localPaths(home);
+export function writeLocalDiscovery(home: string, input: { port: number; token: string; pid?: number; owner?: string; now?: Date; channel?: DesktopChannel }): LocalDiscovery {
+  const p = localPaths(home, input.channel);
   const d: LocalDiscovery = {
     v: 1,
     url: `http://127.0.0.1:${input.port}`,
@@ -54,8 +58,8 @@ export function writeLocalDiscovery(home: string, input: { port: number; token: 
 }
 
 /** Discovery und Token entfernen, wenn sie noch zu `pid` gehören. */
-export function removeLocalDiscovery(home: string, pid: number = process.pid): boolean {
-  const p = localPaths(home);
+export function removeLocalDiscovery(home: string, pid: number = process.pid, channel: DesktopChannel = "next"): boolean {
+  const p = localPaths(home, channel);
   let mine = false;
   try {
     mine = (JSON.parse(readFileSync(p.discovery, "utf8")) as { pid?: unknown }).pid === pid;
@@ -119,13 +123,13 @@ const basedHealth = async (url: string) => {
   }
 };
 
-export async function replaceStaleLocal(home: string, port: number, owner: string, deps: StaleLocalDeps = {}): Promise<"replaced" | "foreign"> {
+export async function replaceStaleLocal(home: string, port: number, owner: string, deps: StaleLocalDeps = {}, channel: DesktopChannel = "next"): Promise<"replaced" | "foreign"> {
   const alive = deps.alive ?? isAlive;
   const kill = deps.kill ?? ((pid, sig) => process.kill(pid, sig));
   const health = deps.health ?? basedHealth;
   const sleep = deps.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
   let d: Partial<LocalDiscovery>;
-  try { d = JSON.parse(readFileSync(localPaths(home).discovery, "utf8")) as Partial<LocalDiscovery>; } catch { return "foreign"; }
+  try { d = JSON.parse(readFileSync(localPaths(home, channel).discovery, "utf8")) as Partial<LocalDiscovery>; } catch { return "foreign"; }
   const url = `http://127.0.0.1:${port}`;
   if (d.url !== url || d.owner !== owner || typeof d.pid !== "number" || d.pid <= 1 || d.pid === process.pid) return "foreign";
   if (!alive(d.pid) || !(await health(url))) return "foreign";

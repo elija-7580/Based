@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parseOptions } from "../src/main.js";
-import { localPaths, loginShellPath, mergePath, replaceStaleLocal, writeLocalDiscovery } from "../src/local.js";
+import { localPaths, loginShellPath, mergePath, removeLocalDiscovery, replaceStaleLocal, writeLocalDiscovery } from "../src/local.js";
 import { createServer } from "node:net";
 
 const serverDir = fileURLToPath(new URL("..", import.meta.url));
@@ -86,6 +86,33 @@ describe("BSD-138 based-server --local", () => {
       rmSync(data, { recursive: true, force: true });
     }
   }, 60_000);
+
+  it("BSD-455: Based Beta neben Based Next – eigene Discovery-/Token-Datei, Ablösen und Aufräumen nur im eigenen Kanal", async () => {
+    const home = mkdtempSync(join(tmpdir(), "based-channel-home-"));
+    try {
+      const next = localPaths(home), beta = localPaths(home, "beta");
+      expect(beta.discovery).toBe(join(home, ".config", "based", "local-beta.json"));
+      expect(beta.token).not.toBe(next.token);
+      writeLocalDiscovery(home, { port: 47821, token: "next-token", pid: 1111, owner: "Based Next" });
+      writeLocalDiscovery(home, { port: 47822, token: "beta-token", pid: 2222, owner: "Based Beta", channel: "beta" });
+      expect(readFileSync(next.token, "utf8").trim()).toBe("next-token");
+      expect(readFileSync(beta.token, "utf8").trim()).toBe("beta-token");
+      expect(JSON.parse(readFileSync(beta.discovery, "utf8"))).toMatchObject({ url: "http://127.0.0.1:47822", owner: "Based Beta", tokenFile: beta.token });
+      // die Beta hält den Next-Server nie für ihren eigenen alten
+      const killed: number[] = [];
+      const deps = { alive: () => true, kill: (pid: number) => { killed.push(pid); }, health: async () => true, sleep: async () => {}, waitMs: 0 };
+      expect(await replaceStaleLocal(home, 47821, "Based Beta", deps, "beta")).toBe("foreign");
+      expect(killed).toEqual([]);
+      // Aufräumen der Beta lässt die Dateien von Next stehen
+      expect(removeLocalDiscovery(home, 2222, "beta")).toBe(true);
+      expect(removeLocalDiscovery(home, 1111, "beta")).toBe(false);
+      expect(existsSync(beta.discovery)).toBe(false);
+      expect(existsSync(next.discovery)).toBe(true);
+      expect(existsSync(next.token)).toBe(true);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
 
   it("BSD-424: Port belegt – eigener alter Server wird abgelöst, fremdes Programm nicht", async () => {
     const home = mkdtempSync(join(tmpdir(), "based-stale-home-"));

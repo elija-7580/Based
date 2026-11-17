@@ -2,7 +2,8 @@
 //   pnpm --filter @based/server start -- --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0]
 //   pnpm --filter @based/server start -- --stdio --db based.sqlite        (MCP für Desktop-Clients)
 // Konfiguration auch über BASED_TOKEN, BASED_DB, BASED_PORT, BASED_HOST, BASED_NODE, BASED_PUBLIC_URL,
-// BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV. Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
+// BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV, BASED_CHANNEL (beta: Discovery-Datei
+// der Based Beta, BSD-455). Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
 import { readFileSync } from "node:fs";
 import { CodingSessions, DEFAULT_AGENTS, type AcpMcpServer, type AgentDefinition } from "@based/brain";
 import { spawnAgent } from "@based/brain/acp-node";
@@ -13,6 +14,7 @@ import { openNodeDatabase } from "@based/sync/node";
 import { createApp } from "./app.js";
 import { anthropicAgentEngine } from "./agent-engine.js";
 import type { WorkspaceStore } from "@based/core";
+import { desktopChannel } from "@based/core";
 import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./sandbox.js";
 import { createLogger, parseLogLevel, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
@@ -294,6 +296,8 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   });
   // BSD-424: belegter Port (z. B. ein nach einem Absturz übrig gebliebener lokaler Server) war ein Absturz mit
   // Stacktrace – die App zeigte nur „exit 1 … Node.js v26“. Jetzt: eigenen alten Server ablösen, sonst klare Meldung.
+  // BSD-455: Kanal der startenden App (Based Beta neben Based Next) – eigene Discovery-/Token-Datei.
+  const channel = desktopChannel(process.env.BASED_CHANNEL);
   const listen = () => app.listen(opts.port, opts.host);
   const inUse = (e: unknown) => (e as NodeJS.ErrnoException | undefined)?.code === "EADDRINUSE";
   let listening: { port: number };
@@ -301,7 +305,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     listening = await listen();
   } catch (e) {
     if (!inUse(e) || !opts.local) throw inUse(e) ? new Error(portInUseMessage(opts.port)) : e;
-    const r = await replaceStaleLocal(homedir(), opts.port, process.env.BASED_LOCAL_OWNER ?? "based-server --local");
+    const r = await replaceStaleLocal(homedir(), opts.port, process.env.BASED_LOCAL_OWNER ?? "based-server --local", {}, channel);
     if (r !== "replaced") throw new Error(portInUseMessage(opts.port));
     log.warning("replaced a stale local server on the same port", { port: opts.port });
     try { listening = await listen(); } catch (e2) { throw inUse(e2) ? new Error(portInUseMessage(opts.port)) : e2; }
@@ -311,7 +315,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });
   if (opts.local) {
     // BSD-138: für die CLI auffindbar; die Hülle liest die Adresse aus dieser Zeile (der Token steht nicht darin).
-    const d = writeLocalDiscovery(homedir(), { port, token: opts.token, owner: process.env.BASED_LOCAL_OWNER ?? "based-server --local" });
+    const d = writeLocalDiscovery(homedir(), { port, token: opts.token, owner: process.env.BASED_LOCAL_OWNER ?? "based-server --local", channel });
     // BSD-315: im Tailnet erreichbar – nur auf den Tailscale-Adressen, gleicher Port.
     const tailnet: string[] = [];
     if (opts.tailnet) {
@@ -329,7 +333,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     if (stopping) return;
     stopping = true;
     log.info("stopping", { signal });
-    if (opts.local) removeLocalDiscovery(homedir());
+    if (opts.local) removeLocalDiscovery(homedir(), process.pid, channel);
     app.close().then(
       () => process.exit(0),
       () => process.exit(1),

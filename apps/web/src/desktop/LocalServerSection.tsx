@@ -15,7 +15,7 @@ import { ICloudGroup } from "./ICloudGroup.js";
 import { Group, Row, Value } from "../screens/settings/parts.js";
 import { registerSettingsSection, type SettingsSectionProps } from "../screens/settings/registry.js";
 import { syncConfig } from "../shell/storage.js";
-import { localServer } from "./localServer.js";
+import { localServer, PLACES } from "./localServer.js";
 
 const STATUS: Record<string, string> = { off: "Off", starting: "Starting…", running: "Running", failed: "Stopped with an error", unavailable: "Only in the desktop app" };
 
@@ -74,7 +74,7 @@ function LocalServerSection({ client }: SettingsSectionProps) {
             ? <BasedButton label="Uninstall" variant="ghost" disabled={s.cli.busy} onClick={() => void ls.uninstallCli(chosen ?? s.cli.target)} />
             : <BasedButton label="Install…" disabled={s.cli.busy} onClick={() => void ls.installCli(chosen)} />}
         </Row>
-        {!s.cli.installed ? <TextInput label="Install location" value={target} onChange={setTarget} placeholder="~/.local/bin/based" description="Leave as is unless you keep your own commands somewhere else." /> : null}
+        {!s.cli.installed ? <TextInput label="Install location" value={target} onChange={setTarget} placeholder={`~/.local/bin/${PLACES.cliName}`} description="Leave as is unless you keep your own commands somewhere else." /> : null}
         {s.cli.message ? <Text type="supporting" color="secondary" role="status" data-testid="cli-status">{s.cli.message}</Text> : null}
       </Group>
     </VStack>

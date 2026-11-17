@@ -1,6 +1,7 @@
 // Wohin der Befehl verbindet und mit welchem Token (Swift `CLIConfig`). Reihenfolge: --url / BASED_URL / Datei;
 // Token: BASED_TOKEN / --token-file / BASED_TOKEN_FILE / Datei. Dateien, die andere lesen dürfen, werden abgelehnt.
 import { CLIError, type CLIOptions } from "./args.js";
+import { DESKTOP_CHANNELS, desktopChannel, desktopPlaces, type DesktopChannel } from "@based/core";
 
 export interface CLIConfig {
   url: string;
@@ -42,11 +43,25 @@ export function checkURL(url: string): string {
 }
 
 /** BSD-138: Discovery-Datei des lokalen Servers der Desktop-App (ohne Token; der steht in `tokenFile`, 0600). */
-export const localDiscoveryPath = (home: string) => `${home}/.config/based/local.json`;
+export const localDiscoveryPath = (home: string, channel: DesktopChannel = "next") => `${home}/.config/based/${desktopPlaces(channel).discoveryFile}`;
 
-/** Lokalen Server der Desktop-App finden; `undefined`, wenn keiner läuft. Wirft bei unsicheren Dateien. */
+/**
+ * Lokalen Server der Desktop-App finden; `undefined`, wenn keiner läuft. Wirft bei unsicheren Dateien.
+ * BSD-455: Der Starter der Based Beta setzt BASED_CHANNEL=beta und findet nur deren Server; ohne Kanal zuerst Based
+ * Next, dann Based Beta (nur eine läuft).
+ */
 export function localConfig(io: ConfigIO): CLIConfig | undefined {
-  const path = localDiscoveryPath(io.home);
+  const set = io.env.BASED_CHANNEL?.trim();
+  const channels: DesktopChannel[] = set ? [desktopChannel(set)] : [...DESKTOP_CHANNELS];
+  for (const channel of channels) {
+    const found = localConfigFor(io, channel);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function localConfigFor(io: ConfigIO, channel: DesktopChannel): CLIConfig | undefined {
+  const path = localDiscoveryPath(io.home, channel);
   const raw = io.readFile(path);
   if (raw === undefined) return undefined;
   let d: { url?: unknown; pid?: unknown; tokenFile?: unknown };

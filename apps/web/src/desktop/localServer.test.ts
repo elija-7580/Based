@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { actionEnv, channelServerEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -25,6 +25,15 @@ describe("lokaler Server und CLI (Desktop)", () => {
     const env = actionEnv("/App/Resources/based-server.cjs", "local", { BASED_TOKEN: "t" });
     expect(Object.keys(env).every((k) => k.startsWith("BASED_"))).toBe(true);
     expect(RUN.args.join(" ")).not.toContain("TOKEN");
+  });
+
+  it("BSD-455: Umgebung pro Kanal – Beta mit eigenem Port, Besitzer, Backup- und iCloud-Ordner", () => {
+    expect(channelServerEnv("/Users/e/Documents", "next")).toEqual({ BASED_PORT: "47821", BASED_LOCAL_OWNER: "Based Next", BASED_CHANNEL: "next", BASED_BACKUP_DIR: "/Users/e/Documents/Based Backups" });
+    expect(channelServerEnv("/Users/e/Documents/", "beta")).toEqual({ BASED_PORT: "47822", BASED_LOCAL_OWNER: "Based Beta", BASED_CHANNEL: "beta", BASED_BACKUP_DIR: "/Users/e/Documents/Based Beta Backups" });
+    expect(folderSyncEnv("/Users/e", true, "mac-1", "beta").BASED_FOLDER_SYNC).toBe("/Users/e/Library/Mobile Documents/com~apple~CloudDocs/Based Beta");
+    expect(actionEnv("/b.cjs", "install-cli", {}, "beta")).toMatchObject({ BASED_CHANNEL: "beta" });
+    // Tests/Entwicklung: Based Next
+    expect(actionEnv("/b.cjs", "cli-status")).toMatchObject({ BASED_CHANNEL: "next" });
   });
 
   it("Ergebnis- und Bereit-Zeilen", () => {

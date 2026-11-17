@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Group, Row, Value } from "../screens/settings/parts.js";
 import { relative } from "../shell/format.js";
 import { syncConfig } from "../shell/storage.js";
-import { localServer } from "./localServer.js";
+import { localServer, PLACES } from "./localServer.js";
 
 type Info = Awaited<ReturnType<ReturnType<typeof localServer>["backups"]>>;
 const pages = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
@@ -49,7 +49,7 @@ export function BackupsGroup() {
   };
   return (
     <Group>
-      <Row label="Backups" hint={`Every hour (when something changed) and when the app quits, into ${info?.dir ?? "Documents/Based Backups"}. Keeps the last 10, 24 hourly, 30 daily and 12 monthly.`}>
+      <Row label="Backups" hint={`Every hour (when something changed) and when the app quits, into ${info?.dir ?? `Documents/${PLACES.backupFolder}`}. Keeps the last 10, 24 hourly, 30 daily and 12 monthly.`}>
         <BasedButton label={busy ? "Backing up…" : "Back up now"} disabled={busy} onClick={() => void now()} />
       </Row>
       <Row label="Last backup"><Value testID="backup-last">{info?.last ? relative(new Date(info.last.at)) : info?.snapshots[0] ? relative(new Date(info.snapshots[0].at)) : "None yet"}</Value></Row>

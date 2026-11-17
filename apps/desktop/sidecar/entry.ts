@@ -6,25 +6,28 @@
 //                                 erlaubte Befehl in der Capability fest (keine freien Argumente)
 //   based-server.cjs …            based-server wie gewohnt (z. B. --local)
 // Dynamische Importe: die CLI lädt den Server nicht mit.
+// BSD-455: BASED_CHANNEL=beta (Based Beta) – eigener Port, eigene Discovery-Datei, eigener Befehl `based-beta`.
 import { homedir } from "node:os";
+import { desktopChannel, desktopPlaces } from "../../../packages/core/src/desktop-channel.js";
 
 const argv = process.argv.slice(2);
 const env = process.env;
 
 async function desktop(): Promise<void> {
   const action = env.BASED_ACTION ?? "";
+  const channel = desktopChannel(env.BASED_CHANNEL);
   if (action === "local") {
     const { main } = await import("../../server/src/main.js");
-    await main(["--local", "--port", env.BASED_PORT ?? "47821", "--db", env.BASED_DB ?? "local-server.sqlite", "--coding-root", env.BASED_CODING_ROOT ?? homedir()]);
+    await main(["--local", "--port", env.BASED_PORT ?? String(desktopPlaces(channel).port), "--db", env.BASED_DB ?? "local-server.sqlite", "--coding-root", env.BASED_CODING_ROOT ?? homedir()]);
     return;
   }
   const { defaultTarget, installStarter, starterStatus, uninstallStarter } = await import("../../cli/src/install.js");
-  const target = env.BASED_TARGET || defaultTarget(homedir());
+  const target = env.BASED_TARGET || defaultTarget(homedir(), channel);
   let result: unknown;
   if (action === "install-cli") {
-    result = installStarter({ target, node: process.execPath, nodeVersion: process.version, bundle: env.BASED_BUNDLE ?? process.argv[1] ?? "", path: env.PATH });
-  } else if (action === "uninstall-cli") result = uninstallStarter(target);
-  else if (action === "cli-status") result = { ok: true, ...starterStatus(target), node: process.execPath, nodeVersion: process.version };
+    result = installStarter({ target, node: process.execPath, nodeVersion: process.version, bundle: env.BASED_BUNDLE ?? process.argv[1] ?? "", path: env.PATH, channel });
+  } else if (action === "uninstall-cli") result = uninstallStarter(target, channel);
+  else if (action === "cli-status") result = { ok: true, ...starterStatus(target, channel), node: process.execPath, nodeVersion: process.version };
   else {
     result = { ok: false, message: `unknown action ${action}` };
     process.exitCode = 2;

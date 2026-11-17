@@ -78,6 +78,19 @@ describe("BSD-138: lokaler Server der Desktop-App", () => {
     expect(localConfig(io({ "/h/.config/based/local.json": disc({ url: "http://127.0.0.1:1" }) }))).toBeUndefined();
   });
 
+  it("BSD-455: Based Beta daneben – eigener Discovery-Name, BASED_CHANNEL wählt, ohne Kanal erst Next, dann Beta", () => {
+    const beta = { "/h/.config/based/local-beta.json": disc({ url: "http://127.0.0.1:47822", tokenFile: "/h/.config/based/local-beta-token" }), "/h/.config/based/local-beta-token": "beta-tok\n" };
+    // nur die Beta läuft: `based` (ohne Kanal) und `based-beta` finden sie
+    expect(localConfig(io(beta))?.token).toBe("beta-tok");
+    expect(localConfig(io(beta, { env: { BASED_CHANNEL: "beta" } }))?.url).toBe("http://127.0.0.1:47822");
+    // beide laufen: jeder Starter findet seine eigene App
+    const both = { ...local, ...beta };
+    expect(localConfig(io(both))?.token).toBe("tok");
+    expect(localConfig(io(both, { env: { BASED_CHANNEL: "beta" } }))?.token).toBe("beta-tok");
+    // der Beta-Starter nimmt nie den Server von Based Next
+    expect(localConfig(io(local, { env: { BASED_CHANNEL: "beta" } }))).toBeUndefined();
+  });
+
   it("--local mit --url wird abgelehnt", () => {
     expect(() => parseArgs(["--local", "--url", "http://127.0.0.1:1", "tools"])).toThrow("--local");
     expect(parseArgs(["--local", "tools"]).options.local).toBe(true);

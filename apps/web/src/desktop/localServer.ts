@@ -14,10 +14,18 @@
 // - Kommandozeile: ein kleiner Starter (Standard ~/.local/bin/based), der das Bundle mit dieser Node startet;
 //   „Uninstall“ entfernt nur den eigenen Starter.
 // Im Browser tut nichts davon etwas.
+import { desktopPlaces, type DesktopChannel } from "@based/core";
 import { isTauri } from "../desktop.js";
+import { CHANNEL } from "../shell/beta.js";
 import { secretVault } from "../shell/storage.js";
 
-export const LOCAL_SERVER_PORT = 47821;
+/**
+ * BSD-455: Based Beta läuft neben Based Next – Port, Discovery-Datei, Backup- und iCloud-Ordner sowie der Befehl
+ * hängen am Kanal (packages/core desktop-channel.ts). App-Daten und Token-Ablage trennt die eigene Bundle-ID.
+ */
+export const DESKTOP_CHANNEL: DesktopChannel = CHANNEL === "beta" ? "beta" : "next";
+export const PLACES = desktopPlaces(DESKTOP_CHANNEL);
+export const LOCAL_SERVER_PORT = PLACES.port;
 export const MIN_NODE_MAJOR = 22;
 export const PROBE = { name: "based-node-probe", args: ["-ilc", "command -v node && node --version"] } as const;
 export const RUN = { name: "based-node-run", args: ["-ilc", 'exec node "$BASED_BUNDLE" desktop'] } as const;
@@ -58,13 +66,26 @@ export interface LocalServerState {
   icloudDevice: string | undefined;
 }
 
-/** BSD-334: Standard-Ordner in iCloud Drive (macOS). */
-export const ICLOUD_FOLDER = "Library/Mobile Documents/com~apple~CloudDocs/Based";
+/** BSD-334: Standard-Ordner in iCloud Drive (macOS); BSD-455: Based Beta nimmt „Based Beta“. */
+export const icloudFolder = (channel: DesktopChannel = DESKTOP_CHANNEL) => `Library/Mobile Documents/com~apple~CloudDocs/${desktopPlaces(channel).icloudFolder}`;
+export const ICLOUD_FOLDER = icloudFolder();
 
 /** BSD-334: Umgebung für den lokalen Server, wenn iCloud-Sync an ist (Ordner unter dem Home, Gerätekennung). */
-export function folderSyncEnv(home: string, on: boolean, device: string | undefined): Record<string, string> {
+export function folderSyncEnv(home: string, on: boolean, device: string | undefined, channel: DesktopChannel = DESKTOP_CHANNEL): Record<string, string> {
   if (!on || !device || !/^[A-Za-z0-9_-]{1,64}$/.test(device)) return {};
-  return { BASED_FOLDER_SYNC: `${home.replace(/\/+$/, "")}/${ICLOUD_FOLDER}`, BASED_FOLDER_DEVICE: device };
+  return { BASED_FOLDER_SYNC: `${home.replace(/\/+$/, "")}/${icloudFolder(channel)}`, BASED_FOLDER_DEVICE: device };
+}
+
+/**
+ * BSD-455: Umgebung des lokalen Servers, die am Kanal hängt (Port, Besitzer, Backup-Ordner, Kanal für
+ * Discovery-Datei und Starter). Rein – getestet für beide Kanäle.
+ */
+export function channelServerEnv(documents: string, channel: DesktopChannel = DESKTOP_CHANNEL): Record<string, string> {
+  const p = desktopPlaces(channel);
+  return {
+    BASED_PORT: String(p.port), BASED_LOCAL_OWNER: p.appName, BASED_CHANNEL: channel,
+    BASED_BACKUP_DIR: `${documents.replace(/\/+$/, "")}/${p.backupFolder}`,
+  };
 }
 
 /** BSD-315: Kopplungs-Link für ein Gerät (QR-Code): Adresse im Tailnet + eigenes Geräte-Token, nie das Haupt-Token. */
@@ -144,8 +165,8 @@ export function failureLine(log: readonly string[]): string {
 }
 
 /** Umgebung für einen Aufruf des Bundles (nur BASED_*; PATH usw. liefert die Login-Shell). */
-export function actionEnv(bundle: string, action: "local" | "install-cli" | "uninstall-cli" | "cli-status", extra: Record<string, string> = {}): Record<string, string> {
-  return { BASED_BUNDLE: bundle, BASED_ACTION: action, ...extra };
+export function actionEnv(bundle: string, action: "local" | "install-cli" | "uninstall-cli" | "cli-status", extra: Record<string, string> = {}, channel: DesktopChannel = DESKTOP_CHANNEL): Record<string, string> {
+  return { BASED_BUNDLE: bundle, BASED_ACTION: action, BASED_CHANNEL: channel, ...extra };
 }
 
 /** Zufälliger Token (32 Byte, base64url). */
@@ -381,19 +402,20 @@ class LocalServer {
       const node = await this.probeNode();
       if (!node?.ok) { this.set({ status: "failed", error: node?.message }); return; }
       const [{ Command }, path] = await Promise.all([import("@tauri-apps/plugin-shell"), import("@tauri-apps/api/path")]);
-      const [data, home, bundle] = await Promise.all([path.appDataDir(), path.homeDir(), this.bundle()]);
+      const [data, home, bundle, documents] = await Promise.all([path.appDataDir(), path.homeDir(), this.bundle(), path.documentDir()]);
       const db = await path.join(data, "local-server.sqlite");
       const env = actionEnv(bundle, "local", {
-        BASED_DB: db, BASED_PORT: String(LOCAL_SERVER_PORT), BASED_CODING_ROOT: home,
-        BASED_TOKEN: await this.token(), BASED_LOCAL_OWNER: "Based Next", BASED_LOG_LEVEL: "warning",
+        BASED_DB: db, BASED_CODING_ROOT: home,
+        BASED_TOKEN: await this.token(), BASED_LOG_LEVEL: "warning",
+        // BSD-455: Port, Besitzer, Kanal und Backup-Ordner (~/Documents/Based Backups bzw. Based Beta Backups)
+        // BSD-274: automatische Backups (stündlich bei Änderungen, beim Beenden) außerhalb des App-Speichers
+        ...channelServerEnv(documents),
         // BSD-251: das Fenster der App darf den Server ansprechen (CORS) – sonst scheitern Coding, CLI-Verlauf und Sync
         BASED_APP_ORIGIN: globalThis.location?.origin ?? "",
         // BSD-315: zusätzlich nur auf den Tailscale-Adressen lauschen
         ...(this.state.tailnet ? { BASED_TAILNET: "1" } : {}),
         // BSD-334: über iCloud Drive mit anderen Macs abgleichen (der Server liest/schreibt den Ordner)
         ...folderSyncEnv(home, this.state.icloud, this.state.icloudDevice),
-        // BSD-274: automatische Backups (stündlich bei Änderungen, beim Beenden) außerhalb des App-Speichers
-        BASED_BACKUP_DIR: await path.join(await path.documentDir(), "Based Backups"),
       });
       const run = await this.runner();
       const cmd = Command.create(run.name, [...run.args], { env: { ...env, ...run.env } });
