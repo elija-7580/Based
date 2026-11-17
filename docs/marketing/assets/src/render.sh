@@ -19,6 +19,7 @@ r linkedin-cover          strip  1128 191
 r reddit-profile-banner   center 1920 384
 r reddit-community-banner center 1600 480
 r github-social-preview   og     1280 640
+r github-social-preview-dark og  1280 640 dark
 r og-image                og     1200 630
 r og-image-dark           og     1200 630 dark
 r producthunt-gallery-1   og     1270 760
