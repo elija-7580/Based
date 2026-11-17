@@ -427,8 +427,11 @@ class MarkdownNotionImporter {
           if (this.files.isFile(csv)) u = csv;
         }
         const ext = extname(u).toLowerCase();
-        if (ext === "md" && this.files.isFile(u) && !this.consumed.has(u)) { this.importPage(u, "b:" + id, k); return; }
-        if (ext === "csv") {
+        // BSD-473: nur Dateien direkt im Unterordner dieser Seite sind ihre Kinder. Ein Link auf eine Seite oder
+        // Datenbank anderswo (z. B. oben im Export) bleibt ein Link und wird später zur Erwähnung aufgelöst.
+        const own = folder !== undefined && dirname(u) === folder;
+        if (ext === "md" && own && this.files.isFile(u) && !this.consumed.has(u)) { this.importPage(u, "b:" + id, k); return; }
+        if (ext === "csv" && own) {
           const all = joinPath(dirname(u), basename(stripExtension(u)) + "_all.csv");
           const pick = this.files.isFile(all) ? all : u;
           if (this.files.isFile(pick) && !this.consumed.has(pick)) { this.importDatabase(pick, "b:" + id, k, true); return; }

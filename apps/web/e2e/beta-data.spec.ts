@@ -110,21 +110,18 @@ async function exportWorkspace(page: Page, format: RegExp): Promise<{ name: stri
 
 // Bekannte Unterschiede nach dem Wiederimport eines Markdown-Exports. Sie werden auf beiden Seiten gleich gemacht, damit
 // der Vergleich alles andere streng prüft und eine Behebung den Test nicht rot macht.
-//  - BSD-472: der Markdown-Export enthält den Inhalt von Datenbank-Zeilen nicht (nur ihre Properties in der CSV).
-//  - BSD-473: eine Datenbank, auf die eine Seite verlinkt, landet beim Wiederimport unter dieser Seite; der Link auf
-//    eine eingebettete Datenbank zeigt im Export ins falsche Verzeichnis, sie landet am Seitenende.
+//  (Behoben in BSD-472/473: Zeileninhalt fehlte, eingebettete Datenbank rutschte ans Seitenende, eine verlinkte oberste
+//  Datenbank landete unter der verlinkenden Seite – jetzt streng verglichen.)
 //  - Unique-ID: der Export schreibt „TASK-7“, der Import liest den Text als Wert (Zeile zeigt „TASK-7“ statt „7“).
 //  - Created einer Zeile ohne Wert in Notion = Importzeit; Leerzeilen um Bilder und Links (nur Darstellung).
 function normalizeMarkdownRoundTrip(s: Snapshot): Snapshot {
   const out: Snapshot = {};
   for (const [key, text] of Object.entries(s)) {
-    const [kind, ...rest] = key.split(" ");
-    const leaf = rest.join(" ").split(" / ").filter((t) => t !== "Home" || kind === "page").join(" / ");
+    const kind = key.split(" ")[0];
     let t = text.replace(/^Created: .*$/gm, "").replace(/^ID: (TASK-)?(\d+)$/gm, "ID: $2");
-    if (kind === "row") t = t.split(/\n\n/).slice(0, 2).join("\n\n"); // Titel und Properties
     if (kind === "database") t = t.split("\n").map((l) => l.replace(/,"[A-Z][a-z]+ \d+, \d{4} \d+:\d\d [AP]M",/, ",,")).join("\n");
-    t = t.replace(/\[(People|Tasks)\]\([^)]*\)\n*/g, "").replace(/\n{2,}/g, "\n").trim();
-    out[`${kind} ${kind === "page" ? rest.join(" ") : leaf}`] = t;
+    t = t.replace(/\n{2,}/g, "\n").trim();
+    out[key] = t;
   }
   return out;
 }
@@ -171,10 +168,12 @@ test("BSD-469 Beta-Weg 2: Notion-Export importieren, als Markdown/HTML/Archiv ex
 
     // 4. Markdown-Export wieder importieren: gleiche Zahlen, gleicher Inhalt bis auf die bekannten Unterschiede
     await wipe(page);
-    expect(await importFile(page, markdown.name, markdown.bytes)).toBe("Imported 2 pages, 2 databases, 3 rows, 2 attached files.");
+    // die Zeile „Write docs“ mit Inhalt liegt als eigene .md im Export und zählt wie im Notion-Import als Seite
+    expect(await importFile(page, markdown.name, markdown.bytes)).toBe("Imported 3 pages, 2 databases, 3 rows, 2 attached files.");
     const fromMarkdown = await snapshot(page);
     expect(Object.keys(fromMarkdown)).toHaveLength(Object.keys(original).length);
     expect(normalizeMarkdownRoundTrip(fromMarkdown)).toEqual(normalizeMarkdownRoundTrip(original));
+    expect(fromMarkdown["row Home / Tasks / Write docs"]).toContain("Row body text"); // BSD-472
     expect(await assetFiles(page)).toEqual(files);
 
     // 5. HTML-Export wieder importieren: HTML ist ein Leseformat – Seiten, Text und Dateien kommen zurück, Datenbanken

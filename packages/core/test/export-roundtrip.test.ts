@@ -121,4 +121,47 @@ describe("Rundreisen Word und Markdown-Workspace (Prüfung Pass 37)", () => {
     expect(titleOf(dst, root)).toBe("Plan: \"Q4\" 2026");
     expect(dst.children("b:" + root).map((k) => [dst.blocks.get(k)!.type, plainText(dst.blocks.get(k)!.text)])).toEqual([["text", "Inhalt"]]);
   });
+
+  // BSD-472/473 (gefunden von BSD-469): Inhalt von Datenbank-Zeilen liegt als <Datenbank>/<Zeile>.md neben der CSV
+  // (wie im Notion-Export) und kommt zurück; der Link auf eine eingebettete Datenbank zeigt in den Unterordner, die
+  // Datenbank bleibt beim Wiederimport an ihrer Stelle.
+  it("Markdown-Workspace: Zeileninhalt und Position einer eingebetteten Datenbank kommen zurück (BSD-472/473)", () => {
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+    const page = createPage(store, { title: "Home" });
+    const now = store.now();
+    const para = (id: string, parent: string, sk: string, text: string) => store.transact("t", (tx) => tx.put({ kind: "block", data: { id, type: "text", parent: "b:" + parent, sk, text, createdAt: now, updatedAt: now } as Block }));
+    para("p-before", page, "a0", "Before");
+    const { databaseID } = createDatabase(store, { parent: "b:" + page, title: "Tasks", inline: true, sampleRows: 0, position: { after: "p-before" } } as never);
+    const blockAfter = store.children("b:" + page).at(-1)!;
+    expect(store.blocks.get(blockAfter)!.type).toBe("databaseInline");
+    para("p-after", page, "zz", "After");
+    const withBody = addRow(store, databaseID)!;
+    store.transact("t", (tx) => tx.update(withBody, (b) => { b.text = "Write docs"; }));
+    para("row-body", withBody, "a0", "Row body text");
+    // oberste Datenbank, auf die Home verlinkt: bleibt oben (BSD-473)
+    const people = createDatabase(store, { parent: "w", title: "People", sampleRows: 1 } as never);
+    store.transact("t", (tx) => tx.put({ kind: "block", data: { id: "link-people", type: "linkToPage", parent: "b:" + page, sk: "zz5", text: "", props: { linkTarget: people.blockID }, createdAt: now, updatedAt: now } as Block }));
+    const empty = addRow(store, databaseID)!;
+    store.transact("t", (tx) => tx.update(empty, (b) => { b.text = "Plan"; }));
+
+    const plan = planWorkspaceExport(store, topLevelPages(store), "markdown");
+    expect(plan.files.map((f) => f.path).sort()).toEqual(["Home.md", "Home/Tasks.csv", "Home/Tasks/Write docs.md", "People.csv"]);
+    expect(plan.files.find((f) => f.path === "Home.md")!.contents).toContain("[Tasks](Home/Tasks.csv)");
+    expect(plan.files.find((f) => f.path === "Home/Tasks/Write docs.md")!.contents).toContain("Row body text");
+
+    const { zip } = writeExportZip(plan, () => undefined);
+    const { dst, report } = importInto("Export.zip", zip);
+    expect(report).toMatchObject({ pages: 2, databases: 2, rows: 3 }); // die Zeilen-Datei zählt wie im Notion-Import als Seite
+    const root = report.rootIDs.find((id) => titleOf(dst, id) === "Home")!;
+    const kids = dst.children("b:" + root).map((k) => dst.blocks.get(k)!);
+    expect(kids.map((b) => (b.type === "text" ? plainText(b.text) : b.type)).slice(0, 3)).toEqual(["Before", "databaseInline", "After"]);
+    expect(kids.some((b) => b.type === "databasePage")).toBe(false);
+    const peopleBlock = [...dst.blocks.values()].find((b) => b.type === "databasePage" && titleOf(dst, b.id) === "People")!;
+    expect(peopleBlock.parent).toBe("w");
+    const db = [...dst.databases.values()].find((d) => titleOf(dst, d.blockID) === "Tasks")!;
+    const rows = rowsOf(dst, db.id);
+    const row = rows.find((r) => plainText(r.text) === "Write docs")!;
+    expect(dst.children("b:" + row.id).map((k) => plainText(dst.blocks.get(k)!.text))).toEqual(["Row body text"]);
+    expect(rows.map((r) => plainText(r.text)).sort()).toEqual(["Plan", "Write docs"]);
+  });
 });

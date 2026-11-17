@@ -11,6 +11,8 @@ New since the first test build (0.2.2):
 - **Home** opens “Welcome to Based” (or your first page) instead of an empty page called Home.
 - Video and audio blocks with their own play, pause, seek and mute controls (space, ←/→, M, F).
 - Typing on long pages is smoother.
+- Export workspace as Markdown now includes the text inside database rows (one .md per row, like Notion), and
+  imports back with databases in their place.
 - Backups can go to a folder you choose, for example an external drive. If it isn't connected, Based says so and
   makes no backups until it's back.
 - Before every update, Based Beta saves a copy of your whole workspace and keeps the last three. If the copy can't
@@ -22,8 +24,6 @@ New since the first test build (0.2.2):
 
 Known issues:
 
-- Export to Markdown leaves out the text inside database rows (their properties are in the .csv). For a complete
-  copy, use **Export workspace… → Based archive**.
 - An HTML export brings databases back as tables on pages when you import it again.
 
 In this beta:

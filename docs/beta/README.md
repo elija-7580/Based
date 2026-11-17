@@ -49,8 +49,7 @@ Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Set
   Based says so there and makes no backups until it's back – it never quietly switches to another folder.
 - Either way, export anything important now and then (**•••** page menu → Export, or Settings → Import & export).
   For a complete copy choose **Export workspace… → Based archive**: it keeps everything and imports back as it
-  was. Markdown leaves out the text inside database rows, and HTML is for reading – imported again, databases
-  come back as tables.
+  was. HTML is for reading – imported again, databases come back as tables.
 - Based Beta and Based Next can be installed side by side. Each keeps its own workspace, local server (Beta: port
   47822), backups folder and iCloud folder (`Based Beta`); the command line tool of the Beta is `based-beta`.
 - Before it installs an update, Based Beta saves a copy of your whole workspace (a Based archive with all files;
