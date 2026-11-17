@@ -7,11 +7,23 @@ export const isApple = (nav: { platform?: string; userAgent?: string } = globalT
 /** „⌘K“ bzw. „Ctrl+K“ für die Plaketten. */
 export const keyLabel = (key: string, shift = false) => shortcutLabel(key, { apple: isApple(), shift });
 
+/** Sind die Kürzel gerade eingeblendet (⌘ wird gehalten)? Für die Kurzanzeige (components/ShortcutHud.tsx). */
+let shown = false;
+const listeners = new Set<() => void>();
+export const keyHints = {
+  get: () => shown,
+  subscribe: (f: () => void) => { listeners.add(f); return () => { listeners.delete(f); }; },
+};
+
 export function installKeyHints(win: Window = window): () => void {
   const root = win.document.documentElement;
   const d = holdDetector({
     modifier: isApple(win.navigator) ? "Meta" : "Control",
-    onChange: (v) => { if (v) root.setAttribute("data-show-keys", ""); else root.removeAttribute("data-show-keys"); },
+    onChange: (v) => {
+      if (v) root.setAttribute("data-show-keys", ""); else root.removeAttribute("data-show-keys");
+      shown = v;
+      for (const f of listeners) f();
+    },
   });
   const down = (e: KeyboardEvent) => d.keydown(e);
   const up = (e: KeyboardEvent) => d.keyup(e);

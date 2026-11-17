@@ -17,6 +17,7 @@ export { buttonVariant, dialogPurpose, fieldStatus, menuItems } from "./variants
 export type { BasedButtonVariant, BasedMenuItem } from "./variants.js";
 export { BasedChip, type BasedChipProps } from "./chip.js";
 export { BasedMediaPlayer, formatMediaTime, mediaKeyAction, MEDIA_SEEK_STEP, type BasedMediaPlayerProps } from "./media.js";
+export { BasedKeys, kbdKeys } from "./keys.js";
 export { BasedTabs, type BasedTab, type BasedTabsProps } from "./tabs.js";
 export { BasedToken, tokenColor, type BasedTokenColor, type BasedTokenProps } from "./token.js";
 

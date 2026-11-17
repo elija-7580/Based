@@ -54,3 +54,18 @@ export function cycleRegion(doc: Document, dir: 1 | -1): RegionID | undefined {
   if (next) target(doc, next)?.focus();
   return next;
 }
+
+/** ⇧⌘E: in die Seitenleiste; steht der Fokus schon dort, zurück in die Seite. Liefert, wohin. */
+export function toggleSidebarFocus(doc: Document): RegionID | undefined {
+  const to: RegionID = currentRegion(doc) === "sidebar" ? "page" : "sidebar";
+  const el = target(doc, to);
+  el?.focus();
+  return el ? to : undefined;
+}
+
+/** Fokus in einen Bereich (z. B. Esc in der Seitenleiste → Seite). */
+export function focusRegion(doc: Document, id: RegionID): boolean {
+  const el = target(doc, id);
+  el?.focus();
+  return !!el;
+}
