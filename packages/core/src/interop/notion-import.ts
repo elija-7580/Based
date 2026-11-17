@@ -508,9 +508,16 @@ class MarkdownNotionImporter {
         prop.options = options;
         if (prop.type === "status") prop.statusGroups = [{ id: makeRecordID(), name: "To-do", color: "gray", optionIDs: options.map((o) => o.id) }];
       }
+      if (prop.type === "uniqueID") prop.idPrefix = uniqueIDPrefix(column.map(trimSpaces))!;
       props.push(prop);
     });
     const db: Database = { id: makeRecordID(), blockID, title: cleanTitle(basename(p)), properties: props, createdAt: now, updatedAt: now, stamp: { ...ZERO_STAMP } };
+    // BSD-487: neue Zeilen zählen nach der höchsten importierten Unique-ID weiter (wie der Notion-HTML-Import).
+    props.forEach((prop, ci) => {
+      if (prop.type !== "uniqueID") return;
+      const max = Math.max(0, ...rows.map((r) => Number(UNIQUE_ID.exec(trimSpaces(r[ci] ?? ""))?.[2] ?? 0)));
+      if (max > 0) db.nextUniqueID = Math.max(db.nextUniqueID ?? 0, max + 1);
+    });
     this.put({ kind: "database", data: db });
     const view: DatabaseView = { id: makeRecordID(), databaseID: db.id, blockID, name: "Table", type: "table", sortKey: keyBetween(undefined, undefined), createdAt: now, updatedAt: now, stamp: { ...ZERO_STAMP } };
     this.put({ kind: "view", data: view });
@@ -583,6 +590,7 @@ export function inferCSVType(name: string, column: string[]): string {
   if (values.length === 0) return "text";
   if (values.every((v) => v === "Yes" || v === "No")) return "checkbox";
   if (values.every((v) => isSwiftDouble(v.replaceAll(",", "")))) return "number";
+  if (values.length === column.length && uniqueIDPrefix(values) !== undefined) return "uniqueID";
   if (values.every((v) => parseDate(v) !== undefined)) return "date";
   if (values.every((v) => v.startsWith("http://") || v.startsWith("https://"))) return "url";
   if (values.every((v) => v.includes("@") && v.includes(".") && !v.includes(" "))) return "email";
@@ -594,6 +602,25 @@ export function inferCSVType(name: string, column: string[]): string {
   if (short && unique.size <= Math.max(1, Math.floor(values.length / 2)) && values.length >= 2) return "select";
   if (lname.includes("tag") && short) return "multiSelect";
   return "text";
+}
+
+const UNIQUE_ID = /^([A-Za-z][A-Za-z0-9_]*)-(\d+)$/;
+
+/** BSD-487: Präfix einer Unique-ID-Spalte („TASK-1“, „TASK-2“ …) – alle Werte mit demselben Präfix, keine Nummer doppelt.
+ *  So schreiben unser Markdown-Export und Notions CSV-Export die Eigenschaft; sonst `undefined`. */
+export function uniqueIDPrefix(values: string[]): string | undefined {
+  let prefix: string | undefined;
+  const seen = new Set<number>();
+  for (const v of values) {
+    const m = UNIQUE_ID.exec(v);
+    if (!m) return undefined;
+    if (prefix !== undefined && m[1] !== prefix) return undefined;
+    prefix = m[1]!;
+    const n = Number(m[2]);
+    if (seen.has(n)) return undefined;
+    seen.add(n);
+  }
+  return prefix;
 }
 
 const optionNamed = (p: PropertySchema, name: string) => p.options?.find((o) => o.name.toLowerCase() === name.toLowerCase());
@@ -609,6 +636,7 @@ export function parseCSVValue(raw: string, p: PropertySchema): PropertyValue | u
     case "date": { const d = parseDate(s); return d ? ev("date", d) : undefined; }
     case "url": return ev("url", s);
     case "email": return ev("email", s);
+    case "uniqueID": { const m = UNIQUE_ID.exec(s); return m ? ev("uniqueID", Number(m[2])) : undefined; }
     case "select": case "status": { const o = optionNamed(p, s); return o ? ev(p.type, o.id) : undefined; }
     case "multiSelect": {
       const ids = s.split(",").filter((x) => x.length > 0).map((x) => optionNamed(p, trimSpaces(x))?.id).filter((x): x is string => x !== undefined);
