@@ -134,7 +134,7 @@ export function graticuleStep(zoom: number): number {
 export function ringsToPath(rings: readonly (readonly number[])[]): string {
   const out: string[] = [];
   for (const r of rings) {
-    // BSD-492: Ringe über die Datumsgrenze (Russland, Fidschi) springen von +180° auf −180°. Die Länge stetig
+    // BSD-503: Ringe über die Datumsgrenze (Russland, Fidschi) springen von +180° auf −180°. Die Länge stetig
     // weiterführen (±360), sonst läuft eine Linie – und als Füllung ein Band – über die ganze Welt. Die Karte
     // zeichnet die Welt mehrfach nebeneinander; was so über den Rand ragt, liegt in der Nachbarkopie richtig.
     let prev: number | undefined;

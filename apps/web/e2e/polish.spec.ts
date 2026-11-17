@@ -534,7 +534,7 @@ test("Slash-Menü: Gruppenköpfe kommen je einmal vor, auch beim Filtern", async
   }
 });
 
-// BSD-491: Unten im Fenster klappen Slash- und @-Menü über die Zeile, statt sie zu überdecken.
+// BSD-498: Unten im Fenster klappen Slash- und @-Menü über die Zeile, statt sie zu überdecken.
 test("Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster", async ({ page, browserName }) => {
   for (const [w, h] of [[1280, 820], [900, 600]] as const) {
     await page.setViewportSize({ width: w, height: h });

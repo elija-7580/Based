@@ -141,7 +141,7 @@ describe("Basiskarte und Gradnetz", () => {
     }
     expect(ringsToPath([[0, 0, 10, 0, 10, 10]])).toMatch(/^M0\.50000 0\.50000L0\.52778 0\.50000L0\.52778 0\.47\d+Z$/);
   });
-  it("Ringe über die Datumsgrenze springen nicht über die ganze Welt (BSD-492)", () => {
+  it("Ringe über die Datumsgrenze springen nicht über die ganze Welt (BSD-503)", () => {
     // jeder Schritt im Pfad ist kürzer als eine halbe Weltbreite – vorher lief Russland als Band über die Karte
     const steps = (path: string) => {
       const out: number[] = [];

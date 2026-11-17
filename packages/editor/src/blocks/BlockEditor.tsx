@@ -2647,7 +2647,7 @@ interface SlashState { id: string; at: number; query: string; index: number; x: 
 
 /**
  * Hält ein Menü am Cursor ganz im Fenster (gemessen, nicht geschätzt): rückt nach links, wenn rechts kein Platz ist.
- * BSD-491: Mit `above` (Oberkante der Zeile) klappt es über die Zeile, wenn unten zu wenig und oben mehr Platz ist –
+ * BSD-498: Mit `above` (Oberkante der Zeile) klappt es über die Zeile, wenn unten zu wenig und oben mehr Platz ist –
  * statt sich über die Zeile zu legen, in der man tippt. Die gewählte Seite bleibt beim Filtern gleich.
  */
 function useFitInWindow(ref: { current: HTMLElement | null }, x: number, y: number, count: number, above?: number) {

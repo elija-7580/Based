@@ -927,7 +927,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   /** Diese Seite ist Home bzw. soll es werden (aus: zurück zum Dashboard). */
   isHome: boolean;
   onHome: (on: boolean) => void;
-  /** BSD-493: Gibt es ein Dashboard (AI an)? Ohne AI ist Home immer eine Seite – an ihr kein „Use dashboard as Home“. */
+  /** BSD-504: Gibt es ein Dashboard (AI an)? Ohne AI ist Home immer eine Seite – an ihr kein „Use dashboard as Home“. */
   dashboard: boolean;
   /** Direkt in einen anderen Abschnitt (Private, Teamspaces) – nur für Seiten der obersten Ebene. */
   quickMoves: { id: string; label: string }[];

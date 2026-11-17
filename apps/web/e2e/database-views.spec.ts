@@ -375,7 +375,7 @@ test("Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort
 });
 
 // 5.000 Zeilen: Karte (Pins/Cluster, Ziehen, Zoomen), Peek (Blättern) und Formular (Absenden) dürfen nicht ruckeln.
-// BSD-492: Ringe über die Datumsgrenze (Russland, Fidschi) zogen ein Land-Band über die ganze Welt (≈ 65–72° N).
+// BSD-503: Ringe über die Datumsgrenze (Russland, Fidschi) zogen ein Land-Band über die ganze Welt (≈ 65–72° N).
 // In der oberen Kartenhälfte darf keine Pixelzeile fast ganz Land sein.
 test("Karte: kein Land-Band über die ganze Welt (Datumsgrenze)", async ({ page, browserName }) => {
   await page.setViewportSize({ width: 1280, height: 820 });

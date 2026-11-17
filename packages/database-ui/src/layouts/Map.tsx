@@ -82,7 +82,7 @@ function Basemap({ vp, size }: { vp: Viewport; size: Size }) {
     ctx.fillStyle = token("--bg");
     ctx.strokeStyle = token("--line");
     for (let k = first - 2; k <= first + 3; k++) {
-      // eine Weltbreite Rand: Ringe über die Datumsgrenze ragen in die Nachbarkopie (ringsToPath, BSD-492)
+      // eine Weltbreite Rand: Ringe über die Datumsgrenze ragen in die Nachbarkopie (ringsToPath, BSD-503)
       if (tx + (k + 2) * w <= 0 || tx + (k - 1) * w >= size.width) continue;
       ctx.setTransform(dpr * w, 0, 0, dpr * w, dpr * (tx + k * w), dpr * ty);
       ctx.fill(landShape);

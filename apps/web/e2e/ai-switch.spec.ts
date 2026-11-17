@@ -120,7 +120,7 @@ test("ohne AI: kein Ask AI im Block-Editor", async ({ page }) => {
   await expect(page.getByTestId("format-bar").getByRole("button", { name: "Ask AI" })).toHaveCount(0);
 });
 
-// BSD-493: Ohne AI gibt es kein Dashboard – an der Home-Seite fehlt „Use dashboard as Home“ (der Klick tat nichts);
+// BSD-504: Ohne AI gibt es kein Dashboard – an der Home-Seite fehlt „Use dashboard as Home“ (der Klick tat nichts);
 // eine andere Seite lässt sich weiter als Home setzen.
 test("ohne AI: Rechtsklick auf die Home-Seite ohne „Use dashboard as Home“, andere Seite „Set as Home“", async ({ page, browserName }) => {
   await ready(page);
