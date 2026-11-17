@@ -71,6 +71,13 @@ describe("Beta-Gate: Einstellungen", () => {
   });
 });
 
+describe("Beta-Gate: Agenten-Markierungen (BSD-459)", () => {
+  it("Marker und Calm mode nur auf beta ausgeblendet", () => {
+    expect(featureVisible("agentMarks", "beta")).toBe(false);
+    expect(featureVisible("agentMarks", "dev")).toBe(true);
+  });
+});
+
 describe("Beta-Gate: Teilen (BSD-460)", () => {
   it("Share ist nur auf beta ausgeblendet", () => {
     expect(featureVisible("sharing", "beta")).toBe(false);
