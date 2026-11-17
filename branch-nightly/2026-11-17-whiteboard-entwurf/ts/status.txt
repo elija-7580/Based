@@ -1,1 +1,1 @@
-grün f831256040b19e5f4c99292dc95e0eeffcd32899 nightly/2026-11-17-whiteboard-entwurf · ts-fast=success e2e=success perf=success (nicht blockierend) · run 44107756300
+rot baedf6d0e254390ac3b0d0ec3f70bd8f15db73fd nightly/2026-11-17-whiteboard-entwurf · ts-fast=success e2e=failure perf=success (nicht blockierend) · run 44114416604
