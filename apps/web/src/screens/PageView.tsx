@@ -571,8 +571,11 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
     if (!focused.current) setValue(title === "Untitled" ? "" : title);
   }, [title, id]);
   // BSD-482: eben angelegte Seite → Schreibmarke in den Titel (sobald das Feld bearbeitbar ist)
+  // – außer man ist schon im Text der Seite (Klick in die Seite, bevor der Titel bearbeitbar wurde)
   useEffect(() => {
-    if (!readOnly && takeFreshPage(id)) field.current?.focus();
+    if (readOnly || !takeFreshPage(id)) return;
+    if (document.activeElement?.closest(".page-body")) return;
+    field.current?.focus();
   }, [id, readOnly]);
   useLayoutEffect(() => {
     const el = field.current;
