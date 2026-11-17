@@ -1,29 +1,19 @@
-failure 9968538ce2f745862de3e1d3a325003edef7b2fc
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toHaveScreenshot(expected) failed
-
-    Locator: getByTestId('kit-overlays')
-      5904 pixels (ratio 0.02 of all image pixels) are different.
-
-      Snapshot: kit-overlays-default-dark.png
-
+failure 5908bd4cfaeca080fbffc4fdcb0e7265e024ee01
     Call log:
-      - Expect "toHaveScreenshot(kit-overlays-default-dark.png)" getByTestId('kit-overlays') with timeout 5000ms
+      - Expect "toHaveScreenshot(slash-menu-bold-dark.png)" getByRole('listbox').filter({ has: getByRole('option').first() }).first() with timeout 5000ms
         - verifying given screenshot expectation
-      - waiting for getByTestId('kit-overlays')
-        - locator resolved to <section class="kit-overlays" data-testid="kit-overlays">…</section>
+      - waiting for getByRole('listbox').filter({ has: getByRole('option').first() }).first()
+        - locator resolved to <div role="listbox" aria-label="Blocks" data-testid="slash-menu" class="bx2-menu bx2-slash">…</div>
       - taking element screenshot
         - disabled all CSS animations
       - waiting for fonts to load...
       - fonts loaded
       - attempting scroll into view action
         - waiting for element to be stable
-      - 5904 pixels (ratio 0.02 of all image pixels) are different.
+      - 1379 pixels (ratio 0.02 of all image pixels) are different.
       - waiting 100ms before taking screenshot
-      - waiting for getByTestId('kit-overlays')
-        - locator resolved to <section class="kit-overlays" data-testid="kit-overlays">…</section>
+      - waiting for getByRole('listbox').filter({ has: getByRole('option').first() }).first()
+        - locator resolved to <div role="listbox" aria-label="Blocks" data-testid="slash-menu" class="bx2-menu bx2-slash">…</div>
       - taking element screenshot
         - disabled all CSS animations
       - waiting for fonts to load...
@@ -31,31 +21,41 @@ failure 9968538ce2f745862de3e1d3a325003edef7b2fc
       - attempting scroll into view action
         - waiting for element to be stable
       - captured a stable screenshot
-      - 5904 pixels (ratio 0.02 of all image pixels) are different.
+      - 1379 pixels (ratio 0.02 of all image pixels) are different.
 
 
-      504 |     const menuShot = (name: string) => overlays.locator(`[data-overlay="${name}"]`).screenshot({ animations: "disabled" });
-      505 |     expect((await menuShot("Menu")).equals(await menuShot("Menu item hover")), "Menüzeile überfahren erzwungen").toBe(false);
-    > 506 |     await expect(overlays).toHaveScreenshot(`kit-overlays-${style}-${theme}.png`, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 });
-          |                            ^
-      507 |     if (style === "default") await overlays.screenshot({ path: `../../docs/design/screens/web-kit-overlays-${theme}.png`, animations: "disabled" });
-      508 |   });
-      509 | }
-        at /home/runner/work/Based/Based/apps/web/e2e/kit-states.spec.ts:506:28
+      585 |     await settle(slash);
+      586 |     await check("Slash-Menü", slash);
+    > 587 |     await expect(slash).toHaveScreenshot(`slash-menu-${style}-${theme}.png`, SHOT);
+          |                         ^
+      588 |     await page.keyboard.press("Escape");
+      589 |
+      590 |     await page.mouse.move(1279, 819);
+        at /home/runner/work/Based/Based/apps/web/e2e/kit-states.spec.ts:587:25
 
-    attachment #1: kit-overlays-default-dark (image/png) ───────────────────────────────────────────
-    Expected: e2e/kit-states.spec.ts-snapshots/kit-overlays-default-dark-chromium-linux.png
-    Received: test-results/kit-states-Zustands-Galeri-06e59-Bildvergleich-default-dark--chromium-retry1/kit-overlays-default-dark-actual.png
-    Diff:     test-results/kit-states-Zustands-Galeri-06e59-Bildvergleich-default-dark--chromium-retry1/kit-overlays-default-dark-diff.png
+    attachment #1: slash-menu-bold-dark (image/png) ────────────────────────────────────────────────
+    Expected: e2e/kit-states.spec.ts-snapshots/slash-menu-bold-dark-chromium-linux.png
+    Received: test-results/kit-states-Zustands-Galeri-3d72e-im-Bildvergleich-bold-dark--chromium-retry1/slash-menu-bold-dark-actual.png
+    Diff:     test-results/kit-states-Zustands-Galeri-3d72e-im-Bildvergleich-bold-dark--chromium-retry1/slash-menu-bold-dark-diff.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: test-results/kit-states-Zustands-Galeri-06e59-Bildvergleich-default-dark--chromium-retry1/error-context.md
+    Error Context: test-results/kit-states-Zustands-Galeri-3d72e-im-Bildvergleich-bold-dark--chromium-retry1/error-context.md
 
-  2 failed
-    [chromium] › e2e/kit-states.spec.ts:460:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, light) 
-    [chromium] › e2e/kit-states.spec.ts:460:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark) 
+  12 failed
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (bold, light) 
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark) 
+    [chromium] › e2e/kit-states.spec.ts:468:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (bold, dark) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (bold, light) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (default, dark) 
+    [chromium] › e2e/kit-states.spec.ts:522:3 › Zustands-Galerie: Seitenleiste in erzwungenen Zuständen im Bildvergleich (bold, dark) 
+    [chromium] › e2e/kit-states.spec.ts:561:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (default, light) 
+    [chromium] › e2e/kit-states.spec.ts:561:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (bold, light) 
+    [chromium] › e2e/kit-states.spec.ts:561:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (default, dark) 
+    [chromium] › e2e/kit-states.spec.ts:561:3 › Zustands-Galerie: Slash-Menü und Quick Find im Bildvergleich (bold, dark) 
   10 skipped
-  200 passed (4.3m)
+  190 passed (6.0m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
