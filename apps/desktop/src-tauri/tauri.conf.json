@@ -34,6 +34,7 @@
     }
   },
   "bundle": {
+    "copyright": "© 2026 Elija Samuel Friedrich-Ulrich. Licensed under AGPL-3.0-or-later.",
     "active": true,
     "targets": [
       "app"

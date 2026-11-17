@@ -350,7 +350,7 @@ function AboutSection() {
   return (
     <Group>
       <Row label={productName()} labelID={id} hint={productBlurb()} />
-      <Row label="License"><Value>MIT · open source</Value></Row>
+      <Row label="License" hint="Free software under the GNU Affero General Public License, version 3 or later"><Value>AGPL-3.0 · open source</Value></Row>
       <Row label="Source code" hint="Opens GitHub in a new tab">
         <Link href="https://github.com/elija-7580/Based" target="_blank">github.com/elija-7580/Based</Link>
       </Row>

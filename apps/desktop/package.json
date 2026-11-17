@@ -2,6 +2,7 @@
   "name": "@based/desktop",
   "version": "0.0.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "description": "BSD-164: Tauri-2-Hülle „Based Next“ um apps/web (macOS-DMG mit Auto-Update, siehe docs/desktop.md).",
   "scripts": {

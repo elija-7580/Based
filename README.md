@@ -50,4 +50,19 @@ Before an E2E run: `pnpm --filter @based/web exec playwright install --with-deps
 
 ## License
 
-MIT. Clean-room implementation from public Notion help docs; no Notion code or assets were used.
+Based is free software under the **GNU Affero General Public License v3.0 or later** ([`LICENSE`](LICENSE),
+SPDX `AGPL-3.0-or-later`). This covers the whole codebase, including the apps, `based-server` and everything that
+runs Based Cloud. If you run a modified version as a network service, you must offer its source to its users (AGPL §13).
+
+**Earlier versions:** everything up to and including commit `13528e6` (17 November 2026) was released under the MIT
+license. Those copies stay MIT; all later versions are AGPL-3.0-or-later.
+
+- **Name and logo:** the license covers the code, not the name. Forks may not call themselves „Based“ — see
+  [`TRADEMARK.md`](TRADEMARK.md).
+- **Contributing:** external contributions need the Contributor License Agreement ([`CLA.md`](CLA.md)); details in
+  [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- **Security:** report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md).
+- **Support the project:** during the beta, Based is funded by donations through GitHub Sponsors. All features stay
+  free for everyone; a donation buys no extra features or services.
+
+Clean-room implementation from public Notion help docs; no Notion code or assets were used.

@@ -72,7 +72,7 @@ const APP_LD = {
   operatingSystem: "macOS 13 or later",
   description: META["/"].description,
   offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-  license: "https://opensource.org/licenses/MIT"
+  license: "https://www.gnu.org/licenses/agpl-3.0.html"
 };
 const ldScript = (data) => `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
 

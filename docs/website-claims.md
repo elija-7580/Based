@@ -60,7 +60,7 @@ und Modelle (Agents), Phasen (Manifest). Nicht bewertet: Aussagen über Notion u
 | „every version since day one, no plan limit“ | features.csv „Page history / versions“: beta, yes. |
 | „Same slash menu, same ⌘K“ | Block-Editor + Quick Find (beta, yes). |
 | „Schedule agents to run while you sleep“ | features.csv „Custom agents on schedule“: labs, partial (Server legt fällige Läufe an). Als „labs“ kennzeichnen. |
-| „Open source“ | LICENSE: MIT. „every line is in the public repo“ (Manifest) setzt voraus, dass das Repo öffentlich ist – vor dem Start prüfen. |
+| „Open source“ | LICENSE: AGPL-3.0-or-later (seit 17.11.2026, davor MIT). „every line is in the public repo“ (Manifest) setzt voraus, dass das Repo öffentlich ist – vor dem Start prüfen. |
 
 ## 5. Teil 2 – Aussagen aus Skriptdaten
 
