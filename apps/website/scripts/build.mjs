@@ -328,7 +328,8 @@ function main() {
   mkdirSync(join(OUT, "assets"), { recursive: true });
   cpSync(join(SRC, "static", "fonts"), join(OUT, "fonts"), { recursive: true });
   cpSync(join(SRC, "static", "mail"), join(OUT, "mail"), { recursive: true });
-  for (const f of ["mark.svg", "mark-dark.svg", "favicon.svg", "og.png"]) cpSync(join(SRC, "static", f), join(OUT, f));
+  // Search-Console-Bestätigung (Google): Datei muss dauerhaft bleiben.
+  for (const f of ["mark.svg", "mark-dark.svg", "favicon.svg", "og.png", "googleabce878e470a9194.html"]) cpSync(join(SRC, "static", f), join(OUT, f));
 
   const runtime = read(join(SRC, "static", "dc-lite.js"));
   const site = read(join(SRC, "static", "site.js"));
