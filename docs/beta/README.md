@@ -78,3 +78,10 @@ Based Beta checks for updates on its own and asks before installing. You can als
 - **Email:** hello@basednotes.app – bugs, ideas, anything that felt slow or confusing.
 
 The most useful feedback: what you expected, what happened instead, and whether it happens again.
+
+## Support Based
+
+Based has no investors and sells no ads. During the beta every feature is free for everyone, and donations pay for
+the servers. If you like what you're testing, [sponsor Based on GitHub](https://github.com/sponsors/elija-7580): $3 a month is enough, or give once.
+It's a donation, so you get nothing extra for it. The goal is 1,000 monthly sponsors; at 1,000, Based Cloud goes live
+for everyone.
