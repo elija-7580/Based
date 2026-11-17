@@ -71,7 +71,10 @@ export function MeetingBlock(props: MeetingBlockProps) {
   const segments = meetingTranscript(store, id);
   const hasTracks = (info.tracks?.length ?? 0) > 0;
   const summaryBlocks = summaryID ? store.children("b:" + summaryID).filter((c) => store.blocks.get(c)?.trashedAt === undefined).length : 0;
-  const current: Tab = tab ?? (recordingHere ? "notes" : summaryBlocks > 0 ? "summary" : transcriptChunks(store, id).length > 0 ? "transcript" : "notes");
+  // Ohne KI in diesem Build (Beta) kein Reiter „Summary“ – außer das Meeting hat schon eine Zusammenfassung.
+  const tabs = host?.summaryAvailable?.() === false && summaryBlocks === 0 ? TABS.filter((t) => t.id !== "summary") : TABS;
+  const wanted: Tab = tab ?? (recordingHere ? "notes" : summaryBlocks > 0 ? "summary" : transcriptChunks(store, id).length > 0 ? "transcript" : "notes");
+  const current: Tab = tabs.some((t) => t.id === wanted) ? wanted : "notes";
   const play = (s: number) => {
     crumb("meeting play");
     host?.play(store, id, s);
@@ -166,7 +169,7 @@ export function MeetingBlock(props: MeetingBlockProps) {
       <ContextBar store={store} pages={props.pages} onOpenPage={props.onOpenPage} id={id} info={info} editable={editable} />
 
       <div className="bx2-meet-tabs">
-        <BasedTabs label="Meeting" value={current} tabs={TABS.map((t) => ({ ...t, panelId: panelID }))} onChange={(v) => {
+        <BasedTabs label="Meeting" value={current} tabs={tabs.map((t) => ({ ...t, panelId: panelID }))} onChange={(v) => {
           crumb("meeting tab");
           setTab(v as Tab);
         }} />

@@ -5,10 +5,12 @@
 // Datei) oder – Teil 3d – whisper-base aus dem Katalog, das der Besitzer ausdrücklich laden lässt
 // (POST /local/transcribe/model {"action":"download"}; feste Quelle, Größe und SHA-256 geprüft, Ordner `<db>.models`).
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { once } from "node:events";
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { delimiter, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { localModels } from "@based/brain";
 import type { Logger } from "./log.js";
 import { FileModelStore } from "./models.js";
@@ -26,9 +28,10 @@ export interface WhisperConfig {
   model?: string;
   /** Ordner für Modelle aus dem Katalog (Standard `<db>.models`). */
   modelsDir?: string;
-  /** Tests: Netz und Katalogeintrag. */
+  /** Tests: Netz und Katalogeintrag (einer) bzw. Katalogeinträge (mehrere; der erste ist ohne Standard der gewählte). */
   fetch?: typeof fetch;
   spec?: localModels.LocalModelSpec;
+  specs?: readonly localModels.LocalModelSpec[];
   threads?: number;
   /** Zeitlimit je Stück (Standard 10 min). */
   timeoutMs?: number;
@@ -65,7 +68,8 @@ export function whisperFromEnv(env: NodeJS.ProcessEnv, opts: { local?: boolean }
   if (!bin && !opts.local) return undefined;
   const threads = Number(env.BASED_WHISPER_THREADS);
   return {
-    bin: bin ?? "", ...(bin ? {} : { find: () => findWhisper(process.env.PATH) }),
+    // BSD-231: zuerst das mit der Mac-App gelieferte Programm (BASED_WHISPER_BUNDLED), dann ein installiertes.
+    bin: bin ?? "", ...(bin ? {} : { find: () => (env.BASED_WHISPER_BUNDLED && existsSync(env.BASED_WHISPER_BUNDLED) ? env.BASED_WHISPER_BUNDLED : findWhisper(process.env.PATH)) }),
     ...(model ? { model } : {}), ...(Number.isInteger(threads) && threads > 0 ? { threads } : {}),
   };
 }
@@ -103,39 +107,97 @@ export async function runWhisper(cfg: Pick<WhisperConfig, "bin" | "threads" | "t
   }
 }
 
-/** Modell aus dem Katalog auf dem Server: Stand, Laden (im Hintergrund), Abbrechen, Entfernen. */
+/**
+ * Elija 17.11.: eine Modelldatei direkt auf die Platte laden – ohne sie im Speicher zu halten (large-v3-turbo hat
+ * 1,6 GB). Schreibt nach `<ziel>.part`, rechnet SHA-256 mit, setzt einen abgebrochenen Download per Range fort und
+ * benennt erst nach Größen- und Prüfsummen-Kontrolle um. Wirft bei falscher Größe oder Prüfsumme (Teil wird gelöscht).
+ */
+export async function downloadModelFile(file: localModels.LocalModelFile, dest: string, o: { fetch: typeof fetch; signal?: AbortSignal; onProgress?: (loaded: number) => void }): Promise<void> {
+  if (!file.url?.startsWith("https://")) throw new Error(`${file.path}: only https sources`);
+  mkdirSync(dirname(dest), { recursive: true });
+  const part = dest + ".part";
+  let have = existsSync(part) ? statSync(part).size : 0;
+  if (have >= file.size) { rmSync(part, { force: true }); have = 0; }
+  const headers: Record<string, string> = have > 0 ? { Range: `bytes=${have}-` } : {};
+  const res = await o.fetch(file.url, { credentials: "omit", headers, ...(o.signal ? { signal: o.signal } : {}) });
+  if (!res.ok) throw new Error(`${file.path}: HTTP ${res.status}`);
+  // Der Server ignoriert Range (200 statt 206): von vorn.
+  if (have > 0 && res.status !== 206) { rmSync(part, { force: true }); have = 0; }
+  const hash = createHash("sha256");
+  if (have > 0) for await (const chunk of createReadStream(part)) hash.update(chunk as Buffer);
+  const out = createWriteStream(part, { flags: have > 0 ? "a" : "w" });
+  let got = have;
+  try {
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error(`${file.path}: empty response`);
+    for (;;) {
+      o.signal?.throwIfAborted();
+      const { done, value } = await reader.read();
+      if (done) break;
+      got += value.length;
+      if (got > file.size) { await reader.cancel(); throw new Error(`${file.path}: larger than expected`); }
+      hash.update(value);
+      if (!out.write(value)) await once(out, "drain");
+      o.onProgress?.(got);
+    }
+  } finally {
+    await new Promise<void>((resolve) => out.end(() => resolve()));
+  }
+  if (got !== file.size) throw new Error(`${file.path}: size ${got}, expected ${file.size}`);
+  if (hash.digest("hex") !== file.sha256) { rmSync(part, { force: true }); throw new Error(`${file.path}: checksum mismatch`); }
+  renameSync(part, dest);
+  writeFileSync(dest + ".sha256", file.sha256);
+}
+
+/** SHA-256 einer Datei, ohne sie ganz in den Speicher zu lesen. */
+async function fileSha256(path: string): Promise<string> {
+  const hash = createHash("sha256");
+  for await (const chunk of createReadStream(path)) hash.update(chunk as Buffer);
+  return hash.digest("hex");
+}
+
+/** Ein Modell aus dem Katalog auf dem Server: Stand, Laden (im Hintergrund), Abbrechen, Entfernen. */
 class ServerModel {
-  readonly spec: localModels.LocalModelSpec;
   readonly store: FileModelStore;
-  private readonly manager: localModels.LocalModelManager;
   private installed: boolean | undefined;
   private download: { ctl: AbortController; loaded: number; total: number } | undefined;
   private lastError: string | undefined;
 
-  constructor(dir: string, cfg: WhisperConfig, private readonly log: Logger) {
-    this.spec = cfg.spec ?? localModels.catalogFor("transcription")!;
+  constructor(readonly spec: localModels.LocalModelSpec, dir: string, private readonly cfg: WhisperConfig, private readonly log: Logger) {
     this.store = new FileModelStore(dir);
-    this.manager = new localModels.LocalModelManager({
-      store: this.store,
-      fetch: cfg.fetch ?? ((...a) => fetch(...a)),
-      // Der Besitzer hat ausdrücklich „laden“ gesagt (eigene Route); sonst geht keine Anfrage hinaus.
-      consent: () => new Set(["transcription"]),
-      server: () => undefined,
-    });
+  }
+
+  private get size() { return this.spec.files.reduce((n, f) => n + f.size, 0); }
+  private fileOf(f: localModels.LocalModelFile) { return this.store.pathOf(localModels.storePath(this.spec, f)); }
+
+  /**
+   * Vollständig und geprüft? Größe muss stimmen; die Prüfsumme steht nach dem Laden in `<datei>.sha256` (sonst würde
+   * jeder Start 1,6 GB lesen). Fehlt der Vermerk (Datei von einer älteren Version geladen), wird einmal nachgerechnet.
+   */
+  private async check(): Promise<boolean> {
+    for (const f of this.spec.files) {
+      const file = this.fileOf(f);
+      if (!existsSync(file) || statSync(file).size !== f.size) return false;
+      const mark = file + ".sha256";
+      if (existsSync(mark) && (await readFile(mark, "utf8")).trim() === f.sha256) continue;
+      if ((await fileSha256(file)) !== f.sha256) return false;
+      writeFileSync(mark, f.sha256);
+    }
+    return true;
   }
 
   /** Pfad der ggml-Datei, wenn vollständig und geprüft. */
   async path(): Promise<string | undefined> {
     if (this.download) return undefined;
-    this.installed ??= await this.manager.installed(this.spec);
+    this.installed ??= await this.check();
     const file = this.spec.files.find((f) => f.path.endsWith(".bin")) ?? this.spec.files[0]!;
-    return this.installed ? this.store.pathOf(localModels.storePath(this.spec, file)) : undefined;
+    return this.installed ? this.fileOf(file) : undefined;
   }
 
   async state() {
     const ready = (await this.path()) !== undefined;
     return {
-      id: this.spec.id, name: this.spec.name, license: this.spec.license, size: this.spec.files.reduce((n, f) => n + f.size, 0),
+      id: this.spec.id, name: this.spec.name, license: this.spec.license, size: this.size,
       installed: ready, downloading: this.download !== undefined,
       ...(this.download ? { loaded: this.download.loaded } : {}), ...(this.lastError ? { error: this.lastError } : {}),
     };
@@ -144,11 +206,25 @@ class ServerModel {
   start() {
     if (this.download) return;
     const ctl = new AbortController();
-    const d = { ctl, loaded: 0, total: this.spec.files.reduce((n, f) => n + f.size, 0) };
+    const d = { ctl, loaded: 0, total: this.size };
     this.download = d;
     this.lastError = undefined;
     this.installed = undefined;
-    void this.manager.download(this.spec, { signal: ctl.signal, onProgress: (p) => { d.loaded = p.loaded; } }).then(
+    const fetcher = this.cfg.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
+    void (async () => {
+      const errors = localModels.validateSpec(this.spec);
+      if (errors.length) throw new Error(errors.join("; "));
+      let before = 0;
+      for (const f of this.spec.files) {
+        const file = this.fileOf(f);
+        if (!(existsSync(file) && statSync(file).size === f.size && (await fileSha256(file)) === f.sha256)) {
+          const base = before;
+          await downloadModelFile(f, file, { fetch: fetcher, signal: ctl.signal, onProgress: (n) => { d.loaded = base + n; } });
+        } else writeFileSync(file + ".sha256", f.sha256);
+        before += f.size;
+        d.loaded = before;
+      }
+    })().then(
       () => { this.installed = true; this.log.info("whisper model ready", { model: this.spec.id }); },
       (e: unknown) => {
         this.installed = false;
@@ -162,33 +238,88 @@ class ServerModel {
 
   async remove() {
     this.cancel();
-    await this.manager.remove(this.spec);
+    for (const f of this.spec.files) {
+      const file = this.fileOf(f);
+      for (const x of [file, file + ".sha256", file + ".part"]) rmSync(x, { force: true });
+    }
     this.installed = false;
+    this.lastError = undefined;
+  }
+}
+
+/**
+ * Elija 17.11.: mehrere Modelle zur Auswahl (Katalog: base, small, large-v3-turbo). Eines ist gewählt (Vermerk in
+ * `<ordner>/transcription.json`, Standard small); transkribiert wird mit dem gewählten, wenn es geladen ist, sonst mit
+ * einem anderen geladenen (wer früher base geladen hat, verliert nichts).
+ */
+class ServerModels {
+  readonly models: ServerModel[];
+  private active: string;
+  private readonly note: string;
+
+  constructor(dir: string, cfg: WhisperConfig, log: Logger) {
+    const specs = cfg.specs ?? (cfg.spec ? [cfg.spec] : localModels.catalogAll("transcription"));
+    this.models = specs.map((s) => new ServerModel(s, dir, cfg, log));
+    this.note = join(dir, "transcription.json");
+    let saved: unknown;
+    try { saved = (JSON.parse(readFileSync(this.note, "utf8")) as { active?: unknown }).active; } catch { /* noch nichts gewählt */ }
+    const known = (id: unknown): id is string => typeof id === "string" && specs.some((s) => s.id === id);
+    this.active = known(saved) ? saved : known(localModels.DEFAULT_TRANSCRIPTION_MODEL) ? localModels.DEFAULT_TRANSCRIPTION_MODEL : specs[0]!.id;
+  }
+
+  get(id: unknown): ServerModel | undefined { return this.models.find((m) => m.spec.id === (id ?? this.active)); }
+
+  select(id: string) {
+    this.active = id;
+    mkdirSync(dirname(this.note), { recursive: true });
+    writeFileSync(this.note, JSON.stringify({ active: id }));
+  }
+
+  /** Datei des gewählten Modells; ist es nicht geladen, die eines anderen geladenen. */
+  async path(): Promise<string | undefined> {
+    const chosen = await this.get(undefined)?.path();
+    if (chosen) return chosen;
+    for (const m of this.models) { const p = await m.path(); if (p) return p; }
+    return undefined;
+  }
+
+  async state() {
+    const all = await Promise.all(this.models.map(async (m) => ({ ...(await m.state()), active: m.spec.id === this.active })));
+    return { active: all.find((m) => m.active)!, all };
   }
 }
 
 export function registerTranscribeRoutes(router: Router, cfg: WhisperConfig, log: Logger) {
   let queue: Promise<unknown> = Promise.resolve();
-  const catalog = !cfg.model && cfg.modelsDir ? new ServerModel(cfg.modelsDir, cfg, log) : undefined;
+  const catalog = !cfg.model && cfg.modelsDir ? new ServerModels(cfg.modelsDir, cfg, log) : undefined;
   const modelPath = async () => (cfg.model ? (existsSync(cfg.model) ? cfg.model : undefined) : await catalog?.path());
   const binPath = () => (cfg.bin && existsSync(cfg.bin) ? cfg.bin : cfg.find?.());
-  router.add("GET", "/local/transcribe", async () => json({
-    engine: "whisper.cpp",
-    // Feedback 17. 11.: getrennt melden, was fehlt – das Programm oder das Modell (Einstellungen → Meeting notes).
-    engineInstalled: binPath() !== undefined,
-    ready: binPath() !== undefined && (await modelPath()) !== undefined,
-    model: cfg.model ? { source: "file", installed: existsSync(cfg.model) } : catalog ? { source: "catalog", ...(await catalog.state()) } : { source: "none", installed: false },
-  }));
-  // Teil 3d: Modell aus dem Katalog laden lassen (nur Besitzer, nur auf ausdrücklichen Aufruf).
+  router.add("GET", "/local/transcribe", async () => {
+    const models = await catalog?.state();
+    return json({
+      engine: "whisper.cpp",
+      // Feedback 17. 11.: getrennt melden, was fehlt – das Programm oder das Modell (Einstellungen → Meeting notes).
+      engineInstalled: binPath() !== undefined,
+      ready: binPath() !== undefined && (await modelPath()) !== undefined,
+      // `model`: das gewählte (wie bisher); `models`: alle zur Auswahl, `active` markiert das gewählte.
+      model: cfg.model ? { source: "file", installed: existsSync(cfg.model) } : models ? { source: "catalog", ...models.active } : { source: "none", installed: false },
+      ...(models ? { models: models.all } : {}),
+    });
+  });
+  // Teil 3d: Modell aus dem Katalog laden lassen (nur Besitzer, nur auf ausdrücklichen Aufruf). `id` wählt das Modell
+  // (ohne: das gewählte); „download“ und „select“ machen es zum gewählten.
   router.add("POST", "/local/transcribe/model", async ({ body }) => {
     if (!catalog) return error(cfg.model ? "the server uses its own model file (BASED_WHISPER_MODEL)" : "no models folder", 409);
-    let action: unknown;
-    try { action = (JSON.parse(new TextDecoder().decode(body)) as { action?: unknown }).action; } catch { return error("JSON body {action}", 400); }
-    if (action === "download") catalog.start();
-    else if (action === "cancel") catalog.cancel();
-    else if (action === "remove") await catalog.remove();
-    else return error("action must be download, cancel or remove", 400);
-    return json(await catalog.state(), action === "download" ? 202 : 200);
+    let action: unknown, id: unknown;
+    try { ({ action, id } = JSON.parse(new TextDecoder().decode(body)) as { action?: unknown; id?: unknown }); } catch { return error("JSON body {action, id?}", 400); }
+    const model = catalog.get(id);
+    if (!model) return error("unknown model", 404);
+    if (action === "download") { catalog.select(model.spec.id); model.start(); }
+    else if (action === "select") catalog.select(model.spec.id);
+    else if (action === "cancel") model.cancel();
+    else if (action === "remove") await model.remove();
+    else return error("action must be download, select, cancel or remove", 400);
+    return json({ ...(await model.state()), models: (await catalog.state()).all }, action === "download" ? 202 : 200);
   }, { bodyLimit: 1024 });
   router.add("POST", "/local/transcribe", async ({ url, body }) => {
     const bad = checkWav(body);

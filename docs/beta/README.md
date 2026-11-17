@@ -23,6 +23,10 @@ You don't need an account. On the welcome screen you can:
 - **Start from a template** – Tasks, Notes, Journal or Wiki, with a few example entries. **⌘N** offers the same
   templates later.
 
+The welcome screen also offers **Turn on meeting notes**. It starts Based's local server on your Mac and downloads a
+speech model once (488 MB, from huggingface.co). You can do this later in **Settings → My settings → Meeting notes**,
+where you can also pick a smaller or a more accurate model.
+
 Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Settings → Import & export**.
 
 ## What to try
@@ -31,12 +35,15 @@ Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Set
 - Databases: table, board, list, gallery, calendar and timeline views, filters, sorts, groups, formulas
 - Quick Find with **⌘K**, tabs (**⌘T**, **⌘W**), the sidebar, favorites, Trash
 - Video and audio blocks (type `/video` or `/audio`)
+- Meeting notes: type `/meet`, press **Start**, take notes while it records. After **Stop** you get a transcript; click
+  a line or a note to hear that moment. macOS asks once for the microphone. Recording and transcript stay on your Mac.
 - Export a page or your whole workspace (Markdown, HTML, PDF), and import it again
 
 ## What is not in this beta
 
 - AI and agents. They exist in Based, but the beta ships without them.
-- Meeting notes, the graph view and real-time editing on several devices. They come back when they are stable.
+- AI summaries of meetings, and telling speakers apart in the transcript.
+- The graph view and real-time editing on several devices. They come back when they are stable.
 - iPhone, iPad, Windows and the web app. The beta is Mac only.
 - Accounts, sharing and the Based cloud.
 

@@ -7,6 +7,8 @@ written for testers.
 
 New since the first test build (0.2.2):
 
+- Meeting notes: type `/meet` to record a meeting, take notes with timestamps and get a transcript made on your Mac.
+  Turn it on from the welcome screen or in Settings → Meeting notes (downloads a speech model once, 488 MB).
 - Start from a template on the welcome screen: Tasks, Notes, Journal or Wiki. **⌘N** offers them later, too.
 - **Home** opens “Welcome to Based” (or your first page) instead of an empty page called Home.
 - Video and audio blocks with their own play, pause, seek and mute controls (space, ←/→, M, F).

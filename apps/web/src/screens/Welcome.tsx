@@ -5,6 +5,10 @@
 // BSD-436: dritter Weg „Start from a template“ – Tasks, Notes, Journal, Wiki (@based/core STARTER_TEMPLATES); legt die
 // Vorlage oben unter Private an (dazu die Anleitungsseiten) und öffnet sie.
 import { AI_OPTION } from "../shell/ai.js";
+import { featureVisible } from "../shell/beta.js";
+import { isTauri } from "../desktop.js";
+import { useTranscriptionSetup } from "../meeting/useTranscription.js";
+import { downloadPercent, megabytes, type TranscribeModelChoice, type TranscriptionStep } from "../meeting/whisper.js";
 import { BasedButton } from "@based/ui/astryx";
 import { STARTER_TEMPLATES, type StarterTemplateID } from "@based/core";
 import { useEffect, useRef, useState, type Ref } from "react";
@@ -81,6 +85,8 @@ export function Welcome({ client, pending, onOpenPage, onNavigate, onImport }: P
           </div>
         </section>
 
+        {isTauri() && featureVisible("meetings") ? <MeetingNotesOption /> : null}
+
         {AI_OPTION ? (
         <section className="welcome-ai" aria-labelledby="welcome-ai-title">
           <span className="welcome-choice-text">
@@ -94,6 +100,42 @@ export function Welcome({ client, pending, onOpenPage, onNavigate, onImport }: P
         <p className="t-desc welcome-foot">Your workspace is saved on this device. You can import more later with {keyLabel("N")}.</p>
       </div>
     </div>
+  );
+}
+
+/** Reine Texte (getestet): Titel und Beschreibung der Wahl „Meeting notes“ je Stand. */
+export function meetingNotesOptionText(step: TranscriptionStep, o: { model?: Pick<TranscribeModelChoice, "size" | "loaded"> | undefined; problem?: string | undefined } = {}): { title: string; text: string } {
+  const problem = o.problem ? ` ${o.problem}` : "";
+  switch (step) {
+    case "downloading": {
+      const pct = o.model ? downloadPercent({ source: "catalog", installed: false, ...o.model }) : undefined;
+      return { title: "Meeting notes are turning on", text: `Downloading the speech model${o.model?.size ? ` (${megabytes(o.model.size)})` : ""}…${pct === undefined ? "" : ` ${pct} %.`} You can start now; it continues in the background.` };
+    }
+    case "ready":
+      return { title: "Meeting notes are on", text: "Type /meet on any page to record a meeting and get a transcript, made on this Mac." };
+    case "no-engine":
+      return { title: "Meeting notes", text: `This build of Based can't transcribe on its own yet. You can still record; set up transcription later in Settings → Meeting notes.${problem}` };
+    default:
+      return { title: "Meeting notes are off", text: `Record meetings and get a transcript, made on this Mac. Turning this on downloads a speech model once (488 MB) from huggingface.co.${problem}` };
+  }
+}
+
+/**
+ * Elija 17.11.: Meeting notes beim ersten Start einschalten – ein Klick startet den lokalen Server und lädt das
+ * Sprachmodell (Balanced). Nur in der Mac-App; der Willkommensbildschirm bleibt stehen, der Download läuft weiter.
+ */
+function MeetingNotesOption() {
+  const t = useTranscriptionSetup();
+  const o = meetingNotesOptionText(t.step, { model: t.choice, problem: t.problem });
+  return (
+    <section className="welcome-ai" aria-labelledby="welcome-meetings-title" data-testid="welcome-meetings" data-step={t.step}>
+      <span className="welcome-choice-text">
+        <strong id="welcome-meetings-title">{o.title}</strong>
+        <span className="t-desc" aria-live="polite">{o.text}</span>
+      </span>
+      {t.step === "no-server" || t.step === "no-model" ? <BasedButton label="Turn on meeting notes" variant="secondary" busy={t.busy} onClick={t.turnOn} /> : null}
+      {t.step === "downloading" ? <BasedButton label="Cancel" variant="ghost" onClick={() => t.act("cancel")} /> : null}
+    </section>
   );
 }
 

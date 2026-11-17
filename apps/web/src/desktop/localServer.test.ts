@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, backupEnv, channelServerEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { whisperEnv, actionEnv, backupEnv, channelServerEnv, BUNDLED_PROBE, BUNDLED_RUN, chooseNode, failureLine, folderSyncEnv, ICLOUD_FOLDER, localServer, parseFailed, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -11,6 +11,10 @@ describe("lokaler Server und CLI (Desktop)", () => {
   });
 
   it("BSD-334: iCloud-Ordner nur, wenn eingeschaltet und mit gültiger Gerätekennung", () => {
+    // BSD-231: mitgeliefertes whisper-cli nur mit absolutem Pfad
+    expect(whisperEnv("/Applications/Based Next.app/Contents/Resources/whisper/whisper-cli")).toEqual({ BASED_WHISPER_BUNDLED: "/Applications/Based Next.app/Contents/Resources/whisper/whisper-cli" });
+    expect(whisperEnv(undefined)).toEqual({});
+    expect(whisperEnv("whisper/whisper-cli")).toEqual({});
     expect(folderSyncEnv("/Users/e", true, "mac-1a2b3c4d")).toEqual({ BASED_FOLDER_SYNC: `/Users/e/${ICLOUD_FOLDER}`, BASED_FOLDER_DEVICE: "mac-1a2b3c4d" });
     expect(ICLOUD_FOLDER).toBe("Library/Mobile Documents/com~apple~CloudDocs/Based");
     expect(folderSyncEnv("/Users/e/", true, "mac-1")).toMatchObject({ BASED_FOLDER_SYNC: `/Users/e/${ICLOUD_FOLDER}` });

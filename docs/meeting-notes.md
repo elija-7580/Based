@@ -67,14 +67,20 @@ engine), view: `packages/editor/src/schema/meeting.tsx`, browser capture/playbac
   from there.
 - The summary runs only when you click *Generate summary* (engine from Settings → Agents & AI).
 - **Transcription** (BSD-231): whisper.cpp on a `based-server` (`/local/transcribe`). The app asks the Mac app's
-  own local server first, then the connected server (`apps/web/src/meeting/servers.ts`). Set-up lives in
-  Settings → Meeting notes → *Transcription* and names the next missing step:
-  1. Mac app: turn on the local server (Settings → Sync & server).
-  2. whisper.cpp on that machine – on a Mac `brew install whisper-cpp`. The local server finds `whisper-cli`
-     itself (login-shell `PATH`, `/opt/homebrew/bin`, `/usr/local/bin`); a hosted server needs `BASED_WHISPER_BIN`.
-  3. *Download model* – whisper-base (148 MB) from the pinned source, only on that click; size and SHA-256 checked.
-  A recording made before set-up gets *Transcribe recording* in its Transcript tab. Not bundled yet: `whisper-cli`
-  inside the app (so step 2 disappears). No speaker separation (diarization) and no voice profiles in the web app.
+  own local server first, then the connected server (`apps/web/src/meeting/servers.ts`).
+  - **Engine**: the Mac app ships `whisper-cli` (Resource `whisper/`, built from the pinned whisper.cpp tag by
+    `apps/desktop/scripts/build-whisper.mjs`, universal, Metal). The local server gets its path as
+    `BASED_WHISPER_BUNDLED`; if the build could not include it, the server looks for an installed `whisper-cli`
+    (login-shell `PATH`, `/opt/homebrew/bin`, `/usr/local/bin`). A hosted server needs `BASED_WHISPER_BIN`.
+  - **Models** (opt-in download from the pinned source, size and SHA-256 checked, streamed to disk, resumable):
+    Fast = whisper-base (148 MB), Balanced = whisper-small (488 MB, preselected), Best = whisper-large-v3-turbo
+    (1.6 GB). The chosen one is remembered next to the models (`transcription.json`).
+  - **Turn on**: welcome screen → *Turn on meeting notes*, or Settings → My settings → Meeting notes →
+    *Transcription* → *Turn on*. One click starts the local server and downloads the Balanced model; the settings
+    row lets you pick another model, shows progress, cancel and remove (`apps/web/src/meeting/useTranscription.ts`).
+  - A recording made before set-up gets *Transcribe recording* in its Transcript tab.
+  - In builds without AI (beta) the Summary tab is hidden; recording, notes and transcript work.
+  - Not yet: other engines (Parakeet), speaker separation (diarization), voice profiles.
 
 ## Other systems (planned)
 

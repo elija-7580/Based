@@ -13,27 +13,28 @@ describe("Beta-Gate", () => {
     expect(hiddenBlockTypes().size).toBe(0);
   });
 
-  it("beta blendet Meetings, Graph, Echtzeit-Text und Coding aus", () => {
-    expect(featureVisible("meetings", "beta")).toBe(false);
+  it("beta blendet Graph, Echtzeit-Text und Coding aus; Meeting-Notizen sind drin (Elija 17.11.)", () => {
+    expect(featureVisible("meetings", "beta")).toBe(true);
+    for (const id of ["meetings", "meeting"]) expect(commandVisible(id, "beta")).toBe(true);
     expect(featureVisible("graph", "beta")).toBe(false);
     expect(featureVisible("realtimeText", "beta")).toBe(false);
     expect(featureVisible("coding", "beta")).toBe(false);
     expect(featureVisible("sharing", "beta")).toBe(false);
     expect(featureVisible("whiteboard", "beta")).toBe(false);
-    for (const id of ["meetings", "meeting", "graph", "coding", "board"]) expect(commandVisible(id, "beta")).toBe(false);
+    for (const id of ["graph", "coding", "board"]) expect(commandVisible(id, "beta")).toBe(false);
     expect(commandVisible("board", "dev")).toBe(true);
     for (const id of ["home", "library", "trash", "settings", "report"]) expect(commandVisible(id, "beta")).toBe(true);
   });
 
   it("⌘K bietet auf beta keine ausgeblendeten Befehle an, in dev schon", () => {
     const ids = (q: string, channel: "dev" | "beta") => matchCommands(q, { ai: false, channel }).map((c) => c.id);
-    expect(ids("meet", "beta")).toEqual([]);
+    expect(ids("meet", "beta")).toEqual(expect.arrayContaining(["meetings", "meeting"]));
     expect(ids("graph", "beta")).toEqual([]);
     expect(ids("meet", "dev")).toEqual(expect.arrayContaining(["meetings", "meeting"]));
     expect(ids("lib", "beta")).toEqual(["library"]);
     expect(ids("report", "beta")).toEqual(["report"]);
     // jeder Befehl ist entweder sichtbar oder steht für eine ausgeblendete Funktion
-    expect(NAV_COMMANDS.filter((c) => !commandVisible(c.id, "beta")).map((c) => c.id).sort()).toEqual(["coding", "graph", "meeting", "meetings"]);
+    expect(NAV_COMMANDS.filter((c) => !commandVisible(c.id, "beta")).map((c) => c.id).sort()).toEqual(["coding", "graph"]);
   });
 
   it("Seitenleiste: Graph und Coding erscheinen auf beta auch angepinnt nicht", () => {
@@ -43,12 +44,12 @@ describe("Beta-Gate", () => {
     expect(navAvailable("graph", { advanced: false, channel: "dev" })).toBe(true);
   });
 
-  it("Slash-Menü: auf beta kein „Meeting notes“, sonst unverändert", () => {
+  it("Slash-Menü: „Meeting notes“ auch auf beta (Elija 17.11.), sonst unverändert", () => {
     const beta = slashItemsFor(false, hiddenBlockTypes("beta")).map((s) => s.label);
     const dev = slashItemsFor(false, hiddenBlockTypes("dev")).map((s) => s.label);
     expect(dev).toContain("Meeting notes");
-    expect(beta).not.toContain("Meeting notes");
-    expect(beta.length).toBe(dev.length - 1);
+    expect(beta).toContain("Meeting notes");
+    expect(hiddenBlockTypes("beta").has("meeting")).toBe(false);
     expect(slashItemsFor(true, hiddenBlockTypes("beta"))[0]?.label).toBe("Ask AI");
   });
 });
@@ -121,7 +122,7 @@ describe("features.csv passt zum Beta-Gate", () => {
   });
 
   it("ausgeblendete Funktionen stehen nicht auf beta", () => {
-    const hidden = ["AI meeting notes (/meet)", "Real-time multi-user collaboration", "Sharing and permissions", "Coding-agent sessions (Happier / ACP)"];
+    const hidden = ["AI meeting summary (/meet)", "Real-time multi-user collaboration", "Sharing and permissions", "Coding-agent sessions (Happier / ACP)"];
     for (const f of hidden) expect(rows.find((r) => r.feature === f)?.beta, f).not.toBe("beta");
   });
 });

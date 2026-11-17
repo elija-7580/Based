@@ -103,6 +103,16 @@ signiert wird, kann macOS nach einem Update erneut fragen (jeder Build hat eine 
 abgelehnt: Systemeinstellungen → Datenschutz & Sicherheit → Mikrofon, oder im Terminal
 `tccutil reset Microphone com.friedrich-ulrich.based.next`.
 
+## whisper.cpp (Transkription, BSD-231)
+
+`pnpm --filter @based/desktop sidecar` baut vor jedem Build `whisper-cli` aus dem gepinnten whisper.cpp-Stand
+(`scripts/build-whisper.mjs`: Tag + Commit geprüft, statisch, Metal eingebettet, arm64 und x86_64 getrennt gebaut und
+zu einer universellen Datei zusammengefügt) nach `dist-sidecar/whisper/` → Resource `whisper/whisper-cli`. Braucht
+git, cmake und clang (Xcode-Werkzeuge); fertige Programme liegen in `src-tauri/target/whisper-cache`. Schlägt der Bau
+fehl oder ist `BASED_SKIP_WHISPER=1` gesetzt, entsteht die App trotzdem – dann sucht der lokale Server ein
+installiertes `whisper-cli`. `sign-node.mjs` signiert das Programm mit (Hardened Runtime, ohne besondere Rechte).
+Die App übergibt den Pfad als `BASED_WHISPER_BUNDLED` an den lokalen Server.
+
 ## Fenster, Menüs, Kürzel
 
 - Titelleiste im Overlay-Stil: die Ampel-Knöpfe liegen über der Seitenleiste, die Fläche darüber und der obere Rand

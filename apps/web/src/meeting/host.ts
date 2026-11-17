@@ -12,6 +12,7 @@ import { aiConfig } from "../chat/aiConfig.js";
 import type { PageReplica, StoreClient } from "../worker/client.js";
 import { canCaptureSystemAudio, canRecordAudio, startBrowserCapture } from "./capture.js";
 import { isTauri } from "../desktop.js";
+import { AI_OPTION } from "../shell/ai.js";
 import { MeetingPlayer } from "./player.js";
 import { onBattery, watchPower } from "./power.js";
 import { meetingTranscribePref, pendingTranscripts } from "../shell/storage.js";
@@ -207,6 +208,7 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
     canCaptureSystemAudio,
     hasTranscriber: () => { void probeServer(); return activeTranscriber() !== undefined; },
     hasSummaryEngine: () => script !== undefined || config.activeModel() !== undefined,
+    summaryAvailable: () => AI_OPTION || script !== undefined,
     errorFor: (id) => recorder.errorFor(id),
     async start(store, meetingID, opts) {
       if (recorder.getState().recording) return;

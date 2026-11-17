@@ -55,7 +55,8 @@
     "resources": {
       "../dist-sidecar/based-server.cjs": "based-server.cjs",
       "../dist-sidecar/node_modules/": "node_modules/",
-      "../dist-sidecar/node/": "node/"
+      "../dist-sidecar/node/": "node/",
+      "../dist-sidecar/whisper/": "whisper/"
     }
   },
   "plugins": {
