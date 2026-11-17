@@ -1,5 +1,6 @@
 /* BSD-73: Versionsverlauf (Seitenmenü → Version history). Nur Tokens aus @based/design-tokens. */
-.vh-backdrop { align-items: center; padding-top: 0; }
+/* BSD-488: doppelte Klasse, sonst gewinnt .qf-backdrop (styles.css, später geladen) und der Dialog klebt unten */
+.qf-backdrop.vh-backdrop { align-items: center; padding-top: 0; }
 .vh {
   width: min(1040px, 94vw); height: min(720px, 88vh); display: flex; background: var(--bg); border-radius: var(--radius-xl);
   box-shadow: var(--shadow-menu); overflow: hidden; animation: rise-in var(--duration) var(--ease-out);
