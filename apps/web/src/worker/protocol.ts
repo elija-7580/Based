@@ -136,6 +136,8 @@ export interface QuickFindHit {
   path: string;
   snippet?: string;
   kind: "page" | "database" | "row";
+  /** Kein genauer Treffer (Tippfehler, andere Wortform, ein Begriff fehlt). */
+  approx?: true;
 }
 
 export interface SearchResult {

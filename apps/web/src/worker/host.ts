@@ -1108,6 +1108,7 @@ export class StoreHost {
         kind: b?.type === "databasePage" ? "database" : b?.parent.startsWith("d:") ? "row" : "page",
       };
       if (h.snippet) hit.snippet = h.snippet;
+      if (h.approx) hit.approx = true;
       return hit;
     });
     return { query, hits, took: performance.now() - t0 };

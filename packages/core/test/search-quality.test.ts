@@ -74,6 +74,9 @@ const CASES: [kind: string, query: string, expected: string][] = [
   ["Erwähnung einer Seite", "Budgetplanung Termin", "mention"],
   ["Tippfehler + Wortteil", "besprechugnsnotiz", "notiz"],
   ["fehlendes Leerzeichen", "syncarchitecture", "arch"],
+  ["kurzes Wort vertauscht", "Frau Müller udn Anna", "notiz"],
+  ["ein Begriff steht gar nicht auf der Seite", "ingwer kokosmilch zimt", "rezept"],
+  ["Wortteil + vertauschtes kurzes Wort", "quartalsabschlus udn", "notiz"],
 ];
 
 describe("Suchqualität (Ausgangslage und Ziel)", () => {
@@ -86,11 +89,11 @@ describe("Suchqualität (Ausgangslage und Ziel)", () => {
     const quick = run(true);
     const misses = quick.filter((r) => !r.ok).map((r) => `${r.kind}: „${r.query}“ → ${r.got.join(", ") || "nichts"}`);
     if (process.env.BASED_SEARCH_REPORT) writeFileSync(process.env.BASED_SEARCH_REPORT, quick.map((r) => `${r.ok ? "✓" : "✗"} ${r.kind.padEnd(48)} ${r.query}`).join("\n") + "\n");
-    // Ausgangslage 17.11.: 15 von 26 in Quick Find, 9 von 26 über MCP (dort ohne `extended`).
+    // Ausgangslage 17.11.: 15 von 26 in Quick Find, 9 von 26 über MCP (dort ohne `extended`); drei Fälle kamen danach dazu.
     expect(misses).toEqual([]);
   });
 
-  it("die schlichte Suche (wie die Swift-App) bleibt, wie sie war: 9 von 26", () => {
+  it("die schlichte Suche (wie die Swift-App) bleibt, wie sie war: 9 Fälle", () => {
     expect(run(false).filter((r) => r.ok).length).toBe(9);
   });
 
@@ -104,6 +107,16 @@ describe("Suchqualität (Ausgangslage und Ziel)", () => {
     // kurze Begriffe und Zahlen werden nie „ungefähr“ gesucht
     expect(index.alternatives("brot")).toEqual([]);
     expect(index.alternatives("2027")).toEqual([]);
+  });
+
+  it("ungefähre Treffer sind gekennzeichnet, genaue nicht", () => {
+    const hits = (q: string) => index.run(q, { limit: 5, extended: true, now: 0 }) ?? [];
+    expect(hits("Umsatzprognose").find((h) => h.pageID === "notiz")?.approx).toBeUndefined();
+    expect(hits("ingwer brot").find((h) => h.pageID === "rezept")?.approx).toBeUndefined(); // verteilt, aber genau
+    expect(hits("Umsatzprognsoe").find((h) => h.pageID === "notiz")?.approx).toBe(true);
+    expect(hits("ingwer kokosmilch zimt").find((h) => h.pageID === "rezept")?.approx).toBe(true);
+    // zwei Begriffe: keiner darf fehlen (sonst fände jedes einzelne Wort etwas)
+    expect(hits("ingwer zimt")).toEqual([]);
   });
 
   it("der Ausschnitt zeigt die Stelle, die gemeint war", () => {

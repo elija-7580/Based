@@ -1,8 +1,9 @@
 // Quick Find (⌘K): sucht im Store-Worker über den Volltextindex (Titel, Inhalt mit Snippet, Zeilen). Jede Eingabe bricht die vorige
 // Suche ab; ohne Eingabe stehen die zuletzt geöffneten Seiten da. Pfeiltasten wählen, Enter öffnet, Esc schließt.
 // BSD-206: Filter wie in Notion – nur Titel, in der aktuellen Seite, Zeitraum, Sortierung (shell/quickFindFilters.ts).
-import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { BasedChip } from "@based/ui/astryx";
+import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { BasedButton, BasedChip, BasedKeys } from "@based/ui/astryx";
+import { fold, typoBudget, typoDistance } from "@based/core";
 import { useRestoreFocus } from "../shell/restoreFocus.js";
 import { Icon, type IconName } from "../icons.js";
 import { aiSetting } from "../shell/ai.js";
@@ -32,6 +33,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   const [selected, setSelected] = useState(0);
   const listID = useId();
   const input = useRef<HTMLInputElement>(null);
+  const list = useRef<HTMLUListElement>(null);
 
   // BSD-304/421/438: Fokus (samt Schreibmarke) beim Schließen dorthin zurück, wo er vorher war (Seitenleiste,
   // Editor …) – außer man hat eine Seite oder einen Befehl geöffnet, dann bestimmt das Ziel den Fokus.
@@ -69,6 +71,15 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   const items: (QuickFindHit | { command: NavCommand })[] = [...commands.map((c) => ({ command: c })), ...pages];
   // BSD-439: Befehle fallen beim Tippen sofort weg, Treffer kommen später – die Auswahl bleibt nie hinter dem Listenende.
   const cur = Math.min(selected, Math.max(0, items.length - 1));
+  // Die Auswahl bleibt sichtbar, wenn man mit den Pfeiltasten über den Rand der Liste hinausgeht.
+  useEffect(() => {
+    list.current?.querySelector<HTMLElement>("[aria-selected='true']")?.scrollIntoView({ block: "nearest" });
+  }, [cur, items.length]);
+  const filtered = filters.titleOnly || filters.inPage || filters.date !== "any";
+  const setFilter = (next: Partial<QuickFindFilters>) => {
+    setFilters((f) => ({ ...f, ...next }));
+    input.current?.focus(); // nach „Clear filters“ weitertippen können
+  };
   const open = (i: number) => {
     const it = items[i];
     if (!it) return;
@@ -110,6 +121,9 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 setSelected(Math.max(0, cur - 1));
+              } else if (e.key === "PageDown" || e.key === "PageUp") {
+                e.preventDefault();
+                setSelected(Math.max(0, Math.min(items.length - 1, cur + (e.key === "PageDown" ? PAGE : -PAGE))));
               } else if (e.key === "Enter") {
                 e.preventDefault();
                 open(cur);
@@ -140,8 +154,8 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             <Icon name="chevron" size={14} />
           </label>
         </div>
-        <div className="qf-head t-meta">{hits ? (items.length ? "Best matches" : "") : pages.length ? "Recent" : ""}</div>
-        <ul id={listID} role="listbox" aria-label="Results" className="qf-list" data-took={took === undefined ? undefined : took.toFixed(1)}>
+        <div className="qf-head t-meta" data-testid="qf-head">{hits ? (items.length ? (hits.length > 0 && hits.every((h) => h.approx) ? "Closest matches" : "Best matches") : "") : pages.length ? "Recent" : ""}</div>
+        <ul ref={list} id={listID} role="listbox" aria-label="Results" className="qf-list" data-took={took === undefined ? undefined : took.toFixed(1)}>
           {items.map((h, i) => "command" in h ? (
             <li key={"cmd:" + h.command.id} id={`${listID}-${i}`} role="option" aria-selected={i === cur} className="qf-item" data-testid="qf-command"
               onMouseMove={() => setSelected(i)} onClick={() => open(i)}>
@@ -160,14 +174,25 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             >
               <span className="tile"><Icon name={h.kind === "page" ? "page" : "database"} size={18} /></span>
               <span className="grow">
-                <strong>{h.title}</strong>
+                <strong><Highlight text={h.title} query={query} /></strong>
                 {h.path ? <span className="t-desc qf-path"> — {h.path}</span> : null}
                 {h.snippet ? <span className="t-desc qf-snippet" data-testid="qf-snippet"><Highlight text={h.snippet} query={query} /></span> : null}
               </span>
             </li>
           ))}
-          {hits && hits.length === 0 && commands.length === 0 ? <li className="qf-none t-desc">No results</li> : null}
+          {hits && hits.length === 0 && commands.length === 0 ? (
+            <li className="qf-none" data-testid="qf-none">
+              <strong>No results for “{query.trim()}”</strong>
+              <span className="t-desc">{filtered ? "The filters above narrow the search." : "Check the spelling, or try fewer or different words."}</span>
+              {filtered ? <BasedButton label="Clear filters" size="sm" onClick={() => setFilter({ titleOnly: false, inPage: false, date: "any" })} /> : null}
+            </li>
+          ) : null}
         </ul>
+        <div className="qf-foot t-meta" aria-hidden="true">
+          <span><BasedKeys keys="ArrowUp / ArrowDown" /> Select</span>
+          <span><BasedKeys keys="Enter" /> Open</span>
+          <span><BasedKeys keys="Escape" /> Close</span>
+        </div>
       </div>
     </div>
   );
@@ -175,10 +200,54 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
 
 const COMMAND_ICON: Record<string, IconName> = { home: "home", chat: "chat", tasks: "agent", coding: "terminal", graph: "graph", meetings: "mic", meeting: "plus", library: "library", trash: "trash", settings: "settings" };
 
-/** Suchbegriffe im Snippet markieren (Groß/klein egal). */
+const PAGE = 8;
+
+/**
+ * Markiert, was die Suche gemeint hat: die Begriffe selbst (Groß/klein und Akzente egal) und – wenn ein Begriff so
+ * nicht vorkommt – das Wort, das ihm bis auf Tippfehler gleicht (gleiche Regel wie die Suche im Worker).
+ */
+export function highlightRanges(text: string, query: string): [number, number][] {
+  const terms = fold(query.trim()).split(" ").filter(Boolean);
+  if (terms.length === 0) return [];
+  const folded = fold(text);
+  // `fold` kann die Länge ändern (ß → ss): dann lieber nichts markieren als an der falschen Stelle.
+  if (folded.length !== text.length) return [];
+  const ranges: [number, number][] = [];
+  for (const t of terms) {
+    let found = false;
+    for (let i = folded.indexOf(t); i >= 0; i = folded.indexOf(t, i + t.length)) { ranges.push([i, i + t.length]); found = true; }
+    const budget = typoBudget(t);
+    if (found || budget === 0) continue;
+    const letters = (x: string) => [...x].sort().join("");
+    for (const m of folded.matchAll(/[\p{L}\p{N}]+/gu)) {
+      const w = m[0];
+      // drei Buchstaben: nur vertauscht (wie die Suche), sonst träfe fast jedes kurze Wort
+      const near = t.length === 3
+        ? w.length === 3 && letters(w) === letters(t) && typoDistance(w, t, 1) <= 1
+        : typoDistance(w, t, budget) <= budget || (w.length > t.length && typoDistance(w.slice(0, t.length), t, budget) <= budget);
+      if (w.length >= 3 && near) ranges.push([m.index, m.index + w.length]);
+    }
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const r of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+    else merged.push([r[0], r[1]]);
+  }
+  return merged;
+}
+
 function Highlight({ text, query }: { text: string; query: string }) {
-  const terms = query.trim().split(/\s+/).filter(Boolean).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  if (terms.length === 0) return <>{text}</>;
-  const parts = text.split(new RegExp(`(${terms.join("|")})`, "gi"));
-  return <>{parts.map((p, i) => (i % 2 === 1 ? <mark key={i}>{p}</mark> : p))}</>;
+  const ranges = highlightRanges(text, query);
+  if (ranges.length === 0) return <>{text}</>;
+  const out: ReactNode[] = [];
+  let at = 0;
+  for (const [a, z] of ranges) {
+    if (a > at) out.push(text.slice(at, a));
+    out.push(<mark key={a}>{text.slice(a, z)}</mark>);
+    at = z;
+  }
+  if (at < text.length) out.push(text.slice(at));
+  return <>{out}</>;
 }

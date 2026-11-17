@@ -16,6 +16,8 @@ import { graphemes } from "../graphemes.js";
 import type { RecordKeyString, StoreChange, WorkspaceStore } from "../store/store.js";
 
 export interface SearchHit {
+  /** Kein genauer Treffer: über einen Tippfehler, eine andere Wortform oder mit einem fehlenden Begriff gefunden. */
+  approx?: true;
   pageID: string;
   score: number;
   /** Passender Inhaltstext (fehlt, wenn nur der Titel passt). */
@@ -308,12 +310,14 @@ export function typoDistance(a: string, b: string, max: number): number {
 }
 
 /** Wie viele Tippfehler ein Begriff haben darf: kurze genau, ab 4 Zeichen einer, ab 8 zwei. Ziffern immer genau. */
-export const typoBudget = (term: string): number => (/\p{N}/u.test(term) || term.length < 4 ? 0 : term.length < 8 ? 1 : 2);
+export const typoBudget = (term: string): number => (/\p{N}/u.test(term) || term.length < 3 ? 0 : term.length < 8 ? 1 : 2);
+/** Drei Buchstaben: nur zwei vertauschte („mti“ → „mit“) – ein beliebiger Fehler träfe bei so kurzen Wörtern fast alles. */
+const swapped = (a: string, b: string) => a.length === 3 && b.length === 3 && a !== b && ((a[0] === b[1] && a[1] === b[0] && a[2] === b[2]) || (a[0] === b[0] && a[1] === b[2] && a[2] === b[1]));
 
 const WORDS = /[^\p{L}\p{N}]+/u;
 // Wörter mit Ziffern (Nummern, IDs, Daten) gehören nicht ins Wörterbuch: sie werden nie ungefähr gesucht, wären aber
 // in großen Workspaces der größte Teil davon.
-const vocabWords = (folded: string) => folded.split(WORDS).filter((w) => w.length >= 4 && w.length <= 40 && !/\p{N}/u.test(w));
+const vocabWords = (folded: string) => folded.split(WORDS).filter((w) => w.length >= 3 && w.length <= 40 && !/\p{N}/u.test(w));
 
 /** BSD-425: Wort ≈ Begriff – höchstens eine Änderung (fehlend, zusätzlich, falsch, vertauscht); kurze Begriffe genau. */
 export function nearWord(word: string, term: string): boolean {
@@ -535,8 +539,13 @@ export class SearchIndex implements SearchSource {
     if (budget === 0) return [];
     const out: { word: string; distance: number; n: number }[] = [];
     const lt = term.length;
+    if (lt === 3) {
+      for (const [word, n] of this.vocabulary) if (swapped(word, term)) out.push({ word, distance: 1, n });
+      out.sort((a, b) => b.n - a.n || (a.word < b.word ? -1 : 1));
+      return out.slice(0, max).map(({ word, distance }) => ({ word, distance }));
+    }
     for (const [word, n] of this.vocabulary) {
-      if (word.includes(term)) continue; // das findet schon die genaue Suche
+      if (word.length < 4 || word.includes(term)) continue; // kurze nie ungefähr; enthaltene findet schon die genaue Suche
       const lw = word.length;
       let d = budget + 1;
       if (lw >= lt - budget) {
@@ -700,11 +709,12 @@ export class SearchIndex implements SearchSource {
   private extendedHits(q: string, terms: string[], hits: Map<string, SearchHit>, snippetOf: Map<string, () => string>, allowed: (b: Block) => boolean,
     recency: (b: Block) => number, titleOnly: boolean, limit: number, tick: () => boolean): true | undefined {
     const blocks = this.blocks;
+    let approx = false;
     const add = (page: string, score: number, blockID?: string, snip?: () => string, withRecency = true) => {
       if (hits.has(page)) return;
       const pb = blocks.get(page);
       if (!pb || !allowed(pb)) return;
-      hits.set(page, { pageID: page, score: score + (withRecency ? recency(pb) : 0), ...(blockID ? { blockID } : {}) });
+      hits.set(page, { pageID: page, score: score + (withRecency ? recency(pb) : 0), ...(blockID ? { blockID } : {}), ...(approx ? { approx: true as const } : {}) });
       if (snip) snippetOf.set(page, snip);
     };
     if (!titleOnly) {
@@ -762,6 +772,7 @@ export class SearchIndex implements SearchSource {
         }
       }
     }
+    approx = true; // ab hier: ungefähre Treffer
     // Ein Tippfehler bzw. Plural-s in Titelwörtern – nur für kurze Anfragen (ein, zwei Wörter, ohne Ziffern) und
     // solange die genauen Treffer die Liste nicht füllen (BSD-280: lange Anfragen sind Volltext, keine Titel).
     if (hits.size < limit && q.length >= 4 && terms.length <= 2 && !/\p{N}/u.test(q)) {
@@ -782,46 +793,54 @@ export class SearchIndex implements SearchSource {
     // Tippfehler und andere Wortformen im ganzen Text: Jeder Begriff darf auch eines der Wörter aus dem Workspace
     // sein, die er gemeint haben könnte. Nur wenn die genauen Treffer die Liste nicht füllen; je weniger Abweichung,
     // desto weiter oben.
-    if (hits.size < limit && terms.length <= 8) {
-      const needles = terms.map((t) => ({ term: t, alts: this.alternatives(t) }));
-      if (needles.some((x) => x.alts.length > 0)) {
-        const rare = (t: string) => (/\p{N}/u.test(t) ? 1000 : 0) + t.length;
-        needles.sort((a, b) => rare(b.term) - rare(a.term));
-        let cand: Map<string, number> | undefined; // Seite → Summe der Abweichungen
-        const firstEntry = new Map<string, { entry: ContentEntry; word: string }>();
-        for (const { term, alts } of needles) {
-          const next = new Map<string, number>();
-          const visit = (page: string, folded: string, entry?: ContentEntry) => {
-            if (hits.has(page) || (titleOnly && entry) || (cand && !cand.has(page))) return;
-            let d: number | undefined, word = term;
-            if (folded.includes(term)) d = 0;
-            else for (const a of alts) if (folded.includes(a.word)) { d = a.distance; word = a.word; break; }
-            if (d === undefined) return;
-            const before = next.get(page);
-            if (before === undefined || d < before) next.set(page, d);
-            if (entry && d > 0) {
-              const best = firstEntry.get(page);
-              if (!best || comparePaths(entry.path, best.entry.path) < 0) firstEntry.set(page, { entry, word });
-            }
-          };
-          for (const [id, folded] of this.titles) { if (tick()) return undefined; visit(id, folded); }
-          if (!titleOnly) {
-            for (const map of [this.contentEntries, this.extraEntries]) {
-              for (const e of map.values()) { if (tick()) return undefined; visit(e.page, e.folded, e); }
-            }
-            for (const [id, folded] of this.rows) { if (tick()) return undefined; visit(id, folded); }
-            for (const [id, folded] of this.extraRows) { if (tick()) return undefined; visit(id, folded); }
+    // `skip`: ein Begriff, der fehlen darf (letzte Stufe: bei drei und mehr Begriffen passt einer vielleicht gar nicht).
+    const fuzzyPass = (use: string[], penalty: number): true | undefined => {
+      const needles = use.map((t) => ({ term: t, alts: this.alternatives(t) }));
+      if (penalty === 0 && !needles.some((x) => x.alts.length > 0)) return true;
+      const rare = (t: string) => (/\p{N}/u.test(t) ? 1000 : 0) + t.length;
+      needles.sort((a, b) => rare(b.term) - rare(a.term));
+      let cand: Map<string, number> | undefined; // Seite → Summe der Abweichungen
+      const firstEntry = new Map<string, { entry: ContentEntry; word: string }>();
+      for (const { term, alts } of needles) {
+        const next = new Map<string, number>();
+        const visit = (page: string, folded: string, entry?: ContentEntry) => {
+          if (hits.has(page) || (cand && !cand.has(page))) return;
+          let d: number | undefined, word = term;
+          if (folded.includes(term)) d = 0;
+          else for (const a of alts) if (folded.includes(a.word)) { d = a.distance; word = a.word; break; }
+          if (d === undefined) return;
+          const before = next.get(page);
+          if (before === undefined || d < before) next.set(page, d);
+          if (entry) {
+            const best = firstEntry.get(page);
+            if (!best || comparePaths(entry.path, best.entry.path) < 0) firstEntry.set(page, { entry, word });
           }
-          if (cand) for (const [page, d] of next) next.set(page, d + (cand.get(page) ?? 0));
-          cand = next;
-          if (cand.size === 0) break;
+        };
+        for (const [id, folded] of this.titles) { if (tick()) return undefined; visit(id, folded); }
+        if (!titleOnly) {
+          for (const map of [this.contentEntries, this.extraEntries]) {
+            for (const e of map.values()) { if (tick()) return undefined; visit(e.page, e.folded, e); }
+          }
+          for (const [id, folded] of this.rows) { if (tick()) return undefined; visit(id, folded); }
+          for (const [id, folded] of this.extraRows) { if (tick()) return undefined; visit(id, folded); }
         }
-        for (const [page, d] of cand ?? []) {
-          const first = firstEntry.get(page);
-          const b = first ? blocks.get(first.entry.blockID) : undefined;
-          add(page, Math.max(1, EXTENDED_SCORES.fuzzy - d), first?.entry.blockID,
-            first && b ? () => snippet(this.extraEntries.get(b.id) === first.entry ? blockExtraText(b) : contentText(this, b), first.entry.folded, first.word) : undefined);
-        }
+        if (cand) for (const [page, d] of next) next.set(page, d + (cand.get(page) ?? 0));
+        cand = next;
+        if (cand.size === 0) break;
+      }
+      for (const [page, d] of cand ?? []) {
+        const first = firstEntry.get(page);
+        const b = first ? blocks.get(first.entry.blockID) : undefined;
+        add(page, Math.max(1, EXTENDED_SCORES.fuzzy - d - penalty), first?.entry.blockID,
+          first && b ? () => snippet(this.extraEntries.get(b.id) === first.entry ? blockExtraText(b) : contentText(this, b), first.entry.folded, first.word) : undefined);
+      }
+      return true;
+    };
+    if (hits.size < limit && terms.length <= 8 && fuzzyPass(terms, 0) === undefined) return undefined;
+    // Immer noch nichts: Bei drei und mehr Begriffen darf einer fehlen (ein Wort, das auf der Seite gar nicht steht).
+    if (hits.size === 0 && terms.length >= 3 && terms.length <= 6) {
+      for (let i = 0; i < terms.length; i++) {
+        if (fuzzyPass(terms.filter((_, j) => j !== i), 3) === undefined) return undefined;
       }
     }
     return true;

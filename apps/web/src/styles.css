@@ -331,7 +331,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-select select option { color: var(--ink); background: var(--bg); }
 .qf-head { padding: var(--space-3) var(--space-4) var(--space-1); }
 .qf-head:empty { display: none; }
-.qf-list { list-style: none; margin: 0; padding: var(--space-1) var(--space-2) var(--space-2); overflow-y: auto; }
+.qf-list { list-style: none; margin: 0; padding: var(--space-1) var(--space-2) var(--space-2); overflow-y: auto; overflow-x: hidden; }
 .qf-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); cursor: pointer; }
 .qf-item[aria-selected="true"] { background: var(--surface-raised); }
 .qf-item .tile { width: var(--space-6); height: var(--space-6); background: var(--surface-raised); }
@@ -339,7 +339,10 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-item .grow { flex: 1; min-width: 0; }
 .qf-item .qf-key { color: var(--muted); }
 .qf-snippet { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qf-none { padding: var(--space-3); }
+.qf-none { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); padding: var(--space-3); }
+.qf-none button { margin-top: var(--space-2); }
+.qf-foot { display: flex; gap: var(--space-4); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--line); color: var(--muted); user-select: none; }
+.qf-foot > span { display: inline-flex; align-items: center; gap: var(--space-2); }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(calc(-1 * var(--space-2))); } }
 
@@ -357,7 +360,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .dialog-report ul { margin: var(--space-1) 0 0; padding-left: var(--space-5); max-height: 30vh; overflow-y: auto; }
 .progress { height: var(--space-2); border-radius: var(--radius-pill); background: var(--surface-raised); overflow: hidden; }
 .progress > span { display: block; height: 100%; background: var(--ink-2); border-radius: inherit; transition: width var(--duration-fast) var(--ease-out); }
-.qf-snippet mark { background: var(--marker); color: inherit; border-radius: var(--radius-xs); }
+.qf-item mark { background: var(--marker); color: inherit; border-radius: var(--radius-xs); }
 
 /* Seite */
 /* BSD-345: Kopfzeile bleibt einzeilig, auch in 900 × 600 und auf tiefen Seiten. Platz gibt zuerst „Edited …“ ab
