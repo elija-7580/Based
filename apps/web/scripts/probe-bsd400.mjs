@@ -9,7 +9,7 @@ const LAST = Number(process.env.N ?? 300) - 1;
 const switches = Number(process.argv[3] ?? 4);
 const bname = process.argv[4] ?? "webkit";
 const browser = await pw[bname].launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 820 } });
+const page = await browser.newPage({ viewport: { width: 1280, height: 820 }, deviceScaleFactor: Number(process.env.DPR ?? 1) });
 await page.goto(`http://localhost:${port}/`);
 await page.getByTestId("based-root").waitFor();
 await page.waitForSelector("[data-testid=based-root][data-ready]");
@@ -62,6 +62,17 @@ if (process.env.PATCH) await page.evaluate((m) => {
   const first = () => document.querySelector("[data-editable-id]");
   if (m === "sbe") { Selection.prototype.removeAllRanges = function () {}; Selection.prototype.addRange = function (r) { this.setBaseAndExtent(r.startContainer, r.startOffset, r.endContainer, r.endOffset); }; return; }
   if (m === "collapse") { Selection.prototype.removeAllRanges = function () {}; Selection.prototype.addRange = function (r) { this.collapse(r.startContainer, r.startOffset); if (!r.collapsed) this.extend(r.endContainer, r.endOffset); }; return; }
+  if (m === "inplace") {
+    const rc = Element.prototype.replaceChildren;
+    Element.prototype.replaceChildren = function (...nodes) {
+      if (this.dataset && this.dataset.editableId && nodes.length === 1 && nodes[0] instanceof DocumentFragment) {
+        const nw = [...nodes[0].childNodes], old = [...this.childNodes];
+        if (nw.length === old.length && nw.every((n, i) => n.nodeType === 3 && old[i].nodeType === 3)) { nw.forEach((n, i) => { if (old[i].data !== n.data) old[i].data = n.data; }); globalThis.__inpl = (globalThis.__inpl || 0) + 1; return; }
+      }
+      return rc.apply(this, nodes);
+    };
+    return;
+  }
   const orig = Selection.prototype.removeAllRanges;
   Selection.prototype.removeAllRanges = function () {
     if (m === "field") { const f = first(); if (f && f !== document.activeElement) f.replaceChildren(...[...f.childNodes].map((n) => n.cloneNode(true))); }
@@ -89,10 +100,21 @@ const diag = await page.evaluate(() => ({
 const idleFrames = async (label) => { const d = await page.evaluate(() => new Promise((res) => { const fr = []; const f = () => { fr.push(performance.now()); if (fr.length < 40) requestAnimationFrame(f); else res(fr.slice(1).map((x,i)=>x-fr[i]).sort((a,b)=>a-b)); }; requestAnimationFrame(f); })); console.log(label, "p50", d[19].toFixed(1), "max", d[d.length-1].toFixed(1)); };
 await idleFrames("idle-before-click");
 if (process.env.CSS) await page.addStyleTag({ content: process.env.CSS });
+if (process.env.WRAP) await page.evaluate((m) => { const p = document.querySelector(".panel"); const f = document.createElement("div"); f.style.cssText = "flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;border-radius:var(--radius-xl);box-shadow:var(--shadow-panel);background:var(--bg)" + (m === "layer" ? ";will-change:transform" : ""); p.before(f); f.append(p); p.style.boxShadow = "none"; }, process.env.WRAP);
 await page.locator("[data-testid=block-editor]").getByText("Big page B line " + LAST, { exact: false }).click();
 await page.keyboard.press("End");
 await page.waitForTimeout(300);
 await idleFrames("idle-focused");
+if (process.env.DAMAGE) {
+  for (const what of (process.env.DAMAGE === "1" ? ["field", "dummy"] : process.env.DAMAGE.split(","))) {
+    const d = await page.evaluate((what) => new Promise((res) => {
+      const fs = [...document.querySelectorAll("[data-editable-id]")]; const f = what === "other" ? fs[fs.length - 3] : what === "top" ? fs[0] : document.activeElement; const dm = document.body.firstElementChild; const fr = [];
+      const step = () => { fr.push(performance.now()); if (what === "field" || what === "other" || what === "top") { const t = f.lastChild; if (t && t.nodeType === 3) t.data = t.data.endsWith("x") ? t.data.slice(0, -1) : t.data + "x"; } else { dm.style.width = dm.style.width === "2px" ? "1px" : "2px"; } if (fr.length < 40) requestAnimationFrame(step); else res(fr.slice(1).map((x, i) => x - fr[i]).sort((a, b) => a - b)); };
+      requestAnimationFrame(step);
+    }), what);
+    console.log("damage", what, "p50", d[19].toFixed(1), "p90", d[35].toFixed(1));
+  }
+}
 await page.evaluate(() => { globalThis.__k = []; const fr = globalThis.__fr = []; const f = () => { fr.push(performance.now()); if (fr.length < 400) requestAnimationFrame(f); }; if (globalThis.__FRAMES) requestAnimationFrame(f); });
 if (process.env.INPAGE) {
   await page.evaluate((d) => new Promise((res) => { const txt = " the quick brown fox jumps over the lazy dog"; let i = 0; const step = () => { if (i >= txt.length) return res(); document.dispatchEvent(new KeyboardEvent("keydown", { key: txt[i] })); document.execCommand("insertText", false, txt[i]); i++; setTimeout(step, d); }; step(); }), Number(process.env.DELAY ?? 30));
@@ -106,6 +128,6 @@ const q = (arr, p) => { const s = [...arr].sort((a, b) => a - b); return Math.ro
 const col = (f) => k.map((r) => r[f]).filter((x) => x >= 0);
 for (const r of k.slice(5,9)) console.log(Math.round(r.raf), r.muts.join("  "));
 const txtOk = await page.evaluate((L) => document.querySelector("[data-testid=block-editor]").textContent.includes("line " + L + " with some ordinary words to fill the row the quick brown fox jumps over the lazy dog"), LAST);
-console.log("textOk", txtOk);
+console.log("textOk", txtOk, "inplace", await page.evaluate(() => globalThis.__inpl));
 console.log(JSON.stringify({ port, switches, n: k.length, mut50: q(col("mut"), .5), raf50: q(col("raf"), .5), lat50: q(col("lat"), .5), lat95: q(col("lat"), .95), ...diag }));
 await browser.close();
