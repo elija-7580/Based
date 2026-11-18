@@ -283,6 +283,19 @@ test("BSD-542: Kurzfassung der Beta-Notizen für den Updater – höchstens 3 Pu
   assert.match(wf, /--arg notes "\$\(cat dist\/notes-short\.md\)"/);
 });
 
+// Beta-Agent 18.11.: Der aktive Workflow (.github/workflows/desktop-beta.yml) lief nach BSD-514 noch mit
+// APP_NAME „Based Beta“ – tauri baut aber „Based Notes Beta.app“, der nächste Beta-Build wäre an „Signatur prüfen“
+// gescheitert. Aktiver Workflow und Vorlage müssen ab Zeile 4 gleich sein, APP_NAME = productName des Overlays.
+test("Beta-Workflow: aktiv = Vorlage, APP_NAME passt zum productName", () => {
+  const tpl = readFileSync(new URL("../../../ci/github-actions-desktop-beta.yml", import.meta.url), "utf8");
+  const active = readFileSync(new URL("../../../.github/workflows/desktop-beta.yml", import.meta.url), "utf8");
+  const body = (s) => s.split("\n").slice(3).join("\n");
+  assert.equal(body(active), body(tpl));
+  const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
+  assert.match(active, new RegExp(`APP_NAME: ${beta.productName}\\n`));
+  assert.match(active, /--arg notes "\$\(cat dist\/notes-short\.md\)"/);
+});
+
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.
 // BSD-514 (17.11.): sichtbarer Name „Based Notes Beta“; Bundle-ID und Updater-Kanal bleiben (Daten und Updates der Tester).
 test("Beta-Overlay: eigener Name, eigene Bundle-ID, Updater auf beta-latest", () => {
