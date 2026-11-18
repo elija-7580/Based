@@ -24,6 +24,9 @@ export interface CellEditorProps {
   onTab?: (dir: 1 | -1) => void;
   /** Erstes getipptes Zeichen, das den Editor geöffnet hat. */
   initialText?: string | undefined;
+  /** BSD-536: Zeichen, die nach dem ersten, aber vor dem Fokus des Feldes kamen (Tabelle sammelt sie, der Editor
+   *  übernimmt sie beim Öffnen und leert den Puffer). Enthält `initialText` schon. */
+  typeAhead?: { current: string | null } | undefined;
 }
 
 /** Hat der Typ einen Editor (sonst: nur anzeigen bzw. Checkbox direkt umschalten)? */
@@ -44,14 +47,32 @@ export function CellEditor(props: CellEditorProps) {
   }
 }
 
-function TextEditor({ row, prop, anchor, onClose, onCommitNext, onTab, initialText }: CellEditorProps) {
+function TextEditor({ row, prop, anchor, onClose, onCommitNext, onTab, initialText, typeAhead }: CellEditorProps) {
   const { store } = useDB();
   const [text, setText] = useState(initialText ?? editText(row, prop));
   const [invalid, setInvalid] = useState(false);
   const done = useRef(false);
   const field = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
-  // Einmal beim Öffnen: Cursor ans Ende (nach dem Autofokus des Popovers).
-  useEffect(() => { const el = field.current; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, []);
+  // Einmal beim Öffnen: Fokus ins Feld, Cursor ans Ende. Das Popover ist im ersten Bild noch unsichtbar, dann greift
+  // der Fokus erst ein Bild später – bis dahin sammelt die Tabelle getippte Zeichen (BSD-536). Sie kommen in dem
+  // Moment ins Feld, in dem es den Fokus wirklich hat.
+  useEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    const take = () => {
+      const pending = typeAhead?.current ?? null;
+      if (typeAhead) typeAhead.current = null;
+      if (pending !== null && initialText !== undefined && pending !== initialText) {
+        el.value = pending;
+        setText(pending);
+      }
+      el.setSelectionRange(el.value.length, el.value.length);
+    };
+    if (document.activeElement === el) { take(); return; }
+    el.addEventListener("focus", take, { once: true });
+    el.focus();
+    return () => el.removeEventListener("focus", take);
+  }, []);
   const commit = () => {
     if (done.current) return true;
     if (text === editText(row, prop)) { done.current = true; return true; }

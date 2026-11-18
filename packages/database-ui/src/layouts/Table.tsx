@@ -213,10 +213,16 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   }, [offsets]);
   useEffect(() => { if (active) revealCol(active.col); }, [active, revealCol]);
 
+  // BSD-536: Zwischen dem ersten getippten Zeichen und dem Fokus des Zelleneditors kommen weitere Tasten noch bei der
+  // Tabelle an. Sie werden hier gesammelt und vom Editor beim Öffnen übernommen (null = nichts offen).
+  const typeAhead = useRef<string | null>(null);
+  useEffect(() => { if (!editing) typeAhead.current = null; }, [editing]);
   const beginEdit = useCallback((rowID: string, col: number, initialText?: string) => {
     const row = store.blocks.get(rowID);
     const p = props[col];
+    typeAhead.current = null;
     if (!row || !p || locked) return;
+    if (initialText !== undefined && p.type !== "place") typeAhead.current = initialText;
     if (p.type === "checkbox") {
       const c = valueCase(row.values?.[p.id]);
       setValue(store, row.id, p.id, pv("checkbox", !(c?.[0] === "checkbox" && c[1] === true)));
@@ -322,6 +328,12 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // BSD-536: Der Editor öffnet gerade – Zeichen, die noch an der Tabelle selbst ankommen, gehören ins Feld.
+    if (typeAhead.current !== null && e.target === e.currentTarget && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      e.preventDefault();
+      typeAhead.current += e.key;
+      return;
+    }
     if (editing) return;
     if (!active) {
       if (e.target === e.currentTarget && ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(e.key)) {
@@ -620,8 +632,8 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
         {props.map((p, i) => <CalcCell key={p.id} p={p} width={widths[i]!} view={view} rows={result.rows} />)}
       </div>
       {editing && editingRow && editingProp && (
-        <CellEditor row={editingRow} prop={editingProp} anchor={editing.anchor} initialText={editing.initialText}
-          onClose={() => { setEditing(null); gridRef.current?.focus({ preventScroll: true }); }}
+        <CellEditor row={editingRow} prop={editingProp} anchor={editing.anchor} initialText={editing.initialText} typeAhead={typeAhead}
+          onClose={() => { typeAhead.current = null; setEditing(null); gridRef.current?.focus({ preventScroll: true }); }}
           onTab={(dir) => {
             const next = tabFrom({ rowID: editing.rowID, col: editing.col }, dir);
             if (next) goTo(next.cell, false);
