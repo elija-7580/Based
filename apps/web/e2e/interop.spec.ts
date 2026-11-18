@@ -106,7 +106,7 @@ test("Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bi
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
-  await expect(dialog).toContainText("Obsidian vault");
+  await expect(dialog.getByTestId("import-sources")).toContainText("ObsidianChoose the vault folder"); // BSD-567: je App eine Zeile
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
   const vault = zip([
     { path: "Garden/.obsidian/app.json", data: Buffer.from("{}") },
@@ -163,7 +163,7 @@ test("Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
-  await expect(dialog).toContainText("Bear export");
+  await expect(dialog.getByTestId("import-sources")).toContainText("Bear"); // BSD-567
   const bear = zip([
     { path: "Bear Notes/Shopping.textbundle/text.md", data: Buffer.from("# Shopping\n\n::Urgent:: buy for [[Dinner ideas]]\n- [ ] Lemons") },
     { path: "Bear Notes/Shopping.textbundle/info.json", data: Buffer.from(JSON.stringify({ version: 2, creatorIdentifier: "net.shinyfrog.bear" })) },
@@ -330,7 +330,7 @@ test("Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
-  await expect(dialog).toContainText("Joplin (.jex)");
+  await expect(dialog.getByTestId("import-sources")).toContainText("JEX (.jex)"); // BSD-567
   const id = (c: string) => c.repeat(32);
   const item = (title: string, body: string, meta: Record<string, string | number>) => `${title}\n\n${body}${body ? "\n\n" : ""}${Object.entries(meta).map(([k, v]) => `${k}: ${v}`).join("\n")}`;
   const jex = tar([
