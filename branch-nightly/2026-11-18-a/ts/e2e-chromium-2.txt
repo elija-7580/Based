@@ -1,5 +1,5 @@
-failure cdb2c8b2de35c5bef062864dae722b3ba738affa
-  ✓  273 [chromium] › e2e/welcome.spec.ts:256:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.2s)
+failure 6f4d90005d12ca50bf65bb2ae99351780576ae0e
+  ✓  273 [chromium] › e2e/welcome.spec.ts:256:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.8s)
 
 
   1) [chromium] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
@@ -55,7 +55,7 @@ failure cdb2c8b2de35c5bef062864dae722b3ba738affa
   1 failed
     [chromium] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
   12 skipped
-  259 passed (5.4m)
+  259 passed (5.6m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf

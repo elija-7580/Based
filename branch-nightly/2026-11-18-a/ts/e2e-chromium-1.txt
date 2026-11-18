@@ -1,4 +1,34 @@
-failure cdb2c8b2de35c5bef062864dae722b3ba738affa
+failure 6f4d90005d12ca50bf65bb2ae99351780576ae0e
+  ✓  293 [chromium] › e2e/interop.spec.ts:354:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.6s)
+
+
+  1) [chromium] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('settings-section-start-page').getByTestId('home-current')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('settings-section-start-page').getByTestId('home-current') with timeout 5000ms
+      - waiting for getByTestId('settings-section-start-page').getByTestId('home-current')
+
+
+      168 |   await page.keyboard.press("ControlOrMeta+Comma");
+      169 |   const section = page.getByTestId("settings-section-start-page");
+    > 170 |   await expect(section.getByTestId("home-current")).toBeVisible();
+          |                                                     ^
+      171 |   await section.getByRole("button", { name: "Choose page…" }).click();
+      172 |   const dialog = page.getByTestId("page-picker");
+      173 |   await expect(dialog).toBeVisible();
+        at /home/runner/work/Based/Based/apps/web/e2e/feedback-1111.spec.ts:170:53
+
+    Error Context: test-results/feedback-1111-Feedback-14--2b58a-nd-Pfad-finden-zurücksetzen-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
     Error: expect(locator).toBeVisible() failed
 
     Locator: getByTestId('settings-section-start-page').getByTestId('home-current')
@@ -22,40 +52,10 @@ failure cdb2c8b2de35c5bef062864dae722b3ba738affa
 
     Error Context: test-results/feedback-1111-Feedback-14--2b58a-nd-Pfad-finden-zurücksetzen-chromium-retry1/error-context.md
 
-  3) [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) ───────────────────────────
-
-    Error: expect(locator).toHaveAttribute(expected) failed
-
-    Locator:  getByTestId('home-task-card')
-    Expected: "done"
-    Received: "received"
-    Timeout:  10000ms
-
-    Call log:
-      - Expect "toHaveAttribute" getByTestId('home-task-card') with timeout 10000ms
-      - waiting for getByTestId('home-task-card')
-        24 × locator resolved to <article class="task-cardx" aria-live="polite" data-phase="received" aria-label="Task card" data-testid="home-task-card" data-task-id="855378bd-538c-43db-b6c4-d80b223e8721">…</article>
-           - unexpected value "received"
-
-
-      241 |     await shot("received");
-      242 |     await call(page, "setOnline", true);
-    > 243 |     await expect(card(page)).toHaveAttribute("data-phase", "done", { timeout: 10_000 });
-          |                              ^
-      244 |     await shot("done");
-      245 |     await send(page, "Add this to the project");
-      246 |     await expect(card(page)).toHaveAttribute("data-phase", "question", { timeout: 10_000 });
-        at /home/runner/work/Based/Based/apps/web/e2e/home.spec.ts:243:30
-
-    Error Context: test-results/home-Screenshots-Startseite-dark--chromium/error-context.md
-
-  2 failed
-    [chromium] › e2e/block-link.spec.ts:10:1 › Link zu einem Block kopieren und öffnen ─────────────
+  1 failed
     [chromium] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen 
-  1 flaky
-    [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) ────────────────────────────
   17 skipped
-  272 passed (9.0m)
+  274 passed (7.3m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
