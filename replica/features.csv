@@ -140,7 +140,7 @@ Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip d
 Import Markdown files,import,must,yes,yes,,yes,beta
 Export page as Markdown,export,must,yes,yes,,yes,beta
 Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft),beta
-Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt)",beta
+Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt; BSD-550: Standard beim ersten Start System, gespeicherte Wahl bleibt, index.html setzt Hell/Dunkel vor dem ersten Bild)",beta
 Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","yes: ⌘K/⌘P, ⌘N Palette „New…“, ⌥⌘N, ⌘,, ⌘\, ⌘J, ⌘T/⌘W, ⌘1–9, ⌘[ ⌘], ⇧⌘[ ⇧⌘], ⇧⌘L, ⇧⌘U Elternseite (BSD-168), F6 (BSD-204/238); im Browser-Tab fängt der Browser ⌘N/⌘T/⌘W/⌘1–9 ab, in der App nicht",beta
 Settings,app,must,yes,yes,,"yes (BSD-168): 17 Seiten im Notion-Stil; Appearance, Home, Writing (Schrift/Small text/Full width für neue Seiten, Rechtschreibprüfung), Workspace-Name/-Icon, Wochenbeginn, Sync, lokaler Server & CLI, Import/Export, Agents & AI, Connections, Updates (automatisch an/aus), Diagnostics mit Log, About. Nach der Beta (Konten/Mehrbenutzer/Mobil): People, Teamspace-Regeln, Security, Benachrichtigungen, App-Sprache, Zeitzone/Formate, iCloud (BSD-296)",beta
 iPhone keyboard toolbar,mobile,must,yes,yes,,no (Phase 5 mobil),after
