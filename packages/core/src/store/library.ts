@@ -45,7 +45,7 @@ export interface LibraryQuery {
 
 export const titleKey = (t: string) => t.trim().toLowerCase();
 
-/** Jeder Eintrag außerhalb des Papierkorbs, unsortiert. Ein Durchlauf, Vorfahren-Infos gemerkt. */
+/** Jeder Eintrag außerhalb des Papierkorbs, unsortiert. Ein Durchlauf über das Gerüst, Vorfahren-Infos gemerkt. */
 export function libraryItems(store: WorkspaceStore): LibraryItem[] {
   const favorites = new Set(store.workspace.favorites);
   const teamspaces = new Map((store.workspace.teamspaces ?? []).map((t) => [t.id, t.name]));
@@ -92,7 +92,9 @@ export function libraryItems(store: WorkspaceStore): LibraryItem[] {
   };
 
   const out: LibraryItem[] = [];
-  for (const b of store.blocks.values()) {
+  // BSD-515 (ADR 0017 B2): Einträge sind Seiten, Datenbanken und Zeilen – alles Gerüst. Mit Laden nach Bedarf liegt
+  // es immer im Speicher; `blocks.values()` holte dafür den ganzen Workspace.
+  for (const b of store.skeletonBlocks()) {
     let kind: LibraryKind;
     if (b.type === "databasePage") kind = "database";
     else if (b.type === "databaseInline") {

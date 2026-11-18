@@ -1,6 +1,6 @@
 // ADR 0016 (E5, erster Teil): Einträge des Slash-Menüs im Block-Editor. Reine Daten + Filter; Kürzel im Mac-Stil.
 import type { BlockIconName } from "./icons.js";
-import { blockCommands, createDatabase, createFuzzyIndex, insertMeetingAfter, insertPage, type Block, type FuzzyIndex, type WorkspaceStore } from "@based/core";
+import { blockCommands, createDatabase, insertBoardPage, createFuzzyIndex, insertMeetingAfter, insertPage, type Block, type FuzzyIndex, type WorkspaceStore } from "@based/core";
 
 export interface SlashItem {
   type: string;
@@ -64,7 +64,6 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
     const f = blockCommands.insertTable(store, after, replace);
     return f && "blockId" in f ? f.blockId : undefined;
   } },
-  ...[2, 3, 4, 5].map((n): SlashItem => ({ type: "columnList", label: `${n} columns`, group: "Advanced", icon: "columns", keywords: `columns layout side ${n}`, columns: n })),
   { type: "page", label: "Page", group: "Pages", icon: "page", keywords: "subpage new page", page: subPage },
   { type: "databaseInline", label: "Database", group: "Pages", icon: "database", keywords: "table inline database grid", create: (store, after, replace) => {
     const a = store.blocks.get(after);
@@ -72,6 +71,18 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
     const r = createDatabase(store, { parent: a.parent, inline: true, position: { after } });
     if (replace) store.transact("Remove empty block", (tx) => tx.remove(`block:${after}`), { coalesce: "db:" + r.blockID });
     return r.blockID;
+  } },
+  // Elija 17.11.: ein Whiteboard mitten in der Seite (eine Board-Unterseite, die in der Seite als Fläche erscheint).
+  { type: "page", label: "Whiteboard", group: "Pages", icon: "boardPen", keywords: "board drawing draw sketch canvas freeform pen", create: (store, after, replace) => {
+    const a = store.blocks.get(after);
+    const parentPage = a?.parent.startsWith("b:") ? a.parent.slice(2) : undefined;
+    if (!parentPage) return undefined;
+    let id: string | undefined;
+    store.transact("New whiteboard", (tx) => {
+      id = insertBoardPage(store, tx, { parent: parentPage, position: { kind: "after", id: after }, title: "Whiteboard" });
+      if (replace) tx.remove(`block:${after}`);
+    });
+    return id;
   } },
   { type: "databaseInline", label: "Linked view of database", group: "Pages", icon: "linkedDatabase", keywords: "linked database view existing", linkDatabase: true },
   { type: "image", label: "Image", group: "Media", icon: "image", keywords: "picture photo upload" },
@@ -81,6 +92,8 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "pdf", label: "PDF", group: "Media", icon: "file", keywords: "pdf document viewer upload" },
   { type: "bookmark", label: "Web bookmark", group: "Media", icon: "bookmark", keywords: "link url preview" },
   { type: "embed", label: "Embed", group: "Media", icon: "embed", keywords: "iframe link url" },
+  // BSD-484: Spalten stehen im Advanced-Block (vorher davor → „Advanced“ erschien zweimal)
+  ...[2, 3, 4, 5].map((n): SlashItem => ({ type: "columnList", label: `${n} columns`, group: "Advanced", icon: "columns", keywords: `columns layout side ${n}`, columns: n })),
   { type: "equation", label: "Block equation", group: "Advanced", icon: "equation", keywords: "math latex tex formula", props: { expression: "" } },
   { type: "inlineEquation", label: "Inline equation", group: "Advanced", icon: "inlineEquation", keywords: "math latex tex formula inline", inline: "equation" },
   // BSD-407 Teil 3: wie im alten Editor eigene Einträge für Codeblöcke mit Vorschau
@@ -126,6 +139,7 @@ const ALIASES: Record<string, string> = {
   "Divider": "rule horizontal break trennlinie linie trenner strich",
   "Simple table": "table spreadsheet tabelle raster",
   "Page": "document doc subpage seite unterseite dokument",
+  "Whiteboard": "board tafel zeichnen skizze zeichnung freihand stift",
   "Database": "db table board kanban list gallery calendar datenbank tabelle",
   "Linked view of database": "db reference datenbank verknüpft ansicht",
   "Image": "img picture photo screenshot bild foto grafik",
@@ -163,5 +177,19 @@ function indexOf(items: readonly SlashItem[]): FuzzyIndex<SlashItem> {
  */
 export function filterSlash(items: readonly SlashItem[], query: string): SlashItem[] {
   if (!query.trim()) return [...items];
-  return indexOf(items).search(query);
+  return groupedByFirstHit(indexOf(items).search(query));
+}
+
+/**
+ * BSD-484: Das Menü setzt bei jedem Gruppenwechsel einen Kopf. Treffer daher nach Gruppe zusammenfassen – die Gruppen
+ * in der Reihenfolge ihres besten Treffers, darin die Treffer-Reihenfolge. Der beste Treffer bleibt oben.
+ */
+function groupedByFirstHit(hits: readonly SlashItem[]): SlashItem[] {
+  const groups = new Map<string, SlashItem[]>();
+  for (const it of hits) {
+    const g = groups.get(it.group);
+    if (g) g.push(it);
+    else groups.set(it.group, [it]);
+  }
+  return [...groups.values()].flat();
 }

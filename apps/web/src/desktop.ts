@@ -6,7 +6,7 @@
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
 import { checkReleasesFallback, isMissingUpdateManifest, releaseLine } from "./shell/updateFallback.js";
-import { CHANNEL } from "./shell/beta.js";
+import { CHANNEL, productName } from "./shell/beta.js";
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
 import { askUser, showMessage } from "./shell/prompts.js";
@@ -34,7 +34,7 @@ export function applyDesktopShell(root: HTMLElement = document.documentElement) 
 
 let checking = false;
 
-/** Name und Version dieser App, wie sie im Bundle stehen („Based Next“ 0.1.155, „Based Beta“ 0.2.3). */
+/** Name und Version dieser App, wie sie im Bundle stehen („Based Next“ 0.1.155, „Based Notes Beta“ 0.2.5). */
 export interface AppIdentity { name: string; version: string }
 let identity: Promise<AppIdentity> | undefined;
 export function appIdentity(): Promise<AppIdentity> {
@@ -52,10 +52,19 @@ export function upToDateText(app: AppIdentity): string {
   return `You’re on the newest version: ${app.name} ${app.version}.`;
 }
 
-/** BSD-168: Text des Update-Dialogs mit den Notizen aus latest.json (höchstens 12 Zeilen). */
+/** Längste Zeile der Notizen im Update-Dialog; längere enden mit „…“. */
+export const UPDATE_NOTE_CHARS = 110;
+/** Höchstens so viele Zeilen Notizen im Update-Dialog. */
+export const UPDATE_NOTE_LINES = 8;
+
+/**
+ * BSD-168: Text des Update-Dialogs mit den Notizen aus latest.json. Elija 17.11.: kurz halten – höchstens 8 Zeilen,
+ * jede höchstens 110 Zeichen (die Notizen kommen vom Server; der Dialog muss auch mit langen bedienbar bleiben).
+ */
 export function updatePrompt(version: string, current: string, notes?: string, name = "Based Next"): string {
-  const lines = (notes ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
-  const shown = lines.slice(0, 12);
+  const lines = (notes ?? "").split("\n").map((l) => l.trim()).filter(Boolean)
+    .map((l) => (l.length > UPDATE_NOTE_CHARS ? `${l.slice(0, UPDATE_NOTE_CHARS - 1).trimEnd()}…` : l));
+  const shown = lines.slice(0, UPDATE_NOTE_LINES);
   const more = lines.length > shown.length ? `\n… and ${lines.length - shown.length} more` : "";
   const body = shown.length ? `\n\nWhat’s new:\n${shown.join("\n")}${more}` : "";
   return `${name} ${version} is available (you have ${current}).${body}\n\nInstall it and restart now?`;
@@ -160,6 +169,8 @@ export async function startDesktop(tabs?: { close: () => void; count: () => numb
   if (main) for (const ev of ["tauri://close-requested", "tauri://destroyed"]) await win.listen(ev, () => markSessionEnd());
   // BSD-319: Hilfe → „Report a Problem…“ (⇧⌘B) – im Fenster vorn.
   await win.listen("desktop://report-problem", () => void window.dispatchEvent(new CustomEvent(REPORT_PROBLEM_EVENT)));
+  // Mac-Menü: Befehle aus dem Tastatur-Register (File, Edit, View, Go, Help) – im Fenster vorn.
+  await win.listen<string>("desktop://command", (e) => void window.dispatchEvent(new CustomEvent("based:command", { detail: e.payload })));
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
   if (main && autoUpdatePref.get()) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }
@@ -195,7 +206,7 @@ export async function openPageWindow(hash: string, title: string): Promise<void>
   const [{ WebviewWindow }, { LogicalPosition }] = await Promise.all([import("@tauri-apps/api/webviewWindow"), import("@tauri-apps/api/dpi")]);
   const label = "page-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   new WebviewWindow(label, {
-    url, title: title || "Based Next", width: 1000, height: 760, minWidth: 600, minHeight: 400,
+    url, title: title || productName(), width: 1000, height: 760, minWidth: 600, minHeight: 400,
     titleBarStyle: "overlay", hiddenTitle: true, trafficLightPosition: new LogicalPosition(18, 22), dragDropEnabled: false,
   });
 }

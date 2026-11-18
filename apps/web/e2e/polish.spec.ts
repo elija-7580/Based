@@ -503,3 +503,82 @@ test("Datei-Block: Vorschau für Text und CSV", async ({ page }) => {
     await page.evaluate(() => localStorage.removeItem("based.appearance"));
   }
 });
+
+// BSD-484: Jeder Gruppenkopf im Slash-Menü höchstens einmal – ungefiltert (vorher „Advanced“ zweimal) und gefiltert.
+test("Slash-Menü: Gruppenköpfe kommen je einmal vor, auch beim Filtern", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await fresh(page);
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await focusEditorEnd(page);
+  const menu = page.getByTestId("slash-menu");
+  const heads = () => menu.locator(".bx2-menu-label").allTextContents();
+  await page.keyboard.type("/");
+  await expect(menu).toBeVisible();
+  const all = await heads();
+  expect(all.filter((h) => h === "Advanced")).toHaveLength(1);
+  expect(new Set(all).size).toBe(all.length);
+  for (const q of ["h", "e", "co"]) {
+    await page.keyboard.type(q);
+    await expect(menu.getByRole("option").first()).toBeVisible();
+    const filtered = await heads();
+    expect(new Set(filtered).size, `/${q}: ${filtered.join(", ")}`).toBe(filtered.length);
+    if (q === "h" && browserName === "chromium") {
+      await page.screenshot({ path: "../../docs/design/screens/slash-menu-groups-light.png" });
+      await page.keyboard.press("ControlOrMeta+Shift+l");
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: "../../docs/design/screens/slash-menu-groups-dark.png" });
+      await page.keyboard.press("ControlOrMeta+Shift+l");
+    }
+    for (let i = 0; i < q.length; i++) await page.keyboard.press("Backspace");
+  }
+});
+
+// BSD-498: Unten im Fenster klappen Slash- und @-Menü über die Zeile, statt sie zu überdecken.
+test("Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster", async ({ page, browserName }) => {
+  for (const [w, h] of [[1280, 820], [900, 600]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    await fresh(page);
+    await page.keyboard.press("ControlOrMeta+Alt+n");
+    await focusEditorEnd(page);
+    // Zeilen bis kurz vor den unteren Rand
+    for (let i = 0; i < 40; i++) {
+      const box = await page.locator("[data-editable-id]:focus").boundingBox();
+      if (box && box.y > h - 140) break;
+      await page.keyboard.type(`Line ${i + 1}`);
+      await page.keyboard.press("Enter");
+    }
+    const line = (await page.locator("[data-editable-id]:focus").boundingBox())!;
+    for (const [key, id] of [["/", "slash-menu"], ["@", "mention-menu"]] as const) {
+      await page.keyboard.type(key);
+      const menu = page.getByTestId(id);
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole("option").first()).toBeVisible();
+      const m = (await menu.boundingBox())!;
+      const overlaps = m.y < line.y + line.height && m.y + m.height > line.y;
+      expect(overlaps, `${key} ${w} × ${h}: Menü ${Math.round(m.y)}–${Math.round(m.y + m.height)}, Zeile ${Math.round(line.y)}–${Math.round(line.y + line.height)}`).toBe(false);
+      expect(m.y).toBeGreaterThanOrEqual(0);
+      expect(m.y + m.height).toBeLessThanOrEqual(h);
+      if (key === "/" && w === 1280 && browserName === "chromium") {
+        await page.screenshot({ path: "../../docs/design/screens/slash-menu-above-light.png" });
+        await page.keyboard.press("ControlOrMeta+Shift+l");
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: "../../docs/design/screens/slash-menu-above-dark.png" });
+        await page.keyboard.press("ControlOrMeta+Shift+l");
+      }
+      // Filtern: das Menü bleibt über der Zeile
+      if (key === "/") {
+        await page.keyboard.type("he");
+        await expect(menu.getByRole("option").first()).toBeVisible();
+        const f = (await menu.boundingBox())!;
+        expect(f.y + f.height, "gefiltert über der Zeile").toBeLessThanOrEqual(line.y + 1);
+        await page.keyboard.press("Backspace");
+        await page.keyboard.press("Backspace");
+      }
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeHidden();
+      await page.keyboard.press("Backspace");
+    }
+  }
+});

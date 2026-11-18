@@ -2,10 +2,9 @@
 // Import-Worker vorbereiten – mit Fortschritt und Abbrechen –, dann im Store-Worker schreiben und berichten.
 // Export: Seite als Markdown, HTML (eigenständige Datei oder ZIP mit Unterseiten/assets) oder PDF (Druckansicht);
 // Workspace als ZIP (Markdown oder HTML mit assets/) oder Based-Archiv, als Download.
-import { BasedButton } from "@based/ui/astryx";
+import { BasedButton, BasedSwitcher } from "@based/ui/astryx";
 import { useReturnFocus } from "@based/ui/native";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { exportStylesheet } from "../shell/exportCss.js";
 import { printHTML } from "../shell/print.js";
@@ -252,10 +251,8 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
       {pageID && format === "html" ? (
         <div className="export-options" data-testid="html-export-options">
           <CheckboxInput label="Include sub-pages" description="Each sub-page becomes its own file, in a folder next to this page." value={subpages} onChange={setSubpages} />
-          <SegmentedControl label="Images" value={images} onChange={(v) => setImages(v === "folder" ? "folder" : "embed")}>
-            <SegmentedControlItem value="embed" label="Embedded in the page" />
-            <SegmentedControlItem value="folder" label="In an assets folder" />
-          </SegmentedControl>
+          <BasedSwitcher label="Images" value={images} onChange={(v) => setImages(v === "folder" ? "folder" : "embed")}
+            items={[{ id: "embed", label: "Embedded in the page" }, { id: "folder", label: "In an assets folder" }]} />
           <p className="t-desc">{zip ? "You get a ZIP with the page" + (subpages ? ", its sub-pages" : "") + (images === "folder" ? " and an assets folder." : ".") : "You get one .html file. Attached files that can't be embedded (PDF, video) come along in a ZIP."}</p>
         </div>
       ) : null}

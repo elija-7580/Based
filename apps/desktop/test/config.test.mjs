@@ -47,7 +47,7 @@ test("BSD-138/414: Bundle und Node als Resource (kein externalBin); Shell-Plugin
   assert.equal(conf.bundle.externalBin, undefined);
   // BSD-314: node-pty (native Datei für das Terminal) liegt daneben in node_modules/, nicht im Bundle.
   // BSD-414: die mitgelieferte Node liegt als Resource node/ bei (fetch-node.mjs), weiter kein externalBin.
-  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/", "../dist-sidecar/node/": "node/" });
+  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/", "../dist-sidecar/node/": "node/", "../dist-sidecar/whisper/": "whisper/" });
   assert.match(conf.build.beforeBuildCommand, /@based\/desktop sidecar/);
   assert.match(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.sidecar, /fetch-node\.mjs && node scripts\/sign-node\.mjs/);
   assert.match(conf.build.beforeDevCommand, /@based\/desktop sidecar/);
@@ -184,13 +184,126 @@ test("Entitlements: Mikrofon-Recht der App, in beiden Kanälen eingebunden", () 
   assert.equal(beta.bundle?.macOS, undefined);
 });
 
+// BSD-231 (Elija 17.11.): whisper.cpp liegt der App bei – gebaut aus dem gepinnten Stand, nie ein Build-Abbruch.
+test("whisper.cpp: Ziele, cmake-Argumente, Cache, universelle Datei, Fehler brechen den Build nicht ab", async () => {
+  const { buildWhisper, cmakeArgs, whisperArchs, WHISPER_COMMIT, WHISPER_VERSION, MACOS_MIN } = await import("../scripts/build-whisper.mjs");
+  const { fatArchs } = await import("../scripts/macho.mjs");
+  const { mkdirSync, mkdtempSync, rmSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  assert.deepEqual(whisperArchs({ triple: "universal-apple-darwin" }), ["arm64", "x86_64"]);
+  assert.deepEqual(whisperArchs({ triple: "aarch64-apple-darwin" }), ["arm64"]);
+  assert.deepEqual(whisperArchs({ triple: "x86_64-unknown-linux-gnu" }), []);
+  assert.deepEqual(whisperArchs({ platform: "darwin", arch: "x64" }), ["x86_64"]);
+  assert.deepEqual(whisperArchs({ platform: "linux", arch: "x64" }), []);
+  assert.equal(MACOS_MIN, conf.bundle.macOS.minimumSystemVersion);
+  const args = cmakeArgs({ src: "/s", build: "/b", arch: "x86_64" });
+  for (const a of ["-DCMAKE_OSX_ARCHITECTURES=x86_64", "-DBUILD_SHARED_LIBS=OFF", "-DGGML_NATIVE=OFF", "-DGGML_METAL_EMBED_LIBRARY=ON", "-DWHISPER_CURL=OFF"]) assert.ok(args.includes(a), a);
+  assert.match(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts.sidecar, /build-whisper\.mjs && node scripts\/fetch-node\.mjs/);
+
+  const dir = mkdtempSync(join(tmpdir(), "based-whisper-build-"));
+  try {
+    // Doppel für git/cmake: legt Quellstand und „Programm“ (Mach-O-Kopf der Architektur) an und zählt die Aufrufe.
+    const macho = (cpu) => { const b = Buffer.alloc(64); b.writeUInt32LE(0xfeedfacf, 0); b.writeInt32LE(cpu, 4); return b; };
+    const calls = [];
+    let commit = WHISPER_COMMIT;
+    const run = (cmd, a) => {
+      calls.push([cmd, ...a].join(" "));
+      if (cmd === "git" && a.includes("rev-parse")) { if (!existsSync(join(a[1], "LICENSE"))) throw new Error("no repo"); return commit + "\n"; }
+      if (cmd === "git" && a.includes("clone")) { mkdirSync(a.at(-1), { recursive: true }); writeFileSync(join(a.at(-1), "LICENSE"), "MIT"); return ""; }
+      if (cmd === "cmake" && a[0] === "--build") {
+        const arch = /-(arm64|x86_64)$/.exec(a[1])[1];
+        mkdirSync(join(a[1], "bin"), { recursive: true });
+        writeFileSync(join(a[1], "bin", "whisper-cli"), macho(arch === "arm64" ? 0x0100000c : 0x01000007));
+      }
+      return "";
+    };
+    const log = [];
+    const o = { out: join(dir, "out"), cache: join(dir, "cache"), run, log: (m) => log.push(m) };
+    assert.equal(await buildWhisper({ ...o, archs: [] }), false);
+    assert.equal(existsSync(join(dir, "out", "README.txt")), true);
+    assert.equal(await buildWhisper({ ...o, archs: ["arm64", "x86_64"] }), true);
+    assert.deepEqual(fatArchs(readFileSync(join(dir, "out", "whisper-cli"))).map((a) => a.name).sort(), ["arm64", "x86_64"]);
+    assert.equal(readFileSync(join(dir, "out", "LICENSE"), "utf8"), "MIT");
+    assert.ok(calls.some((c) => c.includes(`--branch ${WHISPER_VERSION}`)));
+    // zweiter Lauf: aus dem Cache, ohne git und cmake
+    const before = calls.length;
+    assert.equal(await buildWhisper({ ...o, archs: ["arm64", "x86_64"] }), true);
+    assert.equal(calls.length, before);
+    // falscher Commit (Tag verschoben) oder Fehler von cmake: kein Programm, kein Abbruch
+    commit = "0".repeat(40);
+    assert.equal(await buildWhisper({ ...o, cache: join(dir, "cache2"), archs: ["arm64"] }), false);
+    assert.equal(existsSync(join(dir, "out", "whisper-cli")), false);
+    commit = WHISPER_COMMIT;
+    const failing = (cmd, a) => { if (cmd === "cmake") throw Object.assign(new Error("cmake failed"), { stderr: "CMake Error: no compiler" }); return run(cmd, a); };
+    assert.equal(await buildWhisper({ ...o, cache: join(dir, "cache3"), run: failing, archs: ["arm64"] }), false);
+    assert.equal(existsSync(join(dir, "out", "whisper-cli")), false);
+    assert.match(log.at(-1), /build failed .*no compiler/);
+    // Signierplan: whisper-cli mit Hardened Runtime, ohne besondere Rechte
+    const { signTargets } = await import("../scripts/sign-node.mjs");
+    mkdirSync(join(dir, "dist", "whisper"), { recursive: true });
+    writeFileSync(join(dir, "dist", "whisper", "whisper-cli"), "x");
+    assert.deepEqual(signTargets(join(dir, "dist")), [{ path: join(dir, "dist", "whisper", "whisper-cli"), entitlements: false }]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// Elija 17.11.: Die Notizen von beta 0.2.4 (33 Zeilen) machten den Update-Dialog unbedienbar. Der oberste Abschnitt
+// von docs/beta/RELEASE_NOTES.md geht in latest.json (Workflow: awk '/^## /{n++; next} n==1') – er bleibt kurz.
+test("Beta-Release-Notes: oberster Abschnitt passt in den Update-Dialog (≤ 8 Zeilen, je ≤ 110 Zeichen)", () => {
+  const notes = readFileSync(new URL("../../../docs/beta/RELEASE_NOTES.md", import.meta.url), "utf8");
+  let n = 0;
+  const top = notes.split("\n").filter((l) => { if (/^## /.test(l)) { n += 1; return false; } return n === 1; }).filter((l) => l.trim() !== "");
+  assert.ok(top.length >= 1 && top.length <= 8, `${top.length} lines`);
+  for (const l of top) {
+    assert.ok(l.length <= 110, `${l.length} chars: ${l}`);
+    assert.match(l, /^- \S/, `one point per line, no wrapped lines: ${l}`);
+  }
+});
+
+// BSD-542: latest.json der Beta bekommt nur die Kurzfassung (der Dialog von 0.2.2–0.2.4 scrollt nicht).
+test("BSD-542: Kurzfassung der Beta-Notizen für den Updater – höchstens 3 Punkte à 80 Zeichen, Workflow nutzt sie", async () => {
+  const { shortNotes, topSection } = await import("../scripts/beta-notes.mjs");
+  const notes = readFileSync(new URL("../../../docs/beta/RELEASE_NOTES.md", import.meta.url), "utf8");
+  const short = shortNotes(notes).split("\n");
+  assert.ok(short.length >= 1 && short.length <= 3, short.join("\n"));
+  for (const l of short) {
+    assert.ok([...l].length <= 82, `${[...l].length}: ${l}`); // „• “ + 80
+    assert.match(l, /^• \S/);
+  }
+  assert.equal(short[0].slice(2, 22), topSection(notes)[0].replace(/^- /, "").slice(0, 20)); // die ersten Punkte des obersten Abschnitts
+  const long = "## 1\n\n- " + "word ".repeat(40) + "\n- two\n- three\n- four\n## old\n- no";
+  assert.deepEqual(shortNotes(long).split("\n").map((l) => [...l].length <= 82), [true, true, true]);
+  assert.equal(shortNotes(long).split("\n").length, 3);
+  assert.ok(shortNotes(long).startsWith("• word word") && shortNotes(long).split("\n")[0].endsWith(" …"));
+  assert.equal(shortNotes("# nothing\n"), "• Small fixes and improvements");
+  const wf = readFileSync(new URL("../../../ci/github-actions-desktop-beta.yml", import.meta.url), "utf8");
+  assert.match(wf, /beta-notes\.mjs docs\/beta\/RELEASE_NOTES\.md --short > dist\/notes-short\.md/);
+  assert.match(wf, /--arg notes "\$\(cat dist\/notes-short\.md\)"/);
+});
+
+// Beta-Agent 18.11.: Der aktive Workflow (.github/workflows/desktop-beta.yml) lief nach BSD-514 noch mit
+// APP_NAME „Based Beta“ – tauri baut aber „Based Notes Beta.app“, der nächste Beta-Build wäre an „Signatur prüfen“
+// gescheitert. Aktiver Workflow und Vorlage müssen ab Zeile 4 gleich sein, APP_NAME = productName des Overlays.
+test("Beta-Workflow: aktiv = Vorlage, APP_NAME passt zum productName", () => {
+  const tpl = readFileSync(new URL("../../../ci/github-actions-desktop-beta.yml", import.meta.url), "utf8");
+  const active = readFileSync(new URL("../../../.github/workflows/desktop-beta.yml", import.meta.url), "utf8");
+  const body = (s) => s.split("\n").slice(3).join("\n");
+  assert.equal(body(active), body(tpl));
+  const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
+  assert.match(active, new RegExp(`APP_NAME: ${beta.productName}\\n`));
+  assert.match(active, /--arg notes "\$\(cat dist\/notes-short\.md\)"/);
+});
+
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.
+// BSD-514 (17.11.): sichtbarer Name „Based Notes Beta“; Bundle-ID und Updater-Kanal bleiben (Daten und Updates der Tester).
 test("Beta-Overlay: eigener Name, eigene Bundle-ID, Updater auf beta-latest", () => {
   const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
-  assert.equal(beta.productName, "Based Beta");
+  assert.equal(beta.productName, "Based Notes Beta");
   assert.equal(beta.identifier, "com.friedrich-ulrich.based.beta");
   assert.notEqual(beta.identifier, conf.identifier);
-  assert.equal(beta.app.windows[0].title, "Based Beta");
+  assert.equal(beta.app.windows[0].title, "Based Notes Beta");
   // Das Overlay ersetzt das Fenster-Array ganz (JSON Merge Patch): alles außer dem Titel muss gleich bleiben.
   assert.deepEqual({ ...beta.app.windows[0], title: conf.app.windows[0].title }, conf.app.windows[0]);
   assert.equal(beta.plugins.updater.pubkey, conf.plugins.updater.pubkey);

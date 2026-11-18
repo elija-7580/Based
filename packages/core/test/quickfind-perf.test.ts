@@ -57,13 +57,17 @@ describe("Quick Find (BSD-280)", () => {
       const body = cpuTime(() => { deep = index.run("other things number 29999", QF)?.length ?? 0; });
       expect(deep).toBeGreaterThan(0);
       const miss = cpuTime(() => { expect(index.run("zzqx", QF)).toEqual([]); });
+      // Tippfehler: die genaue Suche findet nichts, dann das Wörterbuch und ein weiterer Durchlauf (teuerster Weg).
+      let typoHits = 0;
+      const typo = cpuTime(() => { typoHits = index.run("roadmpa laucnh", QF)?.length ?? 0; });
+      expect(typoHits).toBeGreaterThan(0);
       const edit = cpuTime(() => {
         index.apply({ upserts: [{ kind: "block", data: { id: "p7b0", type: "text", parent: "b:p7", sk: "a0", text: "Quokka sighting", createdAt: 0, updatedAt: 1, stamp: { ...stamp, millis: 2 } } } as WireRecord], deletions: [] });
         expect(index.run("quokka", QF)?.[0]?.pageID).toBe("p7");
       });
-      return { build, keystroke, body, miss, edit };
+      return { build, keystroke, body, miss, typo, edit };
     };
-    const t = expectWithinBudget("Quick Find", { build: 1000, keystroke: 200, body: 60, miss: 60, edit: 60 }, run);
+    const t = expectWithinBudget("Quick Find", { build: 1000, keystroke: 200, body: 60, miss: 60, typo: 250, edit: 60 }, run);
     console.info("Quick Find (ms CPU):", Object.fromEntries(Object.entries(t).map(([k, v]) => [k, Math.round(v)])), "je Taste:", perKey.join(" "));
   });
 

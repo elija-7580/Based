@@ -1,3 +1,4 @@
+import { askUser } from "./shell/prompts.js";
 // BSD-153: Start der Web-Shell. Der Store läuft in einem Dedicated Worker (SQLite-WASM auf OPFS); die UI spricht mit
 // ihm über StoreClient. Mehrere Browser-Tabs: nur ein Tab startet den Worker, die anderen reden über ihn
 // (worker/leader.ts). Gerätekennung im localStorage, Sync-Server verschlüsselt in IndexedDB (shell/secrets.ts).
@@ -7,11 +8,13 @@ import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { desktopClipboard, desktopSpelling, isPageWindow, isTauri, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
-import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
+import { deviceNode, guestDeviceNode, lazyStoreSetting, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
+import { installBrowserKeep } from "./shell/storagePersist.js";
+import { installSelectAll } from "./shell/selectAll.js";
 import { installWheelLatch } from "./shell/wheelLatch.js";
 import { StoreClient } from "./worker/client.js";
 
@@ -141,7 +144,7 @@ function start(guest: GuestBoot | undefined) {
       // BSD-235: ein Gast läuft nur im Speicher (der OPFS-Pool gehört dem Store-Tab des Besitzers) und synct mit dem Link.
       // BSD-30: ein Gast richtet sich nach dem Server (sein Store lebt nur im Speicher und muss dessen Protokoll sprechen)
       if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync && (await serverUsesPropertyRecords(sync.url)) ? { propertyRecords: true } : {}) };
-      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(propertyRecordsSetting.get() ? { propertyRecords: true } : {}) };
+      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(propertyRecordsSetting.get() ? { propertyRecords: true } : {}), ...(lazyStoreSetting.get() ? { lazy: true } : {}) };
     },
   });
   const client = new StoreClient(link);
@@ -167,6 +170,7 @@ function start(guest: GuestBoot | undefined) {
   }
   // BSD-336: Neuladen/Schließen fragt nur nach, solange eine Änderung noch nicht beim Store-Tab gespeichert ist.
   installUnloadGuard(window, () => client.unsavedWrites);
+  installSelectAll(window);
   connectEditor(client);
   link.onReconnect = () => void client.resync();
   client.onDevice = devices.set;
@@ -209,11 +213,13 @@ function start(guest: GuestBoot | undefined) {
       if (r.created && r.homePageID) recentPages.touch(r.homePageID);
       // BSD-275: frischer Workspace → Willkommensbildschirm an Stelle von Home (nicht für Gäste, nicht in E2E-Browsern)
       if (!guest) firstRun.noteInit(r);
+      // ADR 0017 A3: dauerhaften Speicher anfragen (nur im Browser, nur wenn wirklich im Browser gespeichert wird).
+      if (!guest && !isTauri() && r.persistent) installBrowserKeep(window);
     })
     .catch(() => undefined);
 
   // Für E2E-Tests und Messungen (Playwright): Zugriff auf Client, Verlauf und Tab-Verbindung.
-  (globalThis as { __based?: unknown }).__based = { client, history, link, registerSettingsSection, guest: guest ? { id: guest.id, server: guest.config.server, me: guest.me } : undefined };
+  (globalThis as { __based?: unknown }).__based = { client, history, link, registerSettingsSection, askUser, guest: guest ? { id: guest.id, server: guest.config.server, me: guest.me } : undefined };
 
   /**
    * Astryx folgt dem Appearance-Umschalter: Hell/Dunkel über `mode` (Astryx setzt damit selbst `data-theme` am

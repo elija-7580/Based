@@ -8,10 +8,10 @@ export const coreVersion = CORE_VERSION;
 export * from "./sql.js";
 export { CURRENT_SCHEMA_VERSION, MIGRATIONS, PROPERTY_RECORDS_SCHEMA_VERSION, PersistenceError, enablePropertyRecords, hasPropertyRecords, migrate, schemaVersion } from "./migrations.js";
 export type { Migration } from "./migrations.js";
-export { LOCAL_DERIVED, SqlitePersistence, decodeStamp, deviceNodeID, encodeStamp, openWorkspace, resolveNode, revertPropertyRecords } from "./persistence.js";
+export { LAZY_INDEXES, LOCAL_DERIVED, PARENT_SQL, SKELETON_SQL, SqlitePersistence, decodeStamp, deviceNodeID, encodeStamp, openWorkspace, resolveNode, revertPropertyRecords } from "./persistence.js";
 export type { ChangeEntry, DeviceNodeStore, NodeResolution, UndecodableRow } from "./persistence.js";
-export { PULLED_KEY, PUSHED_KEY, SyncClient, SyncHTTPError, CLOCK_SKEW_LIMIT_MS, clockSkewFrom, decodeDeletions, decodeRecords } from "./client.js";
-export type { SyncClientOptions, SyncLog, SyncRoundResult, WireDeletion } from "./client.js";
+export { PULLED_KEY, PUSHED_KEY, PULL_PAGE_BYTES, PULL_PAGE_MAX, gzipText, syncCapabilities, SyncClient, SyncHTTPError, CLOCK_SKEW_LIMIT_MS, clockSkewFrom, decodeDeletions, decodeRecords } from "./client.js";
+export type { ServerInfo, SyncCapabilities, SyncClientOptions, SyncLog, SyncRoundResult, WireDeletion } from "./client.js";
 // BSD-73: Versionsverlauf in einer eigenen Datei (history.sqlite, Format wie Swift)
 export { HISTORY_SCHEMA, SqliteHistoryStorage } from "./history.js";
 // BSD-78: Dateien als inhaltsadressierte Blobs über den Server-Sync

@@ -28,6 +28,8 @@ node ci/design-guard.mjs --base origin/main
 pnpm -r test
 # BSD-30: dieselben Tests noch einmal im neuen Format (Spalten als eigene Records).
 BASED_PROPERTY_RECORDS=1 pnpm -r test
+# ADR 0017 Stufe B: Kern, Sync, Web-Worker und Server noch einmal mit Laden nach Bedarf (Gerüst im Speicher, Inhalt aus der Datei).
+BASED_LAZY_STORE=1 pnpm --filter @based/core --filter @based/sync --filter @based/web --filter @based/server test
 pw() { CI=1 pnpm --filter @based/web exec playwright test --trace off "$@"; }
 case "$mode" in
   --fast) pw --project=chromium --grep @smoke ;;

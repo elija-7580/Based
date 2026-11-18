@@ -817,8 +817,10 @@ test("Copy and sync: Original und synchronisierte Kopie", async ({ page }) => {
   await expect(editor(page).locator('.bx2-block[data-type="syncedBlock"] [data-editable-id]').first()).toHaveText("Shared line!");
 });
 
-// BSD-407 Teil 2e: HTML-Codeblock zeigt eine Vorschau im abgeschotteten Rahmen (sandbox ohne same-origin, CSP).
-test("HTML-Codeblock mit Vorschau", async ({ page }) => {
+// BSD-407 Teil 2e: HTML-Codeblock zeigt sein Ergebnis im abgeschotteten Rahmen (sandbox ohne same-origin, CSP).
+// Wie Notions HTML-Block: ohne Rand und Beschriftung, Höhe nach dem Inhalt, der Code ist ausgeblendet, sobald die
+// Schreibmarke den Block verlässt; Ansichten Code | Split | Preview und eine Vollansicht.
+test("HTML-Codeblock: Ergebnis wie ein Teil der Seite, Code ausblendbar, Vollansicht", async ({ page }) => {
   await newPage(page);
   await startTyping(page);
   await page.keyboard.type("```");
@@ -826,8 +828,53 @@ test("HTML-Codeblock mit Vorschau", async ({ page }) => {
   await editor(page).locator(".bx2-code-lang-btn").click();
   await page.getByLabel("Search languages").fill("html");
   await page.keyboard.press("Enter");
-  const frame = editor(page).locator("iframe.bx-html-preview");
+  const wrap = editor(page).getByTestId("code-block");
+  const field = wrap.locator("> [data-editable-id]");
+  const frame = wrap.locator("iframe.bx-html-preview");
   await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+  await expect(page.frameLocator("iframe.bx-html-preview").locator("b")).toHaveText("Hi preview");
+  // Standard für HTML: nur das Ergebnis. Solange die Schreibmarke im Code steht, bleibt er sichtbar; danach ist er
+  // weg und die Leiste erscheint erst beim Überfahren.
+  await expect(wrap).toHaveAttribute("data-view", "preview");
+  await expect(field).toBeFocused();
+  await expect(wrap).not.toHaveAttribute("data-code-hidden", "");
+  await page.getByLabel("Page title").click();
+  await expect(wrap).toHaveAttribute("data-code-hidden", "");
+  await expect.poll(async () => (await field.boundingBox())?.height ?? 0).toBe(0);
+  await expect(wrap.locator(".bx-html-preview-label")).toHaveCount(0);
+  await expect(frame).toHaveCSS("border-top-width", "0px");
+  // Höhe nach dem Inhalt: eine Zeile Text, nicht die feste Mindesthöhe
+  await expect.poll(async () => (await frame.boundingBox())?.height ?? 999).toBeLessThan(60);
+  // Schrift und Farbe kommen von der Seite
+  const ink = await wrap.evaluate((el) => getComputedStyle(el).color);
+  expect(await page.frameLocator("iframe.bx-html-preview").locator("body").evaluate((el) => getComputedStyle(el).color)).toBe(ink);
+
+  // Split: Code und Ergebnis, Schreibmarke im Code
+  await wrap.hover();
+  await wrap.getByTestId("code-view-split").click();
+  await expect(wrap).toHaveAttribute("data-view", "split");
+  await expect(wrap).not.toHaveAttribute("data-code-hidden", "");
+  await expect(field).toBeFocused();
+  await expect(frame).toBeVisible();
+  // Code: kein Ergebnis
+  await wrap.getByTestId("code-view-code").click();
+  await expect(frame).toHaveCount(0);
+  await expect(field).toContainText("<b>Hi preview</b>");
+  // zurück zu „nur Ergebnis“ – bleibt nach dem Neuladen
+  await wrap.getByTestId("code-view-preview").click();
+  await expect(wrap).toHaveAttribute("data-code-hidden", "");
+  // Vollansicht im Dialog
+  await wrap.hover();
+  await wrap.getByTestId("code-full").click();
+  const full = page.getByTestId("code-full-view");
+  await expect(full.locator("iframe.bx-html-preview")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(full.locator("iframe.bx-html-preview")).toBeHidden();
+  // Neuladen nur in Chromium: WebKit speichert im Standard-Kontext nur im Speicher („Not saved“)
+  if (test.info().project.name !== "chromium") return;
+  await page.waitForTimeout(800);
+  await page.reload();
+  await expect(editor(page).getByTestId("code-block")).toHaveAttribute("data-code-hidden", "");
   await expect(page.frameLocator("iframe.bx-html-preview").locator("b")).toHaveText("Hi preview");
 });
 

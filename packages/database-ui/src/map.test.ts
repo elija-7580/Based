@@ -141,6 +141,19 @@ describe("Basiskarte und Gradnetz", () => {
     }
     expect(ringsToPath([[0, 0, 10, 0, 10, 10]])).toMatch(/^M0\.50000 0\.50000L0\.52778 0\.50000L0\.52778 0\.47\d+Z$/);
   });
+  it("Ringe über die Datumsgrenze springen nicht über die ganze Welt (BSD-503)", () => {
+    // jeder Schritt im Pfad ist kürzer als eine halbe Weltbreite – vorher lief Russland als Band über die Karte
+    const steps = (path: string) => {
+      const out: number[] = [];
+      for (const sub of path.split("Z")) {
+        const xs = [...sub.matchAll(/[ML](-?[\d.]+) /g)].map((m) => Number(m[1]));
+        for (let i = 1; i < xs.length; i++) out.push(Math.abs(xs[i]! - xs[i - 1]!));
+      }
+      return out;
+    };
+    expect(Math.max(...steps(ringsToPath([[-180, 65, 179.99, 65, 170, 70, 178.6, 69.4, -180, 68.96]])))).toBeLessThan(0.1);
+    expect(Math.max(...steps(ringsToPath(LAND_RINGS)))).toBeLessThan(0.5);
+  });
   it("Gradnetz wird mit dem Zoom feiner; Kartenhöhen", () => {
     expect(graticuleStep(0)).toBe(30);
     expect(graticuleStep(4)).toBeLessThan(graticuleStep(1));

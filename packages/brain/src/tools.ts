@@ -6,9 +6,9 @@
 // Rumpf, dreht der Store alles zurück; kein Zwischenstand im Sync). `find_replace` ersetzt lauf-weise im RichText
 // (`replaceInRichText`), Fett/Kursiv/Links/Erwähnungen bleiben.
 import {
-  attachSearchIndex, addRow, cellText, insertPage, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
+  attachSearchIndex, addRow, pageLocation, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
   parseCSVValue, plainText, QueryEngine, replaceInRichText, rowsOf, sortKeys, titleOf, titleProperty, toRichText,
-  type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
+  type Author, type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
 import type { ToolHost, ToolResult } from "./engine.js";
 import type { ToolSpec } from "./messages.js";
@@ -59,7 +59,14 @@ function paged(lines: string[], limit: number, offset: number): string {
 export interface WorkspaceToolsOptions {
   /** Eigene Suche (z. B. der Index, den der Store-Host ohnehin pflegt). Ohne: eigener Volltextindex. */
   search?: (query: string, limit: number) => { pageID: string; snippet?: string | undefined }[];
+  /**
+   * BSD-522: Als wer die Werkzeuge schreiben (Herkunft: Seite „ai“/„mixed“, Autor je Block). Ohne: wer gerade am Store
+   * eingetragen ist (z. B. der MCP-Client), sonst „Based agent“ – diese Werkzeuge benutzen immer Agenten.
+   */
+  actor?: Author;
 }
+
+const DEFAULT_ACTOR: Author = { kind: "agent", name: "Based agent" };
 
 export class WorkspaceTools implements ToolHost {
   private readonly defs = new Map<string, ToolDef>();
@@ -94,7 +101,7 @@ export class WorkspaceTools implements ToolHost {
     try {
       if (def.write && this.store.isReadOnly) throw new ToolError("The workspace is read-only right now (saving failed). Nothing was changed.");
       const revision = this.store.revision;
-      const text = def.run(args);
+      const text = def.write ? this.store.withActor(this.opts.actor ?? this.store.actor ?? DEFAULT_ACTOR, () => def.run(args)) : def.run(args);
       // Ein Schreiben, das der Store abgewiesen hat (schreibgeschützt), darf nicht als Erfolg gemeldet werden.
       if (def.write && this.store.isReadOnly && this.store.revision === revision) throw new ToolError("Saving failed; nothing was changed.");
       return { text, isError: false };
@@ -138,7 +145,8 @@ export class WorkspaceTools implements ToolHost {
   private search(query: string, limit: number): { pageID: string; snippet?: string | undefined }[] {
     if (this.opts.search) return this.opts.search(query, limit);
     this.ownIndex ??= attachSearchIndex(this.store);
-    return this.ownIndex.index.search(query, {}, "bestMatch", limit * 2);
+    // wie Quick Find: verteilte Begriffe, Tippfehler, Zeilen über Relationen
+    return this.ownIndex.index.run(query, { limit: limit * 2, extended: true }) ?? [];
   }
 
   /** Inhaltsblöcke einer Seite in Dokumentreihenfolge, ohne Unterseiten und deren Inhalt. */
@@ -212,7 +220,7 @@ export class WorkspaceTools implements ToolHost {
     return [
       {
         write: false,
-        spec: { name: "search", description: "Search titles and full text of pages and database rows. Returns ids and snippets.", inputSchema: obj({ query: S, limit: limitSchema }, ["query"]) },
+        spec: { name: "search", description: "Find pages and database rows by title, text, or row values (including related rows, people, options). Words may be spread over a page and may contain typos. Returns ids, where each page lives, and snippets.", inputSchema: obj({ query: S, limit: limitSchema }, ["query"]) },
         run: (a) => {
           const limit = Math.max(1, num(a, "limit", 20));
           const seen = new Set<string>();
@@ -220,7 +228,8 @@ export class WorkspaceTools implements ToolHost {
           for (const h of this.search(need(a, "query"), limit)) {
             if (seen.has(h.pageID) || !isPageLike(store.blocks.get(h.pageID)) || isTrashed(store, h.pageID)) continue;
             seen.add(h.pageID);
-            lines.push(this.line(h.pageID) + (h.snippet ? `\n  ${h.snippet.replace(/\n/g, " ")}` : ""));
+            const where = pageLocation(store, h.pageID);
+            lines.push(this.line(h.pageID) + (where ? ` · in ${where}` : "") + (h.snippet ? `\n  ${h.snippet.replace(/\n/g, " ")}` : ""));
             if (lines.length >= limit) break;
           }
           return lines.length > 0 ? lines.join("\n") : "No pages found.";
@@ -273,6 +282,68 @@ export class WorkspaceTools implements ToolHost {
             return pid;
           });
           return `Created page “${title ?? "Untitled"}” (id: ${id})`;
+        },
+      },
+      // BSD-93: Whiteboards als Text – wenige Token, keine Koordinaten; die Anordnung rechnet Based (whiteboard/agent.ts).
+      {
+        write: false,
+        spec: { name: "read_board", description: "A whiteboard as compact text: one line per object (short handle, kind, text, position), connectors as “a -> b: label”. Use the handles in draw_board.", inputSchema: obj({ page_id: pageID }, ["page_id"]) },
+        run: (a) => {
+          const id = need(a, "page_id");
+          this.page(id, true);
+          if (!isBoardPage(store.blocks.get(id))) throw new Error("That page is not a whiteboard. Use read_page.");
+          return boardOutline(boardObjectsOf(store, id), (pid) => titleOf(store, pid) || undefined);
+        },
+      },
+      {
+        write: true,
+        spec: {
+          name: "draw_board",
+          description: [
+            "Add to or change a whiteboard with a short script; Based lays the objects out (columns follow the arrows) and puts new content beside what is there. Omit page_id to create a new board (title, parent_id optional). One statement per line:",
+            "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
+            "a -> b: optional label (a, b: names from this script or handles from read_board)",
+            "frame f: Title { a b c } | set <handle>: new text | del <handle>",
+          ].join("\n"),
+          inputSchema: obj({ page_id: pageID, script: S, title: S, parent_id: pageID }, ["script"]),
+        },
+        run: (a) => {
+          const given = str(a, "page_id");
+          const parent = str(a, "parent_id");
+          if (given !== undefined) { this.page(given); if (!isBoardPage(store.blocks.get(given))) throw new Error("That page is not a whiteboard."); }
+          else if (parent !== undefined) this.page(parent);
+          const existing = given ? boardObjectsOf(store, given) : [];
+          const plan = planBoardScript(need(a, "script"), existing, () => makeRecordID());
+          // Seitenkarten: nur vorhandene Seiten, mit ihrem Titel als Text (für Suche und Vorschau).
+          plan.add = plan.add.filter((o) => {
+            if (o.kind !== "page") return true;
+            const b = o.ref ? store.blocks.get(o.ref) : undefined;
+            if (!isPageLike(b) || b?.trashedAt !== undefined) { plan.errors.push(`page ${o.ref ?? ""} — no such page`); return false; }
+            o.text = titleOf(store, o.ref!) || "Untitled";
+            return true;
+          });
+          const kept = new Set(plan.add.map((o) => o.id));
+          plan.add = plan.add.filter((o) => o.kind !== "connector" || ((kept.has(o.from.id) || existing.some((e) => e.id === o.from.id)) && (kept.has(o.to.id) || existing.some((e) => e.id === o.to.id))));
+          const page = store.transact("Agent: draw on board", (tx) => {
+            const pid = given ?? insertBoardPage(store, tx, { ...(parent ? { parent } : {}), title: str(a, "title") ?? "Untitled board" });
+            const now = store.now();
+            const all = new Map([...existing, ...plan.add].map((o) => [o.id, o]));
+            for (const o of plan.add) tx.put({ kind: "block", data: boardObjectToBlock(o, pid, now, undefined, all) });
+            for (const [id, fields] of plan.patch) {
+              const block = store.blocks.get(id);
+              const cur = block ? boardObjectFromBlock(block) : undefined;
+              if (block && cur) tx.put({ kind: "block", data: boardObjectToBlock({ ...cur, ...fields } as typeof cur, pid, now, block) });
+            }
+            for (const id of plan.remove) if (store.blocks.get(id)) tx.remove(keyOf("block", id));
+            return pid;
+          });
+          const handles = boardHandles(boardObjectsOf(store, page));
+          const names = [...plan.names].filter(([, id]) => handles.has(id)).map(([n, id]) => `${n}=${handles.get(id)!}`).join(" ");
+          return [
+            `${given ? "Updated" : "Created"} board (id: ${page}): ${plan.add.length} added, ${plan.patch.size} changed, ${plan.remove.length} removed.`,
+            ...(names ? [`Handles: ${names}`] : []),
+            ...(plan.errors.length ? ["Skipped:", ...plan.errors.map((e) => `- ${e}`)] : []),
+          ].join("\n");
         },
       },
       {

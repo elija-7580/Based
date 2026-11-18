@@ -45,6 +45,15 @@ export const propertyRecordsSetting = {
   set: (on: boolean) => write("based.propertyRecords", on),
 };
 
+/**
+ * ADR 0017 Stufe B (Versuch): beim Start nur das Gerüst laden, Seiteninhalt beim Öffnen. Gilt ab dem nächsten Start.
+ * Aus = wie bisher alles laden; die Datei bleibt dieselbe (zwei Indizes mehr).
+ */
+export const lazyStoreSetting = {
+  get: (): boolean => read<unknown>("based.lazyStore", false) === true,
+  set: (on: boolean) => write("based.lazyStore", on),
+};
+
 let secrets: SecretStore | undefined;
 const secretStore = () => (secrets ??= new SecretStore(typeof indexedDB === "undefined" ? memoryKV() : indexedDBKV()));
 /** Die verschlüsselte Ablage (IndexedDB; ohne IndexedDB nur für diese Sitzung im Speicher – nie Klartext im localStorage). */

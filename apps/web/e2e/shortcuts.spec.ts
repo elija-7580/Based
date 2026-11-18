@@ -15,8 +15,8 @@ test("⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; �
   await page.keyboard.press("ControlOrMeta+n");
   const palette = page.getByTestId("new-palette");
   await expect(palette).toBeVisible();
-  // Seite, AI-Chat, Meeting, Datenbank, Import und die vier Startvorlagen (BSD-436)
-  await expect(palette.getByRole("option")).toHaveCount(9);
+  // Seite, AI-Chat, Meeting, Datenbank, Import, Board (BSD-264) und die vier Startvorlagen (BSD-436)
+  await expect(palette.getByRole("option")).toHaveCount(10);
   await page.keyboard.type("datab");
   await expect(palette.getByRole("option")).toHaveCount(1);
   await page.keyboard.press("Enter");
@@ -109,4 +109,52 @@ test("Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen",
   await page.keyboard.press("Enter");
   await expect(menu).toBeHidden();
   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
+});
+
+// BSD-482: Neue Seite → Schreibmarke im Titel (⌥⌘N, ⌘N → New page, „+“ neben Private), Enter springt in den Text.
+// Eine vorhandene Seite öffnen stiehlt keinen Fokus.
+test("Neue Seite: Schreibmarke steht im Titel, Enter geht in den Text; Öffnen einer Seite fokussiert nichts", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const title = page.getByLabel("Page title");
+
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(title).toBeFocused();
+  await page.keyboard.type("Typed right away");
+  await expect(page.getByRole("treeitem", { name: "Typed right away", exact: true })).toHaveCount(1);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Body text");
+  await expect(page.getByTestId("block-editor")).toContainText("Body text");
+  await expect(title).toHaveValue("Typed right away");
+
+  await page.keyboard.press("ControlOrMeta+n");
+  await expect(page.getByTestId("new-palette")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(title).toHaveValue("");
+  await expect(title).toBeFocused();
+  await page.keyboard.type("From the palette");
+  await expect(page.getByRole("treeitem", { name: "From the palette", exact: true })).toHaveCount(1);
+  if (browserName === "chromium") {
+    // Foto hell, dann ⇧⌘L → dunkel (der Fokus bleibt im Titel), wieder zurück
+    await page.mouse.move(0, 0);
+    await page.screenshot({ path: "../../docs/design/screens/new-page-title-focus-light.png" });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(title).toBeFocused();
+    await page.waitForTimeout(400); // Farbwechsel abwarten
+    await page.screenshot({ path: "../../docs/design/screens/new-page-title-focus-dark.png" });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+  }
+  await page.getByText("Private", { exact: true }).hover();
+  await page.getByRole("button", { name: "New page in Private" }).click();
+  await expect(title).toHaveValue("");
+  await expect(title).toBeFocused();
+  await page.keyboard.type("From the sidebar");
+  await expect(page.getByRole("treeitem", { name: "From the sidebar", exact: true })).toHaveCount(1);
+
+  // vorhandene Seite öffnen: kein Fokus im Titel
+  await page.getByRole("treeitem", { name: "Typed right away", exact: true }).click();
+  await expect(title).toHaveValue("Typed right away");
+  await expect(title).not.toBeFocused();
 });

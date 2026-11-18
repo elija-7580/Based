@@ -6,6 +6,8 @@ import { canonicalStringify, cloneRecord } from "../json.js";
 import { compareStamps, StampClock, ZERO_STAMP, type Stamp } from "../hlc.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { diffProperties } from "../model/property-records.js";
+import type { Actor } from "../model/provenance.js";
+import { applyProvenance } from "./provenance-ops.js";
 import type { Block, Database, DatabaseView, PropertyRecord, PropertySchema, RecordKind, WireRecord, Workspace } from "../model/records.js";
 
 export type RecordKeyString = `${RecordKind}:${string}`;
@@ -43,7 +45,46 @@ export interface Persistence {
   tombstone(key: RecordKeyString): Stamp | undefined;
   /** Schreibt eine Probe; wirft, wenn die Datenbank nicht beschreibbar ist (für `retryWrites`). */
   checkWritable?(): void;
+  /** ADR 0017 Stufe B: Laden nach Bedarf. Fehlt es, lädt der Store immer alles. */
+  lazy?: LazyPersistence;
 }
+
+/**
+ * ADR 0017 Stufe B: Lesen in Teilen. Der Store hält dann das Gerüst (alles außer Inhaltsblöcken) im Speicher und
+ * holt Inhaltsblöcke, wenn jemand nach ihnen fragt. Alle Aufrufe sind synchron (SQLite im Worker, in Node, nativ).
+ */
+export interface LazyPersistence {
+  /** Alle Nicht-Block-Records und alle Gerüst-Blöcke (`isSkeletonBlock`). Darf werfen – dann lädt der Store alles. */
+  loadSkeleton(): WireRecord[];
+  /** Blöcke nach ID; unbekannte fehlen im Ergebnis. */
+  loadBlocks(ids: readonly string[]): Block[];
+  /** Alle Blöcke mit einem dieser Eltern (`w`, `b:<id>`, `d:<id>`) – je Elternteil vollständig. */
+  loadChildren(parents: readonly string[]): Block[];
+  /** Alle Blöcke, deren ID `skip` nicht kennt (der Rest, wenn doch alles gebraucht wird). */
+  loadRemaining(skip: (id: string) => boolean): Block[];
+  /** Zahl der gespeicherten Blöcke. */
+  countBlocks(): number;
+  /**
+   * Der neueste Stempel aller gespeicherten Records. Ein voll geladener Store sieht ihn beim Laden; hier setzt die
+   * Uhr damit hinter Inhalt fort, der noch nicht im Speicher liegt (zurückgestellte Systemuhr). Stempel nach
+   * `maxMillis` zählen nicht – die Uhr nimmt sie auch beim Laden nicht an (`StampClock.maxDrift`).
+   */
+  clockFloor(maxMillis: number): Stamp | undefined;
+  /**
+   * Alle gespeicherten Blöcke, deren JSON einen der Texte enthält, der Reihe nach durchreichen – ohne sie im
+   * Speicher zu behalten. Für abgeleitete Indizes (Links), die nur wenige Blöcke betreffen. Leere Liste = alle
+   * Blöcke. `ignoreCase`: Groß/Klein von ASCII-Buchstaben zählt nicht.
+   */
+  scanBlocks(containing: readonly string[], each: (b: Block) => void, opts?: { ignoreCase?: boolean }): void;
+}
+
+/**
+ * Gerüst-Blöcke bleiben immer im Speicher: alles mit eigenem Titel (Seiten, Datenbanken, Zeilen) und alles im
+ * Papierkorb. Seitenleiste, Titel, Papierkorb, Quick Find nach Titel und Links brauchen nur sie. Die SQL-Fassung
+ * steht in `packages/sync/src/persistence.ts` (`SKELETON_SQL`); ein Test hält beide gleich.
+ */
+export const SKELETON_TYPES = ["page", "databasePage", "databaseInline"] as const;
+export const isSkeletonBlock = (b: Block): boolean => (SKELETON_TYPES as readonly string[]).includes(b.type) || b.trashedAt !== undefined;
 
 export class MemoryPersistence implements Persistence {
   private records = new Map<RecordKeyString, WireRecord>();
@@ -68,6 +109,27 @@ export class MemoryPersistence implements Persistence {
   tombstone(key: RecordKeyString): Stamp | undefined {
     return this.tombs.get(key);
   }
+  private *storedBlocks(): Iterable<Block> {
+    for (const r of this.records.values()) if (r.kind === "block") yield r.data;
+  }
+  /** Laden nach Bedarf über denselben Speicher (für Tests des Stores ohne SQLite). */
+  readonly lazy: LazyPersistence = {
+    loadSkeleton: () => [...this.records.values()].filter((r) => r.kind !== "block" || isSkeletonBlock(r.data)).map((r) => cloneRecord(r)),
+    loadBlocks: (ids) => ids.flatMap((id) => { const r = this.records.get(keyOf("block", id)); return r?.kind === "block" ? [cloneRecord(r.data)] : []; }),
+    loadChildren: (parents) => { const set = new Set(parents); return [...this.storedBlocks()].filter((b) => set.has(b.parent)).map((b) => cloneRecord(b)); },
+    loadRemaining: (skip) => [...this.storedBlocks()].filter((b) => !skip(b.id)).map((b) => cloneRecord(b)),
+    countBlocks: () => { let n = 0; for (const _ of this.storedBlocks()) n += 1; return n; },
+    scanBlocks: (containing, each, opts) => {
+      const fold = (s: string) => (opts?.ignoreCase ? s.toLowerCase() : s);
+      const needles = containing.map(fold);
+      for (const b of this.storedBlocks()) { const json = fold(JSON.stringify(b)); if (needles.length === 0 || needles.some((c) => json.includes(c))) each(cloneRecord(b)); }
+    },
+    clockFloor: (maxMillis) => {
+      let max: Stamp | undefined;
+      for (const r of this.records.values()) { const s = r.data.stamp as Stamp | undefined; if (s && s.millis <= maxMillis && (!max || compareStamps(s, max) > 0)) max = s; }
+      return max;
+    },
+  };
 }
 
 /** Schreiben auf die Platte ist gescheitert: der Store ist schreibgeschützt, bis `retryWrites()` klappt. */
@@ -98,6 +160,11 @@ export interface StoreChange {
   notified?: RecordKeyString[];
   /** Name der Transaktion (z. B. „New block“, beim Undo der des rückgängig gemachten Schritts) – für die Diagnose. */
   name?: string;
+  /**
+   * Blöcke aus `keys`, die den Elternteil gewechselt haben (ADR 0017 Stufe B: wer die Struktur verfolgt, muss dafür
+   * nicht mehr die Eltern aller Blöcke im Speicher halten). Fehlt, wenn keiner umgezogen ist.
+   */
+  moved?: RecordKeyString[];
 }
 
 export interface RemoteMergeResult {
@@ -230,6 +297,65 @@ export class Tx {
   }
 }
 
+/** Was `BlockMap` vom Store braucht, solange nicht alles geladen ist. */
+interface BlockSource {
+  fault(id: string): Block | undefined;
+  total(): number;
+  everything(why: string): void;
+}
+
+/**
+ * Die Blöcke des Stores. Mit „Laden nach Bedarf“ (ADR 0017 Stufe B) liegen nur Gerüst und Benutztes im Speicher;
+ * die Karte verhält sich trotzdem wie der ganze Workspace: `get`/`has` holen einen fehlenden Block aus der Datei,
+ * `size` zählt alle, und jeder Durchlauf (`values`, `keys`, `entries`, `forEach`, `for…of`) lädt zuerst den Rest.
+ * Wer nur Seiten braucht, nimmt `WorkspaceStore.skeletonBlocks()` – das lädt nichts nach.
+ */
+export class BlockMap extends Map<string, Block> {
+  /** @internal Gesetzt, solange nicht alles geladen ist. */
+  source: BlockSource | undefined;
+  /** Nur was im Speicher liegt – ohne Nachladen. */
+  peek(id: string): Block | undefined {
+    return super.get(id);
+  }
+  /** Nur was im Speicher liegt – ohne Nachladen. */
+  loaded(): IterableIterator<Block> {
+    return super.values();
+  }
+  get loadedSize(): number {
+    return super.size;
+  }
+  override get(id: string): Block | undefined {
+    const b = super.get(id);
+    return b !== undefined || !this.source ? b : this.source.fault(id);
+  }
+  override has(id: string): boolean {
+    return super.has(id) || (this.source !== undefined && this.source.fault(id) !== undefined);
+  }
+  override get size(): number {
+    return this.source ? this.source.total() : super.size;
+  }
+  override values() {
+    this.source?.everything("values");
+    return super.values();
+  }
+  override keys() {
+    this.source?.everything("keys");
+    return super.keys();
+  }
+  override entries() {
+    this.source?.everything("entries");
+    return super.entries();
+  }
+  override forEach(fn: (value: Block, key: string, map: Map<string, Block>) => void, thisArg?: unknown): void {
+    this.source?.everything("forEach");
+    super.forEach(fn, thisArg);
+  }
+  override [Symbol.iterator]() {
+    this.source?.everything("iterate");
+    return super[Symbol.iterator]();
+  }
+}
+
 export interface StoreOptions {
   persistence?: Persistence;
   node: string;
@@ -248,10 +374,36 @@ export interface StoreOptions {
    * Startstand erzeugen sonst dieselben Stempel, und eine der beiden Änderungen verliert.
    */
   resumeClock?: boolean;
+  /**
+   * ADR 0017 Stufe B: nur das Gerüst laden, Inhaltsblöcke bei Bedarf (braucht `persistence.lazy`). Standard:
+   * `WorkspaceStore.lazyByDefault`. Ohne dies lädt der Store wie bisher alles.
+   */
+  lazy?: boolean;
 }
 
 export class WorkspaceStore {
-  readonly blocks = new Map<string, Block>();
+  readonly blocks = new BlockMap();
+  /**
+   * ADR 0017 Stufe B: Vorgabe für Stores ohne ausdrückliche Angabe. BASED_LAZY_STORE=1 schaltet sie ein – so läuft
+   * die Testsuite auch mit Laden nach Bedarf (ci/typecheck/run-ts.sh).
+   */
+  static lazyByDefault = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.BASED_LAZY_STORE === "1";
+  /** Nur für die Testsuite (BASED_LAZY_STORE=1): auch eine leere Datei nach Bedarf öffnen, damit jeder Test den Weg nimmt. */
+  static lazyEvenWhenEmpty = WorkspaceStore.lazyByDefault;
+  /** Quelle für Laden nach Bedarf; `undefined`, sobald alles im Speicher liegt (dann verhält sich der Store wie immer). */
+  private lazySource: LazyPersistence | undefined;
+  /** Eltern, deren Kinder vollständig im Speicher und in `childIndex` sind. Eine Kinderliste ist ganz da oder gar nicht. */
+  private loadedParents = new Set<string>();
+  /** Blöcke im Speicher, deren Geschwister noch nicht geladen sind – je Elternteil. */
+  private strays = new Map<string, Set<string>>();
+  /** In dieser Sitzung entfernte Blöcke: nicht aus der Datei zurückholen (dort stehen sie bis zum Commit noch). */
+  private gone = new Set<string>();
+  private blockTotal = 0;
+  private resume = true;
+  /** Wie oft doch alles geladen wurde (Messpunkt: nach dem Start soll das für Alltagswege 0 bleiben). */
+  fullLoads = 0;
+  /** Wird gerufen, wenn alles geladen wird, mit dem Auslöser (`values`, `allRecords`, …). */
+  onFullLoad: ((why: string) => void) | undefined;
   /** Datenbanken, wie die App sie liest: immer mit `properties`. */
   readonly databases = new Map<string, Database>();
   readonly views = new Map<string, DatabaseView>();
@@ -272,6 +424,11 @@ export class WorkspaceStore {
   readonly persistence: Persistence | undefined;
   now: () => number;
   userID: string | null;
+  /**
+   * BSD-522: Wer gerade schreibt, wenn es nicht der Mensch am Gerät ist (Agent über MCP, Gast). Nur über `withActor`
+   * setzen; `undefined` = der Nutzer.
+   */
+  actor: Actor = undefined;
   undoCoalesceInterval = 1.5;
   maxUndo = 300;
   revision = 0;
@@ -291,9 +448,19 @@ export class WorkspaceStore {
     this.userID = opts.userID === undefined ? "me" : opts.userID;
     this.propertyRecords = opts.propertyRecords ?? WorkspaceStore.propertyRecordsByDefault;
     let ws: Workspace | undefined;
-    const resume = opts.resumeClock !== false;
+    const resume = (this.resume = opts.resumeClock !== false);
     this.composing = false;
-    for (const r of opts.persistence?.loadAll() ?? []) {
+    let source = (opts.lazy ?? WorkspaceStore.lazyByDefault) ? opts.persistence?.lazy : undefined;
+    let initial: WireRecord[] | undefined;
+    if (source) {
+      try {
+        initial = source.loadSkeleton();
+      } catch {
+        // Gerüst nicht lesbar (z. B. Indizes lassen sich nicht anlegen): wie bisher alles laden.
+        source = undefined;
+      }
+    }
+    for (const r of initial ?? opts.persistence?.loadAll() ?? []) {
       if (r.kind === "workspace") {
         if (!ws || r.data.id === WORKSPACE_ID) ws = r.data;
       } else this._set(r);
@@ -305,8 +472,124 @@ export class WorkspaceStore {
     if (this.propertyRecords) for (const id of this.cores.keys()) this.compose(id);
     const t = this.now();
     this.workspace = ws ?? { id: WORKSPACE_ID, name: "My Workspace", favorites: [], createdAt: t, updatedAt: t, stamp: { ...ZERO_STAMP } };
-    this.rebuildChildIndex();
+    // Eine leere Datei ist vollständig geladen (erster Sync, Import: keine Rückfragen an die Datei je neuem Block).
+    if (source && source.countBlocks() === 0 && !WorkspaceStore.lazyEvenWhenEmpty) source = undefined;
+    if (source) {
+      // Ab hier nach Bedarf: Was geladen ist, wartet je Elternteil, bis dessen Kinder vollständig geholt werden.
+      this.lazySource = source;
+      this.blockTotal = source.countBlocks();
+      const floor = resume ? source.clockFloor(this.clock.wallClock() + StampClock.maxDrift) : undefined;
+      if (floor) this.clock.observe(floor);
+      this.childIndex.clear();
+      for (const b of this.blocks.loaded()) this.stray(b);
+      this.blocks.source = {
+        fault: (id) => this.fault(id),
+        total: () => this.blockTotal,
+        everything: (why) => this.loadEverything(why),
+      };
+    } else this.rebuildChildIndex();
     if (this.propertyRecords) this.migrateToPropertyRecords();
+  }
+
+  // MARK: Laden nach Bedarf (ADR 0017 Stufe B)
+
+  /** Lädt der Store noch nach Bedarf? `false`, sobald alles im Speicher liegt (oder von Anfang an alles geladen wurde). */
+  get isPartial(): boolean {
+    return this.lazySource !== undefined;
+  }
+
+  /**
+   * Alle Gerüst-Blöcke (Seiten, Datenbanken, Zeilen, Papierkorb) – ohne Inhalt nachzuladen. Für alles, was über
+   * „alle Seiten“ läuft: Seitenleiste, Titel, Papierkorb, Quick Find nach Titel.
+   */
+  *skeletonBlocks(): IterableIterator<Block> {
+    for (const b of this.blocks.loaded()) if (isSkeletonBlock(b)) yield b;
+  }
+
+  private stray(b: Block) {
+    let set = this.strays.get(b.parent);
+    if (!set) this.strays.set(b.parent, (set = new Set()));
+    set.add(b.id);
+  }
+
+  /** Einen aus der Datei gelesenen Block übernehmen, falls er nicht schon (neuer) im Speicher liegt oder entfernt wurde. */
+  private adopt(b: Block): boolean {
+    if (this.blocks.peek(b.id) !== undefined || this.gone.has(b.id)) return false;
+    this.blocks.set(b.id, b);
+    // Die Uhr setzt hinter allem fort, was sie gesehen hat (siehe Konstruktor) – auch hinter Nachgeladenem.
+    if (this.resume) this.clock.observe(b.stamp ?? ZERO_STAMP);
+    return true;
+  }
+
+  private fault(id: string): Block | undefined {
+    const source = this.lazySource;
+    if (!source || this.gone.has(id)) return undefined;
+    const [b] = source.loadBlocks([id]);
+    if (!b || !this.adopt(b)) return this.blocks.peek(id);
+    this.stray(b);
+    return b;
+  }
+
+  /** Mehrere Blöcke in einem Zug holen (vor großen Merges), statt einzeln beim ersten Zugriff. */
+  prefetchBlocks(ids: readonly string[]): void {
+    const source = this.lazySource;
+    if (!source) return;
+    const missing = ids.filter((id) => this.blocks.peek(id) === undefined && !this.gone.has(id));
+    if (missing.length === 0) return;
+    for (const b of source.loadBlocks(missing)) if (this.adopt(b)) this.stray(b);
+  }
+
+  /** Kinderlisten dieser Eltern vollständig machen (eine Abfrage für alle, die noch fehlen). */
+  private loadGroups(parents: readonly string[]): void {
+    const source = this.lazySource;
+    if (!source) return;
+    const missing = [...new Set(parents)].filter((p) => !this.loadedParents.has(p));
+    if (missing.length === 0) return;
+    const lists = new Map<string, Set<string>>(missing.map((p) => [p, new Set(this.strays.get(p) ?? [])]));
+    for (const b of source.loadChildren(missing)) {
+      this.adopt(b);
+      // Maßgeblich ist der Stand im Speicher: ein dort schon verschobener Block gehört nicht mehr hierher.
+      const cur = this.blocks.peek(b.id);
+      if (cur) lists.get(cur.parent)?.add(cur.id);
+    }
+    for (const [parent, ids] of lists) {
+      const list = [...ids].filter((id) => this.blocks.peek(id)?.parent === parent);
+      list.sort((x, y) => this.compareSiblings(x, y));
+      if (list.length > 0) this.childIndex.set(parent, list);
+      else this.childIndex.delete(parent);
+      this.loadedParents.add(parent);
+      this.strays.delete(parent);
+    }
+  }
+
+  /** Doch alles laden: danach verhält sich der Store wie ohne Laden nach Bedarf. */
+  private loadEverything(why: string): void {
+    const source = this.lazySource;
+    if (!source) return;
+    for (const b of source.loadRemaining((id) => this.blocks.peek(id) !== undefined || this.gone.has(id))) this.adopt(b);
+    this.lazySource = undefined;
+    this.blocks.source = undefined;
+    this.loadedParents.clear();
+    this.strays.clear();
+    this.gone.clear();
+    this.rebuildChildIndex();
+    this.fullLoads += 1;
+    this.onFullLoad?.(why);
+  }
+
+  /**
+   * Über alle Blöcke laufen, deren gespeichertes JSON einen der Texte enthält – ohne den Workspace dafür in den
+   * Speicher zu holen. `each` darf den Store lesen, aber nicht schreiben. Voll geladen: ein Durchlauf im Speicher
+   * (dann ohne Vorfilter – `each` muss selbst prüfen).
+   */
+  scanBlocks(containing: readonly string[], each: (b: Block) => void, opts?: { ignoreCase?: boolean }): void {
+    if (this.lazySource) this.lazySource.scanBlocks(containing, each, opts);
+    else for (const b of this.blocks.loaded()) each(b);
+  }
+
+  /** Alles in den Speicher holen (für Vorgänge über den ganzen Workspace: Export, Voll-Abgleich, Suche über Inhalt). */
+  ensureComplete(why = "ensureComplete"): void {
+    this.loadEverything(why);
   }
 
   // MARK: Properties als eigene Records (BSD-30)
@@ -402,6 +685,7 @@ export class WorkspaceStore {
    * der neueste aus Kern und Properties, damit ein Import sie als so aktuell behandelt, wie sie ist.
    */
   exportRecords(): WireRecord[] {
+    this.loadEverything("exportRecords");
     if (!this.propertyRecords) return this.allRecords().filter((r) => r.kind !== "property");
     const databases = [...this.databases.values()].map((d) => {
       let stamp = d.stamp;
@@ -417,6 +701,7 @@ export class WorkspaceStore {
   }
 
   allRecords(): WireRecord[] {
+    this.loadEverything("allRecords");
     return [
       { kind: "workspace", data: this.workspace },
       ...[...this.blocks.values()].map((data) => ({ kind: "block", data }) as const),
@@ -428,10 +713,19 @@ export class WorkspaceStore {
 
   /** Kinder eines Elternteils (`w`, `b:<id>`, `d:<id>`) nach (sk, id). */
   children(parent: string): string[] {
+    if (this.lazySource && !this.loadedParents.has(parent)) this.loadGroups([parent]);
     return this.childIndex.get(parent) ?? [];
   }
 
   descendants(id: string): string[] {
+    if (this.lazySource) {
+      // Ebene für Ebene in je einer Abfrage holen statt je Block einzeln.
+      let level = ["b:" + id];
+      while (level.length > 0 && this.lazySource) {
+        this.loadGroups(level);
+        level = level.flatMap((p) => (this.childIndex.get(p) ?? []).map((c) => "b:" + c));
+      }
+    }
     const out: string[] = [];
     const stack = [...this.children("b:" + id)].reverse();
     while (stack.length) {
@@ -481,6 +775,10 @@ export class WorkspaceStore {
       case "block": {
         const old = this.blocks.get(r.data.id);
         this.blocks.set(r.data.id, r.data);
+        if (this.lazySource) {
+          this.gone.delete(r.data.id);
+          if (!old) this.blockTotal += 1;
+        }
         if (!old || old.parent !== r.data.parent || old.sk !== r.data.sk) {
           if (old) this.unindex(old);
           this.index(r.data);
@@ -519,6 +817,10 @@ export class WorkspaceStore {
       const old = this.blocks.get(id);
       if (old) this.unindex(old);
       this.blocks.delete(id);
+      if (this.lazySource) {
+        this.gone.add(id);
+        if (old) this.blockTotal -= 1;
+      }
     } else if (kind === "database") {
       this.cores.delete(id);
       this.databases.delete(id);
@@ -534,6 +836,7 @@ export class WorkspaceStore {
 
   /** Sortiert einfügen (binäre Suche statt Neusortieren: Laden und große Pulls blieben sonst quadratisch). */
   private index(b: Block) {
+    if (this.lazySource && !this.loadedParents.has(b.parent)) return this.stray(b);
     let list = this.childIndex.get(b.parent);
     if (!list) {
       list = [];
@@ -548,19 +851,23 @@ export class WorkspaceStore {
     list.splice(lo, 0, b.id);
   }
   private unindex(b: Block) {
+    if (this.lazySource && !this.loadedParents.has(b.parent)) {
+      this.strays.get(b.parent)?.delete(b.id);
+      return;
+    }
     const list = this.childIndex.get(b.parent);
     if (!list) return;
     const i = list.indexOf(b.id);
     if (i >= 0) list.splice(i, 1);
   }
   private compareSiblings(x: string, y: string) {
-    const a = this.blocks.get(x)!.sk, b = this.blocks.get(y)!.sk;
+    const a = this.blocks.peek(x)!.sk, b = this.blocks.peek(y)!.sk;
     if (a !== b) return a < b ? -1 : 1;
     return x < y ? -1 : x > y ? 1 : 0;
   }
   private rebuildChildIndex() {
     this.childIndex.clear();
-    for (const b of this.blocks.values()) {
+    for (const b of this.blocks.loaded()) {
       const list = this.childIndex.get(b.parent) ?? [];
       list.push(b.id);
       this.childIndex.set(b.parent, list);
@@ -580,6 +887,9 @@ export class WorkspaceStore {
     tx.lww = opts.keepStamps === true;
     try {
       const result = body(tx);
+      // BSD-522: Herkunft (Autor je Block, origin je Seite) nur bei eigenen Änderungen – nicht bei Sync/Importen mit
+      // fertigen Stempeln und nicht bei aus Y-Dokumenten abgeleiteten Änderungen (die hat der Schreiber schon gesetzt).
+      if (!opts.keepStamps && !opts.derived && tx.order.length > 0) applyProvenance(this, tx, this.actor);
       // BSD-220 `derived`: aus einem /collab-Y.Doc abgeleitet (nie rückgängig, nicht pushen); gestempelt wie sonst auch.
       const origin: ChangeOrigin = opts.derived ? "derived" : opts.keepStamps ? "import" : "local";
       this.commit(tx, name, opts.coalesce, origin, opts.keepStamps || opts.derived ? false : opts.undoable ?? true, !opts.keepStamps);
@@ -587,6 +897,20 @@ export class WorkspaceStore {
     } catch (e) {
       this.rollback(tx);
       throw e;
+    }
+  }
+
+  /**
+   * BSD-522: `body` als `actor` ausführen – jede Transaktion darin setzt Autor und Herkunft für ihn. Nur für
+   * synchrone Arbeit (Promises danach laufen wieder als Nutzer).
+   */
+  withActor<T>(actor: Actor, body: () => T): T {
+    const prev = this.actor;
+    this.actor = actor;
+    try {
+      return body();
+    } finally {
+      this.actor = prev;
     }
   }
 
@@ -696,6 +1020,12 @@ export class WorkspaceStore {
         }
       }
       const change: StoreChange = notified.length > 0 ? { keys, origin, notified, name } : { keys, origin, name };
+      const moved: RecordKeyString[] = [];
+      for (const [k, cur] of after) {
+        const prev = before.get(k);
+        if (cur?.kind === "block" && prev?.kind === "block" && cur.data.parent !== prev.data.parent) moved.push(k);
+      }
+      if (moved.length > 0) change.moved = moved;
       for (const fn of this.observers) fn(change);
     }
     return true;
@@ -805,6 +1135,13 @@ export class WorkspaceStore {
     tx.lww = true;
     const stale: RecordKeyString[] = [];
     const tombstoned = new Map<RecordKeyString, Stamp>();
+    if (this.lazySource) {
+      // Die betroffenen Blöcke in einem Zug holen (Stempelvergleich), statt je Record einzeln nachzufragen.
+      const ids: string[] = [];
+      for (const r of records) if (r.kind === "block") ids.push(r.data.id);
+      for (const k of deletions) if (k.startsWith("block:")) ids.push(k.slice(6));
+      this.prefetchBlocks(ids);
+    }
     for (const r of records) {
       if (r.kind === "workspace" && r.data.id !== this.workspace.id) continue; // ein Workspace pro Store (BSD-23)
       const key = recordKey(r);

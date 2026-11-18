@@ -4,10 +4,14 @@ Project-specific guidance for AI coding agents.
 
 ## Based zuerst
 
-Für Based Next gelten zuerst die Regeln aus `docs/design/README.md` (Designsprache „Based Default“) und
-`docs/design/astryx.md`. Wo der Astryx-Block unten dem widerspricht, gewinnt Based:
+Für Based Next gelten zuerst die Regeln aus `docs/design/README.md` (Designsprache „Based Default“),
+`docs/design/elements.md` (Element-System) und `docs/design/astryx.md`. Wo der Astryx-Block unten dem widerspricht, gewinnt Based:
 
 - Vor jeder sichtbaren Änderung den Skill `.claude/skills/based-design/SKILL.md` lesen und befolgen.
+- **Pflicht für jede Oberfläche:** `docs/design/elements.md` (Element-System v11). Jedes Bedienelement kommt aus
+  dessen Abschnitt 4. Standardgröße `md` (32 px), `size="sm"` nur in `packages/database-ui`; Anklickbares mindestens
+  14 px; höchstens ein Fokusrahmen zur Zeit; nur die vier Einblendungen mit ihren Zeiten, keine neuen `@keyframes`.
+  Fehlt ein Element, wird zuerst `elements.md` und das Design-Kit erweitert, dann gebaut.
 - Eine Bedienoberfläche überall: Menüs, Popover, Toolbars und Dialoge – auch im Editor und in Datenbank-Views –
   kommen aus `@based/ui/astryx` (oder sehen genau so aus). Views importieren `@astryxdesign/core` nicht direkt.
 - Bestehender Blockinhalt (Editor) und der Tabellenkörper (Datenbank) werden nicht wegen „No <div>“ umgeschrieben.

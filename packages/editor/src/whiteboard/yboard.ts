@@ -20,14 +20,25 @@ function ensureVersion(doc: Y.Doc) {
 export function readBoard(doc: Y.Doc): WBObject[] {
   const out: WBObject[] = [];
   for (const m of objects(doc).values()) {
-    if (!(m instanceof Y.Map)) continue;
-    const o = parseWBObject(m.toJSON());
-    if (!o) continue;
-    const ink = m.get("ink");
-    if (o.kind !== "connector" && ink instanceof Uint8Array) o.ink = ink;
-    out.push(o);
+    const o = readObject(m);
+    if (o) out.push(o);
   }
   return sortByZ(out);
+}
+
+/** Ein Objekt aus seiner Y.Map lesen (BSD-264: die Sitzung liest nur geänderte Objekte neu). */
+export function readObject(m: unknown): WBObject | undefined {
+  if (!(m instanceof Y.Map)) return undefined;
+  const o = parseWBObject(m.toJSON());
+  if (!o) return undefined;
+  const ink = m.get("ink");
+  if (o.kind !== "connector" && ink instanceof Uint8Array) o.ink = ink;
+  return o;
+}
+
+/** Die Y.Map aller Objekte (id → Y.Map). */
+export function boardObjectsMap(doc: Y.Doc): Y.Map<Y.Map<unknown>> {
+  return objects(doc);
 }
 
 function setFields(m: Y.Map<unknown>, fields: Record<string, unknown>) {
@@ -38,36 +49,37 @@ function setFields(m: Y.Map<unknown>, fields: Record<string, unknown>) {
   }
 }
 
-export function addObject(doc: Y.Doc, obj: WBObject) {
+/** `origin` (BSD-264): Herkunft der Y-Transaktion – die Sitzung unterscheidet eigene Änderungen (Undo) von eingespielten. */
+export function addObject(doc: Y.Doc, obj: WBObject, origin?: unknown) {
   doc.transact(() => {
     ensureVersion(doc);
     const m = new Y.Map<unknown>();
     m.set("id", obj.id);
     setFields(m, wbFields(obj));
     objects(doc).set(obj.id, m);
-  });
+  }, origin);
 }
 
 /** Einzelne Felder ändern (nur die übergebenen; `undefined` entfernt ein Feld). */
-export function updateObject(doc: Y.Doc, id: string, patch: Record<string, unknown>): boolean {
+export function updateObject(doc: Y.Doc, id: string, patch: Record<string, unknown>, origin?: unknown): boolean {
   const m = objects(doc).get(id);
   if (!(m instanceof Y.Map)) return false;
-  doc.transact(() => setFields(m, patch));
+  doc.transact(() => setFields(m, patch), origin);
   return true;
 }
 
 /** Ganz nach vorn holen (neues z hinter dem bisher vordersten). */
-export function bringToFront(doc: Y.Doc, id: string): boolean {
+export function bringToFront(doc: Y.Doc, id: string, origin?: unknown): boolean {
   const others = readBoard(doc).filter((o) => o.id !== id);
-  return updateObject(doc, id, { z: frontZ(others) });
+  return updateObject(doc, id, { z: frontZ(others) }, origin);
 }
 
 /** Objekte löschen, Verbindungen, die danach ins Leere zeigen, gleich mit. Gibt alle gelöschten IDs zurück. */
-export function removeObjects(doc: Y.Doc, ids: readonly string[]): string[] {
+export function removeObjects(doc: Y.Doc, ids: readonly string[], origin?: unknown): string[] {
   const set = new Set(ids);
   for (const c of danglingConnectors(readBoard(doc), set)) set.add(c);
   const map = objects(doc);
   const removed = [...set].filter((id) => map.has(id));
-  doc.transact(() => { for (const id of removed) map.delete(id); });
+  doc.transact(() => { for (const id of removed) map.delete(id); }, origin);
   return removed;
 }

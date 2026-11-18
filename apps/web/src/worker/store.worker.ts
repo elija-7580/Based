@@ -17,7 +17,7 @@ const host = new StoreHost({
   importedAssets: new IDBAssetStore(),
   // BSD-231: lokale Modelle im OPFS-Ordner `models` (geladen wird nur mit Einwilligung)
   openModels: () => openOpfsModels(),
-  async open({ device, opfs, propertyRecords }) {
+  async open({ device, opfs, propertyRecords, lazy }) {
     // BSD-30: nur einschalten, nie ausschalten – eine umgestellte Datei bleibt es (openWorkspace)
     const mode = propertyRecords ? { propertyRecords: true } : {};
     if (opfs) {
@@ -25,7 +25,7 @@ const host = new StoreHost({
         // Übernahme von einem geschlossenen Tab (tabs.ts): dessen Worker gibt die Datei erst kurz nach dem Lock frei.
         const db = await openWasmDatabase({ opfs, waitMs: 5000 });
         const storageWarnings: string[] = [];
-        const opened = { ...openWorkspace(db, { device, ...mode }), persistent: true, ...(await openHistory(storageWarnings)), ...(await openAssets(storageWarnings)), ...(await openYDocs(storageWarnings)) };
+        const opened = { ...openWorkspace(db, { device, ...mode, lazy: lazy === true }), persistent: true, ...(await openHistory(storageWarnings)), ...(await openAssets(storageWarnings)), ...(await openYDocs(storageWarnings)) };
         return storageWarnings.length ? { ...opened, storageWarnings } : opened;
       } catch (e) {
         const note = `Not saved on this device: ${e instanceof Error ? e.message : String(e)}`;

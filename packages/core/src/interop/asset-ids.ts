@@ -3,6 +3,7 @@
 // Ein Verweis ist ein Objekt mit `id` und `name` (AssetRef: Bild-/Dateiblock, Icon, Cover, Datei-Property, Spuren).
 import type { WorkspaceStore } from "../store/store.js";
 
+const REF_HINTS = ['"name"'] as const;
 const isRef = (o: Record<string, unknown>) => typeof o.id === "string" && typeof o.name === "string";
 
 /** Tiefe Kopie, in der jeder AssetRef mit einer ID aus `map` die neue ID bekommt. Ohne Treffer: dasselbe Objekt. */
@@ -43,7 +44,8 @@ export function assetIDsInStore(store: WorkspaceStore): Set<string> {
       for (const x of Object.values(o)) walk(x);
     }
   };
-  for (const b of store.blocks.values()) { walk(b.props); walk(b.values); }
+  // Ein Verweis hat immer ein Feld `name`: mit Laden nach Bedarf sucht die Datei danach, statt alles zu laden.
+  store.scanBlocks(REF_HINTS, (b) => { walk(b.props); walk(b.values); });
   return out;
 }
 
@@ -51,9 +53,9 @@ export function assetIDsInStore(store: WorkspaceStore): Set<string> {
 export function remapStoreAssets(store: WorkspaceStore, map: ReadonlyMap<string, string>): number {
   if (map.size === 0) return 0;
   const hits: string[] = [];
-  for (const b of store.blocks.values()) {
+  store.scanBlocks(REF_HINTS, (b) => {
     if (remapAssetRefs(b.props, map) !== b.props || remapAssetRefs(b.values, map) !== b.values) hits.push(b.id);
-  }
+  });
   if (hits.length === 0) return 0;
   store.transact("Move files to synced storage", (tx) => {
     for (const id of hits) {
@@ -84,10 +86,12 @@ function fallbackAssetName(type: string, id: string): string {
  */
 export function migrateAssetURLBlocks(store: WorkspaceStore, info?: (id: string) => { name?: string; mime?: string; size?: number } | undefined): number {
   const hits: string[] = [];
-  for (const b of store.blocks.values()) {
+  // Mit Laden nach Bedarf sucht die Datei nach dem Schema, statt den ganzen Workspace in den Speicher zu holen
+  // (ADR 0017 Stufe B) – sonst wäre der erste Start mit „Fast start“ gar kein schneller.
+  store.scanBlocks([ASSET_URL_SCHEME], (b) => {
     const url = b.props?.url;
     if (typeof url === "string" && url.startsWith(ASSET_URL_SCHEME) && url.length > ASSET_URL_SCHEME.length && !b.props?.asset) hits.push(b.id);
-  }
+  });
   if (hits.length === 0 || store.isReadOnly) return 0;
   const rejected = store.writeFailure?.rejected ?? 0;
   store.transact("Fix uploaded files", (tx) => {

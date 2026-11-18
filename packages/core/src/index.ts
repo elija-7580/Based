@@ -5,12 +5,16 @@ export * from "./json.js";
 export * as schema from "./model/schema.js";
 export { ENUMS, KNOWN_KEYS } from "./model/schema.js";
 export * from "./model/records.js";
+// BSD-522: Herkunft pro Seite und Block (Regeln; Datenfelder in model/schema.ts).
+export { AUTHOR_KINDS, PAGE_ORIGINS, ProvenanceError, authorID, authorKindOf, checkOriginChange, contentChanged, isPageOrigin, originAfterEdit, type Actor, type Author, type AuthorKind, type PageOrigin } from "./model/provenance.js";
+export { applyProvenance, setPageOrigin } from "./store/provenance-ops.js";
 export * as propertyRecords from "./model/property-records.js";
 export type { DatabaseCore, MigrationReport, PropertyDiff, SchemaIssue } from "./model/property-records.js";
 export { StampClock, ZERO_STAMP, compareStamps, parseStamp, stampToString, type Stamp } from "./hlc.js";
 export { FIRST_KEY, isValidKey, keyBetween, keysBetween } from "./sortkeys.js";
 export { plainText } from "./richtext.js";
-export { MemoryPersistence, StoreReadOnlyError, Tx, WorkspaceStore, keyOf, parseKey, recordKey, WORKSPACE_ID } from "./store/store.js";
+export { MemoryPersistence, StoreReadOnlyError, Tx, WorkspaceStore, keyOf, parseKey, recordKey, WORKSPACE_ID, SKELETON_TYPES, isSkeletonBlock } from "./store/store.js";
+export type { LazyPersistence } from "./store/store.js";
 export type { ChangeOrigin, Persistence, RecordKeyString, RemoteMergeResult, StoreChange, StoreOptions, UndoOutcome, WriteFailure } from "./store/store.js";
 export { Formula, FormulaError, FUNCTION_NAMES, referencedProperties } from "./query/formula.js";
 export type { FormulaEnvironment, FormulaExpr } from "./query/formula.js";
@@ -20,7 +24,7 @@ export { QueryEngine, TITLE_PROPERTY_ID, filterOps, cellText, databaseOfRow, dur
 export type { QueryEngineOptions, QueryResult, RowGroup } from "./query/engine.js";
 export { conversionLoss, formatDateValue, plainString, propertyConversion } from "./store/conversion.js";
 export type { ConversionPlan } from "./store/conversion.js";
-export { EXTENDED_SCORES, SearchCorpus, SearchIndex, attachSearchIndex, blockExtraText, contentText, fold, nearWord, rowExtraText, handleSearchMessage, observeSearchDeltas, rowText, searchDeltaFrom, searchSnapshot, searchTitle, snippet } from "./search/search.js";
+export { EXTENDED_SCORES, SearchCorpus, SearchIndex, attachSearchIndex, blockExtraText, contentText, fold, nearWord, typoBudget, typoDistance, rowExtraText, handleSearchMessage, observeSearchDeltas, rowText, searchDeltaFrom, searchSnapshot, searchTitle, snippet } from "./search/search.js";
 export type { SearchDelta, SearchFilters, SearchHit, SearchOptions, SearchRequest, SearchResponse, SearchSort, SearchSource } from "./search/search.js";
 export { HTMLNode, decodeEntities, parseHTML, pageIDFromLink, sanitizeURL, urlScheme } from "./interop/html.js";
 export { LINK_PREVIEW_MAX_BYTES, parseLinkPreview, type BookmarkMeta } from "./interop/link-preview.js";
@@ -43,7 +47,7 @@ export { ForceLayout, hashID, layoutBounds, nodeAtPoint } from "./graph/layout.j
 export type { LayoutOptions, Point } from "./graph/layout.js";
 export { treeLayout } from "./graph/tree-layout.js";
 export type { TreeLayout, TreeLayoutOptions } from "./graph/tree-layout.js";
-export { PRIVATE_SECTION, SHARED_SECTION, buildOutline, iconText, pageAncestors, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
+export { PRIVATE_SECTION, SHARED_SECTION, buildOutline, buildOutlineByWalk, iconText, pageAncestors, pageLocation, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
 export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/outline.js";
 // BSD-156: Import und Export (Notion-HTML, Markdown/CSV, Workspace-Archiv, ZIP)
 export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFingerprint, IMPORT_FINGERPRINT_KEY, notionIDInName, notionUUID, versionHash } from "./interop/importids.js";
@@ -60,7 +64,7 @@ export { classRules, cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter,
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
 export { codeSpan, decodeCSV, decodeInlineMarkdown, escapeTagLike, linkTarget, encodeCSV, guardCSVFormula, unguardCSVFormula, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
-export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
+export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, uniqueIDPrefix, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { findObsidianVault, ObsidianImporter, parseWikiTarget, splitFrontmatter, yamlList, type ObsidianImportOptions } from "./interop/obsidian-import.js";
 export { isLogseqGraph, logseqBlockIDs, logseqTitle, logseqToMarkdown } from "./interop/logseq.js";
@@ -146,7 +150,7 @@ export type { IconColor, PhosphorIconRef } from "./editor/icon-ref.js";
 export { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
 export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";
-export { CODE_LANGUAGES, codeLanguageID, syntaxTokens } from "./editor/syntax.js";
+export { CODE_LANGUAGES, CODE_VIEWS, codeLanguageID, codePreviewKind, codeView, syntaxTokens, type CodeView } from "./editor/syntax.js";
 export type { SyntaxKind, SyntaxToken } from "./editor/syntax.js";
 export { embedTarget } from "./editor/embed.js";
 export type { EmbedTarget } from "./editor/embed.js";
@@ -199,6 +203,25 @@ export {
   type ConnectorEnd, type ConnectorShape, type ConnectorSide, type WBConnector, type WBKind, type WBObject, type WBShape, type WBStyleValue,
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
+export { boardFileView, fileExtension, PREVIEW_BYTES, PREVIEW_LINES, textPreview, type BoardFileView, type PreviewLine, type TextPreview } from "./whiteboard/files.js";
+export { BOARD_SCRIPT_MAX, boardHandles, boardOutline, planBoardScript, type BoardPlan } from "./whiteboard/agent.js";
+// BSD-265 (Whiteboard 3): Tinte – ausdünnen, Treffer, Lasso
+export { distanceToInk, inkBounds, inkObjectGeometry, inkPointsOf, pointInPolygon, recognizeShape, shareInside, simplifyInk } from "./whiteboard/stroke.js";
+// BSD-264 (Whiteboard 2): Kamera, Geometrie, Raumindex und Board-Objekte als Records
+export {
+  centerOn, clampZoom, DEFAULT_CAMERA, fitCamera, GRID_STEP, gridStepFor, MAX_ZOOM, MIN_ZOOM, panBy, rectContains, rectFromPoints, rectsIntersect, screenToWorld,
+  unionRect, visibleRect, worldRectToScreen, worldToScreen, ZOOM_STEPS, zoomByWheel, zoomLabel, zoomStep, zoomTo,
+  type Camera, type Point as BoardPoint, type Rect as BoardRect, type Size as BoardSize,
+} from "./whiteboard/viewport.js";
+export {
+  BoardIndex, connectorPoints, duplicateObjects, facingSide, FRAME_EDGE, FRAME_TITLE_HEIGHT, frontZs, HANDLES, handlePoint, hitHandle, hitsObject, hitTest, indexByID, isConnector, isShape,
+  MIN_OBJECT_SIZE, nudgeDelta, objectBounds, objectsInRect, readingOrder, resizeRect, scaleInto, selectionBounds, type Handle,
+} from "./whiteboard/geometry.js";
+export {
+  BOARD_BACKGROUNDS, boardBackground, setBoardBackground, type BoardBackground,
+  BOARD_FORMAT, BOARD_OBJECT_TYPE, boardObjectFromBlock, boardObjectProps, boardObjectsOf, boardObjectToBlock, createBoardPage, insertBoardPage, isBoardObjectBlock,
+  isBoardPage, sameBoardObject,
+} from "./whiteboard/records.js";
 export {
   BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, FEEDBACK_EMAIL, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
   reportEmail, systemLabel, type ReportEmail, type ReportEmailInput,

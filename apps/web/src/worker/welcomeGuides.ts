@@ -80,7 +80,7 @@ export function addWelcomeGuides(store: WorkspaceStore, parentID: string): strin
   const parent = store.blocks.get(parentID);
   if (!parent || parent.type !== "page" || store.isReadOnly) return [];
   const existing = new Set<string>();
-  for (const b of store.blocks.values()) if (b.parent === "b:" + parentID && b.type === "page" && typeof b.text === "string") existing.add(b.text);
+  for (const b of store.skeletonBlocks()) if (b.parent === "b:" + parentID && b.type === "page" && typeof b.text === "string") existing.add(b.text);
   const missing = WELCOME_GUIDES.filter((g) => !existing.has(g.title));
   if (missing.length === 0) return [];
   // je Seite eine Transaktion: die Sortierschlüssel „am Ende“ sehen so die gerade angelegte Schwester

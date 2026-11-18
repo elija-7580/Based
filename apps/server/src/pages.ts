@@ -11,6 +11,7 @@ import {
   makeRecordID,
   MarkdownExporter,
   MarkdownImporter,
+  pageLocation,
   restorePages,
   sortKeys,
   titleOf,
@@ -96,13 +97,20 @@ export class Pages {
     return isTrashed(this.store, id) ? `(in the Trash)\n\n${md}` : md;
   }
 
-  /** Titel und Volltext; nur Seiten außerhalb des Papierkorbs. */
-  searchPages(query: string, limit = 20): { id: string; title: string; snippet?: string }[] {
-    const hits = this.index.search(query, {}, "bestMatch", Math.max(limit * 2, limit));
-    const out: { id: string; title: string; snippet?: string }[] = [];
+  /**
+   * Titel, Volltext und Zeilenwerte – so wie Quick Find in der App (Begriffe über mehrere Absätze, Tippfehler, andere
+   * Wortformen, Zeilen über ihre Relationen, Personen, Optionen). Nur Seiten außerhalb des Papierkorbs. `location`
+   * sagt, wo die Seite liegt (Elternseiten bzw. Datenbank), `row` ob sie eine Datenbankzeile ist.
+   */
+  searchPages(query: string, limit = 20, opts: { titleOnly?: boolean | undefined; within?: string | undefined } = {}): { id: string; title: string; snippet?: string; location?: string; row?: boolean }[] {
+    const filters = { ...(opts.titleOnly ? { titleOnly: true } : {}), ...(opts.within ? { inPage: opts.within } : {}) };
+    const hits = this.index.run(query, { filters, limit: Math.max(limit * 2, limit), extended: true }) ?? [];
+    const out: { id: string; title: string; snippet?: string; location?: string; row?: boolean }[] = [];
     for (const h of hits) {
-      if (!this.store.blocks.has(h.pageID) || isTrashed(this.store, h.pageID)) continue;
-      out.push(h.snippet ? { id: h.pageID, title: this.title(h.pageID), snippet: h.snippet } : { id: h.pageID, title: this.title(h.pageID) });
+      const b = this.store.blocks.get(h.pageID);
+      if (!b || isTrashed(this.store, h.pageID)) continue;
+      const location = pageLocation(this.store, h.pageID);
+      out.push({ id: h.pageID, title: this.title(h.pageID), ...(h.snippet ? { snippet: h.snippet } : {}), ...(location ? { location } : {}), ...(b.parent.startsWith("d:") ? { row: true } : {}) });
       if (out.length >= limit) break;
     }
     return out;

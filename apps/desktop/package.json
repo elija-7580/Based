@@ -2,6 +2,7 @@
   "name": "@based/desktop",
   "version": "0.0.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "description": "BSD-164: Tauri-2-Hülle „Based Next“ um apps/web (macOS-DMG mit Auto-Update, siehe docs/desktop.md).",
   "scripts": {
@@ -10,7 +11,7 @@
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
-    "sidecar": "node scripts/build-sidecar.mjs && node scripts/fetch-node.mjs && node scripts/sign-node.mjs",
+    "sidecar": "node scripts/build-sidecar.mjs && node scripts/build-whisper.mjs && node scripts/fetch-node.mjs && node scripts/sign-node.mjs",
     "verify-app": "node scripts/verify-app.mjs"
   },
   "devDependencies": {

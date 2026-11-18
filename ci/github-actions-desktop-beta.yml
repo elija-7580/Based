@@ -1,9 +1,11 @@
-# Beta-Release (16.11.2026): „Based Beta“ – die Release-Linie für Tester (Branch beta, nur stabile Funktionen).
+# Beta-Release (16.11.2026): „Based Notes Beta“ (bis BSD-514: „Based Beta“) – die Release-Linie für Tester (Branch beta, nur stabile Funktionen).
 # VORLAGE: Workflow-Dateien in .github/ kann nur Elija anlegen. Aktivieren:
 #   cp ci/github-actions-desktop-beta.yml .github/workflows/desktop-beta.yml && git add … && git commit && git push
 # Unterschiede zu desktop.yml (Based Next):
 #   - läuft nur bei Pushes auf beta (und von Hand), baut mit BASED_CHANNEL=beta (shell/beta.ts, kein AI-Schalter)
-#   - App „Based Beta“, Bundle-ID com.friedrich-ulrich.based.beta (tauri.beta.conf.json) – neben Based Next installierbar
+#   - App „Based Notes Beta“, Bundle-ID com.friedrich-ulrich.based.beta (tauri.beta.conf.json) – neben Based Next installierbar
+#   - BSD-514: nur der sichtbare Name ist neu. Bundle-ID, Tags beta-v<Version>/beta-latest und latest.json bleiben, damit
+#     installierte Kopien („Based Beta.app“) das Update finden; Based-Beta.dmg wird weiter nach beta-latest geladen (alte Links).
 #   - Version 0.2.<Lauf>, Pre-Release beta-v<Version>, fester Kanal beta-latest (latest.json für den Updater)
 #   - Release Notes aus docs/beta/RELEASE_NOTES.md (oberster Abschnitt), nicht aus den Commits
 name: Desktop Beta
@@ -22,11 +24,11 @@ permissions:
 
 jobs:
   mac:
-    name: Based Beta (DMG)
+    name: Based Notes Beta (DMG)
     runs-on: macos-15
     timeout-minutes: 60
     env:
-      APP_NAME: Based Beta
+      APP_NAME: Based Notes Beta
       BASED_CHANNEL: beta
       TARGET: universal-apple-darwin
     steps:
@@ -63,7 +65,7 @@ jobs:
           # Laufende Nummer dieses Workflows: steigt mit jedem Lauf, damit der Updater neuere Versionen erkennt.
           V="0.2.${GITHUB_RUN_NUMBER}"
           echo "version=$V" >> "$GITHUB_OUTPUT"
-          echo "Based Beta $V"
+          echo "Based Notes Beta $V"
 
       - name: Build (.app, universal, ad hoc signiert)
         env:
@@ -132,23 +134,28 @@ jobs:
           # Release Notes für Tester: oberster Abschnitt von docs/beta/RELEASE_NOTES.md (ohne die Überschrift).
           awk '/^## /{n++; next} n==1' docs/beta/RELEASE_NOTES.md | sed '/^$/N;/^\n$/D' > dist/notes.md
           [ -s dist/notes.md ] || echo "• Small fixes and improvements" > dist/notes.md
+          # BSD-542: für den Updater (latest.json) nur die Kurzfassung – höchstens 3 Punkte à 80 Zeichen. Der Dialog der
+          # installierten Beta 0.2.2–0.2.4 scrollt nicht; viele lange Zeilen schöben „Install and Restart“ aus dem Fenster.
+          node apps/desktop/scripts/beta-notes.mjs docs/beta/RELEASE_NOTES.md --short > dist/notes-short.md || echo "• Small fixes and improvements" > dist/notes-short.md
           ditto "$BUNDLE/$APP_NAME.app" "$RUNNER_TEMP/dmg/$APP_NAME.app"
           ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
-          hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Beta.dmg
+          hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Notes-Beta.dmg
           # Frisch geschriebene DMG ist kurz gesperrt („Resource temporarily unavailable“): bis zu 5 Versuche.
           for i in 1 2 3 4 5; do
-            hdiutil verify dist/Based-Beta.dmg && break
+            hdiutil verify dist/Based-Notes-Beta.dmg && break
             [ "$i" = 5 ] && exit 1
             sleep 5
           done
+          # BSD-514: alter Name als Kopie, damit Links auf beta-latest/Based-Beta.dmg (Einladungen, alte Seiten) weiter gehen.
+          cp dist/Based-Notes-Beta.dmg dist/Based-Beta.dmg
           if [ -f "$BUNDLE/$APP_NAME.app.tar.gz" ]; then
-            cp "$BUNDLE/$APP_NAME.app.tar.gz" dist/Based-Beta.app.tar.gz
-            cp "$BUNDLE/$APP_NAME.app.tar.gz.sig" dist/Based-Beta.app.tar.gz.sig
-            URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/beta-v$V/Based-Beta.app.tar.gz"
-            SIG="$(cat dist/Based-Beta.app.tar.gz.sig)"
+            cp "$BUNDLE/$APP_NAME.app.tar.gz" dist/Based-Notes-Beta.app.tar.gz
+            cp "$BUNDLE/$APP_NAME.app.tar.gz.sig" dist/Based-Notes-Beta.app.tar.gz.sig
+            URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/beta-v$V/Based-Notes-Beta.app.tar.gz"
+            SIG="$(cat dist/Based-Notes-Beta.app.tar.gz.sig)"
             # Ein universelles Paket für beide Architekturen.
             jq -n --arg v "$V" --arg url "$URL" --arg sig "$SIG" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              --arg notes "$(cat dist/notes.md)" \
+              --arg notes "$(cat dist/notes-short.md)" \
               '{version:$v, notes:$notes, pub_date:$date, platforms:{
                  "darwin-aarch64":{signature:$sig,url:$url},
                  "darwin-x86_64":{signature:$sig,url:$url}}}' > dist/latest.json
@@ -163,7 +170,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Based-Beta-${{ steps.version.outputs.version }}
+          name: Based-Notes-Beta-${{ steps.version.outputs.version }}
           path: dist/
           retention-days: 14
 
@@ -174,21 +181,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           V: ${{ steps.version.outputs.version }}
         run: |
-          NOTES="Based Beta $V – Testversion für Mac (Apple Silicon und Intel).
-          Installieren: Based-Beta.dmg öffnen, „Based Beta“ nach Programme ziehen. Anleitung: docs/beta/README.md.
+          NOTES="Based Notes Beta $V – Testversion für Mac (Apple Silicon und Intel).
+          Installieren: Based-Notes-Beta.dmg öffnen, „Based Notes Beta“ nach Programme ziehen. Anleitung: docs/beta/README.md.
           Läuft neben Based Next; eigene Daten. Commit ${GITHUB_SHA}.
 
           $(cat dist/notes.md)"
-          ASSETS=(dist/Based-Beta.dmg)
-          [ -f dist/Based-Beta.app.tar.gz ] && ASSETS+=(dist/Based-Beta.app.tar.gz dist/Based-Beta.app.tar.gz.sig)
-          gh release create "beta-v$V" "${ASSETS[@]}" --target "$GITHUB_SHA" --title "Based Beta $V" \
+          ASSETS=(dist/Based-Notes-Beta.dmg)
+          [ -f dist/Based-Notes-Beta.app.tar.gz ] && ASSETS+=(dist/Based-Notes-Beta.app.tar.gz dist/Based-Notes-Beta.app.tar.gz.sig)
+          gh release create "beta-v$V" "${ASSETS[@]}" --target "$GITHUB_SHA" --title "Based Notes Beta $V" \
             --notes "$NOTES" --prerelease --latest=false
 
           # Fester Beta-Kanal für Download-Link und Updater.
           if ! gh release view beta-latest >/dev/null 2>&1; then
-            gh release create beta-latest --target "$GITHUB_SHA" --title "Based Beta (neueste Version)" --prerelease --latest=false \
-              --notes "Fester Link auf die neueste Based-Beta-DMG und latest.json für den Updater. Versionen: Releases beta-v<version>."
+            gh release create beta-latest --target "$GITHUB_SHA" --title "Based Notes Beta (neueste Version)" --prerelease --latest=false \
+              --notes "Fester Link auf die neueste DMG (Based-Notes-Beta.dmg, alter Name Based-Beta.dmg) und latest.json für den Updater. Versionen: Releases beta-v<version>."
           fi
-          UP=(dist/Based-Beta.dmg)
+          UP=(dist/Based-Notes-Beta.dmg dist/Based-Beta.dmg)
           [ -f dist/latest.json ] && UP+=(dist/latest.json)
           gh release upload beta-latest "${UP[@]}" --clobber

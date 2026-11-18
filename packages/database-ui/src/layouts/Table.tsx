@@ -45,6 +45,10 @@ interface RowProps {
   onSelect: ((row: Block, shift: boolean) => void) | undefined;
 }
 
+/** BSD-544: ID der aktiven Zelle für aria-activedescendant – der Fokus bleibt am Raster, Screenreader und der
+ *  Tab-Durchlauf sehen die Zelle mit dem einen Fokusrahmen (docs/design/elements.md, Abschnitt 3). */
+const activeCellID = (rowID: string, col: number) => `dbui-active-${rowID}-${col}`;
+
 const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, range, agent, wrap, onCell, onMenu, onOpen, onToggle, selected, onSelect }: RowProps) {
   const [c0, c1] = range ? range.split(":").map(Number) as [number, number] : [-1, -2];
   return (
@@ -63,7 +67,7 @@ const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, ac
       {lead > 0 && <div className="dbui-col-spacer" style={{ width: lead }} aria-hidden />}
       {props.slice(from, to).map((p, i) => { const col = from + i; return (
         <div key={p.id} role="gridcell" className={"dbui-cell" + (col === activeCol ? " active" : "") + (col >= c0 && col <= c1 ? " in-range" : "") + (p.type === "title" ? " title" : "")} style={{ width: widths[col] }}
-          data-cell={`${row.id}:${col}`} aria-selected={col === activeCol || (col >= c0 && col <= c1)} onClick={(e) => onCell(row, col, e.currentTarget)}>
+          data-cell={`${row.id}:${col}`} id={col === activeCol ? activeCellID(row.id, col) : undefined} aria-selected={col === activeCol || (col >= c0 && col <= c1)} onClick={(e) => onCell(row, col, e.currentTarget)}>
           <CellView row={row} prop={p} wrap={wrap} blankEmptyTitle onToggleCheckbox={() => onToggle(row, p)} />
           {p.type === "title" && onOpen && (
             <button type="button" className="dbui-open-btn" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onOpen(row.id); }} aria-label={`Open ${plainText(row.text) || "Untitled"}`}>
@@ -213,10 +217,16 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   }, [offsets]);
   useEffect(() => { if (active) revealCol(active.col); }, [active, revealCol]);
 
+  // BSD-536: Zwischen dem ersten getippten Zeichen und dem Fokus des Zelleneditors kommen weitere Tasten noch bei der
+  // Tabelle an. Sie werden hier gesammelt und vom Editor beim Öffnen übernommen (null = nichts offen).
+  const typeAhead = useRef<string | null>(null);
+  useEffect(() => { if (!editing) typeAhead.current = null; }, [editing]);
   const beginEdit = useCallback((rowID: string, col: number, initialText?: string) => {
     const row = store.blocks.get(rowID);
     const p = props[col];
+    typeAhead.current = null;
     if (!row || !p || locked) return;
+    if (initialText !== undefined && p.type !== "place") typeAhead.current = initialText;
     if (p.type === "checkbox") {
       const c = valueCase(row.values?.[p.id]);
       setValue(store, row.id, p.id, pv("checkbox", !(c?.[0] === "checkbox" && c[1] === true)));
@@ -322,6 +332,12 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // BSD-536: Der Editor öffnet gerade – Zeichen, die noch an der Tabelle selbst ankommen, gehören ins Feld.
+    if (typeAhead.current !== null && e.target === e.currentTarget && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      e.preventDefault();
+      typeAhead.current += e.key;
+      return;
+    }
     if (editing) return;
     if (!active) {
       if (e.target === e.currentTarget && ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(e.key)) {
@@ -559,6 +575,7 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
     <div className="dbui-scroll" ref={scrollRef} data-testid="table-scroll" onKeyDown={(e) => { if (e.key === "Escape" && selected.size && !editing) { setSelected(new Set()); } }}>
       {selected.size > 0 && <SelectionBar ids={[...selected]} onClear={() => setSelected(new Set())} />}
       <div className="dbui-table" role="grid" aria-label={view.name} aria-rowcount={result.rows.length + 1} aria-colcount={props.length}
+        aria-activedescendant={active && !editing ? activeCellID(active.rowID, active.col) : undefined}
         tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} onPointerDown={onGridPointerDown} data-range={rect ? "" : undefined} onFocus={(e) => { if (e.target === e.currentTarget && !focusByPointer.current && !editing) setActive((a) => a ?? firstCell()); }}
         onMouseDown={(e) => {
           // BSD-372: Nativer Fokus beim Drücken würde die (sehr hohe) Tabelle „in Sicht“ rollen – WebKit verschiebt
@@ -620,8 +637,8 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
         {props.map((p, i) => <CalcCell key={p.id} p={p} width={widths[i]!} view={view} rows={result.rows} />)}
       </div>
       {editing && editingRow && editingProp && (
-        <CellEditor row={editingRow} prop={editingProp} anchor={editing.anchor} initialText={editing.initialText}
-          onClose={() => { setEditing(null); gridRef.current?.focus({ preventScroll: true }); }}
+        <CellEditor row={editingRow} prop={editingProp} anchor={editing.anchor} initialText={editing.initialText} typeAhead={typeAhead}
+          onClose={() => { typeAhead.current = null; setEditing(null); gridRef.current?.focus({ preventScroll: true }); }}
           onTab={(dir) => {
             const next = tabFrom({ rowID: editing.rowID, col: editing.col }, dir);
             if (next) goTo(next.cell, false);

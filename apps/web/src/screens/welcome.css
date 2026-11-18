@@ -2,6 +2,13 @@
 .welcome .column { gap: var(--space-6); padding-top: var(--space-6); }
 .welcome-head { display: flex; flex-direction: column; gap: var(--space-2); }
 .welcome-head h1 { margin: 0; }
+/* Logo-Intro über der Überschrift: optisch bündig mit dem Text (das Zeichen hat links Luft im Raster) */
+.welcome-head .logo-intro { margin-bottom: var(--space-2); margin-left: calc(var(--space-2) * -1); }
+/* niedriges Fenster (900 × 600): das Zeichen steht links neben Überschrift und Text, damit alle Wege ohne Scrollen sichtbar bleiben */
+@media (max-height: 44em) {
+  .welcome-head { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-3); align-items: center; }
+  .welcome-head .logo-intro { grid-row: 1 / span 2; margin-bottom: 0; }
+}
 .welcome-lead { margin: 0; font-size: var(--type-body-size); }
 
 .welcome-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--page-measure) / 3), 1fr)); gap: var(--space-3); }

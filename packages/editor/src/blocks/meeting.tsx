@@ -71,7 +71,10 @@ export function MeetingBlock(props: MeetingBlockProps) {
   const segments = meetingTranscript(store, id);
   const hasTracks = (info.tracks?.length ?? 0) > 0;
   const summaryBlocks = summaryID ? store.children("b:" + summaryID).filter((c) => store.blocks.get(c)?.trashedAt === undefined).length : 0;
-  const current: Tab = tab ?? (recordingHere ? "notes" : summaryBlocks > 0 ? "summary" : transcriptChunks(store, id).length > 0 ? "transcript" : "notes");
+  // Ohne KI in diesem Build (Beta) kein Reiter „Summary“ – außer das Meeting hat schon eine Zusammenfassung.
+  const tabs = host?.summaryAvailable?.() === false && summaryBlocks === 0 ? TABS.filter((t) => t.id !== "summary") : TABS;
+  const wanted: Tab = tab ?? (recordingHere ? "notes" : summaryBlocks > 0 ? "summary" : transcriptChunks(store, id).length > 0 ? "transcript" : "notes");
+  const current: Tab = tabs.some((t) => t.id === wanted) ? wanted : "notes";
   const play = (s: number) => {
     crumb("meeting play");
     host?.play(store, id, s);
@@ -103,12 +106,12 @@ export function MeetingBlock(props: MeetingBlockProps) {
       <div className="bx-meet-controls">
         {recordingHere ? (
           <>
-            <BasedButton label={hs.paused ? "Resume" : "Pause"} size="sm" onClick={() => {
+            <BasedButton label={hs.paused ? "Resume" : "Pause"} onClick={() => {
               crumb(hs.paused ? "meeting resume" : "meeting pause");
               if (hs.paused) host?.resume();
               else host?.pause();
             }} />
-            <BasedButton label="Stop" variant="primary" size="sm" onClick={() => {
+            <BasedButton label="Stop" variant="primary" onClick={() => {
               crumb("meeting stop");
               void host?.stop();
             }} />
@@ -118,7 +121,7 @@ export function MeetingBlock(props: MeetingBlockProps) {
         ) : (
           <>
             {canRecord ? (
-              <BasedButton label={hasTracks ? "Continue recording" : host.hasTranscriber() ? "Start transcribing" : "Start recording"} variant="primary" size="sm"
+              <BasedButton label={hasTracks ? "Continue recording" : host.hasTranscriber() ? "Start transcribing" : "Start recording"} variant="primary"
                 disabled={busyElsewhere || processing} onClick={start} />
             ) : null}
             {canRecord && host.canCaptureSystemAudio() ? (
@@ -131,7 +134,7 @@ export function MeetingBlock(props: MeetingBlockProps) {
             {playback ? (
               <span className="bx-meet-playing bx2-meet-playing" data-testid="meeting-playback" data-from={playback.from}>
                 {playback.error ? <span className="bx-meet-error">{playback.error}</span> : <span>{playback.playing ? "Playing" : "Paused"} · <span className="bx-meet-clock">{timecode(playback.position)}</span></span>}
-                <BasedButton label="Stop" ariaLabel="Stop playback" variant="ghost" size="sm" onClick={() => {
+                <BasedButton label="Stop" ariaLabel="Stop playback" variant="ghost" onClick={() => {
                   crumb("meeting stop playback");
                   host?.stopPlayback();
                 }} />
@@ -152,7 +155,7 @@ export function MeetingBlock(props: MeetingBlockProps) {
           <span className="bx-meet-pending" data-testid="meeting-transcribe-pending">
             Recording saved · transcript {host?.pendingReason?.() ?? "comes later"}
             {host?.transcribeNow && editable ? (
-              <BasedButton label="Transcribe now" variant="ghost" size="sm" onClick={() => {
+              <BasedButton label="Transcribe now" variant="ghost" onClick={() => {
                 crumb("meeting transcribe now");
                 void host.transcribeNow?.(store, id);
               }} />
@@ -166,7 +169,7 @@ export function MeetingBlock(props: MeetingBlockProps) {
       <ContextBar store={store} pages={props.pages} onOpenPage={props.onOpenPage} id={id} info={info} editable={editable} />
 
       <div className="bx2-meet-tabs">
-        <BasedTabs label="Meeting" value={current} tabs={TABS.map((t) => ({ ...t, panelId: panelID }))} onChange={(v) => {
+        <BasedTabs label="Meeting" value={current} tabs={tabs.map((t) => ({ ...t, panelId: panelID }))} onChange={(v) => {
           crumb("meeting tab");
           setTab(v as Tab);
         }} />
@@ -271,7 +274,7 @@ function ContextBar(props: { store: WorkspaceStore; pages: PageDirectory | undef
           onRemove={() => removeMeetingContext(store, props.id, it.id)} />
       ))}
       {props.editable && mode === "idle" ? (
-        <BasedMenu label={items.length ? "Add" : "Add context"} variant="ghost" size="sm" items={[
+        <BasedMenu label={items.length ? "Add" : "Add context"} variant="ghost" items={[
           ...(pages ? [{ label: "Link a page", description: "Agenda, specs: they go to the summary", onSelect: () => setMode("page") }] : []),
           { label: "Add a note", description: "Names, background, vocabulary", onSelect: () => setMode("note") },
         ]} />
@@ -290,13 +293,13 @@ function ContextBar(props: { store: WorkspaceStore; pages: PageDirectory | undef
             }} />
           <div className="bx2-meet-results" role="list">
             {results.map((p) => (
-              <BasedButton key={p.id} label={p.title || "Untitled"} variant="ghost" size="sm" onClick={() => {
+              <BasedButton key={p.id} label={p.title || "Untitled"} variant="ghost" onClick={() => {
                 addMeetingContext(store, props.id, { kind: "page", pageID: p.id, title: p.title });
                 done();
               }} />
             ))}
           </div>
-          <BasedButton label="Cancel" variant="ghost" size="sm" onClick={done} />
+          <BasedButton label="Cancel" variant="ghost" onClick={done} />
         </div>
       ) : null}
       {mode === "note" ? (
@@ -310,7 +313,7 @@ function ContextBar(props: { store: WorkspaceStore; pages: PageDirectory | undef
               addMeetingContext(store, props.id, { kind: "text", text: query.trim() });
               done();
             }} />
-          <BasedButton label="Cancel" variant="ghost" size="sm" onClick={done} />
+          <BasedButton label="Cancel" variant="ghost" onClick={done} />
         </div>
       ) : null}
     </div>
@@ -344,7 +347,7 @@ function SummaryTab(props: {
   const { store, host } = props;
   const engine = host?.hasSummaryEngine() === true;
   const generate = (
-    <BasedButton label={props.summarizing ? "Writing summary…" : props.count > 0 ? "Regenerate summary" : "Generate summary"} size="sm"
+    <BasedButton label={props.summarizing ? "Writing summary…" : props.count > 0 ? "Regenerate summary" : "Generate summary"}
       variant={props.count > 0 ? "secondary" : "primary"} busy={props.summarizing} disabled={!props.hasContent || props.summarizing}
       onClick={() => {
         crumb("meeting summarize");
@@ -402,7 +405,7 @@ function TranscriptTab(props: {
         <p className="bx-meet-hint" data-testid="meeting-transcript-empty">{later ? "This recording has no transcript yet." : text}</p>
         {later ? (
           <div className="bx-meet-row">
-            <BasedButton label="Transcribe recording" size="sm" onClick={() => {
+            <BasedButton label="Transcribe recording" onClick={() => {
               crumb("meeting transcribe now");
               void host.transcribeNow?.(store, props.id);
             }} />
@@ -466,12 +469,12 @@ function SpeakerLegend(props: { store: WorkspaceStore; id: string; info: Meeting
             setEditing(undefined);
           }} />
           {others.length ? (
-            <BasedMenu label="Same person as…" variant="ghost" size="sm" items={others.map((o) => ({ label: o.name, onSelect: () => {
+            <BasedMenu label="Same person as…" variant="ghost" items={others.map((o) => ({ label: o.name, onSelect: () => {
               mergeSpeakers(store, props.id, s.id, o.id);
               setEditing(undefined);
             } }))} />
           ) : null}
-          <BasedButton label="Done" variant="ghost" size="sm" onClick={() => {
+          <BasedButton label="Done" variant="ghost" onClick={() => {
             if (name.trim() && name.trim() !== s.name) renameSpeaker(store, props.id, s.id, name.trim());
             setEditing(undefined);
           }} />

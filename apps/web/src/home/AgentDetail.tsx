@@ -100,8 +100,8 @@ export function AgentDetailScreen({ client, state, runID, onNavigate, onOpenPage
             {d.task ? <span className="tag">{`asked by you${d.task.data.source === "composer" ? " on Home" : d.task.data.source ? ` via ${d.task.data.source}` : ""} · `}<span className="home-mono">{clock(toMs(d.task.data.createdAt))}</span></span> : null}
           </span>
           <span className="task-actions">
-            {r.chatID && finished ? <Button size="sm" variant="secondary" label="Open transcript" onClick={() => openChat(r.chatID!)} /> : null}
-            {!finished ? <Button size="sm" variant="secondary" label="Stop" onClick={() => act(async () => { rt.agents.cancel(runID); await client.agents({ op: "updateRun", id: runID, patch: { status: "cancelled", lease: null } }); })} /> : null}
+            {r.chatID && finished ? <Button variant="secondary" label="Open transcript" onClick={() => openChat(r.chatID!)} /> : null}
+            {!finished ? <Button variant="secondary" label="Stop" onClick={() => act(async () => { rt.agents.cancel(runID); await client.agents({ op: "updateRun", id: runID, patch: { status: "cancelled", lease: null } }); })} /> : null}
           </span>
           {error ? <p className="t-desc" role="alert" style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
         </section>
@@ -143,13 +143,13 @@ export function AgentDetailScreen({ client, state, runID, onNavigate, onOpenPage
                 <strong>Needs you</strong>
                 <span>{`${d.title} wants to use ${a.name.replace(/_/g, " ")}.`}</span>
                 <span className="task-actions">
-                  <Button size="sm" variant="primary" label="Allow" onClick={() => rt.agents.approve(runID, a.callID, true)} />
-                  <Button size="sm" variant="secondary" label="Always" onClick={() => act(async () => {
+                  <Button variant="primary" label="Allow" onClick={() => rt.agents.approve(runID, a.callID, true)} />
+                  <Button variant="secondary" label="Always" onClick={() => act(async () => {
                     const rules = snap.main.permissions.rules.trim();
                     await client.agents({ op: "saveMain", patch: { rules: `${rules ? rules + "\n" : ""}allow based.${a.name}` } });
                     rt.agents.approve(runID, a.callID, true);
                   })} />
-                  <Button size="sm" variant="ghost" label="No" onClick={() => rt.agents.approve(runID, a.callID, false)} />
+                  <Button variant="ghost" label="No" onClick={() => rt.agents.approve(runID, a.callID, false)} />
                 </span>
               </section>
             ))}
@@ -181,7 +181,7 @@ export function AgentDetailScreen({ client, state, runID, onNavigate, onOpenPage
                 <strong>Started from</strong>
                 <span className="t-meta">{`Task card · `}<span className="home-mono">{clock(toMs(d.task.data.createdAt))}</span></span>
                 <span style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{d.task.data.input}</span>
-                <span className="task-actions"><Button size="sm" variant="ghost" label="Continue in chat" onClick={continueInChat} /></span>
+                <span className="task-actions"><Button variant="ghost" label="Continue in chat" onClick={continueInChat} /></span>
               </section>
             ) : null}
           </aside>

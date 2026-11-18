@@ -181,3 +181,24 @@ export function codeLanguageID(raw: string | undefined): string | undefined {
   if (raw === undefined) return undefined;
   return LANGUAGE_IDS.get(raw.trim().toLowerCase()) ?? raw;
 }
+
+/** Codeblock-Ansicht wie Notion „Code | Split | Preview“: nur Code, Code mit Ergebnis darunter, nur das Ergebnis. */
+export type CodeView = "code" | "split" | "preview";
+export const CODE_VIEWS: readonly CodeView[] = ["code", "split", "preview"];
+
+/** Sprachen, deren Code der Editor als Ergebnis zeigt (HTML im abgeschotteten Rahmen, Mermaid als Bild). */
+export function codePreviewKind(language: string | undefined): "html" | "mermaid" | undefined {
+  const id = codeLanguageID(language);
+  return id === "html" || id === "mermaid" ? id : undefined;
+}
+
+/**
+ * Ansicht eines Codeblocks; `undefined`, wenn die Sprache kein Ergebnis hat. Ohne gespeicherte Wahl zeigt HTML nur das
+ * Ergebnis (wie Notions HTML-Block, der Code erscheint beim Bearbeiten) und Mermaid Code und Diagramm.
+ */
+export function codeView(props: { language?: string | undefined; codeView?: string | undefined } | undefined): CodeView | undefined {
+  const kind = codePreviewKind(props?.language);
+  if (!kind) return undefined;
+  const stored = CODE_VIEWS.find((v) => v === props?.codeView);
+  return stored ?? (kind === "html" ? "preview" : "split");
+}

@@ -54,6 +54,18 @@ describe("Slash-Menü", () => {
     expect(first("num list")).toBe("Numbered list");
     expect(filterSlash(SLASH_ITEMS, "xyzqq")).toEqual([]);
   });
+  it("jeder Gruppenkopf höchstens einmal – ungefiltert und gefiltert, bester Treffer oben (BSD-484)", () => {
+    const heads = (items: readonly { group: string }[]) => items.map((i) => i.group).filter((g, i, a) => g !== a[i - 1]);
+    const unique = (items: readonly { group: string }[]) => { const h = heads(items); expect(new Set(h).size, h.join(", ")).toBe(h.length); };
+    unique(SLASH_ITEMS);
+    expect(heads(SLASH_ITEMS)).toEqual(["Basic blocks", "Pages", "Media", "Advanced"]);
+    for (const q of ["h", "head", "table", "co", "e", "page", "li", "math", "col", "d"]) {
+      const hits = filterSlash(SLASH_ITEMS, q);
+      unique(hits);
+      expect(hits.length, q).toBeGreaterThan(0);
+    }
+    expect(filterSlash(SLASH_ITEMS, "table")[0]?.label).toBe("Table of contents");
+  });
   it("jeder Eintrag hat ein Based-Icon (kein Emoji, kein Textzeichen)", () => {
     for (const it of SLASH_ITEMS) expect(isBlockIcon(it.icon), it.label).toBe(true);
     for (const d of Object.values(BLOCK_ICON_PATHS)) expect(d).toMatch(/^[MmLlHhVvCcSsQqTtAaZz0-9 .,-]+$/);

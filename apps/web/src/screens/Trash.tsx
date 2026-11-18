@@ -1,6 +1,6 @@
 // Papierkorb: gelöschte Seiten, Datenbanken und Zeilen (neueste zuerst) – wiederherstellen oder endgültig löschen.
 import { BasedButton } from "@based/ui/astryx";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons.js";
 import { fromSwift, relative } from "../shell/format.js";
 import { mayDeleteForever } from "../shell/guest.js";
@@ -11,6 +11,12 @@ const PAGE = 100;
 export function Trash({ client, state, onOpenPage }: { client: StoreClient; state: ShellState; onOpenPage: (id: string) => void }) {
   const entries = state.outline?.trash ?? [];
   const [confirm, setConfirm] = useState(false);
+  // BSD-505: „Delete forever“ an einer Zeile fragt in der Zeile nach (wie „Empty Trash“) – ein Klick löscht nichts.
+  const [asking, setAsking] = useState<string | undefined>();
+  const list = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    if (asking) list.current?.querySelector<HTMLButtonElement>(`[data-asking="${CSS.escape(asking)}"] button`)?.focus();
+  }, [asking]);
   const forever = mayDeleteForever();
   // Nach „alles löschen“ liegen hier Tausende Seiten; alle als Zeilen zu zeichnen machte jeden Klick träge.
   // Erst eine Seite voll, auf Wunsch mehr. „Empty Trash“ gilt immer für alle.
@@ -26,9 +32,10 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
     <div className="content">
       <div className="column">
         <header className="trash-head">
-          <div>
-            <h1 className="t-title">Trash</h1>
-            <p className="t-desc" style={{ marginTop: "var(--space-1)" }}>{forever ? "Pages stay here until you delete them forever." : "Pages stay here until the owner deletes them."}</p>
+          {/* BSD-530: Kopf eines App-Screens – Titel heading + Anzahl in meta, rechts die Hauptaktion */}
+          <div className="trash-title">
+            <h1 className="t-heading">Trash</h1>
+            <p className="t-meta" data-head-count="" data-testid="trash-count">{entries.length.toLocaleString("en-US")} {entries.length === 1 ? "page" : "pages"}</p>
           </div>
           {emptying !== undefined ? (
             <span className="t-desc" role="status" data-testid="trash-emptying">Deleting {emptying} {emptying === 1 ? "page" : "pages"} forever…</span>
@@ -43,10 +50,11 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
             )
           ) : null}
         </header>
+        <p className="t-desc trash-hint">{forever ? "Pages stay here until you delete them forever." : "Pages stay here until the owner deletes them."}</p>
         {entries.length === 0 ? (
           <p className="t-desc">The Trash is empty.</p>
         ) : (
-          <ul className="group" aria-label="Pages in Trash">
+          <ul ref={list} className="group" aria-label="Pages in Trash" onKeyDown={(e) => { if (e.key === "Escape" && asking) { e.stopPropagation(); setAsking(undefined); } }}>
             {entries.slice(0, shown).map((e) => {
               const title = state.titles.get(e.id) ?? "Untitled";
               return (
@@ -56,8 +64,17 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
                     <strong>{title}</strong>
                     <span className="t-desc" style={{ display: "block" }}>{e.from ? `in ${e.from} · ` : ""}deleted {relative(fromSwift(e.trashedAt))}</span>
                   </button>
-                  <BasedButton label="Restore" size="sm" icon={<Icon name="restore" size={16} />} onClick={() => void client.command({ op: "restore", ids: [e.id] })} />
-                  {forever ? <BasedButton label="Delete forever" size="sm" variant="ghost" onClick={() => void client.command({ op: "deleteForever", ids: [e.id] })} /> : null}
+                  {asking === e.id ? (
+                    <span className="actions" data-asking={e.id}>
+                      <BasedButton label="Delete forever" variant="danger" ariaLabel={`Delete “${title}” forever`} onClick={() => { setAsking(undefined); void client.command({ op: "deleteForever", ids: [e.id] }); }} />
+                      <BasedButton label="Cancel" variant="ghost" onClick={() => setAsking(undefined)} />
+                    </span>
+                  ) : (
+                    <>
+                      <BasedButton label="Restore" icon={<Icon name="restore" size={16} />} onClick={() => void client.command({ op: "restore", ids: [e.id] })} />
+                      {forever ? <BasedButton label="Delete forever" variant="ghost" onClick={() => setAsking(e.id)} /> : null}
+                    </>
+                  )}
                 </li>
               );
             })}
@@ -66,7 +83,7 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
         {entries.length > shown ? (
           <p className="t-desc trash-more" data-testid="trash-more">
             {entries.length - shown} more in Trash.{" "}
-            <BasedButton label="Show more" size="sm" variant="ghost" onClick={() => setShown((n) => n + PAGE * 5)} />
+            <BasedButton label="Show more" variant="ghost" onClick={() => setShown((n) => n + PAGE * 5)} />
           </p>
         ) : null}
       </div>

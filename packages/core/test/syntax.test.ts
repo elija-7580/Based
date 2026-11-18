@@ -1,6 +1,6 @@
 // BSD-209: dieselben Fälle wie Swift SyntaxHighlighterTests.
 import { describe, expect, it } from "vitest";
-import { CODE_LANGUAGES, codeLanguageID, syntaxTokens, type SyntaxKind } from "../src/index.js";
+import { CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, syntaxTokens, type SyntaxKind } from "../src/index.js";
 
 const kinds = (code: string, lang: string | undefined): [string, SyntaxKind][] =>
   syntaxTokens(code, lang).map((t) => [code.slice(t.from, t.from + t.length), t.kind]);
@@ -48,5 +48,26 @@ describe("BSD-343: Sprach-Kurznamen im Codeblock", () => {
   it("Unbekanntes bleibt, wie es ist; ohne Sprache keine Sprache", () => {
     expect(codeLanguageID("cobol")).toBe("cobol");
     expect(codeLanguageID(undefined)).toBeUndefined();
+  });
+});
+
+describe("Codeblock-Ansicht (Code | Split | Preview)", () => {
+  it("nur HTML und Mermaid haben ein Ergebnis, auch über Kurznamen und Schreibweisen", () => {
+    expect(codePreviewKind("html")).toBe("html");
+    expect(codePreviewKind(" HTML ")).toBe("html");
+    expect(codePreviewKind("mermaid")).toBe("mermaid");
+    expect(codePreviewKind("typescript")).toBeUndefined();
+    expect(codePreviewKind(undefined)).toBeUndefined();
+  });
+  it("Standard: HTML zeigt nur das Ergebnis, Mermaid Code und Diagramm; die gespeicherte Wahl gewinnt", () => {
+    expect(codeView({ language: "html" })).toBe("preview");
+    expect(codeView({ language: "mermaid" })).toBe("split");
+    expect(codeView({ language: "html", codeView: "code" })).toBe("code");
+    expect(codeView({ language: "mermaid", codeView: "preview" })).toBe("preview");
+  });
+  it("unbekannter Wert fällt auf den Standard zurück, Sprachen ohne Ergebnis haben keine Ansicht", () => {
+    expect(codeView({ language: "html", codeView: "sideways" })).toBe("preview");
+    expect(codeView({ language: "swift", codeView: "preview" })).toBeUndefined();
+    expect(codeView(undefined)).toBeUndefined();
   });
 });

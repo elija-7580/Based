@@ -257,6 +257,24 @@ footer a{display:inline-block;padding:6px 0}
 @keyframes bsdSheet{from{transform:translateY(100%)}to{transform:none}}
 @media (prefers-reduced-motion: reduce){.bsd .mb-sheet,.bsd .mb-backdrop{animation:none}}
 
+.bsd .ws-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bsd .ws-item.on{background:var(--bg);color:var(--ink);font-weight:600;box-shadow:var(--shadow-panel)}
+.bsd .ws-ic{flex:0 0 16px;width:16px;height:16px;border-radius:5px;background:var(--selected)}
+.bsd .ws-label{margin:16px 10px 6px;font-size:12px;font-weight:600;color:var(--muted)}
+.bsd .ws-t{padding:5px 12px;border-radius:999px;background:var(--surface-raised);color:var(--ink);font-size:13px;font-weight:600}
+.bsd .ws-t1{background:var(--button);color:var(--button-ink)}
+.bsd .ws-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 110px 90px;gap:12px;padding:11px 4px;border-top:1px solid var(--line);font-size:14px;align-items:center}
+.bsd .ws-head{border-top:0;font-size:12px;font-weight:600;color:var(--muted)}
+.bsd .imp-bar{display:block;height:4px;margin:0 0 8px;border-radius:4px;background:var(--surface-raised);overflow:hidden}
+.bsd .imp-bar>span{display:block;height:100%;background:var(--marker-strong);transform-origin:0 50%}
+@media (prefers-reduced-motion: no-preference){
+.bsd .ws-t1{animation:bsdT1 12s infinite}.bsd .ws-t2{animation:bsdT2 12s infinite}.bsd .ws-t3{animation:bsdT3 12s infinite}
+.bsd .imp-bar>span{animation:bsdLoopGrow 6s cubic-bezier(.4,0,.2,1) infinite}
+}
+@keyframes bsdT1{0%,31%{background:var(--button);color:var(--button-ink)}33%,100%{background:var(--surface-raised);color:var(--ink)}}
+@keyframes bsdT2{0%,31%{background:var(--surface-raised);color:var(--ink)}33%,64%{background:var(--button);color:var(--button-ink)}66%,100%{background:var(--surface-raised);color:var(--ink)}}
+@keyframes bsdT3{0%,64%{background:var(--surface-raised);color:var(--ink)}66%,97%{background:var(--button);color:var(--button-ink)}100%{background:var(--surface-raised);color:var(--ink)}}
+@media (max-width:900px){.bsd .ws-side,.bsd .ws-due{display:none !important}.bsd .ws-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 96px}}
 </style>
 </helmet>
 <div class="bsd" data-theme="{{theme}}" style="min-height: 100vh; display: flex; flex-direction: column;">
@@ -440,7 +458,7 @@ class Component extends DCLogic {
         { n: '02', t: 'Safety is not a pricing tier.', d: 'Version history, offline access and backups are basic rights for your own writing. Nobody should pay extra to undo a mistake from last month.' },
         { n: '03', t: 'Agents sign their work.', d: 'AI is welcome here, on your terms. Off by default, on a leash you choose, and every line it writes is marked with where it came from.' },
         { n: '04', t: 'Your AI, your keys.', d: 'You already pay for a model. Based connects to it instead of selling you a second one, and never hides which model did what.' },
-        { n: '05', t: 'Built in Europe, in the open.', d: 'Made in Vienna. MIT licensed, clean-room from public documentation, with the roadmap, the backlog and every night shift log in public.' }
+        { n: '05', t: 'Built in Europe, in the open.', d: 'Made in Vienna. AGPL licensed, clean-room from public documentation, with the roadmap, the backlog and every night shift log in public.' }
       ],
       crew: [
         { t: 'Elija', d: 'Human. Decides what Based is. Tests every screen on his Mac.', s: 'Vienna', bar: 0 },
@@ -452,7 +470,7 @@ class Component extends DCLogic {
         { v: '221', l: 'Notion features tracked one by one against the public help pages' },
         { v: '178', l: 'already working in the Swift prototype' },
         { v: '9', l: 'golden fixture suites that keep behaviour identical through the rewrite' },
-        { v: 'MIT', l: 'licence. Fork it, read it, audit it.' }
+        { v: 'AGPL', l: 'licence. Read it, audit it, build on it.' }
       ],
       phases
     };

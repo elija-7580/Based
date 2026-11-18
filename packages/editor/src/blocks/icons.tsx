@@ -57,6 +57,25 @@ export const BLOCK_ICON_PATHS = {
   moveDown: "M12 5v14M6 13l6 6 6-6",
   palette: "M12 3.5c3 3.6 6 7 6 10.2a6 6 0 0 1-12 0C6 10.5 9 7.1 12 3.5z",
   chevronRight: "M10 7l5 5-5 5",
+  // BSD-264: Werkzeuge der Board-Fläche (Entwurf „Based – Whiteboard“)
+  boardSelect: "M5 3.5l13 7-5.6 1.6L10.8 18z",
+  boardHand: "M8 12V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7.5a6.5 6.5 0 0 1-6.5 6.5h-.6a6 6 0 0 1-4.6-2.2L3.6 15a1.5 1.5 0 0 1 2.3-1.9L8 15",
+  boardNote: "M5 5.5A1.5 1.5 0 0 1 6.5 4h11A1.5 1.5 0 0 1 19 5.5V14l-5 6H6.5A1.5 1.5 0 0 1 5 18.5zM19 14h-3.5a1.5 1.5 0 0 0-1.5 1.5V20",
+  boardShape: "M4 13.5A1.5 1.5 0 0 1 5.5 12h5a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 18.5zM16.5 4a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z",
+  // BSD-265–267: Stift, Textmarker, Radierer, Lasso, Text, Verbindung, Frame (Pfade aus dem Entwurf)
+  boardPen: "M4 20l1-4.2L15.6 5.2a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19zM13.5 7.3l3.2 3.2",
+  // Textmarker mit schräger Spitze und dem Strich darunter (Elija 17.11.: „Icon vom Marker besser“).
+  boardHighlighter: "M13.6 4.4a1.8 1.8 0 0 1 2.5 0l3.5 3.5a1.8 1.8 0 0 1 0 2.5L12 18l-6-6zM6 12l-1.6 4.7 2.9 2.9L12 18M3 21h7",
+  boardEraser: "M8.5 20H20M4.6 14.6l8.8-8.8a2 2 0 0 1 2.8 0l2.8 2.8a2 2 0 0 1 0 2.8L11 19.4a2 2 0 0 1-2.8 0l-3.6-3.6a1.2 1.2 0 0 1 0-1.2zM9 10l5 5",
+  boardLasso: "M12 4c4.4 0 8 2.2 8 5s-3.6 5-8 5-8-2.2-8-5 3.6-5 8-5zM7 13c-1 1.3-1 3 .5 3.6 1.3.5 2.2-.6 1.6-1.6M8 16.5c.3 1.6-.2 3-1.5 3.5",
+  boardText: "M5 6V4.5h14V6M12 4.5v15M9 19.5h6",
+  boardConnector: "M5 19L19 5M10 5h9v9",
+  boardFrame: "M7 3v18M17 3v18M3 7h18M3 17h18",
+  boardImage: "M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5zM4 16l4.5-4.5 4 4 2.5-2.5L20 18",
+  boardUndo: "M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11",
+  boardRedo: "M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13",
+  boardZoomIn: "M12 5.5v13M5.5 12h13",
+  boardZoomOut: "M5.5 12h13",
 } as const;
 
 export type BlockIconName = keyof typeof BLOCK_ICON_PATHS;

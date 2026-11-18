@@ -2,12 +2,15 @@
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
-import { importPendingSource, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
-import { EmojiPicker, IconView, isDrawableIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
+import { BOARD_BACKGROUNDS, boardBackground, setBoardBackground, importPendingSource, isBoardPage, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type BoardBackground, type PageFormatPatch, type WorkspaceStore } from "@based/core";
+import { BoardView, EmojiPicker, IconView, isDrawableIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
 import { BlockView } from "../components/BlockView.js";
+import { assets } from "../assetBridge.js";
+import { EmbeddedPage } from "../components/Embedded.js";
+import { pickPage } from "../shell/pagePick.js";
 import { aiSetting } from "../shell/ai.js";
 import { openPageWindow } from "../desktop.js";
 import { FindBar } from "../components/FindBar.js";
@@ -25,6 +28,7 @@ import { guestMayEdit, isGuest, mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
+import { takeFreshPage } from "../shell/freshPage.js";
 import type { PageReplica, ShellState, StoreClient } from "../worker/client.js";
 import type { HistoryRestoreResult } from "../worker/protocol.js";
 
@@ -173,12 +177,20 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
   const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
 
+  const board = isBoardPage(page);
   const loading = !store && !failed;
   let body;
   if (failed) body = <p className="t-desc">Couldn't open this page: {failed}</p>;
   else if (!store) body = <p className="t-desc page-opening" aria-busy="true">Opening…</p>;
   else if (!page) body = <p className="t-desc">This page was deleted.</p>;
-  else if (dbID) {
+  else if (board) {
+    // BSD-264: Board-Seite – die Fläche füllt das Panel (kein Seitenkopf; umbenennen über die Seitenleiste).
+    // BSD-266: Dateien auf dem Board liegen im selben Dateispeicher wie Bilder im Editor (nur die Adresse im Record).
+    const files = assets();
+    body = <BoardView store={store} pageID={pageID} readOnly={readOnly} onOpenPage={(id) => onOpenPage(id)} pageTitles={state.titles} pickPage={pickPage}
+      renderPage={(id, editable) => <EmbeddedPage client={client} pageID={id} editable={editable} onOpenPage={onOpenPage} />}
+      {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />;
+  } else if (dbID) {
     const View = slots.DatabaseView;
     body = View
       ? <View store={store} blockID={pageID} databaseID={dbID} readOnly={readOnly} onOpenPage={onOpenPage} asPage />
@@ -233,7 +245,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             {ai ? (
               <BasedIconButton label="AI chat" tooltip="AI chat (⌘J)" pressed={chatOpen} testID="topbar-ai" icon={<Icon name="chat" size={18} filled={chatOpen} />} onClick={toggleChatPanel} />
             ) : null}
-            <BasedButton label="Export" variant="ghost" size="sm" onClick={() => setExporting(true)} />
+            <BasedButton label="Export" variant="ghost" onClick={() => setExporting(true)} />
             <BasedIconButton label="Page menu" tooltip="More" menu={{ expanded: menu !== undefined }} icon={<Icon name="more" size={18} />} onClick={(el) => {
               const r = el.getBoundingClientRect();
               setMenu(menu ? undefined : { top: r.bottom + 4, right: window.innerWidth - r.right });
@@ -250,8 +262,9 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       {crumbMenu && outline ? <CrumbMenu menu={crumbMenu} outline={outline} titles={state.titles} current={pageID} onClose={() => setCrumbMenu(undefined)} onOpen={(id) => { setCrumbMenu(undefined); onOpenPage(id); }} /> : null}
       {menu ? (
         <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }}
-          outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
-          options={store && page && !storeReadOnly && !guestReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
+          outline={store && page && !dbID && !board && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
+          options={store && page && !storeReadOnly && !guestReadOnly ? { format, isDatabase: dbID !== undefined || board, isBoard: board, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
+          board={board && store && !readOnly ? { background: boardBackground(store, pageID), set: (bg) => setBoardBackground(store, pageID, bg) } : undefined}
           actions={page && !trashed ? {
             copyLink: () => void copyPageLink(pageID),
             openWindow: () => void openPageWindow(routeToHash({ name: "page", id: pageID }), title),
@@ -260,7 +273,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             favorite: guest ? undefined : { on: favorite, toggle: () => void client.command({ op: "favorite", ids: [pageID], on: !favorite }) },
             exportPage: () => setExporting(true),
             find: () => setFind((f) => ({ focus: (f?.focus ?? 0) + 1, step: f?.step ?? { n: 0, delta: 1 } })),
-            stats: store && !dbID ? pageTextStats(store, pageID) : undefined,
+            stats: store && !dbID && !board ? pageTextStats(store, pageID) : undefined,
+            board,
             trash: guestReadOnly ? undefined : () => { void client.command({ op: "trash", ids: [pageID] }); onNavigate({ name: "home" }); },
             edited,
           } : undefined} />
@@ -297,6 +311,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         </div>
       ) : null}
       {find ? <FindBar root={findRoot} focusSignal={find.focus} step={find.step} onClose={() => setFind(undefined)} /> : null}
+      {board ? <div className="page-board" data-testid="page-content">{body}</div> : (
       <article ref={article} className={dbID ? "page page-database" : "page"} onMouseDown={(e) => {
         // Wie Notion: Klick in die leere Fläche unter dem Inhalt setzt die Schreibmarke ans Ende (neue Zeile, wenn
         // die letzte nicht leer ist).
@@ -366,6 +381,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           <div className="page-body" data-testid="page-content">{body}</div>
         </div>
       </article>
+      )}
       {exporting ? <ExportDialog client={client} pageID={pageID} onClose={() => setExporting(false)} /> : null}
     </>
   );
@@ -430,7 +446,9 @@ function CrumbMenu({ menu, outline, titles, current, onClose, onOpen }: { menu: 
 }
 
 /** Seitenmenü (⋯) in der Kopfzeile. */
-interface PageOptionsMenu { format: ReturnType<typeof pageFormat>; isDatabase: boolean; set: (patch: PageFormatPatch) => void }
+interface PageOptionsMenu { format: ReturnType<typeof pageFormat>; isDatabase: boolean; isBoard?: boolean; set: (patch: PageFormatPatch) => void }
+/** Board-Einstellungen im •••-Menü (Elija 17.11.: Untergrund gehört hierher, mit Vorschau). */
+interface BoardMenuOptions { background: BoardBackground; set: (bg: BoardBackground) => void }
 
 const FONTS: readonly { id: PageFont; label: string }[] = [{ id: "default", label: "Default" }, { id: "serif", label: "Serif" }, { id: "mono", label: "Mono" }];
 
@@ -445,6 +463,8 @@ interface PageActions {
   favorite?: { on: boolean; toggle: () => void } | undefined;
   exportPage: () => void;
   find: () => void;
+  /** Board-Seite: kein „Find in page“, keine Wortzahl (Menüs je Seitentyp, Elija 17.11.). */
+  board?: boolean;
   /** Wortzahl (nur Seiten mit Text). */
   stats?: { words: number; characters: number } | undefined;
   trash?: (() => void) | undefined;
@@ -482,7 +502,23 @@ async function copyPageLink(pageID: string) {
   } catch { /* ohne Zwischenablage-Recht: nichts */ }
 }
 
-function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined; options?: PageOptionsMenu | undefined; actions?: PageActions | undefined }) {
+/** Reihe von Wahlknöpfen mit kleiner Vorschau im •••-Menü (Schrift, Untergrund eines Boards). */
+function ChoiceRow({ label, items, checked, onPick, className }: {
+  label: string; items: readonly { id: string; label: string; sample: React.ReactNode; attrs?: Record<string, string> }[];
+  checked: string; onPick: (id: string) => void; className?: string;
+}) {
+  return (
+    <div className={"page-font-row" + (className ? " " + className : "")} role="group" aria-label={label}>
+      {items.map((it) => (
+        <button key={it.id} type="button" role="menuitemradio" aria-checked={checked === it.id} className="page-font" {...it.attrs} onClick={() => onPick(it.id)}>
+          {it.sample}{it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PageMenu({ pos, onClose, onHistory, outline, options, actions, board }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined; options?: PageOptionsMenu | undefined; actions?: PageActions | undefined; board?: BoardMenuOptions | undefined }) {
   const ref = useRef<HTMLDivElement>(null);
   useMenuKeys(ref, onClose);
   return (
@@ -491,11 +527,19 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
         <>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="link" size={18} />Copy link</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.openWindow(); }}><Icon name="expand" size={18} />Open in new window</button>
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.find(); }}><Icon name="search" size={18} />Find in page<kbd className="menu-kbd t-meta">⌘F</kbd></button>
+          {!actions.board ? <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.find(); }}><Icon name="search" size={18} />Find in page<kbd className="menu-kbd t-meta">⌘F</kbd></button> : null}
           {actions.duplicate ? <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.duplicate?.(); }}><Icon name="duplicate" size={18} />Duplicate</button> : null}
           {actions.move ? <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.move?.(); }}><Icon name="move" size={18} />Move to…</button> : null}
           {actions.favorite ? <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.favorite?.toggle(); }}><Icon name="star" size={18} />{actions.favorite.on ? "Remove from Favorites" : "Add to Favorites"}</button> : null}
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.exportPage(); }}><Icon name="export" size={18} />Export…</button>
+          <div className="menu-sep" role="separator" />
+        </>
+      ) : null}
+      {board ? (
+        <>
+          <p className="menu-label t-meta">Background</p>
+          <ChoiceRow label="Background" className="page-bg-row" items={BOARD_BACKGROUNDS.map((b) => ({ id: b.id, label: b.label, sample: <span className="page-bg-sample" data-bg={b.id} aria-hidden="true" />, attrs: { "data-testid": `board-bg-${b.id}` } }))}
+            checked={board.background} onPick={(id) => board.set(id as BoardBackground)} />
           <div className="menu-sep" role="separator" />
         </>
       ) : null}
@@ -504,23 +548,19 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
       {options ? (
         <>
           {!options.isDatabase ? (
-            <div className="page-font-row" role="group" aria-label="Font">
-              {FONTS.map((f) => (
-                <button key={f.id} type="button" role="menuitemradio" aria-checked={options.format.font === f.id} className="page-font" data-font={f.id}
-                  onClick={() => options.set({ font: f.id })}>
-                  <span className="page-font-sample" aria-hidden="true">Ag</span>{f.label}
-                </button>
-              ))}
-            </div>
+            <ChoiceRow label="Font" items={FONTS.map((f) => ({ id: f.id, label: f.label, sample: <span className="page-font-sample" aria-hidden="true">Ag</span>, attrs: { "data-font": f.id } }))}
+              checked={options.format.font} onPick={(id) => options.set({ font: id as PageFont })} />
           ) : null}
           {!options.isDatabase ? (
             <button type="button" role="menuitemcheckbox" aria-checked={options.format.smallText} className="menu-item" onClick={() => options.set({ smallText: !options.format.smallText })}>
               <Icon name="textSize" size={18} />Small text{options.format.smallText ? <span className="menu-check" aria-hidden="true">✓</span> : null}
             </button>
           ) : null}
-          <button type="button" role="menuitemcheckbox" aria-checked={options.format.fullWidth} className="menu-item" onClick={() => options.set({ fullWidth: !options.format.fullWidth })}>
-            <Icon name="width" size={18} />Full width{options.format.fullWidth ? <span className="menu-check" aria-hidden="true">✓</span> : null}
-          </button>
+          {!options.isBoard ? (
+            <button type="button" role="menuitemcheckbox" aria-checked={options.format.fullWidth} className="menu-item" onClick={() => options.set({ fullWidth: !options.format.fullWidth })}>
+              <Icon name="width" size={18} />Full width{options.format.fullWidth ? <span className="menu-check" aria-hidden="true">✓</span> : null}
+            </button>
+          ) : null}
           <button type="button" role="menuitemcheckbox" aria-checked={options.format.locked} className="menu-item" onClick={() => { options.set({ locked: !options.format.locked }); onClose(); }}>
             <Icon name="lock" size={18} />Lock page{options.format.locked ? <span className="menu-check" aria-hidden="true">✓</span> : null}
           </button>
@@ -563,6 +603,13 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
   useEffect(() => {
     if (!focused.current) setValue(title === "Untitled" ? "" : title);
   }, [title, id]);
+  // BSD-482: eben angelegte Seite → Schreibmarke in den Titel (sobald das Feld bearbeitbar ist)
+  // – außer man ist schon im Text der Seite (Klick in die Seite, bevor der Titel bearbeitbar wurde)
+  useEffect(() => {
+    if (readOnly || !takeFreshPage(id)) return;
+    if (document.activeElement?.closest(".page-body")) return;
+    field.current?.focus();
+  }, [id, readOnly]);
   useLayoutEffect(() => {
     const el = field.current;
     if (!el) return;

@@ -4,10 +4,15 @@
 // neueste Änderung). Fehler werfen `PersistenceError`; der Store wird dann schreibgeschützt (kein RAM-Fallback).
 import {
   canonicalStringify,
+  compareStamps,
+  SKELETON_TYPES,
+  StampClock,
   keyOf,
   parseStamp,
   safeParseRecord,
   WorkspaceStore,
+  type Block,
+  type LazyPersistence,
   type Persistence,
   type RecordKeyString,
   type RecordKind,
@@ -16,7 +21,7 @@ import {
   type WireRecord,
 } from "@based/core";
 import { CURRENT_SCHEMA_VERSION, enablePropertyRecords, hasPropertyRecords, migrate, PersistenceError, setMeta } from "./migrations.js";
-import { asInt, asText, first, utf8, type SqlDatabase } from "./sql.js";
+import { asInt, asText, first, utf8, type SqlDatabase, type SqlRow } from "./sql.js";
 
 export interface ChangeEntry {
   seq: number;
@@ -42,6 +47,20 @@ export interface UndecodableRow {
 
 const KINDS = new Set<RecordKind>(["workspace", "block", "database", "view", "property"]);
 
+// ADR 0017 Stufe B: Indizes über Feldern im JSON, ohne die Zeilen umzuschreiben (kein neues Dateiformat: ältere
+// Builds öffnen die Datei weiter, SQLite pflegt die Indizes auch für sie; der Rückweg ist DROP INDEX).
+// `json_valid` zuerst: eine unlesbare Zeile (BSD-16, bleibt unangetastet) ließe `json_extract` sonst werfen – beim
+// Anlegen des Index und bei jedem Schreiben. Abfragen müssen die Ausdrücke wörtlich so verwenden.
+const JSON_TEXT = "CAST(data AS TEXT)";
+/** Elternteil eines Blocks (`w`, `b:<id>`, `d:<id>`). */
+export const PARENT_SQL = `CASE WHEN json_valid(${JSON_TEXT}) THEN json_extract(${JSON_TEXT}, '$.parent') END`;
+/** 1 für Gerüst-Blöcke – dieselbe Regel wie `isSkeletonBlock` im Kern (ein Test hält beide gleich). */
+export const SKELETON_SQL =
+  `CASE WHEN json_valid(${JSON_TEXT}) AND (json_extract(${JSON_TEXT}, '$.type') IN (${SKELETON_TYPES.map((t) => `'${t}'`).join(", ")})` +
+  ` OR json_extract(${JSON_TEXT}, '$.trashedAt') IS NOT NULL) THEN 1 END`;
+const CLOCK_MAX_KEY = "clock.max";
+export const LAZY_INDEXES = ["records_parent", "records_skeleton"] as const;
+
 /** Stempel als JSON wie Swift `JSONEncoder` (Reihenfolge egal, Swift liest es zurück). */
 export const encodeStamp = (s: Stamp) => JSON.stringify({ millis: s.millis, counter: s.counter, node: s.node });
 
@@ -61,9 +80,157 @@ export function decodeStamp(text: string | undefined): Stamp | undefined {
 export class SqlitePersistence implements Persistence {
   /** Zeilen, die diese Version nicht lesen kann: bleiben unangetastet in der Datei und werden nie gepusht (BSD-16). */
   undecodable: UndecodableRow[] = [];
+  private undecodableKeys = new Set<RecordKeyString>();
 
   constructor(readonly db: SqlDatabase) {
     migrate(db);
+  }
+
+  /** Eine Zeile aus `records` prüfen; unlesbare werden vermerkt (einmal je Schlüssel) und übersprungen. */
+  private decode(row: SqlRow, kindOf?: RecordKind): WireRecord | undefined {
+    const kind = kindOf ?? (asText(row.kind) as RecordKind);
+    const id = asText(row.id) ?? "";
+    const key = keyOf(kind, id);
+    const fail = (error: string) => {
+      if (!this.undecodableKeys.has(key)) {
+        this.undecodableKeys.add(key);
+        this.undecodable.push({ key, error });
+      }
+      return undefined;
+    };
+    if (!KINDS.has(kind)) return fail(`unknown record kind ${kind}`);
+    try {
+      const parsed = safeParseRecord({ kind, data: JSON.parse(asText(row.data) ?? "") });
+      return parsed.ok ? parsed.record : fail(parsed.error.message);
+    } catch (e) {
+      return fail(String(e));
+    }
+  }
+
+  // MARK: Laden nach Bedarf (ADR 0017 Stufe B)
+
+  /** Legt die beiden Indizes an, falls sie fehlen (einmalig; bei 520 000 Records rund 1,5 s nativ). */
+  ensureLazyIndexes(): void {
+    this.guard("lazy indexes", () => {
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS records_parent ON records(${PARENT_SQL}) WHERE kind = 'block';
+        CREATE INDEX IF NOT EXISTS records_skeleton ON records(kind, id) WHERE kind = 'block' AND ${SKELETON_SQL} = 1;
+      `);
+    });
+  }
+
+  /** Rückweg: die Indizes wieder entfernen (die Datei ist danach wie vorher). */
+  dropLazyIndexes(): void {
+    this.guard("lazy indexes", () => { for (const name of LAZY_INDEXES) this.db.exec(`DROP INDEX IF EXISTS ${name}`); });
+  }
+
+  private blocksOf(rows: SqlRow[], out: Block[]) {
+    for (const row of rows) {
+      const r = this.decode(row, "block");
+      if (r?.kind === "block") out.push(r.data);
+    }
+  }
+
+  readonly lazy: LazyPersistence = {
+    loadSkeleton: () => {
+      this.ensureLazyIndexes();
+      return this.guard("load", () => {
+        const out: WireRecord[] = [];
+        const rows = [
+          ...this.db.all("SELECT kind, id, data FROM records WHERE kind != 'block'"),
+          ...this.db.all(`SELECT kind, id, data FROM records WHERE kind = 'block' AND ${SKELETON_SQL} = 1`),
+        ];
+        for (const row of rows) {
+          const r = this.decode(row);
+          if (r) out.push(r);
+        }
+        return out;
+      });
+    },
+    // Je ID und je Elternteil eine eigene (vorbereitete) Abfrage: Mit `IN (…)` über dem Index-Ausdruck sucht SQLite
+    // die ganze Tabelle ab (gemessen 17.11.: 1,4 s statt 0,05 ms bei 520 000 Zeilen).
+    loadBlocks: (ids) =>
+      this.guard("load", () => {
+        const out: Block[] = [];
+        for (const id of ids) this.blocksOf(this.db.all("SELECT id, data FROM records WHERE kind = 'block' AND id = ?", [id]), out);
+        return out;
+      }),
+    loadChildren: (parents) =>
+      this.guard("load", () => {
+        const out: Block[] = [];
+        for (const parent of parents) this.blocksOf(this.db.all(`SELECT id, data FROM records WHERE kind = 'block' AND ${PARENT_SQL} = ?`, [parent]), out);
+        return out;
+      }),
+    loadRemaining: (skip) =>
+      this.guard("load", () => {
+        const out: Block[] = [];
+        const take = (row: SqlRow) => {
+          if (skip(asText(row.id) ?? "")) return;
+          const r = this.decode(row, "block");
+          if (r?.kind === "block") out.push(r.data);
+        };
+        const sql = "SELECT id, data FROM records WHERE kind = 'block'";
+        if (this.db.each) {
+          let chunk: SqlRow[] = [];
+          const flush = () => { for (const row of chunk) take(row); chunk = []; };
+          this.db.each(sql, [], (row) => { if (chunk.push(row) >= 4096) flush(); });
+          flush();
+        } else for (const row of this.db.all(sql)) take(row);
+        return out;
+      }),
+    scanBlocks: (containing, each, opts) =>
+      this.guard("load", () => {
+        // SQLite sucht die Zeilen ab; JSON und Prüfung laufen nur für Treffer. LIKE unterscheidet bei ASCII nicht
+        // nach Groß/Klein, instr sucht genau.
+        const where = containing.map(() => (opts?.ignoreCase ? `${JSON_TEXT} LIKE ? ESCAPE '\\'` : `instr(${JSON_TEXT}, ?) > 0`)).join(" OR ");
+        const params = opts?.ignoreCase ? containing.map((c) => `%${c.replace(/[\\%_]/g, "\\$&")}%`) : [...containing];
+        const out: Block[] = [];
+        this.blocksOf(this.db.all(`SELECT id, data FROM records WHERE kind = 'block'${where ? ` AND (${where})` : ""}`, params), out);
+        for (const b of out) each(b);
+      }),
+    countBlocks: () => this.guard("load", () => asInt(first(this.db, "SELECT count(*) AS n FROM records WHERE kind = 'block'")?.n)),
+    clockFloor: (maxMillis) => this.guard("load", () => this.readClockMax(maxMillis)),
+  };
+
+  /**
+   * Neuester Stempel der Datei, gemerkt in `meta` zusammen mit dem Stand des Change-Logs. Passt der nicht mehr (ein
+   * Build ohne dieses Merken hat geschrieben) oder fehlt der Eintrag, wird einmal über alle Zeilen gesucht. Stempel,
+   * die beim Schreiben weiter als `StampClock.maxDrift` in der Zukunft lagen, zählen nicht (die Uhr lehnt sie ab).
+   */
+  private clockMax: Stamp | undefined;
+  private tracksClock = false;
+  private readClockMax(maxMillis: number): Stamp | undefined {
+    const seq = this.maxSeq();
+    try {
+      const saved = JSON.parse(this.meta(CLOCK_MAX_KEY) ?? "null") as { seq?: number; stamp?: string } | null;
+      const stamp = saved ? decodeStamp(saved.stamp) : undefined;
+      if (saved && saved.seq === seq && (!stamp || stamp.millis <= maxMillis)) {
+        this.tracksClock = true;
+        return (this.clockMax = stamp);
+      }
+    } catch {
+      // unlesbar: neu bestimmen
+    }
+    const millis = `json_extract(${JSON_TEXT}, '$.stamp.millis')`;
+    const row = first(this.db, `SELECT data FROM records WHERE json_valid(${JSON_TEXT}) AND ${millis} <= ${Math.floor(maxMillis)} ORDER BY ${millis} DESC, json_extract(${JSON_TEXT}, '$.stamp.counter') DESC, json_extract(${JSON_TEXT}, '$.stamp.node') DESC LIMIT 1`);
+    let max: Stamp | undefined;
+    try {
+      const s = (JSON.parse(asText(row?.data) ?? "null") as { stamp?: Partial<Stamp> } | null)?.stamp;
+      if (s && typeof s.millis === "number" && typeof s.counter === "number" && typeof s.node === "string") max = { millis: s.millis, counter: s.counter, node: s.node };
+    } catch {
+      // keine lesbare Zeile
+    }
+    this.clockMax = max;
+    this.tracksClock = true;
+    try {
+      this.saveClockMax();
+    } catch {
+      // nicht beschreibbar: beim nächsten Öffnen wieder suchen
+    }
+    return max;
+  }
+  private saveClockMax(): void {
+    setMeta(this.db, CLOCK_MAX_KEY, JSON.stringify({ seq: this.maxSeq(), stamp: this.clockMax ? encodeStamp(this.clockMax) : undefined }));
   }
 
   private guard<T>(what: string, body: () => T): T {
@@ -79,22 +246,25 @@ export class SqlitePersistence implements Persistence {
     return this.guard("load", () => {
       const out: WireRecord[] = [];
       this.undecodable = [];
-      for (const row of this.db.all("SELECT kind, id, data FROM records")) {
-        const kind = asText(row.kind) as RecordKind;
-        const id = asText(row.id) ?? "";
-        const key = keyOf(kind, id);
-        if (!KINDS.has(kind)) {
-          this.undecodable.push({ key, error: `unknown record kind ${kind}` });
-          continue;
+      this.undecodableKeys.clear();
+      // ADR 0017 A1: Zeile für Zeile (wo der Treiber es kann) – sonst liegen alle Zeilen als BLOB, als Text und als
+      // Objekt gleichzeitig im Speicher.
+      // In Stücken von 4096 Zeilen: der Speicher bleibt begrenzt, und SQLite (WASM) und JSON/Zod wechseln sich nicht je
+      // Zeile ab. Die Ladezeit ändert das nicht messbar (17.11., 100 000 Records, WebKit 2,4–3,0 s in allen Varianten).
+      const each = (fn: (row: SqlRow) => void) => {
+        if (!this.db.each) {
+          for (const row of this.db.all("SELECT kind, id, data FROM records")) fn(row);
+          return;
         }
-        try {
-          const parsed = safeParseRecord({ kind, data: JSON.parse(asText(row.data) ?? "") });
-          if (parsed.ok) out.push(parsed.record);
-          else this.undecodable.push({ key, error: parsed.error.message });
-        } catch (e) {
-          this.undecodable.push({ key, error: String(e) });
-        }
-      }
+        let chunk: SqlRow[] = [];
+        const flush = () => { for (const row of chunk) fn(row); chunk = []; };
+        this.db.each("SELECT kind, id, data FROM records", [], (row) => { if (chunk.push(row) >= 4096) flush(); });
+        flush();
+      };
+      each((row) => {
+        const r = this.decode(row);
+        if (r) out.push(r);
+      });
       return out;
     });
   }
@@ -124,6 +294,15 @@ export class SqlitePersistence implements Persistence {
           const kind = key.slice(0, i), id = key.slice(i + 1);
           this.db.run("DELETE FROM records WHERE kind = ? AND id = ?", [kind, id]);
           logChange(kind, id, true, tombstones.get(key));
+        }
+        if (this.tracksClock) {
+          // ADR 0017 Stufe B: den neuesten Stempel mitführen (siehe `readClockMax`), in derselben Transaktion.
+          const limit = Date.now() + StampClock.maxDrift;
+          for (const r of upserts) {
+            const s = r.data.stamp as Stamp | undefined;
+            if (s && s.millis <= limit && (!this.clockMax || compareStamps(s, this.clockMax) > 0)) this.clockMax = s;
+          }
+          this.saveClockMax();
         }
         this.db.exec("COMMIT");
       } catch (e) {
@@ -197,6 +376,7 @@ export class SqlitePersistence implements Persistence {
           this.db.run("DELETE FROM changes WHERE kind = ? AND id = ?", [r.kind ?? null, r.id ?? null]);
           this.db.run("INSERT INTO changes(kind, id, deleted, local, deleted_stamp) VALUES(?, ?, ?, 1, ?)", [r.kind ?? null, r.id ?? null, r.deleted ?? 0, r.deleted_stamp ?? null]);
         }
+        if (this.tracksClock) this.saveClockMax(); // das Log ist weitergelaufen: der gemerkte Stempel gilt weiter
         this.db.exec("COMMIT");
       } catch (e) {
         try {
@@ -292,6 +472,15 @@ export function openWorkspace(
   if (!id) {
     id = persistence.meta("node") ?? newNode();
     if (!persistence.meta("node")) persistence.setMeta("node", id);
+  }
+  // ADR 0017 Stufe B, Rückweg: Ohne Laden nach Bedarf braucht die Datei die beiden Indizes nicht – sie kosten Platz und
+  // Zeit bei jedem Schreiben. Entfernen ist billig und wiederholbar; die Datei ist danach wie vorher.
+  if (!(rest.lazy ?? WorkspaceStore.lazyByDefault)) {
+    try {
+      persistence.dropLazyIndexes();
+    } catch {
+      // nicht beschreibbar: bleibt, wie es ist
+    }
   }
   const store = new WorkspaceStore({ ...rest, persistence, node: id, propertyRecords });
   return { store, persistence };

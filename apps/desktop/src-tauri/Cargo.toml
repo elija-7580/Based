@@ -2,6 +2,7 @@
 name = "based-desktop"
 version = "0.1.0"
 edition = "2021"
+license = "AGPL-3.0-or-later"
 rust-version = "1.77.2"
 # ADR 0011: keine eigene Rust-Logik – nur Tauri-Vorlage und offizielle Plugins.
 

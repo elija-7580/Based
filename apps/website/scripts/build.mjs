@@ -19,6 +19,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = join(ROOT, "src");
 const OUT = process.env.WEBSITE_OUT || join(ROOT, "public");
 const SITE = "https://basednotes.app";
+const SPONSORS = "https://github.com/sponsors/elija-7580";
 
 // Artboard → URL path. Mobile.dc.html is the phone version of the home page.
 const PAGES = [
@@ -36,8 +37,8 @@ LINKS["Mobile.dc.html"] = "/";
 // Descriptions stay ≤ 155 characters and only promise what the Mac beta can do (docs/website-claims.md).
 const META = {
   "/": {
-    title: "Based · The local-first Notion alternative for Mac",
-    description: "Pages and fast databases that stay on your Mac. Import your Notion workspace, no account needed. Join the free Mac beta."
+    title: "Based Notes · The local-first Notion alternative for Mac",
+    description: "Fast, private notes and databases on your own Mac. Import your whole Notion workspace, no account needed. Open source, free Mac beta."
   },
   "/workspace": {
     title: "Based Workspace · Big databases, zero waiting",
@@ -65,14 +66,14 @@ const META = {
 const APP_LD = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "Based",
-  alternateName: "Based notes",
+  name: "Based Notes",
+  alternateName: "Based",
   url: SITE + "/",
   applicationCategory: "ProductivityApplication",
   operatingSystem: "macOS 13 or later",
   description: META["/"].description,
   offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-  license: "https://opensource.org/licenses/MIT"
+  license: "https://www.gnu.org/licenses/agpl-3.0.html"
 };
 const ldScript = (data) => `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
 
@@ -80,11 +81,11 @@ const ldScript = (data) => `<script type="application/ld+json">${JSON.stringify(
 // download stays out of search and the sitemap until Elija links it from the invitations.
 const INFO = [
   { name: "faq", path: "/faq", index: true,
-    title: "Based FAQ · Questions about the Mac beta",
+    title: "Based Notes FAQ · Questions about the Mac beta",
     description: "Is the Based beta free, where is my data, can I import from Notion, what is not in the beta yet? Short answers." },
   { name: "download", path: "/download", index: false,
-    title: "Download the Based beta for Mac",
-    description: "Download Based Beta for macOS, install it and send feedback." }
+    title: "Download the Based Notes beta for Mac",
+    description: "Download Based Notes Beta for macOS, install it and send feedback." }
 ];
 
 const stripTags = (s) => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()
@@ -133,7 +134,55 @@ function patchLinks(s) {
   if (s.includes("[LINK]")) throw new Error("a [LINK] placeholder is left");
   return s;
 }
+// Header menus (desktop and phone sheet) lead with the notes app; Agents stays in the footer and on the home page.
+// The footer tagline follows the same framing on every page.
+function patchNav(s) {
+  s = s.split("Databases, docs and agents. Instant, private, everywhere. Built in Vienna.")
+    .join("Your data. Based. Notes and databases on your own Mac. Built in Vienna.");
+  // Donations in focus (Elija 17.11.): "Sponsor" in the header menus and in the footer's "Open" column.
+  s = s.replace(/(<footer[\s\S]*?<a href="https:\/\/github\.com\/elija-7580\/Based" class="navlink">GitHub<\/a>\n)/,
+    `$1<a href="${SPONSORS}" class="navlink">Sponsor Based</a>\n`);
+  return s.replace(/<header[\s\S]*?<\/header>/, (h) => h
+    .replace(/<a href="\/agents" class="navlink[^"]*">Agents<\/a>\n?/, "")
+    .replace(/<a href="\/agents">Agents<\/a>\n?/, "")
+    .replace(/(<a href="https:\/\/github\.com\/elija-7580\/Based" class="navlink">GitHub<\/a>\n)/, `$1<a href="${SPONSORS}" class="navlink" style="display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 600;"><svg width="12" height="12" viewBox="0 0 24 24" fill="#E0C24A" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1.1 8.5 3.2 5 6.6 5c2 0 3.4 1.1 4.4 2.5C12 6.1 13.4 5 15.4 5c3.4 0 5.5 3.5 4.1 6.8C19.5 16.4 12 21 12 21z"/></svg>Sponsor</a>\n`)
+    .replace(/(<a href="https:\/\/github\.com\/elija-7580\/Based">GitHub<\/a>\n)/, `$1<a href="${SPONSORS}">Sponsor Based</a>\n`));
+}
 const patchAssets = (s) => s.split(MARK_LIGHT).join("/mark.svg").split(MARK_DARK).join("/mark-dark.svg");
+
+// ---- logo intro (Elija 17.11.): the mark in the header "types" itself once on every page ----
+// Same order as in the app (apps/web/src/components/logoTimeline.ts): the base line draws in one stroke, a caret
+// blinks, the stem lands, then the bowl; the line gives a little and the blocks rock and settle. Done in CSS because
+// dc-lite morphs the DOM on every state change and only CSS animations survive that. `html.lg-intro` starts it;
+// site.js removes the class when the intro is over and the mark rests. Hovering then gives one "keystroke" (the line
+// gives, the blocks rock). The canvas's own pop animations (bsdStem, bsdBowl) are switched off everywhere: typing,
+// not bouncing. Sizes are tuned for the 34 px mark (a little stronger than in the app).
+const LOGO_SVG_OLD = '<svg class="logo-svg" aria-hidden="true" width="34" height="34" viewBox="0 0 100 100"><rect x="10" y="80" width="80" height="9" rx="4.5" fill="#E7CE6A"></rect><rect class="lg-stem" x="20" y="7" width="16" height="68" rx="8" fill="var(--ink)"></rect><rect class="lg-bowl" x="40" y="37" width="38" height="38" rx="14" fill="var(--ink)"></rect></svg>';
+const LOGO_SVG_NEW = '<svg class="logo-svg" aria-hidden="true" width="34" height="34" viewBox="0 0 100 100"><g class="lg-dip"><g class="lg-dip2"><line class="lg-base" x1="14.5" y1="84.5" x2="85.5" y2="84.5" pathLength="100" stroke="#E7CE6A" stroke-width="9" stroke-linecap="round"></line><rect class="lg-stem" x="20" y="7" width="16" height="68" rx="8" fill="var(--ink)"></rect><rect class="lg-bowl" x="40" y="37" width="38" height="38" rx="14" fill="var(--ink)"></rect><rect class="lg-caret" x="20" y="9" width="3.2" height="66" rx="1.6" fill="var(--ink)"></rect></g></g></svg>';
+const LOGO_INTRO_MS = 3600; // stem key 1500 + bowl 360 later + settling; site.js waits a little longer
+const LOGO_INTRO_CSS = `
+.bsd .logo-svg{overflow:visible}
+.bsd .logo-svg .lg-caret{opacity:0}
+.bsd .logo-svg .lg-stem,.bsd .logo-svg .lg-bowl,.bsd .logo-link:hover .lg-stem,.bsd .logo-link:hover .lg-bowl{animation:none}
+@media (prefers-reduced-motion: no-preference){
+.bsd .logo-link:hover .lg-stem{animation:bsdLgTapStem 800ms ease-in-out both}
+.bsd .logo-link:hover .lg-bowl{animation:bsdLgTapBowl 800ms ease-in-out 90ms both}
+.bsd .logo-link:hover .lg-dip{animation:bsdLgDip 520ms ease-in-out both}
+html.lg-intro .bsd .logo-svg .lg-base{stroke-dasharray:100;animation:bsdLgLine 600ms cubic-bezier(.17,.84,.44,1) 150ms both}
+html.lg-intro .bsd .logo-svg .lg-stem,html.lg-intro .bsd .logo-link:hover .lg-stem{animation:bsdLgStem 1700ms ease-in-out 1500ms both}
+html.lg-intro .bsd .logo-svg .lg-bowl,html.lg-intro .bsd .logo-link:hover .lg-bowl{animation:bsdLgBowl 1700ms ease-in-out 1860ms both}
+html.lg-intro .bsd .logo-svg .lg-caret{animation:bsdLgCaret 2440ms linear 760ms both}
+html.lg-intro .bsd .logo-svg .lg-dip,html.lg-intro .bsd .logo-link:hover .lg-dip{animation:bsdLgDip 520ms ease-in-out 1610ms both}
+html.lg-intro .bsd .logo-svg .lg-dip2{animation:bsdLgDip 520ms ease-in-out 1970ms both}
+}
+@keyframes bsdLgLine{from{stroke-dashoffset:99.9}to{stroke-dashoffset:0}}
+@keyframes bsdLgStem{0%{opacity:0;transform:translateY(-8px)}.1%{opacity:1;transform:translateY(-8px);animation-timing-function:ease-in}6.5%{opacity:1;transform:none}11.3%{transform:rotate(5deg)}20.9%{transform:rotate(-2.9deg)}30.5%{transform:rotate(1.6deg)}40.1%{transform:rotate(-.9deg)}49.7%{transform:rotate(.5deg)}59.4%{transform:rotate(-.25deg)}70.6%,100%{opacity:1;transform:none}}
+@keyframes bsdLgBowl{0%{opacity:0;transform:translateY(-8px)}.1%{opacity:1;transform:translateY(-8px);animation-timing-function:ease-in}6.5%{opacity:1;transform:none}11.3%{transform:rotate(3.5deg)}20.9%{transform:rotate(-2deg)}30.5%{transform:rotate(1.1deg)}40.1%{transform:rotate(-.6deg)}49.7%{transform:rotate(.35deg)}59.4%{transform:rotate(-.2deg)}70.6%,100%{opacity:1;transform:none}}
+@keyframes bsdLgTapStem{0%{transform:none}14%{transform:rotate(4deg)}32%{transform:rotate(-2.3deg)}50%{transform:rotate(1.3deg)}68%{transform:rotate(-.7deg)}84%{transform:rotate(.3deg)}100%{transform:none}}
+@keyframes bsdLgTapBowl{0%{transform:none}14%{transform:rotate(2.8deg)}32%{transform:rotate(-1.6deg)}50%{transform:rotate(.9deg)}68%{transform:rotate(-.5deg)}84%{transform:rotate(.2deg)}100%{transform:none}}
+@keyframes bsdLgDip{0%{transform:none}17%{transform:translateY(3px)}45%{transform:translateY(-1px)}70%{transform:translateY(.4px)}100%{transform:none}}
+@keyframes bsdLgCaret{0%{opacity:0;transform:none}.1%{opacity:1}15.6%{opacity:1}26%{opacity:0}30.2%{opacity:0;transform:none}30.3%{opacity:1;transform:translateX(20px)}45%{opacity:1;transform:translateX(20px)}45.1%{opacity:1;transform:translateX(62px)}60.7%{opacity:1}73%{opacity:0}82%{opacity:0}90%{opacity:.7}100%{opacity:0;transform:translateX(62px)}}
+`;
 
 // ---- page-specific patches ----------------------------------------------------------
 const CONSENT_DESKTOP =
@@ -174,37 +223,11 @@ const PAGE_PATCHES = {
 // Strings inside the page scripts are single-quoted JavaScript: no plain apostrophes in replacements.
 const BETA_LIST_OLD = ["Sync between your Apple devices through iCloud", "Agents with your own keys, opt-in", "Meeting notes transcribed on your Mac, offline"];
 const CLAIMS = {
-  "Main.dc.html": [
-    ["<li>Sync between your Apple devices through iCloud</li><li>Databases, pages, import from Notion</li><li>Agents with your own keys, opt-in</li><li>Meeting notes transcribed on your Mac, offline</li>",
-      "<li>Databases, pages, import from Notion</li><li>Every version of every page, backups to a folder on your Mac</li><li>Sync between your Macs through iCloud Drive (preview)</li>"],
-    ["<li>MCP for every AI you use</li>",
-      "<li>Opt-in agents with your own keys, MCP for every AI you use</li><li>Meeting notes transcribed on your device</li>"],
-    ["<span>Built in Vienna, EU servers</span>", "<span>Built in Vienna, EU cloud at release</span>"],
-    ["Bring your own keys, or run models locally.", "Bring your own keys when agents arrive after the beta."],
-    ["Every version is kept and snapshots go to a drive you choose.", "Every version is kept and snapshots go to a folder on your Mac."],
-    ["fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.'",
-      "fixTitle: 'Only when you ask', fix: 'Meeting notes only when you start them. On-device transcription comes after the beta, and the audio stays on your Mac.'"],
-    ["foot: 'Agents never delete or share anything without asking.'",
-      "foot: 'Agents never delete for good or send anything out without asking, unless you allow it.'"],
-    ["Math.round(221 * ease)", "Math.round(236 * ease)"],
-    ["Math.round(178 * ease)", "Math.round(185 * ease)"]
-  ],
-  "Mobile.dc.html": [
-    ["['Mac app, data stored locally', 'Sync between your Apple devices through iCloud', 'Databases, pages, import from Notion', 'Agents with your own keys, opt-in', 'Meeting notes transcribed on your Mac, offline']",
-      "['Mac app, data stored locally', 'Databases, pages, import from Notion', 'Every version of every page, backups to a folder on your Mac', 'Sync between your Macs through iCloud Drive (preview)']"],
-    ["'MCP for every AI you use',", "'Opt-in agents with your own keys, MCP for every AI you use', 'Meeting notes transcribed on your device',"],
-    ["<span>EU servers</span>", "<span>EU cloud at release</span>"],
-    ["Your device, your encrypted cloud and snapshots in a folder you choose. Restore is one click.",
-      "Your Mac and a backup folder today, an encrypted cloud copy at release. Restore from any snapshot."],
-    ["Every version is kept and snapshots go to a drive you choose.", "Every version is kept and snapshots go to a folder on your Mac."],
-    ["fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.'",
-      "fixTitle: 'Only when you ask', fix: 'Meeting notes only when you start them. On-device transcription comes after the beta, and the audio stays on your Mac.'"],
-    ["foot: 'Agents never delete or share anything without asking.'",
-      "foot: 'Agents never delete for good or send anything out without asking, unless you allow it.'"],
-    ["One session across laptop, cloud sandbox and phone. Any AI can join through MCP.",
-      "At release: one session across laptop, cloud sandbox and phone. Any AI can join through MCP."]
-  ],
+  // Main.dc.html and Mobile.dc.html: reframed on 17.11.2026 ("Your data. Based."); their texts already keep to the beta.
   "Workspace.dc.html": [
+    // 17.11. (framing): phone and encrypted server come with the release, so the heading says so
+    ['<h2 id="sync-title" class="h2">Your phone gets everything. The server gets gibberish.</h2>',
+      '<h2 id="sync-title" class="h2">At release, your phone gets everything. The server gets gibberish.</h2>'],
     ["The beta syncs your Apple devices through iCloud.", "In the beta, your Macs can sync through iCloud Drive as a preview."],
     ["by release. iCloud in the beta.</span>", "by release. iCloud Drive sync as a preview in the beta.</span>"],
     ["d: 'iCloud in the beta. At release, Based Cloud on EU servers, end-to-end encrypted. Lose your laptop, keep your work.'",
@@ -218,6 +241,12 @@ const CLAIMS = {
     ["d: 'Every row opens as a full page with blocks, sub-pages and comments.'", "d: 'Every row opens as a full page with blocks and sub-pages.'"]
   ],
   "Switch.dc.html": [
+    // 17.11. (framing): a moving guide, not "Based is the good part of Notion"
+    ['aria-label="Love Notion? Keep the good part."', 'aria-label="Leaving Notion? Bring it all."'],
+    ["hw1: Component.words('Love Notion?', 0, 120)", "hw1: Component.words('Leaving Notion?', 0, 120)"],
+    ["hw2: Component.words('Keep the good part.', 380, 140)", "hw2: Component.words('Bring it all.', 380, 140)"],
+    ["You love how Notion works. Pages, blocks, databases, the slash menu. This page is about everything else:",
+      "Pages, blocks, databases and the slash menu are a good way to work. This page is about the rest:"],
     ["b: [3, 'Every version kept, three copies, restore in one click.']",
       "b: [3, 'Every version kept, automatic backups on your Mac, the encrypted cloud copy at release.']"],
     ["b: [1, 'Beta is Mac only with iCloud. Phone, web and Based Cloud come with the release.']",
@@ -229,6 +258,9 @@ const CLAIMS = {
       "based: 'After the beta: the ChatGPT login or Claude Code CLI you already have, or an API key. Local models later. Or keep AI off entirely.'"]
   ],
   "Agents.dc.html": [
+    // 17.11. (framing): the notes app comes first, agents are the next chapter after the beta
+    ['<span class="bar" style="height: 14px;"></span>Opt-in. Off until you switch it on.</p>',
+      '<span class="bar" style="height: 14px;"></span>After the beta, and only if you want them.</p>'],
     ["Connect the ChatGPT or Claude account you already pay for, plug in an API key, or drive the coding CLIs you already use.",
       "Use the ChatGPT login or the Claude Code CLI you already have, plug in an API key, or drive the coding CLIs you already use."],
     ["Pick per task: Auto, Fast, Deep or a specific model. Or run one locally.", "Pick per task: Auto, Fast, Deep or a specific model. Local models come after the beta."],
@@ -267,7 +299,7 @@ function scriptFor(id, p, mobile) {
 function htmlPage({ title, description, path, cssHref, assets, root, templates, pages, extraHead = "" }) {
   const url = SITE + path;
   return `<!doctype html>
-<html lang="en">
+<html lang="en" class="lg-intro" data-lg-intro-ms="${LOGO_INTRO_MS}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -277,14 +309,14 @@ function htmlPage({ title, description, path, cssHref, assets, root, templates, 
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#F1F1EE">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Based">
+<meta property="og:site_name" content="Based Notes">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:url" content="${url}">
 <meta property="og:image" content="${SITE}/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Your data. Based. Databases, docs and agents. Join the beta at basednotes.app">
+<meta property="og:image:alt" content="Based Notes. Your data. Based. Notes and databases on your own Mac. Join the beta at basednotes.app">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -345,16 +377,17 @@ function main() {
   const parsed = {};
   for (const f of readdirSync(join(SRC, "pages")).filter((x) => x.endsWith(".dc.html"))) {
     const p = parse(f);
-    p.body = patchAssets(patchLinks(p.body));
+    p.body = patchNav(patchAssets(patchLinks(p.body)));
     p.code = patchAssets(p.code);
     if (PAGE_PATCHES[f]) PAGE_PATCHES[f](p);
+    p.body = must(p.body, LOGO_SVG_OLD, LOGO_SVG_NEW, "logo intro " + f);
     applyClaims(f, p);
     cssSet.add(p.css);
     parsed[f] = p;
   }
   if (cssSet.size !== 1) console.warn(`note: ${cssSet.size} different stylesheets, using the home page's`);
   const legalCss = read(join(SRC, "legal.css"));
-  const css = FONT_CSS + parsed["Main.dc.html"].css + "\n" + legalCss;
+  const css = FONT_CSS + parsed["Main.dc.html"].css + "\n" + legalCss + LOGO_INTRO_CSS;
   const cssHref = `/assets/site.${hash(css)}.css`;
   writeFileSync(join(OUT, cssHref), css);
 
@@ -380,7 +413,7 @@ function main() {
     console.log("built", page.path);
   }
 
-  // Legal pages are plain HTML (German, with an English note), no runtime.
+  // Legal pages are plain HTML in English (Austrian legal terms in brackets), no runtime.
   const shell = read(join(SRC, "legal", "_shell.html"));
   const footer = /<footer[\s\S]*?<\/footer>/.exec(parsed["Workspace.dc.html"].body)[0]
     .replace(/\{\{markSrc\}\}/g, "/mark.svg");
@@ -390,9 +423,9 @@ function main() {
     const src = read(join(SRC, "legal", name + ".html"));
     const title = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(src)[1].replace(/<[^>]+>/g, "");
     const html = shell
-      .replace("%LANG%", "de")
+      .replace("%LANG%", "en")
       .replace("%HEAD%", "")
-      .replace(/%TITLE%/g, title + " · Based")
+      .replace(/%TITLE%/g, title + " · Based Notes")
       .replace("%CANONICAL%", SITE + path)
       .replace("%CSS%", cssHref)
       .replace("%HEADER%", header)

@@ -139,7 +139,7 @@ export class BrainHost {
   semantic(): LocalSemanticIndex {
     if (!this.index) {
       this.index = new LocalSemanticIndex();
-      for (const b of this.store.blocks.values()) if (isPageLike(b)) this.indexPage(b.id);
+      for (const b of [...this.store.skeletonBlocks()]) if (isPageLike(b)) this.indexPage(b.id);
       this.indexDirty.clear();
     }
     for (const id of this.indexDirty) this.indexPage(id);

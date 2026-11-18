@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { localModels } from "@based/brain";
 import { defaultModelsDir, FileModelStore } from "../src/models.js";
-import { checkWav, findWhisper, whisperFromEnv } from "../src/transcribe.js";
+import { checkWav, downloadModelFile, findWhisper, whisperFromEnv } from "../src/transcribe.js";
 import { startApp, TOKEN } from "./helpers.js";
 
 const apps: { close(): Promise<void> }[] = [];
@@ -121,6 +121,11 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     expect(whisperFromEnv({})).toBeUndefined();
     expect(whisperFromEnv({}, { local: true })).toMatchObject({ bin: "" });
     expect(whisperFromEnv({ BASED_WHISPER_BIN: "/x/whisper-cli" }, { local: true })).toEqual({ bin: "/x/whisper-cli" });
+    // BSD-231: das mit der Mac-App gelieferte Programm geht vor einem installierten; fehlt die Datei, wird gesucht
+    const bundledDir = mkdtempSync(join(tmpdir(), "based-whisper-bundled-"));
+    writeFileSync(join(bundledDir, "whisper-cli"), "x");
+    expect(whisperFromEnv({ BASED_WHISPER_BUNDLED: join(bundledDir, "whisper-cli") }, { local: true })?.find?.()).toBe(join(bundledDir, "whisper-cli"));
+    expect(whisperFromEnv({ BASED_WHISPER_BUNDLED: join(bundledDir, "missing") }, { local: true })?.find?.()).not.toBe(join(bundledDir, "missing"));
 
     const dir = mkdtempSync(join(tmpdir(), "based-whisper-test-"));
     const { model } = fakeWhisper(dir);
@@ -133,6 +138,95 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     installed = true; // „brew install whisper-cpp“, ohne Neustart
     expect(await state()).toMatchObject({ ready: true, engineInstalled: true });
     expect((await post(`${app.url}/local/transcribe`, wav(1))).status).toBe(200);
+  });
+
+  it("Elija 17.11.: mehrere Modelle – Auswahl, Laden macht es zum gewählten, Rückfall auf ein geladenes, Auswahl bleibt nach Neustart", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "based-whisper-test-"));
+    const { bin } = fakeWhisper(dir);
+    const mk = async (id: string, text: string): Promise<localModels.LocalModelSpec> => {
+      const bytes = new TextEncoder().encode(text);
+      return { id, purpose: "transcription", name: id, version: "v1", license: "MIT", files: [{ path: `ggml-${id}.bin`, url: `https://example.invalid/${id}.bin`, size: bytes.length, sha256: await localModels.sha256Hex(bytes) }] };
+    };
+    const specs = [await mk("fast", "fast model"), await mk("best", "the best model")];
+    const requested: string[] = [];
+    const fakeFetch = (async (u: string | URL | Request) => { requested.push(String(u)); return new Response(String(u).includes("fast") ? "fast model" : "the best model"); }) as typeof fetch;
+    const modelsDir = join(dir, "models");
+    const cfg = { bin, modelsDir, specs, fetch: fakeFetch };
+    type State = { ready: boolean; model: { id: string; installed: boolean }; models: { id: string; installed: boolean; active: boolean }[] };
+    const run = async (url: string) => {
+      const state = async () => (await (await fetch(`${url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json()) as State;
+      const model = (action: string, id?: string) => fetch(`${url}/local/transcribe/model`, { method: "POST", body: JSON.stringify({ action, ...(id ? { id } : {}) }), headers: { Authorization: `Bearer ${TOKEN}` } });
+      return { state, model };
+    };
+    const app = await startApp({ whisper: cfg });
+    const a = await run(app.url);
+    // ohne Vermerk ist das erste gewählt (der echte Katalog nimmt small); nichts wird von selbst geladen
+    expect((await a.state()).models).toEqual([expect.objectContaining({ id: "fast", active: true, installed: false }), expect.objectContaining({ id: "best", active: false, installed: false })]);
+    expect(requested).toEqual([]);
+    expect((await a.model("download", "nope")).status).toBe(404);
+    // „best“ laden: wird das gewählte; nur diese Datei wird geholt
+    expect((await a.model("download", "best")).status).toBe(202);
+    await expect.poll(async () => (await a.state()).ready, { timeout: 5000 }).toBe(true);
+    expect(requested).toEqual(["https://example.invalid/best.bin"]);
+    expect((await a.state()).model).toMatchObject({ id: "best", installed: true });
+    expect(readFileSync(join(modelsDir, "best", "v1", "ggml-best.bin.sha256"), "utf8")).toBe(specs[1]!.files[0]!.sha256);
+    // „fast“ nur wählen (nicht geladen): transkribiert wird mit dem geladenen „best“
+    expect((await a.model("select", "fast")).status).toBe(200);
+    expect(await a.state()).toMatchObject({ ready: true, model: { id: "fast", installed: false } });
+    expect((await post(`${app.url}/local/transcribe`, wav(1))).status).toBe(200);
+    const args = JSON.parse(readFileSync(join(dir, "calls.jsonl"), "utf8").trim().split("\n").at(-1)!) as string[];
+    expect(args[args.indexOf("-m") + 1]).toBe(join(modelsDir, "best", "v1", "ggml-best.bin"));
+    // Neustart: Auswahl und geladenes Modell bleiben
+    await app.close();
+    const again = await startApp({ whisper: cfg });
+    apps.push(again);
+    const b = await run(again.url);
+    expect(await b.state()).toMatchObject({ ready: true, model: { id: "fast" }, models: [{ id: "fast", active: true, installed: false }, { id: "best", active: false, installed: true }] });
+    expect((await b.model("remove", "best")).status).toBe(200);
+    expect((await b.state()).ready).toBe(false);
+    expect(existsSync(join(modelsDir, "best", "v1", "ggml-best.bin"))).toBe(false);
+  });
+
+  it("Elija 17.11.: Modelldatei direkt auf die Platte – Fortsetzen per Range, falsche Prüfsumme wird verworfen", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "based-whisper-test-"));
+    const bytes = new TextEncoder().encode("0123456789abcdefghij");
+    const file = { path: "m.bin", url: "https://example.invalid/m.bin", size: bytes.length, sha256: await localModels.sha256Hex(bytes) };
+    const dest = join(dir, "sub", "m.bin");
+    // erster Versuch bricht nach 8 Bytes ab (Verbindung weg)
+    const ranges: (string | undefined)[] = [];
+    const cut = (async (_u: string | URL | Request, init?: RequestInit) => {
+      ranges.push((init?.headers as Record<string, string> | undefined)?.Range);
+      let sent = false;
+      return new Response(new ReadableStream({ pull(c) { if (!sent) { sent = true; c.enqueue(bytes.slice(0, 8)); } else c.error(new Error("connection lost")); } }));
+    }) as typeof fetch;
+    await expect(downloadModelFile(file, dest, { fetch: cut })).rejects.toThrow("connection lost");
+    expect(readFileSync(dest + ".part", "utf8")).toBe("01234567");
+    expect(existsSync(dest)).toBe(false);
+    // zweiter Versuch setzt fort (206) und meldet den Fortschritt ab dem vorhandenen Teil
+    const progress: number[] = [];
+    const resume = (async (_u: string | URL | Request, init?: RequestInit) => {
+      const range = (init?.headers as Record<string, string> | undefined)?.Range;
+      ranges.push(range);
+      const from = Number(/bytes=(\d+)-/.exec(range ?? "")?.[1] ?? 0);
+      return new Response(bytes.slice(from), { status: from ? 206 : 200 });
+    }) as typeof fetch;
+    await downloadModelFile(file, dest, { fetch: resume, onProgress: (n) => progress.push(n) });
+    expect(ranges).toEqual([undefined, "bytes=8-"]);
+    expect(progress.at(-1)).toBe(bytes.length);
+    expect(readFileSync(dest, "utf8")).toBe("0123456789abcdefghij");
+    expect(existsSync(dest + ".part")).toBe(false);
+    // Server ohne Range (200): von vorn, Ergebnis stimmt trotzdem
+    const dest2 = join(dir, "m2.bin");
+    writeFileSync(dest2 + ".part", "XXXX");
+    await downloadModelFile(file, dest2, { fetch: (async () => new Response(bytes)) as typeof fetch });
+    expect(readFileSync(dest2, "utf8")).toBe("0123456789abcdefghij");
+    // falscher Inhalt gleicher Länge: Fehler, nichts bleibt liegen; nur https
+    const dest3 = join(dir, "m3.bin");
+    await expect(downloadModelFile(file, dest3, { fetch: (async () => new Response("X".repeat(bytes.length))) as typeof fetch })).rejects.toThrow("checksum mismatch");
+    expect(existsSync(dest3)).toBe(false);
+    expect(existsSync(dest3 + ".part")).toBe(false);
+    await expect(downloadModelFile(file, dest3, { fetch: (async () => new Response("too short")) as typeof fetch })).rejects.toThrow(/size 9, expected 20/);
+    await expect(downloadModelFile({ ...file, url: "http://example.invalid/m.bin" }, dest3, { fetch: cut })).rejects.toThrow("only https");
   });
 
   it("Einrichtung aus der Umgebung, WAV-Kopf", () => {

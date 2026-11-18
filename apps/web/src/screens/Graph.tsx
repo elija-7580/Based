@@ -379,18 +379,19 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
     <div className="gx" data-testid="graph">
       <section className="gx-stage" aria-label="Page graph">
         <div className="gx-title">
-          {onSwitch ? <LibraryTabs value="graph" onNavigate={onSwitch} /> : null}
+          {/* BSD-530: Zeile 1 Titel + Anzahl (meta), Zeile 2 Umschalter */}
           <h1 className="t-heading">Graph</h1>
-          <span className="t-desc" role="status" data-testid="graph-stats">
+          <span className="t-meta" role="status" data-testid="graph-stats" data-head-count="">
             {result === undefined ? (failed ? `Couldn't build the graph: ${failed}` : "Building…") : `${count(nodes, "page")} · ${count(edges, "link")}${cut ? ` of ${result.totalNodes.toLocaleString("en-US")}` : ""}`}
           </span>
+          {onSwitch ? <span className="gx-switch"><LibraryTabs value="graph" onNavigate={onSwitch} /></span> : null}
         </div>
         <div className="gx-zoom" role="group" aria-label="Zoom">
-          <IconButton label="Zoom in" size="sm" icon={<Icon name="plus" size={16} />} onClick={() => zoomBy(1.4)} />
-          <IconButton label="Zoom out" size="sm" icon={<span className="gx-minus" aria-hidden="true" />} onClick={() => zoomBy(1 / 1.4)} />
-          <Button label="Fit" size="sm" onClick={() => { autoFit.current = true; fit(); }} />
+          <IconButton label="Zoom in" icon={<Icon name="plus" size={16} />} onClick={() => zoomBy(1.4)} />
+          <IconButton label="Zoom out" icon={<span className="gx-minus" aria-hidden="true" />} onClick={() => zoomBy(1 / 1.4)} />
+          <Button label="Fit" onClick={() => { autoFit.current = true; fit(); }} />
           {/* BSD-262: gemerktes Layout verwerfen und neu anordnen */}
-          <Button label="Re-layout" size="sm" onClick={() => {
+          <Button label="Re-layout" onClick={() => {
             if (!result) return;
             forgetPositions();
             const prev = scene.current?.layout;
@@ -459,10 +460,10 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
             </div>
             {!hovered || selected === shown.id ? (
               <div className="gx-actions">
-                <Button label="Open page" variant="primary" size="sm" onClick={() => onOpenPage(shown.id)} />
+                <Button label="Open page" variant="primary" onClick={() => onOpenPage(shown.id)} />
                 {focus === shown.id
-                  ? <Button label="Show whole graph" size="sm" onClick={() => setFocus(undefined)} />
-                  : <Button label="Show neighbourhood" size="sm" onClick={() => { setFocus(shown.id); autoFit.current = true; }} />}
+                  ? <Button label="Show whole graph" onClick={() => setFocus(undefined)} />
+                  : <Button label="Show neighbourhood" onClick={() => { setFocus(shown.id); autoFit.current = true; }} />}
               </div>
             ) : null}
           </div>
@@ -485,7 +486,7 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
                 <SegmentedControlItem value="2" label="2 steps" />
                 <SegmentedControlItem value="3" label="3 steps" />
               </SegmentedControl>
-              <Button label="Show whole graph" size="sm" variant="ghost" onClick={() => { setFocus(undefined); autoFit.current = true; }} />
+              <Button label="Show whole graph" variant="ghost" onClick={() => { setFocus(undefined); autoFit.current = true; }} />
             </div>
           ) : null}
         </div>

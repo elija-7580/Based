@@ -27,14 +27,18 @@ export function unlinkedMentions(store: WorkspaceStore, pageID: string, limit = 
   if (title.length < 3) return [];
   const re = new RegExp(`(?<![\\p{L}\\p{N}_])${escape(title)}(?![\\p{L}\\p{N}_])`, "giu");
   const out: UnlinkedMention[] = [];
-  for (const b of store.blocks.values()) {
-    if (out.length >= limit) break;
-    if (!b.text || PAGE_TYPES.has(b.type) || b.parent.startsWith("d:")) continue;
+  // ADR 0017 Stufe B: Mit Laden nach Bedarf sucht SQLite die Datei nach einem Stück des Titels ab (das längste aus
+  // ASCII-Buchstaben, Ziffern und Leerzeichen – steht unverändert im JSON, Groß/Klein egal); geprüft wird wie immer
+  // hier. Hat der Titel kein solches Stück, laufen alle Blöcke durch.
+  const piece = (title.match(/[A-Za-z0-9 ]{3,}/g) ?? []).map((s) => s.trim()).filter((s) => s.length >= 3).sort((a, b) => b.length - a.length)[0];
+  store.scanBlocks(piece ? [piece] : [], (b) => {
+    if (out.length >= limit) return;
+    if (!b.text || PAGE_TYPES.has(b.type) || b.parent.startsWith("d:")) return;
     let offset = 0;
     const full = runsOf(b.text).map((r) => r.t ?? "").join("");
-    if (!full.toLowerCase().includes(title.toLowerCase())) continue;
+    if (!full.toLowerCase().includes(title.toLowerCase())) return;
     const page = containingPage(store, b.id);
-    if (!page || page === pageID || isTrashed(store, b.id)) continue;
+    if (!page || page === pageID || isTrashed(store, b.id)) return;
     for (const r of runsOf(b.text)) {
       const t = r.t ?? "";
       if (!r.mention) {
@@ -45,7 +49,7 @@ export function unlinkedMentions(store: WorkspaceStore, pageID: string, limit = 
       }
       offset += t.length;
     }
-  }
+  }, { ignoreCase: true });
   return out.slice(0, limit);
 }
 

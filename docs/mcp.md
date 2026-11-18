@@ -124,3 +124,19 @@ Every enabled skill is a prompt (name, description, optional argument `input`).
 - Comments and mentions as tools.
 - `ask_main_agent` in the app's local MCP host (only the server offers it).
 - Server-sent notifications (`listChanged`, resource subscriptions).
+
+## Whiteboards (BSD-508)
+
+Agents draw as text – few tokens, no coordinates, no browser. Based lays the objects out and writes them as records,
+so an open board updates at once and sync, history and search apply as for any edit.
+
+- `read_board { id }` – one line per object with a short handle, connectors as `a -> b: label`.
+- `draw_board { id?, script, title?, parent? }` – without `id` a new board is created. One statement per line:
+
+```
+note a: text          box a: text (also oval, diamond)     text a: text
+page a: <page id>     a -> b: optional label               frame f: Title { a b }
+set <handle>: text    del <handle>
+```
+
+Everything an agent adds carries the marker bar; its connectors are dashed in the marker colour.

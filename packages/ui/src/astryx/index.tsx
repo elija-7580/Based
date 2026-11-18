@@ -13,11 +13,17 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import type { KeyboardEvent, ReactNode, Ref } from "react";
 import { buttonVariant, dialogPurpose, fieldStatus, menuItems, type BasedButtonVariant, type BasedMenuItem } from "./variants.js";
 
-export { buttonVariant, dialogPurpose, fieldStatus, menuItems } from "./variants.js";
-export type { BasedButtonVariant, BasedMenuItem } from "./variants.js";
+export { buttonVariant, dialogPurpose, fieldStatus, menuItems, pickerText } from "./variants.js";
+export type { BasedButtonVariant, BasedMenuItem, BasedPickerOption } from "./variants.js";
 export { BasedChip, type BasedChipProps } from "./chip.js";
 export { BasedMediaPlayer, formatMediaTime, mediaKeyAction, MEDIA_SEEK_STEP, type BasedMediaPlayerProps } from "./media.js";
+export { BasedKeys, kbdKeys } from "./keys.js";
 export { BasedTabs, type BasedTab, type BasedTabsProps } from "./tabs.js";
+export { BasedSwitcher, type BasedSwitcherItem, type BasedSwitcherProps } from "./switcher.js";
+export { BasedPicker, type BasedPickerProps } from "./picker.js";
+export { BasedSheet, type BasedSheetProps } from "./sheet.js";
+export { BasedToast, TOAST_MS, type BasedToastProps } from "./toast.js";
+import "./elements.css";
 export { BasedToken, tokenColor, type BasedTokenColor, type BasedTokenProps } from "./token.js";
 
 export interface BasedButtonProps {
@@ -58,7 +64,7 @@ export interface BasedIconButtonProps {
 }
 
 /** Icon-Knopf (Kopfzeile, Schließen-×, Werkzeugleisten) – BSD-350. Klickfläche ≥ 24 px, Name und Tooltip immer gesetzt. */
-export function BasedIconButton({ label, icon, tooltip, variant = "ghost", size = "sm", disabled = false, pressed, menu, onClick, testID }: BasedIconButtonProps) {
+export function BasedIconButton({ label, icon, tooltip, variant = "ghost", size = "md", disabled = false, pressed, menu, onClick, testID }: BasedIconButtonProps) {
   return (
     <IconButton label={label} tooltip={tooltip ?? label} variant={variant} size={size} icon={icon} isDisabled={disabled}
       {...(pressed !== undefined ? { "aria-pressed": pressed } : {})} {...(testID ? { "data-testid": testID } : {})}

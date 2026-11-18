@@ -7,6 +7,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { afterEach, describe, expect, it } from "vitest";
+import { authorKindOf, createPage } from "@based/core";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { AgentBrain, AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, TASK_TYPE, type ProjectData } from "@based/brain";
@@ -40,7 +41,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent", "read_board", "draw_board"].sort(),
     );
   });
 
@@ -75,6 +76,29 @@ describe("MCP über Streamable HTTP", () => {
     expect(inbox).toContain("1 run needs you:");
     expect(inbox).toContain("May I send the mail?");
     expect(inbox).not.toContain("Details…");
+  });
+
+  it("BSD-522: Schreiben über MCP setzt Herkunft „ai“ und Agent-Autor; in eine Seite des Nutzers → „mixed“", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    const page = idIn(textOf(await call("create_page", { title: "From the agent", markdown: "First line" })));
+    expect(store.blocks.get(page)?.origin).toBe("ai");
+    const author = store.blocks.get(page)?.author;
+    expect(author).toMatch(/^a-/);
+    expect(authorKindOf(author)).toBe("agent");
+    expect(store.workspace.authors?.[author!]?.kind).toBe("agent");
+    const kids = store.children("b:" + page).map((id) => store.blocks.get(id)!);
+    expect(kids.length).toBeGreaterThan(0);
+    for (const k of kids) expect(k.author).toBe(author);
+    // Seite des Nutzers (ohne Herkunft): ein Agent hängt an → gemischt; Lesen ändert nichts
+    const mine = createPage(store, { title: "Mine" });
+    expect(store.blocks.get(mine)?.origin).toBeUndefined();
+    await call("read_page", { id: mine });
+    expect(store.blocks.get(mine)?.origin).toBeUndefined();
+    await call("append_markdown", { id: mine, markdown: "Added by the agent" });
+    expect(store.blocks.get(mine)?.origin).toBe("mixed");
+    // danach schreibt der Nutzer wieder ohne Agent-Kennung
+    expect(store.actor).toBeUndefined();
   });
 
   it("BSD-221 Teil 2: find_replace, move_page, duplicate_page, backlinks, set_favorite", async () => {
@@ -127,6 +151,10 @@ describe("MCP über Streamable HTTP", () => {
     await call("append_markdown", { id, markdown: "## Nachtrag\n\nMehr Text mit Suchwort Zebrafink" });
     expect(textOf(await call("read_page", { id }))).toContain("## Nachtrag");
     expect(textOf(await call("search", { query: "Zebrafink" }))).toContain(`(id: ${id})`);
+    // Tippfehler, Ort der Seite, nur unterhalb einer Seite, nur Titel (wie Quick Find in der App)
+    expect(textOf(await call("search", { query: "Zebrafnik" }))).toContain(`(id: ${id})`);
+    expect(textOf(await call("search", { query: "Zebrafink", title_only: true }))).toMatch(/\(id: |No matches\./);
+    expect(textOf(await call("search", { query: "Zebrafink", within: "nicht-vorhanden" }))).toBe("No matches.");
 
     await call("replace_page_content", { id, markdown: "Nur noch das" });
     const md = textOf(await call("read_page", { id }));
@@ -396,5 +424,19 @@ describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
     const tasks = listRecords<{ state: string; input: string; source?: string }>(app.sync.store, TASK_TYPE);
     expect(tasks.map((t) => t.data)).toEqual([expect.objectContaining({ state: "received", input: "Summarize this week's notes", source: "mcp" })]);
     expect((await call("ask_main_agent", { task: "" })).isError).toBe(true);
+  });
+});
+
+// BSD-508: Whiteboards über MCP – zeichnen als Text, knapp zurücklesen.
+describe("Whiteboard über MCP", () => {
+  it("draw_board legt ein Board an und verknüpft eine Seite; read_board liest es knapp", async () => {
+    const { call } = await httpClient();
+    const page = idIn(textOf(await call("create_page", { title: "Lecture 5", markdown: "Notes" })));
+    const out = textOf(await call("draw_board", { title: "Map", script: `page p: ${page}\nnote n: On the exam\np -> n: explains` }));
+    expect(out).toContain("3 added");
+    const board = idIn(out);
+    const read = textOf(await call("read_board", { id: board }));
+    expect(read).toContain(`page ${page} "Lecture 5"`);
+    expect(read).toMatch(/\w+ -> \w+: explains/);
   });
 });

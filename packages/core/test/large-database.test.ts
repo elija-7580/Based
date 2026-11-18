@@ -52,7 +52,7 @@ describe("Große Datenbank (BSD-215)", () => {
   it(`${N.toLocaleString("de")} Zeilen: laden, abfragen, Cache, Zelle ändern`, () => {
     // Die Kopien der Test-Persistenz (structuredClone) gehören nicht zur Messung: geladen wird wie aus SQLite eine fertige Liste.
     const recs = new MemoryPersistence(records(N)).loadAll();
-    const persistence = Object.assign(new MemoryPersistence(), { loadAll: () => recs });
+    const persistence = Object.assign(new MemoryPersistence(), { loadAll: () => recs, lazy: undefined }); // gemessen wird das Laden von allem
     const [store, load] = time(() => new WorkspaceStore({ persistence, node: "n" }));
     expect(store.children("d:db").length).toBe(N);
 

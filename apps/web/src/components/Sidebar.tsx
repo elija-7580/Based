@@ -292,7 +292,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     if (row.kind === "action") {
       return (
         <div role="treeitem" aria-selected={false} aria-label={row.label} className="tree-action-row" style={style}>
-          <button type="button" className="tree-row tree-create t-desc" style={{ ...style, paddingLeft: indent(1) }} onClick={() => setEditTeamspace({ name: "" })}>
+          <button type="button" className="tree-row tree-create" style={{ ...style, paddingLeft: indent(1) }} onClick={() => setEditTeamspace({ name: "" })}>
             <Icon name="plus" size={16} />
             {row.label}
           </button>
@@ -307,6 +307,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           aria-expanded={!row.collapsed}
           aria-selected={false}
           aria-label={row.name}
+          tabIndex={-1}
           data-teamspace={row.id}
           className={"tree-row tree-teamspace" + dropClass}
           style={{ ...style, paddingLeft: indent(0) }}
@@ -451,7 +452,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     <button key={n.id} type="button" className={"nav-item" + dropClass(n.id)} aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "top")}>
       <Icon name={n.icon} filled={n.active && FILLABLE.has(n.icon)} {...(n.cut ? { cut: n.cut } : {})} />
       {n.name}
-      {n.badge ? <span className="badge" aria-label={`${n.badge} in Trash`}>{n.badge}</span> : n.key ? <span className="key t-data">{n.key}</span> : null}
+      {n.badge ? <span className="badge" aria-label={`${n.badge} in Trash`}>{n.badge}</span> : n.key ? <span className="key keycap">{n.key}</span> : null}
     </button>
   );
   const iconButton = (n: NavEntry) => (
@@ -588,6 +589,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           onExport={(format) => void client.exportPage(menu.id, format).then(download).catch(() => undefined)}
           isHome={homePage === menu.id}
           onHome={(on) => startPage.set(on ? menu.id : undefined)}
+          dashboard={ai}
           quickMoves={(outline?.nodes[menu.id]?.parent === undefined ? outline?.sections ?? [] : []).filter((x) => x.id !== menuSection).map((x) => ({ id: x.id, label: `Move to ${x.name}` }))}
           onQuickMove={(section) => void client.command({ op: "moveToSection", ids: [menu.id], section })}
           onTrash={() => {
@@ -630,6 +632,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
             setHidden(true);
           }
         }}
+        data-arrow-nav="off"
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") resize(width - 16);
           else if (e.key === "ArrowRight") resize(width + 16);
@@ -906,7 +909,7 @@ function copyPageLinks(ids: string[]): Promise<void> {
   return navigator.clipboard?.writeText(text).catch(() => undefined) ?? Promise.resolve();
 }
 
-function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, onOpenTab, onCopyLink, onExport, isHome, onHome, quickMoves, onQuickMove }: {
+function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, onOpenTab, onCopyLink, onExport, isHome, onHome, dashboard, quickMoves, onQuickMove }: {
   menu: Menu;
   favorite: boolean;
   canNest: boolean;
@@ -926,6 +929,8 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   /** Diese Seite ist Home bzw. soll es werden (aus: zurück zum Dashboard). */
   isHome: boolean;
   onHome: (on: boolean) => void;
+  /** BSD-504: Gibt es ein Dashboard (AI an)? Ohne AI ist Home immer eine Seite – an ihr kein „Use dashboard as Home“. */
+  dashboard: boolean;
   /** Direkt in einen anderen Abschnitt (Private, Teamspaces) – nur für Seiten der obersten Ebene. */
   quickMoves: { id: string; label: string }[];
   onQuickMove: (section: string) => void;
@@ -967,7 +972,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   return (
     <div ref={ref} role="menu" aria-label="Page actions" className="menu" style={pos}>
       {item(favorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!favorite))}
-      {item(isHome ? "Use dashboard as Home" : "Set as Home", "home", () => onHome(!isHome))}
+      {isHome && !dashboard ? null : item(isHome ? "Use dashboard as Home" : "Set as Home", "home", () => onHome(!isHome))}
       {item("Rename", "page", onRename)}
       {canNest ? item("Add a page inside", "plus", onAdd) : null}
       {item("Duplicate", "duplicate", onDuplicate)}

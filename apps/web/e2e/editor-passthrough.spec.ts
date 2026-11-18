@@ -173,7 +173,9 @@ test("Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records",
   const fields = blockEditor(page).locator("[data-editable-id]");
   await fields.first().click();
   await page.keyboard.press("End");
-  await fields.last().click();
+  // Der HTML-Codeblock am Ende zeigt seit 88b60158 nur das Ergebnis (Code erst mit der Schreibmarke darin): das letzte
+  // sichtbare Feld anklicken (BSD-544).
+  await fields.filter({ visible: true }).last().click();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Home", exact: true }).first().click();
   await page.goBack();

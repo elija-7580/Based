@@ -118,12 +118,9 @@ export function mermaidPreview(code: string): HTMLElement {
   wrap.contentEditable = "false";
   wrap.dataset.code = code;
   wrap.setAttribute("data-testid", "mermaid-preview");
-  const label = document.createElement("div");
-  label.className = "bx-html-preview-label";
-  label.textContent = "Preview";
   const body = document.createElement("div");
   body.className = "bx-mermaid-body";
-  wrap.append(label, body);
+  wrap.append(body);
   pruneDetached();
   live.add(wrap);
   watchTheme();

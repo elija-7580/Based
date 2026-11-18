@@ -18,15 +18,19 @@ export type Channel = "dev" | "beta";
 export const CHANNEL: Channel = typeof __BASED_CHANNEL__ === "string" && __BASED_CHANNEL__ === "beta" ? "beta" : "dev";
 
 /** Funktionen, die ein Kanal ausblenden kann. */
-export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing" | "agentMarks";
+export type GatedFeature = "meetings" | "graph" | "realtimeText" | "coding" | "sharing" | "agentMarks" | "whiteboard" | "fastStart";
 
 /** Auf beta ausgeblendet, mit Grund (für Menschen; wird nicht angezeigt). */
-export const BETA_HIDDEN: Readonly<Record<GatedFeature, string>> = {
-  meetings: "Labs (features.csv) und offener Bug BSD-453 (Aufnahme in der Mac-App)",
+// Elija 17.11.: Meeting-Notizen sind in der Beta – Aufnahme, Notizen mit Zeit, Transkript auf dem Mac (BSD-453 behoben,
+// whisper.cpp liegt der App bei, BSD-231). Die AI-Zusammenfassung bleibt auf beta weg (kein AI-Schalter): der Reiter
+// „Summary“ fehlt dort (meeting/host.ts → summaryAvailable). Wieder ausblenden: `meetings: "<Grund>"` hier eintragen.
+export const BETA_HIDDEN: Readonly<Partial<Record<GatedFeature, string>>> = {
   graph: "BSD-420: Graph laut Mac-Abnahme buggy und langsam",
   realtimeText: "Echtzeit-Text ist „after“ (features.csv), braucht einen Server",
   coding: "Labs, hängt an AI",
   agentMarks: "BSD-459: Marker-Farbe und Calm mode erklären sich nur über Agenten, die es auf beta nicht gibt",
+  // whiteboard: seit 17.11. auf beta sichtbar (Entscheidung Elija: freischalten, sobald Stift und Dateien stehen – BSD-93).
+  fastStart: "ADR 0017 Stufe B: Laden nach Bedarf ist ein Versuch; die erste Suche lädt noch den ganzen Workspace",
   sharing: "BSD-460: Teilen ist „after“ (features.csv „Sharing and permissions“), braucht einen Server; docs/beta/README.md",
 };
 
@@ -41,6 +45,7 @@ const COMMAND_FEATURE: Readonly<Record<string, GatedFeature>> = {
   meeting: "meetings",
   graph: "graph",
   coding: "coding",
+  board: "whiteboard",
 };
 
 /** Darf ein ⌘K-Befehl bzw. eine Route mit dieser ID in diesem Kanal erscheinen? */
@@ -67,5 +72,33 @@ export function settingsPageVisible(id: string, channel: Channel = CHANNEL): boo
   return channel !== "beta" || !BETA_HIDDEN_SETTINGS.has(id);
 }
 
-/** Name der App im Kanal (Fenstertitel, Über-Seite, Problem melden). */
-export const APP_NAME = CHANNEL === "beta" ? "Based Beta" : "Based";
+/**
+ * Name der App im Kanal (Fenstertitel, Über-Seite, Problem melden). BSD-514: offizieller Name „Based Notes“, die
+ * Beta heißt sichtbar „Based Notes Beta“. Nur Anzeige – Kennungen (Bundle-ID, Ports, Discovery-Besitzer, Ordner,
+ * CLI `based-beta`) stehen in @based/core desktopPlaces und bleiben, damit Tester Daten und Updates behalten.
+ */
+export const APP_NAME = CHANNEL === "beta" ? "Based Notes Beta" : "Based";
+
+/** BSD-485/514: Produktname auf der Über-Seite – „Based Notes Beta“ auf beta, sonst „Based Next“. */
+export function productName(channel: Channel = CHANNEL): string {
+  return channel === "beta" ? "Based Notes Beta" : "Based Next";
+}
+
+/** BSD-485: Kurzbeschreibung auf der Über-Seite – auf beta ohne Agenten (die gibt es dort nicht). */
+export function productBlurb(channel: Channel = CHANNEL): string {
+  return channel === "beta"
+    ? "Local-first notes and databases. Your workspace lives on your device."
+    : "Local-first notes, databases and agents. Your workspace lives on your device.";
+}
+
+/** BSD-483: Hinweis unter Settings → General → Name – Teilen nur nennen, wo es Teilen gibt. */
+export function workspaceNameHint(channel: Channel = CHANNEL): string {
+  return featureVisible("sharing", channel) ? "Used for exports and shown to people you share with" : "Used for exports";
+}
+
+/** BSD-483: Diagnostics → Crash reports → Sending – auf beta der Weg zu uns (BSD-467: Mail an hello@basednotes.app). */
+export function reportSendingHint(channel: Channel = CHANNEL): string {
+  return channel === "beta"
+    ? "Based doesn’t send reports by itself — save the report as a file and email it to hello@basednotes.app."
+    : "Not available in this beta yet — save the report as a file or copy it and pass it on.";
+}

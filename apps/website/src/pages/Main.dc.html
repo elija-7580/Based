@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Based · Databases, docs and agents. Instant, private, everywhere.</title>
-<meta name="description" content="Easy like Notion, private like Obsidian. The workspace for people who love how Notion works, not how it is run. Your data on your devices, huge databases that stay instant, EU servers, opt-in agents. Join the beta.">
+<title>Based Notes · Your data. Based.</title>
+<meta name="description" content="Fast, private notes and databases on your own Mac. Import your whole Notion workspace, no account needed. Open source, free Mac beta.">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -257,6 +257,24 @@ footer a{display:inline-block;padding:6px 0}
 @keyframes bsdSheet{from{transform:translateY(100%)}to{transform:none}}
 @media (prefers-reduced-motion: reduce){.bsd .mb-sheet,.bsd .mb-backdrop{animation:none}}
 
+.bsd .ws-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bsd .ws-item.on{background:var(--bg);color:var(--ink);font-weight:600;box-shadow:var(--shadow-panel)}
+.bsd .ws-ic{flex:0 0 16px;width:16px;height:16px;border-radius:5px;background:var(--selected)}
+.bsd .ws-label{margin:16px 10px 6px;font-size:12px;font-weight:600;color:var(--muted)}
+.bsd .ws-t{padding:5px 12px;border-radius:999px;background:var(--surface-raised);color:var(--ink);font-size:13px;font-weight:600}
+.bsd .ws-t1{background:var(--button);color:var(--button-ink)}
+.bsd .ws-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 110px 90px;gap:12px;padding:11px 4px;border-top:1px solid var(--line);font-size:14px;align-items:center}
+.bsd .ws-head{border-top:0;font-size:12px;font-weight:600;color:var(--muted)}
+.bsd .imp-bar{display:block;height:4px;margin:0 0 8px;border-radius:4px;background:var(--surface-raised);overflow:hidden}
+.bsd .imp-bar>span{display:block;height:100%;background:var(--marker-strong);transform-origin:0 50%}
+@media (prefers-reduced-motion: no-preference){
+.bsd .ws-t1{animation:bsdT1 12s infinite}.bsd .ws-t2{animation:bsdT2 12s infinite}.bsd .ws-t3{animation:bsdT3 12s infinite}
+.bsd .imp-bar>span{animation:bsdLoopGrow 6s cubic-bezier(.4,0,.2,1) infinite}
+}
+@keyframes bsdT1{0%,31%{background:var(--button);color:var(--button-ink)}33%,100%{background:var(--surface-raised);color:var(--ink)}}
+@keyframes bsdT2{0%,31%{background:var(--surface-raised);color:var(--ink)}33%,64%{background:var(--button);color:var(--button-ink)}66%,100%{background:var(--surface-raised);color:var(--ink)}}
+@keyframes bsdT3{0%,64%{background:var(--surface-raised);color:var(--ink)}66%,97%{background:var(--button);color:var(--button-ink)}100%{background:var(--surface-raised);color:var(--ink)}}
+@media (max-width:900px){.bsd .ws-side,.bsd .ws-due{display:none !important}.bsd .ws-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 96px}}
 </style>
 </helmet>
 <div class="bsd" data-theme="{{theme}}" style="min-height: 100vh; display: flex; flex-direction: column;">
@@ -287,10 +305,10 @@ footer a{display:inline-block;padding:6px 0}
 <main id="top" style="flex: 1 1 auto;">
 
 <section aria-labelledby="hero-title" class="wrap" style="padding-top: 88px; padding-bottom: 48px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 26px;">
-<p class="rise d1 pill-hero" style="margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--marker); color: #1F1F1D; font-size: 13px; font-weight: 500;"><span style="font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Your data. Based.</span><a href="#between" style="white-space: nowrap; padding: 3px 10px; border-radius: 999px; background: var(--bg); text-decoration: none; font-weight: 600;">How →</a></p>
-<h1 id="hero-title" class="disp flipin" aria-label="{{heroLabel}}" style="margin: 0; max-width: 1080px; font-size: clamp(44px, 8vw, 108px);"><span aria-hidden="true"><sc-for list="{{hero1}}" as="w" hint-placeholder-count="4"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="8"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for><br><span class="hl"><sc-for list="{{hero2}}" as="w" hint-placeholder-count="3"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="8"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for></span></span></h1>
+<p class="rise d1 pill-hero" style="margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--marker); color: #1F1F1D; font-size: 13px; font-weight: 500;"><span style="font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Open source, built in Vienna</span><a href="#yours" style="white-space: nowrap; padding: 3px 10px; border-radius: 999px; background: var(--bg); text-decoration: none; font-weight: 600;">How →</a></p>
+<h1 id="hero-title" class="disp flipin" aria-label="{{heroLabel}}" style="margin: 0; max-width: 1080px; font-size: clamp(52px, 9vw, 124px);"><span aria-hidden="true"><sc-for list="{{hero1}}" as="w" hint-placeholder-count="1"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="7"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for><br><span class="hl"><sc-for list="{{hero2}}" as="w" hint-placeholder-count="2"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="5"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for></span></span></h1>
 <p class="rise d3" aria-live="off" style="margin: 0; min-height: 1.3em; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 2.8vw, 36px); letter-spacing: -0.02em; line-height: 1.2;"><span class="sentflip {{flipCls}}">A home for your <span style="color: var(--muted);">{{flapWord}}</span>.</span></p>
-<p class="lead rise d4" style="max-width: 700px;">Your data lives on your devices and belongs to you. Nothing gets lost, nothing gets read. Databases with a hundred thousand rows stay instant. And if you want it, a crew of agents works right inside them, from your terminal, the cloud or your phone.</p>
+<p class="lead rise d4" style="max-width: 700px;">Fast, private notes and databases on your own Mac, even at a hundred thousand rows. Open source and built in Europe. Coming from Notion? Bring your whole workspace, databases included.</p>
 
 <div id="waitlist" class="rise d5" style="width: 100%; max-width: 580px; scroll-margin-top: 100px;">
 <sc-if value="{{showForm}}" hint-placeholder-val="{{ true }}">
@@ -321,15 +339,192 @@ footer a{display:inline-block;padding:6px 0}
 </div>
 </div>
 <sc-if value="{{replyDone}}" hint-placeholder-val="{{ false }}">
-<p class="fadein" style="margin: 0; padding: 12px 10px 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted);"><span style="min-width: 0; overflow-wrap: anywhere;">Written by Based for {{email}}. Marked, like everything it writes.</span><button type="button" onClick="{{reset}}" class="btn2" style="min-height: 32px; font-size: 13px; padding: 0 12px;">Change details</button></p>
+<p class="fadein" style="margin: 0; padding: 12px 10px 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted);"><span style="min-width: 0; overflow-wrap: anywhere;">Written for {{email}}. See you in the beta.</span><button type="button" onClick="{{reset}}" class="btn2" style="min-height: 32px; font-size: 13px; padding: 0 12px;">Change details</button></p>
 </sc-if>
 </div>
 </sc-if>
 </div>
-<p class="rise d6" style="margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; font-size: 13px; font-weight: 500; color: var(--muted);"><span>Open source</span><span>Your data, your devices</span><span>AI only if you switch it on</span><span>Built in Vienna, EU servers</span></p>
+<p class="rise d6" style="margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; font-size: 13px; font-weight: 500; color: var(--muted);"><span>Your data on your Mac</span><span>No account needed</span><span>Free during the beta</span><span>EU cloud at release</span></p>
 </section>
 
-<section aria-label="Based Home preview" class="wrap" style="padding-top: 24px; padding-bottom: 110px;">
+<section aria-label="Based workspace preview" class="wrap" style="padding-top: 24px; padding-bottom: 110px;">
+<div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: 12px; box-shadow: var(--shadow-big);">
+<div style="position: relative; overflow: hidden; border-radius: 22px; background: var(--bg); min-height: 560px; display: flex;">
+<div class="ws-side" style="flex: 0 0 232px; padding: 22px 12px; background: var(--canvas); display: flex; flex-direction: column; gap: 2px; font-size: 14px; box-sizing: border-box;">
+<p style="margin: 0 10px 14px; font-size: 14px; font-weight: 700;">My workspace</p>
+<sc-for list="{{sideTop}}" as="i" hint-placeholder-count="2"><span class="ws-item"><span class="ws-ic" aria-hidden="true"></span>{{i}}</span></sc-for>
+<p class="ws-label">Private</p>
+<sc-for list="{{sidePages}}" as="i" hint-placeholder-count="5"><span class="ws-item {{i.cls}}"><span class="ws-ic" aria-hidden="true" style="background: {{i.ic}};"></span>{{i.t}}</span></sc-for>
+</div>
+<div style="flex: 1 1 auto; min-width: 0; padding: 40px clamp(20px, 4vw, 56px) 28px; display: flex; flex-direction: column; gap: 14px; text-align: left;">
+<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Private / Projects</p>
+<p style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3.2vw, 40px); font-weight: 800; letter-spacing: -0.03em;">Projects</p>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;"><span class="ws-t ws-t1">Table</span><span class="ws-t ws-t2">Board</span><span class="ws-t ws-t3">Timeline</span><span class="ws-t" style="color: var(--muted);">Calendar</span><span style="margin-left: auto; padding: 5px 12px; border-radius: 999px; background: var(--surface-raised); font-size: 13px; font-weight: 600;">New</span></div>
+<div style="position: relative; flex: 1 1 auto; min-height: 330px;">
+<div class="v1" style="display: flex; flex-direction: column;">
+<div class="ws-row ws-head"><span>Name</span><span>Area</span><span>Status</span><span class="ws-due">Due</span></div>
+<sc-for list="{{projRows}}" as="r" hint-placeholder-count="6"><div class="ws-row"><span style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.t}}</span><span style="color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.a}}</span><span><span style="padding: 1px 8px; border-radius: 3px; font-size: 12px; background: {{r.bg}};">{{r.s}}</span></span><span class="mono ws-due" style="font-size: 12px; color: var(--muted);">{{r.d}}</span></div></sc-for>
+</div>
+<div class="v2" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-content: start; opacity: 0;">
+<sc-for list="{{projCols}}" as="c" hint-placeholder-count="3"><div style="padding: 10px; border-radius: 14px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px; min-width: 0;"><p style="margin: 0; font-size: 13px; font-weight: 600;">{{c.t}}</p><sc-for list="{{c.items}}" as="i" hint-placeholder-count="2"><p style="margin: 0; padding: 10px; border-radius: 10px; background: var(--bg); font-size: 13px; box-shadow: var(--shadow-panel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{i}}</p></sc-for></div></sc-for>
+</div>
+<div class="v3" style="display: flex; flex-direction: column; gap: 12px; padding-top: 6px; opacity: 0;">
+<div class="mono" style="display: flex; justify-content: space-between; font-size: 11px; color: var(--muted);"><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span></div>
+<sc-for list="{{projBars}}" as="b" hint-placeholder-count="5"><div style="height: 30px; width: {{b.w}}; margin-left: {{b.x}}; border-radius: 8px; background: {{b.bg}}; font-size: 13px; padding: 6px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.t}}</div></sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p style="margin: 14px 0 0; text-align: center; font-size: 13px; color: var(--muted);">One database, three views of the same rows. Sample data.</p>
+</section>
+
+<section aria-labelledby="pillars-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 48px;">
+<div class="reveal" style="max-width: 820px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Moving in</p>
+<h2 id="pillars-title" class="h2">Bring everything over. Then stop waiting.</h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 16px;">
+<a href="Switch.dc.html" class="card lift reveal-l" style="padding: 32px; display: flex; flex-direction: column; gap: 18px; text-decoration: none; color: var(--ink); min-height: 520px; box-sizing: border-box;">
+<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">01 Your Notion</p>
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">Your whole workspace, moved in.</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2);">Export your Notion as HTML and drop the ZIP into Based. Pages, databases, relations and nesting come back on your Mac, and big exports work too. Your files keep their real names.</p>
+<div style="flex: 1 1 auto; min-height: 220px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); padding: 16px; display: flex; flex-direction: column; gap: 2px; box-sizing: border-box;">
+<p style="margin: 0 0 8px; display: flex; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted);"><span>Notion export.zip</span><span class="mono">import</span></p>
+<span class="imp-bar" aria-hidden="true"><span></span></span>
+<sc-for list="{{importRows}}" as="r" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: minmax(0, 1fr) auto 18px; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: center;"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.t}} <span style="color: var(--muted);">{{r.k}}</span></span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{r.n}}</span><span aria-hidden="true" style="color: var(--marker-strong); font-weight: 700;">✓</span></div></sc-for>
+</div>
+<span style="font-size: 15px; font-weight: 600;">Leaving Notion? Step by step →</span>
+</a>
+<a href="Workspace.dc.html" class="card lift reveal-r" style="padding: 32px; display: flex; flex-direction: column; gap: 18px; text-decoration: none; color: var(--ink); min-height: 520px; box-sizing: border-box;">
+<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">02 Your databases</p>
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">Databases at the heart of it.</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2);">Tables, boards, timelines and calendars over the same rows. Filters, relations, rollups, formulas and a full page inside every row. It all runs on your Mac, so a hundred thousand rows feel like ten.</p>
+<div style="position: relative; flex: 1 1 auto; min-height: 220px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); overflow: hidden;">
+<div class="v1" style="padding: 16px; display: flex; flex-direction: column;">
+<p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted);">Clients, table view</p>
+<sc-for list="{{dbRows}}" as="r" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px 60px; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: center;"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.t}}</span><span style="justify-self: start; padding: 1px 8px; border-radius: 3px; font-size: 12px; background: {{r.bg}};">{{r.s}}</span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{r.v}}</span></div></sc-for>
+</div>
+<div class="v2" style="padding: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; opacity: 0;">
+<sc-for list="{{boardCols}}" as="c" hint-placeholder-count="3"><div style="padding: 8px; border-radius: 12px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 6px; min-width: 0;"><p style="margin: 0; font-size: 12px; font-weight: 600;">{{c.t}}</p><sc-for list="{{c.items}}" as="i" hint-placeholder-count="2"><p style="margin: 0; padding: 7px; border-radius: 8px; background: var(--bg); font-size: 12px; box-shadow: var(--shadow-panel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{i}}</p></sc-for></div></sc-for>
+</div>
+<div class="v3" style="padding: 16px; opacity: 0;">
+<p style="margin: 0 0 12px; font-size: 12px; font-weight: 600; color: var(--muted);">Clients, timeline view</p>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="height: 26px; width: 46%; margin-left: 2%; border-radius: 8px; background: var(--status-ready); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Onboarding Acme</div>
+<div style="height: 26px; width: 40%; margin-left: 28%; border-radius: 8px; background: var(--marker); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Proposal Northwind</div>
+<div style="height: 26px; width: 30%; margin-left: 52%; border-radius: 8px; background: var(--status-review); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Review</div>
+<div style="height: 26px; width: 20%; margin-left: 78%; border-radius: 8px; background: var(--status-blocked); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Launch</div>
+</div>
+</div>
+</div>
+<span style="font-size: 15px; font-weight: 600;">Explore the workspace →</span>
+</a>
+</div>
+</div>
+</section>
+
+<section id="between" aria-labelledby="bt-title" class="wrap" style="padding-top: 120px; padding-bottom: 40px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center; scroll-margin-top: 80px;">
+<div class="reveal-l" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow">Where Based sits</p>
+<h2 id="bt-title" class="h2">Easy like Notion. Private like Obsidian.</h2>
+<p class="lead">Notion is easy, but your data lives in someone else's cloud. Obsidian keeps it on your machine, but asks you to become a plugin engineer. Based gives you both: set up in a minute, your data stays yours, and everything is there to tweak if you want to.</p>
+</div>
+<div class="reveal-r" style="flex: 1 1 440px; min-width: 0;">
+<div style="position: relative; aspect-ratio: 1 / 0.82; border-radius: 28px; background: var(--surface-raised); overflow: hidden;">
+<div aria-hidden="true" style="position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--control-border); opacity: .35;"></div>
+<div aria-hidden="true" style="position: absolute; top: 8%; bottom: 8%; left: 50%; width: 2px; background: var(--control-border); opacity: .35;"></div>
+<span class="mono" style="position: absolute; left: 50%; top: 3%; transform: translateX(-50%); font-size: 11px; color: var(--muted);">your data, your devices</span>
+<span class="mono" style="position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); font-size: 11px; color: var(--muted);">their cloud</span>
+<span class="mono" style="position: absolute; left: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">easy</span>
+<span class="mono" style="position: absolute; right: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">technical</span>
+<sc-for list="{{apps}}" as="a" hint-placeholder-count="3"><div class="dropin" style="position: absolute; left: {{a.x}}; top: {{a.y}}; transform: translate(-50%, -50%); animation-delay: {{a.d}}; display: flex; flex-direction: column; align-items: center; gap: 8px;"><span style="width: {{a.size}}; height: {{a.size}}; border-radius: 50%; background: {{a.bg}}; box-shadow: {{a.sh}};"></span><span style="font-size: 14px; font-weight: 700; white-space: nowrap;">{{a.n}}</span></div></sc-for>
+</div>
+</div>
+</section>
+
+<section id="yours" aria-labelledby="yours-title" class="wrap" style="padding-top: 120px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 36px; scroll-margin-top: 80px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Your data</p>
+<h2 id="yours-title" class="h2">You always know where your data is.</h2>
+<p class="lead">In the beta, everything lives on your Mac. There is no account and no server of ours in between. At release you choose where it syncs: Based Cloud on EU servers with end-to-end encryption, or a server of your own.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px;">
+<div class="card reveal-l" style="padding: 28px; display: flex; flex-direction: column; gap: 14px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Now, in the Mac beta</p><p style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">On your Mac.</p><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; color: var(--ink-2);"><li>Pages and databases stored locally, offline by default</li><li>Every version of every page, backups to a folder on your Mac</li><li>Sync between your Macs through iCloud Drive (preview)</li><li>Export to Markdown with real file names, or a lossless archive</li><li>Open source under the AGPL, so you can read every line</li></ul></div>
+<div class="card reveal-r" style="padding: 28px; display: flex; flex-direction: column; gap: 14px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">At release</p><p style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">Our cloud or your server.</p><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; color: var(--ink-2);"><li>Based Cloud on EU servers, end-to-end encrypted</li><li>Self-hosting on a server of your own</li><li>iPhone, iPad and web, then Windows, Linux and Android</li></ul></div>
+</div>
+</section>
+
+<section aria-labelledby="pain-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Love Notion. Not everything about it.</p>
+<h2 id="pain-title" class="h2">We read r/Notion so you don't have to.</h2>
+<p class="lead">Six things you've definitely said out loud. Tap a card for what we did about it.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px;">
+<sc-for list="{{pains}}" as="p" hint-placeholder-count="6">
+<div class="flip reveal" style="height: 300px;">
+<button type="button" onClick="{{p.toggle}}" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" class="flip-in {{p.cls}}" style="display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer;">
+<span class="face" style="background: var(--surface-raised);">
+<span class="mono" style="font-size: 12px; color: var(--muted);">{{p.n}}</span>
+<span style="font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{p.title}}</span>
+<span style="font-size: 15px; line-height: 1.55; color: var(--ink-2);">{{p.joke}}</span>
+<span style="margin-top: auto; font-size: 13px; font-weight: 600; color: var(--muted);">What Based does →</span>
+</span>
+<span class="face back" style="background: var(--button); color: var(--button-ink);">
+<span style="font-size: 12px; font-weight: 600; opacity: .7;">BASED</span>
+<span style="font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{p.fixTitle}}</span>
+<span style="font-size: 15px; line-height: 1.55; opacity: .85;">{{p.fix}}</span>
+<span style="margin-top: auto; font-size: 12px; opacity: .6;">{{p.src}}</span>
+</span>
+</button>
+</div>
+</sc-for>
+</div>
+<a href="Switch.dc.html" class="btn2 reveal" style="align-self: flex-start;">The full list, with sources →</a>
+</div>
+</section>
+
+<section aria-labelledby="open-title" class="wrap" style="padding-top: 120px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 44px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Built in the open</p>
+<h2 id="open-title" class="h2">The notes app we build together.</h2>
+<p class="lead">Based is open source and made by one person in Vienna. The roadmap is public and comes straight from the backlog, so you can see what is next, vote on it and add what you are missing. What testers run into decides the order.</p>
+<p style="margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 10px;"><a href="Roadmap.dc.html" class="btn2">See the roadmap →</a><a href="https://github.com/elija-7580/Based" class="btn2">Read the code →</a><a href="#support" class="btn2">Support Based →</a></p>
+</div>
+<div ref="{{statsRef}}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px;">
+<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+<div class="reveal" style="padding: 28px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px;">
+<p class="disp" style="margin: 0; font-size: clamp(48px, 6vw, 76px);">{{s.v}}</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted);">{{s.l}}</p>
+</div>
+</sc-for>
+</div>
+<span id="support" style="display: block; scroll-margin-top: 100px;"></span>
+<div class="ink-panel reveal" style="margin-top: 8px; padding: clamp(28px, 4vw, 44px); border-radius: 28px; display: flex; flex-wrap: wrap; gap: 28px 48px; align-items: center; justify-content: space-between;">
+<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<p class="eyebrow" style="color: var(--marker-strong);">Support Based</p>
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(30px, 3.6vw, 48px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.02;">Keep it <span class="hl">independent.</span></h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: var(--ink-2);">Based has no investors and sells no ads. During the beta every feature is free for everyone, and donations pay for the servers. $3 a month is enough. You get nothing extra for it, just a notes app that stays yours.</p>
+<p class="mono" style="margin: 4px 0 0; font-size: 13px; color: var(--muted);">Goal: 1,000 monthly sponsors. At 1,000, Based Cloud goes live for everyone.</p>
+</div>
+<div style="flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; min-width: 240px;">
+<a href="https://github.com/sponsors/elija-7580" class="btn" style="min-height: 52px; padding: 0 26px; font-size: 16px; background: var(--marker); color: #1F1F1D;">Sponsor on GitHub</a>
+<a href="https://github.com/sponsors/elija-7580?frequency=one-time" class="btn2" style="justify-content: center;">Give once instead</a>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="later-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">After the beta</p>
+<h2 id="later-title" class="h2">Later, if you want them: agents.</h2>
+<p class="lead">Once the notes app is solid, opt-in agents come next. One main agent plans, hands work to specialists and checks back with you. They work inside your pages, mark every line they write and use the AI you already pay for. Based stays a complete workspace without them, and they stay off until you switch them on.</p>
+<a href="Agents.dc.html" class="btn2" style="align-self: flex-start;">Where this is going →</a>
+</div>
 <div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: 12px; box-shadow: var(--shadow-big);">
 <div style="position: relative; overflow: hidden; border-radius: 22px; background: var(--bg); padding: clamp(28px, 5vw, 56px) clamp(14px, 4vw, 48px) 40px; min-height: 620px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 26px;">
 <div class="sun" aria-hidden="true"></div>
@@ -377,77 +572,10 @@ footer a{display:inline-block;padding:6px 0}
 </div>
 </div>
 </div>
-<p style="margin: 14px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Home: one box for everything, with every choice in reach. Your day and your agents around it. Sample data.</p>
-</section>
-
-<section aria-labelledby="pillars-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
-<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 48px;">
-<div class="reveal" style="max-width: 820px; display: flex; flex-direction: column; gap: 16px;">
-<p class="eyebrow">Two things, done properly</p>
-<h2 id="pillars-title" class="h2">A workspace that never makes you wait. Agents that never work behind your back.</h2>
-</div>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 16px;">
-<a href="Workspace.dc.html" class="card lift reveal-l" style="padding: 32px; display: flex; flex-direction: column; gap: 18px; text-decoration: none; color: var(--ink); min-height: 520px; box-sizing: border-box;">
-<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">01 The workspace</p>
-<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">Databases at the heart of it.</h3>
-<p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2);">Tables, boards, timelines and calendars over the same data. Filters, relations, rollups, linked views and full pages inside every row. Local, so a hundred thousand rows feel like ten.</p>
-<div style="position: relative; flex: 1 1 auto; min-height: 220px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); overflow: hidden;">
-<div class="v1" style="padding: 16px; display: flex; flex-direction: column;">
-<p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted);">Clients, table view</p>
-<sc-for list="{{dbRows}}" as="r" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px 60px; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: center;"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.t}}</span><span style="justify-self: start; padding: 1px 8px; border-radius: 3px; font-size: 12px; background: {{r.bg}};">{{r.s}}</span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{r.v}}</span></div></sc-for>
-</div>
-<div class="v2" style="padding: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; opacity: 0;">
-<sc-for list="{{boardCols}}" as="c" hint-placeholder-count="3"><div style="padding: 8px; border-radius: 12px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 6px; min-width: 0;"><p style="margin: 0; font-size: 12px; font-weight: 600;">{{c.t}}</p><sc-for list="{{c.items}}" as="i" hint-placeholder-count="2"><p style="margin: 0; padding: 7px; border-radius: 8px; background: var(--bg); font-size: 12px; box-shadow: var(--shadow-panel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{i}}</p></sc-for></div></sc-for>
-</div>
-<div class="v3" style="padding: 16px; opacity: 0;">
-<p style="margin: 0 0 12px; font-size: 12px; font-weight: 600; color: var(--muted);">Projects, timeline view</p>
-<div style="display: flex; flex-direction: column; gap: 10px;">
-<div style="height: 26px; width: 46%; margin-left: 2%; border-radius: 8px; background: var(--status-ready); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Onboarding Acme</div>
-<div style="height: 26px; width: 40%; margin-left: 28%; border-radius: 8px; background: var(--marker); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Proposal, agent drafting</div>
-<div style="height: 26px; width: 30%; margin-left: 52%; border-radius: 8px; background: var(--status-review); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Review</div>
-<div style="height: 26px; width: 20%; margin-left: 78%; border-radius: 8px; background: var(--status-blocked); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Launch</div>
-</div>
-</div>
-</div>
-<span style="font-size: 15px; font-weight: 600;">Explore the workspace →</span>
-</a>
-<a href="Agents.dc.html" class="card lift reveal-r ink-panel" style="padding: 32px; display: flex; flex-direction: column; gap: 18px; text-decoration: none; min-height: 520px; box-sizing: border-box;">
-<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">02 The agents, opt-in</p>
-<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink);">A crew that comes to you.</h3>
-<p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2);">One main agent plans, hands work to specialists and checks back: done, needs you, here's your morning briefing. Every line they write is signed. Bring your own keys, or run models locally.</p>
-<div style="flex: 1 1 auto; min-height: 220px; display: flex; flex-direction: column; gap: 10px; justify-content: center;">
-<sc-for list="{{pings}}" as="p" hint-placeholder-count="3"><div class="fadein" style="padding: 14px 16px 14px 12px; border-radius: 18px; background: var(--surface-raised); display: flex; gap: 12px; color: var(--ink);"><span class="bar" style="flex: 0 0 3px;"></span><span style="display: flex; flex-direction: column; gap: 3px;"><span class="mono" style="font-size: 11px; color: var(--muted);">{{p.time}} {{p.who}}</span><span style="font-size: 14px; line-height: 1.45;">{{p.t}}</span></span></div></sc-for>
-</div>
-<span style="font-size: 15px; font-weight: 600; color: var(--ink);">Meet mission control →</span>
-</a>
-</div>
-</div>
-</section>
-
-<section id="between" aria-labelledby="bt-title" class="wrap" style="padding-top: 120px; padding-bottom: 40px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center; scroll-margin-top: 80px;">
-<div class="reveal-l" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
-<p class="eyebrow">Where Based sits</p>
-<h2 id="bt-title" class="h2">Easy like Notion. Private like Obsidian.</h2>
-<p class="lead">Notion is easy, but your data lives in someone else's cloud. Obsidian keeps it on your machine, but asks you to become a plugin engineer. Based gives you both: set up in a minute, your data stays yours, and everything is there to tweak if you want to.</p>
-</div>
-<div class="reveal-r" style="flex: 1 1 440px; min-width: 0;">
-<div style="position: relative; aspect-ratio: 1 / 0.82; border-radius: 28px; background: var(--surface-raised); overflow: hidden;">
-<div aria-hidden="true" style="position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--control-border); opacity: .35;"></div>
-<div aria-hidden="true" style="position: absolute; top: 8%; bottom: 8%; left: 50%; width: 2px; background: var(--control-border); opacity: .35;"></div>
-<span class="mono" style="position: absolute; left: 50%; top: 3%; transform: translateX(-50%); font-size: 11px; color: var(--muted);">your data, your devices</span>
-<span class="mono" style="position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); font-size: 11px; color: var(--muted);">their cloud</span>
-<span class="mono" style="position: absolute; left: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">easy</span>
-<span class="mono" style="position: absolute; right: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">technical</span>
-<sc-for list="{{apps}}" as="a" hint-placeholder-count="3"><div class="dropin" style="position: absolute; left: {{a.x}}; top: {{a.y}}; transform: translate(-50%, -50%); animation-delay: {{a.d}}; display: flex; flex-direction: column; align-items: center; gap: 8px;"><span style="width: {{a.size}}; height: {{a.size}}; border-radius: 50%; background: {{a.bg}}; box-shadow: {{a.sh}};"></span><span style="font-size: 14px; font-weight: 700; white-space: nowrap;">{{a.n}}</span></div></sc-for>
-</div>
-</div>
-</section>
-
-<section aria-labelledby="ev-title" class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
-<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
-<p class="eyebrow">Everywhere</p>
-<h2 id="ev-title" class="h2">Start in your terminal. Finish on your phone.</h2>
-<p class="lead">The same workspace and the same agents on your laptop, in a cloud sandbox and in your pocket. Reachable through MCP from any AI you use. Every word lands in your workspace the moment it's written.</p>
+<p style="margin: -24px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Planned after the beta: one box for everything, your day and your agents around it. Sample data.</p>
+<div class="reveal" style="max-width: 860px; margin-top: 56px; display: flex; flex-direction: column; gap: 12px;">
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3.4vw, 44px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">Start in your terminal. Finish on your phone.</h3>
+<p class="lead">At release, the same workspace and the same agents on your laptop, in a cloud sandbox and in your pocket. Reachable through MCP from any AI you use.</p>
 </div>
 <div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: clamp(24px, 4vw, 48px); display: flex; flex-direction: column; gap: 32px;">
 <div style="position: relative; height: 150px;">
@@ -465,73 +593,22 @@ footer a{display:inline-block;padding:6px 0}
 </div>
 </div>
 <p class="reveal" style="margin: 0; font-size: 14px; color: var(--muted);">Cloud agents are opt-in and only see the pages you hand them, while they work. Based Cloud runs on EU servers and is end-to-end encrypted by release.</p>
-</section>
-
-<section aria-labelledby="when-title" class="wrap" style="padding-top: 20px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 28px;">
-<h2 id="when-title" class="h2 reveal" style="font-size: clamp(30px, 4vw, 52px);">What you get, and when.</h2>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px;">
-<div class="card reveal-l" style="padding: 28px; display: flex; flex-direction: column; gap: 14px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Beta on the Mac</p><p style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">The fast local workspace.</p><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; color: var(--ink-2);"><li>Mac app, data stored locally</li><li>Sync between your Apple devices through iCloud</li><li>Databases, pages, import from Notion</li><li>Agents with your own keys, opt-in</li><li>Meeting notes transcribed on your Mac, offline</li></ul></div>
-<div class="card reveal-r" style="padding: 28px; display: flex; flex-direction: column; gap: 14px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Release</p><p style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">Everywhere, encrypted.</p><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; color: var(--ink-2);"><li>Based Cloud on EU servers, end-to-end encrypted</li><li>iPhone, iPad, web, then Windows, Linux and Android</li><li>One agent session across terminal, cloud and phone</li><li>MCP for every AI you use</li><li>Self-hosting for anyone who wants it</li></ul></div>
 </div>
 </section>
 
-<section aria-labelledby="pain-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
-<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
-<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
-<p class="eyebrow">Love Notion. Not everything about it.</p>
-<h2 id="pain-title" class="h2">We read r/Notion so you don't have to.</h2>
-<p class="lead">Six things you've definitely said out loud. Tap a card for what we did about it.</p>
-</div>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px;">
-<sc-for list="{{pains}}" as="p" hint-placeholder-count="6">
-<div class="flip reveal" style="height: 300px;">
-<button type="button" onClick="{{p.toggle}}" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" class="flip-in {{p.cls}}" style="display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer;">
-<span class="face" style="background: var(--surface-raised);">
-<span class="mono" style="font-size: 12px; color: var(--muted);">{{p.n}}</span>
-<span style="font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{p.title}}</span>
-<span style="font-size: 15px; line-height: 1.55; color: var(--ink-2);">{{p.joke}}</span>
-<span style="margin-top: auto; font-size: 13px; font-weight: 600; color: var(--muted);">What Based does →</span>
-</span>
-<span class="face back" style="background: var(--button); color: var(--button-ink);">
-<span style="font-size: 12px; font-weight: 600; opacity: .7;">BASED</span>
-<span style="font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{p.fixTitle}}</span>
-<span style="font-size: 15px; line-height: 1.55; opacity: .85;">{{p.fix}}</span>
-<span style="margin-top: auto; font-size: 12px; opacity: .6;">{{p.src}}</span>
-</span>
-</button>
-</div>
-</sc-for>
-</div>
-<a href="Switch.dc.html" class="btn2 reveal" style="align-self: flex-start;">The full list, with sources →</a>
-</div>
-</section>
-
-<section aria-label="Numbers" class="wrap" style="padding-top: 110px; padding-bottom: 110px;">
-<div ref="{{statsRef}}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px;">
-<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
-<div class="reveal" style="padding: 28px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px;">
-<p class="disp" style="margin: 0; font-size: clamp(48px, 6vw, 76px);">{{s.v}}</p>
-<p style="margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted);">{{s.l}}</p>
-</div>
-</sc-for>
-</div>
-</section>
-
-<section aria-labelledby="who-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
-<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px;">
+<section aria-labelledby="who-title" class="wrap" style="padding-top: 120px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 40px;">
 <h2 id="who-title" class="h2 reveal">One workspace. Every kind of knowledge.</h2>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px;">
 <sc-for list="{{uses}}" as="u" hint-placeholder-count="4"><article class="card lift reveal" style="padding: 28px; display: flex; flex-direction: column; gap: 12px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">{{u.n}}</p><h3 style="margin: 0; font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{u.t}}</h3><p style="margin: 0; font-size: 15px; line-height: 1.6; color: var(--ink-2);">{{u.d}}</p></article></sc-for>
-</div>
 </div>
 </section>
 
 <section aria-labelledby="cta-title" class="wrap" style="padding-top: 40px; padding-bottom: 120px;">
 <div class="zoomin ink-panel" style="padding: 88px 32px; border-radius: 36px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px;">
 <img src="{{markDarkSrc}}" alt="" width="64" height="64" class="float" style="width: 64px; height: 64px;">
-<h2 id="cta-title" class="disp" style="margin: 0; font-size: clamp(34px, 5.6vw, 76px);">Based on your devices.<br>Based in Europe.<br><span class="hl">Based on nobody's cloud.</span></h2>
-<p class="lead" style="max-width: 560px;">Open source, built in Europe, yours to keep. Bring your Notion export and the AI you already pay for.</p>
-<a href="#waitlist" class="btn" style="min-height: 52px; padding: 0 28px; font-size: 16px;">Join the beta</a>
+<h2 id="cta-title" class="disp" style="margin: 0; font-size: clamp(34px, 5.6vw, 76px);">Based on your Mac.<br>Based in Europe.<br><span class="hl">Based on your feedback.</span></h2>
+<p class="lead" style="max-width: 560px;">Open source, made in Vienna and shaped by the people who use it. Bring your Notion export and tell us what is missing.</p>
+<p style="margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;"><a href="#waitlist" class="btn" style="min-height: 52px; padding: 0 28px; font-size: 16px;">Join the beta</a><a href="https://github.com/sponsors/elija-7580" class="btn2" style="min-height: 52px; padding: 0 24px; font-size: 16px;">Sponsor Based</a></p>
 </div>
 </section>
 
@@ -576,14 +653,14 @@ footer a{display:inline-block;padding:6px 0}
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}, "typingSpeed": {"editor": "range", "min": 8, "max": 60, "step": 2, "unit": "ms", "default": 20}, "$preview": {"width": 1440, "height": 10400}}'>
+<script type="text/x-dc" data-dc-script data-props='{"theme": {"editor": "enum", "options": ["light", "dark"], "default": "light"}, "typingSpeed": {"editor": "range", "min": 8, "max": 60, "step": 2, "unit": "ms", "default": 20}, "$preview": {"width": 1440, "height": 9200}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = { name: '', email: '', role: 'knowledge', phase: 'form', replyChars: 0, reply: '', flipped: {}, statsT: 0, flapI: 0, ev: 0, menuI: 0, promptI: 0, promptN: 0, clock: 0 };
-    this.timers = { reply: [], loop: [] };
     this.prompts = ['Prepare my week: deadlines first, then the Acme proposal', 'Summarise yesterday\u2019s calls into the Clients database', 'Find sources for thesis chapter 2 and add them to Reading', 'Draft the investor update from the Metrics database'];
-    this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'log files', 'reading list'];
+    this.timers = { reply: [], loop: [] };
+    this.flapWords = ['second brain', 'business', 'research', 'clients and deals', 'thesis', 'projects', 'team wiki', 'reading list'];
   }
   static split(text, start, step) {
     let i = 0;
@@ -591,6 +668,7 @@ class Component extends DCLogic {
   }
   componentDidMount() {
     this.flapTimer = setInterval(() => this.setState({ flapI: this.state.flapI + 1 }), 2800);
+    // agent preview (after the beta): typing prompt, menus opening one by one, terminal-to-phone track
     this.typeTimer = setInterval(() => {
       const p = this.prompts[this.state.promptI % this.prompts.length];
       if (this.state.promptN < p.length) this.setState({ promptN: this.state.promptN + 1 });
@@ -604,7 +682,7 @@ class Component extends DCLogic {
       if (this.statsEl) this.io.observe(this.statsEl);
     } else { this.setState({ statsT: 1 }); }
   }
-  componentWillUnmount() { clearInterval(this.typeTimer); clearInterval(this.menuTimer); clearInterval(this.flapTimer); clearInterval(this.evTimer); this.clearTimers(); if (this.io) this.io.disconnect(); }
+  componentWillUnmount() { clearInterval(this.flapTimer); clearInterval(this.typeTimer); clearInterval(this.menuTimer); clearInterval(this.evTimer); this.clearTimers(); if (this.io) this.io.disconnect(); }
   clearTimers(g) { (g ? [g] : ['reply', 'loop']).forEach((k) => { this.timers[k].forEach((t) => clearTimeout(t)); this.timers[k] = []; }); }
   later(fn, ms, g) { const k = g || 'loop'; const t = setTimeout(fn, ms); this.timers[k].push(t); return t; }
   reduced() { return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
@@ -646,17 +724,17 @@ class Component extends DCLogic {
     const hi = name ? 'Hi ' + name + ', ' : 'Hi, ';
     const org = this.org();
     const r = this.state.role;
-    const tail = "\n\nHomework for today: export your Notion as HTML. I'll bring it over on day one, databases included, without the 32-character file names.";
+    const tail = "\n\nHomework for today: export your Notion as HTML. It comes over on day one, databases included, and the files keep their real names.\n\nWhen something annoys you in the beta, tell me. That is how the roadmap gets made.";
     if (r === 'business') {
-      return hi + "you're in" + (org ? ', and nice to meet the team at ' + org : '') + ".\n\nWhen the beta opens, point me at your clients and projects database. I'll keep it current, prepare a briefing every morning and tell you when something needs a decision. Your data stays on your devices, and every line I write is marked." + tail;
+      return hi + "you're in" + (org ? ', and nice to meet the team at ' + org : '') + ".\n\nWhen the beta opens, bring your clients and projects databases. They stay on your Mac, they stay fast, and nothing gets deleted behind your back." + tail;
     }
     if (r === 'study') {
-      return hi + "you're in" + (org ? ', and nice to meet someone from ' + org : '') + ".\n\nWhen the beta opens, bring me your next lecture. I'll write the notes while you listen, pull out the formulas and file everything into your course database." + tail;
+      return hi + "you're in" + (org ? ', and nice to meet someone from ' + org : '') + ".\n\nWhen the beta opens, bring your lecture notes and reading lists. Courses, sources and deadlines in databases that link to each other, and it all works offline in the lecture hall." + tail;
     }
     if (r === 'dev') {
-      return hi + "you're in.\n\nWhen the beta opens, talk to me from your terminal, let me keep working in the cloud sandbox and check in from your phone. Same session, same workspace, reachable over MCP from whatever AI you already use." + tail;
+      return hi + "you're in.\n\nWhen the beta opens, take it apart. The code is open, your data stays on your Mac, and the roadmap is public. If something is missing, open an issue or tell me directly." + tail;
     }
-    return hi + "you're in" + (org ? ', and hello to everyone at ' + org : '') + ".\n\nWhen the beta opens, I'll help you turn scattered notes into a second brain that stays fast at any size. I'm off by default, I write in the margin and I sign everything." + tail;
+    return hi + "you're in" + (org ? ', and hello to everyone at ' + org : '') + ".\n\nWhen the beta opens, bring your scattered notes and turn them into a second brain that stays fast at any size. It all stays on your Mac." + tail;
   }
   join(e) {
     e.preventDefault();
@@ -674,22 +752,22 @@ class Component extends DCLogic {
     const now = new Date();
     const hhmm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     const word = this.flapWords[s.flapI % this.flapWords.length];
-    const ev = s.ev;
     const painsRaw = [
-      { title: 'Your data, in Oregon', joke: 'By default your Notion workspace lives in the United States. EU storage? That\u2019s an Enterprise conversation with a sales team.', fixTitle: 'Your devices, EU servers', fix: 'Your workspace lives on your devices. Based Cloud runs in the EU and will be end-to-end encrypted, so not even we can read it.', src: 'Notion help center: data residency.' },
+      { title: 'Your data, in Oregon', joke: 'By default your Notion workspace lives in the United States. EU storage? That’s an Enterprise conversation with a sales team.', fixTitle: 'On your Mac, EU at release', fix: 'In the beta your workspace lives on your Mac. At release, Based Cloud runs on EU servers with end-to-end encryption, so not even we can read it.', src: 'Notion help center: data residency.' },
       { title: 'The grey skeleton', joke: 'You know its shape by heart. It has been your most reliable coworker for years.', fixTitle: 'Opens like a file', fix: 'Local first, so pages open before you let go of the click. Online, offline, in a tunnel.', src: 'Notion help center: large databases slow pages down.' },
       { title: '“Available offline”*', joke: '*Pick your pages in advance. Databases: first 50 rows. Formulas and rollups: see you back online.', fixTitle: 'Offline is just on', fix: 'Every page, every row, every formula. There is no offline mode because nothing needs to be online.', src: 'Notion offline mode documentation and guides.' },
-      { title: 'The backup that isn\u2019t', joke: 'Notion\u2019s export can\u2019t recreate your workspace. So you pay a second company to back up the first.', fixTitle: 'You own it. It stays.', fix: 'Your data sits on your own devices. Every version is kept and snapshots go to a drive you choose. Nothing gets deleted behind your back.', src: 'Notion help center on exports; Reddit, 2026.' },
-      { title: 'In a meeting? Notion noticed.', joke: 'Join a call and the desktop app offers to take AI meeting notes. Helpful. Slightly unsettling.', fixTitle: 'Transcribed on your Mac', fix: 'Meeting notes when you start them, transcribed on your device, offline. The audio never leaves your Mac.', src: 'Hacker News thread on Notion Desktop.' },
-      { title: 'Ask AI → “Upgrade”', joke: 'Full Notion AI lives on Business at $20 a seat. Custom agents run on credits. Your OpenAI plan? Irrelevant, apparently.', fixTitle: 'Bring the AI you pay for', fix: 'Connect ChatGPT, Claude, an API key or a local model. No second AI subscription, no credits.', src: 'Notion pricing, November 2026.' }
+      { title: 'The backup that isn’t', joke: 'Notion’s export can’t recreate your workspace. So you pay a second company to back up the first.', fixTitle: 'You own it. It stays.', fix: 'Your data sits on your own Mac. Every version is kept and snapshots go to a folder on your Mac. Nothing gets deleted behind your back.', src: 'Notion help center on exports; Reddit, 2026.' },
+      { title: 'Page 3f9a2c…e81.md', joke: 'Export your workspace and you get thousands of files with a 32-character ID glued to every name. Good luck finding anything.', fixTitle: 'Real file names', fix: 'Markdown export with the names you gave your pages, plus a lossless archive that brings everything back. Leaving takes one click.', src: 'Notion help center on exports.' },
+      { title: 'Ask AI → “Upgrade”', joke: 'Full Notion AI lives on Business at $20 a seat. Custom agents run on credits. Your OpenAI plan? Irrelevant, apparently.', fixTitle: 'Bring the AI you pay for', fix: 'After the beta, AI is opt-in: use the ChatGPT or Claude Code login you already have, or an API key. No second subscription, no credits.', src: 'Notion pricing, November 2026.' }
     ];
     const ease = s.statsT;
+    const ev = s.ev;
     const menus = [
       { k: 'Agent', v: 'Main', icon: '\u25cf', title: 'Agent', hint: 'who takes this', foot: 'The main agent can hand work to the others.', options: [
         { n: 'Main', d: 'Plans, delegates, writes updates', icon: 'M', on: true }, { n: 'Tutor', d: 'Explains and quizzes you', icon: 'T' }, { n: 'Researcher', d: 'Reads sources, cites them', icon: 'R' }, { n: 'Night shift', d: 'Works through your backlog at night', icon: 'N' } ] },
-      { k: 'Model', v: 'Auto', icon: '\u25c6', title: 'Compute', hint: 'how hard Based thinks', foot: 'Use your ChatGPT or Claude account, an API key or a local model.', options: [
-        { n: 'Auto', d: 'Picks per task, recommended', icon: 'A', on: true }, { n: 'Fast', d: 'Quick answers, light tasks', icon: 'F' }, { n: 'Deep', d: 'Long reasoning, big documents', icon: 'D' }, { n: 'Specific model', d: 'Claude, GPT, Gemini or local', icon: '\u2026' } ] },
-      { k: 'Permission', v: 'Ask before edits', icon: '\u25b2', title: 'Permission', hint: 'what Based may do alone', foot: 'Agents never delete or share anything without asking.', options: [
+      { k: 'Model', v: 'Auto', icon: '\u25c6', title: 'Compute', hint: 'how hard Based thinks', foot: 'Use your ChatGPT login, the Claude Code CLI or an API key.', options: [
+        { n: 'Auto', d: 'Picks per task, recommended', icon: 'A', on: true }, { n: 'Fast', d: 'Quick answers, light tasks', icon: 'F' }, { n: 'Deep', d: 'Long reasoning, big documents', icon: 'D' }, { n: 'Specific model', d: 'Claude, GPT or Gemini', icon: '\u2026' } ] },
+      { k: 'Permission', v: 'Ask before edits', icon: '\u25b2', title: 'Permission', hint: 'what Based may do alone', foot: 'Agents never delete for good or send anything out without asking, unless you allow it.', options: [
         { n: 'Ask every time', d: 'Every step needs your OK', icon: '1' }, { n: 'Ask before edits', d: 'Research freely, ask before changing pages', icon: '2', on: true }, { n: 'Work freely', d: 'Within budget and scope, all edits marked', icon: '3' } ] },
       { k: 'Tools', v: '4 on', icon: '\u25a0', title: 'Tools and connectors', hint: 'what Based can reach', foot: 'Any MCP server works. Add your own in settings.', options: [
         { n: 'Your workspace', d: 'Pages, databases, files', icon: 'W', on: true }, { n: 'Web search', d: 'With sources', icon: 'S', on: true }, { n: 'Calendar and mail', d: 'Through MCP', icon: 'C', on: true }, { n: 'Code sandbox', d: 'Runs scripts in the cloud, opt-in', icon: '>', on: true } ] },
@@ -708,46 +786,6 @@ class Component extends DCLogic {
       need: { status: 'Needs you', bg: 'var(--status-review)', chipBg: 'var(--status-review)', chipFg: '#8A2F52' }
     };
     return {
-      theme,
-      heroLabel: 'Databases, docs and agents. Instant. Private. Everywhere.',
-      hero1: Component.split('Databases, docs and agents.', 0, 18),
-      hero2: Component.split('Instant. Private. Everywhere.', 520, 18),
-      flapWord: word,
-      flipCls: s.flapI % 2 === 0 ? 'fa' : 'fb',
-      markSrc: dark ? '/_blob/60426240b69c9dab9372c2741257d898' : '/_blob/c3ccc021887376abcf7fe08d0002d913',
-      markDarkSrc: '/_blob/60426240b69c9dab9372c2741257d898',
-      name: s.name, email: s.email,
-      setName: (e) => this.setState({ name: e.target.value }),
-      setEmail: (e) => this.setState({ email: e.target.value }),
-      roles: [['knowledge', 'my second brain'], ['business', 'my business'], ['study', 'studying'], ['dev', 'building things']].map(([id, label]) => ({
-        label, pressed: s.role === id ? 'true' : 'false',
-        bg: s.role === id ? 'var(--button)' : 'var(--bg)', fg: s.role === id ? 'var(--button-ink)' : 'var(--ink)',
-        pick: () => this.setState({ role: id })
-      })),
-      join: (e) => this.join(e),
-      reset: () => { this.clearTimers('reply'); this.setState({ phase: 'form', replyChars: 0 }); },
-      showForm: ph === 'form', showReply: ph !== 'form', thinking: ph === 'thinking',
-      writing: ph === 'writing' || ph === 'done', typing: ph === 'writing', replyDone: ph === 'done',
-      replyShown: s.reply.slice(0, s.replyChars),
-      replyMeta: ph === 'thinking' ? 'is writing…' : 'to you, ' + hhmm,
-      barOpacity: ph === 'done' ? 1 : 0.25,
-      dbRows: [
-        { t: 'Acme GmbH', s: 'Proposal', bg: 'var(--marker)', v: '€48k' },
-        { t: 'Northwind', s: 'Active', bg: 'var(--status-ready)', v: '€120k' },
-        { t: 'Kranz & Partner', s: 'Review', bg: 'var(--status-review)', v: '€22k' },
-        { t: 'Lumen Labs', s: 'Active', bg: 'var(--status-ready)', v: '€76k' },
-        { t: 'Polar Studio', s: 'Paused', bg: 'var(--status-blocked)', v: '€9k' }
-      ],
-      boardCols: [
-        { t: 'Lead', items: ['Polar Studio', 'Vienna Ventures'] },
-        { t: 'Proposal', items: ['Acme GmbH', 'Kranz'] },
-        { t: 'Active', items: ['Northwind', 'Lumen Labs'] }
-      ],
-      pings: [
-        { who: 'Main agent', time: '07:30', t: 'Your morning briefing is ready: 2 deadlines, 1 approval, 3 pages changed overnight.' },
-        { who: 'Researcher', time: '11:02', t: 'Done. Competitor table added to Projects/Launch, 14 sources linked.' },
-        { who: 'Main agent', time: '16:58', t: 'One thing needs you: approve the proposal draft for Acme.' }
-      ],
       evNodes: [
         { t: 'Terminal', g: '>_', x: '8%', r: '18px', on: ev <= 1 || ev === 7 },
         { t: 'Cloud sandbox', g: '\u25cc', x: '36%', r: '50%', on: ev >= 2 && ev <= 3 },
@@ -772,7 +810,7 @@ class Component extends DCLogic {
       legend: [['Done', '#DCEFE3', 'var(--synced)'], ['Working', 'var(--marker)', 'var(--marker-strong)'], ['Needs you', 'var(--status-review)', '#D9739A'], ['Scheduled', 'var(--status-ready)', '#7C9BD6']].map(([t, bg, dot]) => ({ t, bg, dot })),
       lanes: [
         { t: 'Morning briefing', who: 'Main agent, Fast', a: 7.5, b: 8.25 },
-        { t: 'Thesis sources', who: 'Researcher, local model', a: 8, b: 11.5 },
+        { t: 'Thesis sources', who: 'Researcher, Claude', a: 8, b: 11.5 },
         { t: 'Acme proposal draft', who: 'Writer, Claude', a: 9.5, b: 13, ask: true },
         { t: 'Q4 metrics', who: 'Coder, GPT', a: 12, b: 15.5 },
         { t: 'Northwind call notes', who: 'Transcribed on your Mac', a: 14, b: 15 },
@@ -786,6 +824,81 @@ class Component extends DCLogic {
       promptShown: this.prompts[s.promptI % this.prompts.length].slice(0, s.promptN),
       pills: menus.map((m, i) => ({ k: m.k, v: m.v, icon: m.icon, bg: (menuOpen && i === mi) ? 'var(--button)' : 'var(--surface-raised)', fg: (menuOpen && i === mi) ? 'var(--button-ink)' : 'var(--ink)', dotBg: (menuOpen && i === mi) ? 'rgba(255,255,255,.15)' : 'var(--bg)' })),
       menu: { title: menus[mi].title, hint: menus[mi].hint, foot: menus[mi].foot, options: menus[mi].options.map((o) => ({ n: o.n, d: o.d, icon: o.icon, check: o.on ? '\u2713' : '', bg: o.on ? 'var(--surface-raised)' : 'transparent', tileBg: o.on ? 'var(--button)' : 'var(--surface-raised)', tileFg: o.on ? 'var(--button-ink)' : 'var(--ink)' })) },
+      theme,
+      heroLabel: 'Your data. Based.',
+      hero1: Component.split('Your data.', 0, 22),
+      hero2: Component.split('Based.', 420, 22),
+      flapWord: word,
+      flipCls: s.flapI % 2 === 0 ? 'fa' : 'fb',
+      markSrc: dark ? '/_blob/60426240b69c9dab9372c2741257d898' : '/_blob/c3ccc021887376abcf7fe08d0002d913',
+      markDarkSrc: '/_blob/60426240b69c9dab9372c2741257d898',
+      name: s.name, email: s.email,
+      setName: (e) => this.setState({ name: e.target.value }),
+      setEmail: (e) => this.setState({ email: e.target.value }),
+      roles: [['knowledge', 'my second brain'], ['business', 'my business'], ['study', 'studying'], ['dev', 'building things']].map(([id, label]) => ({
+        label, pressed: s.role === id ? 'true' : 'false',
+        bg: s.role === id ? 'var(--button)' : 'var(--bg)', fg: s.role === id ? 'var(--button-ink)' : 'var(--ink)',
+        pick: () => this.setState({ role: id })
+      })),
+      join: (e) => this.join(e),
+      reset: () => { this.clearTimers('reply'); this.setState({ phase: 'form', replyChars: 0 }); },
+      showForm: ph === 'form', showReply: ph !== 'form', thinking: ph === 'thinking',
+      writing: ph === 'writing' || ph === 'done', typing: ph === 'writing', replyDone: ph === 'done',
+      replyShown: s.reply.slice(0, s.replyChars),
+      replyMeta: ph === 'thinking' ? 'is writing…' : 'to you, ' + hhmm,
+      barOpacity: ph === 'done' ? 1 : 0.25,
+      sideTop: ['Search', 'Home'],
+      sidePages: [
+        { t: 'Projects', cls: 'on', ic: 'var(--marker)' },
+        { t: 'Reading list', cls: '', ic: 'var(--status-ready)' },
+        { t: 'Lecture notes', cls: '', ic: 'var(--status-review)' },
+        { t: 'Clients', cls: '', ic: 'var(--selected)' },
+        { t: 'Journal', cls: '', ic: 'var(--selected)' }
+      ],
+      projRows: [
+        { t: 'Thesis: cell simulation', a: 'Research', s: 'Active', bg: 'var(--status-ready)', d: 'Feb 12' },
+        { t: 'Client onboarding', a: 'Business', s: 'Active', bg: 'var(--status-ready)', d: 'Nov 28' },
+        { t: 'Reading list', a: 'Second brain', s: 'Ongoing', bg: 'var(--selected)', d: '' },
+        { t: 'Q1 roadmap', a: 'Product', s: 'Draft', bg: 'var(--marker)', d: 'Dec 15' },
+        { t: 'Lecture notes, week 6', a: 'Study', s: 'Review', bg: 'var(--status-review)', d: 'Nov 21' },
+        { t: 'Grant application', a: 'Research', s: 'Paused', bg: 'var(--status-blocked)', d: 'Jan 30' }
+      ],
+      projCols: [
+        { t: 'Draft', items: ['Q1 roadmap', 'Grant application'] },
+        { t: 'Active', items: ['Thesis: cell simulation', 'Client onboarding'] },
+        { t: 'Review', items: ['Lecture notes, week 6'] }
+      ],
+      projBars: [
+        { t: 'Lecture notes, week 6', x: '2%', w: '22%', bg: 'var(--status-review)' },
+        { t: 'Client onboarding', x: '8%', w: '30%', bg: 'var(--status-ready)' },
+        { t: 'Q1 roadmap', x: '26%', w: '34%', bg: 'var(--marker)' },
+        { t: 'Grant application', x: '44%', w: '40%', bg: 'var(--status-blocked)' },
+        { t: 'Thesis: cell simulation', x: '18%', w: '78%', bg: 'var(--status-ready)' }
+      ],
+      importRows: [
+        { t: 'Projects', k: 'database', n: '312 rows' },
+        { t: 'Reading list', k: 'database', n: '1,904 rows' },
+        { t: 'Lecture notes', k: 'pages', n: '86 pages' },
+        { t: 'Clients', k: 'database', n: '140 rows' },
+        { t: 'Journal', k: 'pages', n: '730 pages' }
+      ],
+      dbRows: [
+        { t: 'Acme GmbH', s: 'Proposal', bg: 'var(--marker)', v: '€48k' },
+        { t: 'Northwind', s: 'Active', bg: 'var(--status-ready)', v: '€120k' },
+        { t: 'Kranz & Partner', s: 'Review', bg: 'var(--status-review)', v: '€22k' },
+        { t: 'Lumen Labs', s: 'Active', bg: 'var(--status-ready)', v: '€76k' },
+        { t: 'Polar Studio', s: 'Paused', bg: 'var(--status-blocked)', v: '€9k' }
+      ],
+      boardCols: [
+        { t: 'Lead', items: ['Polar Studio', 'Vienna Ventures'] },
+        { t: 'Proposal', items: ['Acme GmbH', 'Kranz'] },
+        { t: 'Active', items: ['Northwind', 'Lumen Labs'] }
+      ],
+      pings: [
+        { who: 'Main agent', time: '07:30', t: 'Your morning briefing is ready: 2 deadlines, 1 approval, 3 pages changed overnight.' },
+        { who: 'Researcher', time: '11:02', t: 'Done. Competitor table added to Projects/Launch, 14 sources linked.' },
+        { who: 'Main agent', time: '16:58', t: 'One thing needs you: approve the proposal draft for Acme.' }
+      ],
       apps: [
         { n: 'Notion', x: '24%', y: '74%', size: '34px', bg: 'var(--control-border)', sh: 'none', d: '200ms' },
         { n: 'Obsidian', x: '76%', y: '26%', size: '34px', bg: 'var(--control-border)', sh: 'none', d: '400ms' },
@@ -801,17 +914,17 @@ class Component extends DCLogic {
       }),
       statsRef: (el) => { this.statsEl = el; },
       stats: [
-        { v: Math.round(221 * ease), l: 'Notion features tracked one by one, from the public help pages' },
-        { v: Math.round(178 * ease), l: 'already working in the prototype. The rest is on the roadmap.' },
+        { v: Math.round(236 * ease), l: 'Notion features tracked one by one, from the public help pages' },
+        { v: Math.round(185 * ease), l: 'already working in the prototype. The rest is on the public roadmap.' },
         { v: '0', l: 'servers your notes depend on. Local first, the cloud is optional.' },
         { v: '1 + ∞', l: 'one human in Vienna, plus a night shift of agents that ships while he sleeps' }
       ],
       uses: [
-        { n: 'Second brain', t: 'Everything you know, linked.', d: 'Notes, reading, ideas and journals in databases that stay fast at any size, with a graph of how it all connects.' },
-        { n: 'Business', t: 'Run the company on it.', d: 'Clients, deals, projects and logs as databases. Agents keep them current and brief you every morning.' },
-        { n: 'Research and study', t: 'From lecture to paper.', d: 'Record, transcribe on device, cite sources. Course and literature databases that link themselves.' },
-        { n: 'Builders', t: 'Wired into your tools.', d: 'CLI, MCP, your own keys and local models. Open source, so you can read every line that touches your data.' }
-      ],
+        { n: 'Second brain', t: 'Everything you know, linked.', d: 'Notes, reading, ideas and journals in databases that link to each other and stay fast at any size.' },
+        { n: 'Business', t: 'Run the company on it.', d: 'Clients, deals, projects and logs as databases, with a full page behind every row. On your Mac, not in someone else’s cloud.' },
+        { n: 'Research and study', t: 'From lecture to paper.', d: 'Lecture notes, sources and reading lists in databases that link to each other. Export to Markdown when the paper is due.' },
+        { n: 'Builders', t: 'Yours to take apart.', d: 'Open source, so you can read every line that touches your data. Markdown export, a lossless archive and an MCP server in labs.' }
+      ]
     };
   }
 }

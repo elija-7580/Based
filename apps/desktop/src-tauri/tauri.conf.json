@@ -34,6 +34,7 @@
     }
   },
   "bundle": {
+    "copyright": "Based Notes © 2026 Elija Samuel Friedrich-Ulrich. Licensed under AGPL-3.0-or-later.",
     "active": true,
     "targets": [
       "app"
@@ -55,7 +56,8 @@
     "resources": {
       "../dist-sidecar/based-server.cjs": "based-server.cjs",
       "../dist-sidecar/node_modules/": "node_modules/",
-      "../dist-sidecar/node/": "node/"
+      "../dist-sidecar/node/": "node/",
+      "../dist-sidecar/whisper/": "whisper/"
     }
   },
   "plugins": {

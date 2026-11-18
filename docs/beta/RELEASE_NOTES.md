@@ -1,12 +1,28 @@
-# Based Beta – release notes
+# Based Notes Beta – release notes
 
-The build workflow puts the top section into the release and the update dialog. Newest first; keep it short and
-written for testers.
+The build workflow puts the **top section** into the update dialog and the release. Keep it short: at most 8 lines,
+one line per point (no wrapped lines), each at most 110 characters – a test checks this
+(`apps/desktop/test/config.test.mjs`). Details go into the section below it. Newest first; written for testers.
 
 ## 0.2 – release candidate
 
+- Based Beta is now called Based Notes Beta; your workspace, backups and settings stay as they are
+- Meeting notes: type /meet to record, take timestamped notes and get a transcript made on your Mac
+- Start from a template: Tasks, Notes, Journal or Wiki
+- Video and audio blocks with their own controls
+- Backups to a folder you choose, and a backup before every update
+- Smoother typing on long pages; spelling suggestions on right-click
+- Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
+- Like Based? It runs on donations, $3 a month helps: github.com/sponsors/elija-7580
+
+## 0.2 – release candidate, in detail
+
 New since the first test build (0.2.2):
 
+- The app is now called **Based Notes Beta** (Based Notes is the official name). Bundle, data folder, backups
+  (`Based Beta Backups`), iCloud folder (`Based Beta`) and the `based-beta` command keep their names.
+- Meeting notes: type `/meet` to record a meeting, take notes with timestamps and get a transcript made on your Mac.
+  Turn it on from the welcome screen or in Settings → Meeting notes (downloads a speech model once, 488 MB).
 - Start from a template on the welcome screen: Tasks, Notes, Journal or Wiki. **⌘N** offers them later, too.
 - **Home** opens “Welcome to Based” (or your first page) instead of an empty page called Home.
 - Video and audio blocks with their own play, pause, seek and mute controls (space, ←/→, M, F).

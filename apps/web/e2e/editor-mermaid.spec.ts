@@ -109,6 +109,26 @@ test("Mermaid: beim Umschalten auf dunkel zeichnet sich die Vorschau in den dunk
   expect(darkSvg).not.toBe(lightSvg);
 });
 
+test("Mermaid: Ansichten Code | Split | Preview, Standard zeigt Code und Diagramm", async ({ page }) => {
+  await command(page, { op: "createPage", title: "Views" });
+  await openPage(page, "Views");
+  const code = await mermaidBlock(page, ["graph LR", "A --> B"]);
+  const wrap = code.getByTestId("code-block");
+  const preview = code.locator("[data-testid=mermaid-preview]");
+  await expect(wrap).toHaveAttribute("data-view", "split");
+  await expect(preview).toHaveAttribute("data-state", "ready", { timeout: 20_000 });
+  await expect(preview.locator(".bx-html-preview-label")).toHaveCount(0);
+  await wrap.hover();
+  await wrap.getByTestId("code-view-preview").click();
+  await expect(wrap).toHaveAttribute("data-code-hidden", "");
+  await expect.poll(async () => (await wrap.locator("> [data-editable-id]").boundingBox())?.height ?? 0).toBe(0);
+  await expect(preview.locator("img.bx-mermaid-image")).toBeVisible();
+  await wrap.hover();
+  await wrap.getByTestId("code-view-code").click();
+  await expect(preview).toHaveCount(0);
+  await expect(wrap.locator("> [data-editable-id]")).toBeFocused();
+});
+
 test("Bildschirmfotos: Mermaid-Vorschau", async ({ page, browserName }) => {
   test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium");
   const id = (await command(page, { op: "createPage", title: "Release flow" })) as string;

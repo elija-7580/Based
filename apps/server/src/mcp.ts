@@ -7,8 +7,8 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { AgentBrain, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
-import type { WorkspaceStore } from "@based/core";
+import { AgentBrain, WorkspaceTools, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import type { Author, WorkspaceStore } from "@based/core";
 import { resolveInboxText, createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
 export const SERVER_NAME = "based";
@@ -83,6 +83,12 @@ export function mcpRuleRefusal(store: WorkspaceStore, tool: string, args: unknow
   return undefined;
 }
 
+/** BSD-522: Autor für Schreibzugriffe über MCP – der Name, den der Client beim Verbinden nennt. */
+export function mcpActor(server: McpServer): Author {
+  const name = server.server.getClientVersion()?.name?.trim();
+  return { kind: "agent", name: name ? name.slice(0, 80) : "MCP client" };
+}
+
 /** Ein MCP-Server über den Seiten des Workspaces. Pro HTTP-Anfrage neu (zustandslos), für stdio einmal. */
 export function createMcpServer(pages: Pages): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION }, { instructions: INSTRUCTIONS });
@@ -92,7 +98,8 @@ export function createMcpServer(pages: Pages): McpServer {
     (server as unknown as { registerTool: typeof register }).registerTool = (name, config, cb) =>
       register(name, config, config.annotations?.readOnlyHint ? cb : (...a: unknown[]) => {
         const refused = mcpRuleRefusal(pages.store, name, a[0]);
-        return refused ? fail(refused) : cb(...a);
+        // BSD-522: alles, was ein MCP-Client schreibt, gilt als von einem Agenten (Seite „ai“ bzw. „mixed“, Autor je Block).
+        return refused ? fail(refused) : pages.store.withActor(mcpActor(server), () => cb(...a));
       });
   }
   const line = (id: string) => `- ${pages.title(id)} (id: ${id})`;
@@ -298,14 +305,17 @@ export function createMcpServer(pages: Pages): McpServer {
   server.registerTool(
     "search",
     {
-      description: "Search titles and full text of pages and database rows. Returns ids and snippets.",
-      inputSchema: { query: z.string().min(1), limit },
+      description:
+        "Find pages and database rows by title, text, or row values (including the titles of related rows, people and options). " +
+        "Words may be spread over a page and may contain typos. Returns ids, where each page lives, and a snippet. " +
+        "Use `within` to search below one page or database, `title_only` for titles. For how pages are connected use `backlinks`.",
+      inputSchema: { query: z.string().min(1), limit, within: z.string().optional(), title_only: z.boolean().optional() },
       annotations: { readOnlyHint: true },
     },
-    guarded(({ query, limit: n }: { query: string; limit?: number | undefined }) => {
-      const hits = pages.searchPages(query, n ?? 20);
+    guarded(({ query, limit: n, within, title_only }: { query: string; limit?: number | undefined; within?: string | undefined; title_only?: boolean | undefined }) => {
+      const hits = pages.searchPages(query, n ?? 20, { within, titleOnly: title_only });
       if (hits.length === 0) return text("No matches.");
-      return text(hits.map((h) => `- ${h.title} (id: ${h.id})${h.snippet ? ` — ${h.snippet}` : ""}`).join("\n"));
+      return text(hits.map((h) => `- ${h.title} (id: ${h.id})${h.location ? ` · ${h.row ? "row in" : "in"} ${h.location}` : ""}${h.snippet ? ` — ${h.snippet}` : ""}`).join("\n"));
     }),
   );
 
@@ -337,6 +347,33 @@ export function createMcpServer(pages: Pages): McpServer {
       const id = pages.create(a);
       return text(`Created ${pages.title(id)} (id: ${id}, ${PAGE_URI}${id})`);
     }),
+  );
+
+  // BSD-508: Whiteboards als Text (wenige Token, keine Koordinaten – die Anordnung rechnet Based). Dieselbe Logik wie
+  // für Baseds eigene Agenten (WorkspaceTools), damit beide Wege genau dasselbe können.
+  const boards = new WorkspaceTools(pages.store);
+  const board = (name: string, input: Record<string, unknown>): CallToolResult => {
+    const r = boards.callSync(name, Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)) as never);
+    return { content: [{ type: "text", text: r.text }], ...(r.isError ? { isError: true } : {}) };
+  };
+  server.registerTool(
+    "read_board",
+    { description: "A whiteboard as compact text: one line per object (short handle, kind, text, position), connectors as `a -> b: label`. Use the handles in draw_board.", inputSchema: { id: z.string() }, annotations: { readOnlyHint: true } },
+    guarded(({ id }: { id: string }) => board("read_board", { page_id: id })),
+  );
+  server.registerTool(
+    "draw_board",
+    {
+      description: [
+        "Add to or change a whiteboard with a short script. Based lays the objects out (columns follow the arrows) and puts new content beside what is there. Omit `id` to create a new board (`title`, `parent` optional). One statement per line:",
+        "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
+        "a -> b: optional label (a, b: names from this script or handles from read_board)",
+        "frame f: Title { a b c } | set <handle>: new text | del <handle>",
+      ].join("\n"),
+      inputSchema: { id: z.string().optional(), script: z.string().min(1), title: z.string().optional(), parent: z.string().optional() },
+    },
+    guarded((a: { id?: string | undefined; script: string; title?: string | undefined; parent?: string | undefined }) =>
+      board("draw_board", { page_id: a.id, script: a.script, title: a.title, parent_id: a.parent })),
   );
 
   server.registerTool(

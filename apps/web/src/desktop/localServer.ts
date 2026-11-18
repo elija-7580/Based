@@ -33,6 +33,8 @@ export const RUN = { name: "based-node-run", args: ["-ilc", 'exec node "$BASED_B
 export const BUNDLED_PROBE = { name: "based-node-bundled-probe", args: ["-c", `printf '%s\\n' "$BASED_NODE" && exec "$BASED_NODE" --version`] } as const;
 export const BUNDLED_RUN = { name: "based-node-bundled-run", args: ["-ilc", 'exec "$BASED_NODE" "$BASED_BUNDLE" desktop'] } as const;
 export const BUNDLED_NODE_RESOURCE = "node/bin/node";
+/** BSD-231: whisper.cpp für die Transkription der Meeting-Notizen (Resource `whisper/`). */
+export const BUNDLED_WHISPER_RESOURCE = "whisper/whisper-cli";
 
 /**
  * BSD-414: Welche Node? Die mitgelieferte, wenn sie läuft (≥ 22); sonst die aus der Login-Shell. BSD-452: Die
@@ -80,6 +82,11 @@ export const ICLOUD_FOLDER = icloudFolder();
 export function folderSyncEnv(home: string, on: boolean, device: string | undefined, channel: DesktopChannel = DESKTOP_CHANNEL): Record<string, string> {
   if (!on || !device || !/^[A-Za-z0-9_-]{1,64}$/.test(device)) return {};
   return { BASED_FOLDER_SYNC: `${home.replace(/\/+$/, "")}/${icloudFolder(channel)}`, BASED_FOLDER_DEVICE: device };
+}
+
+/** BSD-231: Umgebung für das mitgelieferte whisper-cli (nur ein absoluter Pfad zählt). */
+export function whisperEnv(path: string | undefined): Record<string, string> {
+  return path && path.startsWith("/") ? { BASED_WHISPER_BUNDLED: path } : {};
 }
 
 /**
@@ -247,6 +254,12 @@ class LocalServer {
   private async bundle(): Promise<string> {
     const { resolveResource } = await import("@tauri-apps/api/path");
     return resolveResource("based-server.cjs");
+  }
+
+  /** BSD-231: Pfad des mitgelieferten whisper-cli (build-whisper.mjs); ob es dort liegt, prüft der Server. */
+  private async bundledWhisper(): Promise<string | undefined> {
+    const { resolveResource } = await import("@tauri-apps/api/path");
+    return resolveResource(BUNDLED_WHISPER_RESOURCE).catch(() => undefined);
   }
 
   /** BSD-414: Pfad der mitgelieferten Node (fehlt sie im Bundle, scheitert die Probe und die Login-Shell gilt). */
@@ -454,6 +467,8 @@ class LocalServer {
         ...(this.state.tailnet ? { BASED_TAILNET: "1" } : {}),
         // BSD-334: über iCloud Drive mit anderen Macs abgleichen (der Server liest/schreibt den Ordner)
         ...folderSyncEnv(home, this.state.icloud, this.state.icloudDevice),
+        // BSD-231: Transkription mit dem mitgelieferten whisper.cpp
+        ...whisperEnv(await this.bundledWhisper()),
       });
       const run = await this.runner();
       const cmd = Command.create(run.name, [...run.args], { env: { ...env, ...run.env } });

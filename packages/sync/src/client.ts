@@ -45,6 +45,8 @@ export interface SyncClientOptions {
   fetch?: typeof fetch;
   /** Records/Löschungen pro Anfrage. */
   pageSize?: number;
+  /** ADR 0017 A2: Zielgröße einer Pull-Seite in Bytes, wenn der Server danach begrenzen kann (Standard 2 MiB). */
+  pageBytes?: number;
   onStatus?: (status: string) => void;
   log?: SyncLog;
   /**
@@ -110,7 +112,52 @@ export function decodeDeletions(list: unknown, log?: SyncLog): { keys: RecordKey
   return { keys, stamps };
 }
 
+/** Antwort von /sync/v2/info, soweit der Client sie nutzt. */
+export interface ServerInfo {
+  oldestSeq?: number;
+  /** ADR 0017 A2: Zusatzfähigkeiten des Servers (fehlt bei älteren Servern). */
+  sync?: { maxPage?: number; pageBytes?: boolean; gzip?: boolean };
+}
+
+/** Zielgröße einer Pull-Seite (ADR 0017 A2): groß genug für wenige Anfragen, klein genug für eine Transaktion. */
+export const PULL_PAGE_BYTES = 2 * 1024 * 1024;
+/** Größte Seite in Records, die der Client von sich aus verlangt. */
+export const PULL_PAGE_MAX = 5000;
+const GZIP_MIN_CHARS = 1024;
+
+export interface SyncCapabilities { pullLimit: number; pullBytes: number | undefined; gzip: boolean }
+
+/**
+ * Was der Client in dieser Runde nutzt. Ohne Angaben des Servers genau das Bisherige: Seiten zu `pageSize`, kein
+ * `bytes`, kein gzip – ein älterer Server bekommt unveränderte Anfragen.
+ */
+export function syncCapabilities(info: ServerInfo | undefined, pageSize: number, pageBytes: number): SyncCapabilities {
+  const s = info?.sync;
+  if (!s || typeof s !== "object") return { pullLimit: pageSize, pullBytes: undefined, gzip: false };
+  const byBytes = s.pageBytes === true;
+  // Größere Seiten nur zusammen mit der Byte-Grenze: 5 000 große Records wären sonst eine riesige Transaktion.
+  const max = typeof s.maxPage === "number" && s.maxPage > 0 ? Math.floor(s.maxPage) : pageSize;
+  return {
+    pullLimit: byBytes ? Math.max(pageSize, Math.min(PULL_PAGE_MAX, max)) : pageSize,
+    pullBytes: byBytes ? pageBytes : undefined,
+    gzip: s.gzip === true,
+  };
+}
+
+/** Text als gzip; `undefined`, wenn die Plattform keinen CompressionStream hat (dann geht er unkomprimiert). */
+export async function gzipText(text: string): Promise<Uint8Array<ArrayBuffer> | undefined> {
+  if (typeof CompressionStream === "undefined") return undefined;
+  try {
+    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch {
+    return undefined;
+  }
+}
+
 export class SyncClient {
+  /** ADR 0017 A2: ein komprimierter Push wurde abgelehnt – in dieser Sitzung unkomprimiert senden. */
+  private gzipRefused = false;
   readonly baseURL: string;
   pageSize: number;
   lastError: string | undefined;
@@ -158,13 +205,23 @@ export class SyncClient {
 
   // MARK: HTTP
 
-  private async request<T>(method: "GET" | "POST", path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
-    const init: RequestInit = {
-      method,
+  private async request<T>(method: "GET" | "POST", path: string, body?: unknown, signal?: AbortSignal, gzip = false): Promise<T> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.opts.token}`,
       // BSD-30: Protokoll 3, wenn dieser Store Properties als eigene Records führt – der Server weist das andere ab
-      headers: { Authorization: `Bearer ${this.opts.token}`, "X-Based-Protocol": this.store.propertyRecords ? "3" : "2", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
+      "X-Based-Protocol": this.store.propertyRecords ? "3" : "2",
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
     };
-    if (body !== undefined) init.body = JSON.stringify(body);
+    const init: RequestInit = { method, headers };
+    if (body !== undefined) {
+      const text = JSON.stringify(body);
+      // ADR 0017 A2: Push komprimiert, wenn der Server es angekündigt hat und die Plattform es kann.
+      const packed = gzip && text.length >= GZIP_MIN_CHARS ? await gzipText(text) : undefined;
+      if (packed) {
+        headers["Content-Encoding"] = "gzip";
+        init.body = packed;
+      } else init.body = text;
+    }
     if (signal) init.signal = signal;
     const sentAt = this.deviceClock();
     const res = await this.fetcher(`${this.baseURL}/${path}`, init);
@@ -226,6 +283,11 @@ export class SyncClient {
       log?.("warning", "Sync: step before push failed");
     }
 
+    // ADR 0017 A2: einmal je Runde fragen, was der Server kann (größere Seiten, Grenze nach Bytes, gzip). Scheitert
+    // die Anfrage oder nennt der Server nichts, bleibt alles wie bisher (Seiten zu `pageSize`, unkomprimiert).
+    const info = await this.serverInfo();
+    const caps = syncCapabilities(info, this.pageSize, this.opts.pageBytes ?? PULL_PAGE_BYTES);
+
     // Push: jede lokale Änderung nach `pushed`.
     let pushed = this.persistence.metaInt(PUSHED_KEY);
     for (;;) {
@@ -250,7 +312,18 @@ export class SyncClient {
       }
       if (skipped > 0) log?.("warning", `Sync: ${skipped} undecodable records not pushed`);
       if (records.length > 0 || deletions.length > 0) {
-        const reply = await this.request<{ newer?: unknown; deleted?: unknown; seq?: number; rejected?: unknown; restamped?: unknown }>("POST", "sync/v2/push", { records, deletions });
+        type PushReply = { newer?: unknown; deleted?: unknown; seq?: number; rejected?: unknown; restamped?: unknown };
+        let reply: PushReply;
+        try {
+          reply = await this.request<PushReply>("POST", "sync/v2/push", { records, deletions }, undefined, caps.gzip && !this.gzipRefused);
+        } catch (e) {
+          // Etwas zwischen Gerät und Server (Proxy) nimmt den komprimierten Körper nicht an: einmal unkomprimiert
+          // wiederholen und für diese Sitzung dabei bleiben – sonst scheitert jede Runde gleich.
+          if (!(caps.gzip && !this.gzipRefused && e instanceof SyncHTTPError && (e.status === 400 || e.status === 415))) throw e;
+          this.gzipRefused = true;
+          log?.("warning", `Sync: compressed push was refused (HTTP ${e.status}); sending uncompressed`);
+          reply = await this.request<PushReply>("POST", "sync/v2/push", { records, deletions });
+        }
         const newer = decodeRecords(reply.newer, log);
         const deleted = decodeDeletions(reply.deleted, log);
         // BSD-285: vom Server abgelehnt (geteilte Seite ohne Bearbeiten-Recht): seine Kopie gilt trotz eigenem Stempel.
@@ -274,7 +347,7 @@ export class SyncClient {
     // Pull. Hat der Server Tombstones jenseits unseres Cursors entfernt (BSD-104), alles neu holen und
     // löschen, was der Server nicht mehr hat.
     let after = this.persistence.metaInt(PULLED_KEY);
-    const oldest = await this.serverOldestSeq();
+    const oldest = typeof info?.oldestSeq === "number" ? info.oldestSeq : 0;
     const fullPull = after > 0 && after < oldest;
     result.fullPull = fullPull;
     if (fullPull) {
@@ -287,7 +360,7 @@ export class SyncClient {
     for (;;) {
       const page = await this.request<{ records?: unknown; deletions?: unknown; next: number; more: boolean }>(
         "GET",
-        `sync/v2/pull?after=${after}&limit=${this.pageSize}`,
+        `sync/v2/pull?after=${after}&limit=${caps.pullLimit}${caps.pullBytes ? `&bytes=${caps.pullBytes}` : ""}`,
       );
       const records = decodeRecords(page.records, log);
       const deletions = decodeDeletions(page.deletions, log);
@@ -327,13 +400,12 @@ export class SyncClient {
     return result;
   }
 
-  /** `oldestSeq` aus /sync/v2/info; 0, wenn der Server ihn nicht schickt oder die Anfrage scheitert. */
-  private async serverOldestSeq(): Promise<number> {
+  /** /sync/v2/info; `undefined`, wenn die Anfrage scheitert (dann gilt: nichts kompaktiert, keine Zusatzfähigkeiten). */
+  private async serverInfo(): Promise<ServerInfo | undefined> {
     try {
-      const info = await this.request<{ oldestSeq?: number }>("GET", "sync/v2/info");
-      return typeof info.oldestSeq === "number" ? info.oldestSeq : 0;
+      return await this.request<ServerInfo>("GET", "sync/v2/info");
     } catch {
-      return 0;
+      return undefined;
     }
   }
 

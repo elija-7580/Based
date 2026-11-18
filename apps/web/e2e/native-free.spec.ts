@@ -316,3 +316,38 @@ for (const theme of ["light", "dark"] as const) test(`Rechtsklick auf falsch ges
   await expect(menu.getByRole("menuitem", { name: "Beispiel", exact: true })).toHaveCount(0);
   await page.keyboard.press("Escape");
 });
+
+// Elija 17.11. (Based Beta 0.2.2 → 0.2.4): Die Update-Notizen waren so lang, dass „Install and Restart“ unter dem
+// Fensterrand lag und sich nicht erreichen ließ. Der Text scrollt jetzt im Dialog, die Knöpfe bleiben im Fenster –
+// auch im kleinsten Fenster und mit Text, der weit über das Fenster hinausginge.
+for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }]) {
+  test(`Dialog mit sehr langem Text: Knöpfe bleiben erreichbar, der Text scrollt (${size.width} × ${size.height})`, async ({ page }) => {
+    await page.setViewportSize(size);
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.evaluate(() => {
+      const text = `Based Beta 0.2.4 is available (you have 0.2.2).\n\nWhat’s new:\n${Array.from({ length: 60 }, (_, i) => `- line ${i + 1}: ${"long release note ".repeat(8)}`).join("\n")}\n\nInstall it and restart now?`;
+      const based = (globalThis as unknown as { __based: { askUser(t: string, o: { title: string; okLabel: string; cancelLabel: string }): Promise<boolean> } }).__based;
+      void based.askUser(text, { title: "Update available", okLabel: "Install and Restart", cancelLabel: "Later" }).then((yes) => { (globalThis as { __answer?: boolean }).__answer = yes; });
+    });
+    const dialog = page.getByRole("dialog", { name: "Update available" });
+    await expect(dialog).toBeVisible();
+    const inWindow = async (name: string) => {
+      const box = (await dialog.getByRole("button", { name }).boundingBox())!;
+      expect(box.y, name).toBeGreaterThanOrEqual(0);
+      expect(box.y + box.height, name).toBeLessThanOrEqual(size.height);
+    };
+    await inWindow("Install and Restart");
+    await inWindow("Later");
+    // der Text selbst scrollt (und nur er): das Ende ist erreichbar
+    const text = page.getByTestId("prompt-text");
+    const scroll = await text.evaluate((el) => ({ scrolls: el.scrollHeight > el.clientHeight + 1, overflow: getComputedStyle(el).overflowY }));
+    expect(scroll).toEqual({ scrolls: true, overflow: "auto" });
+    await text.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+    await expect(text.getByText("Install it and restart now?")).toBeInViewport();
+    await inWindow("Install and Restart");
+    await dialog.getByRole("button", { name: "Install and Restart" }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await page.evaluate(() => (globalThis as { __answer?: boolean }).__answer)).toBe(true);
+  });
+}

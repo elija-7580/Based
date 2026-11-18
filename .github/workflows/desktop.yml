@@ -20,9 +20,12 @@ on:
       - ".github/workflows/desktop.yml"
   workflow_dispatch:
 
+# Ein laufender Build wird zu Ende gebaut (mit Notarisierung dauert er rund 25 Minuten). Vorher brach jeder neue Push
+# auf main den laufenden ab – bei Pushes im Viertelstundentakt wurde so nie eine Version fertig (17.11.). Von den
+# wartenden Läufen bleibt nur der neueste.
 concurrency:
   group: desktop-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -85,6 +88,10 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          # BSD-433: Node, whisper-cli und node-pty vor dem Bundle signieren (Hardened Runtime) – wie in desktop-beta.yml.
+          # Ohne das lehnt Apple die Notarisierung ab („The binary is not signed“ für pty.node und spawn-helper), seit
+          # dieser Workflow mit Developer ID signiert. Mit Developer ID für die Notarisierung, sonst ad hoc.
+          BASED_SIGN_NODE: "1"
         run: |
           CONF="$RUNNER_TEMP/tauri.ci.json"
           UPD=false
@@ -130,6 +137,8 @@ jobs:
           mkdir -p dist "$RUNNER_TEMP/dmg"
           # BSD-168: Notizen für den Update-Dialog (höchstens 12 Punkte) aus den Commits seit dem letzten next-Tag.
           node scripts/release-notes.mjs > dist/notes.md || echo "• Small fixes and improvements" > dist/notes.md
+          # Für den Updater (latest.json) nur die Kurzfassung: ältere Versionen zeigen sonst den Knopf nicht.
+          node scripts/release-notes.mjs --short > dist/notes-short.md || echo "• Small fixes and improvements" > dist/notes-short.md
           ditto "$BUNDLE/$APP_NAME.app" "$RUNNER_TEMP/dmg/$APP_NAME.app"
           ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
           hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Next.dmg
@@ -141,7 +150,7 @@ jobs:
             SIG="$(cat dist/Based-Next.app.tar.gz.sig)"
             # Ein universelles Paket für beide Architekturen.
             jq -n --arg v "$V" --arg url "$URL" --arg sig "$SIG" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              --arg notes "$(cat dist/notes.md)" \
+              --arg notes "$(cat dist/notes-short.md)" \
               '{version:$v, notes:$notes, pub_date:$date, platforms:{
                  "darwin-aarch64":{signature:$sig,url:$url},
                  "darwin-x86_64":{signature:$sig,url:$url}}}' > dist/latest.json

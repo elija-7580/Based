@@ -4,6 +4,9 @@ Stand 9. 11. 2026, entschieden mit Elija (ADR 0012, Nachtrag v8/v9). Quelle der 
 das teilbare Brand-Book liegt als Design-System-Artefakt „Based“ in Claude, die Entwürfe auf dem Canvas
 „Based – Design“.
 
+**Bedienelemente:** Größe, Schrift, Zustände und Einblendungen jedes Elements stehen verbindlich in
+[`elements.md`](elements.md) (Element-System v11, 17. 11. 2026).
+
 ## Grundsätze
 
 1. **Leise im Standard, aber greifbar.** Systemschrift, ruhige Farben — gruppiert wird mit Flächen
@@ -32,6 +35,7 @@ erfolgreiche Apps (Obsidian, Bear) sind im Standard ruhig und lassen sich tief a
 | Signal | `marker` #F1DE8A (Fläche, Tag) · `marker-strong` #E0C24A (3-px-Strich) · `marker-calm` |
 | Status | Ready, Review, Blocked, Neutral als Tönungen mit Tinte; „In progress“ = Marker |
 | Schrift | Default: Systemschrift, Titel 32/650, Text 16/1.68, Beschreibung 13/450 +0,005 em, Meta 12/500 +0,01 em, Tab-Label 10,5/600 +0,02 em · Bold: Schibsted 40/800, Literata 17/1.7 · Mono 11,5 für Daten |
+| Bedienelemente | `control-md` 32 (Standard) · `control-sm` 28 (nur dichte Daten) · `control-lg` 40 · `keycap` 20 · Beschriftung `label` 14/500 |
 | Abstände | 4-px-Raster `space-1…8` · Seitenbreite 720 px · Randspalte 120 px · Seitenleiste 232 px |
 | Radien | 3 (Tags) · 6 (Code) · 10 (Nav, Kacheln) · 14 (Zeilen in Gruppen) · 18 (Karten, Gruppen, Popover) · 36 (Sheets) · Pille (Buttons, Picker, Tab-Leiste) · Icon 23 % |
 | Icons | 2 px Strich, 24-px-Raster, runde Enden; Navigation zusätzlich gefüllt im aktiven Zustand; Touch-Ziel ≥ 44 px |
@@ -118,3 +122,21 @@ Rendered“): Stamm und Bauch sind Blöcke, die Basis ist der Marker. Dateien in
 - `based-mark.svg`, `based-mark-on-dark.svg` — Zeichen ab 32 px
 - `based-mark-small.svg`, `based-mark-small-on-dark.svg` — flach, für ≤ 24 px (Seitenleiste, Favicon)
 - Wortmarke: Zeichen + „based“ klein, Systemschrift 650, −0,03 em. Schutzraum: eine Stammbreite.
+
+### Logo-Intro (Ausnahme von der Bewegungsregel)
+
+Beim ersten Start „tippt“ sich das Zeichen einmal über der Überschrift des Willkommensbildschirms
+(`apps/web/src/components/LogoIntro.tsx`, Ablauf als getestete Zeitfunktion in `logoTimeline.ts`):
+
+1. Ein gelber Punkt zieht sich in einem Zug zur Basislinie auf.
+2. Eine Einfügemarke in Blockfarbe (nie Gelb) blinkt dort, wo als Nächstes getippt wird.
+3. Der Stamm fällt auf die Linie, dann der Bauch. Die Linie federt nach, die Blöcke kippeln über ihre Kanten
+   aus und bleiben stehen.
+
+Das ist der einzige Ort mit Federn und Drehung – ein Markenmoment, kein UI-Übergang. Regeln: läuft genau
+einmal (rund 2 s bis das Zeichen steht), nie in Schleife, nie als Ladeanzeige im Alltag; mit „Bewegung
+reduzieren“ steht sofort das fertige Zeichen; das letzte Bild ist das ruhende Zeichen. Die Basis nutzt das
+feste `logo-base` (bleibt gelb, auch wenn eine andere Marker-Farbe gewählt ist).
+
+Auf basednotes.app läuft derselbe Ablauf beim Laden jeder Seite einmal im Kopf, dort als CSS
+(`apps/website/scripts/build.mjs`); Hover gibt einen einzelnen „Anschlag“. Gehüpft wird nirgends mehr.

@@ -1,0 +1,151 @@
+/* BSD-264 (Whiteboard 2): Board-Fläche. Die Fläche selbst ist ein Canvas (render.ts liest die Farben aus den Tokens);
+   hier stehen nur die Hülle und die schwebenden Pillen. Auf Apple sind die Pillen Glas ([data-material="glass"]),
+   sonst eine feste Fläche – wie Menüs und Popover der App. Maße aus Tokens, keine freien px. */
+.wb-root {
+  position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; background: var(--bg); outline: none;
+  user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: contain; container-type: size; contain: paint;
+  --wb-pill: calc(var(--space-7) + var(--space-2));
+}
+.wb-root:focus-visible { box-shadow: inset 0 0 0 var(--space-half) var(--focus-ring); }
+.wb-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.wb-pill {
+  position: absolute; z-index: 2; display: flex; align-items: center; gap: var(--space-half); padding: var(--space-1);
+  border-radius: var(--radius-pill); background: var(--bg); box-shadow: var(--shadow-float);
+}
+.wb-minimap { border-radius: var(--radius-lg); background: var(--bg); box-shadow: var(--shadow-float); }
+[data-material="glass"] :is(.wb-pill, .wb-minimap) {
+  background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter);
+  box-shadow: var(--shadow-float), var(--chrome-edge);
+}
+
+/* Werkzeuge: unten in der Mitte; das gewählte Werkzeug liegt auf einer eigenen Fläche. */
+.wb-tools {
+  left: 50%; bottom: var(--space-4); transform: translateX(-50%); padding: var(--space-2); gap: var(--space-1);
+  max-width: calc(100% - var(--space-4) * 2); overflow-x: auto; scrollbar-width: none;
+}
+.wb-tools::-webkit-scrollbar { display: none; }
+.wb-tools > * { flex: none; }
+.wb-tools .wb-sep { height: var(--space-5); }
+
+/* Optionen des Zeichenwerkzeugs (Farbe, Stärke): über dem Hinweis. */
+.wb-options {
+  left: 50%; bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-4) + var(--space-6) + var(--space-2)); transform: translateX(-50%);
+  max-width: calc(100% - var(--space-4) * 2); overflow-x: auto; scrollbar-width: none;
+}
+.wb-options::-webkit-scrollbar { display: none; }
+.wb-options > * { flex: none; }
+.wb-options [aria-pressed="true"] { background: var(--selected); }
+/* Farbfelder wie im Farbmenü des Editors: kleine abgerundete Quadrate; Textmarker und Flächen als Tönung. */
+.wb-swatch { display: block; flex: none; width: var(--space-4); height: var(--space-4); aspect-ratio: 1; border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1px var(--line); }
+.wb-swatch:is([data-row="fill"], [data-row="highlight"]) { box-shadow: inset 0 0 0 1px var(--control-border); }
+
+/* Farbleiste über der Auswahl. */
+.wb-selbar { transform: translate(-50%, -100%); max-width: calc(100% - var(--space-4) * 2); overflow-x: auto; scrollbar-width: none; }
+.wb-selbar::-webkit-scrollbar { display: none; }
+.wb-selbar > * { flex: none; }
+.wb-selbar [aria-pressed="true"] { background: var(--selected); }
+.wb-selbar-label {
+  padding-inline: var(--space-2) var(--space-1); color: var(--muted);
+  font-size: var(--type-meta-size); line-height: var(--type-meta-leading); font-weight: var(--type-meta-weight);
+}
+.wb-options .bx-icon-slot, .wb-options [class*="icon"] { overflow: visible; }
+[aria-pressed="true"] > .wb-swatch, [aria-pressed="true"] .wb-swatch { box-shadow: 0 0 0 var(--space-half) var(--bg), 0 0 0 var(--space-1) var(--ink); }
+.wb-dot { display: block; border-radius: var(--radius-pill); background: var(--ink); width: var(--space-2); height: var(--space-2); }
+.wb-dot[data-size="0"] { width: var(--space-1); height: var(--space-1); }
+.wb-dot[data-size="2"] { width: var(--space-3); height: var(--space-3); }
+
+/* Gemerkter Stift: Farbpunkt in der Größe seiner Stärke; der Textmarker eckig. */
+.wb-preset[data-size="0"] { transform: scale(0.6); }
+.wb-preset[data-size="2"] { transform: scale(1.15); }
+.wb-preset[data-tool="highlighter"] { border-radius: var(--radius-sm); }
+
+/* Seitenkarte wählen: Suchfeld und Treffer über der Werkzeugleiste. */
+.wb-pagepick {
+  position: absolute; z-index: 3; left: 50%; bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-4)); transform: translateX(-50%);
+  width: min(calc(var(--space-8) * 5), calc(100% - var(--space-4) * 2)); display: flex; flex-direction: column; align-items: stretch; gap: var(--space-1);
+  padding: var(--space-2); border-radius: var(--radius-lg); background: var(--bg); box-shadow: var(--shadow-float);
+}
+[data-material="glass"] .wb-pagepick { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-float), var(--chrome-edge); }
+.wb-pagepick .wb-embed-note { padding: var(--space-2); }
+
+/* Eingabefeld für Text auf der Fläche: liegt genau über dem Objekt, in dessen Schrift (Maße setzt die Ansicht). */
+.wb-edit {
+  position: absolute; z-index: 1; box-sizing: border-box; margin: 0; border: 0; outline: none; resize: none; overflow: hidden; background: transparent;
+  color: var(--ink); font-family: inherit; transform-origin: 0 0; user-select: text; -webkit-user-select: text; caret-color: var(--ink);
+}
+.wb-edit[data-kind="note"] { color: var(--board-note-ink); caret-color: var(--board-note-ink); }
+.wb-edit[data-kind="shape"] { text-align: center; }
+.wb-edit[data-kind="frame"], .wb-edit[data-kind="connector"] { white-space: nowrap; }
+.wb-edit[data-kind="connector"] { text-align: center; border-radius: var(--radius-pill); background: var(--surface-raised); }
+.wb-tools [aria-pressed="true"] { background: var(--selected); color: var(--ink); }
+.wb-pill .bx-menu-icon { width: var(--icon-md); height: var(--icon-md); display: block; }
+
+/* Hinweis zum Werkzeug: über der Werkzeugleiste. */
+.wb-hint {
+  position: absolute; z-index: 2; left: 50%; bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-4)); transform: translateX(-50%);
+  max-width: calc(100% - var(--space-6)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--ink); color: var(--bg);
+  font-size: var(--type-meta-size); line-height: var(--type-meta-leading); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking);
+}
+
+.wb-history { left: var(--space-4); bottom: var(--space-4); }
+.wb-corner { position: absolute; z-index: 2; right: var(--space-4); bottom: var(--space-4); display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); pointer-events: none; }
+.wb-corner > * { pointer-events: auto; }
+.wb-zoom { position: static; }
+.wb-zoom-label {
+  min-width: calc(var(--space-7) + var(--space-2)); text-align: center; color: var(--ink); font-variant-numeric: tabular-nums;
+  font-size: var(--type-meta-size); line-height: var(--type-meta-leading); font-weight: var(--type-meta-weight);
+}
+.wb-sep { width: 1px; height: var(--space-4); margin-inline: var(--space-1); background: var(--line); }
+.wb-minimap { width: calc(var(--space-8) * 2 + var(--space-6)); height: calc(var(--space-8) + var(--space-6)); overflow: hidden; cursor: pointer; }
+.wb-minimap-canvas { width: 100%; height: 100%; display: block; }
+
+/* Eingebettete Vorschau (HTML, Video, Audio): liegt im Körper der Karte. Bedienbar erst, wenn die Karte gewählt ist –
+   sonst gehören Zeiger und Rad der Fläche (verschieben, zeichnen). */
+.wb-embed {
+  position: absolute; z-index: 1; transform-origin: 0 0; overflow: hidden; pointer-events: none; display: flex; align-items: center; justify-content: center;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: var(--surface-card);
+}
+.wb-embed[data-active] { pointer-events: auto; }
+/* Ganze Seite auf dem Board: der Editor der App, rollbar; bedienbar, sobald die Karte gewählt ist. */
+.wb-embed[data-view="page"] {
+  display: block; overflow: auto; overscroll-behavior: contain; background: var(--bg); padding: 0 var(--space-4) var(--space-4);
+  user-select: text; -webkit-user-select: text;
+}
+.wb-embed[data-view="page"]:not([data-active]) { overflow: hidden; }
+.wb-embed-frame { width: 100%; height: 100%; border: 0; background: white; color-scheme: light; }
+.wb-embed-media { width: 100%; height: 100%; object-fit: contain; background: var(--surface-raised); }
+.wb-embed-audio { width: calc(100% - var(--space-4) * 2); }
+.wb-embed-note { margin: 0; color: var(--muted); font-size: var(--type-meta-size); line-height: var(--type-meta-leading); font-weight: var(--type-meta-weight); }
+
+/* Present: nur die Folie und eine kleine Leiste zum Blättern; alles andere tritt zurück. */
+.wb-root[data-present] :is(.wb-tools, .wb-options, .wb-history, .wb-corner, .wb-hint, .wb-pagepick, .wb-empty) { display: none; }
+.wb-present { left: 50%; bottom: var(--space-4); transform: translateX(-50%); }
+
+/* Leeres Board: ein Satz, was hierher kommt, und der nächste Schritt. Klicks gehen an die Fläche darunter. */
+.wb-empty {
+  position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1);
+  padding: var(--space-6); padding-bottom: calc(var(--space-8) * 2); text-align: center; pointer-events: none;
+}
+.wb-empty-title { margin: 0; color: var(--ink); font-size: var(--type-section-size); line-height: var(--type-section-leading); font-weight: var(--type-section-weight); }
+.wb-empty-text { margin: 0; max-width: 60ch; color: var(--muted); font-size: var(--type-description-size); line-height: var(--type-description-leading); font-weight: var(--type-description-weight); letter-spacing: var(--type-description-tracking); }
+
+.wb-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Schmale Fläche (halbe Bildschirmbreite, kleinstes Fenster): Minimap und Hinweis weichen, die Pillen bleiben. */
+@container (max-width: 48em) {
+  .wb-hint { display: none; }
+  .wb-options { bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-4)); }
+}
+@container (max-width: 36em) {
+  .wb-minimap { display: none; }
+}
+@container (max-width: 30em) {
+  .wb-zoom .wb-sep, .wb-zoom-label { display: none; }
+  .wb-history { bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-3)); }
+  .wb-corner { bottom: calc(var(--space-4) + var(--wb-pill) + var(--space-3)); }
+}
+@container (max-height: 22em) {
+  .wb-minimap, .wb-hint { display: none; }
+}

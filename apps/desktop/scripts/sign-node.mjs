@@ -25,6 +25,9 @@ export function signTargets(dist) {
   const out = [];
   const node = join(dist, "node", "bin", "node");
   if (existsSync(node)) out.push({ path: node, entitlements: true });
+  // BSD-231: whisper-cli (build-whisper.mjs) – Hardened Runtime, keine besonderen Rechte (kein JIT, keine Geräte).
+  const whisper = join(dist, "whisper", "whisper-cli");
+  if (existsSync(whisper)) out.push({ path: whisper, entitlements: false });
   const walk = (dir) => {
     if (!existsSync(dir)) return;
     for (const name of readdirSync(dir).sort()) {
@@ -86,14 +89,35 @@ if (isMain) {
       const kc = keychainCommands(keychain, p12, process.env.APPLE_CERTIFICATE_PASSWORD ?? "", randomBytes(16).toString("hex"));
       for (const a of kc.setup) execFileSync("security", a, { stdio: ["ignore", "ignore", "inherit"] });
       rmSync(p12, { force: true });
+      // codesign findet eine Identität nur in Schlüsselbunden der Suchliste – `--keychain` allein reicht nicht
+      // („The specified item could not be found in the keychain“, Desktop-Lauf 17.11.). Also vorn in die Liste
+      // des Nutzers eintragen und beim Aufräumen die alte Liste wiederherstellen.
+      const before = execFileSync("security", ["list-keychains", "-d", "user"], { encoding: "utf8" })
+        .split("\n").map((l) => l.trim().replace(/^"|"$/g, "")).filter(Boolean);
+      execFileSync("security", ["list-keychains", "-d", "user", "-s", keychain, ...before], { stdio: ["ignore", "ignore", "inherit"] });
       keychainArgs = ["--keychain", keychain];
-      cleanup = () => { for (const a of kc.cleanup) { try { execFileSync("security", a); } catch { /* schon weg */ } } rmSync(dir, { recursive: true, force: true }); };
+      cleanup = () => {
+        try { execFileSync("security", ["list-keychains", "-d", "user", "-s", ...before]); } catch { /* Liste bleibt, wie sie ist */ }
+        for (const a of kc.cleanup) { try { execFileSync("security", a); } catch { /* schon weg */ } }
+        rmSync(dir, { recursive: true, force: true });
+      };
     }
     try {
       for (const args of commands) {
         if (dry) console.log(`  codesign ${args.map((a) => (/\s/.test(a) ? JSON.stringify(a) : a)).join(" ")}`);
         else {
-          execFileSync("codesign", [...keychainArgs, ...args], { stdio: "inherit" });
+          // Apples Zeitstempel-Dienst antwortet gelegentlich nicht („A timestamp was expected but was not found“,
+          // Desktop-Lauf 17.11.): bis zu fünf Versuche mit wachsender Pause, erst dann scheitert der Build.
+          for (let attempt = 1; ; attempt++) {
+            try {
+              execFileSync("codesign", [...keychainArgs, ...args], { stdio: "inherit" });
+              break;
+            } catch (e) {
+              if (attempt >= 5) throw e;
+              console.log(`sign-node: codesign failed (attempt ${attempt} of 5), retrying…`);
+              execFileSync("sleep", [String(attempt * 10)]);
+            }
+          }
           execFileSync("codesign", ["--verify", "--strict", args.at(-1)], { stdio: "inherit" });
         }
       }

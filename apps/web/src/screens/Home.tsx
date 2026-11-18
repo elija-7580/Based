@@ -4,7 +4,6 @@
 // des Hauptagenten (tasks/runtime.ts); Lage und Zustände rechnen die reinen Funktionen in @based/brain/home.
 // Ablauf beim Senden: Eingabe wird zur Karte → „versteht“ (Skelett) → Plan → die Karte fliegt in den inneren Ring
 // bzw. ins Ziel auf dem Bogen (FLIP, nur Position und Deckkraft, 180 ms; bei „reduzierter Bewegung“ ohne Flug).
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import {
   composerTask, costLine, FRAME_SPAN_MS, frameStart, greetingSentence, greetingWord, homeModel, showCost, taskCard, type DueItem, type Frame, type NeedsYou,
 } from "@based/brain/home";
@@ -21,6 +20,7 @@ import { Icon } from "../icons.js";
 import type { Route } from "../shell/router.js";
 import { tasksRuntime } from "../tasks/runtime.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
+import { BasedSwitcher } from "@based/ui/astryx";
 
 interface Props {
   client: StoreClient;
@@ -186,15 +186,11 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
     <div className="home" data-testid="home" ref={homeRef}>
       <div className="home-inner">
         <header className="home-head">
-          <SegmentedControl label="Time frame" size="sm" value={frame} onChange={(v) => {
+          <BasedSwitcher label="Time frame" value={frame} onChange={(v) => {
             const f: Frame = v === "week" || v === "month" ? v : "today";
             setFrame(f);
             try { localStorage.setItem(FRAME_KEY, f); } catch { /* nur diese Sitzung */ }
-          }}>
-            <SegmentedControlItem value="today" label="Today" />
-            <SegmentedControlItem value="week" label="Week" />
-            <SegmentedControlItem value="month" label="Month" />
-          </SegmentedControl>
+          }} items={[{ id: "today", label: "Today" }, { id: "week", label: "Week" }, { id: "month", label: "Month" }]} />
           {model && showCost(model, showDetails) ? <span className="home-mono" data-testid="home-cost">{costLine(model, frame)}</span> : null}
           <span className="grow" />
           <span className="home-status t-meta" data-testid="home-server" title={synced ? "Server connected" : SYNC_LABEL[state.status.state]}>

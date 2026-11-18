@@ -181,7 +181,7 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
     return (
       <div role="listitem" aria-label={item.title} className={"lib-row" + (isSelected ? " selected" : "")} style={style} data-id={item.id} onClick={onRowClick}>
         <span className="lib-check" onClick={(e) => { if (e.shiftKey) { e.preventDefault(); toggle(item.id, true); } }}>
-          <CheckboxInput label={`Select ${item.title}`} isLabelHidden size="sm" value={isSelected} onChange={() => toggle(item.id, false)} />
+          <CheckboxInput label={`Select ${item.title}`} isLabelHidden value={isSelected} onChange={() => toggle(item.id, false)} />
         </span>
         <span className="lib-icon" aria-hidden="true">{item.icon ?? <Icon name={KIND_ICON[item.kind]} size={16} />}</span>
         <button type="button" className="lib-title link-button" title={item.title} onClick={() => onOpenPage(item.id)}>
@@ -190,8 +190,8 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
         </button>
         <span className="lib-kind t-desc">{KIND_LABEL[item.kind]}</span>
         <span className="lib-location t-desc" title={item.location}>{item.location}</span>
-        <span className="lib-date t-data">{relative(fromSwift(item.edited), now)}</span>
-        <span className="lib-date t-data">{relative(fromSwift(item.created), now)}</span>
+        <span className="lib-date t-meta">{relative(fromSwift(item.edited), now)}</span>
+        <span className="lib-date t-meta">{relative(fromSwift(item.created), now)}</span>
       </div>
     );
   };
@@ -200,26 +200,29 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
   return (
     <div className="lib" data-testid="library" data-count={rows.length} data-loaded={items ? "" : undefined}>
       <header className="lib-head">
-        {onSwitch ? <LibraryTabs value="library" onNavigate={onSwitch} /> : null}
-        <h1 className="t-title">Library</h1>
-        <p className="t-desc" role="status" aria-live="polite" data-testid="library-count">
+        <h1 className="t-heading">Library</h1>
+        <p className="t-meta" role="status" aria-live="polite" data-testid="library-count" data-head-count="">
           {items === undefined ? "Loading…" : filtered ? `${rows.length.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} items` : `${total.toLocaleString("en-US")} ${total === 1 ? "item" : "items"}`}
           {notice ? ` · ${notice}` : ""}
         </p>
       </header>
 
+      <div className="lib-switch">
+        {onSwitch ? <LibraryTabs value="library" onNavigate={onSwitch} /> : <span />}
+        <TextInput type="search" label="Search the library" isLabelHidden placeholder="Search by title or location" value={text} onChange={setText} hasClear width={280} />
+      </div>
+
       <Toolbar
         label="Library filters"
-        size="sm"
+       
         className="lib-toolbar"
-        startContent={<TextInput type="search" label="Search the library" isLabelHidden placeholder="Search by title or location" value={text} onChange={setText} hasClear width={280} />}
-        endContent={
+        startContent={
           <>
-            <DropdownMenu button={{ label: `Type: ${typeLabel}`, variant: "ghost" }} items={typeItems} menuWidth={220} alignment="end" />
-            <DropdownMenu button={{ label: `In: ${locationLabel}`, variant: "ghost" }} items={locationItems} menuWidth={220} alignment="end" />
+            <DropdownMenu button={{ label: `Type: ${typeLabel}`, variant: "secondary" }} items={typeItems} menuWidth={240} alignment="start" />
+            <DropdownMenu button={{ label: `In: ${locationLabel}`, variant: "secondary" }} items={locationItems} menuWidth={240} alignment="start" />
             <ToggleButton label="Favorites" icon={<Icon name="star" size={16} />} isPressed={favoritesOnly} onPressedChange={setFavoritesOnly} />
             <ToggleButton label="Same title" icon={<Icon name="duplicate" size={16} />} isPressed={sameTitle} onPressedChange={setSameTitle} tooltip={duplicates > 0 ? `${duplicates} ${duplicates === 1 ? "title is" : "titles are"} used more than once` : "No title is used more than once"} />
-            <DropdownMenu button={{ label: `Sort: ${sortLabel}`, variant: "ghost" }} items={sortItems} menuWidth={200} alignment="end" />
+            <DropdownMenu button={{ label: `Sort: ${sortLabel}`, variant: "secondary" }} items={sortItems} menuWidth={240} alignment="start" />
           </>
         }
       />
@@ -227,7 +230,7 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
       {n > 0 ? (
         <Toolbar
           label="Selection"
-          size="sm"
+         
           className="lib-bulk"
           startContent={
             <>
@@ -249,7 +252,7 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
       <div className="lib-table">
         <div className="lib-row lib-columns t-meta">
           <span className="lib-check">
-            <CheckboxInput label="Select all" isLabelHidden size="sm" isDisabled={rows.length === 0} value={allVisible ? true : selectedRows.length > 0 ? "indeterminate" : false}
+            <CheckboxInput label="Select all" isLabelHidden isDisabled={rows.length === 0} value={allVisible ? true : selectedRows.length > 0 ? "indeterminate" : false}
               onChange={() => setSelected(allVisible ? new Set() : new Set(rows.map((r) => r.id)))} />
           </span>
           <span className="lib-icon" />

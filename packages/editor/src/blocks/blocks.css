@@ -68,7 +68,10 @@
 }
 .bx2-gutter-btn:hover { background: var(--selected); color: var(--ink); }
 .bx2-grip { width: 18px; cursor: grab; touch-action: none; }
-.bx2-is-dragging, .bx2-is-dragging * { cursor: grabbing !important; }
+/* BSD-532: Greif-Cursor über eine Decke (BlockEditor startHandle), nicht über „*“ – das rechnete beim Start jedes Element
+   der Seite neu (300 Blöcke: Start 100 → 25 ms in Chromium) */
+.bx2-is-dragging { cursor: grabbing; }
+.bx2-drag-cover { position: fixed; inset: 0; z-index: 998; cursor: grabbing; touch-action: none; }
 
 /* Textfelder (Überschriften stecken in einem Rahmen mit Rolle „heading“) */
 .bx2-field-wrap { display: flex; flex: 1 1 auto; min-width: 1px; }
@@ -205,6 +208,12 @@
 
 /* Eingebettete Blöcke */
 .bx2-embed { flex: 1 1 auto; min-width: 0; }
+/* Elija 17.11.: Board mitten in der Seite – Titelzeile (öffnet das Board) und darunter die Fläche. */
+.bx2-board { display: flex; flex-direction: column; gap: var(--space-1); }
+.bx2-board-body {
+  position: relative; display: flex; height: calc(var(--space-8) * 8); border-radius: var(--radius-lg); overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--line); user-select: none; -webkit-user-select: none;
+}
 .bx2-image { margin: 0; }
 .bx2-image img { display: block; max-width: 100%; border-radius: var(--radius-sm); }
 .bx2-image figcaption { margin-top: calc(var(--space-1) + var(--space-half)); color: var(--muted); font-size: var(--type-ui-size); }
@@ -274,18 +283,26 @@
   pointer-events: none;
   opacity: 0.92;
 }
+/* BSD-531: wie das Aufziehen auf dem Board (whiteboard/render.ts): getönte Fläche in der Auswahlfarbe, feiner Rand */
 .bx2-marquee {
   position: fixed;
   z-index: 999;
   border-radius: var(--radius-xs);
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  background: color-mix(in srgb, var(--selected) 50%, transparent);
+  border: 1px solid var(--focus-ring);
   pointer-events: none;
 }
 /* Während der Rechteck-Auswahl keine Textmarkierung (auch nicht im Seitenrand) */
 .bx2-is-selecting, .bx2-is-selecting * { user-select: none !important; -webkit-user-select: none !important; }
-.bx2-flash { animation: bx2-flash var(--duration-pulse) var(--ease-out); }
-@keyframes bx2-flash { 0%, 40% { background: var(--selected); } 100% { background: transparent; } }
+/* Sprungziel kurz hervorheben: eine Fläche über dem Block, die ausblendet (fade-in rückwärts; BSD-529: keine eigenen
+   @keyframes). */
+.bx2-flash { position: relative; }
+.bx2-flash::after {
+  content: ""; position: absolute; inset: 0; border-radius: var(--radius-sm); background: var(--selected); pointer-events: none;
+  mix-blend-mode: multiply; animation: fade-in var(--duration-pulse) var(--ease-out) reverse forwards;
+}
+[data-theme="dark"] .bx2-flash::after { mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce) { .bx2-flash::after { animation: none; opacity: 0; } }
 
 .bx2-tail { min-height: 120px; cursor: text; }
 /* BSD-344: lange Seiten bekommen Luft unter der letzten Zeile (wie Notion), kurze rollen nicht */
@@ -303,8 +320,9 @@
   overscroll-behavior: contain;
   padding: var(--space-1);
   border: 0;
-  border-radius: var(--radius-lg);
-  background: var(--bg);
+  /* BSD-527: das eine Menü (elements.md, Abschnitt 4) – Fläche surface-card, Radius xl */
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
   box-shadow: var(--shadow-menu);
   color: var(--ink);
   font-family: var(--font-ui);
@@ -392,6 +410,8 @@
 .bx2-codewrap[data-wrap] > .bx2-t-code { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: visible; }
 @media (prefers-reduced-motion: reduce) { .bx2-code-actions { transition: none; } }
 .bx2-code-lang {
+  /* die Sprache steht in der Ecke; Knöpfe erscheinen links davon, ohne dass sie wandert */
+  order: 1;
   position: relative;
   color: var(--muted);
   font-family: var(--font-ui);
@@ -400,6 +420,21 @@
   -webkit-user-select: none;
 }
 .bx2-mermaid { margin-top: var(--space-2); }
+.bx2-html-preview { margin-top: var(--space-2); }
+.bx2-html-preview[data-sized] > .bx-html-preview { min-height: 0; }
+.bx2-html-preview[data-fill] { margin-top: 0; }
+.bx2-html-preview[data-fill] > .bx-html-preview { height: 70vh; }
+/* Ansicht „nur Ergebnis“ (Notion: Preview): der Code ist ausgeblendet, bleibt aber fokussierbar (Pfeiltasten); die
+   Leiste erscheint erst beim Überfahren, damit das Ergebnis wie ein eigener Block der Seite wirkt. */
+.bx2-codewrap[data-code-hidden] > .bx2-field {
+  position: absolute; top: 0; left: 0; right: 0; height: 0; min-height: 0; padding: 0; overflow: hidden; opacity: 0; pointer-events: none;
+}
+.bx2-codewrap[data-code-hidden] > .bx2-mermaid, .bx2-codewrap[data-code-hidden] > .bx2-html-preview,
+.bx2-codewrap[data-code-hidden] .bx-html-preview-wrap { margin-top: 0; }
+.bx2-codewrap[data-code-hidden] .bx2-code-tools { z-index: 1; opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.bx2-codewrap[data-code-hidden]:hover .bx2-code-tools, .bx2-codewrap[data-code-hidden] .bx2-code-tools:focus-within { opacity: 1; }
+@media (hover: none) { .bx2-codewrap[data-code-hidden] .bx2-code-tools { opacity: 1; background: var(--surface-raised); box-shadow: var(--shadow-float); } }
+@media (prefers-reduced-motion: reduce) { .bx2-codewrap[data-code-hidden] .bx2-code-tools { transition: none; } }
 
 /* Bookmark, Datei, Medien */
 .bx2-bookmark {
@@ -481,16 +516,16 @@ pre.bx2-file-preview { font-family: var(--font-mono); font-size: var(--type-data
 
 .bx2-link { display: flex; flex-direction: column; gap: var(--space-1); min-width: 300px; }
 .bx2-link-input {
-  height: 30px;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--bg);
+  height: var(--control-md);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
   outline: none;
 }
-.bx2-link-input:focus { border-color: var(--ink-2); }
+.bx2-link-input:focus-visible { outline: var(--space-half) solid var(--focus-ring); outline-offset: calc(-1 * var(--space-half)); }
 .bx2-menu-path { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui); }
 .bx2-placeholder-btn {
   display: flex;
@@ -639,11 +674,12 @@ pre.bx2-file-preview { font-family: var(--font-mono); font-size: var(--type-data
 
 /* BSD-407: Suchfeld im Blockmenü (wie im alten Editor) */
 .bx2-menu-search {
-  width: 100%; min-height: var(--space-6); margin-bottom: var(--space-1); padding: 0 var(--space-3); border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: inherit;
+  width: 100%; min-height: var(--control-md); margin-bottom: var(--space-1); padding: 0 var(--space-3); border: 0;
+  border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font: inherit; flex: none;
 }
 .bx2-menu-search::placeholder { color: var(--muted); }
-.bx2-menu-search:focus-visible { outline: 1px solid var(--focus-ring); border-color: var(--focus-ring); }
+.bx2-menu-search:focus-visible { outline: var(--space-half) solid var(--focus-ring); outline-offset: calc(-1 * var(--space-half)); }
+.bx2-menu-check { flex: none; margin-left: auto; padding-left: var(--space-3); color: var(--ink); }
 .bx2-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }
 .bx2-menu-item:focus-visible, .bx2-menu-item:focus { outline: none; background: var(--surface-raised); }
 .bx2-image-empty { display: flex; flex-direction: column; gap: var(--space-2); }

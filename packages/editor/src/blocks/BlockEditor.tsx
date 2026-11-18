@@ -3,9 +3,9 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, type CodeView, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
-import { htmlPreviewFrame } from "./htmlPreview.js";
+import { htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/props.js";
@@ -19,7 +19,7 @@ import { ImageViewer, imageAt, type ImageView } from "../ui/ImageViewer.js";
 import { PageOutline } from "../ui/Outline.js";
 import { DatabasePicker, MovePicker, PageTargetPicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
-import { BasedButton, BasedIconButton, BasedMediaPlayer } from "@based/ui/astryx";
+import { BasedButton, BasedDialog, BasedIconButton, BasedMediaPlayer } from "@based/ui/astryx";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
@@ -445,6 +445,14 @@ export function BlockEditor(props: PageEditorProps) {
     root.addEventListener("compositionend", onCompositionEnd);
     root.addEventListener("paste", onPaste);
     root.addEventListener("keydown", onPlainKey, true);
+    // ⌘A außerhalb des Editors (Seitenrand, Titel, nichts im Fokus): die Shell bittet um „alle Blöcke“.
+    const onSelectAll = () => {
+      const all = ctrl.order();
+      if (all.length === 0) return;
+      ctrl.select(all);
+      root.focus({ preventScroll: true });
+    };
+    root.addEventListener("based:select-all-blocks", onSelectAll);
     root.addEventListener("copy", onCopy);
     root.addEventListener("cut", onCopy);
     root.addEventListener("drop", onDrop);
@@ -454,6 +462,7 @@ export function BlockEditor(props: PageEditorProps) {
       root.removeEventListener("compositionstart", onCompositionStart);
       root.removeEventListener("compositionend", onCompositionEnd);
       root.removeEventListener("paste", onPaste);
+      root.removeEventListener("based:select-all-blocks", onSelectAll);
       root.removeEventListener("keydown", onPlainKey, true);
       root.removeEventListener("copy", onCopy);
       root.removeEventListener("cut", onCopy);
@@ -490,7 +499,7 @@ export function BlockEditor(props: PageEditorProps) {
     if (!el) return;
     const r = el.ownerDocument.getSelection()?.getRangeAt(0).getBoundingClientRect();
     const box = r && (r.width || r.height) ? r : el.getBoundingClientRect();
-    setSlash({ id, at, query: "", index: 0, x: box.left, y: box.bottom + 6 });
+    setSlash({ id, at, query: "", index: 0, x: box.left, y: box.bottom + 6, above: box.top - 6 });
   };
   const updateSlash = (id: string) => {
     const s = slashRef.current;
@@ -575,7 +584,7 @@ export function BlockEditor(props: PageEditorProps) {
     if (!el) return;
     const r = el.ownerDocument.getSelection()?.getRangeAt(0).getBoundingClientRect();
     const box = r && (r.width || r.height) ? r : el.getBoundingClientRect();
-    const st: MentionState = { id, at, trigger, query: "", index: 0, x: box.left, y: box.bottom + 6, items: [] };
+    const st: MentionState = { id, at, trigger, query: "", index: 0, x: box.left, y: box.bottom + 6, above: box.top - 6, items: [] };
     setMention(st);
     void searchMention(st);
   };
@@ -709,6 +718,21 @@ export function BlockEditor(props: PageEditorProps) {
     if (ctrl.selected.length) return onSelectionKey(e, mod);
   };
 
+  /** ⌘/ (wie Notion): Blockmenü per Tastatur – am Block, an dem man steht bzw. an den ausgewählten Blöcken. */
+  const openMenuByKey = (e: React.KeyboardEvent, ids: readonly string[]): boolean => {
+    if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || !(e.code === "Slash" || e.key === "/") || !editable || !ids.length) return false;
+    e.preventDefault();
+    const id = ids[0]!;
+    const el = rootRef.current?.querySelector<HTMLElement>(`.bx2-block[data-block-id="${CSS.escape(id)}"]`);
+    const r = el?.getBoundingClientRect();
+    setSlash(undefined);
+    setToolbar(undefined);
+    ctrl.select([...ids]);
+    rootRef.current?.focus({ preventScroll: true });
+    setMenu({ id, x: Math.round(r?.left ?? 0), y: Math.round((r?.top ?? 0) + Math.min(r?.height ?? 0, 28)) });
+    return true;
+  };
+
   /** ⌘⌥0–9 (wie Notion): Text, H1–H3, To-do, Liste, Nummern, Toggle, Code, Seite. ⌘⌥T: alle Toggles auf/zu. */
   const blockShortcut = (e: React.KeyboardEvent, ids: readonly string[]): boolean => {
     if (!(e.metaKey || e.ctrlKey) || !e.altKey || !editable) return false;
@@ -747,6 +771,7 @@ export function BlockEditor(props: PageEditorProps) {
     const len = textLen(store, id);
     const key = e.key;
     if (blockShortcut(e, [id])) return;
+    if (openMenuByKey(e, [id])) return;
     // WebKit schickt am Anfang/Ende eines Felds kein beforeinput (nichts zu löschen) – hier selbst behandeln
     if (key === "Backspace" && !mod && !e.altKey && c.from === 0 && c.to === 0) {
       e.preventDefault();
@@ -858,6 +883,7 @@ export function BlockEditor(props: PageEditorProps) {
     const key = e.key;
     const order = ctrl.order();
     if (blockShortcut(e, sel)) return;
+    if (openMenuByKey(e, sel)) return;
     if (key === "Escape") { e.preventDefault(); ctrl.clearSelection(); return; }
     if ((key === "Backspace" || key === "Delete") && editable) {
       e.preventDefault();
@@ -1019,6 +1045,16 @@ export function BlockEditor(props: PageEditorProps) {
       return;
     }
     if (field) {
+      // BSD-531: rechts neben dem Ende des Textes (auch in einer leeren Zeile) beginnt Ziehen eine Rechteck-Auswahl wie
+      // auf dem Board; ein bloßer Klick setzt den Cursor ans Ende. Wer im Text beginnt, markiert weiter Text.
+      const ownRow = field.closest<HTMLElement>(".bx2-row");
+      const isRowField = ownRow?.querySelector(":scope > [data-editable-id], :scope > .bx2-field-wrap > [data-editable-id]") === field;
+      if (editable && isRowField && !e.shiftKey && pastTextEnd(field, e.clientX, e.clientY)) {
+        e.preventDefault();
+        const id = field.dataset.editableId!;
+        startMarquee(e, { additive: mod, onClick: () => ctrl.setCaret(endCaret(store, id)) });
+        return;
+      }
       ctrl.clearSelection();
       return startTextDrag(e, field.dataset.editableId!);
     }
@@ -1030,19 +1066,21 @@ export function BlockEditor(props: PageEditorProps) {
     }
     // Leere Fläche unter dem letzten Block einer Spalte (die kürzere Spalte reicht bis zum Ende der Zeile): wie Notion
     // dort weiterschreiben – in einen leeren Absatz am Ende der Spalte, sonst einen neuen.
+    // BSD-531: Ziehen beginnt auch hier eine Rechteck-Auswahl (wie auf dem Board); nur ein bloßer Klick schreibt weiter.
     const colTail = t.closest<HTMLElement>(".bx2-col-tail");
     if (colTail && editable) {
       e.preventDefault();
       const col = colTail.closest<HTMLElement>(".bx2-column")?.dataset.columnId;
-      if (col) focusEndOf(col);
+      startMarquee(e, { additive: e.shiftKey || mod, onClick: () => { if (col) focusEndOf(col); } });
       return;
     }
-    // Klick rechts neben dem Text einer Zeile: Cursor ans Ende
+    // Klick rechts neben dem Text einer Zeile: Cursor ans Ende; Ziehen von dort: Rechteck-Auswahl (BSD-531)
     const row = t.closest<HTMLElement>(".bx2-row");
     const rowField = row?.querySelector<HTMLElement>(":scope > [data-editable-id], :scope > .bx2-field-wrap > [data-editable-id]");
     if (rowField && editable) {
       e.preventDefault();
-      ctrl.setCaret(endCaret(store, rowField.dataset.editableId!));
+      const id = rowField.dataset.editableId!;
+      startMarquee(e, { additive: e.shiftKey || mod, onClick: () => ctrl.setCaret(endCaret(store, id)) });
       return;
     }
     startMarquee(e, { additive: e.shiftKey || mod });
@@ -1090,6 +1128,11 @@ export function BlockEditor(props: PageEditorProps) {
     indicator.className = "bx2-drop";
     const ghost = doc.createElement("div");
     ghost.className = "bx2-ghost";
+    // BSD-532: eine durchsichtige Decke trägt den Greif-Cursor – statt „.bx2-is-dragging *“, das beim Start jedes
+    // Element der Seite neu berechnete (300 Blöcke: Start 100 → 25 ms in Chromium). Darunter ruht auch das Überfahren.
+    const cover = doc.createElement("div");
+    cover.className = "bx2-drag-cover";
+    let cancelled = false;
 
     const update = () => {
       frame = 0;
@@ -1131,22 +1174,39 @@ export function BlockEditor(props: PageEditorProps) {
         for (const x of ids) root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(x)}"]`)?.setAttribute("data-dragging", "");
         rows = measure(new Set(ids));
         ghost.textContent = ids.map((x) => plainText(store.blocks.get(x)?.text) || labelOf(store.blocks.get(x))).join(" · ").slice(0, 80) || "Block";
-        doc.body.append(indicator, ghost);
+        doc.body.append(cover, indicator, ghost);
         doc.documentElement.classList.add("bx2-is-dragging");
       }
       if (!frame) frame = requestAnimationFrame(update);
     };
-    const finish = (ev: PointerEvent) => {
+    const cleanup = () => {
       doc.removeEventListener("pointermove", onMove);
       doc.removeEventListener("pointerup", finish);
       doc.removeEventListener("pointercancel", finish);
+      doc.removeEventListener("keydown", onKey, true);
       if (frame) cancelAnimationFrame(frame);
-      // letzte Position sicher auswerten (schnelle Bewegungen, gedrosseltes rAF)
-      if (dragging) { last = { x: ev.clientX, y: ev.clientY }; update(); if (frame) cancelAnimationFrame(frame); }
+      frame = 0;
       indicator.remove();
       ghost.remove();
+      cover.remove();
       doc.documentElement.classList.remove("bx2-is-dragging");
       root.querySelectorAll("[data-dragging]").forEach((x) => x.removeAttribute("data-dragging"));
+    };
+    // BSD-532: Esc bricht das Ziehen ab – nichts bewegt sich, die Auswahl bleibt.
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key !== "Escape" || !dragging) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      cancelled = true;
+      cleanup();
+    };
+    const finish = (ev: PointerEvent) => {
+      if (cancelled) return;
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      // letzte Position sicher auswerten (schnelle Bewegungen, gedrosseltes rAF)
+      if (dragging) { last = { x: ev.clientX, y: ev.clientY }; update(); if (frame) cancelAnimationFrame(frame); }
+      cleanup();
       if (!dragging) {
         // Klick auf den Griff: Block wählen und Blockmenü öffnen (die Seite bewegt sich nicht)
         ctrl.select(ids);
@@ -1161,6 +1221,7 @@ export function BlockEditor(props: PageEditorProps) {
     doc.addEventListener("pointermove", onMove);
     doc.addEventListener("pointerup", finish);
     doc.addEventListener("pointercancel", finish);
+    doc.addEventListener("keydown", onKey, true);
   };
 
   /** Text-Auswahl, die einen anderen Block erreicht, wird zur Blockauswahl (wie Notion). */
@@ -1193,8 +1254,10 @@ export function BlockEditor(props: PageEditorProps) {
   /**
    * Rechteck-Auswahl. `additive` (⇧/⌘): zur bestehenden Auswahl hinzu. `fromMargin`: im Seitenrand begonnen – dann
    * zählt nur die Höhe (wie Notion, man muss nicht bis in die Textspalte ziehen). Rollt am Rand des Fensters weiter.
+   * `onClick`: was ein bloßer Klick ohne Ziehen tut (z. B. Cursor ans Zeilenende). BSD-531: Blockrahmen werden einmal
+   * zu Beginn vermessen; die Auswahl wird nur gesetzt, wenn sich die getroffenen Blöcke ändern (kein Neuzeichnen je Bild).
    */
-  const startMarquee = (e: { clientX: number; clientY: number }, opts: { additive?: boolean; fromMargin?: boolean; outside?: boolean } = {}) => {
+  const startMarquee = (e: { clientX: number; clientY: number }, opts: { additive?: boolean; fromMargin?: boolean; outside?: boolean; onClick?: () => void } = {}) => {
     const root = rootRef.current!;
     const doc = root.ownerDocument;
     const scroller = scrollParent(root) ?? doc.documentElement;
@@ -1206,7 +1269,17 @@ export function BlockEditor(props: PageEditorProps) {
     let box: HTMLDivElement | undefined;
     let frame = 0;
     let last = { x: e.clientX, y: e.clientY };
-    if (!opts.additive) ctrl.clearSelection();
+    let shown = "";
+    let current: string[] = [];
+    // BSD-531: Während des Ziehens färbt die Auswahl die Blöcke direkt im DOM (kein React-Durchlauf je Bild – in
+    // WebKit kostete das bei 300 Blöcken 300 ms je Bewegung); erst am Ende wird sie einmal in den Controller übernommen.
+    const painted = new Map<string, HTMLElement>();
+    const paint = (ids: readonly string[]) => {
+      const want = new Set(cmd.topLevel(store, ids));
+      for (const [id, el] of painted) if (!want.has(id)) { el.removeAttribute("data-selected"); painted.delete(id); }
+      for (const r of rows ?? []) if (want.has(r.id) && !painted.has(r.id) && !r.el.hasAttribute("data-selected")) { r.el.setAttribute("data-selected", ""); painted.set(r.id, r.el); }
+    };
+    if (!opts.additive && !opts.onClick) ctrl.clearSelection();
     const update = () => {
       frame = 0;
       const sb = scroller.getBoundingClientRect();
@@ -1222,15 +1295,24 @@ export function BlockEditor(props: PageEditorProps) {
       box!.style.height = `${bottom - top}px`;
       const hit = rows!.filter((r) => r.bottom > top && r.top < bottom && (opts.fromMargin || (r.right > left - 400 && r.left < right + 400))).map((r) => r.id);
       const all = base.length ? [...base, ...hit.filter((x) => !base.includes(x))] : hit;
-      if (all.length) ctrl.select(all, base.length ? baseAnchor : undefined);
-      else ctrl.clearSelection();
+      const key = all.join("\u0000");
+      if (key !== shown) {
+        shown = key;
+        current = all;
+        paint(all);
+      }
       if (last.y < sb.top + edge || last.y > sb.bottom - edge) frame = requestAnimationFrame(update);
     };
     const onMove = (ev: PointerEvent) => {
       last = { x: ev.clientX, y: ev.clientY };
       if (!box) {
         if (Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) < 4) return;
+        if (!opts.additive && opts.onClick) ctrl.clearSelection();
+        shown = opts.additive ? base.join("\u0000") : "";
+        current = [...base];
         rows = measure(new Set());
+        const active = doc.activeElement as HTMLElement | null;
+        if (active && active.isContentEditable) active.blur();
         box = doc.createElement("div");
         box.className = "bx2-marquee";
         doc.body.append(box);
@@ -1244,10 +1326,23 @@ export function BlockEditor(props: PageEditorProps) {
       doc.removeEventListener("pointerup", done);
       doc.removeEventListener("pointercancel", done);
       if (frame) cancelAnimationFrame(frame);
-      if (box) { last = { x: ev.clientX, y: ev.clientY }; update(); if (frame) cancelAnimationFrame(frame); }
+      if (box) {
+        last = { x: ev.clientX, y: ev.clientY };
+        update();
+        if (frame) cancelAnimationFrame(frame);
+        for (const el of painted.values()) el.removeAttribute("data-selected");
+        painted.clear();
+        if (current.length) ctrl.select(current, base.length ? baseAnchor : undefined);
+        else ctrl.clearSelection();
+      }
       box?.remove();
       doc.documentElement.classList.remove("bx2-is-selecting");
       // Ein bloßer Klick im Seitenrand gehört der Seite (z. B. „Klick unter den Inhalt schreibt am Ende weiter“).
+      if (!box && opts.onClick) {
+        if (!opts.additive) ctrl.clearSelection();
+        opts.onClick();
+        return;
+      }
       if (!box && !ctrl.selected.length && !opts.outside) root.focus({ preventScroll: true });
       if (box && ctrl.selected.length) root.focus({ preventScroll: true });
     };
@@ -1269,11 +1364,10 @@ export function BlockEditor(props: PageEditorProps) {
       const t = e.target instanceof Element ? e.target : null;
       if (!t || root.contains(t) || !scroller.contains(t)) return;
       if (t.closest("button, a, input, textarea, select, label, [contenteditable], [role=menu], [role=dialog], [role=toolbar], [data-embed], [data-no-marquee], .bx2-menu")) return;
-      // Nur auf Höhe des Editors oder darunter – der Seitenkopf (Titel, Icon, Cover) behält seine Klicks.
+      // Elija 17.11., wie in Notion: Ziehen beginnt überall auf der Seite – auch über dem Titel, auf der Metazeile oder
+      // den Backlinks – und wählt immer nur Blöcke. Titel, Knöpfe und Links (oben ausgenommen) behalten ihre Klicks;
+      // Text der Oberfläche wird dabei nie markiert (styles.css: nicht markierbar).
       const r = root.getBoundingClientRect();
-      if (e.clientY < r.top - 24) return;
-      // Text außerhalb des Editors (z. B. Hinweise) bleibt markierbar.
-      if (t !== scroller && t.childNodes.length && [...t.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())) return;
       // kein preventDefault: der Klick selbst (ohne Ziehen) bleibt für die Seite
       startMarquee(e, { additive: e.shiftKey || e.metaKey || e.ctrlKey, fromMargin: e.clientX < r.left || e.clientX > r.right, outside: true });
     };
@@ -1356,7 +1450,7 @@ export function BlockEditor(props: PageEditorProps) {
       {notice ? (
         <div className="bx-notice" role="status" data-testid="editor-notice">
           <span>{notice}</span>
-          <BasedButton size="sm" variant="ghost" label="Dismiss" onClick={() => setNotice(undefined)} />
+          <BasedButton variant="ghost" label="Dismiss" onClick={() => setNotice(undefined)} />
         </div>
       ) : null}
     </EditorCtx.Provider>
@@ -1592,15 +1686,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
     case "text": case "quote":
       return <TextField block={b} />;
     case "code":
-      // BSD-407 Teil 6.2: Umbruch nur mit `wrap: true` (Standard ohne Umbruch wie Notion, Entscheidung BSD-340)
-      return (
-        <div className="bx2-codewrap" data-wrap={b.props?.wrap === true ? "" : undefined}>
-          <TextField block={b} />
-          <CodeTools block={b} />
-          {b.props?.language === "mermaid" && plainText(b.text).length > 0 ? <MermaidPreview code={plainText(b.text)} /> : null}
-          {b.props?.language === "html" && plainText(b.text).trim().length > 0 ? <HtmlPreview code={plainText(b.text)} /> : null}
-        </div>
-      );
+      return <CodeBlock block={b} />;
     case "bulletedList":
       return <><span className="bx2-marker" contentEditable={false}>{["•", "◦", "▪"][depth % 3]}</span><TextField block={b} /></>;
     case "numberedList":
@@ -1639,6 +1725,14 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <hr className="bx2-divider" />;
     case "page": case "databasePage": case "linkToPage": {
       const target = b.type === "linkToPage" ? b.props?.linkTarget : b.id;
+      if (b.type === "page" && isBoardPage(b) && props.renderBoard) {
+        return (
+          <div className="bx2-embed bx2-board" data-embed="" data-no-marquee="" contentEditable={false} data-testid="board-block">
+            <PageLink target={target} />
+            <div className="bx2-board-body">{props.renderBoard({ blockID: b.id, pageID: b.id })}</div>
+          </div>
+        );
+      }
       return <PageLink target={target} />;
     }
     case "databaseInline": {
@@ -1716,8 +1810,8 @@ function SyncedBlockView({ block: b, depth }: { block: Block; depth: number }) {
     <div className="bx2-embed bx2-synced" data-embed="" data-synced-copy={isCopy ? "" : undefined} data-trashed={trashed ? "true" : undefined}>
       {isCopy ? (
         <div className="bx2-synced-bar" contentEditable={false}>
-          {home && !trashed ? <BasedButton size="sm" variant="ghost" label={"Original in " + homeTitle} onClick={() => props.onOpenPage?.(home)} /> : null}
-          {editable ? <BasedButton size="sm" variant="ghost" label="Unsync" onClick={() => unsyncCopy(store, b.id)} /> : null}
+          {home && !trashed ? <BasedButton variant="ghost" label={"Original in " + homeTitle} onClick={() => props.onOpenPage?.(home)} /> : null}
+          {editable ? <BasedButton variant="ghost" label="Unsync" onClick={() => unsyncCopy(store, b.id)} /> : null}
         </div>
       ) : null}
       {trashed ? (
@@ -1794,7 +1888,7 @@ function BookmarkCard({ block: b, url }: { block: Block; url: string }) {
       {card}
       {editable && fetchLink ? (
         <span className="bx2-bookmark-actions">
-          <BasedButton size="sm" variant="ghost" busy={busy} onClick={() => void fetchPreview()}
+          <BasedButton variant="ghost" busy={busy} onClick={() => void fetchPreview()}
             label={busy ? "Fetching preview…" : meta?.title ? "Refresh preview" : "Fetch preview"} />
           {note ? <span className="bx2-muted" role="status">{note}</span> : null}
         </span>
@@ -2135,8 +2229,8 @@ function TableBlock({ block: b }: { block: Block }) {
           <button type="button" className="bx2-table-add" onClick={() => cmd.addTableColumn(store, b.id)} aria-label="Add column">+ Column</button>
           {at ? (
             <>
-              <BasedButton size="sm" variant="ghost" label="Delete row" disabled={rows.length <= 1} onClick={deleteRow} />
-              <BasedButton size="sm" variant="ghost" label="Delete column" disabled={m.cols <= 1} onClick={deleteColumn} />
+              <BasedButton variant="ghost" label="Delete row" disabled={rows.length <= 1} onClick={deleteRow} />
+              <BasedButton variant="ghost" label="Delete column" disabled={m.cols <= 1} onClick={deleteColumn} />
             </>
           ) : null}
         </span>
@@ -2216,25 +2310,25 @@ function BlockAIBox({ ai, req, onClose }: { ai: EditorAI; req: AIState; onClose:
             onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); run(prompt); } }} />
           {req.selection ? (
             <span className="bx2-ai-actions" role="group" aria-label="Edit selection">
-              {SELECTION_ACTIONS.map((a) => <BasedButton key={a.label} size="sm" variant="ghost" label={a.label} onClick={() => run(a.prompt)} />)}
+              {SELECTION_ACTIONS.map((a) => <BasedButton key={a.label} variant="ghost" label={a.label} onClick={() => run(a.prompt)} />)}
             </span>
           ) : null}
         </>
       ) : state.phase === "busy" ? (
-        <span className="bx2-ai-status" role="status" aria-busy="true">Writing…<BasedButton size="sm" variant="ghost" label="Stop" onClick={discard} /></span>
+        <span className="bx2-ai-status" role="status" aria-busy="true">Writing…<BasedButton variant="ghost" label="Stop" onClick={discard} /></span>
       ) : state.phase === "failed" ? (
         <>
           <span className="bx2-ai-status" role="alert">{state.message}</span>
-          <span className="bx2-ai-actions"><BasedButton size="sm" label="Try again" onClick={() => run(state.prompt)} /><BasedButton size="sm" variant="ghost" label="Discard" onClick={discard} /></span>
+          <span className="bx2-ai-actions"><BasedButton label="Try again" onClick={() => run(state.prompt)} /><BasedButton variant="ghost" label="Discard" onClick={discard} /></span>
         </>
       ) : (
         <>
           <div className="bx2-ai-preview" data-testid="ai-preview">{state.text}</div>
           <span className="bx2-ai-actions">
-            {req.selection ? <BasedButton size="sm" variant="primary" label="Replace selection" onClick={() => finish("replace")} /> : null}
-            <BasedButton size="sm" variant={req.selection ? "secondary" : "primary"} label={req.selection ? "Insert below" : "Insert"} onClick={() => finish("below")} />
-            <BasedButton size="sm" variant="ghost" label="Try again" onClick={() => run(state.prompt)} />
-            <BasedButton size="sm" variant="ghost" label="Discard" onClick={discard} />
+            {req.selection ? <BasedButton variant="primary" label="Replace selection" onClick={() => finish("replace")} /> : null}
+            <BasedButton variant={req.selection ? "secondary" : "primary"} label={req.selection ? "Insert below" : "Insert"} onClick={() => finish("below")} />
+            <BasedButton variant="ghost" label="Try again" onClick={() => run(state.prompt)} />
+            <BasedButton variant="ghost" label="Discard" onClick={discard} />
           </span>
         </>
       )}
@@ -2305,15 +2399,15 @@ function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
   return (
     <div className="bx2-embed bx2-btn" data-embed="" contentEditable={false} data-editing={editing ? "" : undefined}>
       <span className="bx2-btn-row">
-        <BasedButton label={buttonLabel(b)} size="sm" busy={busy} disabled={!editable} onClick={() => void run()} />
-        {editable ? <BasedButton label={editing ? "Done" : "Edit"} variant="ghost" size="sm" ariaLabel={editing ? "Close button settings" : "Edit button"} onClick={() => setEditing((o) => !o)} /> : null}
+        <BasedButton label={buttonLabel(b)} busy={busy} disabled={!editable} onClick={() => void run()} />
+        {editable ? <BasedButton label={editing ? "Done" : "Edit"} variant="ghost" ariaLabel={editing ? "Close button settings" : "Edit button"} onClick={() => setEditing((o) => !o)} /> : null}
         {note ? <span className="bx2-muted" role="status">{note}</span> : null}
       </span>
       {pause ? (
         <span className="bx2-btn-confirm" role="alertdialog" aria-label="Confirm">
           <span>{pause.message}</span>
-          <BasedButton label="Cancel" variant="ghost" size="sm" onClick={() => setPause(undefined)} />
-          <BasedButton label="Continue" variant="primary" size="sm" onClick={() => void run(pause.next, pause.added)} />
+          <BasedButton label="Cancel" variant="ghost" onClick={() => setPause(undefined)} />
+          <BasedButton label="Continue" variant="primary" onClick={() => void run(pause.next, pause.added)} />
         </span>
       ) : null}
       {editing ? <ButtonSetup block={b} depth={depth} onDone={() => setEditing(false)} /> : null}
@@ -2361,12 +2455,12 @@ function ButtonSetup({ block: b, depth, onDone }: { block: Block; depth: number;
             ) : <span className="bx2-muted">{buttonActionName(st.kind)} ({st.kind})</span>}
             {st.kind === "addPage" ? (
               <>
-                <BasedButton size="sm" label={st.targetID ? dbTitle(st.targetID) : "Choose a database…"} onClick={() => setPicking({ step: i, kind: "database" })} />
+                <BasedButton label={st.targetID ? dbTitle(st.targetID) : "Choose a database…"} onClick={() => setPicking({ step: i, kind: "database" })} />
                 <input className="bx2-link-input" aria-label="Page name" placeholder="Page name" defaultValue={st.title ?? ""}
                   onBlur={(e) => { if ((st.title ?? "") !== e.target.value) change(i, { title: e.target.value }); }} />
               </>
             ) : null}
-            {st.kind === "openPage" ? <BasedButton size="sm" label={st.targetID ? pageTitle(st.targetID) : "Choose a page…"} onClick={() => setPicking({ step: i, kind: "page" })} /> : null}
+            {st.kind === "openPage" ? <BasedButton label={st.targetID ? pageTitle(st.targetID) : "Choose a page…"} onClick={() => setPicking({ step: i, kind: "page" })} /> : null}
             {st.kind === "openAdded" ? (
               <select className="bx2-link-input" aria-label="Which page" value={st.step === undefined ? "" : String(st.step)}
                 onChange={(e) => change(i, { step: e.target.value === "" ? undefined : Number(e.target.value) })}>
@@ -2392,13 +2486,13 @@ function ButtonSetup({ block: b, depth, onDone }: { block: Block; depth: number;
           <option value="">+ Add step</option>
           {BUTTON_ACTION_KINDS.map((k) => <option key={k} value={k}>{buttonActionName(k)}</option>)}
         </select>
-        <BasedButton label="Done" variant="primary" size="sm" onClick={onDone} />
+        <BasedButton label="Done" variant="primary" onClick={onDone} />
       </span>
       {hasTemplate ? (
         <div className="bx2-btn-template" aria-label="Blocks to insert" data-testid="button-template">
           <span className="bx2-btn-caption">Blocks to insert</span>
           {kids.length ? <BlockList parent={b.id} depth={depth + 1} /> : (
-            <BasedButton size="sm" variant="ghost" label="Add a block" onClick={() => {
+            <BasedButton variant="ghost" label="Add a block" onClick={() => {
               ctrl.apply(cmd.insertBlock(store, { inside: b.id }, "text"));
             }} />
           )}
@@ -2480,7 +2574,53 @@ export let lastCodeCopy = "";
  * BSD-407 Teil 6.2: Leiste oben rechts im Codeblock wie Notion und der alte Editor – Sprache, „Wrap code“ (an/aus) und
  * „Copy code“. Umbruch und Kopieren erscheinen beim Überfahren oder mit Tastaturfokus; die Leiste verschiebt nichts.
  */
-function CodeTools({ block: b }: { block: Block }) {
+const CODE_VIEW_BUTTONS: readonly { view: CodeView; label: string; icon: MenuIconName }[] = [
+  { view: "code", label: "Show code", icon: "code" },
+  { view: "split", label: "Show code and result", icon: "viewSplit" },
+  { view: "preview", label: "Show result only", icon: "viewPreview" },
+];
+
+/**
+ * Codeblock. Sprachen mit Ergebnis (HTML, Mermaid) haben drei Ansichten wie Notion: Code, Code + Ergebnis, nur Ergebnis.
+ * In „nur Ergebnis“ ist der Code ausgeblendet, bleibt aber erreichbar (Pfeiltasten, Knopf „Show code“) und erscheint,
+ * solange die Schreibmarke darin steht.
+ */
+function CodeBlock({ block: b }: { block: Block }) {
+  const { store } = useCtx();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [full, setFull] = useState(false);
+  const code = plainText(b.text);
+  const kind = codePreviewKind(b.props?.language);
+  const view = codeView(b.props);
+  const hasResult = kind !== undefined && (kind === "html" ? code.trim().length > 0 : code.length > 0);
+  const showResult = hasResult && view !== "code";
+  const codeHidden = showResult && view === "preview" && !editing;
+  const inField = (t: EventTarget) => t instanceof Element && t.closest("[data-editable-id]") !== null;
+  const setView = (v: CodeView) => {
+    cmd.setBlockProps(store, [b.id], { codeView: v }, "Code view");
+    if (v !== "preview") wrapRef.current?.querySelector<HTMLElement>(":scope > [data-editable-id]")?.focus({ preventScroll: true });
+    else if (wrapRef.current?.contains(document.activeElement)) (document.activeElement as HTMLElement | null)?.blur?.();
+  };
+  // BSD-407 Teil 6.2: Umbruch nur mit `wrap: true` (Standard ohne Umbruch wie Notion, Entscheidung BSD-340)
+  return (
+    <div ref={wrapRef} className="bx2-codewrap" data-wrap={b.props?.wrap === true ? "" : undefined} data-view={view}
+      data-code-hidden={codeHidden ? "" : undefined} data-testid="code-block"
+      onFocus={(e) => { if (inField(e.target)) setEditing(true); }} onBlur={(e) => { if (inField(e.target)) setEditing(false); }}>
+      <TextField block={b} />
+      <CodeTools block={b} view={hasResult ? view : undefined} onView={setView} onFull={hasResult ? () => setFull(true) : undefined} />
+      {showResult && kind === "mermaid" ? <MermaidPreview code={code} /> : null}
+      {showResult && kind === "html" ? <HtmlPreview code={code} /> : null}
+      {hasResult ? (
+        <BasedDialog open={full} onClose={() => setFull(false)} title={kind === "html" ? "HTML" : "Diagram"} width={960} testID="code-full-view">
+          {full ? (kind === "html" ? <HtmlPreview code={code} fill /> : <MermaidPreview code={code} />) : null}
+        </BasedDialog>
+      ) : null}
+    </div>
+  );
+}
+
+function CodeTools({ block: b, view, onView, onFull }: { block: Block; view?: CodeView | undefined; onView?: (v: CodeView) => void; onFull?: (() => void) | undefined }) {
   const { store, editable } = useCtx();
   const wrap = b.props?.wrap === true;
   const [copied, setCopied] = useState<"ok" | "failed" | undefined>();
@@ -2499,6 +2639,10 @@ function CodeTools({ block: b }: { block: Block }) {
     <span className="bx2-code-tools" contentEditable={false}>
       <CodeLanguage block={b} />
       <span className="bx2-code-actions" onMouseDown={(e) => e.preventDefault() /* Schreibmarke bleibt, wo sie ist */}>
+        {editable && view && onView ? CODE_VIEW_BUTTONS.map((v) => (
+          <BasedIconButton key={v.view} label={v.label} pressed={view === v.view} icon={<MenuIcon name={v.icon} />} testID={`code-view-${v.view}`} onClick={() => onView(v.view)} />
+        )) : null}
+        {onFull ? <BasedIconButton label="Open full view" icon={<MenuIcon name="expand" />} testID="code-full" onClick={onFull} /> : null}
         {editable ? (
           <BasedIconButton label="Wrap code" pressed={wrap} icon={<MenuIcon name="wrap" />}
             onClick={() => cmd.setBlockProps(store, [b.id], { wrap: !wrap }, "Wrap code")} />
@@ -2527,11 +2671,11 @@ function CodeLanguage({ block: b }: { block: Block }) {
       <button type="button" className="bx2-code-lang-btn" disabled={!editable} aria-haspopup="listbox" onClick={() => setOpen((o) => !o)}>{name}</button>
       {open ? (
         <span className="bx2-menu bx2-code-menu" role="listbox" aria-label="Language">
-          <input autoFocus className="bx2-link-input" aria-label="Search languages" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)}
+          <input autoFocus className="bx2-menu-search" aria-label="Search languages" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setOpen(false); } else if (e.key === "Enter") { e.preventDefault(); pick(list[0]?.id); } }} onBlur={() => setTimeout(() => setOpen(false), 120)} />
-          <button type="button" role="option" aria-selected={!cur} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(undefined)}><span className="bx2-menu-text">Plain text</span></button>
-          {list.slice(0, 40).map((l) => (
-            <button key={l.id} type="button" role="option" aria-selected={cur === l.id} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(l.id)}><span className="bx2-menu-text">{l.name}</span></button>
+          <button type="button" role="option" aria-selected={!cur} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(undefined)}><span className="bx2-menu-text">Plain text</span>{!cur ? <span className="bx2-menu-check" aria-hidden="true">✓</span> : null}</button>
+          {list.filter((l) => l.name !== "Plain text").slice(0, 40).map((l) => (
+            <button key={l.id} type="button" role="option" aria-selected={cur === l.id} className="bx2-menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => pick(l.id)}><span className="bx2-menu-text">{l.name}</span>{cur === l.id ? <span className="bx2-menu-check" aria-hidden="true">✓</span> : null}</button>
           ))}
         </span>
       ) : null}
@@ -2550,16 +2694,57 @@ function MermaidPreview({ code }: { code: string }) {
   return <div ref={ref} className="bx2-mermaid" contentEditable={false} data-embed="" />;
 }
 
-// BSD-407: HTML-Codeblock mit Vorschau wie im alten Editor (htmlPreviewFrame: sandbox ohne same-origin, CSP, kein Netz)
-function HtmlPreview({ code }: { code: string }) {
-  const ref = useRef<HTMLDivElement>(null);
+/** Zählt hoch, wenn die App zwischen hell und dunkel wechselt (Einstellung oder System). */
+function useSchemeTick(): string {
+  const [scheme, setScheme] = useState(() => hostScheme());
   useEffect(() => {
-    const host = ref.current;
-    if (!host) return;
-    const t = setTimeout(() => host.replaceChildren(htmlPreviewFrame(code)), 250);
+    const update = () => setScheme(hostScheme());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const mq = globalThis.matchMedia?.("(prefers-color-scheme: dark)");
+    mq?.addEventListener("change", update);
+    return () => { mo.disconnect(); mq?.removeEventListener("change", update); };
+  }, []);
+  return scheme;
+}
+
+/**
+ * Ergebnis eines HTML-Codeblocks (htmlPreview.ts): Rahmen mit sandbox ohne same-origin, CSP, kein Netz. Ohne Rand und
+ * Beschriftung, Schrift und Farbe der Seite, Höhe nach dem Inhalt; `fill` (Vollansicht) füllt stattdessen den Dialog.
+ */
+function HtmlPreview({ code, fill = false }: { code: string; fill?: boolean }) {
+  const host = useRef<HTMLDivElement>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const scheme = useSchemeTick();
+  const [doc, setDoc] = useState<string>();
+  const [height, setHeight] = useState<number>();
+  const first = useRef(true);
+  useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    const make = () => setDoc(htmlPreviewDoc(code, htmlThemeAt(el)));
+    if (first.current) { first.current = false; make(); return; }
+    const t = setTimeout(make, 250);
     return () => clearTimeout(t);
-  }, [code]);
-  return <div ref={ref} className="bx2-html-preview" contentEditable={false} data-embed="" />;
+  }, [code, scheme]);
+  useEffect(() => {
+    if (fill) return;
+    const onMessage = (e: MessageEvent) => {
+      if (!frame.current || e.source !== frame.current.contentWindow) return;
+      const h = htmlPreviewHeight(e.data);
+      if (h !== undefined) setHeight(h);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [fill]);
+  return (
+    <div ref={host} className="bx2-html-preview" contentEditable={false} data-embed="" data-fill={fill ? "" : undefined} data-sized={height !== undefined ? "" : undefined} data-testid="html-preview">
+      {doc !== undefined ? (
+        <iframe ref={frame} className="bx-html-preview" sandbox="allow-scripts" referrerPolicy="no-referrer" title="HTML preview" srcDoc={doc}
+          style={{ colorScheme: scheme, ...(!fill && height !== undefined ? { height } : {}) }} />
+      ) : null}
+    </div>
+  );
 }
 
 function labelOf(b: Block | undefined): string {
@@ -2643,18 +2828,34 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
 
 // MARK: Menüs
 
-interface SlashState { id: string; at: number; query: string; index: number; x: number; y: number }
+interface SlashState { id: string; at: number; query: string; index: number; x: number; y: number; above?: number }
 
-/** Hält ein Menü am Cursor ganz im Fenster (gemessen, nicht geschätzt): rückt nach oben/links, wenn unten/rechts kein Platz ist. */
-function useFitInWindow(ref: { current: HTMLElement | null }, x: number, y: number, count: number) {
+/**
+ * Hält ein Menü am Cursor ganz im Fenster (gemessen, nicht geschätzt): rückt nach links, wenn rechts kein Platz ist.
+ * BSD-498: Mit `above` (Oberkante der Zeile) klappt es über die Zeile, wenn unten zu wenig und oben mehr Platz ist –
+ * statt sich über die Zeile zu legen, in der man tippt. Die gewählte Seite bleibt beim Filtern gleich.
+ */
+function useFitInWindow(ref: { current: HTMLElement | null }, x: number, y: number, count: number, above?: number) {
+  const side = useRef<{ y: number; up: boolean } | undefined>(undefined);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const pad = 8;
+    el.style.maxHeight = "";
     const r = el.getBoundingClientRect();
     el.style.left = `${Math.max(pad, Math.min(x, window.innerWidth - r.width - pad))}px`;
-    el.style.top = `${Math.max(pad, Math.min(y, window.innerHeight - r.height - pad))}px`;
-  }, [ref, x, y, count]);
+    if (above === undefined) {
+      el.style.top = `${Math.max(pad, Math.min(y, window.innerHeight - r.height - pad))}px`;
+      return;
+    }
+    const roomBelow = window.innerHeight - pad - y;
+    const roomAbove = above - pad;
+    if (side.current?.y !== y) side.current = { y, up: r.height > roomBelow && roomAbove > roomBelow };
+    const room = side.current.up ? roomAbove : roomBelow;
+    const height = Math.min(r.height, room);
+    if (height < r.height) el.style.maxHeight = `${Math.max(0, room)}px`;
+    el.style.top = `${side.current.up ? above - height : y}px`;
+  }, [ref, x, y, count, above]);
 }
 
 function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; state: SlashState; onChoose: (i: SlashItem) => void; onHover: (i: number) => void }) {
@@ -2662,7 +2863,7 @@ function SlashMenu({ items, state, onChoose, onHover }: { items: SlashItem[]; st
   useLayoutEffect(() => {
     ref.current?.querySelector(`[data-index="${state.index}"]`)?.scrollIntoView({ block: "nearest" });
   }, [state.index]);
-  useFitInWindow(ref, state.x, state.y, items.length);
+  useFitInWindow(ref, state.x, state.y, items.length, state.above);
   let group = "";
   return (
     <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Blocks" data-testid="slash-menu" style={{ left: state.x, top: state.y }} onPointerDown={(e) => e.preventDefault()}>
@@ -2818,7 +3019,7 @@ function BlockMenu({ id, x, y, view0, onClose, onMove }: { id: string; x: number
   }
   // „Page“ (⌘⌥9) steht wie im alten Editor unter „Turn into“.
   // BSD-407 Teil 4: auch „Block equation“ (Text wird TeX) wie im alten Editor.
-  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => s.type === "page" || s.type === "equation" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
+  const targets = editable && turnable ? SLASH_ITEMS.filter((s) => (s.type === "page" && !s.create) || s.type === "equation" || (cmd.TEXT_TYPES.has(s.type) && !s.page && s.props?.color === undefined && !s.props?.language)) : [];
   const runTurn = (s: (typeof SLASH_ITEMS)[number]) => {
     if (s.type === "equation") return void ctrl.apply(cmd.turnIntoEquation(store, ids));
     if (s.type !== "page") return void cmd.turnInto(store, ids, s.type, s.props ?? {});
@@ -2939,9 +3140,9 @@ function FormatBar({ x, y, caret, onMark, onColor, onAI, onLink, onEquation, onT
   return (
     <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 48) }} onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("input")) e.preventDefault(); }}>
       {turnable ? (
-        <BasedButton size="sm" variant="ghost" label={blockTypeLabel(b)} ariaLabel={"Turn into · " + blockTypeLabel(b)} icon={<MenuIcon name="turn" />} onClick={onTurn} />
+        <BasedButton variant="ghost" label={blockTypeLabel(b)} ariaLabel={"Turn into · " + blockTypeLabel(b)} icon={<MenuIcon name="turn" />} onClick={onTurn} />
       ) : null}
-      {onAI ? <BasedButton size="sm" variant="ghost" label="Ask AI" onClick={onAI} /> : null}
+      {onAI ? <BasedButton variant="ghost" label="Ask AI" onClick={onAI} /> : null}
       <span className="bx2-format-sep" aria-hidden="true" />
       {items.map((it) => <BasedIconButton key={it.m} label={it.label} tooltip={`${it.label} (${it.key})`} pressed={on(it.m)} icon={<MenuIcon name={it.icon} />} onClick={() => onMark(it.m)} testID={"format-" + it.m} />)}
       <BasedIconButton label="Equation" tooltip="Equation" icon={<MenuIcon name="sqrt" />} onClick={onEquation} testID="format-equation" />
@@ -3037,12 +3238,12 @@ function DatePopover({ state, onChange, onClose }: { state: { id: string; from: 
   );
 }
 // `trigger`: „@“ (Seiten und Daten) oder „[[“ (nur Seiten, wie im alten Editor).
-interface MentionState { id: string; at: number; trigger: "@" | "[["; query: string; index: number; x: number; y: number; items: MentionItem[] }
+interface MentionState { id: string; at: number; trigger: "@" | "[["; query: string; index: number; x: number; y: number; above?: number; items: MentionItem[] }
 
 function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoose: (r: MentionItem) => void; onHover: (i: number) => void }) {
   const firstDate = state.items.findIndex((x) => x.kind === "date");
   const ref = useRef<HTMLDivElement>(null);
-  useFitInWindow(ref, state.x, state.y, state.items.length);
+  useFitInWindow(ref, state.x, state.y, state.items.length, state.above);
   return (
     <div ref={ref} className="bx2-menu bx2-slash" role="listbox" aria-label="Mention a page" data-testid="mention-menu" style={{ left: state.x, top: state.y }} onPointerDown={(e) => e.preventDefault()}>
       {state.items.length && state.items[0]!.kind === "page" ? <div className="bx2-menu-label">Link to page</div> : null}
@@ -3092,6 +3293,23 @@ function LinkPopover({ x, y, value, onDone }: { x: number; y: number; value: str
 
 const R = (c: Caret): EditorTextRange => ({ blockId: c.id, from: c.from, to: c.to });
 const textLen = (store: WorkspaceStore, id: string) => plainText(store.blocks.get(id)?.text).length;
+
+/**
+ * BSD-531: Liegt der Punkt hinter dem Ende des Textes eines Feldes – rechts neben der letzten Zeile oder in einem leeren
+ * Feld? Dort beginnt Ziehen eine Rechteck-Auswahl statt einer Textmarkierung (wie Notion). Ein Feld, dessen Text gar
+ * keine Zeile hat (leer), zählt ganz als „dahinter“.
+ */
+export function pastTextEnd(field: HTMLElement, x: number, y: number): boolean {
+  if (!field.textContent) return true;
+  const range = field.ownerDocument.createRange();
+  range.selectNodeContents(field);
+  const rects = [...range.getClientRects()].filter((r) => r.width > 0 || r.height > 0);
+  if (rects.length === 0) return true;
+  const lastLine = rects.reduce((a, r) => (r.bottom > a.bottom + 1 || (Math.abs(r.bottom - a.bottom) <= 1 && r.right > a.right) ? r : a));
+  // nur die letzte Zeile; darüber gehört der Raum rechts noch zum umbrechenden Text
+  if (y < lastLine.top - 1) return false;
+  return x > lastLine.right + 8;
+}
 
 function endCaret(store: WorkspaceStore, id: string): Caret {
   const n = textLen(store, id);
