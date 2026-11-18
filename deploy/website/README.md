@@ -53,6 +53,26 @@ docker compose exec waitlist node --no-warnings waitlist.mjs purge         # Ein
 Die Datenbank liegt im Volume `waitlist-data` (`/data/waitlist.sqlite`). Sicherung:
 `docker compose exec -T waitlist sh -c 'cat /data/waitlist.sqlite' > waitlist-$(date +%F).sqlite`.
 
+## Beta-Einladungen (BSD-553)
+
+Die Mac-Beta gibt es nur mit persönlichem Link: `https://basednotes.app/download?i=<token>`, 30 Tage gültig,
+höchstens 5 Downloads. `GET /api/download?i=<token>` prüft das Token und liefert `/srv/based-beta/Based-Notes-Beta.dmg`
+(im Container `/beta`). Die DMG lädt der Workflow „Desktop Beta“ per rsync hoch; einrichten mit
+`bash ci/setup-beta-deploy.sh root@<server>` (Schlüssel, Benutzer `based-beta`, Secrets). Ohne die Secrets hängt der
+Workflow die DMG wie früher öffentlich an die Releases.
+
+```bash
+# im Ordner deploy/website (bzw. deploy/website/edge auf dem Server mit edge-caddy)
+docker compose exec waitlist node --no-warnings waitlist.mjs invite a@b.c          # Link ausgeben (vorhandener wird wiederverwendet)
+docker compose exec waitlist node --no-warnings waitlist.mjs invite a@b.c --new    # alten Link sperren, neuen ausgeben
+docker compose exec -T waitlist node --no-warnings waitlist.mjs invite --wave - < welle1.txt   # eine Adresse pro Zeile, CSV zurück
+docker compose exec waitlist node --no-warnings waitlist.mjs invites               # Liste mit Status und Downloads
+docker compose exec waitlist node --no-warnings waitlist.mjs revoke a@b.c          # Link sperren
+```
+
+`invites` meldet am Ende, ob die DMG auf dem Server liegt. Ohne DMG antwortet der Download mit 503 und zählt nichts.
+`purge` löscht Einladungen 30 Tage nach Ablauf (steht so in der Datenschutzerklärung).
+
 ## Später: based-server auf derselben Maschine
 
 Den Block `sync.basednotes.app` in `Caddyfile` einkommentieren und den Dienst `based` aus `deploy/docker-compose.yml`

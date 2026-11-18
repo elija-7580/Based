@@ -173,6 +173,8 @@ export const blockProps = z.looseObject({
   checked: z.boolean().optional(), color: tColor.optional(), language: z.string().optional(), wrap: z.boolean().optional(),
   /** Codeblock mit Ergebnis (HTML, Mermaid): „code“ | „split“ | „preview“ (editor/syntax.ts codeView). */
   codeView: z.string().optional(),
+  /** BSD-535 (nur TS-Stack): von Hand gezogene Höhe des HTML-Ergebnisses in CSS-Pixeln (Breite: `width`). */
+  height: z.number().optional(),
   caption: richText.optional(), url: z.string().optional(), asset: assetRef.optional(), icon: pageIcon.optional(),
   cover: pageCover.optional(), isOpen: z.boolean().optional(), toggleable: z.boolean().optional(), expression: z.string().optional(),
   ratio: z.number().optional(), tableColumns: int.optional(), tableHeaderRow: z.boolean().optional(), tableHeaderColumn: z.boolean().optional(),

@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 40 (Nachtlauf 2026-11-17, Lauf ab 14:01, TS-Stack, Abschnitt direkt unten; Pass 39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 41 (Nachtlauf 2026-11-18, TS-Stack, Abschnitt direkt unten; Pass 40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,25 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-18 (Pass 41, TS-Stack, Beta-Sprint)
+
+Merges nach main (Hauptlauf, je run-ts --fast auf dem Merge grün): a2ca7394, a1e901a0, e0015d60, f0f870d0, bb51995e (dazu a11y/editor-passthrough in Chromium + WebKit), 32cbb955, 4eb16497, 2b6d4e09, e28c12ab, a23912d2, c153c6ae. Schicht A 03:13–06:49, Schicht B 03:13–06:23; beide früh fertig, weil nur noch Einträge „frühestens ab 24.11.“ offen waren. Keine Kollisionen.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-544 Rot auf main: a11y Tab-Durchlauf, editor-passthrough Notion-Import (P0) | ✅ | gewollte Änderungen vom 17.11.; Tabelle meldet aktive Zelle per aria-activedescendant; kein Datenfehler |
+| BSD-514 App heißt „Based Notes Beta“ | 🟡 | Mac-Test; Bundle-ID, Datenordner, Kanal, appName-Kennung und Download-Link unverändert |
+| BSD-522 Herkunft pro Block und Seite im Datenformat | ✅ | optionale Felder, alte Daten lesen sich unverändert; Agenten schreiben „ai“, keine Anzeige |
+| BSD-542 Beta-latest.json nur Kurzfassung | 🟡 | Mac-Test (Install-Knopf in 0.2.2–0.2.4 erreichbar) |
+| BSD-543 CSV-Import: „COVID-19“ bleibt Text | ✅ | aus der Prüfung (Schritt 5) |
+| BSD-515 Teil 1 Library/Graph mit „Fast start“ | 🟡 | Teil 2 blockiert: FTS5 oder Dateisuche (Frage an Elija) |
+| BSD-531 Rechteck-Auswahl / BSD-532 Blöcke ziehen | 🟡 | Mac-Test; p95 28 ms bei 300 Blöcken, Ziehstart ~20 ms |
+| BSD-535 HTML-Block: Größe ziehen, HTML-Datei öffnen/ablegen | 🟡 | Mac-Test; Mermaid-Standard offen (Frage) |
+| BSD-536 Tabelle: Zeichen beim Lostippen | ✅ | Puffer bis das Zellenfeld Fokus hat; Test 10× |
+| BSD-525/527/528/529/530 Element-System 1, 3–6 | ✅ | Bausteine, ein Menü-Aussehen, 14 px Klickfläche, drei Animationen, App-Köpfe |
+| BSD-509 Einstellungen-Zeile / BSD-524 a11y-Foto-Test / BSD-545 Long-Poll-Test / BSD-547 WebKit database-click | ✅ | Tests stabil |
+| BSD-533 Auswahl wie in Notion | 🟡 | Mac-Test (Code seit 17.11. auf main) |
 
 ## Nachtlauf 2026-11-17 (Pass 40, TS-Stack, Beta-Sprint, Lauf ab 14:01)
 

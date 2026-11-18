@@ -626,7 +626,7 @@ class Component extends DCLogic {
       whenTabs: [['beta', 'Now, in the Mac beta'], ['release', 'At release']].map(([id, t]) => ({ t, sel: s.when === id ? 'true' : 'false', bg: s.when === id ? 'var(--bg)' : 'transparent', sh: s.when === id ? 'var(--shadow-panel)' : 'none', pick: () => this.setState({ when: id }) })),
       whenTitle: s.when === 'beta' ? 'On your Mac.' : 'Our cloud or your server.',
       whenItems: s.when === 'beta'
-        ? ['Pages and databases stored locally, offline by default', 'Every version of every page, backups to a folder on your Mac', 'Sync between your Macs through iCloud Drive (preview)', 'Export to Markdown with real file names, or a lossless archive', 'Open source under the AGPL, so you can read every line']
+        ? ['Pages and databases stored locally, offline by default', 'Every version of every page, backups to a folder on your Mac', 'Sync between your Macs through iCloud Drive (preview)', 'Meeting notes transcribed on your device', 'Export to Markdown with real file names, or a lossless archive', 'Open source under the AGPL, so you can read every line']
         : ['Based Cloud on EU servers, end-to-end encrypted', 'Self-hosting on a server of your own', 'iPhone, iPad and web, then Windows, Linux and Android'],
       name: s.name, email: s.email,
       setName: (e) => this.setState({ name: e.target.value }),

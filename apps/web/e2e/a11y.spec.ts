@@ -188,7 +188,8 @@ test("Fotos: Gliederung, Quick Find, Tabelle mit Fokus", async ({ page, browserN
       await page.setViewportSize({ width: w, height: h });
       await page.evaluate((x) => { location.hash = x; }, pageHash);
       await page.waitForTimeout(500);
-      await page.getByTestId("page-outline").hover().catch(() => undefined);
+      // BSD-524: in schmalen Fenstern ist die Gliederung ausgeblendet – nicht bis zum Zeitlimit auf sie warten
+      await page.getByTestId("page-outline").hover({ timeout: 2000 }).catch(() => undefined);
       await page.waitForTimeout(300);
       await page.screenshot({ path: `../../docs/design/screens/web-a11y-outline-${theme}${suffix}.png` });
       await page.keyboard.press("ControlOrMeta+k");

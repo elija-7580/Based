@@ -735,3 +735,22 @@ pre.bx2-file-preview { font-family: var(--font-mono); font-size: var(--type-data
    Linie → Kind weiter nach links; eingerückte Enkel liegen ohnehin rechts der Linie) */
 .bx2-synced > .bx2-children > .bx2-block > .bx2-gutter { left: calc(-50px - var(--space-2) - var(--space-5) - var(--space-half)); }
 .bx2-synced-note { margin: var(--space-1) 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--ink-2); font-family: var(--font-ui); font-size: var(--type-description-size); user-select: none; -webkit-user-select: none; }
+
+/* HTML-Ergebnis als Karte: Fläche wie der Codeblock, runde Ecken schneiden auch eine ganze Datei mit eigenem Grund ab.
+   So ist klar, wo das eingebettete Stück anfängt und aufhört. */
+.bx2-html-preview { position: relative; max-width: 100%; border-radius: var(--radius-md); background: var(--surface-soft); overflow: hidden; isolation: isolate; }
+.bx2-html-preview[data-fill] { border-radius: 0; background: none; }  /* im Dialog ist der Dialog die Fläche */
+/* BSD-535: Größe des HTML-Ergebnisses ziehen – Griffe wie beim Bild (rechts: Breite, unten: Höhe), beim Überfahren */
+.bx2-html-handle {
+  position: absolute;
+  border-radius: var(--radius-pill);
+  background: var(--ink-2);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+  touch-action: none;
+}
+.bx2-html-handle-x { top: 50%; right: var(--space-1); width: var(--space-1); height: var(--space-8); transform: translateY(-50%); cursor: col-resize; }
+.bx2-html-handle-y { left: 50%; bottom: var(--space-1); height: var(--space-1); width: var(--space-8); transform: translateX(-50%); cursor: row-resize; }
+.bx2-html-preview:hover > .bx2-html-handle { opacity: 0.6; }
+@media (hover: none) { .bx2-html-handle { opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .bx2-html-handle { transition: none; } }

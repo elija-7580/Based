@@ -868,3 +868,32 @@ export function insertColumns(store: WorkspaceStore, after: string, n: number, r
     return at(first, 0);
   });
 }
+
+// MARK: HTML-Datei (BSD-535)
+
+/** Größte HTML-Datei, die als HTML-Block auf die Seite kommt (Zeichen). */
+export const HTML_FILE_MAX_CHARS = 2_000_000;
+
+/**
+ * BSD-535: Eine HTML-Datei (z. B. ein exportiertes Artefakt) als HTML-Block: Codeblock mit Sprache HTML, nur das
+ * Ergebnis sichtbar. Mit `replace` und einem Codeblock als `anchor` wird sein Code ersetzt (Knopf „Open HTML file…“,
+ * Ablegen auf dem Block); ein leerer Textblock wird selbst zum HTML-Block; sonst kommt ein neuer Block danach.
+ * Ein Undo-Schritt.
+ */
+export function placeHTMLFile(store: WorkspaceStore, anchor: string, html: string, opts: { replace?: boolean } = {}): Focus | undefined {
+  const a = store.blocks.get(anchor);
+  if (!a || html.length > HTML_FILE_MAX_CHARS) return undefined;
+  const runs = runsOf(html);
+  const props: BlockProps = { language: "html", codeView: "preview" };
+  if ((a.type === "code" && opts.replace) || (a.type !== "code" && isTextBlock(a) && runsLength(textOf(a)) === 0 && liveChildren(store, a.id).length === 0)) {
+    store.transact("Open HTML file", (tx) => {
+      tx.update(a.id, (x) => {
+        x.type = "code" as Block["type"];
+        x.props = { ...(a.type === "code" ? x.props ?? {} : {}), ...props };
+      });
+      writeText(tx, a.id, runs);
+    });
+    return { blockId: a.id, selected: true };
+  }
+  return insertBlock(store, { after: a.id }, "code", { props, text: html });
+}
