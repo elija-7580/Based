@@ -1,1 +1,1 @@
-abgebrochen 4a0d108cfb866c13895ec8cc43880775c5a24225 nightly/2026-11-18-parity · ts-fast=success e2e=cancelled perf=success (nicht blockierend) · run 44329348933
+abgebrochen 0506b78c30a7365877dba8c91eb03461d8516c9f nightly/2026-11-18-parity · ts-fast=success e2e=cancelled perf=cancelled (nicht blockierend) · run 44331315070
