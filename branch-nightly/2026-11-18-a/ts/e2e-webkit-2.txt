@@ -1,7 +1,8 @@
-cancelled 6f4d90005d12ca50bf65bb2ae99351780576ae0e
-    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit-retry1/error-context.md
+failure ad6d002bae585dda5d1369756209d72384749294
+  -  279 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
 
-  2) [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
+
+  1) [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
 
     Error: expect(locator).toBeVisible() failed
 
@@ -51,11 +52,10 @@ cancelled 6f4d90005d12ca50bf65bb2ae99351780576ae0e
 
     Error Context: test-results/shell-layout-Letzten-Tab-s-29c48-selbst-gewählten-Startseite-webkit-retry1/error-context.md
 
-  2 failed
-    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+  1 failed
     [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
-  49 skipped
-  221 passed (15.5m)
+  50 skipped
+  227 passed (10.0m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
