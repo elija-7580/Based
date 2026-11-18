@@ -219,7 +219,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
-| Meetings | M1 Meeting anlegen | ⌘N „Meeting notes“, Slash | – | fehlt | `create_page { kind: "meeting" }` bzw. `add meeting` in `edit_blocks` | S |
+| Meetings | M1 Meeting anlegen | ⌘N „Meeting notes“, Slash | – | erledigt | erledigt 18.11.: `edit_blocks` mit `meeting: Titel` | – |
 | Meetings | M2 Meetings auflisten | Library „Meetings“ | `search` findet Seiten | Liste mit Datum, Dauer, Zustand fehlt | `list_meetings` | S |
 | Meetings | M3 Notizen, Zusammenfassung, Transkript lesen | Reiter im Block | `read_page` (prüfen, was vom Block ankommt) | Transkript kann sehr lang sein, Zeitmarken und Sprecher | `read_meeting { id, part, from?, limit? }` | M |
 | Meetings | M4 Notizen und Zusammenfassung schreiben | Tippen | – | fehlt | `edit_blocks` in den Abschnitten; Zusammenfassung als eigener Abschnitt | M |
@@ -276,7 +276,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Datenbanken | 23 | 3 | 18 | 2 | 0 |
 | Shell | 23 | 15 | 4 (S1, S13, S17, S18) | 4 | 0 |
 | Verlauf, Export, Import | 7 | 0 | 6 | 1 | 0 |
-| Meetings | 7 | 0 | 5 | 2 | 0 |
+| Meetings | 7 | 1 | 4 | 2 | 0 |
 | Brain, Inbox, Home | 14 | 4 | 8 | 2 | 0 |
 | Teilen | 5 | 0 | 4 | 0 | 1 (T5, kommt mit Multi-User) |
 | Einstellungen | 6 | 0 | 2 | 4 | 0 |
