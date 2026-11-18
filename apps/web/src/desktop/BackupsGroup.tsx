@@ -15,6 +15,7 @@ import { isTauri } from "../desktop.js";
 import { relative } from "../shell/format.js";
 import { syncConfig } from "../shell/storage.js";
 import { localServer, PLACES } from "./localServer.js";
+import { restoredMessage } from "./backupText.js";
 
 type Info = Awaited<ReturnType<ReturnType<typeof localServer>["backups"]>>;
 const pages = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
@@ -63,7 +64,7 @@ export function BackupsGroup() {
     if (!confirm) return;
     const c = confirm;
     setConfirm(undefined); setBusy(true);
-    try { await ls.backupRestore(c.name); setMessage(`Restored the backup from ${new Date(c.at).toLocaleString()}. The state before was backed up first – restore that one to undo.`); load(); }
+    try { const r = await ls.backupRestore(c.name); setMessage(restoredMessage(c.at, r.missing?.length)); load(); }
     catch (e) { setMessage(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
   };
