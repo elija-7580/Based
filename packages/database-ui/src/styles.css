@@ -318,7 +318,7 @@
 /* Popover und Menüs */
 .dbui-popover {
   position: fixed; z-index: 1000; min-width: calc(var(--space-8) * 4); max-width: min(calc(var(--page-measure) - var(--space-8)), calc(100vw - var(--space-5)));
-  max-height: min(calc(var(--page-measure) - var(--space-6)), calc(100vh - var(--space-5))); overflow: auto; background: var(--bg); color: var(--ink);
+  max-height: min(calc(var(--page-measure) - var(--space-6)), calc(100vh - var(--space-5))); overflow: auto; background: var(--surface-card); color: var(--ink);
   border-radius: var(--radius-xl); box-shadow: var(--shadow-menu); padding: var(--space-2); display: flex; flex-direction: column; gap: var(--space-1);
   font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading);
 }
@@ -334,8 +334,10 @@
 }
 .dbui-cell-editor textarea { border: 0; background: transparent; padding: var(--cell-pad); font: inherit; color: var(--ink); resize: vertical; width: 100%; }
 .dbui-cell-editor :is(input, textarea):focus-visible { outline: none; }
+/* BSD-527: Menüs der Datenbank sind das eine Menü (elements.md, Abschnitt 4): Innenabstand space-1, Zeile md. */
+.dbui-popover[role="menu"], .dbui-popover.dbui-property-menu { padding: var(--space-1); }
 .dbui-menu-item {
-  width: 100%; display: flex; align-items: center; gap: var(--space-2); min-height: calc(var(--space-7) - var(--space-1)); padding: 0 var(--space-2);
+  width: 100%; display: flex; align-items: center; gap: var(--space-2); min-height: var(--control-md); padding: 0 var(--space-3);
   border: 0; border-radius: var(--radius-md); background: transparent; text-align: left;
 }
 .dbui-menu-item:hover:not(.static):not(:disabled), .dbui-menu-item[aria-selected="true"] { background: var(--surface-raised); }

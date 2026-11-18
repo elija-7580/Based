@@ -301,7 +301,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .tree-header.drop-inside { background: var(--selected); }
 .tree-empty { color: var(--muted); }
 .menu {
-  position: fixed; z-index: 20; min-width: calc(var(--sidebar-width) - var(--space-5)); background: var(--bg); border-radius: var(--radius-lg);
+  position: fixed; z-index: 20; min-width: calc(var(--sidebar-width) - var(--space-5)); background: var(--surface-card); border-radius: var(--radius-xl);
   box-shadow: var(--shadow-menu); padding: var(--space-1); display: flex; flex-direction: column;
 }
 [data-material="glass"] .menu { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
