@@ -71,6 +71,8 @@ export const ENUMS = {
   DateGrouping: ["day", "month", "relative", "week", "year"],
   PageFont: ["default", "mono", "serif"],
   AudioTrackRole: ["microphone", "mixed", "system", "upload"],
+  // BSD-522: Herkunft einer Seite (nur TS-Stack).
+  PageOrigin: ["ai", "human", "mixed", "reviewed"],
   // `property` gibt es nur im TS-Stack (BSD-30, ADR 0014); die eingefrorene Swift-App kennt die Art nicht.
   RecordKind: ["block", "database", "view", "workspace", "property"],
   PropertyValueCase: ["checkbox", "date", "email", "files", "multiSelect", "number", "person", "phone", "place", "relation", "select", "status", "text", "uniqueID", "url"],
@@ -189,6 +191,13 @@ export const block = z.looseObject({
   createdBy: z.string().optional(), updatedBy: z.string().optional(), trashedAt: swiftDate.optional(),
   /** Fehlt nur bei sehr alten Records (dann wie Stamp.zero). */
   stamp: stamp.optional(),
+  /**
+   * BSD-522 (nur TS-Stack): Herkunft einer Seite – human | ai | reviewed | mixed; fehlt = unbekannt (Alt-Daten,
+   * Importe). Regeln: model/provenance.ts.
+   */
+  origin: openEnum(ENUMS.PageOrigin).optional(),
+  /** BSD-522: Autor des letzten Inhalts als Kennung aus `workspace.authors`; fehlt = der Mensch aus `updatedBy`. */
+  author: z.string().optional(),
 });
 
 // MARK: Database
@@ -284,9 +293,13 @@ export const databaseView = z.looseObject({
 // MARK: Workspace
 
 export const teamspace = z.looseObject({ id: recordID, name: z.string(), icon: pageIcon.optional(), createdAt: swiftDate });
+/** BSD-522: Eintrag der Autoren-Tabelle – `kind` user | agent | guest (offen), Name, optional Modell. */
+export const authorEntry = z.looseObject({ kind: z.string(), name: z.string(), model: z.string().optional() });
 export const workspace = z.looseObject({
   id: recordID, name: z.string(), icon: pageIcon.optional(), favorites: z.array(recordID), teamspaces: z.array(teamspace).optional(),
   homePageID: recordID.optional(), createdAt: swiftDate, updatedAt: swiftDate, stamp,
+  /** BSD-522 (nur TS-Stack): Autoren-Tabelle, Kennung → Eintrag (model/provenance.ts `authorID`). */
+  authors: z.record(z.string(), authorEntry).optional(),
 });
 
 // MARK: Records auf dem Draht

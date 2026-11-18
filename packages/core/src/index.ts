@@ -5,6 +5,8 @@ export * from "./json.js";
 export * as schema from "./model/schema.js";
 export { ENUMS, KNOWN_KEYS } from "./model/schema.js";
 export * from "./model/records.js";
+// BSD-522: Herkunft pro Seite und Block (Regeln; Datenfelder in model/schema.ts).
+export { AUTHOR_KINDS, PAGE_ORIGINS, ProvenanceError, authorID, authorKindOf, checkOriginChange, contentChanged, isPageOrigin, originAfterEdit, type Actor, type Author, type AuthorKind, type PageOrigin } from "./model/provenance.js";
 export * as propertyRecords from "./model/property-records.js";
 export type { DatabaseCore, MigrationReport, PropertyDiff, SchemaIssue } from "./model/property-records.js";
 export { StampClock, ZERO_STAMP, compareStamps, parseStamp, stampToString, type Stamp } from "./hlc.js";
