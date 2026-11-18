@@ -125,12 +125,11 @@ input::placeholder { color: var(--muted); }
 .keycap { display: inline-flex; }
 .key-badge { display: none; }
 :root:not([data-show-keys]) .nav-item .key { display: none; }
-:root[data-show-keys] .nav-item .key { display: inline-flex; animation: key-in var(--duration-fast) var(--ease-out); }
+:root[data-show-keys] .nav-item .key { display: inline-flex; animation: fade-in var(--duration-fast) var(--ease-out); }
 .nav-item[aria-current="page"] .key { background: var(--surface-raised); }
-:root[data-show-keys] .key-badge { display: inline-flex; animation: key-in var(--duration-fast) var(--ease-out); }
+:root[data-show-keys] .key-badge { display: inline-flex; animation: fade-in var(--duration-fast) var(--ease-out); }
 .key-badge.above { position: absolute; left: 50%; top: 0; transform: translate(-50%, -110%); }
 .tab .key-badge { margin-left: var(--space-1); }
-@keyframes key-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { :root[data-show-keys] :is(.key-badge, .nav-item .key) { animation: none; } }
 /* Tastatur: Fokusrahmen im Seitenbaum liegt innen – die Zeile darunter schnitt ihn sonst ab. */
 .tree :is(.tree-header-label, .tree-row, .tree-create):focus-visible { outline-offset: calc(var(--marker-width) * -1); border-radius: var(--radius-md); }
@@ -144,10 +143,14 @@ input::placeholder { color: var(--muted); }
 .keys-row { display: flex; align-items: center; gap: var(--space-3); justify-content: space-between; min-height: var(--space-6); user-select: none; -webkit-user-select: none; }
 .keys-label { min-width: 0; }
 .keys-hud {
-  position: fixed; left: 50%; bottom: var(--space-5); transform: translateX(-50%); z-index: 40; pointer-events: none;
+  position: fixed; left: 50%; bottom: var(--space-5); translate: -50% 0; z-index: 40; pointer-events: none;
   display: flex; align-items: flex-start; gap: var(--space-5); max-width: calc(100vw - var(--space-6)); padding: var(--space-3) var(--space-4); background: var(--surface-card); border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-menu); animation: key-in var(--duration-fast) var(--ease-out);
+  box-shadow: var(--shadow-menu);
+  /* BSD-529: Hinweis (elements.md, Abschnitt 5) – 180 ms mit 8 px von unten, ohne eigene @keyframes */
+  transition: opacity var(--duration) var(--ease-out), translate var(--duration) var(--ease-out);
 }
+@starting-style { .keys-hud { opacity: 0; translate: -50% var(--space-2); } }
+@media (prefers-reduced-motion: reduce) { .keys-hud { transition: none; } }
 [data-material="glass"] .keys-hud { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
 .keys-hud-group { display: flex; flex-direction: column; gap: var(--space-1); min-width: calc(var(--sidebar-width) + var(--space-5)); }
 .keys-hud .keys-row { min-height: var(--control-sm); gap: var(--space-5); }
@@ -351,8 +354,11 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-none button { margin-top: var(--space-2); }
 .qf-foot { display: flex; gap: var(--space-4); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--line); color: var(--muted); user-select: none; }
 .qf-foot > span { display: inline-flex; align-items: center; gap: var(--space-2); }
+/* BSD-529: die drei Animationen von Based (docs/design/elements.md, Abschnitt 5). Neue Keyframes legt niemand an;
+   Pakete (Editor, native Menüs) nutzen dieselben Namen. */
 @keyframes fade-in { from { opacity: 0; } }
-@keyframes rise-in { from { opacity: 0; transform: translateY(calc(-1 * var(--space-2))); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(calc(-1 * var(--rise, var(--space-2)))); } }
+@keyframes pulse { 50% { opacity: 0.35; } }
 
 /* Dialoge (Import, Export) */
 .dialog-backdrop { position: fixed; inset: 0; z-index: 30; background: color-mix(in srgb, var(--ink) 16%, transparent); display: flex; justify-content: center; align-items: flex-start; padding-top: 14vh; animation: fade-in var(--duration-fast) var(--ease-out); }
@@ -399,8 +405,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .crumb-menu-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crumb-menu-more { color: var(--muted); }
 /* „Opening…“ erst zeigen, wenn es wirklich dauert – sonst blitzt der Text bei jedem Seitenwechsel auf. */
-.page-opening { animation: page-opening-in var(--duration-fast) var(--ease-out) calc(var(--duration-fast) * 3) both; }
-@keyframes page-opening-in { from { opacity: 0; } to { opacity: 1; } }
+.page-opening { animation: fade-in var(--duration-fast) var(--ease-out) calc(var(--duration-fast) * 3) both; }
 .crumb > [aria-hidden="true"], .crumb:has(> .crumb-more) { flex: none; }
 .crumb-link, .crumb-text { min-width: 0; max-width: calc(var(--space-8) * 6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
 .crumb-link:hover { color: var(--ink); }
@@ -430,7 +435,10 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .block-media { background: var(--surface-soft); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4); }
 .mention { border: 0; background: transparent; padding: 0; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); }
 .empty-page { padding: var(--space-2) 0; }
-.trash-head { display: flex; align-items: flex-end; gap: var(--space-4); justify-content: space-between; flex-wrap: wrap; }
+.trash-head { display: flex; align-items: center; gap: var(--space-4); justify-content: space-between; flex-wrap: wrap; }
+.trash-title { display: flex; align-items: baseline; gap: var(--space-4); }
+.trash-title .t-meta { font-variant-numeric: tabular-nums; }
+.trash-hint { margin-top: calc(-1 * var(--space-2)); }
 .trash-head .actions { display: flex; gap: var(--space-2); }
 .trash-more { display: flex; align-items: center; gap: var(--space-2); }
 .group .row .btn { flex: none; }

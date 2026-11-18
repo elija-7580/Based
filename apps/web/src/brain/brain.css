@@ -33,10 +33,10 @@
 /* Ziel eines Zitat-Sprungs: eine Fläche über dem Block, kurz sichtbar. */
 .brain-cite-flash {
   position: fixed; pointer-events: none; z-index: 5; border-radius: var(--radius-sm); background: var(--selected); mix-blend-mode: multiply;
-  animation: brain-cite-fade var(--duration) var(--ease-out) calc(var(--duration-pulse) + var(--duration)) forwards;
+  /* ausblenden = fade-in rückwärts (BSD-529: keine eigenen @keyframes) */
+  animation: fade-in var(--duration) var(--ease-out) calc(var(--duration-pulse) + var(--duration)) reverse forwards;
 }
 [data-theme="dark"] .brain-cite-flash { mix-blend-mode: screen; }
-@keyframes brain-cite-fade { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .brain-cite-flash { animation: none; } }
 
 /* Einstellungen */
