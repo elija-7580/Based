@@ -6,7 +6,7 @@ describe("Einstellungen: Modell", () => {
     expect(SETTINGS_GROUPS.map((g) => g.title)).toEqual(["App", "Workspace", "System"]);
     expect(SETTINGS_PAGES.filter((p) => p.group === "app").map((p) => p.title)).toEqual(["Appearance", "Pages", "Meeting notes", "Language & region", "Notifications", "Connected accounts"]);
     expect(SETTINGS_PAGES.filter((p) => p.group === "workspace")).toHaveLength(9);
-    expect(SETTINGS_PAGES.filter((p) => p.group === "system").map((p) => p.title)).toEqual(["This device", "Updates", "Diagnostics", "About"]);
+    expect(SETTINGS_PAGES.filter((p) => p.group === "system").map((p) => p.title)).toEqual(["This device", "Connect AI apps", "Updates", "Diagnostics", "About"]);
     expect(new Set(SETTINGS_PAGES.map((p) => p.id)).size).toBe(SETTINGS_PAGES.length);
     for (const p of SETTINGS_PAGES) expect(SETTINGS_GROUPS.some((g) => g.id === p.group), p.id).toBe(true);
   });

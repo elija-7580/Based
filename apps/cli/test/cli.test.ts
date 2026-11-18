@@ -288,3 +288,52 @@ describe("based check", () => {
     }
   });
 });
+
+describe("BSD-581: based mcp (stdio → POST /mcp)", () => {
+  it("leitet einen echten MCP-Client an den Server weiter und wieder zurück", async () => {
+    const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+    const { InMemoryTransport } = await import("@modelcontextprotocol/sdk/inMemory.js");
+    const { StreamableHTTPClientTransport } = await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+    const { bridge } = await import("../src/mcp-proxy.js");
+    const [clientSide, proxySide] = InMemoryTransport.createLinkedPair();
+    const upstream = new StreamableHTTPClientTransport(new URL(url + "/mcp"), { requestInit: { headers: { Authorization: `Bearer ${TOKEN}` } } });
+    const errors: string[] = [];
+    const done = bridge(proxySide, upstream, (e) => errors.push(e.message));
+    const client = new Client({ name: "test-desktop-client", version: "1" });
+    await client.connect(clientSide);
+    const tools = (await client.listTools()).tools.map((t) => t.name);
+    expect(tools).toContain("search");
+    expect(tools).toContain("create_page");
+    const made = await client.callTool({ name: "create_page", arguments: { title: "Over stdio", markdown: "Hello" } });
+    expect(JSON.stringify(made.content)).toContain("Over stdio");
+    await client.close();
+    await done;
+    expect(errors).toEqual([]);
+  });
+
+  it("falscher Token: Anfrage endet mit einem Fehler statt zu hängen", async () => {
+    const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+    const { InMemoryTransport } = await import("@modelcontextprotocol/sdk/inMemory.js");
+    const { StreamableHTTPClientTransport } = await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+    const { bridge } = await import("../src/mcp-proxy.js");
+    const [clientSide, proxySide] = InMemoryTransport.createLinkedPair();
+    const upstream = new StreamableHTTPClientTransport(new URL(url + "/mcp"), { requestInit: { headers: { Authorization: "Bearer wrong" } } });
+    const errors: string[] = [];
+    const done = bridge(proxySide, upstream, (e) => errors.push(e.message));
+    const client = new Client({ name: "t", version: "1" });
+    await expect(client.connect(clientSide)).rejects.toThrow(/Based server/);
+    await client.close();
+    await done;
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it("Argumente und Hilfe", async () => {
+    const { negotiatedVersion } = await import("../src/mcp-proxy.js");
+    expect(parseArgs(["mcp"]).command).toEqual({ name: "mcp" });
+    expect(parseArgs(["mcp", "--local"]).options.local).toBe(true);
+    expect(() => parseArgs(["mcp", "x"])).toThrow("takes no arguments");
+    expect((await run(["--help"])).out).toContain("based mcp");
+    expect(negotiatedVersion({ jsonrpc: "2.0", id: 1, result: { protocolVersion: "2025-06-18", serverInfo: { name: "x", version: "1" }, capabilities: {} } })).toBe("2025-06-18");
+    expect(negotiatedVersion({ jsonrpc: "2.0", id: 2, result: { tools: [] } })).toBeUndefined();
+  });
+});

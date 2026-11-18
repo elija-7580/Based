@@ -5,10 +5,12 @@ import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadArchive, propertyRecords } from "@based/core";
 import { CLIError, parseArgs, VERSION } from "./args.js";
 import { BasedCLI, type MCPSession } from "./cli.js";
 import { checkURL, configFileContents, configPath, resolveConfig } from "./config.js";
+import { bridge } from "./mcp-proxy.js";
 import { formatReports, listReports } from "./reports.js";
 
 const readFile = (p: string) => {
@@ -151,6 +153,15 @@ export async function main(argv: string[], io: { env?: Record<string, string | u
     const config = resolveConfig(options, { env, home, readFile, fileMode, alive });
     if (command.name === "config") {
       out(`Server: ${config.url}\nToken:  from ${config.tokenSource}`);
+      return 0;
+    }
+    if (command.name === "mcp") {
+      // BSD-581: stdout gehört dem Protokoll; Meldungen nur auf stderr. Endet, wenn der Client stdin schließt.
+      const upstream = new StreamableHTTPClientTransport(new URL(config.url + "/mcp"), { requestInit: { headers: { Authorization: `Bearer ${config.token}` } } });
+      const local = new StdioServerTransport();
+      const done = bridge(local, upstream, (e) => err(`based mcp: ${e.message}`));
+      process.stdin.once("end", () => void local.close());
+      await done;
       return 0;
     }
     const session = await connect(config.url, config.token);
