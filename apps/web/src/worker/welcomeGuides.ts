@@ -69,7 +69,106 @@ const GUIDES: readonly WelcomeGuide[] = [
   },
 ];
 
-export const WELCOME_GUIDES: readonly WelcomeGuide[] = welcomeGuides();
+/**
+ * BSD-552 (Mac-Beta, Einstieg 2): „Everything in Based“ – alle Funktionen der Beta, eine Zeile je Funktion. Jede Zeile
+ * nennt die Zeile in replica/features.csv, aus der sie kommt (Spalte `feature`); welcomeGuides.test.ts prüft, dass
+ * jede davon `beta = beta` und `ts = yes|partial` hat. Nichts, was auf beta ausgeblendet ist (AI, Graph, Coding,
+ * Echtzeit, Teilen, Whiteboard).
+ */
+export interface FeatureLine {
+  /** Name der Zeile in replica/features.csv */
+  readonly feature: string;
+  readonly text: string;
+}
+
+export const EVERYTHING_TITLE = "Everything in Based";
+
+export const EVERYTHING_GROUPS: readonly { readonly heading: string; readonly items: readonly FeatureLine[] }[] = [
+  {
+    heading: "Pages and writing",
+    items: [
+      { feature: "Slash command menu with search", text: "Type / in an empty line for any block: headings, lists, to-dos, toggles, callouts, code, tables, images and more." },
+      { feature: "Markdown block shortcuts (# - * + 1. [] > ``` ---)", text: "Markdown works as you type: # for a heading, - for a list, [] for a to-do, > for a quote." },
+      { feature: "Nested subpages (page inside page)", text: "Pages hold other pages, as deep as you like." },
+      { feature: "Columns (2-5)", text: "Drag a block next to another to make columns." },
+      { feature: "Turn into (any block type)", text: "Turn any block into another type from the block menu (⌘/)." },
+      { feature: "Undo / redo for text and structure", text: "⌘Z undoes typing, moves and deletes." },
+      { feature: "Page mention (@ / [[)", text: "Type @ to link a page or a date. Backlinks show where a page is mentioned." },
+      { feature: "Page icon (emoji)", text: "Give pages an icon, a cover, a font and full width." },
+      { feature: "Synced block", text: "Synced blocks show the same content in several places." },
+      { feature: "Find in page", text: "⌘F finds text on the page." },
+    ],
+  },
+  {
+    heading: "Databases",
+    items: [
+      { feature: "Database full page", text: "Create a database with ⌘N, as a full page or inside a page." },
+      { feature: "Multiple views per database", text: "See the same rows as a table, board, list, gallery, calendar, timeline or chart." },
+      { feature: "Filters (and/or groups)", text: "Filter, sort and group each view on its own." },
+      { feature: "Property: formula (Formula 2.0)", text: "Properties for text, numbers, dates, select, status, people, files, formulas, relations and rollups." },
+      { feature: "Row opens as page (side peek / center / full)", text: "Every row is a page. Open it at the side, in the center or full screen." },
+      { feature: "Database templates", text: "Templates fill new rows for you." },
+      { feature: "Large database performance (50k rows)", text: "Tens of thousands of rows stay fast." },
+    ],
+  },
+  {
+    heading: "Search and navigation",
+    items: [
+      { feature: "Quick Find search (titles + content)", text: "⌘K searches titles and text of every page, with recent pages first." },
+      { feature: "Tabs (Mac)", text: "Open pages in tabs (⌘T, ⌘W) or in a new window." },
+      { feature: "Favorites", text: "Star pages to keep them at the top of the sidebar." },
+      { feature: "Back / forward history", text: "⌘[ and ⌘] go back and forward." },
+      { feature: "Choose Home page", text: "Pick any page as Home." },
+    ],
+  },
+  {
+    heading: "Import and export",
+    items: [
+      { feature: "Import Notion export (Markdown & CSV)", text: "Bring your Notion export over with pages, databases and relations. Connect Notion directly to bring the views too." },
+      { feature: "Import Markdown files", text: "Import Markdown, HTML, CSV, Word, Obsidian, Logseq, Bear and Evernote." },
+      { feature: "Export page as Markdown", text: "Export a page or the whole workspace as Markdown, HTML, PDF or Word." },
+      { feature: "Lossless workspace archive export/import", text: "A Based archive keeps everything and imports back one to one." },
+    ],
+  },
+  {
+    heading: "Your data",
+    items: [
+      { feature: "Offline editing", text: "Everything works offline. Your workspace is a file on this Mac." },
+      { feature: "Automatic local backups + one-click restore", text: "Backups every hour, when you quit and before updates. Restore one in Settings." },
+      { feature: "Page history / versions", text: "Every page keeps its versions. Open the history to restore an older one." },
+      { feature: "Trash with restore and delete forever", text: "Deleted pages wait in the Trash until you empty it." },
+    ],
+  },
+  {
+    heading: "Meeting notes",
+    items: [
+      { feature: "Meeting notes (/meet): recording and on-device transcript", text: "Type /meet to record a meeting. The transcript is made on this Mac." },
+    ],
+  },
+  {
+    heading: "The Mac app",
+    items: [
+      { feature: "Dark mode (system + toggle)", text: "Light, dark or the system setting. ⇧⌘L switches." },
+      { feature: "Keyboard shortcuts: ⌘N ⌘P ⌘\\ ⌘[ ⌘] ⇧⌘L", text: "Hold ⌘ to see the shortcuts for where you are. ⇧⌘/ shows all of them." },
+      { feature: "Diagnostics: logs, hang watchdog, crash report, layout audit", text: "⇧⌘B saves a report of what just happened, to send to hello@basednotes.app." },
+    ],
+  },
+];
+
+/** Am Ende der Seite: was die Beta noch nicht kann (Entscheidung Elija 18.11.). */
+export const NOT_IN_BETA: readonly string[] = ["AI and agents", "The iPhone app", "Sync through a server for everyone", "Sharing pages with other people"];
+
+const EVERYTHING: WelcomeGuide = {
+  title: EVERYTHING_TITLE,
+  lines: [
+    ["text", "What you can do in this beta, one line each. Skim it now and come back when you need it."],
+    ...EVERYTHING_GROUPS.flatMap((g): Line[] => [["heading2", g.heading], ...g.items.map((it): Line => ["bulletedList", it.text])]),
+    ["heading2", "Not in this beta yet"],
+    ...NOT_IN_BETA.map((t): Line => ["bulletedList", t]),
+  ],
+};
+
+export const WELCOME_GUIDES: readonly WelcomeGuide[] = [...welcomeGuides(), EVERYTHING];
 
 /**
  * Legt die Willkommensseiten unter `parentID` an (am Ende, in fester Reihenfolge) und gibt ihre IDs zurück.

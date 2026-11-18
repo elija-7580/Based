@@ -14,6 +14,7 @@ import { keyLabel } from "../shell/keyHints.js";
 import { LogoIntro } from "../components/LogoIntro.js";
 import { MeetingNotesOption } from "./Welcome.js";
 import { tourKey, tourSteps } from "../shell/welcomeTour.js";
+import { EVERYTHING_TITLE } from "../worker/welcomeGuides.js";
 import "./welcome.css";
 
 /** „Not yet“ im Beta-Schritt: ohne AI-Schalter (beta) steht AI vorn. */
@@ -78,7 +79,8 @@ export function WelcomeTour({ mode, onFinish }: Props) {
       <div className="column">
         <BasedSteps count={total} current={index} testID="welcome-tour-steps" />
         {step === "basics" ? (
-          <Step title="Welcome to Based Notes" lead={`Notes, pages and databases in one app, saved on ${place}.`} logo>
+          <Step title="Welcome to Based Notes" lead={`Notes, pages and databases in one app, saved on ${place}.`} logo
+            foot={`Everything the beta can do is on the page “${EVERYTHING_TITLE}” under Welcome to Based.`}>
             <Idea icon="page" title="Everything is a page" text="A page is made of blocks. Type / to add a heading, a list, a table or an image." />
             <Idea icon="database" title="Databases" text="Collect things in a database and look at them as a table, a board or a calendar." />
             <Idea icon="search" title={`${keyLabel("K")} finds everything`} text="Search every page and jump anywhere from one field." />
@@ -111,7 +113,7 @@ export function WelcomeTour({ mode, onFinish }: Props) {
   );
 }
 
-function Step({ title, lead, logo = false, children }: { title: string; lead: string; logo?: boolean; children: React.ReactNode }) {
+function Step({ title, lead, logo = false, foot, children }: { title: string; lead: string; logo?: boolean; foot?: string; children: React.ReactNode }) {
   return (
     <>
       <header className="welcome-head">
@@ -120,6 +122,7 @@ function Step({ title, lead, logo = false, children }: { title: string; lead: st
         <p className="t-desc welcome-lead">{lead}</p>
       </header>
       <ul className="welcome-ideas">{children}</ul>
+      {foot ? <p className="t-desc welcome-foot" data-testid="welcome-tour-foot">{foot}</p> : null}
     </>
   );
 }

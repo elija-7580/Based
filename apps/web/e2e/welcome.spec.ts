@@ -61,7 +61,7 @@ test("Frischer Speicher → Willkommen → Turn on agents → Start empty → An
 
     await welcome(page).getByRole("button", { name: /Start empty/ }).click();
     await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
-    for (const t of ["Basics", "Databases", "Keyboard", "Your data"]) await expect(page.getByTestId("page-content").getByText(t, { exact: true })).toBeVisible();
+    for (const t of ["Basics", "Databases", "Keyboard", "Your data", "Everything in Based"]) await expect(page.getByTestId("page-content").getByText(t, { exact: true })).toBeVisible();
 
     // danach die gewohnte Startseite, auch nach dem Neuladen
     await page.getByRole("button", { name: "Home" }).click();
@@ -212,6 +212,34 @@ test("Einstieg erneut über ⌘K „Welcome tour“: ohne Wahl am Ende, Daten bl
     await expect(tour(page)).toHaveCount(0);
   } finally {
     await close();
+  }
+});
+
+// BSD-552 (Mac-Beta, Einstieg 2): „Everything in Based“ als fünfte Anleitung – echte Seite mit den Bereichen und
+// „Not in this beta yet“, im ersten Schritt des Einstiegs genannt. Fotos 1280 × 820 hell/dunkel.
+test("Everything in Based: fünfte Anleitung mit allen Bereichen, im Einstieg genannt", async ({ playwright, browserName, baseURL }) => {
+  for (const theme of ["light", "dark"] as const) {
+    const { page, close } = await fresh(playwright, browserName, baseURL!);
+    try {
+      await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.goto("/");
+      await ready(page);
+      await expect(tour(page).getByTestId("welcome-tour-foot")).toContainText("Everything in Based");
+      await skipTour(page);
+      await expect(welcome(page).getByRole("button", { name: /Start empty/ })).toContainText("Everything in Based");
+      await welcome(page).getByRole("button", { name: /Start empty/ }).click();
+      await page.getByTestId("page-content").getByText("Everything in Based", { exact: true }).click();
+      await expect(page.getByLabel("Page title")).toHaveValue("Everything in Based");
+      const editor = page.getByTestId("block-editor");
+      for (const h of ["Pages and writing", "Databases", "Search and navigation", "Import and export", "Your data", "Meeting notes", "The Mac app", "Not in this beta yet"]) await expect(editor.getByText(h, { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (browserName === "chromium") {
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: `${SHOTS}web-welcome-everything-${theme}.png` });
+      }
+    } finally {
+      await close();
+    }
   }
 });
 
