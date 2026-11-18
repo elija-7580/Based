@@ -280,12 +280,13 @@
   pointer-events: none;
   opacity: 0.92;
 }
+/* BSD-531: wie das Aufziehen auf dem Board (whiteboard/render.ts): getönte Fläche in der Auswahlfarbe, feiner Rand */
 .bx2-marquee {
   position: fixed;
   z-index: 999;
   border-radius: var(--radius-xs);
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  background: color-mix(in srgb, var(--selected) 50%, transparent);
+  border: 1px solid var(--focus-ring);
   pointer-events: none;
 }
 /* Während der Rechteck-Auswahl keine Textmarkierung (auch nicht im Seitenrand) */

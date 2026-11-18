@@ -1045,6 +1045,16 @@ export function BlockEditor(props: PageEditorProps) {
       return;
     }
     if (field) {
+      // BSD-531: rechts neben dem Ende des Textes (auch in einer leeren Zeile) beginnt Ziehen eine Rechteck-Auswahl wie
+      // auf dem Board; ein bloßer Klick setzt den Cursor ans Ende. Wer im Text beginnt, markiert weiter Text.
+      const ownRow = field.closest<HTMLElement>(".bx2-row");
+      const isRowField = ownRow?.querySelector(":scope > [data-editable-id], :scope > .bx2-field-wrap > [data-editable-id]") === field;
+      if (editable && isRowField && !e.shiftKey && pastTextEnd(field, e.clientX, e.clientY)) {
+        e.preventDefault();
+        const id = field.dataset.editableId!;
+        startMarquee(e, { additive: mod, onClick: () => ctrl.setCaret(endCaret(store, id)) });
+        return;
+      }
       ctrl.clearSelection();
       return startTextDrag(e, field.dataset.editableId!);
     }
@@ -1056,19 +1066,21 @@ export function BlockEditor(props: PageEditorProps) {
     }
     // Leere Fläche unter dem letzten Block einer Spalte (die kürzere Spalte reicht bis zum Ende der Zeile): wie Notion
     // dort weiterschreiben – in einen leeren Absatz am Ende der Spalte, sonst einen neuen.
+    // BSD-531: Ziehen beginnt auch hier eine Rechteck-Auswahl (wie auf dem Board); nur ein bloßer Klick schreibt weiter.
     const colTail = t.closest<HTMLElement>(".bx2-col-tail");
     if (colTail && editable) {
       e.preventDefault();
       const col = colTail.closest<HTMLElement>(".bx2-column")?.dataset.columnId;
-      if (col) focusEndOf(col);
+      startMarquee(e, { additive: e.shiftKey || mod, onClick: () => { if (col) focusEndOf(col); } });
       return;
     }
-    // Klick rechts neben dem Text einer Zeile: Cursor ans Ende
+    // Klick rechts neben dem Text einer Zeile: Cursor ans Ende; Ziehen von dort: Rechteck-Auswahl (BSD-531)
     const row = t.closest<HTMLElement>(".bx2-row");
     const rowField = row?.querySelector<HTMLElement>(":scope > [data-editable-id], :scope > .bx2-field-wrap > [data-editable-id]");
     if (rowField && editable) {
       e.preventDefault();
-      ctrl.setCaret(endCaret(store, rowField.dataset.editableId!));
+      const id = rowField.dataset.editableId!;
+      startMarquee(e, { additive: e.shiftKey || mod, onClick: () => ctrl.setCaret(endCaret(store, id)) });
       return;
     }
     startMarquee(e, { additive: e.shiftKey || mod });
@@ -1219,8 +1231,10 @@ export function BlockEditor(props: PageEditorProps) {
   /**
    * Rechteck-Auswahl. `additive` (⇧/⌘): zur bestehenden Auswahl hinzu. `fromMargin`: im Seitenrand begonnen – dann
    * zählt nur die Höhe (wie Notion, man muss nicht bis in die Textspalte ziehen). Rollt am Rand des Fensters weiter.
+   * `onClick`: was ein bloßer Klick ohne Ziehen tut (z. B. Cursor ans Zeilenende). BSD-531: Blockrahmen werden einmal
+   * zu Beginn vermessen; die Auswahl wird nur gesetzt, wenn sich die getroffenen Blöcke ändern (kein Neuzeichnen je Bild).
    */
-  const startMarquee = (e: { clientX: number; clientY: number }, opts: { additive?: boolean; fromMargin?: boolean; outside?: boolean } = {}) => {
+  const startMarquee = (e: { clientX: number; clientY: number }, opts: { additive?: boolean; fromMargin?: boolean; outside?: boolean; onClick?: () => void } = {}) => {
     const root = rootRef.current!;
     const doc = root.ownerDocument;
     const scroller = scrollParent(root) ?? doc.documentElement;
@@ -1232,7 +1246,17 @@ export function BlockEditor(props: PageEditorProps) {
     let box: HTMLDivElement | undefined;
     let frame = 0;
     let last = { x: e.clientX, y: e.clientY };
-    if (!opts.additive) ctrl.clearSelection();
+    let shown = "";
+    let current: string[] = [];
+    // BSD-531: Während des Ziehens färbt die Auswahl die Blöcke direkt im DOM (kein React-Durchlauf je Bild – in
+    // WebKit kostete das bei 300 Blöcken 300 ms je Bewegung); erst am Ende wird sie einmal in den Controller übernommen.
+    const painted = new Map<string, HTMLElement>();
+    const paint = (ids: readonly string[]) => {
+      const want = new Set(cmd.topLevel(store, ids));
+      for (const [id, el] of painted) if (!want.has(id)) { el.removeAttribute("data-selected"); painted.delete(id); }
+      for (const r of rows ?? []) if (want.has(r.id) && !painted.has(r.id) && !r.el.hasAttribute("data-selected")) { r.el.setAttribute("data-selected", ""); painted.set(r.id, r.el); }
+    };
+    if (!opts.additive && !opts.onClick) ctrl.clearSelection();
     const update = () => {
       frame = 0;
       const sb = scroller.getBoundingClientRect();
@@ -1248,15 +1272,24 @@ export function BlockEditor(props: PageEditorProps) {
       box!.style.height = `${bottom - top}px`;
       const hit = rows!.filter((r) => r.bottom > top && r.top < bottom && (opts.fromMargin || (r.right > left - 400 && r.left < right + 400))).map((r) => r.id);
       const all = base.length ? [...base, ...hit.filter((x) => !base.includes(x))] : hit;
-      if (all.length) ctrl.select(all, base.length ? baseAnchor : undefined);
-      else ctrl.clearSelection();
+      const key = all.join("\u0000");
+      if (key !== shown) {
+        shown = key;
+        current = all;
+        paint(all);
+      }
       if (last.y < sb.top + edge || last.y > sb.bottom - edge) frame = requestAnimationFrame(update);
     };
     const onMove = (ev: PointerEvent) => {
       last = { x: ev.clientX, y: ev.clientY };
       if (!box) {
         if (Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) < 4) return;
+        if (!opts.additive && opts.onClick) ctrl.clearSelection();
+        shown = opts.additive ? base.join("\u0000") : "";
+        current = [...base];
         rows = measure(new Set());
+        const active = doc.activeElement as HTMLElement | null;
+        if (active && active.isContentEditable) active.blur();
         box = doc.createElement("div");
         box.className = "bx2-marquee";
         doc.body.append(box);
@@ -1270,10 +1303,23 @@ export function BlockEditor(props: PageEditorProps) {
       doc.removeEventListener("pointerup", done);
       doc.removeEventListener("pointercancel", done);
       if (frame) cancelAnimationFrame(frame);
-      if (box) { last = { x: ev.clientX, y: ev.clientY }; update(); if (frame) cancelAnimationFrame(frame); }
+      if (box) {
+        last = { x: ev.clientX, y: ev.clientY };
+        update();
+        if (frame) cancelAnimationFrame(frame);
+        for (const el of painted.values()) el.removeAttribute("data-selected");
+        painted.clear();
+        if (current.length) ctrl.select(current, base.length ? baseAnchor : undefined);
+        else ctrl.clearSelection();
+      }
       box?.remove();
       doc.documentElement.classList.remove("bx2-is-selecting");
       // Ein bloßer Klick im Seitenrand gehört der Seite (z. B. „Klick unter den Inhalt schreibt am Ende weiter“).
+      if (!box && opts.onClick) {
+        if (!opts.additive) ctrl.clearSelection();
+        opts.onClick();
+        return;
+      }
       if (!box && !ctrl.selected.length && !opts.outside) root.focus({ preventScroll: true });
       if (box && ctrl.selected.length) root.focus({ preventScroll: true });
     };
@@ -3224,6 +3270,23 @@ function LinkPopover({ x, y, value, onDone }: { x: number; y: number; value: str
 
 const R = (c: Caret): EditorTextRange => ({ blockId: c.id, from: c.from, to: c.to });
 const textLen = (store: WorkspaceStore, id: string) => plainText(store.blocks.get(id)?.text).length;
+
+/**
+ * BSD-531: Liegt der Punkt hinter dem Ende des Textes eines Feldes – rechts neben der letzten Zeile oder in einem leeren
+ * Feld? Dort beginnt Ziehen eine Rechteck-Auswahl statt einer Textmarkierung (wie Notion). Ein Feld, dessen Text gar
+ * keine Zeile hat (leer), zählt ganz als „dahinter“.
+ */
+export function pastTextEnd(field: HTMLElement, x: number, y: number): boolean {
+  if (!field.textContent) return true;
+  const range = field.ownerDocument.createRange();
+  range.selectNodeContents(field);
+  const rects = [...range.getClientRects()].filter((r) => r.width > 0 || r.height > 0);
+  if (rects.length === 0) return true;
+  const lastLine = rects.reduce((a, r) => (r.bottom > a.bottom + 1 || (Math.abs(r.bottom - a.bottom) <= 1 && r.right > a.right) ? r : a));
+  // nur die letzte Zeile; darüber gehört der Raum rechts noch zum umbrechenden Text
+  if (y < lastLine.top - 1) return false;
+  return x > lastLine.right + 8;
+}
 
 function endCaret(store: WorkspaceStore, id: string): Caret {
   const n = textLen(store, id);
