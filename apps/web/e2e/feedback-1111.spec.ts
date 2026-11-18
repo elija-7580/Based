@@ -166,6 +166,8 @@ test("Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler 
   const id = await command<string>(page, { op: "createPage", title: "Quarterly Roadmap" });
   await command<string>(page, { op: "createPage", title: "Reading list" });
   await page.keyboard.press("ControlOrMeta+Comma");
+  // seit #34 steht „Home“ auf der Einstellungsseite „Pages“ (⌘, öffnet „Appearance“)
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Pages" }).click();
   const section = page.getByTestId("settings-section-start-page");
   await expect(section.getByTestId("home-current")).toBeVisible();
   await section.getByRole("button", { name: "Choose page…" }).click();
