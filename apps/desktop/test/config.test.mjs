@@ -294,6 +294,14 @@ test("Beta-Workflow: aktiv = Vorlage, APP_NAME passt zum productName", () => {
   const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
   assert.match(active, new RegExp(`APP_NAME: ${beta.productName}\\n`));
   assert.match(active, /--arg notes "\$\(cat dist\/notes-short\.md\)"/);
+  // Beta-Agent 18.11.: mit Secrets wird auch die DMG-Hülle signiert, notarisiert und gestapelt (Go/No-Go Punkt 1).
+  const dmgStep = active.slice(active.indexOf("- name: DMG"), active.indexOf("actions/upload-artifact"));
+  assert.match(dmgStep, /APPLE_SIGNING_IDENTITY: \$\{\{ secrets\.APPLE_SIGNING_IDENTITY \}\}/);
+  assert.match(dmgStep, /codesign --force --sign "\$APPLE_SIGNING_IDENTITY" --timestamp[^\n]*dist\/Based-Notes-Beta\.dmg/);
+  assert.match(dmgStep, /xcrun notarytool submit dist\/Based-Notes-Beta\.dmg/);
+  assert.match(dmgStep, /xcrun stapler staple dist\/Based-Notes-Beta\.dmg/);
+  // signiert wird vor der Kopie unter altem Namen, damit beide Dateien gleich sind
+  assert.ok(dmgStep.indexOf("stapler staple") < dmgStep.indexOf("cp dist/Based-Notes-Beta.dmg dist/Based-Beta.dmg"));
 });
 
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.

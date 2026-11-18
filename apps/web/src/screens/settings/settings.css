@@ -33,3 +33,7 @@
 .diagnostics-log-line { white-space: pre-wrap; overflow-wrap: anywhere; }
 .diagnostics-log-line[data-level="warning"] { color: var(--ink); }
 .diagnostics-log-line[data-level="error"] { color: var(--danger); }
+/* BSD-509: Zeile mit Text links und Wert/Knopf rechts – ein langer Hinweis bricht um, statt den Knopf unter die Zeile
+   zu schieben. Die Textspalte startet schmal (Basis 4 × space-8) und wächst; erst wenn auch das nicht reicht
+   (schmales Fenster), rutscht der Knopf in die nächste Zeile. */
+.settings-row > :first-child { flex: 1 1 calc(var(--space-8) * 4); min-width: 0; }
