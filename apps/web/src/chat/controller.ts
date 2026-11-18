@@ -246,6 +246,7 @@ export class ChatController {
     const base: ToolHost = {
       get specs() { return specs?.specs ?? []; },
       isWrite: (n) => specs?.write.includes(n) ?? true,
+      get listed() { return specs?.listed; },
       call: (name, input) => this.o.backend.chatTool(name, input),
     };
     const extra = this.hooks.tools?.();

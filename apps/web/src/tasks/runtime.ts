@@ -150,6 +150,7 @@ export class TasksRuntime {
     return {
       get specs() { return specs?.specs ?? []; },
       isWrite: (n) => specs?.write.includes(n) ?? true,
+      get listed() { return specs?.listed; },
       call: (name, input) => this.client.chatTool(name, input),
     };
   }

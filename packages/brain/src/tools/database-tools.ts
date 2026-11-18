@@ -47,6 +47,10 @@ const VIEW_LOOK: Record<string, JSONValue> = {
       show_legend: { type: "boolean" }, show_values: { type: "boolean" }, sort_by_value: { type: "boolean" }, limit: { type: "integer", minimum: 0 }, caption: S,
     },
   },
+  form: {
+    type: "object", additionalProperties: false, description: "Form view: title, description and per question {required, description}; which properties are asked and their order is `properties`",
+    properties: { title: S, description: S, questions: { type: "object", additionalProperties: { type: "object", additionalProperties: false, properties: { required: { type: "boolean" }, description: S } } } },
+  },
   add_widgets: { ...NAMES, description: `Dashboard view: widgets to add (${WIDGET_TYPES.join(", ")})` },
 };
 const ROWS_IN = (withID: boolean): JSONValue => ({

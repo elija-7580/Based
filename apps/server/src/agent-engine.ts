@@ -29,7 +29,7 @@ export function anthropicAgentEngine(store: WorkspaceStore, o: ServerModelOption
   const provider = new AnthropicProvider({ apiKey: o.apiKey, ...(o.baseURL ? { baseURL: o.baseURL } : {}), ...(o.fetch ? { fetch: o.fetch } : {}) });
   // Dieselben Werkzeuge wie über MCP; ohne „agents“ (ein Lauf vergibt keine Aufträge an den Hauptagenten und gibt
   // sich nichts selbst frei).
-  const tools = new WorkspaceTools(store, { groups: ["pages", "blocks", "boards", "files", "databases", "brain"] });
+  const tools = new WorkspaceTools(store, { groups: ["pages", "blocks", "boards", "files", "databases", "brain"] }).host(); // kurze Liste für das Modell, alles aufrufbar
   const fallback = o.model || DEFAULT_AGENT_MODEL;
   const low = o.lowModel || fallback;
   return (req) => new ModelEngine({ provider, model: serverModelFor(req.model, req.forceLow ? low : fallback), tools, policy: req.policy });

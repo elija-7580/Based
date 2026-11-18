@@ -6,11 +6,19 @@
 // Von außen (resolve_inbox) lässt sich so eine Rückfrage nicht beantworten, auch nicht mit einer allow-Regel.
 import type { Author, JSONValue, WorkspaceStore } from "@based/core";
 import { AgentStore } from "../agents/store.js";
-import { getRecord, RUN_TYPE } from "../agents/records.js";
-import type { RunData } from "../agents/records.js";
+import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, RUN_TYPE } from "../agents/records.js";
+import type { AgentData, RunData } from "../agents/records.js";
 import { ToolError } from "./base.js";
 
 export const REQUEST_KIND = "request" as const;
+
+/**
+ * Hat der Mensch Agenten „Work freely“ gegeben? Nur dann laufen Dinge ohne Rückfrage, die sonst eine Frage in der
+ * Inbox sind (teilen, Skills ändern). Endgültiges Löschen fragt immer.
+ */
+export function agentsWorkFreely(store: WorkspaceStore): boolean {
+  return (getRecord<AgentData>(store, AGENT_TYPE, MAIN_AGENT_ID)?.data ?? defaultMainAgent()).permissions?.mode === "free";
+}
 
 /** Rückfrage anlegen. Gibt die Antwort an den Agenten zurück. */
 export function createToolRequest(store: WorkspaceStore, o: { name: string; input: JSONValue; actor: Author; title: string }): string {

@@ -70,6 +70,7 @@ const TOOL_LABELS: Record<string, string> = {
   create_view: "Create view", update_view: "Update view", delete_view: "Delete view",
   add_rows: "Add rows", update_rows: "Update rows", delete_forever: "Ask to delete forever", empty_trash: "Ask to empty Trash",
   list_meetings: "List meetings", read_meeting: "Read meeting", update_meeting: "Update meeting",
+  more_tools: "Look up tools", run_tool: "Run tool",
   page_history: "Version history", read_version: "Read version", restore_version: "Restore version",
   get_workspace: "Read workspace", update_workspace: "Update workspace", create_teamspace: "Create teamspace", update_teamspace: "Update teamspace", delete_teamspace: "Delete teamspace",
 };

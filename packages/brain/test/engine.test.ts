@@ -23,6 +23,23 @@ function host(calls: string[] = [], result: (name: string) => ToolResult | Promi
 const never = new AbortController().signal;
 
 describe("ModelEngine", () => {
+  it("kurze Werkzeugliste: das Modell sieht nur `listed`; run_tool gilt als das gemeinte Werkzeug (Anzeige, Rechte, Aufruf)", async () => {
+    const calls: string[] = [];
+    const base = host(calls);
+    const h: ToolHost = { ...base, specs: [...base.specs, { name: "run_tool", description: "r", inputSchema: {} }], listed: ["search", "run_tool"] };
+    const p = new ScriptedProvider([
+      { text: "", calls: [{ id: "c1", name: "run_tool", arguments: { name: "create_page", args: { title: "T" } } }], stop: "tool_use" },
+      { text: "Done.", stop: "end_turn" },
+    ]);
+    const asked: string[] = [];
+    const engine = new ModelEngine({ provider: p, model: "m", tools: h, policy: { mode: "askEdits", approve: async (c) => { asked.push(c.name); return true; } } });
+    const events = await collect(runTurn(engine, { prompt: "make a page" }, never));
+    expect(p.seenOptions[0]!.tools.map((t) => t.name)).toEqual(["search", "run_tool"]);
+    expect(events.find((e) => e.type === "toolUse")).toMatchObject({ name: "create_page", input: { title: "T" } });
+    expect(asked, "schreibendes Werkzeug fragt auch über run_tool").toEqual(["create_page"]);
+    expect(calls).toEqual(['create_page{"title":"T"}']);
+  });
+
   it("Tool-Schleife: Deltas, Usage, Tool-Call, Ergebnis, Schlussantwort", async () => {
     const p = new ScriptedProvider([
       { thinking: "plan", text: "Let me search.", calls: [{ id: "c1", name: "search", arguments: { query: "trip" } }], stop: "tool_use", usage: { inputTokens: 100, outputTokens: 20 } },

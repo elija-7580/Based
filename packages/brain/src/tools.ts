@@ -38,6 +38,7 @@ import { workspaceTools } from "./tools/workspace.js";
 export { PAGE_URI, ToolError, putMarkdownBlocks, checkArgs, type Args, type ToolDef, type ToolGroup, type ToolRunContext } from "./tools/base.js";
 export type { ToolCtx } from "./tools/context.js";
 export type { HistoryHost } from "./tools/history.js";
+export { agentsWorkFreely } from "./tools/requests.js";
 export { Databases, type ViewArgs } from "./tools/databases.js";
 export { GUIDE } from "./tools/guide.js";
 export * from "./tools/runs.js";
@@ -140,6 +141,20 @@ export class WorkspaceTools implements ToolHost {
 
   get all(): ToolDef[] {
     return [...this.defs.values()];
+  }
+
+  /**
+   * Als Werkzeug-Host für eine Engine mit kurzer Liste: alle Werkzeuge sind aufrufbar, das Modell sieht `listed`
+   * (Kern + more_tools/run_tool).
+   */
+  host(): { specs: ToolSpec[]; listed: string[]; isWrite: (name: string) => boolean; call: WorkspaceTools["call"] } {
+    const compact = this.compact.map((d) => d.spec);
+    return {
+      specs: [...this.specs, ...compact.filter((c) => !this.defs.has(c.name))],
+      listed: compact.map((s) => s.name),
+      isWrite: (name) => this.isWrite(name),
+      call: (name, input, signal, actor) => this.call(name, input, signal, actor),
+    };
   }
 
   isWrite(name: string): boolean {

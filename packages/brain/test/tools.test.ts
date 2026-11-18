@@ -196,12 +196,12 @@ describe("WorkspaceTools – Seiten", () => {
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
     expect([...write].sort()).toEqual([
       "add_row", "add_rows", "append_markdown", "ask_main_agent", "create_database", "create_page", "create_project", "create_teamspace", "create_view", "delete_forever", "delete_teamspace", "delete_view",
-      "draw_board", "duplicate_page", "edit_blocks", "empty_trash", "find_replace", "move_page", "remember", "replace_page_content", "resolve_inbox", "restore_page", "set_favorite", "trash_page", "undo_last",
+      "draw_board", "duplicate_page", "edit_blocks", "empty_trash", "find_replace", "move_page", "remember", "replace_page_content", "resolve_inbox", "restore_page", "save_skill", "set_favorite", "trash_page", "undo_last",
       "update_database", "update_meeting", "update_page", "update_project", "update_project_status", "update_row", "update_rows", "update_schedule", "update_teamspace", "update_view", "update_workspace",
     ]);
     expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n)).sort()).toEqual([
       "about_me", "backlinks", "based_guide", "database_schema", "due", "get_project", "get_run", "get_workspace", "inbox", "list_connections", "list_databases", "list_files", "list_meetings", "list_pages",
-      "list_projects", "list_runs", "list_schedules", "list_skills", "list_trash", "list_views", "load_skill", "query_database", "read_blocks", "read_board", "read_meeting", "read_page", "recall", "related", "search",
+      "list_projects", "list_runs", "list_schedules", "list_skills", "list_trash", "list_views", "load_skill", "query_database", "read_blocks", "read_board", "read_meeting", "read_page", "read_skill_file", "recall", "related", "search",
     ]);
     // was etwas verwerfen kann, ist als solches markiert
     expect(tools.specs.map((s) => s.name).filter((n) => tools.isDestructive(n)).sort()).toEqual(["delete_forever", "delete_teamspace", "delete_view", "empty_trash", "replace_page_content", "trash_page", "update_database", "update_schedule"]);
@@ -502,6 +502,39 @@ describe("Meetings, Verlauf, Projekte, Zeitpläne, Fälliges", () => {
     expect(ok("list_connections")).toBe("No connections.");
     expect(ok("due")).toBe("Nothing due in that range.");
     expect(call("due", { from: "soon" }).text).toContain("from must be a date");
+  });
+});
+
+describe("Skills und Formular", () => {
+  it("save_skill fragt in der Inbox, außer Agenten arbeiten frei; read_skill_file; an/aus", () => {
+    const { store, tools, ok, call } = setup();
+    const asked = ok("save_skill", { name: "Weekly review", description: "Every Friday", body: "1. Read the week\n2. Summarise" });
+    expect(asked).toContain("Asked the user in Based's inbox");
+    expect(asked).toContain("Add the skill “Weekly review”");
+    expect(ok("list_skills")).toBe("No skills yet.");
+    const id = /request ([^)\s]+)\)/.exec(asked)![1]!;
+    expect(tools.resolveRequest(id, true).text).toContain("Added the skill “Weekly review”");
+    expect(ok("list_skills")).toContain("- Weekly review — Every Friday");
+    new AgentStore(store).saveMain((d) => { d.permissions = { ...d.permissions, mode: "free" }; });
+    expect(ok("save_skill", { name: "Weekly review", enabled: false })).toBe("Skill “Weekly review” is off.");
+    expect(ok("list_skills")).toBe("No skills yet.");
+    expect(ok("save_skill", { name: "Weekly review", body: "New steps", enabled: true })).toContain("Updated the skill");
+    expect(ok("load_skill", { name: "Weekly review" })).toContain("New steps");
+    expect(ok("read_skill_file", { name: "Weekly review" })).toBe("This skill has no extra files.");
+    expect(call("save_skill", { name: "Nope", enabled: true }).text).toContain("No skill named “Nope”");
+  });
+
+  it("update_view { form }: Titel und Pflichtfragen der Formular-Ansicht", () => {
+    const { store, ok, call } = setup();
+    const page = createPage(store, { title: "P" });
+    const db = createDatabase(store, { parent: "b:" + page, title: "Signups", sampleRows: 0 }).databaseID;
+    addProperty(store, db, "Email", "email");
+    const view = viewIn(ok("create_view", { database_id: db, type: "form", name: "Sign up", properties: ["Name", "Email"], form: { title: "Join us", questions: { Email: { required: true, description: "We reply here" } } } }));
+    const email = store.databases.get(db)!.properties.find((p) => p.name === "Email")!.id;
+    expect((store.views.get(view) as unknown as { form: unknown }).form).toEqual({ title: "Join us", questions: { [email]: { required: true, description: "We reply here" } } });
+    ok("update_view", { view_id: view, form: { questions: { Email: { required: false, description: "" } } } });
+    expect((store.views.get(view) as unknown as { form: { questions: object } }).form.questions).toEqual({});
+    expect(call("update_view", { view_id: view, form: { questions: { Nope: { required: true } } } }).isError).toBe(true);
   });
 });
 

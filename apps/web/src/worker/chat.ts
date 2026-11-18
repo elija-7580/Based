@@ -30,6 +30,8 @@ export interface ToolCatalog {
   specs: ToolSpec[];
   /** Namen der Werkzeuge, die schreiben. */
   write: string[];
+  /** Was das Modell als Liste sieht (kurze Liste); ohne: alle. */
+  listed?: string[];
 }
 
 export class ChatHost {
@@ -63,8 +65,9 @@ export class ChatHost {
       case "rename": return this.checked(() => this.chats.rename(a.id, a.title));
       case "delete": return this.checked(() => this.chats.delete(a.id));
       case "toolSpecs": {
-        const specs = this.tools.specs;
-        return { specs, write: specs.map((s) => s.name).filter((n) => this.tools.isWrite(n)) } satisfies ToolCatalog;
+        // Alle Werkzeuge sind aufrufbar; das Modell bekommt nur die kurze Liste (Kern + more_tools/run_tool).
+        const h = this.tools.host();
+        return { specs: h.specs, write: h.specs.map((s) => s.name).filter((n) => this.tools.isWrite(n)), listed: h.listed } satisfies ToolCatalog;
       }
       case "tool": return this.tools.callSync(a.name, a.input) satisfies ToolResult;
       case "pagePaths": return pagePathCandidates(this.store, a.id);

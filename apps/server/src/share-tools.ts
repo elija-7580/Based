@@ -3,7 +3,7 @@
 // Teilen für Agenten (Matrix T1–T4). Sehen und Entziehen gehen immer. Freigeben (Link, Einladung, Veröffentlichen)
 // läuft nur ohne Rückfrage, wenn der Mensch Agenten „Work freely“ gegeben hat; sonst wird es eine Frage in der Inbox
 // (Entscheidung 3). Die Regeln der Freigabe selbst (wer darf was weitergeben) stehen in ShareService.
-import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, ToolError, type AgentData, type ToolCtx, type ToolDef } from "@based/brain";
+import { agentsWorkFreely, ToolError, type ToolCtx, type ToolDef } from "@based/brain";
 import { fromSwiftDate, isRole, OWNER, ROLE_LABEL, ShareError, type LinkKind, type ShareService, type SharingLink } from "./share.js";
 
 const KINDS: Record<string, LinkKind> = { link: "access", invite: "invite", publish: "publish" };
@@ -16,7 +16,7 @@ export function shareTools(share: ShareService, base = ""): (ctx: ToolCtx) => To
   const url = (l: SharingLink, secret?: string) => (l.kind === "publish" ? `${base}/p/${encodeURIComponent(l.id)}` : secret ? `${base}/s/${secret}` : undefined);
   const day = (d: number | undefined) => (d === undefined ? "" : new Date(fromSwiftDate(d)).toISOString().slice(0, 10));
   return (ctx) => {
-    const free = () => (getRecord<AgentData>(ctx.store, AGENT_TYPE, MAIN_AGENT_ID)?.data ?? defaultMainAgent()).permissions?.mode === "free";
+    const free = () => agentsWorkFreely(ctx.store);
     const kindOf = (a: Record<string, unknown>): LinkKind => {
       const k = KINDS[typeof a.kind === "string" ? a.kind : "link"];
       if (!k) throw new ToolError("kind must be link, invite or publish");

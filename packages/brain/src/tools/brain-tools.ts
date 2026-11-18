@@ -5,8 +5,10 @@ import { MEMORY_KINDS, looksSensitive } from "../memory/suggestions.js";
 import { Recall } from "../recall/recall.js";
 import { needStr, obj, optStr, pageID, str, ToolError, type ToolDef } from "./base.js";
 import type { ToolCtx } from "./context.js";
+import { agentsWorkFreely } from "./requests.js";
 
 export function brainTools(ctx: ToolCtx): ToolDef[] {
+  const { store } = ctx;
   return [
     {
       group: "brain", write: false,
@@ -105,6 +107,57 @@ export function brainTools(ctx: ToolCtx): ToolDef[] {
         if (r.outcome === "duplicate") return `Already remembered: “${r.title}” (id: ${r.id}). Nothing added.`;
         if (r.outcome === "linked") return `Already remembered: “${r.title}” (id: ${r.id}). Added the new links.`;
         return `Remembered (id: ${r.id})${r.status === "To review" ? " as “To review”: it looks private, so it only counts once the user sets it to Active in Based" : ""}${replaces ? `; the old memory is now Superseded` : ""}.`;
+      },
+    },
+    {
+      group: "brain", write: false,
+      spec: {
+        name: "read_skill_file",
+        description: "Files of a skill besides its instructions (scripts, references, templates). Without `file`: the list; with `file`: its text.",
+        inputSchema: obj({ name: { type: "string", minLength: 1 }, file: { type: "string" } }, ["name"]),
+      },
+      run: (a) => {
+        const sk = ctx.brain().skillByName(needStr(a, "name"));
+        if (!sk) throw new ToolError(`No skill named “${needStr(a, "name")}”. Skills: ${ctx.brain().skills().map((x) => x.name).join(", ") || "(none)"}`);
+        const files = ctx.brain().exportSkill(sk.id)?.files ?? {};
+        const names = Object.keys(files).filter((n) => n !== "SKILL.md");
+        const file = optStr(a, "file");
+        if (file === undefined) return names.length ? names.map((n) => `- ${n} (${files[n]!.length} bytes)`).join("\n") : "This skill has no extra files.";
+        const data = files[file];
+        if (!data || file === "SKILL.md") throw new ToolError(`No file “${file}” in this skill. Files: ${names.join(", ") || "(none)"}`);
+        if (data.includes(0)) throw new ToolError(`“${file}” is not a text file.`);
+        return new TextDecoder().decode(data);
+      },
+    },
+    {
+      group: "brain", write: true,
+      // Skills sind Anweisungen, denen Agenten später folgen: ohne „Work freely“ entscheidet der Mensch (Entscheidung 3).
+      ask: (a) => {
+        const name = needStr(a, "name").trim();
+        const known = ctx.brain().skillByName(name);
+        if (optStr(a, "body") === undefined && !known) throw new ToolError(`No skill named “${name}”; give a body to create it.`);
+        if (agentsWorkFreely(store)) return undefined;
+        return optStr(a, "body") === undefined ? `${a.enabled === false ? "Switch off" : "Switch on"} the skill “${name}”` : `${known ? "Change" : "Add"} the skill “${name}”`;
+      },
+      spec: {
+        name: "save_skill",
+        description: "Add or change a skill (reusable instructions agents can load), or switch one on or off. Unless the user lets agents work freely, this asks them in Based's inbox first.",
+        inputSchema: obj({ name: { type: "string", minLength: 1, maxLength: 80 }, description: str("One sentence: when to use it"), body: str("The instructions (Markdown)"), enabled: { type: "boolean" } }, ["name"]),
+      },
+      run: (a) => {
+        const name = needStr(a, "name").trim();
+        const brain = ctx.brain();
+        const body = optStr(a, "body");
+        if (body === undefined) {
+          const sk = brain.skillByName(name);
+          if (!sk) throw new ToolError(`No skill named “${name}”.`);
+          if (typeof a.enabled !== "boolean") return "Nothing to change.";
+          brain.setSkillEnabled(sk.id, a.enabled);
+          return `Skill “${sk.name}” is ${a.enabled ? "on" : "off"}.`;
+        }
+        const old = brain.skillByName(name);
+        const r = brain.saveSkill({ name, description: optStr(a, "description") ?? old?.description ?? "", body, ...(old?.extraFrontmatter ? { extraFrontmatter: old.extraFrontmatter } : {}), ...(typeof a.enabled === "boolean" ? { enabled: a.enabled } : {}) });
+        return `${r.created ? "Added" : "Updated"} the skill “${name}” (id: ${r.id}).`;
       },
     },
   ];

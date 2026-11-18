@@ -538,6 +538,8 @@ export class Databases {
       oneOf(chart.date_bucket, ENUMS.ChartDateBucket as readonly string[], "chart.date_bucket");
     }
     const chartX = propID(chart?.x), chartY = propID(chart?.y);
+    // Formular: Titel, Beschreibung und je Frage Pflicht/Hilfetext (`view.form`, wie packages/database-ui/src/logic/form.ts)
+    const formQuestions = Object.entries(a.form?.questions ?? {}).map(([n, q]) => [this.prop(db, n).id, q] as const);
     for (const w of a.add_widgets ?? []) if (!WIDGET_TYPES.includes(w)) throw new ToolError(`Widget must be one of: ${WIDGET_TYPES.join(", ")}`);
 
     updateView(this.store, viewID, (v) => {
@@ -564,6 +566,22 @@ export class Databases {
         if (a.hide_empty_groups !== undefined) { if (a.hide_empty_groups) g.hideEmptyGroups = true; else delete g.hideEmptyGroups; }
         if (a.date_grouping !== undefined) g.dateGrouping = a.date_grouping as NonNullable<typeof g.dateGrouping>;
         w.groupBy = g;
+      }
+      if (a.form) {
+        const f = { ...((w.form as { title?: string; description?: string; questions?: Record<string, { required?: boolean; description?: string }> } | undefined) ?? {}) };
+        if (a.form.title !== undefined) { if (a.form.title) f.title = a.form.title; else delete f.title; }
+        if (a.form.description !== undefined) { if (a.form.description) f.description = a.form.description; else delete f.description; }
+        if (formQuestions.length) {
+          const qs = { ...(f.questions ?? {}) };
+          for (const [id, q] of formQuestions) {
+            const cur = { ...(qs[id] ?? {}) };
+            if (q.required !== undefined) { if (q.required) cur.required = true; else delete cur.required; }
+            if (q.description !== undefined) { if (q.description) cur.description = q.description; else delete cur.description; }
+            if (Object.keys(cur).length) qs[id] = cur; else delete qs[id];
+          }
+          f.questions = qs;
+        }
+        w.form = f;
       }
       if (calcs.length) {
         const c = { ...(w.calculations ?? {}) } as Record<string, string>;
@@ -640,6 +658,8 @@ export interface ViewArgs {
   calculations?: Record<string, string> | undefined;
   chart?: { kind?: string; x?: string; y?: string; aggregate?: string; date_bucket?: string; show_legend?: boolean; show_values?: boolean; sort_by_value?: boolean; limit?: number; caption?: string } | undefined;
   add_widgets?: string[] | undefined;
+  /** Formular-Ansicht: welche Properties gefragt werden, steht in `properties`; hier Titel und je Frage Pflicht/Hilfe. */
+  form?: { title?: string; description?: string; questions?: Record<string, { required?: boolean; description?: string }> } | undefined;
 }
 
 export interface DatabaseChanges {
