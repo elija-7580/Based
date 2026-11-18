@@ -36,6 +36,20 @@ export class SyncHTTPError extends Error {
   }
 }
 
+/**
+ * BSD-583: Der Server spricht ein neueres Protokoll, als dieser Build kennt. Nichts wird gesendet oder geholt (Cursor
+ * bleiben stehen, lokale Änderungen warten), bis Based aktualisiert ist.
+ */
+export class SyncProtocolError extends Error {
+  constructor(readonly serverProtocol: number) {
+    super(`This server uses a newer sync protocol (v${serverProtocol}). Update Based to keep syncing; your changes stay on this device until then.`);
+    this.name = "SyncProtocolError";
+  }
+}
+
+/** Höchstes Sync-Protokoll, das dieser Build spricht (2 = Properties im Datenbank-Record, 3 = Property-Records). */
+export const MAX_SYNC_PROTOCOL = 3;
+
 export type SyncLog = (level: "info" | "warning" | "error", message: string) => void;
 
 export interface SyncClientOptions {
@@ -114,6 +128,8 @@ export function decodeDeletions(list: unknown, log?: SyncLog): { keys: RecordKey
 
 /** Antwort von /sync/v2/info, soweit der Client sie nutzt. */
 export interface ServerInfo {
+  /** Protokoll, das der Server mit diesem Client spricht (fehlt bei sehr alten Servern = 2). */
+  protocol?: number;
   oldestSeq?: number;
   /** ADR 0017 A2: Zusatzfähigkeiten des Servers (fehlt bei älteren Servern). */
   sync?: { maxPage?: number; pageBytes?: boolean; gzip?: boolean };
@@ -286,6 +302,12 @@ export class SyncClient {
     // ADR 0017 A2: einmal je Runde fragen, was der Server kann (größere Seiten, Grenze nach Bytes, gzip). Scheitert
     // die Anfrage oder nennt der Server nichts, bleibt alles wie bisher (Seiten zu `pageSize`, unkomprimiert).
     const info = await this.serverInfo();
+    // BSD-583: Ein Server mit neuerem Protokoll (z. B. v4 nach der Beta) – vor dem ersten Push anhalten, statt
+    // Records in einem Format zu schicken, das er anders liest. Ein späterer Server, der diesen Client noch bedient,
+    // nennt in `info` das Protokoll aus dessen Header (docs/sync-protocol.md).
+    if (typeof info?.protocol === "number" && Number.isInteger(info.protocol) && info.protocol > MAX_SYNC_PROTOCOL) {
+      throw new SyncProtocolError(info.protocol);
+    }
     const caps = syncCapabilities(info, this.pageSize, this.opts.pageBytes ?? PULL_PAGE_BYTES);
 
     // Push: jede lokale Änderung nach `pushed`.

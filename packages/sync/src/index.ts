@@ -10,7 +10,7 @@ export { CURRENT_SCHEMA_VERSION, MIGRATIONS, PROPERTY_RECORDS_SCHEMA_VERSION, Pe
 export type { Migration } from "./migrations.js";
 export { LAZY_INDEXES, LOCAL_DERIVED, PARENT_SQL, SKELETON_SQL, SqlitePersistence, decodeStamp, deviceNodeID, encodeStamp, openWorkspace, resolveNode, revertPropertyRecords } from "./persistence.js";
 export type { ChangeEntry, DeviceNodeStore, NodeResolution, UndecodableRow } from "./persistence.js";
-export { PULLED_KEY, PUSHED_KEY, PULL_PAGE_BYTES, PULL_PAGE_MAX, gzipText, syncCapabilities, SyncClient, SyncHTTPError, CLOCK_SKEW_LIMIT_MS, clockSkewFrom, decodeDeletions, decodeRecords } from "./client.js";
+export { PULLED_KEY, PUSHED_KEY, PULL_PAGE_BYTES, PULL_PAGE_MAX, gzipText, syncCapabilities, SyncClient, SyncHTTPError, SyncProtocolError, MAX_SYNC_PROTOCOL, CLOCK_SKEW_LIMIT_MS, clockSkewFrom, decodeDeletions, decodeRecords } from "./client.js";
 export type { ServerInfo, SyncCapabilities, SyncClientOptions, SyncLog, SyncRoundResult, WireDeletion } from "./client.js";
 // BSD-73: Versionsverlauf in einer eigenen Datei (history.sqlite, Format wie Swift)
 export { HISTORY_SCHEMA, SqliteHistoryStorage } from "./history.js";
@@ -23,5 +23,5 @@ export type { PageAccess, ShareLinkInfo, ShareLinkKind, SharePerson, ShareRole }
 // BSD-220: Y-Zustände der Editor-Dokumente in einer eigenen Datei (ydocs.sqlite, nie gesynct)
 export { MemoryYDocStorage, SqliteYDocStorage, YDOCS_SCHEMA } from "./ydocs.js";
 export type { YDocStorage } from "./ydocs.js";
-export { FolderAssets, FolderSync, parseSegment, segmentName, snapshotName } from "./folder.js";
+export { FolderAssets, FolderSync, FOLDER_FORMAT_VERSION, newerSegmentVersion, parseSegment, segmentName, snapshotName } from "./folder.js";
 export type { FolderChangeLog, FolderRoundResult, FolderSyncOptions, FolderSyncState, FolderTarget } from "./folder.js";

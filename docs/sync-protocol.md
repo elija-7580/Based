@@ -83,6 +83,14 @@ match the server's, nothing is exchanged:
 
 Convert the server first (`based-server --property-records`), then each device.
 
+**Later protocols (BSD-583).** `info` is sent with the same header. A later server (e.g. protocol 4 with end-to-end
+envelopes) that can still serve the client answers `info` with the client's protocol; one that cannot reports its own,
+higher number. A client that sees a `protocol` above the highest it speaks (TypeScript client: 3) stops before the
+push and shows "This server uses a newer sync protocol (v4). Update Based to keep syncing" – nothing is sent or pulled,
+cursors stay, local changes wait. Pushes and pulls with an older header are still answered with `426` as above.
+Folder sync (`devices/<device>/*.jsonl`) works the same way: a segment whose head has `"v"` above 1 is not read, the
+device's later segments wait behind it, and the round reports it under `newer` ("Update Based to read it").
+
 ### `GET /sync/v2/info`
 
 ```json

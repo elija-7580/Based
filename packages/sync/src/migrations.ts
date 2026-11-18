@@ -151,7 +151,8 @@ export function migrate(db: SqlDatabase, migrations: readonly Migration[] = MIGR
   // BSD-30: eine auf Property-Records umgestellte Datei ist bekannt und braucht keine weitere Migration
   if (from === PROPERTY_RECORDS_SCHEMA_VERSION && migrations === MIGRATIONS) return;
   if (from > target) {
-    throw new PersistenceError(`based.sqlite has format v${from}, this version of Based knows up to v${target}`, "newerFormat");
+    // BSD-583: Satz für Menschen – die Web-App zeigt ihn als Grund, warum sie nur im Speicher läuft. Die Datei bleibt unberührt.
+    throw new PersistenceError(`This workspace was saved by a newer version of Based (format v${from}; this version reads up to v${Math.max(target, PROPERTY_RECORDS_SCHEMA_VERSION)}). Update Based to open it.`, "newerFormat");
   }
   if (from >= target) return;
   // Bestehenden Inhalt sichern (eine Datei von vor der Liste hat user_version 0, aber schon Tabellen).
