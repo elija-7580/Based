@@ -4,7 +4,7 @@
 // (shell/pageDirectory.ts); Synced Blocks von anderen Seiten holt `loadSynced` in die Seiten-Replik.
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { BlockEditor, textDocName, type BoardEmbed, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { migrateEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
@@ -64,6 +64,14 @@ function useRootTheme(): "light" | "dark" {
 }
 
 // BSD-101: Link auf einen Block dieser Seite (öffnet die Seite und springt hin)
+const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
+// BSD-407: Inline-Gleichungen im neuen Editor als KaTeX-HTML (KaTeX lädt erst bei der ersten Gleichung)
+const renderEquationHTML = (tex: string, onReady: () => void): string | undefined => {
+  if (!texReady()) { void loadTeX().then(onReady, () => undefined); return undefined; }
+  const r = renderTeX(tex, false);
+  return "html" in r ? r.html : undefined;
+};
+
 const blockLink = (pageID: string) => (blockID: string) => {
   const u = new URL(location.href);
   u.hash = routeToHash({ name: "page", id: pageID, block: blockID });
@@ -75,20 +83,19 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   const client = shellClient;
   // BSD-407 Teil 4: nur noch der Block-Editor (ADR 0016); der alte BlockNote-Editor ist entfernt.
   const Editor = BlockEditor;
-  const renderDatabase = (p: DatabaseRenderProps) => {
+  // Feste Funktionen, solange sich nichts ändert, wovon sie abhängen: Der Editor vergleicht seine props Wert für Wert
+  // und zeichnet seine Blöcke nur dann alle neu, wenn sich einer ändert. Neue Funktionen bei jedem Zeichnen hießen:
+  // jede Taste zeichnet jeden Block der Seite neu (gemessen 18.11., siehe `useCtx` im Editor).
+  const renderDatabase = useCallback((p: DatabaseRenderProps) => {
     const View = slots.DatabaseView;
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
-  };
+  }, [store, readOnly, onOpenPage]);
   // Elija 17.11.: ein Board als Unterseite erscheint mitten in der Seite als Fläche.
-  const renderBoard = client ? (p: { pageID: string; embed?: BoardEmbed }) => <EmbeddedBoard client={client} pageID={p.pageID} onOpenPage={onOpenPage} embed={p.embed} /> : undefined;
-  const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
-  // BSD-407: Inline-Gleichungen im neuen Editor als KaTeX-HTML (KaTeX lädt erst bei der ersten Gleichung)
-  const renderEquationHTML = (tex: string, onReady: () => void): string | undefined => {
-    if (!texReady()) { void loadTeX().then(onReady, () => undefined); return undefined; }
-    const r = renderTeX(tex, false);
-    return "html" in r ? r.html : undefined;
-  };
+  const renderBoard = useMemo(() => (client ? (p: { pageID: string; embed?: BoardEmbed }) => <EmbeddedBoard client={client} pageID={p.pageID} onOpenPage={onOpenPage} embed={p.embed} /> : undefined), [client, onOpenPage]);
   const files = assets();
+  const uploadFile = useMemo(() => (files ? (f: File) => files.uploadFile(f) : undefined), [files]);
+  const resolveFileUrl = useMemo(() => (files ? (u: string) => files.resolveFileUrl(u) : undefined), [files]);
+  const linkToBlock = useMemo(() => blockLink(pageID), [pageID]);
   const loadSynced = useMemo(() => (client ? (source: string) => client.includeSynced(pageID, source) : undefined), [client, pageID]);
   const databases = useMemo(() => (client ? {
     list: async (q: string) => (await client.listDatabases(q)).map((d) => ({ id: d.id, title: d.title, path: d.path })),
@@ -107,9 +114,9 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   const fetchLinkPreview = useMemo(() => linkPreviewFetcher(), []);
   return (
     <div className="shell-editor">
-      <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} {...(renderBoard ? { renderBoard } : {})} renderEquation={renderEquation} renderEquationHTML={renderEquationHTML}
+      <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={linkToBlock} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} {...(renderBoard ? { renderBoard } : {})} renderEquation={renderEquation} renderEquationHTML={renderEquationHTML}
         {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(HIDDEN_BLOCKS.size ? { hiddenBlocks: HIDDEN_BLOCKS } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
-        {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
+        {...(uploadFile && resolveFileUrl ? { uploadFile, resolveFileUrl } : {})} />
       {client && !hideBacklinks && !embedded ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>
   );

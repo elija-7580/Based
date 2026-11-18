@@ -68,8 +68,16 @@ export function PageOutline(props: { store: WorkspaceStore; pageID: string; cont
       frame = 0;
       const top = scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top;
       const height = scroller instanceof Window ? window.innerHeight : scroller.clientHeight;
+      // Ein Durchgang über die Blöcke statt einer Suche je Überschrift: Die Suche lief je Überschrift über die ganze
+      // Seite – bei jedem Scroll-Frame (18.11., 2 000 Blöcke mit 220 Überschriften: 70 ms je Messung).
+      const wanted = new Set(idsRef.current);
+      const found = new Map<string, HTMLElement>();
+      for (const el of container.querySelectorAll<HTMLElement>(".bx2-block[data-block-id]")) {
+        const id = el.getAttribute("data-block-id")!;
+        if (wanted.has(id) && !found.has(id)) found.set(id, el);
+      }
       const tops = idsRef.current.map((id) => {
-        const el = headingElement(container, id);
+        const el = found.get(id);
         return el ? el.getBoundingClientRect().top - top : Number.POSITIVE_INFINITY;
       });
       const scrolled = scroller instanceof Window ? window.scrollY : scroller.scrollTop;

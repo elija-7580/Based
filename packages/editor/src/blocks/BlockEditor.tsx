@@ -43,7 +43,36 @@ interface Ctx {
   notify: (message: string) => void;
 }
 const EditorCtx = createContext<Ctx | null>(null);
+/**
+ * Der Kontext des Editors. Er bleibt derselbe, solange sich kein Wert der props ändert (`useStableProps`) – wer ihn
+ * liest, zeichnet also nicht bei jeder Taste neu. Nur für Bausteine, die alles, was sie aus dem Store zeigen, selbst
+ * abonnieren (`useBlock`, `useKids`, `useHasKids` …): Blockliste, Blockzeile, Rand, Textfeld. Die gibt es je Block
+ * einmal; hingen sie am Zeichnen der Hülle, kostete jede Taste alle Blöcke der Seite (18.11.: 2 000 Blöcke ≈ 49 ms
+ * je Taste in Chromium, 300 Blöcke in WebKit p50 83 ms).
+ */
 const useCtx = () => useContext(EditorCtx)!;
+/** Wechselt bei jedem Zeichnen, das von der Hülle kommt (ihre props sind dann ein neues Objekt). */
+const HostRenderCtx = createContext<unknown>(null);
+/**
+ * Wie `useCtx`, zeichnet aber wie bisher bei jedem Zeichnen der Hülle neu (die Seite zeichnet bei jeder Änderung am
+ * Store und am Seitenverzeichnis). Für alle übrigen Bausteine: Sie lesen beim Zeichnen auch Dinge, die sie nicht
+ * abonniert haben (Titel verlinkter Seiten, Dateien, Tabellenzeilen …), und es gibt sie nur vereinzelt je Seite.
+ */
+const useLiveCtx = () => {
+  useContext(HostRenderCtx);
+  return useContext(EditorCtx)!;
+};
+
+/** Dieselben props, solange kein Wert sich ändert (die Hülle reicht bei jedem Zeichnen ein neues Objekt). */
+function useStableProps<T extends object>(props: T): T {
+  const ref = useRef(props);
+  const prev = ref.current as Record<string, unknown>, next = props as Record<string, unknown>;
+  if (prev !== next) {
+    const keys = Object.keys(next);
+    if (keys.length !== Object.keys(prev).length || keys.some((k) => !Object.is(prev[k], next[k]))) ref.current = props;
+  }
+  return ref.current;
+}
 
 // MARK: Store-Abos (pro Block nur, was sich an ihm ändert)
 
@@ -62,6 +91,20 @@ const useKids = (store: WorkspaceStore, id: string): string[] => {
     store.children("b:" + id).filter((k) => store.blocks.get(k)?.trashedAt === undefined).join("\n"));
   return useMemo(() => (key ? key.split("\n") : []), [key]);
 };
+/** Hat der Block sichtbare Kinder? Eigenes Abo: ein neues Kind ändert den Block selbst nicht. */
+const useHasKids = (store: WorkspaceStore, id: string): boolean => useSyncExternalStore(storeSubscribe(store), () => {
+  const b = store.blocks.get(id);
+  return b !== undefined && cmd.visibleChildren(store, b).length > 0;
+});
+/** Welche Kinder nummerierte Listen sind (als Text): wechselt ein Nachbar den Typ, zählt die Liste neu. */
+const useNumbering = (store: WorkspaceStore, parent: string): string => useSyncExternalStore(storeSubscribe(store), () => {
+  let key = "";
+  for (const k of store.children("b:" + parent)) {
+    const b = store.blocks.get(k);
+    if (b && b.trashedAt === undefined) key += b.type === "numberedList" ? "1" : "0";
+  }
+  return key;
+});
 const useSelected = (ctrl: EditorController, id: string) => useSyncExternalStore(ctrl.subscribe, () => ctrl.isSelected(id));
 
 const PLACEHOLDER: Record<string, string> = {
@@ -1430,13 +1473,15 @@ export function BlockEditor(props: PageEditorProps) {
     if (scroller) ro.observe(scroller);
     return () => ro.disconnect();
   }, []);
-  const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable, notify }), [ctrl, store, props, editable, notify]);
+  const stableProps = useStableProps(props);
+  const ctx = useMemo<Ctx>(() => ({ ctrl, store, props: stableProps, editable, notify }), [ctrl, store, stableProps, editable, notify]);
   // ADR 0016 (E7): Echtzeit-Text und Präsenz über /collab (Dokument `text:<seite>`)
   const presence = useRealtime(store, pageID, props.collab, ctrl, props.presenceName);
   const slashItems = slash ? filterSlash(slashItems_, slash.query) : [];
 
   return (
     <EditorCtx.Provider value={ctx}>
+    <HostRenderCtx.Provider value={props}>
       <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-root={pageID} data-theme={props.theme} data-collab={presence ? "" : undefined} data-long={long ? "" : undefined}
         tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={onPointerDown} writingsuggestions="false">
         <BlockList parent={pageID} depth={0} />
@@ -1475,6 +1520,7 @@ export function BlockEditor(props: PageEditorProps) {
           <BasedButton variant="ghost" label="Dismiss" onClick={() => setNotice(undefined)} />
         </div>
       ) : null}
+    </HostRenderCtx.Provider>
     </EditorCtx.Provider>
   );
 }
@@ -1538,6 +1584,7 @@ function isColumnable(store: WorkspaceStore, id: string, pageID: string): boolea
 const BlockList = memo(function BlockList({ parent, depth }: { parent: string; depth: number }) {
   const { store } = useCtx();
   const kids = useKids(store, parent);
+  useNumbering(store, parent);
   let num = 0;
   return (
     <>
@@ -1554,10 +1601,11 @@ const BlockView = memo(function BlockView({ id, depth, number }: { id: string; d
   const { store, ctrl } = useCtx();
   const b = useBlock(store, id);
   const selected = useSelected(ctrl, id);
+  const hasKids = useHasKids(store, id);
   if (!b || b.trashedAt !== undefined) return null;
   if (b.type === "columnList") return <Columns block={b} depth={depth} />;
   // Kinder eines Buttons sind seine Vorlage („Insert blocks“) – sie stehen in der Einrichtung, nicht unter dem Button
-  const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table" && b.type !== "button";
+  const showKids = hasKids && b.type !== "callout" && b.type !== "syncedBlock" && b.type !== "table" && b.type !== "button";
   const color = typeof b.props?.color === "string" && b.props.color !== "default" ? b.props.color : undefined;
   // Abschnitt (Entscheidung 14. 11.): Toggle-Überschrift mit Hintergrundfarbe färbt den ganzen Block samt Inhalt als Fläche.
   const section = sectionColor(b);
@@ -1580,7 +1628,7 @@ export function sectionColor(b: { type: string; props?: Record<string, unknown> 
 
 /** BSD-407 Teil 5: Abschnitt eines Meetings (Notizen, Zusammenfassung) – Klick in die freie Fläche schreibt am Ende weiter. */
 function MeetingSection({ id, depth, placeholder }: { id: string; depth: number; placeholder: string | undefined }) {
-  const { store, ctrl, editable } = useCtx();
+  const { store, ctrl, editable } = useLiveCtx();
   const kids = useKids(store, id);
   const onClick = (e: React.MouseEvent) => {
     if (!editable || (e.target as Element).closest("[data-editable-id], button, input, a, [data-embed]:not(.bx2-meet)")) return;
@@ -1629,7 +1677,7 @@ function Gutter({ id }: { id: string }) {
 }
 
 function Columns({ block, depth }: { block: Block; depth: number }) {
-  const { store, ctrl } = useCtx();
+  const { store, ctrl } = useLiveCtx();
   const cols = useKids(store, block.id);
   const selected = useSelected(ctrl, block.id);
   return (
@@ -1643,7 +1691,7 @@ function Columns({ block, depth }: { block: Block; depth: number }) {
 
 /** Trenner zwischen zwei Spalten: Ziehen verteilt die Breite der beiden neu (ein Undo-Schritt am Ende). */
 function ColumnResizer({ left, right }: { left: string; right: string }) {
-  const { store, editable } = useCtx();
+  const { store, editable } = useLiveCtx();
   const onDown = (e: React.PointerEvent) => {
     if (!editable) return;
     e.preventDefault();
@@ -1677,7 +1725,7 @@ function ColumnResizer({ left, right }: { left: string; right: string }) {
 }
 
 function Column({ id, depth, next }: { id: string; depth: number; next: string | undefined }) {
-  const { store, editable } = useCtx();
+  const { store, editable } = useLiveCtx();
   const b = useBlock(store, id);
   const ratio = typeof b?.props?.ratio === "number" && b.props.ratio > 0 ? b.props.ratio : 1;
   return (
@@ -1689,8 +1737,13 @@ function Column({ id, depth, next }: { id: string; depth: number; next: string |
   );
 }
 
+/**
+ * Inhalt einer Zeile. Die Textarten (Absatz, Überschrift, Liste, To-do, Toggle, Zitat, Trenner) stehen hier – sie
+ * zeigen nur ihren eigenen Block und zeichnen nicht bei jeder Taste irgendwo auf der Seite neu. Alles andere zeichnet
+ * `OtherContent` wie bisher mit der Hülle.
+ */
 function BlockContent({ block: b, depth, number }: { block: Block; depth: number; number: number }) {
-  const { store, props, editable } = useCtx();
+  const { store, editable } = useCtx();
   switch (b.type) {
     case "heading1": case "heading2": case "heading3": case "heading4":
       if (b.props?.toggleable) {
@@ -1707,8 +1760,6 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <HeadingField block={b} />;
     case "text": case "quote":
       return <TextField block={b} />;
-    case "code":
-      return <CodeBlock block={b} />;
     case "bulletedList":
       return <><span className="bx2-marker" contentEditable={false}>{["•", "◦", "▪"][depth % 3]}</span><TextField block={b} /></>;
     case "numberedList":
@@ -1733,6 +1784,18 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
           <TextField block={b} />
         </>
       );
+    case "divider":
+      return <hr className="bx2-divider" />;
+    default:
+      return <OtherContent block={b} depth={depth} />;
+  }
+}
+
+function OtherContent({ block: b, depth }: { block: Block; depth: number }) {
+  const { store, props, editable } = useLiveCtx();
+  switch (b.type) {
+    case "code":
+      return <CodeBlock block={b} />;
     case "callout":
       return (
         <div className="bx2-callout">
@@ -1743,8 +1806,6 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
           </div>
         </div>
       );
-    case "divider":
-      return <hr className="bx2-divider" />;
     case "page": case "databasePage": case "linkToPage": {
       const target = b.type === "linkToPage" ? b.props?.linkTarget : b.id;
       if (b.type === "page" && isBoardPage(b) && props.renderBoard) return <BoardBlock block={b} />;
@@ -1811,7 +1872,7 @@ const PASTE_PROBLEMS: Record<SyncedPasteProblem, string> = {
  * Blöcken (Kern unsyncCopy, ein Undo-Schritt). Liegt das Original im Papierkorb, zeigt die Kopie einen Hinweis.
  */
 function SyncedBlockView({ block: b, depth }: { block: Block; depth: number }) {
-  const { store, props, editable } = useCtx();
+  const { store, props, editable } = useLiveCtx();
   const raw = typeof b.props?.syncSource === "string" ? b.props.syncSource : undefined;
   const isCopy = raw !== undefined && raw !== b.id;
   const missing = isCopy && !store.blocks.has(raw);
@@ -1858,7 +1919,7 @@ function numberLabel(n: number, depth: number): string {
  * scrollt darüber hinweg; ein Doppelklick betritt sie, Esc oder ein Klick daneben verlässt sie wieder.
  */
 function BoardBlock({ block: b }: { block: Block }) {
-  const { store, editable, props } = useCtx();
+  const { store, editable, props } = useLiveCtx();
   const [picking, setPicking] = useState(false);
   const [entered, setEntered] = useState(false);
   const read = useRef<(() => Camera) | undefined>(undefined);
@@ -1914,7 +1975,7 @@ function BoardBlock({ block: b }: { block: Block }) {
 }
 
 function PageLink({ target }: { target: string | undefined }) {
-  const { store, props } = useCtx();
+  const { store, props } = useLiveCtx();
   const dir = props.pages;
   const ref = useSyncExternalStore(dir ? dir.subscribe : storeSubscribe(store), () => (target ? dir?.get(target) : undefined));
   const local = target ? store.blocks.get(target) : undefined;
@@ -1933,7 +1994,7 @@ function PageLink({ target }: { target: string | undefined }) {
  * ausdrücklichen Klick und nur, wo die Hülle das kann (Desktop, Test-Haken); Fehler stehen als Satz unter der Karte.
  */
 function BookmarkCard({ block: b, url }: { block: Block; url: string }) {
-  const { store, editable, props } = useCtx();
+  const { store, editable, props } = useLiveCtx();
   const meta = b.props?.bookmark;
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | undefined>();
@@ -1985,7 +2046,7 @@ function ImageBlock({ block: b }: { block: Block }) {
   const src = useFileURL(raw);
   const width = typeof b.props?.width === "number" ? b.props.width : undefined;
   const align = imageAlign(b.props?.align);
-  const { store, props, editable, ctrl } = useCtx();
+  const { store, props, editable, ctrl } = useLiveCtx();
   // nach einer Aktion am Bild ist es gewählt und der Editor hat den Fokus: ⌘Z/⇧⌘Z, Entf und Pfeile wirken (wie Notion)
   const selectSelf = () => { ctrl.select([b.id]); ctrl.root?.focus({ preventScroll: true }); };
   const input = useRef<HTMLInputElement>(null);
@@ -2097,7 +2158,7 @@ function ImageBlock({ block: b }: { block: Block }) {
 }
 
 function useFileURL(raw: string | undefined): string | undefined {
-  const { props } = useCtx();
+  const { props } = useLiveCtx();
   const [src, setSrc] = useState<string | undefined>(raw && !raw.startsWith(ASSET_URL_PREFIX) ? raw : undefined);
   useEffect(() => {
     if (!raw) return;
@@ -2110,7 +2171,7 @@ function useFileURL(raw: string | undefined): string | undefined {
 }
 
 function UrlPrompt({ block: b }: { block: Block }) {
-  const { store, editable } = useCtx();
+  const { store, editable } = useLiveCtx();
   const [v, setV] = useState("");
   const save = () => { const u = v.trim(); if (u) cmd.setBlockProps(store, [b.id], { url: /^[a-z]+:/i.test(u) ? u : "https://" + u }, "Add link"); };
   return (
@@ -2135,7 +2196,7 @@ export function uploadedProps(url: string, f: { name: string; type: string; size
 function FileBlock({ block: b }: { block: Block }) {
   const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
   const src = useFileURL(raw);
-  const { store, props, editable } = useCtx();
+  const { store, props, editable } = useLiveCtx();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   if (!raw) {
@@ -2208,7 +2269,7 @@ function FilePreviewView({ name, mime, src }: { name: string; mime: string | und
 }
 
 function TableBlock({ block: b }: { block: Block }) {
-  const { store, editable, ctrl } = useCtx();
+  const { store, editable, ctrl } = useLiveCtx();
   // BSD-407 Teil 3: gemeinsames Format – Zeilen sind Kind-Blöcke `tableRow` mit `cells` (Kern `tableModel`); neu zeichnen,
   // wenn sich eine Zeile ändert
   useSyncExternalStore(storeSubscribe(store), () => store.revision);
@@ -2316,7 +2377,7 @@ function TableBlock({ block: b }: { block: Block }) {
 }
 
 function TableOfContents() {
-  const { store, ctrl } = useCtx();
+  const { store, ctrl } = useLiveCtx();
   useSyncExternalStore(storeSubscribe(store), () => store.revision);
   const heads = ctrl.order().map((id) => store.blocks.get(id)!).filter((x) => /^heading[1-3]$/.test(x.type));
   return (
@@ -2336,7 +2397,7 @@ interface AIState { anchor: string; selection?: { id: string; from: number; to: 
 type AIPhase = { phase: "ask" } | { phase: "busy"; prompt: string } | { phase: "done"; prompt: string; text: string } | { phase: "failed"; prompt: string; message: string };
 
 function BlockAIBox({ ai, req, onClose }: { ai: EditorAI; req: AIState; onClose: () => void }) {
-  const { store, ctrl, props } = useCtx();
+  const { store, ctrl, props } = useLiveCtx();
   const [prompt, setPrompt] = useState("");
   const [state, setState] = useState<AIPhase>({ phase: "ask" });
   const abort = useRef<AbortController | undefined>(undefined);
@@ -2418,7 +2479,7 @@ function BlockAIBox({ ai, req, onClose }: { ai: EditorAI; req: AIState; onClose:
 const freshButtons = new Set<string>();
 
 function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
-  const { store, props, editable, ctrl } = useCtx();
+  const { store, props, editable, ctrl } = useLiveCtx();
   const [editing, setEditing] = useState(() => editable && freshButtons.delete(b.id));
   const [pause, setPause] = useState<ButtonPause | undefined>();
   const [busy, setBusy] = useState(false);
@@ -2492,7 +2553,7 @@ function ButtonBlock({ block: b, depth }: { block: Block; depth: number }) {
 }
 
 function ButtonSetup({ block: b, depth, onDone }: { block: Block; depth: number; onDone: () => void }) {
-  const { store, props, ctrl } = useCtx();
+  const { store, props, ctrl } = useLiveCtx();
   const [label, setLabel] = useState(b.props?.buttonLabel ?? "");
   const steps = effectiveButtonActions(b.props);
   const [picking, setPicking] = useState<{ step: number; kind: "database" | "page" } | undefined>();
@@ -2607,7 +2668,7 @@ function EquationPopover({ x, y, initial, onDone }: { x: number; y: number; init
 }
 
 function EquationBlock({ block: b }: { block: Block }) {
-  const { store, props, editable } = useCtx();
+  const { store, props, editable } = useLiveCtx();
   const expr = b.props?.expression ?? "";
   const [editing, setEditing] = useState(expr === "" && editable);
   const [draft, setDraft] = useState(expr);
@@ -2629,7 +2690,7 @@ function EquationBlock({ block: b }: { block: Block }) {
 }
 
 function CalloutIcon({ block: b }: { block: Block }) {
-  const { store, editable } = useCtx();
+  const { store, editable } = useLiveCtx();
   const [open, setOpen] = useState(false);
   const icon = typeof b.props?.icon === "string" ? b.props.icon : "💡";
   return (
@@ -2662,7 +2723,7 @@ const CODE_VIEW_BUTTONS: readonly { view: CodeView; label: string; icon: MenuIco
  * solange die Schreibmarke darin steht.
  */
 function CodeBlock({ block: b }: { block: Block }) {
-  const { store, editable, ctrl } = useCtx();
+  const { store, editable, ctrl } = useLiveCtx();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
   const [full, setFull] = useState(false);
@@ -2700,7 +2761,7 @@ function CodeBlock({ block: b }: { block: Block }) {
 }
 
 function CodeTools({ block: b, view, onView, onFull }: { block: Block; view?: CodeView | undefined; onView?: (v: CodeView) => void; onFull?: (() => void) | undefined }) {
-  const { store, editable } = useCtx();
+  const { store, editable } = useLiveCtx();
   const wrap = b.props?.wrap === true;
   const [copied, setCopied] = useState<"ok" | "failed" | undefined>();
   useEffect(() => {
@@ -2735,7 +2796,7 @@ function CodeTools({ block: b, view, onView, onFull }: { block: Block; view?: Co
 
 /** BSD-535: HTML-Datei öffnen – ersetzt den Code des HTML-Blocks (ein Undo-Schritt). */
 function HtmlFileButton({ block: b }: { block: Block }) {
-  const { store, notify } = useCtx();
+  const { store, notify } = useLiveCtx();
   const input = useRef<HTMLInputElement>(null);
   const open = async (f: File | undefined) => {
     if (!f) return;
@@ -2752,7 +2813,7 @@ function HtmlFileButton({ block: b }: { block: Block }) {
 }
 
 function CodeLanguage({ block: b }: { block: Block }) {
-  const { store, editable } = useCtx();
+  const { store, editable } = useLiveCtx();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   // BSD-343 / BSD-407 Teil 3: Kurznamen aus Markdown/Notion („ts“, „js“, „py“) zeigen die Sprache (gespeichert bleibt der Wert)
@@ -3061,7 +3122,7 @@ function MenuRow({ icon, label, hint, danger, sub, role = "menuitem", checked, o
 }
 
 function BlockMenu({ id, x, y, view0, onClose, onMove }: { id: string; x: number; y: number; view0?: "turn" | undefined; onClose: () => void; onMove?: ((ids: string[]) => void) | undefined }) {
-  const { store, ctrl, editable, props } = useCtx();
+  const { store, ctrl, editable, props } = useLiveCtx();
   const ref = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<"main" | "color" | "turn">(view0 ?? "main");
   // BSD-407: Suchfeld wie im alten Blockmenü – Tippen filtert, Enter führt den ersten Treffer aus, ↓ geht in die
@@ -3270,7 +3331,7 @@ function FormatBar({ x, y, caret, onMark, onColor, onAI, onLink, onEquation, onT
   onMark: (m: FormatMark) => void; onColor: (color: string | undefined) => void; onAI?: (() => void) | undefined;
   onLink: () => void; onEquation: () => void; onTurn: () => void;
 }) {
-  const { store } = useCtx();
+  const { store } = useLiveCtx();
   useSyncExternalStore(storeSubscribe(store), () => store.revision);
   const [colors, setColors] = useState(false);
   const b = store.blocks.get(caret.id);
@@ -3334,7 +3395,7 @@ interface DateMentionValue { start: number; end?: number; includeTime?: boolean;
 
 /** Wähler einer Datums-Erwähnung: Tag, Ende (Bereich), Uhrzeit und „Remind me“; Änderungen gelten sofort (ein Undo-Schritt je Feld). */
 function DatePopover({ state, onChange, onClose }: { state: { id: string; from: number; to: number; x: number; y: number }; onChange: (v: DateMentionValue) => void; onClose: () => void }) {
-  const { store } = useCtx();
+  const { store } = useLiveCtx();
   const ref = useRef<HTMLDivElement>(null);
   const b = useBlock(store, state.id);
   const run = cmd.runsOf(b?.text);
