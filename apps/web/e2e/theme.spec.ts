@@ -137,6 +137,10 @@ test("Theme „System“ folgt dem Betriebssystem", async ({ page }) => {
   await page.goto("/#appearance");
   await ready(page);
   const html = page.locator("html");
+  // BSD-550: frisches Profil = „System“
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByRole("radio", { name: "System" })).toBeChecked();
+  await page.getByRole("radio", { name: "Light" }).click();
   await expect(html).toHaveAttribute("data-theme", "light");
   await page.getByRole("radio", { name: "System" }).click();
   await expect(html).toHaveAttribute("data-theme", "dark");
@@ -145,6 +149,29 @@ test("Theme „System“ folgt dem Betriebssystem", async ({ page }) => {
   await expect(html).toHaveAttribute("data-theme", "light");
   await expect.poll(() => css(page, ".astryx-card", "background-color")).toBe(token("surface-raised", "light"));
 });
+
+// BSD-550: Erster Start auf dunklem System ist dunkel, schon bevor das App-Modul läuft (kein heller Blitz);
+// eine gespeicherte Wahl „Light“ bleibt nach dem Update hell.
+for (const saved of [undefined, "light", "dark"] as const) {
+  test(`Erster Bild-Zustand bei dunklem System, gespeichert: ${saved ?? "nichts"}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.addInitScript((t) => {
+      if (t) localStorage.setItem("based.appearance", JSON.stringify({ theme: t, style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false }));
+      // „interactive“ kommt nach dem Parsen, aber vor den Modul-Skripten: so sieht das erste Bild aus.
+      document.addEventListener("readystatechange", () => {
+        if (document.readyState === "interactive") (window as unknown as { __firstTheme?: string }).__firstTheme = `${document.documentElement.dataset.theme}/${document.documentElement.style.colorScheme}`;
+      });
+    }, saved);
+    await page.goto("/");
+    await ready(page);
+    const want = saved ?? "dark";
+    expect(await page.evaluate(() => (window as unknown as { __firstTheme?: string }).__firstTheme)).toBe(`${want}/${want}`);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", want);
+    await page.reload();
+    await ready(page);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", want);
+  });
+}
 
 for (const style of ["default", "bold"] as const) {
   test(`beim Laden gehen keine Requests an fremde Hosts (Stil ${style})`, async ({ page, context, baseURL }) => {

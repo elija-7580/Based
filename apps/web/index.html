@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Based</title>
+    <script>
+      // BSD-550: Hell/Dunkel vor dem ersten Bild, noch bevor das große Modul geladen ist (kein heller Blitz auf
+      // dunklem System). Gleiche Regel wie appearance.ts: ohne Eintrag „system“, gespeicherte Wahl gewinnt.
+      try {
+        var raw = localStorage.getItem("based.appearance");
+        var t = raw ? JSON.parse(raw).theme : "system";
+        if (t !== "dark" && t !== "system") t = "light";
+        if (t === "system") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = t;
+        document.documentElement.style.colorScheme = t;
+      } catch (e) {}
+    </script>
   </head>
   <body writingsuggestions="false">
     <div id="root"></div>

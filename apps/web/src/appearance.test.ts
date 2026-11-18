@@ -6,6 +6,20 @@ describe("appearance", () => {
     expect(loadAppearance({ getItem: () => null })).toEqual(DEFAULT_APPEARANCE);
     expect(loadAppearance({ getItem: () => "{kaputt" })).toEqual(DEFAULT_APPEARANCE);
   });
+  it("BSD-550: ohne gespeicherte Wahl folgt der erste Start dem System", () => {
+    const a = loadAppearance({ getItem: () => null });
+    expect(a.theme).toBe("system");
+    expect(effectiveTheme(a, true)).toBe("dark");
+    expect(effectiveTheme(a, false)).toBe("light");
+  });
+  it("BSD-550: eine gespeicherte Wahl bleibt nach dem Update erhalten", () => {
+    for (const theme of ["light", "dark", "system"] as const) {
+      expect(loadAppearance({ getItem: () => JSON.stringify({ ...DEFAULT_APPEARANCE, theme }) }).theme).toBe(theme);
+    }
+    // alter Eintrag ohne Theme (andere Einstellung geändert, als „light“ noch Standard war): bleibt hell
+    expect(loadAppearance({ getItem: () => JSON.stringify({ density: "compact" }) }).theme).toBe("light");
+    expect(loadAppearance({ getItem: () => JSON.stringify({ theme: "neon" }) }).theme).toBe("light");
+  });
   it("übernimmt nur bekannte Werte", () => {
     const a = loadAppearance({ getItem: () => JSON.stringify({ theme: "dark", marker: "neon", calm: true }) });
     expect(a).toMatchObject({ theme: "dark", marker: "butter", calm: true });

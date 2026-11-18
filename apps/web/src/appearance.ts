@@ -19,9 +19,15 @@ export interface Appearance {
   agentDetails: boolean;
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { theme: "light", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false };
+/**
+ * BSD-550: Ohne gespeicherte Wahl folgt Based dem System (Entscheidung Elija 18. 11.). Wer schon etwas gespeichert
+ * hat, behält es – auch ein alter Eintrag ohne `theme` bleibt „light“ (das war bis dahin der Standard).
+ */
+export const DEFAULT_APPEARANCE: Appearance = { theme: "system", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false };
 
 const KEY = "based.appearance";
+/** Gespeicherte Einstellung ohne gültiges `theme`: so wie vor BSD-550, damit sich bei niemandem etwas ändert. */
+const SAVED_THEME_FALLBACK: Theme = "light";
 
 export function loadAppearance(storage: Pick<Storage, "getItem"> | undefined = safeStorage()): Appearance {
   try {
@@ -29,7 +35,7 @@ export function loadAppearance(storage: Pick<Storage, "getItem"> | undefined = s
     if (!raw) return { ...DEFAULT_APPEARANCE };
     const v = JSON.parse(raw) as Partial<Appearance>;
     return {
-      theme: v.theme === "dark" || v.theme === "system" ? v.theme : "light",
+      theme: v.theme === "dark" || v.theme === "system" ? v.theme : SAVED_THEME_FALLBACK,
       style: v.style === "bold" ? "bold" : "default",
       marker: v.marker === "mint" || v.marker === "sky" || v.marker === "rose" ? v.marker : "butter",
       density: v.density === "compact" ? "compact" : "comfortable",
