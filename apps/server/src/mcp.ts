@@ -18,6 +18,7 @@ export const SERVER_VERSION = "0.1.0";
 
 export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, databases). Pages are read and written as Markdown.
 - Start with \`recall\` when you need context: one call returns what Based remembers about the user, matching pages with a passage, and how they are connected. \`about_me\` gives the user's profile; \`related\` lists a page's neighbours.
+- Skills are the user's reusable instructions: \`list_skills\`, then \`load_skill\` before following one (they are also offered as prompts).
 - When the user tells you something durable about themselves, their projects or people, save it with \`remember\` (one fact per call, link the pages it is about).
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
@@ -647,10 +648,31 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
     "about_me",
     { description: "The user's profile (“About me” in the Agent Brain) and their standing preferences. Read it once at the start of a task that depends on who the user is.", inputSchema: {}, annotations: { readOnlyHint: true } },
     guarded(() => {
-      const about = pages.brain.about().trim();
+      // Die Vorlage („## Role“ …) ohne eigenen Text ist kein Profil.
+      const raw = pages.brain.about().trim();
+      const about = raw.split("\n").some((l) => l.trim() && !/^#{1,6}\s/.test(l.trim())) ? raw : "";
       const prefs = pages.brain.activeMemories().filter((m) => m.kind === "Profile" || m.kind === "Preference").slice(0, 25);
       const out = [about ? `# About me\n${about}` : "", prefs.length ? `# Profile and preferences\n${prefs.map((m) => `- ${m.title} (${m.kind}; id: ${m.id})`).join("\n")}` : ""].filter(Boolean).join("\n\n");
       return text(out || "Nothing saved about the user yet.");
+    }),
+  );
+
+  server.registerTool(
+    "list_skills",
+    { description: "The user's skills (reusable instructions) that are switched on, with their descriptions. Load one with `load_skill` before following it.", inputSchema: {}, annotations: { readOnlyHint: true } },
+    guarded(() => {
+      const skills = pages.brain.skills(true);
+      return text(skills.length ? skills.map((sk) => `- ${sk.name}${sk.description ? ` — ${sk.description}` : ""}`).join("\n") : "No skills yet.");
+    }),
+  );
+
+  server.registerTool(
+    "load_skill",
+    { description: "The full instructions of one skill, by name.", inputSchema: { name: z.string().min(1) }, annotations: { readOnlyHint: true } },
+    guarded(({ name }: { name: string }) => {
+      const sk = pages.brain.skillByName(name);
+      if (!sk || !sk.enabled) return fail(`No skill named “${name}”. Skills: ${pages.brain.skills(true).map((x) => x.name).join(", ") || "(none)"}`);
+      return text(`# Skill: ${sk.name}\n${sk.description}\n\n${sk.body}`);
     }),
   );
 

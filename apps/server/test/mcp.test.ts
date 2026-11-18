@@ -41,7 +41,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_view", "database_schema", "delete_view", "draw_board", "duplicate_page", "find_replace", "get_project", "get_run", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_trash", "list_views", "move_page", "query_database", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "update_database", "update_page", "update_project_status", "update_row", "update_view", "upload_file"].sort(),
+      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_view", "database_schema", "delete_view", "draw_board", "duplicate_page", "find_replace", "get_project", "get_run", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "update_database", "update_page", "update_project_status", "update_row", "update_view", "upload_file"].sort(),
     );
   });
 
@@ -215,6 +215,13 @@ describe("MCP: Agent Brain (BSD-541)", () => {
     expect(textOf(await call("based_guide", { topic: "brain" }))).toContain("remember(fact");
     expect(textOf(await call("about_me"))).toBe("Nothing saved about the user yet.");
     expect(textOf(await call("recall", { query: "" }))).toContain("Give a query");
+    expect(textOf(await call("list_skills"))).toBe("No skills yet.");
+    new AgentBrain(app.pages.store).saveSkill({ name: "Weekly review", description: "How to write the weekly review", body: "1. Collect done tasks.\n2. Write three lines." });
+    // Der Brain existiert jetzt – „About me“ enthält nur die leere Vorlage und zählt nicht als Profil.
+    expect(textOf(await call("about_me"))).toBe("Nothing saved about the user yet.");
+    expect(textOf(await call("list_skills"))).toBe("- Weekly review — How to write the weekly review");
+    expect(textOf(await call("load_skill", { name: "weekly review" }))).toContain("2. Write three lines.");
+    expect((await call("load_skill", { name: "nope" })).isError).toBe(true);
 
     const adr = idIn(textOf(await call("create_page", { title: "ADR 0017", markdown: "Storage decisions." })));
     const plan = idIn(textOf(await call("create_page", { title: "Sync plan", markdown: `Devices sync through the server. See [ADR 0017](based://page/${adr}).` })));

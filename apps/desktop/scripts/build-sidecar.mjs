@@ -43,3 +43,24 @@ mkdirSync(ptyOut, { recursive: true });
 for (const f of ["package.json", "LICENSE", "lib"]) cpSync(join(ptySrc, f), join(ptyOut, f), { recursive: true });
 for (const p of ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64"]) cpSync(join(ptySrc, "prebuilds", p), join(ptyOut, "prebuilds", p), { recursive: true });
 console.log(`copied ${PTY} → ${ptyOut}`);
+
+// BSD-541: ONNX-Laufzeit für die Suche nach Bedeutung (`recall` über MCP) neben das Bundle legen – onnxruntime-web
+// (MIT), nur die Node-Variante mit ihrer WebAssembly-Datei (~12 MB, keine native Datei, also nichts zu signieren).
+// Der Server lädt sie per require relativ zu based-server.cjs; fehlt sie, bleibt recall bei Wörtern und Nachbarn.
+try {
+  const serverReq = createRequire(join(desktop, "..", "server", "package.json"));
+  const webSrc = join(dirname(serverReq.resolve("onnxruntime-web")), "..");
+  const commonSrc = join(dirname(createRequire(join(webSrc, "package.json")).resolve("onnxruntime-common")), "..", "..");
+  const webOut = join(out, "node_modules", "onnxruntime-web"), commonOut = join(out, "node_modules", "onnxruntime-common");
+  rmSync(webOut, { recursive: true, force: true });
+  rmSync(commonOut, { recursive: true, force: true });
+  mkdirSync(join(webOut, "dist"), { recursive: true });
+  mkdirSync(commonOut, { recursive: true });
+  cpSync(join(webSrc, "package.json"), join(webOut, "package.json"));
+  for (const f of ["ort.node.min.js", "ort-wasm-simd-threaded.wasm", "ort-wasm-simd-threaded.mjs"]) cpSync(join(webSrc, "dist", f), join(webOut, "dist", f));
+  cpSync(join(commonSrc, "package.json"), join(commonOut, "package.json"));
+  cpSync(join(commonSrc, "dist", "cjs"), join(commonOut, "dist", "cjs"), { recursive: true });
+  console.log(`copied onnxruntime-web → ${webOut}`);
+} catch (e) {
+  console.log(`onnxruntime-web not bundled (${e instanceof Error ? e.message : String(e)}) – recall works without search by meaning`);
+}

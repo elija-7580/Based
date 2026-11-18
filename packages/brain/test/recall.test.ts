@@ -5,7 +5,7 @@ import {
   AgentBrain, pageSections, Recall, RelationGraph, RememberError, sameFact, SemanticIndexer, textHash, VectorIndex, WorkspaceTools,
   type EmbedKind, type TextEmbedder,
 } from "../src/index.js";
-import { memoryStore } from "./helpers.js";
+import { fixture, memoryStore } from "./helpers.js";
 
 function pageWith(store: WorkspaceStore, title: string, md = "", parent?: string): string {
   const id = createPage(store, { title, ...(parent ? { parent } : {}) });
@@ -110,6 +110,33 @@ describe("VectorIndex", () => {
       expect(Math.abs(hit.score - cos(q, vs[Number(hit.pageID.slice(1))]!))).toBeLessThan(0.02);
     }
     expect(agree).toBe(40);
+  });
+
+  it("echte E5-Vektoren (alle in derselben Ecke des Raums): die Vorauswahl über Bits trifft, weil sie um den Mittelwert nimmt", () => {
+    // Fixture: 480 Abschnitte und 8 Anfragen, eingebettet mit multilingual-e5-small (18.11.2026), als int8.
+    // Bei 313 von 384 Dimensionen haben über 90 % dieser Vektoren dasselbe Vorzeichen – rohe Vorzeichen-Bits fanden
+    // den besten Treffer in der Messung nur 62 von 68 Mal, um den Mittelwert genommen 68 von 68 Mal.
+    const raw = fixture("e5-vectors.bin");
+    const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+    const n = dv.getUint32(0, true), nq = dv.getUint32(4, true), dim = dv.getUint32(8, true);
+    const row = (r: number) => Float32Array.from(new Int8Array(raw.buffer, raw.byteOffset + 12 + r * dim, dim));
+    const vs = Array.from({ length: n }, (_, i) => row(i));
+    const cos = (a: Float32Array, b: Float32Array) => { let d = 0, na = 0, nb = 0; for (let i = 0; i < dim; i++) { d += a[i]! * b[i]!; na += a[i]! * a[i]!; nb += b[i]! * b[i]!; } return d / Math.sqrt(na * nb); };
+    const build = () => {
+      const index = new VectorIndex(dim, "e5", 256, 100);
+      vs.forEach((v, i) => index.setPage("p" + i, [i], [v]));
+      return index;
+    };
+    const queries = [...Array.from({ length: nq }, (_, k) => ({ q: row(n + k), self: -1 })), ...vs.filter((_, i) => i % 8 === 0).map((q, k) => ({ q, self: k * 8 }))];
+    const found = (index: VectorIndex) => queries.filter(({ q, self }) => {
+      const exact = vs.map((v, i) => ({ i, s: cos(q, v) })).filter((x) => x.i !== self).sort((a, b) => b.s - a.s)[0]!;
+      // Vorauswahl 5 % (im Betrieb sind es weniger als 1 %): der beste Treffer muss dabei sein.
+      return index.search(q, 2, { preselect: 24, filter: (id) => id !== "p" + self })[0]!.pageID === "p" + exact.i;
+    }).length;
+    const index = build();
+    expect(queries).toHaveLength(68);
+    expect(found(index)).toBeGreaterThanOrEqual(67);
+    expect(found(VectorIndex.deserialize(index.serialize(), { dim, model: "e5" })!)).toBeGreaterThanOrEqual(67);
   });
 
   it("ersetzt Seiten, behält unveränderte Abschnitte, übersteht Speichern und Laden", () => {
