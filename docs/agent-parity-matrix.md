@@ -7,17 +7,21 @@ Auftrag `docs/agent-parity.md`). Wird je Eintrag fortgeschrieben (Lücke → „
 ist entschieden, siehe „Entscheidungen“. Die vier Punkte „Was vor der Matrix zu wissen ist“ beschreiben den Stand vor
 dem Umbau.
 
+**Nachtrag 18.11., später:** Import als Werkzeug (`import_files`, `notion_import`; der Importer liegt jetzt im Kern),
+die kurze Werkzeugliste auch für die App-eigenen Agenten und Server-Läufe, Skills (`read_skill_file`, `save_skill`),
+Formular-Fragen (`update_view { form }`) und „Undo“ an jeder Agenten-Aktion im Chat sind gebaut.
+
 **Noch offen** (jeweils eigener Backlog-Eintrag):
-- V6/V7 Import von Dateien (Markdown-Text geht, alle anderen Importer nicht) und Notion-Import als Werkzeug: die
-  Importer hängen an der App (`apps/web/src/worker/importer.ts`) und müssen erst in ein gemeinsames Paket.
-- E35 „Undo“ an jeder Agenten-Aktion im Chat (sichtbare Oberfläche; `undo_last` für den Agenten selbst gibt es).
-- B7 `ask_user` (braucht ein Antwortfeld in der Inbox), B4/B5 Skill-Dateien und ein/aus, B12 Captures, B14 Coding-Sitzungen.
-- D19 Formular-Fragen, D11 Datumsformat, D12 Status-Gruppen, D14 verschachtelte Filter, S1/S18 Sortierung und
-  Dubletten, S17 Graph mit Tiefe, V3 PDF, T4 Embeds, X2 Workspace-Einstellungen.
+- B7 `ask_user`: braucht ein Antwortfeld in der Inbox (die Freigabe-Karte kann nur Allow/Deny).
+- V7 Notion-Import: als Werkzeug gibt es den Weg über die Notion-API (Token am Server, `BASED_NOTION_TOKEN`). Der
+  Hybrid-Weg (Export-ZIP plus API) und Pausieren fehlen; ein Notion-ZIP allein geht über `import_files`.
+- V3 PDF-Export (der Server hat keinen Browser zum Drucken), B12 Captures (gibt es in Based Next noch nicht),
+  B14 Coding-Sitzungen, B10 Zeitplan anlegen.
+- D11 Datumsformat, D12 Status-Gruppen, D14 verschachtelte Filter, S1/S18 Sortierung und Dubletten, S17 Graph mit
+  Tiefe, T4 Embeds, X2 Workspace-Einstellungen.
 - Rechte-Stufen Private/Balanced/Open gibt es in Based noch nicht. Bis dahin gilt: „Work freely“ = Open, alles andere
-  fragt beim Freigeben in der Inbox.
-- Die Werkzeuge der App-eigenen Agenten kommen noch als ganze Liste; die kurze Liste (`more_tools`, `run_tool`) gilt
-  bisher nur für MCP.
+  fragt beim Freigeben und bei Skills in der Inbox.
+- „Undo“ im Chat gilt, solange die App läuft; nach einem Neustart bleibt der Versionsverlauf der Seite.
 
 Aufwand: **S** = dünne Hülle um Logik, die es in `packages/core` schon gibt · **M** = neues Werkzeug mit eigener
 Logik oder Leseformat · **L** = braucht neue Kernlogik, einen Host-Weg (Dateien, Netz, Gerät) oder eine offene
@@ -155,7 +159,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Editor | E32 Als Markdown kopieren | ⌘C, Blockmenü | `read_page` | – | erledigt | – |
 | Editor | E33 Meeting-Block anlegen | Slash „Meeting notes“, ⌘N | – | erledigt | erledigt 18.11.: `meeting: Titel` | – |
 | Editor | E34 Ask AI im Text | Leertaste, Slash, Formatleiste | – | bewusst nicht | Der Agent ist selbst das Modell; er schreibt über `edit_blocks`. | – |
-| Editor | E35 Undo/Redo | ⌘Z; „Undo“ an der Agenten-Aktion im Chat | – | fehlt (Entscheidung 4) | teils 18.11.: `undo_last` (je Client, genau der letzte Aufruf); offen: „Undo“ an der Agenten-Aktion im Chat (Eintrag 7/7) | M |
+| Editor | E35 Undo/Redo | ⌘Z; „Undo“ an der Agenten-Aktion im Chat | – | erledigt | erledigt 18.11.: `undo_last` für den Agenten; im Chat ein „Undo“ an jeder schreibenden Aktion (`ToolResult.undo`, `undoByToken`) | – |
 | Editor | E36 Blockauswahl, Schreibmarke, Suchen in der Seite, Gliederung ein/aus | Esc, ⌘F, Seitenmenü | – | bewusst nicht | Rein visuell; `search` und `read_blocks` decken das Finden ab. | – |
 | Editor | E37 Echtzeit-Präsenz | Cursor anderer | – | bewusst nicht | Kein Dateninhalt. | – |
 
@@ -181,7 +185,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Datenbank | D16 Layout-Optionen (Karten-Vorschau, -Größe, Datums-Property, Zeitraum, Karte, „Open pages in“, Titel und Icon zeigen) | View settings | – | erledigt | erledigt 18.11.: `update_view { card_preview, card_size, date_property, end_date_property, map_property, open_in, show_icons, show_title, limit }` | – |
 | Datenbank | D17 Berechnungen (Summe, Anzahl …) | Tabellenfuß | – | erledigt | erledigt 18.11.: `update_view { calculations }`; `query_database { view }` gibt sie aus | – |
 | Datenbank | D18 Chart und Dashboard-Widgets | View settings „Chart“, „Widgets“ | `create_chart` nur Swift; `create_view type=chart` ohne Achsen | erledigt | erledigt 18.11.: `update_view { chart, add_widgets }` | – |
-| Datenbank | D19 Formular-Ansicht | Form | `create_view type=form` | Fragen, Pflichtfelder fehlen | `update_view { form }` | M |
+| Datenbank | D19 Formular-Ansicht | Form | `create_view type=form` | erledigt | erledigt 18.11.: `update_view { form: { title, description, questions } }`; welche Properties gefragt werden: `properties` | – |
 | Datenbank | D20 Zeilen-Vorlagen | „New“ ▾, „Templates“ | – | erledigt | erledigt 18.11.: `update_database { add_templates, delete_templates, default_template }`, `add_row { template }` | – |
 | Datenbank | D21 Datenbank sperren | View settings „Lock database“ | – | erledigt | erledigt 18.11.: `update_database { locked }` | – |
 | Datenbank | D22 Als ganze Seite öffnen, Zeilen-Vorschau, Suche in der Ansicht | Kopfzeile | – | bewusst nicht | Rein visuell; `query_database { search }` deckt die Suche. | – |
@@ -224,8 +228,8 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Export | V3 Seite exportieren (Markdown, HTML, PDF, Word, JSON, OPML, Archiv) | „Export…“ | `read_page` (Markdown als Text) | erledigt | erledigt 18.11.: `export_page { format: markdown, html, docx, json, opml; subpages; path }` am Server → Datei-Adresse, über stdio auch Pfad; PDF offen | – |
 | Export | V4 Ganzen Workspace exportieren | Settings → Import | – | erledigt | erledigt 18.11.: `export_workspace { format: markdown, html, archive }` am Server | – |
 | Export | V5 Drucken | ⌘P | – | bewusst nicht | Gerät. PDF deckt V3. | – |
-| Import | V6 Dateien importieren (Markdown, HTML, Word, Notion-ZIP, Obsidian, Logseq, Bear, Evernote, OPML, Archiv) | ⌘N „Import“, Settings | `create_page { markdown }` | alles außer Markdown-Text fehlt | `import_files { refs \| path, parent? }` über die Importer aus core; Antwort ist der Bericht | L |
-| Import | V7 Notion-Import (Hybrid, API) starten, pausieren, Stand lesen | Settings → Import | – | fehlt | `notion_import { start \| pause \| status }`; Token nur aus den Einstellungen (Entscheidung 5) | L |
+| Import | V6 Dateien importieren (Markdown, HTML, Word, Notion-ZIP, Obsidian, Logseq, Bear, Evernote, OPML, Archiv) | ⌘N „Import“, Settings | `create_page { markdown }` | erledigt | erledigt 18.11.: `import_files { refs, text + name, path (stdio), parent }` mit den Importern der App (Kern: `interop/prepare-files.ts`) | – |
+| Import | V7 Notion-Import (Hybrid, API) starten, pausieren, Stand lesen | Settings → Import | – | fehlt | teils 18.11.: `notion_import { action: start \| status \| cancel, links, parent }` über die Notion-API; Hybrid und Pause offen | L |
 
 ### M · Meeting Notes
 
@@ -246,8 +250,8 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Brain | B1 Erinnerungen lesen, About me | Agent Brain | `recall`, `about_me` | – | erledigt (nur MCP; eigene Agenten haben `recall_memories`, `semantic_search`, `related_pages`, also drei Namen für dasselbe → G1) | – |
 | Brain | B2 Erinnerung speichern, ersetzen | Agent Brain | `remember { replaces }` | – | erledigt | – |
 | Brain | B3 Erinnerung freigeben („To review“), löschen | Memories-Datenbank | `update_row`/`trash_page` auf der Zeile | Freigabe privater Fakten darf ein Agent nicht selbst geben | bewusst nicht für „To review → freigegeben“ (Entscheidung 18.11.); Regel im Werkzeug festhalten und testen | S |
-| Brain | B4 Skills lesen | Settings → Agents & AI | `list_skills`, `load_skill`, Prompts | Dateien eines Skills (`read_skill_file`) fehlen | nachziehen | S |
-| Brain | B5 Skill anlegen, ändern, ein/aus, importieren | Settings → Agents & AI | Skills sind Seiten → `create_page` | ein/aus und Import fehlen | `save_skill`, `set_skill_enabled`; nach Rechte-Stufe (Entscheidung 3) | M |
+| Brain | B4 Skills lesen | Settings → Agents & AI | `list_skills`, `load_skill`, Prompts | erledigt | erledigt 18.11.: `read_skill_file` | – |
+| Brain | B5 Skill anlegen, ändern, ein/aus, importieren | Settings → Agents & AI | Skills sind Seiten → `create_page` | erledigt | erledigt 18.11.: `save_skill { name, description, body, enabled }`; ohne „Work freely“ Rückfrage in der Inbox | – |
 | Inbox | B6 Inbox lesen, beantworten | Home, Inbox | `inbox`, `resolve_inbox` | – | erledigt | – |
 | Inbox | B7 Agent per @ ansprechen, Frage stellen | Inbox-Format (Vaultite) | `ask_main_agent` | Frage an den Nutzer aus MCP heraus fehlt | `ask_user { question, options? }` → Inbox | S |
 | Home | B8 Projekte lesen, anlegen, Status | Home, Projekt-Ansicht | `list_projects`, `get_project`, `create_project`, `update_project_status` | erledigt | erledigt 18.11.: `update_project { name, goal, status, budget_eur }` | – |
@@ -284,12 +288,12 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Bereich | Zeilen | erledigt | Lücke | bewusst nicht | offen |
 | --- | --- | --- | --- | --- | --- |
 | Grundlage | 4 | 4 | 0 | 0 | 0 |
-| Editor | 37 | 30 | 4 (E5, E30, E31, E35) | 3 | 0 |
-| Datenbanken | 23 | 20 | 1 (D19; Reste bei D11, D12, D14) | 2 | 0 |
+| Editor | 37 | 31 | 3 (E5, E30, E31) | 3 | 0 |
+| Datenbanken | 23 | 21 | 0 (Reste bei D11, D12, D14) | 2 | 0 |
 | Shell | 23 | 17 | 2 (S17, S18) | 4 | 0 |
-| Verlauf, Export, Import | 7 | 4 | 2 (V6, V7) | 1 | 0 |
+| Verlauf, Export, Import | 7 | 5 | 1 (V7 teils) | 1 | 0 |
 | Meetings | 7 | 5 | 0 | 2 | 0 |
-| Brain, Inbox, Home | 14 | 6 | 6 (B4, B5, B7, B10 teils, B12, B14) | 2 | 0 |
+| Brain, Inbox, Home | 14 | 8 | 4 (B7, B10 teils, B12, B14) | 2 | 0 |
 | Teilen | 5 | 4 | 0 | 0 | 1 (T5, kommt mit Multi-User) |
 | Einstellungen | 6 | 1 | 1 (X2) | 4 | 0 |
 

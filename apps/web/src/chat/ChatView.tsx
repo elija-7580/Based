@@ -168,7 +168,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
               <div className="chat-scroll" data-testid="chat-messages">
                 {s.error ? <p className="chat-error t-desc" role="alert">{s.error}</p> : null}
                 {s.loading ? <p className="t-meta" role="status">Loading…</p> : (
-                  <ChatMessages items={t.items} running={s.running} approvals={s.approvals} onAnswer={(id, ok) => controller.answer(id, ok)} onRetry={() => controller.retry()} empty={empty} />
+                  <ChatMessages items={t.items} running={s.running} approvals={s.approvals} onAnswer={(id, ok) => controller.answer(id, ok)} onRetry={() => controller.retry()} empty={empty} undo={{ results: s.undone, session: s.undoSession, run: (id, token) => void controller.undoTool(id, token) }} />
                 )}
               </div>
               {s.waiting.length > 0 ? (

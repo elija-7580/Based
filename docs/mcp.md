@@ -37,7 +37,7 @@ token) and ask "Which projects are running and what needs me?".
 ### The tool list is short on purpose (tokens)
 
 A client loads the whole tool list into every conversation. Based has about 70 tools; their descriptions and schemas
-come to roughly 11,800 tokens before an agent has done anything. So `tools/list` shows only 19: the 17 core tools
+come to roughly 12,500 tokens before an agent has done anything. So `tools/list` shows only 19: the 17 core tools
 (search, read, write pages, rows, memory, undo) plus two that reach the rest. That is about 3,400 tokens, 71 % less.
 
 | Tool | What it does |
@@ -47,7 +47,8 @@ come to roughly 11,800 tokens before an agent has done anything. So `tools/list`
 
 Every tool can still be called directly by name. To list all of them (for clients that load tools on demand
 themselves, like Claude Code with tool search): `POST /mcp?tools=all`, or `BASED_MCP_TOOLS=all` for
-`based-server --stdio` and `based mcp`. The `based` CLI always asks for the full list.
+`based-server --stdio` and `based mcp`. The `based` CLI always asks for the full list. Based's own agents (chat,
+runs on the server) get the same short list; `run_tool` is unwrapped before rules and approvals apply.
 
 How others do it, and what Based took from it: Anthropic's tool search (`defer_loading`, about 85 % fewer tokens)
 and Claude Code's deferred MCP tools need the client to support it; GitHub's MCP server has dynamic toolsets
@@ -82,6 +83,8 @@ Allow in Based. `resolve_inbox` refuses these, with or without an allow rule: an
 | `page_history` / `read_version` / `restore_version` | Saved versions of a page (only inside the Based app; the server keeps no history) |
 | `list_meetings` / `read_meeting` / `update_meeting` | Meetings: list; notes, summary and paged transcript with speakers; title, summary, speaker names, context pages |
 | `export_page` / `export_workspace` | Files: Markdown, HTML, Word, JSON, OPML; whole workspace as Markdown or HTML ZIP or lossless archive. Returns a file ref, over stdio also saves to `path` |
+| `import_files` | Import with the app's importers: Notion export (ZIP, HTML, CSV), Markdown, HTML, Word, Obsidian, Evernote, OPML, CSV / JSON Lines (databases), Based archive. Sources: `refs` from `upload_file`, `text` + `name`, over stdio a `path` (file or folder); `parent` |
+| `notion_import` | Notion API import in the background: `start` (`links`, `parent`), `status`, `cancel`. The token stays on the server (`BASED_NOTION_TOKEN`); no tool shows it |
 | `list_shares` / `share_page` / `revoke_share` | Who has access; link, invite or publish (asks first unless agents work freely); take access away. HTTP server only |
 | `backlinks` | Pages that link to or mention a page |
 | `set_favorite` | Add to / remove from Favorites |
@@ -152,6 +155,7 @@ One call for context, a few tools to keep it. Everything lives in ordinary pages
 | `about_me` | The user's profile ("About me") and their Profile / Preference memories |
 | `remember` | `{fact, type?, about?, source?, replaces?, detail?}` – one durable fact per call. `about` links the pages it concerns (they become mentions, so the fact shows up around those pages). The same fact is never stored twice; `replaces` sets the old memory to Superseded; health, money and similar private facts are stored as "To review" and only count once the user sets them to Active |
 | `list_skills` / `load_skill` | Skills (reusable instructions) and one skill's full text; also offered as MCP prompts |
+| `read_skill_file` / `save_skill` | A skill's extra files; add, change, switch on or off (asks the user in the inbox unless agents work freely) |
 
 How `recall` finds things (`packages/brain/src/recall/`):
 
@@ -166,7 +170,7 @@ How `recall` finds things (`packages/brain/src/recall/`):
 The lists are merged with Reciprocal Rank Fusion. Superseded and "To review" memories never appear, neither as hits
 nor as neighbours. Skills are never returned by `recall` (they are instructions, not knowledge).
 
-Not ported from the Swift server: `read_skill_file`, the resources `brain://about` and
+Not ported from the Swift server: the resources `brain://about` and
 `brain://memories` (use `about_me` and `recall`).
 
 ### Projects, runs, inbox, main agent (BSD-58)
@@ -211,9 +215,8 @@ Every enabled skill is a prompt (name, description, optional argument `input`).
 
 What a person can do in the app and an agent can't yet is listed in `docs/agent-parity-matrix.md`.
 
-- Importing files other than Markdown text, and the Notion import, as tools.
-- An “Undo” at each agent action in Based's chat (agents themselves have `undo_last`).
-- `ask_user`, skill files (`read_skill_file`), captures and the host tools for coding sessions (`spawn_agent`,
+- The Notion hybrid import (export ZIP plus API) and pausing an import; PDF export.
+- `ask_user`, captures and the host tools for coding sessions (`spawn_agent`,
   `wait_for_agents`, `agent_sessions`, `read_agent_session`, `message_agent`, `stop_agent`, `approval`) exist only in
   the frozen Swift server. HTML and Mermaid blocks are written as code blocks (`code: … {lang=html show=result}`).
 - Comments (come with multi-user).

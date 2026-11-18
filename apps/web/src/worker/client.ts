@@ -407,6 +407,11 @@ export class StoreClient {
     return this.request<ToolResult>({ type: "chat", action: { op: "tool", name, input } });
   }
 
+  /** „Undo“ an einer Agenten-Aktion: genau diesen Schritt zurücknehmen. */
+  chatUndoTool(token: string): Promise<ToolResult> {
+    return this.request<ToolResult>({ type: "chat", action: { op: "undoTool", token } });
+  }
+
   /** BSD-245: Pfade einer Seite für Pfad-Regeln (worker/chat.ts). */
   chatPagePaths(id: string): Promise<string[]> {
     return this.request<string[]>({ type: "chat", action: { op: "pagePaths", id } });

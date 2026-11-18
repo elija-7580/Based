@@ -15,6 +15,8 @@ export type ChatAction =
   | { op: "rename"; id: string; title: string }
   | { op: "delete"; id: string }
   | { op: "toolSpecs" }
+  /** „Undo“ an einer Agenten-Aktion im Chat (Kennung aus dem Ergebnis des Werkzeugs). */
+  | { op: "undoTool"; token: string }
   | { op: "tool"; name: string; input: JSONValue }
   /** BSD-245: Seitenpfade für Pfad-Regeln (`Titel/Titel`, mit Bereich davor). */
   | { op: "pagePaths"; id: string }
@@ -32,6 +34,8 @@ export interface ToolCatalog {
   write: string[];
   /** Was das Modell als Liste sieht (kurze Liste); ohne: alle. */
   listed?: string[];
+  /** Undo-Kennungen (`ToolResult.undo`) mit diesem Anfang lassen sich noch zurücknehmen. */
+  undoSession?: string;
 }
 
 export class ChatHost {
@@ -67,8 +71,9 @@ export class ChatHost {
       case "toolSpecs": {
         // Alle Werkzeuge sind aufrufbar; das Modell bekommt nur die kurze Liste (Kern + more_tools/run_tool).
         const h = this.tools.host();
-        return { specs: h.specs, write: h.specs.map((s) => s.name).filter((n) => this.tools.isWrite(n)), listed: h.listed } satisfies ToolCatalog;
+        return { specs: h.specs, write: h.specs.map((s) => s.name).filter((n) => this.tools.isWrite(n)), listed: h.listed, undoSession: this.tools.undoSessionID } satisfies ToolCatalog;
       }
+      case "undoTool": return this.tools.undoByToken(a.token) satisfies ToolResult;
       case "tool": return this.tools.callSync(a.name, a.input) satisfies ToolResult;
       case "pagePaths": return pagePathCandidates(this.store, a.id);
       case "importLegacy": return this.checked(() => importLegacyChats(this.chats));

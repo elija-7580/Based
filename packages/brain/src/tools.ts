@@ -102,6 +102,9 @@ export class WorkspaceTools implements ToolHost {
    */
   private readonly lastWrite = new Map<string, { step: number; tool: string }>();
   readonly ctx: ToolCtx;
+  /** Undo-Kennungen gelten nur für diesen Lauf der App (die Schrittnummern des Stores beginnen danach neu). */
+  private readonly undoSession = Math.random().toString(36).slice(2, 10);
+  get undoSessionID(): string { return this.undoSession; }
   private readonly gateway = new Map(gatewayTools(() => this.all).map((d) => [d.spec.name, d] as const));
 
   constructor(readonly store: WorkspaceStore, private readonly opts: WorkspaceToolsOptions = {}) {
@@ -216,6 +219,21 @@ export class WorkspaceTools implements ToolHost {
     }
   }
 
+  /**
+   * „Undo“ des Menschen an einer Agenten-Aktion: genau diesen Schritt zurücknehmen, auch wenn danach weitergearbeitet
+   * wurde. Was seither jemand an denselben Stellen geändert hat, bleibt. Geht es nicht mehr, sagt die Antwort warum.
+   */
+  undoByToken(token: string): ToolResult {
+    const [session, seq] = token.split(":");
+    const gone = "This can't be undone here any more (Based was restarted since). The page's version history still has the earlier state.";
+    if (session !== this.undoSession || !/^\d+$/.test(seq ?? "")) return { text: gone, isError: true };
+    if (this.store.isReadOnly) return { text: "The workspace is read-only right now. Nothing was changed.", isError: true };
+    const r = this.store.undoStep(Number(seq));
+    if (r.name === null) return { text: "This was already undone, or it is too far back. The page's version history still has the earlier state.", isError: true };
+    if (r.applied === 0) return { text: "Nothing was undone: everything this step touched has been edited since. The page's version history still has the earlier state.", isError: true };
+    return { text: r.skipped ? `Undone, except ${r.skipped} place${r.skipped === 1 ? "" : "s"} edited since.` : "Undone.", isError: false };
+  }
+
   /** Zugestimmte Rückfragen ausführen, deren Werkzeug dieser Host hat. Gibt zurück, wie viele liefen. */
   runApprovedRequests(): number {
     return runApprovedRequests(this.store, (n, i, a) => this.callApproved(n, i, a), (n) => this.defs.has(n));
@@ -253,8 +271,9 @@ export class WorkspaceTools implements ToolHost {
       // Ein Schreiben, das der Store abgewiesen hat (schreibgeschützt), darf nicht als Erfolg gemeldet werden.
       if (this.store.isReadOnly && this.store.revision === revision) throw new ToolError("Saving failed; nothing was changed.");
       const step = this.store.lastUndoStep;
-      if (name !== "undo_last" && step !== undefined && step !== before) this.lastWrite.set(actor.name, { step, tool: name });
-      return { text, isError: false };
+      const fresh = name !== "undo_last" && step !== undefined && step !== before;
+      if (fresh) this.lastWrite.set(actor.name, { step, tool: name });
+      return fresh ? { text, isError: false, undo: `${this.undoSession}:${step}` } : { text, isError: false };
     } catch (e) {
       return this.failed(name, e);
     }

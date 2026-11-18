@@ -20,6 +20,8 @@ export interface ChatBackend {
   chatDelete(id: string): Promise<void>;
   chatToolSpecs(): Promise<ToolCatalog>;
   chatTool(name: string, input: JSONValue): Promise<{ text: string; isError: boolean }>;
+  /** „Undo“ an einer Agenten-Aktion (fehlt in Hosts ohne Store, z. B. Tests): Kennung aus dem Werkzeug-Ergebnis. */
+  chatUndoTool?(token: string): Promise<{ text: string; isError: boolean }>;
 }
 
 export interface EngineContext {
@@ -47,6 +49,10 @@ export interface ChatViewState {
   approvals: readonly PendingApproval[];
   /** Fehler außerhalb eines Turns (Laden, Speichern). */
   error: string | undefined;
+  /** Ergebnis von „Undo“ je Werkzeug-Aufruf dieser Sitzung (Kennung des Aufrufs → Antwort; `pending` solange es läuft). */
+  undone: Readonly<Record<string, { text: string; ok: boolean; pending?: boolean }>>;
+  /** Für welche Undo-Kennungen der Store noch die Schritte hat (seit dem Start der App); ältere zeigen keinen Knopf. */
+  undoSession: string | undefined;
   /** Ein Engine-Override ist aktiv (Tests) oder ein Modell eingerichtet. */
   ready: boolean;
   /** BSD-245: im Plan-Modus gesammelte Schritte des letzten Turns (bis „Run plan“ oder „Dismiss“). */
@@ -58,7 +64,7 @@ export interface ChatViewState {
 /** BSD-245: Regeln (global, Pfade) für Werkzeugaufrufe im Chat; je Turn neu geholt. */
 export type ChatRules = (call: ToolCall) => RuleEffect | undefined | Promise<RuleEffect | undefined>;
 
-const EMPTY: ChatViewState = { chatID: undefined, events: [], loading: false, running: false, waiting: [], approvals: [], error: undefined, ready: false, plan: undefined };
+const EMPTY: ChatViewState = { chatID: undefined, events: [], loading: false, running: false, waiting: [], approvals: [], error: undefined, ready: false, plan: undefined, undone: {}, undoSession: undefined };
 
 /** Wo die Engine eines Turns ihr Modell aufruft (für Privacy-Redact: lokale Modelle brauchen keins). */
 export type TurnReach = "external" | "local" | "cli";
@@ -231,6 +237,16 @@ export class ChatController {
   }
 
   /** Antwort auf eine Freigabe-Anfrage. */
+  /** Eine Agenten-Aktion zurücknehmen (genau diesen Schritt). Doppelklicks richten nichts an. */
+  async undoTool(callID: string, token: string) {
+    const undo = this.o.backend.chatUndoTool;
+    if (!undo || this.state.undone[callID]) return;
+    this.set({ undone: { ...this.state.undone, [callID]: { text: "", ok: false, pending: true } } });
+    let r: { text: string; isError: boolean };
+    try { r = await undo.call(this.o.backend, token); } catch (e) { r = { text: e instanceof Error ? e.message : String(e), isError: true }; }
+    this.set({ undone: { ...this.state.undone, [callID]: { text: r.text, ok: !r.isError } } });
+  }
+
   answer(callID: string, ok: boolean) {
     const a = this.state.approvals.find((x) => x.call.id === callID);
     if (!a) return;
@@ -242,7 +258,10 @@ export class ChatController {
     this.catalog ??= this.o.backend.chatToolSpecs();
     const catalog = this.catalog;
     let specs: ToolCatalog | undefined;
-    void catalog.then((c) => { specs = c; });
+    void catalog.then((c) => {
+      specs = c;
+      if (c.undoSession !== this.state.undoSession) this.set({ undoSession: c.undoSession });
+    });
     const base: ToolHost = {
       get specs() { return specs?.specs ?? []; },
       isWrite: (n) => specs?.write.includes(n) ?? true,

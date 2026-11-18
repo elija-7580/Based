@@ -505,6 +505,23 @@ describe("Meetings, Verlauf, Projekte, Zeitpläne, Fälliges", () => {
   });
 });
 
+describe("Undo des Menschen an einer Agenten-Aktion (Kennung im Ergebnis)", () => {
+  it("jeder Schreibschritt bringt eine Kennung; undoByToken nimmt genau ihn zurück, auch wenn danach mehr kam", () => {
+    const { store, tools, call } = setup();
+    const a = call("create_page", { title: "First" });
+    const b = call("create_page", { title: "Second" });
+    expect(a.undo).toMatch(/^[a-z0-9]+:\d+$/);
+    expect(call("search", { query: "First" }).undo, "Lesen hat keine").toBeUndefined();
+    const titles = () => [...store.blocks.values()].filter((x) => x.type === "page" && x.trashedAt === undefined).map((x) => plainText(x.text)).sort();
+    expect(titles()).toEqual(["First", "Second"]);
+    expect(tools.undoByToken(a.undo!)).toEqual({ text: "Undone.", isError: false });
+    expect(titles()).toEqual(["Second"]);
+    expect(tools.undoByToken(a.undo!).text).toContain("already undone");
+    expect(tools.undoByToken("other:" + b.undo!.split(":")[1]).text, "Kennung einer früheren Sitzung trifft keinen fremden Schritt").toContain("restarted since");
+    expect(titles()).toEqual(["Second"]);
+  });
+});
+
 describe("Skills und Formular", () => {
   it("save_skill fragt in der Inbox, außer Agenten arbeiten frei; read_skill_file; an/aus", () => {
     const { store, tools, ok, call } = setup();

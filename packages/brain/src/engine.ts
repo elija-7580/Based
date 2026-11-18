@@ -34,6 +34,11 @@ export interface ChatEngine {
 export interface ToolResult {
   text: string;
   isError: boolean;
+  /**
+   * Kennung, mit der der Mensch genau diesen Schreibschritt zurücknehmen kann („Undo“ an der Aktion im Chat). Gilt,
+   * solange die App läuft; danach bleibt der Versionsverlauf der Seite.
+   */
+  undo?: string | undefined;
 }
 
 /** Wo Werkzeuge laufen (im Web: im Store-Worker). */
@@ -305,7 +310,7 @@ export class ModelEngine implements ChatEngine {
           ? await executeTool(host, call, policy, signal, emit)
           : { text: `Unknown tool ${call.name}`, isError: true };
         messages.push({ role: "tool", content: clip(res.text, TOOL_OUTPUT_MODEL_LIMIT), toolCallID: call.id });
-        emit({ type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError });
+        emit({ type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError, ...(res.undo ? { undo: res.undo } : {}) });
       }
     }
     // BSD-47: das Schrittlimit endet nicht mehr still.
@@ -401,7 +406,7 @@ export class ScriptedEngine implements ChatEngine {
         }
         const res = await run;
         while (pending.length > 0) yield pending.shift()!;
-        yield { type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError };
+        yield { type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError, ...(res.undo ? { undo: res.undo } : {}) };
       } else if ("wait" in step) await sleep(step.wait, signal);
       else if ("hold" in step) await raceAbort(new Promise<void>(() => undefined), signal);
       else if ("fail" in step) throw new Error(step.fail);
