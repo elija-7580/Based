@@ -2,7 +2,7 @@
 
 Stand 18.11.2026, gelesen auf `main` (f07b0bf) plus `feat/board-markdown` (f27f9b9, dort liegt der Auftrag
 `docs/agent-parity.md`). Keine Code-Änderung. Diese Matrix wird in Schritt 4 je Eintrag fortgeschrieben
-(Lücke → „erledigt“ mit Commit).
+(Lücke → „erledigt“ mit Commit). Schritt 2 ist entschieden, siehe „Entscheidungen“.
 
 Aufwand: **S** = dünne Hülle um Logik, die es in `packages/core` schon gibt · **M** = neues Werkzeug mit eigener
 Logik oder Leseformat · **L** = braucht neue Kernlogik, einen Host-Weg (Dateien, Netz, Gerät) oder eine offene
@@ -35,6 +35,46 @@ Produktentscheidung.
 4. **Nicht jedes schreibende Werkzeug ist richtig eingeordnet.** `trash_page` und `replace_page_content` tragen
    `destructiveHint`; `delete_view` und `update_database` mit `delete_properties` oder `change_types` (kann Werte
    verwerfen) nicht. `list_views` ist lesend, hat aber kein `readOnlyHint` und läuft damit durch die Schreib-Regeln.
+
+## Entscheidungen (Elija, 18.11.2026, Schritt 2)
+
+1. **Reihenfolge und Zeitpunkt entscheidet Fable; es soll fertig werden.** Festgelegt: G (eine Schicht, Einordnung,
+   Doku) → Editor → Datenbanken → Shell → Verlauf/Export/Import → Meetings/Brain/Home → Teilen/Einstellungen.
+   Start sofort, jeder Eintrag geht mit grünem `ts-fast` nach main. Was bis zum Freeze (Fr 20.11.) nicht grün ist,
+   wartet auf einem Branch bis nach der Beta (Mo 23.11.).
+2. **Form der Werkzeuge entscheidet Fable.** Festgelegt: Editor als `read_blocks` + `edit_blocks` (Skript, wie
+   `draw_board`); Datenbanken ohne Skript, die vorhandenen Werkzeuge werden erweitert. Ein Argumentname für Seiten:
+   `id` (so kennen es die MCP-Clients); `page_id` bleibt als Alias, bis die eigenen Agenten umgestellt sind.
+3. **Was ein Agent ohne Rückfrage darf, hängt an der Rechte-Stufe** (Private / Balanced / Open, Standard Balanced).
+   **Endgültig löschen fragt immer einen Menschen**, in jeder Stufe. Umsetzung:
+
+   | Aktion | Private | Balanced | Open |
+   | --- | --- | --- | --- |
+   | Lesen, Schreiben in Seiten und Datenbanken, Papierkorb (rückholbar) | nach den Regeln der Stufe | ja | ja |
+   | Endgültig löschen, Papierkorb leeren, Teamspace löschen, Property mit Werten löschen | Frage in der Inbox | Frage in der Inbox | Frage in der Inbox |
+   | Link anlegen, veröffentlichen, Einladung | nein | Frage in der Inbox | ja |
+   | Zugriff entziehen | ja | ja | ja |
+   | Skills anlegen und ändern, Workspace-Einstellungen | Frage in der Inbox | Frage in der Inbox | ja |
+   | Eigene Rechte-Stufe, Regeln, API-Schlüssel, Sync-Zugang | nein | nein | nein |
+
+   „Frage in der Inbox“ heißt: das Werkzeug führt nichts aus, legt die Frage an (`ask`-Weg, `resolve_inbox`) und
+   meldet dem Agenten die Kennung; nach der Freigabe läuft genau dieser Aufruf. Die letzte Zeile ist die einzige
+   Ausnahme von „alles, was der Mensch kann“: sonst könnte ein Agent die Tabelle selbst umschreiben.
+4. **Undo für Agenten: ja.** `undo_last` nimmt den eigenen letzten Schreib-Aufruf zurück (weil jeder Aufruf eine
+   Transaktion ist). Dazu in Based selbst: an jeder Agenten-Aktion im Chat ein „Undo“, mit dem der Mensch genau
+   diesen Schritt zurückklickt, auch wenn danach schon weitergearbeitet wurde (wo das nicht sauber geht, sagt Based
+   warum und bietet den Versionsverlauf der Seite an).
+5. **Import und Export: alles, auch Dateien.** Jedes Format, das die App kann, in beide Richtungen; Dateien über
+   Refs (`upload_file`, `list_files`) und über stdio als Pfad. Auch der Notion-Import (Hybrid und API) ist ein
+   Werkzeug; das Token muss der Mensch einmal in den Einstellungen hinterlegt haben, der Agent bekommt es nie zu sehen.
+6. **Der Agent hat auf alles Zugriff.** Elija: „genau das tun, was ein Mensch auch tun kann: Sachen designen,
+   HTML schreiben, Datenbanken mit Visualisierungen erstellen, die Anordnung der Datenbanken verändern, den kompletten
+   Workspace umgraben.“ Damit entfällt „bewusst nicht“ für alles, was Daten des Workspaces ändert. Es bleibt nur für
+   das, was dem Gerät gehört (Fenster, Theme, Mikrofon) und für die letzte Zeile der Tabelle oben.
+
+Damit ändern sich gegenüber der ersten Fassung: S13 (endgültig löschen: Werkzeug mit Inbox-Frage), E35 (Undo: ja),
+V7 (Notion-Import: ja), T2/T4 (Teilen: nach Stufe), B5 (Skills: nach Stufe), X2 (Workspace-Einstellungen: ja), D18
+und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nur das Gerät.
 
 ## Vorgeschlagene Werkzeuge (auf die sich die Spalte „Vorschlag“ bezieht)
 
@@ -100,7 +140,7 @@ Produktentscheidung.
 | Editor | E32 Als Markdown kopieren | ⌘C, Blockmenü | `read_page` | – | erledigt | – |
 | Editor | E33 Meeting-Block anlegen | Slash „Meeting notes“, ⌘N | – | fehlt | siehe M1 | – |
 | Editor | E34 Ask AI im Text | Leertaste, Slash, Formatleiste | – | bewusst nicht | Der Agent ist selbst das Modell; er schreibt über `edit_blocks`. | – |
-| Editor | E35 Undo/Redo | ⌘Z | – | offen (Frage 4) | `undo_last` nur für den eigenen letzten Aufruf | M |
+| Editor | E35 Undo/Redo | ⌘Z; „Undo“ an der Agenten-Aktion im Chat | – | fehlt (Entscheidung 4) | `undo_last` für den eigenen letzten Aufruf; im Chat ein „Undo“ je Agenten-Aktion für den Menschen | M |
 | Editor | E36 Blockauswahl, Schreibmarke, Suchen in der Seite, Gliederung ein/aus | Esc, ⌘F, Seitenmenü | – | bewusst nicht | Rein visuell; `search` und `read_blocks` decken das Finden ab. | – |
 | Editor | E37 Echtzeit-Präsenz | Cursor anderer | – | bewusst nicht | Kein Dateninhalt. | – |
 
@@ -148,7 +188,7 @@ Produktentscheidung.
 | Shell | S10 Duplizieren | Menü | `duplicate_page` | – | erledigt (nur MCP) | – |
 | Shell | S11 Favoriten | Seitenmenü, Sidebar | `set_favorite` | Reihenfolge der Favoriten | bewusst nicht (persönliche Anordnung), sonst `after` | – |
 | Shell | S12 Papierkorb: hinein, zurück, Liste | Menü, Trash | `trash_page`, `restore_page`, `list_trash` | – | erledigt (nur MCP) | – |
-| Shell | S13 Endgültig löschen, Papierkorb leeren | Trash „Delete forever“, „Empty Trash“ | – | fehlt | offen (Frage 3) | S |
+| Shell | S13 Endgültig löschen, Papierkorb leeren | Trash „Delete forever“, „Empty Trash“ | – | fehlt | `delete_forever`, `empty_trash`: immer erst Frage in der Inbox (Entscheidung 3), `destructiveHint` | M |
 | Shell | S14 Teamspaces: anlegen, umbenennen, Icon, löschen | Sidebar | – | fehlt | Einzelwerkzeuge oder `workspace`-Skript; Löschen mit `destructiveHint` | M |
 | Shell | S15 Workspace-Name und -Icon | Sidebar-Kopf | – | fehlt | `update_workspace` | S |
 | Shell | S16 Backlinks, Verwandtes | Backlinks-Leiste | `backlinks`, `related` | – | erledigt | – |
@@ -170,7 +210,7 @@ Produktentscheidung.
 | Export | V4 Ganzen Workspace exportieren | Settings → Import | – | fehlt | wie V3; nur stdio oder als Download-Link des Servers | L |
 | Export | V5 Drucken | ⌘P | – | bewusst nicht | Gerät. PDF deckt V3. | – |
 | Import | V6 Dateien importieren (Markdown, HTML, Word, Notion-ZIP, Obsidian, Logseq, Bear, Evernote, OPML, Archiv) | ⌘N „Import“, Settings | `create_page { markdown }` | alles außer Markdown-Text fehlt | `import_files { refs \| path, parent? }` über die Importer aus core; Antwort ist der Bericht | L |
-| Import | V7 Notion-Import (Hybrid, API) starten, pausieren | Settings → Import | – | fehlt | offen: braucht Token und läuft lange; eher „bewusst nicht“ (Frage 5) | L |
+| Import | V7 Notion-Import (Hybrid, API) starten, pausieren, Stand lesen | Settings → Import | – | fehlt | `notion_import { start \| pause \| status }`; Token nur aus den Einstellungen (Entscheidung 5) | L |
 
 ### M · Meeting Notes
 
@@ -192,7 +232,7 @@ Produktentscheidung.
 | Brain | B2 Erinnerung speichern, ersetzen | Agent Brain | `remember { replaces }` | – | erledigt | – |
 | Brain | B3 Erinnerung freigeben („To review“), löschen | Memories-Datenbank | `update_row`/`trash_page` auf der Zeile | Freigabe privater Fakten darf ein Agent nicht selbst geben | bewusst nicht für „To review → freigegeben“ (Entscheidung 18.11.); Regel im Werkzeug festhalten und testen | S |
 | Brain | B4 Skills lesen | Settings → Agents & AI | `list_skills`, `load_skill`, Prompts | Dateien eines Skills (`read_skill_file`) fehlen | nachziehen | S |
-| Brain | B5 Skill anlegen, ändern, ein/aus, importieren | Settings → Agents & AI | Skills sind Seiten → `create_page` | ein/aus und Import fehlen | offen (Frage 3: darf ein Agent seine eigenen Anweisungen ändern?) | M |
+| Brain | B5 Skill anlegen, ändern, ein/aus, importieren | Settings → Agents & AI | Skills sind Seiten → `create_page` | ein/aus und Import fehlen | `save_skill`, `set_skill_enabled`; nach Rechte-Stufe (Entscheidung 3) | M |
 | Inbox | B6 Inbox lesen, beantworten | Home, Inbox | `inbox`, `resolve_inbox` | – | erledigt | – |
 | Inbox | B7 Agent per @ ansprechen, Frage stellen | Inbox-Format (Vaultite) | `ask_main_agent` | Frage an den Nutzer aus MCP heraus fehlt | `ask_user { question, options? }` → Inbox | S |
 | Home | B8 Projekte lesen, anlegen, Status | Home, Projekt-Ansicht | `list_projects`, `get_project`, `create_project`, `update_project_status` | Ziel, Budget, Ordner ändern; archivieren | `update_project` | S |
@@ -208,9 +248,9 @@ Produktentscheidung.
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
 | Teilen | T1 Sehen, wer Zugriff hat | „Share“ | – | fehlt | `list_shares { id }` (lesend) | S |
-| Teilen | T2 Link anlegen (view, comment, edit), Einladung | „Share a link“, „Create invite“ | – | fehlt | `share_page`; offen (Frage 3) | M |
+| Teilen | T2 Link anlegen (view, comment, edit), Einladung | „Share a link“, „Create invite“ | – | fehlt | `share_page`; nach Rechte-Stufe (Entscheidung 3) | M |
 | Teilen | T3 Zugriff entziehen, Rolle ändern | „Revoke“, „Remove“ | – | fehlt | `revoke_share`; Entziehen ist die sichere Richtung | S |
-| Teilen | T4 Im Web veröffentlichen, Embeds erlauben | „Publish to web“ | – | fehlt | `publish_page`; offen (Frage 3) | M |
+| Teilen | T4 Im Web veröffentlichen, Embeds erlauben | „Publish to web“ | – | fehlt | `publish_page`; nach Rechte-Stufe (Entscheidung 3) | M |
 | Teilen | T5 Kommentare | – | – | gibt es in Based noch nicht | kommt mit Multi-User (Entscheidung 11.11.) | – |
 
 ### X · Einstellungen
@@ -229,13 +269,13 @@ Produktentscheidung.
 | Bereich | Zeilen | erledigt | Lücke | bewusst nicht | offen |
 | --- | --- | --- | --- | --- | --- |
 | Grundlage | 4 | 0 | 4 | 0 | 0 |
-| Editor | 37 | 2 | 30 | 3 | 2 (E33 → M1, E35) |
+| Editor | 37 | 2 | 31 | 3 | 1 (E33 → M1) |
 | Datenbanken | 23 | 3 | 18 | 2 | 0 |
-| Shell | 23 | 6 | 12 | 4 | 1 (S13) |
-| Verlauf, Export, Import | 7 | 0 | 5 | 1 | 1 (V7) |
+| Shell | 23 | 6 | 13 | 4 | 0 |
+| Verlauf, Export, Import | 7 | 0 | 6 | 1 | 0 |
 | Meetings | 7 | 0 | 5 | 2 | 0 |
-| Brain, Inbox, Home | 14 | 4 | 7 | 2 | 1 (B5) |
-| Teilen | 5 | 0 | 2 | 0 | 3 (T2, T4, T5) |
+| Brain, Inbox, Home | 14 | 4 | 8 | 2 | 0 |
+| Teilen | 5 | 0 | 4 | 0 | 1 (T5, kommt mit Multi-User) |
 | Einstellungen | 6 | 0 | 2 | 4 | 0 |
 
 ## Nicht geprüft
