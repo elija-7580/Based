@@ -119,13 +119,14 @@ export function ImportDialog({ client, onClose, onOpenPage, initial = "pick" }: 
   return (
     <Dialog title={phase.k === "notion" ? "Import from Notion" : "Import"} onClose={onClose} busy={busy}>
       <input ref={files} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Choose files to import"
-        accept=".zip,.html,.htm,.md,.markdown,.csv,.txt,.json,.jsonl,.enex,.opml,.docx" onChange={(e) => void start(e.target.files)} />
+        accept=".zip,.html,.htm,.md,.markdown,.csv,.txt,.json,.jsonl,.enex,.opml,.docx,.jex,.tar,.bear2bk,.textpack" onChange={(e) => void start(e.target.files)} />
       <input ref={folder} type="file" className="sr-only" tabIndex={-1} aria-label="Choose a folder to import"
         {...{ webkitdirectory: "" }} onChange={(e) => void start(e.target.files)} />
       {phase.k === "pick" || phase.k === "error" ? (
         <>
           <p className="t-desc">
-            A Notion export (HTML or Markdown &amp; CSV — the .zip or its unpacked folder), an Obsidian vault, Logseq graph or Bear export (folder or .zip), Evernote notebooks (.enex), outlines (.opml), Word documents (.docx), JSON or JSON Lines (a list of objects becomes a database), Markdown or CSV files, or a Based archive (.based.zip, .jsonl).
+            Exports from Notion (HTML or Markdown &amp; CSV — the .zip, all of its parts, or the unpacked folder), an Obsidian vault, a Logseq graph, a Bear export, Evernote (.enex), Joplin (.jex), Roam Research (.json), Google Keep (Takeout), Simplenote, Standard Notes, ChatGPT and Claude.
+            Also folders of Markdown or text files, Word (.docx), outlines (.opml), CSV and JSON (a list of objects becomes a database), and Based archives.
             Importing the same Notion export again updates those pages and keeps what you changed in Based.
           </p>
           {phase.k === "error" ? <p role="alert" className="dialog-error">Import failed: {phase.message}</p> : null}

@@ -4,7 +4,7 @@
 // Clean-Room: nur das Dateiformat des Exports, wie ihn Notion ausliefert (HTML mit Unterseiten).
 import { basename, bytesSource, dirname, extname, ImportFiles, joinPath, stripExtension, subSource, type ByteSource } from "../files.js";
 import { notionIDInName } from "../importids.js";
-import { DEFAULT_ZIP_LIMITS, ImportCancelled, isDirectoryEntry, isEncryptedEntry, isZip, readZipEntries, sanitizedZipPath, ZipError, zipEntryData, zipEntryStart, type ZipLimits } from "../zip.js";
+import { DEFAULT_ZIP_LIMITS, ImportCancelled, isDirectoryEntry, isExportPart, isEncryptedEntry, isZip, readZipEntries, sanitizedZipPath, ZipError, zipEntryData, zipEntryStart, type ZipLimits } from "../zip.js";
 
 export type HybridErrorKind = "markdownExport" | "notAnExport" | "noState" | "needsZip";
 
@@ -21,6 +21,9 @@ export interface OpenExportOptions {
   isCancelled?: (() => boolean) | undefined;
 }
 
+/** Notions Teil-Archive („…-Part-N.zip“) sind EIN Export: in denselben Ordner, sonst fehlen einer Seite die Dateien
+ *  und Unterseiten, die im nächsten Teil liegen. Andere innere ZIPs bekommen ihren eigenen Ordner. */
+const partPrefix = (dest: string) => (isExportPart(dest) ? dirname(dest) : stripExtension(dest));
 const isHTML = (p: string) => ["html", "htm"].includes(extname(p).toLowerCase());
 
 export class NotionExportIndex {
@@ -112,10 +115,10 @@ export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExpor
         try {
           if (entry.method === 0 && entry.compressedSize >= 4) {
             const start = zipEntryStart(src, entry);
-            if (isZip(src.read(start, 4))) { visit(subSource(src, start, entry.compressedSize), stripExtension(dest), depth + 1); continue; }
+            if (isZip(src.read(start, 4))) { visit(subSource(src, start, entry.compressedSize), partPrefix(dest), depth + 1); continue; }
           } else {
             const data = zipEntryData(src, entry);
-            if (isZip(data)) { visit(bytesSource(data), stripExtension(dest), depth + 1); continue; }
+            if (isZip(data)) { visit(bytesSource(data), partPrefix(dest), depth + 1); continue; }
           }
         } catch (e) {
           if (!(e instanceof ZipError) || e.kind === "limit" || e.kind === "cancelled") throw e;

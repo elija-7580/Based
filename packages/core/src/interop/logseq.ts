@@ -47,6 +47,49 @@ export function logseqBlockIDs(text: string, into = new Map<string, string>()): 
   return into;
 }
 
+const TASK = /^(\s*- )(TODO|DOING|NOW|LATER|WAITING|WAIT|IN-PROGRESS|DONE|CANCELED|CANCELLED)\s+(.*)$/;
+const ADMONITION: Record<string, string> = { NOTE: "note", TIP: "tip", IMPORTANT: "important", WARNING: "warning", CAUTION: "caution", PINNED: "important" };
+
+/** Logseq-Schreibweisen je Zeile: Aufgaben-Marken, Zitat-/Hinweis-Blöcke (#+BEGIN_…), Bildgrößen, Hervorhebung. */
+function logseqBlocks(lines: string[]): string[] {
+  const out: string[] = [];
+  let fence = false;
+  /** offener #+BEGIN-Block: Präfix der Zeilen und ob die erste Inhaltszeile noch aussteht */
+  let open: { prefix: string; kind: string; first: boolean } | undefined;
+  for (const raw of lines) {
+    if (/^\s*(- )?(```|~~~)/.test(raw)) fence = !fence;
+    if (fence) { out.push(raw); continue; }
+    let l = raw;
+    const begin = /^(\s*)(- )?#\+BEGIN_([A-Z]+)\s*$/i.exec(l);
+    if (begin && !open) {
+      const kind = begin[3]!.toUpperCase();
+      if (kind === "SRC" || kind === "EXAMPLE" || kind === "EXPORT") { out.push(l); continue; }
+      // der Block steht an der Stelle seines Punkts (gleiche Einrückung)
+      open = { prefix: begin[1]!, kind, first: true };
+      continue;
+    }
+    if (open) {
+      // Leerzeile danach: zwei Blöcke hintereinander bleiben zwei
+      if (/^\s*#\+END_[A-Z]+\s*$/i.test(l)) { open = undefined; out.push(""); continue; }
+      const text = l.trim();
+      const head = open.first && ADMONITION[open.kind] !== undefined ? `> [!${ADMONITION[open.kind]}]\n${open.prefix}> ` : "> ";
+      out.push(open.prefix + head + text);
+      open.first = false;
+      continue;
+    }
+    const t = TASK.exec(l);
+    if (t) l = `${t[1]}[${t[2] === "DONE" ? "x" : t[2] === "CANCELED" || t[2] === "CANCELLED" ? "-" : " "}] ${t[3]}`;
+    // Größenangabe hinter Bildern: ![x](y){:height 200, :width 300}
+    l = l.replace(/(\]\([^)\n]*\))\{:[^}\n]*\}/g, "$1");
+    // ^^Hervorheben^^ → ==Hervorheben== (liest der Vault-Import)
+    l = l.replace(/\^\^(?=\S)([^\n]*?\S)\^\^/g, "==$1==");
+    // {{embed [[Seite]]}} / {{embed ((id))}} → der Verweis selbst
+    l = l.replace(/\{\{embed\s+(\[\[[^\]\n]+\]\]|\(\([0-9a-f-]{36}\)\))\s*\}\}/gi, "$1");
+    out.push(l);
+  }
+  return out;
+}
+
 const yamlValue = (v: string) => (/^[\w ./-]*$/.test(v) && v.trim() === v && v !== "" ? v : JSON.stringify(v));
 
 /** Logseq-Markdown → Markdown, wie es der Obsidian-Import liest. */
@@ -63,8 +106,21 @@ export function logseqToMarkdown(text: string, blocks: ReadonlyMap<string, strin
     i++;
   }
   let body = lines.slice(i);
-  // Block-Properties, die nur Logseq braucht
-  body = body.filter((l) => !/^\s*(- )?(id|collapsed)::/.test(l));
+  // Block-Properties, die nur Logseq braucht. Steht die Property in der Zeile des Punkts („- collapsed:: true“, der
+  // Text folgt eingerückt), bleibt der Punkt und bekommt die nächste Zeile als Text.
+  const kept: string[] = [];
+  for (let k = 0; k < body.length; k++) {
+    const l = body[k]!;
+    const own = /^(\s*)- (?:id|collapsed)::/.exec(l);
+    if (own) {
+      const next = body[k + 1];
+      if (next !== undefined && /^\s+\S/.test(next) && !/^\s*- /.test(next) && !/^\s*(?:id|collapsed)::/.test(next)) { kept.push(own[1]! + "- " + next.trim()); k++; }
+      continue;
+    }
+    if (/^\s*(id|collapsed)::/.test(l)) continue;
+    kept.push(l);
+  }
+  body = logseqBlocks(kept);
   let out = body.join("\n").replace(/\(\(([0-9a-f-]{36})\)\)/gi, (_m, id: string) => blocks.get(id.toLowerCase()) ?? "");
   // leere Aufzählungspunkte (nur „-“) weg
   out = out.replace(/^\s*-\s*$/gm, "");

@@ -97,6 +97,7 @@ const attr = (tag: string, name: string) => new RegExp(`\\s${name}\\s*=\\s*("([^
 export function enmlToHTML(enml: string): string {
   let h = enml.replace(/<en-note\b[^>]*>/i, "<body>").replace(/<\/en-note>/i, "</body>");
   h = h.replace(/<en-crypt\b[^>]*>[\s\S]*?<\/en-crypt>/gi, "<p>[encrypted content]</p>");
+  h = codeBlocks(h);
   h = h.replace(/<en-media\b([^>]*?)\/?>(?:\s*<\/en-media>)?/gi, (_m, a: string) => {
     const hash = attr(a, "hash")?.toLowerCase();
     return hash ? `<img src="${MEDIA_HOST}${hash}">` : "";
@@ -108,6 +109,34 @@ export function enmlToHTML(enml: string): string {
   // Neue To-do-Listen: <ul style="--en-todo:true"><li style="--en-checked:true">
   h = h.replace(/<ul\b([^>]*--en-todo\s*:\s*true[^>]*)>/gi, '<ul class="to-do-list">');
   h = h.replace(/<li\b([^>]*--en-checked\s*:\s*true[^>]*)>/gi, '<li class="checked">');
+  return h;
+}
+
+/** Zeilen eines Code-Blocks als Text (Tags weg, Entities bleiben für den HTML-Leser). */
+function codeText(inner: string): string {
+  return inner.replace(/<br\s*\/?>(?=\s*<\/div>)/gi, "").replace(/<\/(div|p)>/gi, "\n").replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").replace(/\n+$/, "");
+}
+
+/** Evernote-Code-Blöcke → <pre>: alt `<en-codeblock>`, neu `<div style="--en-codeblock:true">` (je Zeile ein <div>). */
+function codeBlocks(html: string): string {
+  let h = html.replace(/<en-codeblock\b[^>]*>([\s\S]*?)<\/en-codeblock>/gi, (_m, inner: string) => `<pre>${codeText(inner)}</pre>`);
+  const open = /<div\b[^>]*--en-codeblock\s*:\s*true[^>]*>/gi;
+  let out = "", at = 0, m: RegExpExecArray | null;
+  while ((m = open.exec(h)) !== null) {
+    // passendes </div> suchen (verschachtelte <div> zählen)
+    const tag = /<(\/?)div\b[^>]*>/gi;
+    tag.lastIndex = open.lastIndex;
+    let depth = 1, end = -1, t: RegExpExecArray | null;
+    while ((t = tag.exec(h)) !== null) {
+      depth += t[1] === "/" ? -1 : 1;
+      if (depth === 0) { end = t.index; break; }
+    }
+    if (end < 0) break;
+    out += h.slice(at, m.index) + `<pre>${codeText(h.slice(open.lastIndex, end))}</pre>`;
+    at = tag.lastIndex;
+    open.lastIndex = at;
+  }
+  h = out + h.slice(at);
   return h;
 }
 

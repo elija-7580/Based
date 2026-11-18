@@ -36,11 +36,20 @@ describe("ZIP", () => {
     expect(r.count).toBe(2);
   });
 
-  it("verschachtelte Teil-Archive werden Ordner", () => {
-    const outer = zipSync({ "Export-Part-1.zip": [zipSync({ "p.md": enc.encode("x") }), { level: 0 }], "__MACOSX/._p.md": enc.encode("junk") });
+  it("verschachtelte ZIPs werden Ordner; Notions Teil-Archive (…-Part-N.zip) kommen zusammen in einen", () => {
+    const outer = zipSync({
+      "Export-Part-1.zip": [zipSync({ "Home abc/p.md": enc.encode("x") }), { level: 0 }],
+      "Export-Part-2.zip": [zipSync({ "Home abc/q.md": enc.encode("y") }), { level: 0 }],
+      "other.zip": [zipSync({ "o.md": enc.encode("z") }), { level: 0 }],
+      "__MACOSX/._p.md": enc.encode("junk"),
+    });
     const r = extractZip(outer);
-    expect(r.files.readText("Export-Part-1/p.md")).toBe("x");
+    // Teile eines Exports: ein Baum (eine Seite in Teil 1, ihr Unterordner in Teil 2)
+    expect(r.files.readText("Home abc/p.md")).toBe("x");
+    expect(r.files.readText("Home abc/q.md")).toBe("y");
     expect(r.files.isFile("Export-Part-1.zip")).toBe(false);
+    // andere innere ZIPs: eigener Ordner wie bisher
+    expect(r.files.readText("other/o.md")).toBe("z");
   });
 
   it("Grenzen: Anzahl, Größe, Kompressionsrate", () => {
@@ -208,12 +217,12 @@ describe("BSD-254: ZIP aus einer Quelle (ohne alles zu laden)", () => {
     let read = 0, largest = 0;
     const counting = { size: base.size, read: (o: number, l: number) => { read += l; largest = Math.max(largest, l); return base.read(o, l); } };
     const r = extractZip(counting);
-    expect(r.files.isFile("Export-Part-1/Page.html")).toBe(true);
-    expect(r.files.size("Export-Part-1/img.png")).toBe(big.length);
+    expect(r.files.isFile("Page.html")).toBe(true);
+    expect(r.files.size("img.png")).toBe(big.length);
     const before = read;
     // Byte-Vergleich statt toEqual: Vitest 4 vergleicht 1 MB-Arrays elementweise (~3 s) und reißt sonst das Test-Timeout.
     const same = (a: Uint8Array | undefined) => !!a && a.length === big.length && a.every((v, i) => v === big[i]);
-    expect(same(r.files.read("Export-Part-1/img.png"))).toBe(true); // erst jetzt erneut aus der Quelle
+    expect(same(r.files.read("img.png"))).toBe(true); // erst jetzt erneut aus der Quelle
     expect(read).toBeGreaterThan(before);
     expect(same(r.files.read("top.png"))).toBe(true);
     // gleiches Ergebnis wie aus dem Puffer

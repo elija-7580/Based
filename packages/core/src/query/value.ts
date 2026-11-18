@@ -410,7 +410,8 @@ const PARSERS: Parser[] = [
 
 /** ISO-Daten, Notion-Exportdaten („May 4, 2024 3:15 PM“) und Bereiche („A → B“). */
 export function parseDate(raw: string): DateValue | undefined {
-  const s = raw.trim();
+  // Notion hängt bei Zeiten mit fester Zeitzone „(GMT+1)“, „(UTC)“ oder „(EST)“ an – die Angabe zählt nicht zum Datum.
+  const s = raw.trim().replace(/\s*\((?:GMT|UTC)?(?:[+-]\d{1,2}(?::\d{2})?)?\)$|\s*\([A-Z]{2,5}\)$/, "");
   if (!s) return undefined;
   for (const sep of [" → ", " -> "]) {
     if (!s.includes(sep)) continue;

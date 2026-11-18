@@ -55,6 +55,9 @@ export { ImportFiles, basename, bytesSource, dirname, extname, joinPath, normali
 export type { ByteSource, LazyFile } from "./interop/files.js";
 export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZIP_EAGER_BYTES, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData, zipEntryStart } from "./interop/zip.js";
 export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
+export { extractTar, isTar } from "./interop/tar.js";
+export { convertForeignExport } from "./interop/foreign/index.js";
+export type { ForeignExport } from "./interop/foreign/index.js";
 export { AssetRejected, DEFAULT_MAX_ASSET_BYTES, ImportBuilder, LimitedAssetSink, MemoryAssetSink, formatBytes, importAssetFrom, looksLikeLocalFile, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
 export type { AssetRef, AssetSink, ImportBuilderOptions, LazyAsset, ImportBuilderWire, ImportReport, NewBlock } from "./interop/builder.js";
 // BSD-260 Teil 12: Vorschau von Text-, Code- und CSV-Dateien in Seiten.
