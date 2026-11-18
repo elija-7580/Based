@@ -19,7 +19,8 @@ export const SWIFT_EPOCH_MS = 978_307_200_000;
 export const toMs = (swift: number) => swift * 1000 + SWIFT_EPOCH_MS;
 export const fromMs = (ms: number) => (ms - SWIFT_EPOCH_MS) / 1000;
 
-export type RunKind = "chat" | "main" | "subagent" | "schedule";
+/** „request“: Rückfrage eines Werkzeugs an den Menschen (kein Lauf mit Transkript), siehe tools/requests.ts. */
+export type RunKind = "chat" | "main" | "subagent" | "schedule" | "request";
 export type RunStatus = "queued" | "running" | "needsYou" | "done" | "failed" | "cancelled";
 export const isRunFinished = (s: RunStatus) => s === "done" || s === "failed" || s === "cancelled";
 

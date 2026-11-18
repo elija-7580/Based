@@ -3,10 +3,11 @@
 // (docs/agent-parity.md, Regel 1). Jede Änderung ist eine lokale Änderung des Servers und kommt per Sync v2 bei den
 // Geräten an.
 import { attachSearchIndex, isPageLike, isTrashed, titleOf, type JSONValue, type SearchIndex, type WorkspaceStore } from "@based/core";
-import { AgentBrain, PAGE_URI, Recall, RelationGraph, ToolError, WorkspaceTools, type RecallDeps } from "@based/brain";
+import { AgentBrain, PAGE_URI, Recall, RelationGraph, ToolError, WorkspaceTools, type RecallDeps, type ToolCtx, type ToolDef } from "@based/brain";
 import type { AssetStore } from "./assets.js";
 import { assetFileInfo } from "./board-files.js";
 import { fileTools, LinkPreviews, prepareForTool } from "./file-tools.js";
+import { exportTools } from "./export-tools.js";
 
 export { PAGE_URI, ToolError };
 
@@ -58,6 +59,9 @@ export class Pages {
    * Die Werkzeuge für MCP. `assets`: Dateispeicher (Maße und PDF-Seiten aus den Bytes, `upload_file`); `localFiles`:
    * der Client läuft auf diesem Rechner (stdio) und darf Pfade nennen.
    */
+  /** Werkzeuge zum Teilen (nur wo es einen ShareService gibt: HTTP-Server). Vor dem ersten `tools()` setzen. */
+  shareTools: ((ctx: ToolCtx) => ToolDef[]) | undefined;
+
   tools(opts: { assets?: AssetStore | undefined; localFiles?: boolean | undefined } = {}): WorkspaceTools {
     const key = opts.assets ? (opts.localFiles ? "local" : "remote") : "plain";
     let t = this.toolSets.get(key);
@@ -65,7 +69,7 @@ export class Pages {
       const assets = opts.assets;
       t = new WorkspaceTools(this.store, {
         index: () => this.index, graph: () => this.graph, brain: () => this.brain, vectors: () => this.vectors?.(),
-        ...(assets ? { fileInfo: (ref: string) => assetFileInfo(assets, ref), extra: fileTools(assets, opts.localFiles === true), before: (name: string, input: JSONValue) => prepareForTool(assets, this.store, this.previews)(name, input), linkPreview: (url: string) => this.previews.get(url) } : {}),
+        ...(assets ? { fileInfo: (ref: string) => assetFileInfo(assets, ref), extra: (ctx: ToolCtx) => [...fileTools(assets, opts.localFiles === true)(ctx), ...exportTools(assets, opts.localFiles === true)(ctx), ...(this.shareTools?.(ctx) ?? [])], before: (name: string, input: JSONValue) => prepareForTool(assets, this.store, this.previews)(name, input), linkPreview: (url: string) => this.previews.get(url) } : {}),
       });
       this.toolSets.set(key, t);
     }

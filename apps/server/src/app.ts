@@ -10,7 +10,7 @@ import { openNodeDatabase } from "@based/sync/node";
 import { ASSET_CHUNK_LIMIT, ASSET_HASH, AssetError, AssetStore, parseRange, referencedAssets } from "./assets.js";
 import { Collab, YStateStore } from "./collab.js";
 import { createLogger, type Logger } from "./log.js";
-import { createMcpServer } from "./mcp.js";
+import { createMcpServer, mcpToolList } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { error, json, LARGE_BODY_LIMIT, Router, tokenEquals, type Caller } from "./router.js";
 import type { AgentRunnerOptions, CodingSessions, PtyFactory } from "@based/brain";
@@ -25,6 +25,7 @@ import { BrainIndex, registerBrainRoutes, type BrainIndexOptions } from "./brain
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
 import { Scheduler } from "./scheduler.js";
+import { shareTools } from "./share-tools.js";
 import { principalOf, registerShareRoutes } from "./share-routes.js";
 import { BadRequest, ProtocolMismatch, PROTOCOL_HEADER, WaitLimit, decodePush, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
 
@@ -144,6 +145,16 @@ export function createApp(opts: AppOptions): App {
     opts.assetsDir ?? (persistentDb ? (opts.db as string).replace(/(\.sqlite)?$/, ".assets") : mkdtempSync(join(tmpdir(), "based-assets-"))),
     { ...(opts.maxAssetBytes !== undefined ? { maxBytes: opts.maxAssetBytes } : {}), ...(opts.nowMillis ? { nowMillis: opts.nowMillis } : {}) },
   );
+  // Agenten-Werkzeuge zum Teilen; zugestimmte Rückfragen (Inbox in der App), die nur der Server ausführen kann.
+  pages.shareTools = shareTools(share);
+  let requestTimer: ReturnType<typeof setTimeout> | undefined;
+  const runRequests = () => {
+    requestTimer = undefined;
+    try { pages.tools({ assets }).runApprovedRequests(); } catch (e) { log.warning("approved request failed", { error: e instanceof Error ? e.message : String(e) }); }
+  };
+  const unobserveRequests = sync.store.observe(() => {
+    requestTimer ??= setTimeout(runRequests, 50);
+  });
   const collectAssets = (nowMillis?: number) => assets.collect(referencedAssets(sync.store), TOMBSTONE_RETENTION_DAYS, nowMillis);
 
   // 400 statt 500 für kaputte Anfragen; Meldungen ohne Inhalte.
@@ -350,14 +361,14 @@ export function createApp(opts: AppOptions): App {
   router.add(
     "POST",
     "/mcp",
-    async ({ req, res, body }) => {
+    async ({ req, res, body, url }) => {
       let parsed: unknown;
       try {
         parsed = JSON.parse(body.toString("utf8"));
       } catch {
         return json({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }, 400);
       }
-      const server = createMcpServer(pages, { assets });
+      const server = createMcpServer(pages, { assets, toolList: mcpToolList(url.searchParams.get("tools")) });
       const transport = new StreamableHTTPServerTransport({ enableJsonResponse: true }) // ohne sessionIdGenerator: zustandslos;
       res.on("close", () => {
         void transport.close();
@@ -448,6 +459,8 @@ export function createApp(opts: AppOptions): App {
       sync.close(); // offene Long-Polls antworten sofort
       share.close();
       scheduler.stop();
+      unobserveRequests();
+      if (requestTimer) clearTimeout(requestTimer);
       brain.close();
       pages.dispose();
       await collab.close();

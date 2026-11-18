@@ -1,8 +1,8 @@
 // BSD-159 / BSD-74: Werkzeuge gegen einen In-Memory-Store – lesen, schreiben, atomar (ein Undo-Schritt, alles oder
 // nichts), Formatierung bleibt beim Ersetzen.
 import { describe, expect, it } from "vitest";
-import { addOption, addProperty, createDatabase, createPage, keyOf, makeBlock, plainText, rowsOf, trashPages, type WorkspaceStore } from "@based/core";
-import { WorkspaceTools } from "../src/index.js";
+import { addOption, addProperty, appendTranscript, createMeeting, type Block, createDatabase, createPage, keyOf, makeBlock, plainText, restorePages, rowsOf, trashPages, type WorkspaceStore } from "@based/core";
+import { AgentStore, WorkspaceTools } from "../src/index.js";
 import { memoryStore } from "./helpers.js";
 
 function setup() {
@@ -194,17 +194,21 @@ describe("WorkspaceTools – Seiten", () => {
   it("Schreib-Werkzeuge sind als solche markiert (für „Ask before edits“)", () => {
     const { tools } = setup();
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
-    expect(write).toEqual([
-      "create_page", "append_markdown", "replace_page_content", "find_replace", "update_page", "move_page", "duplicate_page", "trash_page", "restore_page", "set_favorite",
-      "update_workspace", "create_teamspace", "update_teamspace", "delete_teamspace", "edit_blocks", "draw_board", "add_row", "update_row", "add_rows", "update_rows", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
-      "ask_main_agent", "resolve_inbox", "create_project", "update_project_status", "undo_last",
+    expect([...write].sort()).toEqual([
+      "add_row", "add_rows", "append_markdown", "ask_main_agent", "create_database", "create_page", "create_project", "create_teamspace", "create_view", "delete_forever", "delete_teamspace", "delete_view",
+      "draw_board", "duplicate_page", "edit_blocks", "empty_trash", "find_replace", "move_page", "remember", "replace_page_content", "resolve_inbox", "restore_page", "set_favorite", "trash_page", "undo_last",
+      "update_database", "update_meeting", "update_page", "update_project", "update_project_status", "update_row", "update_rows", "update_schedule", "update_teamspace", "update_view", "update_workspace",
     ]);
-    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual([
-      "based_guide", "search", "read_page", "list_pages", "list_trash", "backlinks", "get_workspace", "read_blocks", "read_board", "list_files", "list_databases", "database_schema", "query_database", "list_views",
-      "recall", "related", "about_me", "list_skills", "load_skill", "list_runs", "get_run", "inbox", "list_projects", "get_project",
+    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n)).sort()).toEqual([
+      "about_me", "backlinks", "based_guide", "database_schema", "due", "get_project", "get_run", "get_workspace", "inbox", "list_connections", "list_databases", "list_files", "list_meetings", "list_pages",
+      "list_projects", "list_runs", "list_schedules", "list_skills", "list_trash", "list_views", "load_skill", "query_database", "read_blocks", "read_board", "read_meeting", "read_page", "recall", "related", "search",
     ]);
     // was etwas verwerfen kann, ist als solches markiert
-    expect(tools.specs.map((s) => s.name).filter((n) => tools.isDestructive(n))).toEqual(["replace_page_content", "trash_page", "delete_teamspace", "update_database", "delete_view"]);
+    expect(tools.specs.map((s) => s.name).filter((n) => tools.isDestructive(n)).sort()).toEqual(["delete_forever", "delete_teamspace", "delete_view", "empty_trash", "replace_page_content", "trash_page", "update_database", "update_schedule"]);
+    // die kurze Liste: Kern plus die zwei Zugänge; sie zählen nicht zu den Werkzeugen der Schicht
+    expect(tools.compact.map((d) => d.spec.name)).toEqual(["based_guide", "search", "read_page", "list_pages", "create_page", "append_markdown", "update_page", "read_blocks", "edit_blocks", "list_databases", "database_schema", "query_database", "add_row", "update_row", "recall", "remember", "undo_last", "more_tools", "run_tool"]);
+    expect(tools.isWrite("more_tools")).toBe(false);
+    expect(tools.callSync("run_tool", { name: "search", args: { query: "x" } } as never).isError, "run_tool packt nur der Host aus").toBe(true);
     expect(tools.isWrite("unknown"), "Unbekanntes gilt als Schreiben").toBe(true);
     for (const s of tools.specs) expect(s.inputSchema).toMatchObject({ type: "object" });
   });
@@ -395,6 +399,109 @@ describe("WorkspaceTools – Datenbanken", () => {
     for (let i = 0; i < 5; i++) ok("add_row", { database_id: db, title: "Row " + i });
     const text = ok("query_database", { database_id: db, limit: 2, offset: 1 });
     expect(text.split("\n").map((l) => l.replace(/ \(id: [^)]+\)/, ""))).toEqual(["- Row 1", "- Row 2", "… 2 more (offset: 3)"]);
+  });
+});
+
+describe("Endgültig löschen: immer erst ein Mensch (Rückfrage in der Inbox)", () => {
+  it("delete_forever löscht nicht, sondern fragt; erst die Zustimmung in Based führt aus", () => {
+    const { store, tools, ok, call } = setup();
+    const page = createPage(store, { title: "Old plan" });
+    expect(call("delete_forever", { ids: [page] }).text, "nur aus dem Papierkorb").toContain("is not in the Trash");
+    expect(ok("inbox"), "ungültiges erreicht den Menschen nicht").toBe("Nothing needs you right now.");
+    trashPages(store, [page]);
+    const text = ok("delete_forever", { ids: [page] });
+    expect(text).toContain("Nothing was changed yet");
+    expect(store.blocks.has(page), "noch da").toBe(true);
+    expect(ok("inbox")).toContain("Delete forever: “Old plan”");
+    const id = /request ([^)\s]+)\)/.exec(text)![1]!;
+    expect(ok("delete_forever", { ids: [page] }), "nicht doppelt fragen").toContain("Already asked");
+    // Ein Agent kann seine eigene Rückfrage nicht beantworten – auch nicht mit der allow-Regel.
+    const main = new AgentStore(store);
+    main.saveMain((d) => { d.permissions = { ...d.permissions, rules: "allow based.resolve_inbox" }; });
+    const r = call("resolve_inbox", { run_id: id, decision: "allow" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("Only the user can answer this request");
+    expect(store.blocks.has(page)).toBe(true);
+    // Der Mensch stimmt zu (Knopf in Based → resolveRequest).
+    expect(tools.resolveRequest(id, true).text).toContain("Deleted for good: “Old plan”");
+    expect(store.blocks.has(page)).toBe(false);
+    expect(ok("get_run", { run_id: id })).toContain("Deleted for good");
+    expect(tools.resolveRequest(id, true).isError, "nur einmal").toBe(true);
+  });
+
+  it("empty_trash: Ablehnen ändert nichts; was sich seit der Frage geändert hat, scheitert beim Ausführen sauber", () => {
+    const { store, tools, ok } = setup();
+    const a = createPage(store, { title: "A" });
+    trashPages(store, [a]);
+    const text = ok("empty_trash");
+    expect(text).toContain("Empty the Trash (1 page)");
+    const id = /request ([^)\s]+)\)/.exec(text)![1]!;
+    expect(tools.resolveRequest(id, false).text).toBe("Declined.");
+    expect(store.blocks.has(a)).toBe(true);
+    expect(ok("inbox")).toBe("Nothing needs you right now.");
+    const req = /request ([^)\s]+)\)/.exec(ok("delete_forever", { ids: [a] }))![1]!;
+    restorePages(store, [a]); // der Mensch holt die Seite zurück, bevor er die Frage sieht
+    const out = tools.resolveRequest(req, true);
+    expect(out.text).toContain("is not in the Trash");
+    expect(store.blocks.has(a)).toBe(true);
+    expect(ok("get_run", { run_id: req })).toContain("[Failed]");
+  });
+});
+
+describe("Meetings, Verlauf, Projekte, Zeitpläne, Fälliges", () => {
+  it("list_meetings, read_meeting (Übersicht und Transkript), update_meeting", () => {
+    const { store, ok, call } = setup();
+    const page = createPage(store, { title: "Weekly" });
+    const ctxPage = createPage(store, { title: "Roadmap" });
+    const m = createMeeting(store, { parent: "b:" + page, title: "Sync with Ada" });
+    appendTranscript(store, m, [{ id: "s1", s: 0, e: 2, t: "Hello there.", sp: "me" }, { id: "s2", s: 3, e: 5, t: "Hi, ready?", sp: "others" }]);
+    expect(ok("list_meetings")).toContain(`- Sync with Ada (id: ${m}) — `);
+    expect(ok("list_meetings")).toContain("on “Weekly”");
+    ok("update_meeting", { id: m, title: "Sync", summary: "## Decisions\n- Ship on Friday", speakers: { others: "Ada" }, add_context: [ctxPage] });
+    const text = ok("read_meeting", { id: m });
+    expect(text).toContain("# Sync (id: ");
+    expect(text).toContain("Ship on Friday");
+    expect(text).toContain("Context: page “Roadmap”");
+    expect(text).toMatch(/## Notes \(section id: [^)]+\)/);
+    const tr = ok("read_meeting", { id: m, part: "transcript" });
+    expect(tr).toContain("Me: Hello there.");
+    expect(tr).toContain("Ada: Hi, ready?");
+    expect(call("update_meeting", { id: m, speakers: { Nobody: "X" } }).text).toContain("No speaker “Nobody”");
+    expect(call("read_meeting", { id: page }).isError).toBe(true);
+  });
+
+  it("page_history, read_version, restore_version laufen über den Verlauf des Hosts; ohne Host gibt es sie nicht", () => {
+    const store = memoryStore();
+    expect(new WorkspaceTools(store).specs.some((s) => s.name === "page_history")).toBe(false);
+    const page = createPage(store, { title: "Doc" });
+    const old: Block[] = [structuredClone(store.blocks.get(page)!), { id: "X1", type: "paragraph", parent: "b:" + page, sk: "a", text: "old line", createdAt: 0, updatedAt: 0 }];
+    let restored = 0;
+    const tools = new WorkspaceTools(store, { history: () => ({
+      list: () => ({ versions: [{ id: 7, pageID: page, at: 1_800_000_000, manifest: "m", title: "Doc", blockCount: 1, wordCount: 2, reason: "edit" }] }),
+      content: (_p, v) => { if (v !== 7) throw new Error("This version no longer exists."); return { blocks: old, missing: [] }; },
+      restore: () => { restored++; return { restored: 1, removed: 0, copied: 0, trashed: 0 }; },
+    }) });
+    const run = (n: string, i: Record<string, unknown>) => tools.callSync(n, i as never);
+    expect(run("page_history", { id: page }).text).toContain("- version 7 · 2027-01-15 08:00 UTC · edit · 1 blocks, 2 words");
+    expect(run("read_version", { id: page, version: 7 }).text).toBe("paragraph: old line");
+    expect(run("read_version", { id: page, version: 8 }).text).toBe("This version no longer exists.");
+    expect(run("restore_version", { id: page, version: 7 }).text).toContain("Restored “Doc” to version 7: 1 blocks back");
+    expect(restored).toBe(1);
+    expect(tools.isDestructive("restore_version")).toBe(true);
+  });
+
+  it("update_project, list_schedules/update_schedule, due, list_connections", () => {
+    const { store, ok, call } = setup();
+    const agents = new AgentStore(store);
+    const p = agents.createProject("Launch", { goal: "Ship v1" });
+    expect(ok("update_project", { project: "launch", goal: "Ship v2", status: "paused", budget_eur: 20 })).toContain("Updated project “Launch”: goal, status, budgetEUR");
+    expect(agents.projects().find((x) => x.id === p.id)!.data).toMatchObject({ goal: "Ship v2", status: "paused", budgetEUR: 20 });
+    expect(call("update_project", { project: "launch", status: "frozen" }).isError).toBe(true);
+    expect(ok("list_schedules")).toBe("No schedules.");
+    expect(call("update_schedule", { id: "nope", enabled: false }).text).toContain("No schedule nope");
+    expect(ok("list_connections")).toBe("No connections.");
+    expect(ok("due")).toBe("Nothing due in that range.");
+    expect(call("due", { from: "soon" }).text).toContain("from must be a date");
   });
 });
 

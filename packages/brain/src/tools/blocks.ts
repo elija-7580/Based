@@ -3,9 +3,18 @@
 // Seiten-Editor für Agenten (Agent-Parität 2/7): einzelne Blöcke lesen und ändern – verschieben, Spalten, Farben,
 // Turn into, Bilder und Dateien einfügen, Tabellen. Die Logik liegt im Kern (`blockOutline`, `runBlockScript`);
 // hier stehen Name, Beschreibung und die Antwort.
-import { BLOCK_SCRIPT_HELP, blockHandles, blockOutline, isBoardPage, runBlockScript, workspaceFiles } from "@based/core";
+import { blockHandles, blockOutline, isBoardPage, runBlockScript, workspaceFiles } from "@based/core";
 import { limitSchema, needStr, obj, offsetSchema, optNum, pageID, PAGE_URI, ToolError, type ToolDef } from "./base.js";
 import type { ToolCtx } from "./context.js";
+
+/** Das Nötigste der Skriptsprache; die ganze Grammatik steht in `based_guide` (Thema blocks) – so kostet die Werkzeugliste wenig. */
+const BLOCK_SCRIPT_SHORT = [
+  "One statement per line. Create: `<kind>: text` or `<kind> name: text` (p h1 h2 h3 bullet number todo toggle quote callout code divider table image file page database …), or `md: <Markdown>` for many blocks.",
+  "Where: {after=h} {before=h} {in=h} {left=h} {right=h}; without it, after the previous line's block (first line: end of page).",
+  "Change: `set h: text`, `set h {type=h2 color=blue bg=yellow checked}`, `move h {after=h2}`, `del h`, `dup h`, `indent h`, `check h`, `cell h 2,1: text`.",
+  "Text is inline Markdown. A wrong line is skipped with its reason. Full grammar (columns, synced blocks, buttons, dates, tables, files): based_guide topic `blocks`.",
+  "Example: h2 s: Summary {after=1a2b}\\ncallout: **Ship on Friday** {bg=blue icon=🚀}\\nmove 3c4d {right=s}",
+].join("\n");
 
 export function blockTools(ctx: ToolCtx): ToolDef[] {
   const { store } = ctx;
@@ -36,8 +45,7 @@ export function blockTools(ctx: ToolCtx): ToolDef[] {
         name: "edit_blocks",
         description: [
           "Change a page block by block with a short script: insert at a place, edit, move, put side by side in columns, colour, turn into another kind, add images and files, edit tables. Read the handles with read_blocks first.",
-          BLOCK_SCRIPT_HELP,
-          "Example: h2 s: Summary {after=1a2b}\\ncallout: **Ship on Friday** {bg=blue icon=🚀}\\nmove 3c4d {right=s}\\nset 5e6f {type=todo checked}",
+          BLOCK_SCRIPT_SHORT,
         ].join("\n"),
         inputSchema: obj({ id: pageID, script: { type: "string", minLength: 1 } }, ["id", "script"]),
       },

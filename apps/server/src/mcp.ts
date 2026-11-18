@@ -9,7 +9,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolResult } fr
 import { z } from "zod";
 import { PAGE_URI, type Pages } from "./pages.js";
 import type { AssetStore } from "./assets.js";
-import { AgentBrain, AGENT_TYPE, defaultMainAgent, getRecord, GUIDE, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import { AgentBrain, AGENT_TYPE, defaultMainAgent, getRecord, GUIDE, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData, unwrap } from "@based/brain";
 import type { Author, JSONValue, WorkspaceStore } from "@based/core";
 
 export { GUIDE } from "@based/brain";
@@ -60,11 +60,20 @@ export function mcpActor(server: McpServer): Author {
   return { kind: "agent", name: name ? name.slice(0, 80) : "MCP client" };
 }
 
+/** `?tools=all` (HTTP) bzw. BASED_MCP_TOOLS=all (stdio); alles andere: die kurze Liste. */
+export const mcpToolList = (v: string | null | undefined): "compact" | "all" => (v?.trim().toLowerCase() === "all" ? "all" : "compact");
+
 export interface McpServerOptions {
   /** Dateispeicher: Agenten wählen Dateien aus (Maße, PDF-Seiten aus den Bytes) und laden welche hoch. */
   assets?: AssetStore | undefined;
   /** stdio: der Client läuft auf diesem Rechner – upload_file darf lokale Pfade lesen. */
   localFiles?: boolean;
+  /**
+   * Welche Werkzeuge die Liste zeigt: "compact" (Standard) = Kernwerkzeuge plus more_tools/run_tool, das spart rund
+   * drei Viertel der Token je Gespräch; "all" = jedes Werkzeug (für Clients, die selbst nachladen, z. B. Claude Code).
+   * Aufrufbar ist immer alles.
+   */
+  toolList?: "compact" | "all" | undefined;
 }
 
 /** Ein MCP-Server über den Seiten des Workspaces. Pro HTTP-Anfrage neu (zustandslos), für stdio einmal. */
@@ -74,8 +83,9 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
 
   // MARK: Werkzeuge – aus der einen Schicht, mit ihrem JSON-Schema (keine zweite Beschreibung hier).
   server.server.registerCapabilities({ tools: {} });
+  const listed = () => (opts.toolList === "all" ? tools.all : tools.compact);
   server.server.setRequestHandler(ListToolsRequestSchema, () => ({
-    tools: tools.all.map((d) => ({
+    tools: listed().map((d) => ({
       name: d.spec.name,
       description: d.spec.description,
       inputSchema: d.spec.inputSchema as { type: "object"; [k: string]: unknown },
@@ -83,8 +93,8 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
     })),
   }));
   server.server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolResult> => {
-    const name = req.params.name;
-    const args = (req.params.arguments ?? {}) as JSONValue;
+    // run_tool {name, args} meint das Werkzeug darin: Regeln, Rückfragen und Herkunft gelten für dieses.
+    const { name, input: args } = unwrap(req.params.name, (req.params.arguments ?? {}) as JSONValue);
     // Jedes schreibende Werkzeug prüft vorher die Regeln (BSD-221 Teil 3e) – neue Werkzeuge automatisch.
     if (tools.isWrite(name) && tools.def(name)) {
       const refused = mcpRuleRefusal(pages.store, name, args);

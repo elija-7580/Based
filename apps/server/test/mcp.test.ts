@@ -6,12 +6,12 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { LinkPreviews } from "../src/file-tools.js";
 import { authorKindOf, createPage } from "@based/core";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
-import { AgentBrain, AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, TASK_TYPE, type ProjectData } from "@based/brain";
+import { AgentBrain, AgentStore, WorkspaceTools, AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, TASK_TYPE, type ProjectData } from "@based/brain";
 import { startApp, TOKEN } from "./helpers.js";
 
 type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
@@ -37,13 +37,84 @@ async function httpClient(token = TOKEN) {
 const idIn = (s: string) => /id: ([0-9A-Fa-f-]{36})/.exec(s)?.[1] ?? "";
 
 describe("MCP über Streamable HTTP", () => {
-  it("initialize mit Anleitung, Werkzeugliste", async () => {
-    const { client } = await httpClient();
+  it("initialize mit Anleitung; die Werkzeugliste ist kurz (Kern + more_tools/run_tool), ?tools=all zeigt alle", async () => {
+    const { client, app } = await httpClient();
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
-    const names = (await client.listTools()).tools.map((t) => t.name).sort();
-    expect(names).toEqual(
-      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_teamspace", "create_view", "database_schema", "delete_teamspace", "delete_view", "draw_board", "duplicate_page", "edit_blocks", "find_replace", "get_project", "get_run", "get_workspace", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_blocks", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "undo_last", "update_database", "update_page", "update_project_status", "update_row", "update_teamspace", "update_view", "update_workspace", "upload_file"].sort(),
+    const short = (await client.listTools()).tools;
+    expect(short.map((t) => t.name).sort()).toEqual(
+      ["add_row", "append_markdown", "based_guide", "create_page", "database_schema", "edit_blocks", "list_databases", "list_pages", "more_tools", "query_database", "read_blocks", "read_page", "recall", "remember", "run_tool", "search", "undo_last", "update_page", "update_row"],
     );
+    const all = new Client({ name: "test", version: "1" });
+    await all.connect(new StreamableHTTPClientTransport(new URL(`${app.url}/mcp?tools=all`), { requestInit: { headers: { Authorization: `Bearer ${TOKEN}` } } }));
+    cleanup.push(() => all.close());
+    const full = (await all.listTools()).tools;
+    expect(full.map((t) => t.name).sort()).toEqual(
+      ["about_me", "add_row", "add_rows", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_teamspace", "create_view", "database_schema", "delete_forever", "delete_teamspace", "delete_view", "draw_board", "due", "duplicate_page", "edit_blocks", "empty_trash", "export_page", "export_workspace", "find_replace", "get_project", "get_run", "get_workspace", "inbox", "list_connections", "list_databases", "list_files", "list_meetings", "list_pages", "list_projects", "list_runs", "list_schedules", "list_shares", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_blocks", "read_board", "read_meeting", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "revoke_share", "search", "set_favorite", "share_page", "trash_page", "undo_last", "update_database", "update_meeting", "update_page", "update_project", "update_project_status", "update_row", "update_rows", "update_schedule", "update_teamspace", "update_view", "update_workspace", "upload_file"].sort(),
+    );
+    // Die kurze Liste kostet höchstens ein Drittel der ganzen (gemessen an Beschreibung + Schema).
+    const size = (l: unknown[]) => JSON.stringify(l).length;
+    expect(size(short)).toBeLessThan(size(full) / 3);
+    expect(size(short), "kurze Liste bleibt unter ~3.500 Token").toBeLessThan(14_000);
+  });
+
+  it("more_tools nennt den Rest, beschreibt ihn auf Wunsch; run_tool ruft auf – mit den Regeln des gemeinten Werkzeugs", async () => {
+    const { app, call } = await httpClient();
+    const list = textOf(await call("more_tools"));
+    expect(list).toContain("Databases:");
+    expect(list).toContain("- update_view: ");
+    expect(list).not.toContain("- read_page:");
+    expect(textOf(await call("more_tools", { query: "trash" }))).toContain("- empty_trash: ");
+    const desc = textOf(await call("more_tools", { names: ["move_page"] }));
+    expect(desc).toContain("## move_page (writes)");
+    expect(desc).toContain("Arguments: {");
+    const id = idIn(textOf(await call("create_page", { title: "Via gateway" })));
+    expect(textOf(await call("run_tool", { name: "set_favorite", args: { id, favorite: true } }))).toMatch(/favorite/i);
+    expect((await call("run_tool", { name: "set_favorite", args: { id: "nope", favorite: true } })).isError).toBe(true);
+    // Eine deny-Regel für das gemeinte Werkzeug gilt auch über run_tool.
+    new AgentStore(app.sync.store).saveMain((d) => { d.permissions = { ...d.permissions, rules: "deny based.trash_page" }; });
+    const refused = await call("run_tool", { name: "trash_page", args: { id } });
+    expect(refused.isError).toBe(true);
+    expect(textOf(refused)).toContain("Not allowed by the permission rules");
+    expect(textOf(await call("run_tool", { name: "run_tool", args: {} })), "kein Schachteln").toContain("Databases:");
+  });
+
+  it("export_page: Markdown kommt direkt und als Datei-Adresse; HTML und Word als Datei", async () => {
+    const { call } = await httpClient();
+    const id = idIn(textOf(await call("create_page", { title: "Report", markdown: "# Findings\n\nAll **good**." })));
+    const md = textOf(await call("export_page", { id }));
+    expect(md).toContain("Exported “Report” as Markdown.");
+    expect(md).toMatch(/File “Report\.md” \(\d+ KB\): based-asset:[0-9a-f]{64}/);
+    expect(md).toContain("All **good**.");
+    expect(textOf(await call("export_page", { id, format: "html" }))).toMatch(/Exported 1 page as HTML\.\nFile “Report\.html”/);
+    expect(textOf(await call("export_page", { id, format: "docx" }))).toMatch(/File “Report\.docx” \(\d+ KB\): based-asset:/);
+    expect(textOf(await call("export_workspace", { format: "archive" }))).toMatch(/Archived \d+ records\.\nFile “.*\.based\.zip”/);
+    const refused = await call("export_page", { id, path: "/tmp/x.md" });
+    expect(refused.isError, "Pfade nur über stdio").toBe(true);
+  });
+
+  it("Teilen: ansehen und entziehen immer; freigeben fragt in der Inbox, außer Agenten dürfen frei arbeiten", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    const id = idIn(textOf(await call("create_page", { title: "Roadmap" })));
+    expect(textOf(await call("list_shares", { id }))).toBe("Not shared.");
+    const asked = textOf(await call("share_page", { id, kind: "publish" }));
+    expect(asked).toContain("Asked the user in Based's inbox");
+    expect(asked).toContain("Publish “Roadmap” to the web");
+    expect(textOf(await call("list_shares", { id }))).toBe("Not shared.");
+    expect((await call("share_page", { id, kind: "link", role: "full" })).isError, "ungültiges fragt nicht").toBe(true);
+    // Der Mensch stimmt in der App zu: dort gibt es das Werkzeug nicht, der Server führt es aus.
+    const req = /request ([^)\s]+)\)/.exec(asked)![1]!;
+    const appTools = new WorkspaceTools(store, { groups: ["pages"] });
+    expect(appTools.resolveRequest(req, true).text).toBe("Allowed. Your Based server carries it out.");
+    await vi.waitFor(async () => expect(textOf(await call("list_shares", { id }))).toContain("Published to the web"));
+    expect(textOf(await call("get_run", { run_id: req }))).toContain("Published “Roadmap”");
+    // „Work freely“: ohne Rückfrage.
+    new AgentStore(store).saveMain((d) => { d.permissions = { ...d.permissions, mode: "free" }; });
+    const shared = textOf(await call("share_page", { id, kind: "link", role: "view", label: "For Ada" }));
+    expect(shared).toMatch(/Shared “Roadmap” \(share: [^,]+, can view\): \/s\/bdl_/);
+    const sid = /share: ([^,]+),/.exec(shared)![1]!;
+    expect(textOf(await call("revoke_share", { share: sid }))).toBe("Revoked.");
+    expect(textOf(await call("list_shares", { id }))).not.toContain("For Ada");
   });
 
   it("BSD-221 Teil 3a: list_runs, get_run, inbox aus den Lauf-Records", async () => {
@@ -80,7 +151,10 @@ describe("MCP über Streamable HTTP", () => {
   });
 
   it("Agent-Parität: MCP meldet genau die Werkzeuge der einen Schicht an – Name, Beschreibung, Schema, Einordnung", async () => {
-    const { app, client, call } = await httpClient();
+    const { app, call } = await httpClient();
+    const client = new Client({ name: "test", version: "1" });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${app.url}/mcp?tools=all`), { requestInit: { headers: { Authorization: `Bearer ${TOKEN}` } } }));
+    cleanup.push(() => client.close());
     const listed = (await client.listTools()).tools;
     const layer = app.pages.tools({ assets: app.assets }).all;
     expect(listed.map((t) => t.name)).toEqual(layer.map((d) => d.spec.name));

@@ -35,6 +35,14 @@ export interface ToolDef {
   write: boolean;
   /** Kann es etwas verwerfen, das nicht mit einem Klick zurückkommt (Inhalt ersetzen, Property löschen …)? */
   destructive?: boolean;
+  /** Steht auch in der kurzen Werkzeugliste (tools/gateway.ts); alles andere erreicht ein Agent über more_tools/run_tool. */
+  core?: boolean;
+  /**
+   * Läuft nie auf Wunsch eines Agenten allein: der Aufruf wird als Rückfrage in der Inbox abgelegt und erst
+   * ausgeführt, wenn ein Mensch in Based zustimmt. Der Titel sagt dem Menschen, was passieren würde; `undefined`
+   * heißt: diesmal ohne Rückfrage (z. B. weil der Mensch Agenten freies Arbeiten erlaubt hat).
+   */
+  ask?: (args: Args) => string | undefined;
   /** Frühere Namen von Argumenten (`page_id` → `id`); werden still angenommen, stehen aber nicht im Schema. */
   aliases?: Record<string, string>;
   /** Das Werkzeug schreibt und muss dabei warten (Netz, Dateien): es läuft nicht als eine Transaktion, siehe `run`. */

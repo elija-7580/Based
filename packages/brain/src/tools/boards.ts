@@ -3,11 +3,18 @@
 // BSD-93 / BSD-508: Whiteboards als Text – wenige Token; die Anordnung rechnet Based (core whiteboard/agent.ts).
 // Elija 18.11.: Agenten können auf dem Board alles, was ein Mensch kann (Farben, Stellen, Zeichnen, Bilder, Dateien).
 import {
-  BOARD_SCRIPT_HELP, boardBackground, boardFileParts, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, insertBoardPage, isBoardPage, isPageLike, keyOf,
+  boardBackground, boardFileParts, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, insertBoardPage, isBoardPage, isPageLike, keyOf,
   makeRecordID, planBoardScript, titleOf, workspaceFiles, type Block,
 } from "@based/core";
 import { limitSchema, needStr, obj, offsetSchema, optNum, optStr, pageID, paged, S, type ToolDef } from "./base.js";
 import type { ToolCtx } from "./context.js";
+
+/** Das Nötigste; die ganze Grammatik steht in `based_guide` (Thema boards). */
+const BOARD_SCRIPT_SHORT = [
+  "One statement per line. Create: note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> | image a: <file ref> | file a: <file ref> | ink a: <SVG path>",
+  "Connect: a -> b: optional label. Group: frame f: Title { a b c }. Change: set <handle>: text | set <handle> {attrs} | del <handle> | copy <handle> as c | background dots|lines|grid|plain",
+  "Attributes go last in braces: {color=green fill=blue at=120,40 size=200x100}. Text is Markdown. Colours, ink, PDFs, copying between boards: based_guide topic `boards`.",
+].join("\n");
 
 export function boardTools(ctx: ToolCtx): ToolDef[] {
   const { store } = ctx;
@@ -45,7 +52,7 @@ export function boardTools(ctx: ToolCtx): ToolDef[] {
       group: "boards", write: true, aliases: { page_id: "id", parent_id: "parent" },
       spec: {
         name: "draw_board",
-        description: ["Add to or change a whiteboard with a short script. Based lays new objects out beside what is there unless they have at=. Omit `id` to create a new board (`title`, `parent` optional).", BOARD_SCRIPT_HELP].join("\n"),
+        description: ["Add to or change a whiteboard with a short script. Based lays new objects out beside what is there unless they have at=. Omit `id` to create a new board (`title`, `parent` optional).", BOARD_SCRIPT_SHORT].join("\n"),
         inputSchema: obj({ id: pageID, script: { type: "string", minLength: 1 }, title: S, parent: pageID }, ["script"]),
       },
       run: (a) => {

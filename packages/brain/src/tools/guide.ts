@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Anleitung für Agenten (wie Notions MCP): kurze Themen, die ein Modell bei Bedarf nachliest (`based_guide`, und als
 // Ressourcen based://docs/<topic>).
+import { BLOCK_SCRIPT_HELP, BOARD_SCRIPT_HELP } from "@based/core";
 import { obj, optStr, str, ToolError, type ToolDef } from "./base.js";
 
 export const GUIDE: Record<string, string> = {
@@ -33,9 +34,26 @@ sense on its own ("Elija prefers answers in German"). Not for things that only m
 - The same fact is never stored twice; you get the existing memory back.
 - Health, money and similar private facts are stored as "To review" and only count once the user sets them to Active.
 Types: Profile, Preference, Work, People, Notes.`,
+  blocks: `# Editing a page block by block (edit_blocks)
+${BLOCK_SCRIPT_HELP}
+Example:
+h2 s: Summary {after=1a2b}
+callout: **Ship on Friday** {bg=blue icon=🚀}
+move 3c4d {right=s}
+set 5e6f {type=todo checked}`,
+  boards: `# Whiteboards (read_board, draw_board)
+${BOARD_SCRIPT_HELP}`,
+  databases: `# Databases
+A database has properties (columns), rows (each row is a page) and views (table, board, list, gallery, calendar,
+timeline, map, form, chart, dashboard). Read: list_databases, database_schema, list_views, query_database (use
+\`view\` to get what a view shows, including its footer calculations). Rows: add_row(s), update_row(s); values are
+plain text by property name; relations take row ids or titles. Schema: update_database (formulas, relations,
+rollups, options, templates). Looks: create_view / update_view (filters, sorts, grouping, visible properties,
+calculations, chart).`,
   safety: `# Safety
-Prefer appending over replacing. Never empty pages or move many pages without the user asking. trash_page is reversible;
-nothing here deletes forever.`,
+Prefer appending over replacing. Never empty pages or move many pages without the user asking. trash_page is
+reversible and undo_last takes back your last change. delete_forever and empty_trash never run on their own: they put
+a question in the user's inbox, and only the user can answer it in Based. Locked pages refuse changes on purpose.`,
 };
 
 export function guideTools(): ToolDef[] {

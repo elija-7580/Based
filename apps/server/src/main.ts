@@ -18,7 +18,7 @@ import type { WorkspaceStore } from "@based/core";
 import { desktopChannel } from "@based/core";
 import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./sandbox.js";
 import { createLogger, parseLogLevel, type Logger } from "./log.js";
-import { createMcpServer } from "./mcp.js";
+import { createMcpServer, mcpToolList } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { loginShellPath, mergePath, newLocalToken, portInUseMessage, removeLocalDiscovery, replaceStaleLocal, writeLocalDiscovery } from "./local.js";
 import { tailnetAddresses, urlFor } from "./tailnet.js";
@@ -275,7 +275,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     // BSD-541: liegt das Embedding-Modell schon neben der Datenbank, sucht `recall` auch über stdio nach Bedeutung.
     const brain = new BrainIndex({ store: sync.store, pages, log, modelsDir: defaultModelsDir(opts.db), indexFile: defaultVectorsFile(opts.db) });
     void brain.start();
-    const server = createMcpServer(pages, { assets, localFiles: true });
+    const server = createMcpServer(pages, { assets, localFiles: true, toolList: mcpToolList(process.env.BASED_MCP_TOOLS) });
     await server.connect(new StdioServerTransport());
     log.info("mcp on stdio", { db: opts.db });
     return;

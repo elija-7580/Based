@@ -5,8 +5,8 @@
 import {
   addStarterTemplate, COVER_COLOR_IDS, COVER_GRADIENT_COUNT, COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, ICON_COLORS, parsePhosphorIcon, phosphorIcon, sectionOf, setCoverHeight, setCoverPosition,
   setPageCover, setPageFormat, setPageIcon, setPageIconImage, STARTER_TEMPLATES, workspaceFiles, type InsertPosition, type PageCoverValue, type PageDestination, type StarterTemplateID,
-  backlinksTo, duplicatePages, putMarkdownBlocks, insertPage, isPageLike, isTrashed, keyOf, MarkdownImporter, movePages, pageLocation, PRIVATE, replaceInRichText, restorePages, setFavorite, sortKeys,
-  trashedPages, trashPages, type Block,
+  backlinksTo, duplicatePages, putMarkdownBlocks, insertPage, isBoardPage, isPageLike, isTrashed, keyOf, MarkdownImporter, movePages, pageLocation, PRIVATE, replaceInRichText, restorePages, setFavorite, sortKeys,
+  trashedPages, trashPages, deleteForever, emptyTrash, type Block,
 } from "@based/core";
 import { bool, limitSchema, needStr, obj, offsetSchema, optNum, optStr, pageID, paged, S, str, ToolError, type ToolDef } from "./base.js";
 import type { ToolCtx } from "./context.js";
@@ -41,17 +41,31 @@ export function pageTools(ctx: ToolCtx): ToolDef[] {
           "Find pages and database rows by title, text, or row values (including the titles of related rows, people and options). " +
           "Words may be spread over a page and may contain typos. Returns ids, where each page lives, and a snippet. " +
           "Use `within` to search below one page or database, `title_only` for titles. For how pages are connected use `backlinks`.",
-        inputSchema: obj({ query: { type: "string", minLength: 1 }, limit: limitSchema, within: str("Page or database id to search below"), title_only: bool("Match titles only") }, ["query"]),
+        inputSchema: obj({
+          query: { type: "string", minLength: 1 }, limit: limitSchema, within: str("Page or database id to search below"), title_only: bool("Match titles only"),
+          kind: { type: "string", enum: ["page", "row", "database", "board"], description: "Only this kind" },
+          edited_after: str("YYYY-MM-DD"), edited_before: str("YYYY-MM-DD"),
+        }, ["query"]),
       },
       run: (a) => {
         const limit = Math.max(1, optNum(a, "limit", 20));
         const within = optStr(a, "within");
-        const filters = { ...(a.title_only === true ? { titleOnly: true } : {}), ...(within ? { inPage: within } : {}) };
+        const swift = (k: string) => {
+          const v = optStr(a, k);
+          if (v === undefined) return undefined;
+          const t = Date.parse(v);
+          if (Number.isNaN(t)) throw new ToolError(`${k} must be a date like 2026-11-20`);
+          return t / 1000 - 978_307_200;
+        };
+        const after = swift("edited_after"), before = swift("edited_before");
+        const kind = optStr(a, "kind");
+        const isKind = (b: Block) => kind === undefined || (kind === "row" ? b.parent.startsWith("d:") : kind === "database" ? b.type === "databasePage" || [...store.databases.values()].some((d) => d.blockID === b.id) : kind === "board" ? isBoardPage(b) : !b.parent.startsWith("d:") && b.type === "page");
+        const filters = { ...(a.title_only === true ? { titleOnly: true } : {}), ...(within ? { inPage: within } : {}), ...(after !== undefined ? { editedAfter: after } : {}), ...(before !== undefined ? { editedBefore: before + 86_400 } : {}) };
         const seen = new Set<string>();
         const lines: string[] = [];
-        for (const h of ctx.search(needStr(a, "query"), limit, filters)) {
+        for (const h of ctx.search(needStr(a, "query"), kind ? limit * 5 : limit, filters)) {
           const b = store.blocks.get(h.pageID);
-          if (seen.has(h.pageID) || !b || !isPageLike(b) || isTrashed(store, h.pageID)) continue;
+          if (seen.has(h.pageID) || !b || !isPageLike(b) || isTrashed(store, h.pageID) || !isKind(b)) continue;
           seen.add(h.pageID);
           const where = pageLocation(store, h.pageID);
           lines.push(`${ctx.line(h.pageID)}${where ? ` · ${b.parent.startsWith("d:") ? "row in" : "in"} ${where}` : ""}${h.snippet ? ` — ${h.snippet.replace(/\n/g, " ")}` : ""}`);
@@ -365,6 +379,50 @@ export function pageTools(ctx: ToolCtx): ToolDef[] {
         if (b.trashedAt === undefined) return `“${ctx.title(id)}” is not in the Trash.`;
         restorePages(store, [id]);
         return `Restored “${ctx.title(id)}”.`;
+      },
+    },
+    {
+      group: "pages", write: true, destructive: true,
+      ask: (a) => {
+        const ids = a.ids as string[];
+        // Erst prüfen, dann fragen: eine Rückfrage, die nicht ausführbar wäre, soll den Menschen nicht erreichen.
+        for (const id of ids) {
+          const b = store.blocks.get(id);
+          if (!b || !isPageLike(b)) throw new ToolError(`No page with id ${id}`);
+          if (!isTrashed(store, id)) throw new ToolError(`“${ctx.title(id)}” is not in the Trash. Move it there first (trash_page).`);
+        }
+        return `Delete forever: ${ids.slice(0, 3).map((id) => `“${ctx.title(id)}”`).join(", ")}${ids.length > 3 ? ` and ${ids.length - 3} more` : ""}`;
+      },
+      spec: {
+        name: "delete_forever",
+        description: "Delete pages in the Trash for good. Never runs on its own: it puts a question in the user's inbox and runs only after they allow it in Based.",
+        inputSchema: obj({ ids: { type: "array", items: pageID, minItems: 1, maxItems: 200 } }, ["ids"]),
+      },
+      run: (a) => {
+        const ids = a.ids as string[];
+        for (const id of ids) {
+          const b = store.blocks.get(id);
+          if (!b || !isPageLike(b)) throw new ToolError(`No page with id ${id}`);
+          if (!isTrashed(store, id)) throw new ToolError(`“${ctx.title(id)}” is not in the Trash. Move it there first (trash_page).`);
+        }
+        const names = ids.map((id) => ctx.title(id));
+        deleteForever(store, ids);
+        return `Deleted for good: ${names.map((n) => `“${n}”`).join(", ")}`;
+      },
+    },
+    {
+      group: "pages", write: true, destructive: true,
+      ask: () => {
+        const n = trashedPages(store).filter(isPageLike).length;
+        if (n === 0) throw new ToolError("The Trash is already empty.");
+        return `Empty the Trash (${n} page${n === 1 ? "" : "s"})`;
+      },
+      spec: { name: "empty_trash", description: "Delete everything in the Trash for good. Never runs on its own: asks the user in Based's inbox first.", inputSchema: obj({}) },
+      run: () => {
+        const n = trashedPages(store).filter(isPageLike).length;
+        if (n === 0) return "The Trash is already empty.";
+        emptyTrash(store);
+        return `Emptied the Trash (${n} page${n === 1 ? "" : "s"} deleted for good).`;
       },
     },
     {

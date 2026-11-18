@@ -2,9 +2,11 @@
 // SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Läufe, Inbox, Hauptagent und Projekte (BSD-221 Teil 3). Die Texte folgen dem, was die CLI erwartet (`runs.ts`).
 import { AgentStore } from "../agents/store.js";
-import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, type AgentData } from "../agents/records.js";
+import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, toMs, type AgentData, type ProjectStatus } from "../agents/records.js";
+import { dueItems } from "../home/due.js";
+import { listConnections } from "../mcp/connections.js";
 import { Permissions } from "../agents/permissions.js";
-import { limitSchema, needStr, obj, optStr, str, ToolError, type ToolDef } from "./base.js";
+import { limitSchema, needStr, obj, optStr, S, str, ToolError, type ToolDef } from "./base.js";
 import type { ToolCtx } from "./context.js";
 import { createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, resolveInboxText, updateProjectStatusText } from "./runs.js";
 
@@ -90,6 +92,90 @@ export function agentTools(ctx: ToolCtx): ToolDef[] {
         inputSchema: obj({ project: str("Project id or name"), update: str("What happened, one or two sentences"), status: str("Optional: Active | Paused | Done") }, ["project", "update"]),
       },
       run: (a) => updateProjectStatusText(store, { project: needStr(a, "project"), update: needStr(a, "update"), status: optStr(a, "status") }),
+    },
+    {
+      group: "agents", write: true,
+      spec: {
+        name: "update_project",
+        description: "Change a project: name, goal, status, monthly budget in € (0 clears).",
+        inputSchema: obj({ project: str("Project id or name"), name: S, goal: S, status: str("active | paused | done"), budget_eur: { type: "number", minimum: 0 } }, ["project"]),
+      },
+      run: (a) => {
+        const agents = new AgentStore(store);
+        const ref = needStr(a, "project");
+        const p = agents.projects().find((x) => x.id === ref) ?? agents.projects().find((x) => x.name.toLowerCase() === ref.toLowerCase());
+        if (!p) throw new ToolError(`No project “${ref}” (list_projects shows them).`);
+        const status = optStr(a, "status")?.toLowerCase();
+        if (status !== undefined && !["active", "paused", "done"].includes(status)) throw new ToolError("status must be active, paused or done");
+        const patch: Parameters<AgentStore["updateProject"]>[1] = {};
+        if (optStr(a, "name")) patch.name = optStr(a, "name")!;
+        if (optStr(a, "goal") !== undefined) patch.goal = optStr(a, "goal")!;
+        if (status) patch.status = status as ProjectStatus;
+        if (typeof a.budget_eur === "number") patch.budgetEUR = a.budget_eur > 0 ? a.budget_eur : null;
+        if (Object.keys(patch).length === 0) return "Nothing to change.";
+        agents.updateProject(p.id, patch);
+        return `Updated project “${patch.name ?? p.name}”: ${Object.keys(patch).join(", ")}`;
+      },
+    },
+    {
+      group: "agents", write: false,
+      spec: { name: "list_schedules", description: "Scheduled agent runs: when, what, next run, on or off.", inputSchema: obj({}) },
+      run: () => {
+        const all = new AgentStore(store).schedules();
+        if (all.length === 0) return "No schedules.";
+        return all.map((s) => `- ${s.data.when} — ${s.data.prompt.split("\n")[0]!.slice(0, 120)} (id: ${s.id}) · ${s.data.enabled ? "on" : "off"}${s.data.nextAt !== undefined ? ` · next ${new Date(toMs(s.data.nextAt)).toISOString().slice(0, 16).replace("T", " ")} UTC` : ""}`).join("\n");
+      },
+    },
+    {
+      group: "agents", write: true, destructive: true,
+      spec: {
+        name: "update_schedule",
+        description: "Change a schedule: turn it on or off, change when it runs or what it does, or delete it. New schedules are made by the main agent (ask_main_agent).",
+        inputSchema: obj({ id: str("Schedule id"), enabled: { type: "boolean" }, when: str("e.g. every weekday at 9:00"), prompt: S, delete: { type: "boolean" } }, ["id"]),
+      },
+      run: (a) => {
+        const agents = new AgentStore(store);
+        const id = needStr(a, "id");
+        if (!agents.schedules().some((s) => s.id === id)) throw new ToolError(`No schedule ${id} (list_schedules shows them).`);
+        if (a.delete === true) { agents.deleteSchedule(id); return "Deleted the schedule."; }
+        const patch: { enabled?: boolean; when?: string; prompt?: string } = {};
+        if (typeof a.enabled === "boolean") patch.enabled = a.enabled;
+        if (optStr(a, "when")) patch.when = optStr(a, "when")!;
+        if (optStr(a, "prompt")) patch.prompt = optStr(a, "prompt")!;
+        if (Object.keys(patch).length === 0) return "Nothing to change.";
+        try { agents.updateSchedule(id, patch); } catch (e) { throw new ToolError(e instanceof Error ? e.message : String(e)); }
+        return `Updated the schedule: ${Object.keys(patch).join(", ")}`;
+      },
+    },
+    {
+      group: "agents", write: false,
+      spec: {
+        name: "due",
+        description: "What is due across all databases with a date and a status: rows between two dates (default: overdue up to 7 days ahead).",
+        inputSchema: obj({ from: str("YYYY-MM-DD"), to: str("YYYY-MM-DD"), limit: limitSchema }),
+      },
+      run: (a) => {
+        const at = (k: string, fallback: number) => {
+          const v = optStr(a, k);
+          if (v === undefined) return fallback;
+          const t = Date.parse(v);
+          if (Number.isNaN(t)) throw new ToolError(`${k} must be a date like 2026-11-20`);
+          return t;
+        };
+        const now = Date.now();
+        const items = dueItems(store, at("from", now - 365 * 86_400_000), at("to", now + 7 * 86_400_000) + 86_399_999, limit(a) ?? 50);
+        if (items.length === 0) return "Nothing due in that range.";
+        return items.map((d) => `- ${new Date(d.dueMs).toISOString().slice(0, d.allDay ? 10 : 16).replace("T", " ")}${d.dueMs < now ? " (overdue)" : ""} — ${d.title || "Untitled"} (id: ${d.rowID}) in “${d.databaseTitle}”`).join("\n");
+      },
+    },
+    {
+      group: "agents", write: false,
+      spec: { name: "list_connections", description: "MCP connections set up in Based: name, transport, on or off. Secrets are never shown.", inputSchema: obj({}) },
+      run: () => {
+        const all = listConnections(store);
+        if (all.length === 0) return "No connections.";
+        return all.map((c) => `- ${c.name || "Untitled"} (id: ${c.id}) — ${c.data.transport}${c.data.url ? ` ${c.data.url.replace(/[?#].*$/, "")}` : c.data.command ? ` ${c.data.command}` : ""} · ${c.data.enabled ? "on" : "off"}`).join("\n");
+      },
     },
   ];
 }

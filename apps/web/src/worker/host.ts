@@ -185,11 +185,11 @@ export class StoreHost {
   }
 
   private get chat(): ChatHost {
-    return (this.chatHost ??= new ChatHost(this.store, () => this.searchIndex()));
+    return (this.chatHost ??= new ChatHost(this.store, () => this.searchIndex(), () => this.history));
   }
 
   private get agents(): AgentHost {
-    return (this.agentHost ??= new AgentHost(this.store));
+    return (this.agentHost ??= new AgentHost(this.store, () => this.chat.tools));
   }
 
   private memoryYDocs: YDocStorage | undefined;

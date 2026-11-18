@@ -36,6 +36,7 @@ export function clientRunBackend(client: StoreClient): AgentRunBackend {
     runs: () => q({ op: "runs" }),
     claimRun: (id, owner) => q({ op: "claimRun", id, owner }),
     updateRun: (id, patch) => q({ op: "updateRun", id, patch }),
+    resolveRequest: (id, ok) => q({ op: "resolveRequest", id, ok }),
     createRun: (data) => q({ op: "createRun", data }),
     main: () => q({ op: "main" }),
     projects: () => q({ op: "projects" }),

@@ -3,7 +3,7 @@
 // gespeichert, gesynct und erscheint in offenen Seiten. Die Engine selbst (Netz, API-Schlüssel) läuft im
 // Hauptthread; der Schlüssel kommt nie hierher.
 import { parseKey, type SearchIndex, type StoreChange, type WorkspaceStore } from "@based/core";
-import { CHAT_TYPE, ChatStore, importLegacyChats, pagePathCandidates, WorkspaceTools, type ChatInfo, type ChatMeta, type StoredChatEvent, type ToolResult, type ToolSpec } from "@based/brain";
+import { CHAT_TYPE, ChatStore, importLegacyChats, pagePathCandidates, WorkspaceTools, type HistoryHost, type ChatInfo, type ChatMeta, type StoredChatEvent, type ToolResult, type ToolSpec } from "@based/brain";
 import type { JSONValue } from "@based/core";
 
 export type ChatAction =
@@ -38,13 +38,14 @@ export class ChatHost {
   private ids = new Set<string>();
   private dirty = false;
 
-  constructor(private readonly store: WorkspaceStore, searchIndex: () => SearchIndex) {
+  constructor(private readonly store: WorkspaceStore, searchIndex: () => SearchIndex, history?: () => HistoryHost | undefined) {
     this.chats = new ChatStore(store);
     // Dieselbe Werkzeug-Schicht wie der MCP-Server (docs/agent-parity.md, Regel 1). Ohne „brain“ und „agents“: Erinnerungen,
     // Skills, Läufe und Freigaben führt der Chat der App über eigene Hosts (agentbrain/tools.ts, worker/agents.ts).
     this.tools = new WorkspaceTools(store, {
       groups: ["pages", "blocks", "boards", "files", "databases"],
       search: (query, limit, filters) => searchIndex().search(query, filters ?? {}, "bestMatch", limit * 2),
+      ...(history ? { history } : {}),
     });
     for (const c of this.chats.list()) this.ids.add(c.id);
   }

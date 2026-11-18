@@ -19,6 +19,11 @@ import { AgentBrain } from "./agentbrain/store.js";
 import { Recall, type RecallDeps } from "./recall/recall.js";
 import { RelationGraph } from "./recall/graph.js";
 import { checkArgs, obj, PAGE_URI, ToolError, type Args, type ToolDef, type ToolGroup } from "./tools/base.js";
+import { createToolRequest, resolveToolRequest, runApprovedRequests } from "./tools/requests.js";
+import { historyTools, type HistoryHost } from "./tools/history.js";
+import { meetingTools } from "./tools/meetings.js";
+import { gatewayTools } from "./tools/gateway.js";
+export { MORE_TOOLS, RUN_TOOL, unwrap } from "./tools/gateway.js";
 import type { ToolCtx } from "./tools/context.js";
 import { Databases } from "./tools/databases.js";
 import { pageTools } from "./tools/pages.js";
@@ -32,11 +37,18 @@ import { workspaceTools } from "./tools/workspace.js";
 
 export { PAGE_URI, ToolError, putMarkdownBlocks, checkArgs, type Args, type ToolDef, type ToolGroup, type ToolRunContext } from "./tools/base.js";
 export type { ToolCtx } from "./tools/context.js";
+export type { HistoryHost } from "./tools/history.js";
 export { Databases, type ViewArgs } from "./tools/databases.js";
 export { GUIDE } from "./tools/guide.js";
 export * from "./tools/runs.js";
 
 export const TOOL_GROUPS: readonly ToolGroup[] = ["pages", "blocks", "boards", "files", "databases", "brain", "agents"];
+
+/** Was in der kurzen Werkzeugliste steht: suchen, lesen, Seiten schreiben, Zeilen, Gedächtnis, Undo. */
+const CORE_TOOLS: ReadonlySet<string> = new Set([
+  "based_guide", "search", "read_page", "list_pages", "create_page", "append_markdown", "update_page", "read_blocks", "edit_blocks",
+  "list_databases", "database_schema", "query_database", "add_row", "update_row", "recall", "remember", "undo_last",
+]);
 
 export interface WorkspaceToolsOptions {
   /** Eigene Suche (z. B. der Index, den der Store-Host ohnehin pflegt). Ohne: `index` bzw. ein eigener Volltextindex. */
@@ -65,6 +77,8 @@ export interface WorkspaceToolsOptions {
   before?: (name: string, input: JSONValue) => Promise<void> | void;
   /** Vorschau eines Links (Titel, Beschreibung, Bild), wenn der Host sie in `before` geholt hat. */
   linkPreview?: (url: string) => BookmarkMeta | undefined;
+  /** Versionsverlauf des Hosts (in der App der Store-Worker). Ohne: keine Verlaufs-Werkzeuge. */
+  history?: () => HistoryHost | undefined;
   /** Nur diese Bereiche anbieten (ohne: alle). */
   groups?: readonly ToolGroup[];
   /**
@@ -87,15 +101,16 @@ export class WorkspaceTools implements ToolHost {
    */
   private readonly lastWrite = new Map<string, { step: number; tool: string }>();
   readonly ctx: ToolCtx;
+  private readonly gateway = new Map(gatewayTools(() => this.all).map((d) => [d.spec.name, d] as const));
 
   constructor(readonly store: WorkspaceStore, private readonly opts: WorkspaceToolsOptions = {}) {
     this.ctx = this.context();
     const groups = opts.groups ? new Set(opts.groups) : undefined;
-    const all = [...guideTools(), ...pageTools(this.ctx), ...workspaceTools(this.ctx), ...blockTools(this.ctx), ...boardTools(this.ctx), ...databaseTools(this.ctx), ...brainTools(this.ctx), ...agentTools(this.ctx), ...(opts.extra?.(this.ctx) ?? []), this.undoTool()];
+    const all = [...guideTools(), ...pageTools(this.ctx), ...(opts.history ? historyTools(this.ctx, opts.history) : []), ...workspaceTools(this.ctx), ...meetingTools(this.ctx), ...blockTools(this.ctx), ...boardTools(this.ctx), ...databaseTools(this.ctx), ...brainTools(this.ctx), ...agentTools(this.ctx), ...(opts.extra?.(this.ctx) ?? []), this.undoTool()];
     for (const d of all) {
       if (groups && !groups.has(d.group)) continue;
       if (this.defs.has(d.spec.name)) throw new Error(`Tool ${d.spec.name} is defined twice`);
-      this.defs.set(d.spec.name, d);
+      this.defs.set(d.spec.name, CORE_TOOLS.has(d.spec.name) ? { ...d, core: true } : d);
     }
   }
 
@@ -112,7 +127,15 @@ export class WorkspaceTools implements ToolHost {
 
   /** Die Definition eines Werkzeugs (Bereich, schreibend, zerstörend) – für Hosts, die es anmelden. */
   def(name: string): ToolDef | undefined {
-    return this.defs.get(name);
+    return this.defs.get(name) ?? this.gateway.get(name);
+  }
+
+  /**
+   * Die kurze Werkzeugliste: Kernwerkzeuge plus `more_tools` und `run_tool` (tools/gateway.ts). Aufrufbar bleibt
+   * jedes Werkzeug; `run_tool` packt der Host mit `unwrap` aus, bevor er Rechte prüft.
+   */
+  get compact(): ToolDef[] {
+    return [...this.all.filter((d) => d.core), ...this.gateway.values()];
   }
 
   get all(): ToolDef[] {
@@ -120,7 +143,7 @@ export class WorkspaceTools implements ToolHost {
   }
 
   isWrite(name: string): boolean {
-    return this.defs.get(name)?.write ?? true;
+    return this.def(name)?.write ?? true;
   }
 
   isDestructive(name: string): boolean {
@@ -155,14 +178,42 @@ export class WorkspaceTools implements ToolHost {
     return { text: `Tool ${name} needs to wait for its result; this host can only run it with call().`, isError: true };
   }
 
+  /**
+   * Einen Aufruf ausführen, dem ein Mensch in Based zugestimmt hat (Rückfrage aus der Inbox). Nicht für Agenten
+   * erreichbar: kein Werkzeug ruft das auf.
+   */
+  callApproved(name: string, input: JSONValue, actor?: Author): ToolResult {
+    const started = this.start(name, input, actor, true);
+    if ("text" in started) return started;
+    void started.pending.catch(() => undefined);
+    return { text: `Tool ${name} can't run from a request.`, isError: true };
+  }
+
+  /**
+   * Antwort auf eine Rückfrage (Allow/Deny in Based). Kennt dieser Host das Werkzeug nicht (z. B. Teilen: das kann
+   * nur der Server), wird die Zustimmung am Lauf vermerkt; der Host, der es kennt, führt es aus (`runApprovedRequests`).
+   */
+  resolveRequest(runID: string, ok: boolean): ToolResult {
+    try {
+      return { text: resolveToolRequest(this.store, runID, ok, (n, i, a) => this.callApproved(n, i, a), (n) => this.defs.has(n)), isError: false };
+    } catch (e) {
+      return this.failed("resolve_request", e);
+    }
+  }
+
+  /** Zugestimmte Rückfragen ausführen, deren Werkzeug dieser Host hat. Gibt zurück, wie viele liefen. */
+  runApprovedRequests(): number {
+    return runApprovedRequests(this.store, (n, i, a) => this.callApproved(n, i, a), (n) => this.defs.has(n));
+  }
+
   private failed(name: string, e: unknown): ToolResult {
     if (e instanceof ToolError) return { text: e.message, isError: true };
     return { text: `Tool ${name} failed: ${e instanceof Error ? e.message : String(e)}`, isError: true };
   }
 
   /** Prüfen und laufen lassen: fertige Antwort, oder das Promise eines wartenden Werkzeugs. */
-  private start(name: string, input: JSONValue, given: Author | undefined): ToolResult | { pending: Promise<string> } {
-    const def = this.defs.get(name);
+  private start(name: string, input: JSONValue, given: Author | undefined, approved = false): ToolResult | { pending: Promise<string> } {
+    const def = this.def(name);
     if (!def) return { text: `Unknown tool ${name}`, isError: true };
     try {
       const args = checkArgs(def, input);
@@ -172,6 +223,9 @@ export class WorkspaceTools implements ToolHost {
         return typeof out === "string" ? { text: out, isError: false } : { pending: out };
       }
       if (this.store.isReadOnly) throw new ToolError("The workspace is read-only right now (saving failed). Nothing was changed.");
+      // Rückfrage statt Ausführung: nur `callApproved` (Knopf in Based) führt so ein Werkzeug wirklich aus.
+      const question = def.ask && !approved ? def.ask(args) : undefined;
+      if (question !== undefined) return { text: createToolRequest(this.store, { name, input: args as JSONValue, actor, title: question }), isError: false };
       // Wartende Schreib-Werkzeuge (Netz, Dateien) schreiben über `ctx.callSync` – jeder dieser Schritte ist eine Transaktion.
       if (def.wait) return { pending: Promise.resolve().then(() => def.run(args, { actor })) };
       const revision = this.store.revision;

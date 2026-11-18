@@ -68,6 +68,10 @@ const TOOL_LABELS: Record<string, string> = {
   list_trash: "List Trash", backlinks: "Backlinks", set_favorite: "Favorite", undo_last: "Undo", based_guide: "Read guide", read_board: "Read board", draw_board: "Draw on board",
   list_files: "List files", database_schema: "Read schema", create_database: "Create database", update_database: "Update database", list_views: "List views",
   create_view: "Create view", update_view: "Update view", delete_view: "Delete view",
+  add_rows: "Add rows", update_rows: "Update rows", delete_forever: "Ask to delete forever", empty_trash: "Ask to empty Trash",
+  list_meetings: "List meetings", read_meeting: "Read meeting", update_meeting: "Update meeting",
+  page_history: "Version history", read_version: "Read version", restore_version: "Restore version",
+  get_workspace: "Read workspace", update_workspace: "Update workspace", create_teamspace: "Create teamspace", update_teamspace: "Update teamspace", delete_teamspace: "Delete teamspace",
 };
 
 function toolItem(p: ChatPart): ChatToolCallItem {

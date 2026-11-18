@@ -4,6 +4,7 @@
 import { AgentStore, getRecord, listRecords, PROJECT_TYPE, RUN_TYPE, toMs, type ProjectData, type ProjectStatus, type RunData, type RunStatus } from "../agents/index.js";
 import { titleOf, type WorkspaceStore } from "@based/core";
 import { PAGE_URI, ToolError } from "./base.js";
+import { isToolRequest } from "./requests.js";
 
 export const RUN_STATUS_LABEL: Record<RunStatus, string> = { queued: "Queued", running: "Running", needsYou: "Needs you", done: "Done", failed: "Failed", cancelled: "Cancelled" };
 
@@ -75,6 +76,7 @@ export function resolveInboxText(store: WorkspaceStore, o: { run_id: string; dec
   const run = getRecord<RunData>(store, RUN_TYPE, o.run_id);
   if (!run) throw new ToolError(`No run with id ${o.run_id}`);
   if (run.data.status !== "needsYou") throw new ToolError(`${run.name || "This run"} isn't waiting for an answer (status: ${run.data.status}).`);
+  if (isToolRequest(run.data)) throw new ToolError("Only the user can answer this request, in Based's inbox. An agent can't approve it.");
   const approval = run.data.approval;
   if (!approval) throw new ToolError(`${run.name || "This run"} waits for something else than an approval – answer it in Based.`);
   const d = o.decision.trim().toLowerCase();
