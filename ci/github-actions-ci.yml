@@ -114,9 +114,24 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
+      # BSD-548: Systempakete (.deb) zwischen Läufen behalten – der Ubuntu-Mirror der Runner ist zeitweise sehr langsam
+      - name: apt-Pakete aus dem Cache
+        id: aptcache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}-
       - name: Browser holen (BSD-548)
+        id: pwsetup
         timeout-minutes: 16
         run: bash ci/playwright-install.sh ${{ matrix.browser }}
+      - name: apt-Pakete in den Cache
+        if: ${{ always() && steps.pwsetup.outputs.apt-new == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Playwright (ohne @perf)
         timeout-minutes: 25
         run: |
@@ -156,9 +171,24 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit
+      # BSD-548: Systempakete (.deb) zwischen Läufen behalten – der Ubuntu-Mirror der Runner ist zeitweise sehr langsam
+      - name: apt-Pakete aus dem Cache
+        id: aptcache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit-
       - name: Browser holen (BSD-548)
+        id: pwsetup
         timeout-minutes: 16
         run: bash ci/playwright-install.sh chromium webkit
+      - name: apt-Pakete in den Cache
+        if: ${{ always() && steps.pwsetup.outputs.apt-new == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Playwright @perf
         timeout-minutes: 20
         run: |
