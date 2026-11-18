@@ -16,7 +16,7 @@ export function Group({ children }: { children: ReactNode }) {
 /** Eine Einstellung: links Name und Hinweis, rechts die Bedienung. `labelID` verbindet die Bedienung mit dem Namen. */
 export function Row({ label, hint, labelID, children }: { label: string; hint?: ReactNode; labelID?: string; children?: ReactNode }) {
   return (
-    <HStack gap={4} hAlign="between" vAlign="center" wrap="wrap">
+    <HStack gap={4} hAlign="between" vAlign="center" wrap="wrap" className="settings-row">
       <StackItem size="fill">
         <VStack gap={0}>
           <Text type="label" weight="semibold" display="block" {...(labelID ? { id: labelID } : {})}>{label}</Text>
