@@ -19,8 +19,9 @@
 import { createServer } from "node:http";
 import { DatabaseSync } from "node:sqlite";
 import { createReadStream, mkdirSync, readFileSync, statSync } from "node:fs";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const DB_PATH = process.env.WAITLIST_DB || "./data/waitlist.sqlite";
 // PORT=0: a free port from the system (tests); empty or missing: 8790
@@ -300,3 +301,25 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, () => console.log(`waitlist service on :${server.address().port}, db ${DB_PATH}`));
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { server.close(); db.close(); process.exit(0); });
+
+// Reload on update (WAITLIST_RELOAD=1, set in deploy/website): the server pulls main every 10 minutes but doesn't
+// restart this service. When this file has changed and stayed the same for one more check, the service stops cleanly
+// and Docker starts it again with the new code (restart: unless-stopped). Running downloads get up to 10 minutes to
+// finish; an interrupted one can be resumed (BSD-557).
+if (process.env.WAITLIST_RELOAD === "1") {
+  const self = fileURLToPath(import.meta.url);
+  const every = Number(process.env.WAITLIST_RELOAD_MS) || 60_000;
+  const hash = () => { try { return createHash("sha256").update(readFileSync(self)).digest("hex"); } catch { return undefined; } };
+  const running = hash();
+  let seen;
+  const timer = setInterval(() => {
+    const h = hash();
+    if (h === undefined || h === running) { seen = undefined; return; }
+    if (h !== seen) { seen = h; return; } // still being written (git checkout): wait for one more check
+    clearInterval(timer);
+    console.log("waitlist.mjs changed - restarting with the new code");
+    server.close(() => { db.close(); process.exit(0); });
+    server.closeIdleConnections();
+    setTimeout(() => { db.close(); process.exit(0); }, 10 * 60_000).unref();
+  }, every);
+}

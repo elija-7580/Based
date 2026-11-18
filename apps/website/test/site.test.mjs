@@ -433,3 +433,41 @@ test("beta workflow (BSD-553): DMG via rsync to the server, public only without 
     assert.match(c, /based-beta\}?:\/beta:ro/, f);
   }
 });
+
+test("waitlist: with WAITLIST_RELOAD=1 the service stops cleanly once its file has changed (Docker restarts it)", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "based-wl-reload-"));
+  const copy = join(dir, "waitlist.mjs");
+  writeFileSync(copy, readFileSync(join(ROOT, "server", "waitlist.mjs")));
+  const child = spawn(process.execPath, ["--no-warnings", copy], {
+    env: { ...process.env, PORT: "0", WAITLIST_DB: join(dir, "w.sqlite"), WAITLIST_RELOAD: "1", WAITLIST_RELOAD_MS: "100" },
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  let out = "";
+  child.stdout.on("data", (d) => { out += d; });
+  const exited = new Promise((resolve) => child.once("exit", (code) => resolve(code)));
+  try {
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error("no start")), 10_000);
+      child.stdout.on("data", () => { if (/waitlist service on/.test(out)) { clearTimeout(t); resolve(); } });
+    });
+    // Unchanged: keeps running.
+    await new Promise((r) => setTimeout(r, 400));
+    assert.equal(child.exitCode, null);
+    writeFileSync(copy, readFileSync(copy, "utf8") + "\n// new version\n");
+    const code = await Promise.race([exited, new Promise((r) => setTimeout(() => r("timeout"), 5000))]);
+    assert.equal(code, 0);
+    assert.match(out, /changed - restarting/);
+  } finally {
+    if (child.exitCode === null) child.kill();
+  }
+});
+
+test("deploy: the service sees new code (folder mounted, reload switched on)", () => {
+  for (const f of ["../../deploy/website/docker-compose.yml", "../../deploy/website/edge/docker-compose.yml"]) {
+    const yml = readFileSync(join(ROOT, f), "utf8");
+    assert.match(yml, /apps\/website\/server:\/app:ro/, f);
+    assert.doesNotMatch(yml, /waitlist\.mjs:\/app\/waitlist\.mjs/, f);
+    assert.match(yml, /WAITLIST_RELOAD: "1"/, f);
+    assert.match(yml, /restart: unless-stopped/, f);
+  }
+});
