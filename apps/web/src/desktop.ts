@@ -5,7 +5,7 @@
 // - Updates: beim Start still prüfen, über „Check for Updates…“ im App-Menü auch mit Antwort, wenn alles aktuell ist.
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
-import { checkReleasesFallback, isMissingUpdateManifest, releaseLine } from "./shell/updateFallback.js";
+import { checkReleasesFallback, fallbackText, isMissingUpdateManifest, releaseLine } from "./shell/updateFallback.js";
 import { CHANNEL, productName } from "./shell/beta.js";
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
@@ -113,11 +113,7 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
       const app = await appIdentity();
       const line = releaseLine(CHANNEL);
       const found = await checkReleasesFallback(app.version, fetch, line.tagPrefix);
-      const text = found.kind === "newer"
-        ? `${app.name} ${found.version} is available (you have ${app.version}). Automatic install isn’t set up yet — download the new DMG from ${line.downloadPage}`
-        : found.kind === "current"
-          ? upToDateText(app)
-          : `You have ${app.name} ${app.version}. Automatic updates aren’t set up yet. The newest DMG is always at ${line.downloadPage}`;
+      const text = found.kind === "current" ? upToDateText(app) : fallbackText(app, found, line);
       await showMessage(text, { title: found.kind === "newer" ? "Update available" : "Updates" });
       return;
     }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkReleasesFallback, compareVersions, isMissingUpdateManifest, newestNextVersion, releaseLine } from "./updateFallback.js";
+import { checkReleasesFallback, compareVersions, fallbackText, isMissingUpdateManifest, newestNextVersion, releaseLine } from "./updateFallback.js";
 
 describe("updateFallback", () => {
   it("vergleicht Versionen numerisch", () => {
@@ -21,7 +21,7 @@ describe("updateFallback", () => {
     const beta = releaseLine("beta");
     expect(newestNextVersion(all, beta.tagPrefix)).toBe("0.2.10");
     expect(newestNextVersion(all, releaseLine("dev").tagPrefix)).toBe("0.1.155");
-    expect(beta.downloadPage).toMatch(/beta-latest$/);
+    expect(beta.downloadPage).toBe("https://basednotes.app/download");
     expect(releaseLine("dev").downloadPage).toMatch(/next-latest$/);
     const ok = (async () => new Response(JSON.stringify(all), { status: 200 })) as unknown as typeof fetch;
     // 0.2.2 ist in der Beta-Linie nicht „älter als next-0.1.155“ und nicht „neuer“ – es zählt nur die eigene Linie.
@@ -40,5 +40,19 @@ describe("updateFallback", () => {
     expect(await checkReleasesFallback("0.1.7", ok([{ tag_name: "next-0.1.7" }]))).toEqual({ kind: "current" });
     const fail = (async () => { throw new Error("offline"); }) as unknown as typeof fetch;
     expect(await checkReleasesFallback("0.1.5", fail)).toEqual({ kind: "unknown" });
+  });
+  it("BSD-573: Beta verweist nie auf eine GitHub-Release-Seite (dort gibt es seit BSD-553 keine DMG), sondern auf den Einladungslink", () => {
+    const beta = releaseLine("beta");
+    const app = { name: "Based Notes Beta", version: "0.2.2" };
+    for (const text of [fallbackText(app, { kind: "newer", version: "0.2.10" }, beta), fallbackText(app, { kind: "unknown" }, beta)]) {
+      expect(text).not.toMatch(/github\.com|releases/);
+      expect(text).toContain("https://basednotes.app/download");
+      expect(text).toContain("invitation email");
+      expect(text).toContain("hello@basednotes.app");
+      expect(text).toMatch(/\.$/);
+    }
+    expect(fallbackText(app, { kind: "newer", version: "0.2.10" }, beta)).toMatch(/^Based Notes Beta 0\.2\.10 is available \(you have 0\.2\.2\)\./);
+    // Based Next behält seine Release-Seite next-latest (dort liegt die DMG weiter)
+    expect(fallbackText({ name: "Based Next", version: "0.1.1" }, { kind: "unknown" }, releaseLine("dev"))).toContain("releases/tag/next-latest");
   });
 });
