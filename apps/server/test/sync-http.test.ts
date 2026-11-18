@@ -120,8 +120,9 @@ describe("Sync v2", () => {
     const app = await start();
     const t0 = Date.now();
     const waiting = get(`${app.url}/sync/v2/wait?after=0&timeout=10`);
-    await new Promise((r) => setTimeout(r, 100));
-    expect(app.sync.waiting).toBe(1);
+    // BSD-545: auf das Ereignis warten (der Long-Poll ist angekommen), nicht auf eine feste Zeit – unter Last kam die
+    // Anfrage nach 100 ms noch nicht an („expected +0 to be 1“).
+    await expect.poll(() => app.sync.waiting, { timeout: 5000 }).toBe(1);
     await post(`${app.url}/sync/v2/push`, { records: [page("p1", "x")], deletions: [] });
     expect((await waiting).body).toEqual({ seq: 1 });
     expect(Date.now() - t0).toBeLessThan(2000);
@@ -132,7 +133,7 @@ describe("Sync v2", () => {
 
     const ac = new AbortController();
     const aborted = fetch(`${app.url}/sync/v2/wait?after=1&timeout=30`, { headers: auth, signal: ac.signal }).catch(() => "abgebrochen");
-    await new Promise((r) => setTimeout(r, 100));
+    await expect.poll(() => app.sync.waiting, { timeout: 5000 }).toBe(1); // erst abbrechen, wenn der Server wartet
     ac.abort();
     expect(await aborted).toBe("abgebrochen");
     await expect.poll(() => app.sync.waiting).toBe(0);
