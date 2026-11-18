@@ -14,7 +14,7 @@ client can do in the workspace what the user does in the app — and learn how B
 - **Protocol versions**: 2025-06-18, 2025-03-26, 2024-11-05. `initialize` answers with the client's version when it
   is one of these, otherwise with the newest (2025-06-18); the client decides whether to continue.
 - **Explanation for agents** (like Notion's MCP): the `instructions` in `initialize` (short how-to), the resources
-  `based://docs/<topic>` and the tool `based_guide` (topics: overview, markdown, databases, agents, safety).
+  `based://docs/<topic>` and the tool `based_guide` (TypeScript server: overview, markdown, brain, safety).
 - **Answers are compact**: pages come back as Markdown, lists as one line per item; long lists are paged with
   `limit` / `offset` and end with `… N more (offset: K)`.
 
@@ -56,14 +56,34 @@ token) and ask "Which projects are running and what needs me?".
 | `list_views` / `create_view` / `update_view` / `delete_view` | Views with filters, sorts, grouping |
 | `create_chart` | Chart view (bar, line, pie …) |
 
-### Agent brain
+### Agent brain (BSD-541)
+
+One call for context, a few tools to keep it. Everything lives in ordinary pages: "About me", the database
+"Memories" (one row per fact, with Type and Status) and "Skills".
 
 | Tool | What it does |
 |---|---|
-| `about_user` | The user's About page |
-| `memory_search` / `memory_save` | Durable memories |
-| `list_skills` / `load_skill` / `read_skill_file` | Skills (reusable instructions); also offered as MCP prompts. `load_skill` lists the skill's files, `read_skill_file {skill, path}` returns one exactly |
-| `list_connections` | Connected external MCP servers and their tools |
+| `recall` | Use first. `{query, about?, limit?}` → memories, matching pages and rows with a passage and block id, each hit's neighbours by kind of link, and pages that connect several hits. Whole questions and typos work. `about` (a page id) stays around one page; with an empty query it lists the surroundings |
+| `related` | A page's neighbours with ids: database relations (column name, both directions), mentions and backlinks, parent, sub-pages |
+| `about_me` | The user's profile ("About me") and their Profile / Preference memories |
+| `remember` | `{fact, type?, about?, source?, replaces?, detail?}` – one durable fact per call. `about` links the pages it concerns (they become mentions, so the fact shows up around those pages). The same fact is never stored twice; `replaces` sets the old memory to Superseded; health, money and similar private facts are stored as "To review" and only count once the user sets them to Active |
+| `list_skills` / `load_skill` | Skills (reusable instructions) and one skill's full text; also offered as MCP prompts |
+
+How `recall` finds things (`packages/brain/src/recall/`):
+
+1. **Words** – the Quick Find index (typos, word forms, row values), once for the whole query and once per content
+   word, so a full sentence still matches. A page counts more the more of the words it contains.
+2. **Meaning** – only when the user switched the local embedding model on (`POST /local/brain/model`, see
+   `docs/server.md`): the query is embedded and compared with every section of the workspace. Works across languages
+   and without a shared word. Without the model the answer ends with "search by meaning is off".
+3. **Neighbours** – one step along the links of the best hits. Pages reached from two or more hits are listed under
+   "Connected" even when they don't contain the words.
+
+The lists are merged with Reciprocal Rank Fusion. Superseded and "To review" memories never appear, neither as hits
+nor as neighbours. Skills are never returned by `recall` (they are instructions, not knowledge).
+
+Not ported from the Swift server: `read_skill_file`, `list_connections`, the resources `brain://about` and
+`brain://memories` (use `about_me` and `recall`).
 
 ### Projects, runs, inbox, main agent (BSD-58)
 
@@ -110,8 +130,6 @@ answer says so. Without rules nothing changes. Reading tools are never affected.
 
 | URI | Content |
 |---|---|
-| `brain://about` | About the user |
-| `brain://memories` | All memories |
 | `based://docs/<topic>` | Guide topics (overview, markdown, databases, agents, safety) |
 | `based://page/<id>` | A page as Markdown (template `based://page/{id}`; the first 500 pages are listed) |
 
