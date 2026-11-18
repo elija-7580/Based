@@ -106,7 +106,7 @@ export class Relay {
       if (params.device) req.device = params.device;
       if (params.sync) req.sync = params.sync;
       if (params.opfs) req.opfs = params.opfs;
-      if (params.propertyRecords) req.propertyRecords = true;
+      if (params.propertyRecords !== undefined) req.propertyRecords = params.propertyRecords;
       if (params.lazy) req.lazy = true;
       this.forward(RELAY, { ...req, id: 0 } as RequestMessage);
     }

@@ -318,7 +318,7 @@ export class StoreHost {
         this.opts.post({ type: "device", node });
       },
     };
-    this.ws = await this.opts.open({ device: deviceStore, ...(opfs === undefined ? {} : { opfs }), ...(propertyRecords ? { propertyRecords: true } : {}), ...(lazy ? { lazy: true } : {}) });
+    this.ws = await this.opts.open({ device: deviceStore, ...(opfs === undefined ? {} : { opfs }), ...(propertyRecords === undefined ? {} : { propertyRecords }), ...(lazy ? { lazy: true } : {}) });
     const store = this.ws.store;
     // ADR 0017 Stufe B: festhalten, wer doch den ganzen Workspace in den Speicher holt (Diagnose, Zeitmess-Test).
     store.onFullLoad = (why) => {

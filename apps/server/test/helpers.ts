@@ -16,8 +16,8 @@ export async function startApp(opts: Partial<AppOptions> = {}): Promise<App & { 
 
 export const auth = { Authorization: `Bearer ${TOKEN}` };
 
-/** BSD-30: Läuft die Suite im neuen Format (BASED_PROPERTY_RECORDS=1), sprechen die Helfer Protokoll 3. */
-export const protocolHeader = (): Record<string, string> => (WorkspaceStore.propertyRecordsByDefault ? { "X-Based-Protocol": "3" } : {});
+/** BSD-30/BSD-569: Neue Server-Dateien beginnen im neuen Format – die Helfer sprechen Protokoll 3, außer eine Testdatei hält das alte fest. */
+export const protocolHeader = (): Record<string, string> => (WorkspaceStore.propertyRecordsByDefault || WorkspaceStore.propertyRecordsForNewFiles ? { "X-Based-Protocol": "3" } : {});
 
 export async function get(url: string, headers: Record<string, string> = auth) {
   const r = await fetch(url, { headers: { ...protocolHeader(), ...headers } });

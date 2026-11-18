@@ -412,6 +412,9 @@ export class WorkspaceStore {
    * sie ein – so läuft die ganze Testsuite auch im neuen Format (ci/typecheck/run-ts.sh).
    */
   static propertyRecordsByDefault = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.BASED_PROPERTY_RECORDS === "1";
+  /** BSD-569: Eine neue, leere Datei beginnt mit Property-Records (`openWorkspace`). Nur Tests, die das alte
+   *  Speicherformat festhalten, schalten das aus. */
+  static propertyRecordsForNewFiles = true;
   /** BSD-30: Property-Records (nur mit `propertyRecords`). */
   readonly properties = new Map<string, PropertyRecord>();
   readonly propertyRecords: boolean;

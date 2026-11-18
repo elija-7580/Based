@@ -9,6 +9,7 @@ import { openNodeDatabase } from "@based/sync/node";
 import { auth, get, post, startApp, TOKEN } from "./helpers.js";
 
 PinnedStore.propertyRecordsByDefault = false;
+PinnedStore.propertyRecordsForNewFiles = false; // BSD-569
 
 const page = (i: number, text = "x".repeat(900)): WireRecord => ({
   kind: "block",

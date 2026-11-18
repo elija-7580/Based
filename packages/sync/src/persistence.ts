@@ -461,7 +461,12 @@ export function openWorkspace(
   // BSD-30: Eine umgestellte Datei öffnet immer mit Property-Records, egal was eingestellt ist (sonst zeigten die
   // Datenbanken keine Spalten). Eingeschaltet wird über die Option (oder die Vorgabe des Stores); zurück geht es
   // nur ausdrücklich (`revertPropertyRecords`).
-  const propertyRecords = hasPropertyRecords(db) || (rest.propertyRecords ?? WorkspaceStore.propertyRecordsByDefault);
+  // BSD-569: Eine neue, leere Datei beginnt gleich im endgültigen Format – wer mit der Beta anfängt, braucht diese
+  // Umstellung nie. Vorhandene Dateien im alten Format bleiben, bis sie ausdrücklich umgestellt werden; `false` als
+  // Option (Tests des alten Formats, Geräte an einem noch nicht umgestellten Server) gilt weiter.
+  const fresh = rest.propertyRecords === undefined && WorkspaceStore.propertyRecordsForNewFiles && first(db, "SELECT 1 AS x FROM records LIMIT 1") === undefined
+    && first(db, "SELECT 1 AS x FROM changes LIMIT 1") === undefined;
+  const propertyRecords = hasPropertyRecords(db) || (rest.propertyRecords ?? (WorkspaceStore.propertyRecordsByDefault || fresh));
   if (propertyRecords) enablePropertyRecords(db);
   let id = node;
   if (!id && device) {
