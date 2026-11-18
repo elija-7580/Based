@@ -49,7 +49,10 @@ async function inspect(page: Page): Promise<Stop | undefined> {
       if (pseudo && c.content === "none") return false;
       return (c.outlineStyle !== "none" && parseFloat(c.outlineWidth) > 0) || (c.boxShadow !== "none" && c.boxShadow !== "") || (pseudo !== undefined && (c.backgroundColor !== "rgba(0, 0, 0, 0)" || (c.borderTopStyle !== "none" && parseFloat(c.borderTopWidth) > 0)));
     };
-    const ring = [el, el.parentElement, el.parentElement?.parentElement].some((n) => n && (ringOn(n) || ringOn(n, "::before") || ringOn(n, "::after")));
+    // Raster mit aktiver Zelle (Tabelle, BSD-544): der Fokus bleibt am Raster, den einen Rahmen trägt die Zelle, auf die
+    // aria-activedescendant zeigt (docs/design/elements.md, Abschnitt 3: Behälter zeichnen keinen Rahmen).
+    const descendant = el.getAttribute("aria-activedescendant") ? document.getElementById(el.getAttribute("aria-activedescendant")!) : null;
+    const ring = [el, el.parentElement, el.parentElement?.parentElement, descendant].some((n) => n && (ringOn(n) || ringOn(n, "::before") || ringOn(n, "::after")));
     if (!ring && !textEntry) problems.push("kein sichtbarer Fokusrahmen");
     // Klickfläche (WCAG 2.5.8, 24 × 24): das Element, sein Feld (Texteingabe), oder ein absolut gesetztes
     // Pseudo-Element, das die Fläche vergrößert (dann zählt sein Rahmen-Vorfahr). Text-Links im Fließtext und
