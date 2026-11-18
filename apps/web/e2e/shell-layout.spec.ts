@@ -90,6 +90,8 @@ test("Fokusrahmen per Tastatur neutral (Token focus-ring, nicht Marker – BSD-3
 test("Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite", async ({ page }) => {
   await ready(page);
   await page.keyboard.press("ControlOrMeta+Comma");
+  // seit #34 öffnet ⌘, „Appearance“; Home liegt unter „Pages“
+  await page.getByRole("navigation", { name: "Settings pages" }).getByText("Pages", { exact: true }).click();
   await expect(page.getByTestId("settings-section-start-page")).toBeVisible();
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
