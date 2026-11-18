@@ -2,11 +2,11 @@
 // und baut daraus die Werkzeug-Schicht (`WorkspaceTools`, @based/brain). Alle Werkzeuge leben dort – hier steht keines
 // (docs/agent-parity.md, Regel 1). Jede Änderung ist eine lokale Änderung des Servers und kommt per Sync v2 bei den
 // Geräten an.
-import { attachSearchIndex, isPageLike, isTrashed, titleOf, type SearchIndex, type WorkspaceStore } from "@based/core";
+import { attachSearchIndex, isPageLike, isTrashed, titleOf, type JSONValue, type SearchIndex, type WorkspaceStore } from "@based/core";
 import { AgentBrain, PAGE_URI, Recall, RelationGraph, ToolError, WorkspaceTools, type RecallDeps } from "@based/brain";
 import type { AssetStore } from "./assets.js";
 import { assetFileInfo } from "./board-files.js";
-import { fileTools, prepareForTool } from "./file-tools.js";
+import { fileTools, LinkPreviews, prepareForTool } from "./file-tools.js";
 
 export { PAGE_URI, ToolError };
 
@@ -22,6 +22,8 @@ export class Pages {
    * eingeschaltet und geladen ist (`BrainIndex`). Ohne bleibt `recall` bei Wörtern und Nachbarn.
    */
   vectors: RecallDeps["vectors"];
+  /** Link-Vorschauen für Bookmarks, die Agenten anlegen (Tests setzen einen eigenen Holer). */
+  previews = new LinkPreviews();
 
   constructor(readonly store: WorkspaceStore) {}
 
@@ -63,7 +65,7 @@ export class Pages {
       const assets = opts.assets;
       t = new WorkspaceTools(this.store, {
         index: () => this.index, graph: () => this.graph, brain: () => this.brain, vectors: () => this.vectors?.(),
-        ...(assets ? { fileInfo: (ref: string) => assetFileInfo(assets, ref), extra: fileTools(assets, opts.localFiles === true), before: prepareForTool(assets, this.store) } : {}),
+        ...(assets ? { fileInfo: (ref: string) => assetFileInfo(assets, ref), extra: fileTools(assets, opts.localFiles === true), before: (name: string, input: JSONValue) => prepareForTool(assets, this.store, this.previews)(name, input), linkPreview: (url: string) => this.previews.get(url) } : {}),
       });
       this.toolSets.set(key, t);
     }

@@ -49,6 +49,7 @@ export function blockTools(ctx: ToolCtx): ToolDef[] {
         const r = runBlockScript(store, id, needStr(a, "script"), {
           importer: ctx.importer(),
           files: (ref) => ctx.fileInfo(ref, (known ??= workspaceFiles(store)).get(ref)),
+          linkPreview: ctx.linkPreview,
         });
         const did = r.added + r.changed + r.moved + r.removed;
         if (did === 0 && r.errors.length > 0) throw new ToolError(["Nothing was changed.", ...r.errors.map((e) => `- ${e}`)].join("\n"));
@@ -61,6 +62,7 @@ export function blockTools(ctx: ToolCtx): ToolDef[] {
         return [
           `Edited “${ctx.title(id)}”: ${r.added} added, ${r.changed} changed, ${r.moved} moved, ${r.removed} removed.`,
           ...(names.length ? [`Handles: ${names.join(" ")}`] : []),
+          ...(r.synced.length ? [`Synced block${r.synced.length === 1 ? "" : "s"} (copy with “synced: <id>” on any page): ${r.synced.join(", ")}`] : []),
           ...(r.errors.length ? ["Skipped:", ...r.errors.map((e) => `- ${e}`)] : []),
         ].join("\n");
       },

@@ -157,7 +157,7 @@ const MAX_REDIRECTS = 5;
  * Eine Datei aus dem Netz holen: http und https, Weiterleitungen (höchstens fünf) werden einzeln geprüft, nie ins
  * eigene Netz (auch nicht über DNS-Tricks: verbunden wird mit der geprüften Adresse), Größe und Zeit begrenzt.
  */
-export async function fetchRemote(url: string, max: number, timeoutMs = 30_000, lookup: LookupFunction = publicLookup): Promise<{ bytes: Buffer; name: string; mime?: string }> {
+export async function fetchRemote(url: string, max: number, timeoutMs = 30_000, lookup: LookupFunction = publicLookup, truncate = false): Promise<{ bytes: Buffer; name: string; mime?: string }> {
   let u: URL;
   try { u = new URL(url); } catch { throw new UploadError("not a valid URL"); }
   const deadline = Date.now() + timeoutMs;
@@ -176,12 +176,18 @@ export async function fetchRemote(url: string, max: number, timeoutMs = 30_000, 
     }
     if (status < 200 || status >= 300) { res.resume(); throw new UploadError(`could not download (${status})`); }
     const declared = Number(res.headers["content-length"] ?? 0);
-    if (declared > max) { res.destroy(); throw new UploadError(`the file is larger than ${Math.round(max / 1048576)} MB`); }
+    // `truncate` (Link-Vorschau): nur der Anfang wird gebraucht – nach `max` Bytes aufhören statt abzulehnen.
+    if (declared > max && !truncate) { res.destroy(); throw new UploadError(`the file is larger than ${Math.round(max / 1048576)} MB`); }
     const chunks: Buffer[] = [];
     let total = 0;
     for await (const c of res as AsyncIterable<Buffer>) {
       total += c.length;
-      if (total > max) { res.destroy(); throw new UploadError(`the file is larger than ${Math.round(max / 1048576)} MB`); }
+      if (total > max) {
+        res.destroy();
+        if (!truncate) throw new UploadError(`the file is larger than ${Math.round(max / 1048576)} MB`);
+        chunks.push(c.subarray(0, c.length - (total - max)));
+        break;
+      }
       chunks.push(c);
     }
     const disposition = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(String(res.headers["content-disposition"] ?? ""))?.[1];

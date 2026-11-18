@@ -244,7 +244,7 @@ export {
   type BlockDoc, type BlockNode, type ReplayIDs,
 } from "./editor/recording.js";
 // BSD-382 (ADR 0016, E1): Befehle des neuen Block-Editors (Namensraum, damit nichts mit Seiten-/Store-Funktionen kollidiert).
-export { BLOCK_COLOR_NAMES, BLOCK_SCRIPT_HELP, BLOCK_SCRIPT_MAX, blockHandles, blockOutline, putMarkdownBlocks, runBlockScript, shortHandles, type BlockOutlineOptions, type BlockScriptOptions, type BlockScriptResult } from "./editor/agent.js";
+export { BLOCK_COLOR_NAMES, BLOCK_SCRIPT_HELP, BLOCK_SCRIPT_MAX, blockHandles, blockOutline, markdownWithDateMentions, putMarkdownBlocks, runBlockScript, shortHandles, withDateMentions, type BlockOutlineOptions, type BlockScriptOptions, type BlockScriptResult } from "./editor/agent.js";
 export * as blockCommands from "./editor/commands/index.js";
 export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
 export { createFuzzyIndex, normalizeSearch, type FuzzyFields, type FuzzyIndex } from "./fuzzy.js";

@@ -136,7 +136,7 @@ export function pageTools(ctx: ToolCtx): ToolDef[] {
           title = split.title;
           body = split.body;
         }
-        const blocks = ctx.importer().parse(body);
+        const blocks = ctx.markdown(body);
         const id = store.transact("Agent: new page", (tx) => {
           const pid = insertPage(store, tx, { ...(parent ? { parent } : {}), ...(parent === undefined && section ? { section } : {}), ...(title ? { title } : {}), position });
           if (blocks.length > 0) putMarkdownBlocks(store, tx, blocks, "b:" + pid, sortKeys(store, "b:" + pid, { kind: "end" }, blocks.length));
@@ -151,7 +151,7 @@ export function pageTools(ctx: ToolCtx): ToolDef[] {
       run: (a) => {
         const id = needStr(a, "id");
         ctx.writable(id);
-        const blocks = ctx.importer().parse(needStr(a, "markdown"));
+        const blocks = ctx.markdown(needStr(a, "markdown"));
         if (blocks.length === 0) return "Nothing to append.";
         store.transact("Agent: append", (tx) => putMarkdownBlocks(store, tx, blocks, "b:" + id, sortKeys(store, "b:" + id, { kind: "end" }, blocks.length)));
         return `Appended ${blocks.length} block${blocks.length === 1 ? "" : "s"} to “${ctx.title(id)}”`;
@@ -167,7 +167,7 @@ export function pageTools(ctx: ToolCtx): ToolDef[] {
       run: (a) => {
         const id = needStr(a, "id");
         ctx.writable(id);
-        const blocks = ctx.importer().parse(optStr(a, "markdown") ?? "");
+        const blocks = ctx.markdown(optStr(a, "markdown") ?? "");
         const content = store.children("b:" + id).filter((k) => {
           const b = store.blocks.get(k);
           return b !== undefined && !isPageLike(b) && b.type !== "databaseInline";

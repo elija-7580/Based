@@ -27,7 +27,7 @@ function setup(markdown: string) {
     if (!line) throw new Error(`no line with ${needle} in\n${read()}`);
     return line.trim().split(" ")[0]!;
   };
-  const run = (script: string) => runBlockScript(store, page, script, { importer, files: (ref) => FILES[ref] });
+  const run = (script: string) => runBlockScript(store, page, script, { importer, files: (ref) => FILES[ref], linkPreview: (url) => (url === "https://example.com/article" ? { title: "An article", summary: "About things" } : undefined) });
   const ok = (script: string) => {
     const r = run(script);
     expect(r.errors).toEqual([]);
@@ -231,6 +231,92 @@ describe("runBlockScript – ändern", () => {
   });
 });
 
+describe("runBlockScript – Linked view, Synced Block, Button, Datum, Bookmark-Vorschau", () => {
+  it("linked: eine vorhandene Datenbank an einer Stelle zeigen, mit eigener Ansicht", () => {
+    const { ok, run, shape, store, h } = setup("Intro\n\nOutro");
+    const made = ok("database d: Tasks");
+    const dbID = made.databases.get(made.names.get("d")!)!;
+    const r = ok(`linked l: ${dbID} {view=board after=${h("Intro")}}`);
+    expect(shape().split("\n")).toEqual(['text "Intro"', `database "Tasks" (id: ${dbID})`, 'text "Outro"', `database "Tasks" (id: ${dbID})`]);
+    const block = store.blocks.get(r.names.get("l")!)!;
+    expect(block.props?.databaseID).toBe(dbID);
+    expect(store.views.get(block.props!.viewIDs![0]!)).toMatchObject({ type: "board", databaseID: dbID });
+    expect(store.databases.size, "keine zweite Datenbank").toBe(1);
+    expect(run("linked: nope").errors[0]).toContain("needs the id of a database");
+  });
+
+  it("sync macht aus Blöcken ein Original; synced setzt auf einer anderen Seite eine Kopie; unsync löst sie", () => {
+    const { ok, run, shape, store, h, read } = setup("Shared one\n\nShared two\n\nOther");
+    const r = ok(`sync ${h("Shared one")} ${h("Shared two")}`);
+    expect(r.synced).toHaveLength(1);
+    const original = r.synced[0]!;
+    expect(shape().split("\n")).toEqual([`synced (id: ${original})`, '  text "Shared one"', '  text "Shared two"', 'text "Other"']);
+    // im Original weiterschreiben
+    ok(`text: Shared three {in=${original}}`);
+    expect(store.children("b:" + original)).toHaveLength(3);
+    // dieselbe Seite darf es nicht zweimal zeigen
+    expect(run(`synced: ${original}`).errors[0]).toContain("already shows that synced block");
+    const other = createPage(store, { title: "Elsewhere" });
+    const importer = new MarkdownImporter();
+    const copy = runBlockScript(store, other, `synced c: ${original}`, { importer });
+    expect(copy.errors).toEqual([]);
+    const copyID = copy.names.get("c")!;
+    expect(store.blocks.get(copyID)).toMatchObject({ type: "syncedBlock", props: { syncSource: original } });
+    expect(blockOutline(store, other).replace(/^[0-9a-f]+ /, "")).toBe(`synced copy of ${original}`);
+    // in eine Kopie schreibt man nicht hinein
+    expect(runBlockScript(store, other, `text: x {in=${copyID}}`, { importer }).errors[0]).toContain("change the original");
+    expect(runBlockScript(store, other, `unsync ${copyID}`, { importer }).errors).toEqual([]);
+    expect(store.blocks.get(copyID)!.props?.syncSource).toBeUndefined();
+    expect(store.children("b:" + copyID).map((k) => plainText(store.blocks.get(k)!.text))).toEqual(["Shared one", "Shared two", "Shared three"]);
+    expect(read()).toContain("Shared three");
+  });
+
+  it("button: Beschriftung und Schritte in der Reihenfolge der Attribute; insert nimmt die Blöcke im Button als Vorlage", () => {
+    const { ok, run, shape, store } = setup("");
+    const other = createPage(store, { title: "Target" });
+    const db = ok("database d: Tasks");
+    const dbID = db.databases.get(db.names.get("d")!)!;
+    const r = ok(`button b: New task {add=${dbID} confirm="Open it?" open=${other} url=https://example.com/a}\nbutton t: Add checklist {insert}\ntodo: first step {in=t}\ntodo: second step {in=t}`);
+    expect(store.blocks.get(r.names.get("b")!)!.props).toMatchObject({
+      buttonLabel: "New task",
+      buttonActions: [{ kind: "addPage", targetID: dbID }, { kind: "confirm", message: "Open it?" }, { kind: "openPage", targetID: other }, { kind: "openURL", url: "https://example.com/a" }],
+    });
+    const lines = shape().split("\n").slice(1);
+    expect(lines[0]).toBe(`button "New task" {add=${dbID} confirm="Open it?" open=${other} url=https://example.com/a}`);
+    expect(lines.slice(1)).toEqual(['button "Add checklist" {insert}', '  todo [ ] "first step"', '  todo [ ] "second step"']);
+    ok(`set ${r.names.get("b")!}: Add task`);
+    expect(store.blocks.get(r.names.get("b")!)!.props?.buttonLabel).toBe("Add task");
+    expect(run("button: X {add=nope}").errors[0]).toContain("add= needs the id of a database");
+    expect(run("button: X {colour=red}").errors[0]).toContain("button has no attribute colour");
+  });
+
+  it("Datum im Text wird eine Datums-Erwähnung – Tag, Uhrzeit, Bereich, Erinnerung; in Code und Links nicht", () => {
+    const { ok, top, shape } = setup("");
+    ok("text: Due @2026-11-20, call @2026-11-21 14:30 (remind), trip @2026-12-01 → 2026-12-05.\ncode: at @2026-11-20\ntext: mail me@2026 or `@2026-11-20`\nmd: - [ ] pay rent @2026-12-01");
+    const runs = top()[0]!.text as { t: string; mention?: { date?: { _0: { start: number; end?: number; includeTime: boolean; remind?: boolean } } } }[];
+    const dates = runs.filter((r) => r.mention?.date).map((r) => r.mention!.date!._0);
+    expect(dates).toHaveLength(3);
+    expect(dates[0]).toMatchObject({ includeTime: false });
+    expect(dates[0]!.end).toBeUndefined();
+    expect(dates[1]).toMatchObject({ includeTime: true, remind: true });
+    expect(dates[2]!.end! - dates[2]!.start).toBe(4 * 86400);
+    // so kommt es auch wieder zurück
+    expect(shape().split("\n")[0]).toBe('text "Due @2026-11-20, call @2026-11-21 14:30, trip @2026-12-01 → 2026-12-05."');
+    expect(top()[1]!.text).toBe("at @2026-11-20");
+    expect((top()[2]!.text as { mention?: unknown }[]).some((r) => r.mention !== undefined)).toBe(false);
+    expect((top()[3]!.text as { mention?: unknown }[]).some((r) => r.mention !== undefined), "auch in md").toBe(true);
+  });
+
+  it("Bookmark: hat der Host die Vorschau geholt, zeigt das neue Bookmark gleich die Karte", () => {
+    const { ok, top } = setup("");
+    ok("bookmark: https://example.com/article\nbookmark: https://example.com/unknown");
+    expect(top()[0]!.props).toEqual({ url: "https://example.com/article", bookmark: { title: "An article", summary: "About things" } });
+    expect(top()[1]!.props).toEqual({ url: "https://example.com/unknown" });
+    ok(`set ${top()[0]!.id}: https://example.com/unknown`);
+    expect(top()[0]!.props, "neuer Link, alte Karte weg").toEqual({ url: "https://example.com/unknown" });
+  });
+});
+
 describe("runBlockScript – verlässlich", () => {
   it("ein Aufruf ist ein Undo-Schritt und ein Change, egal wie viele Zeilen", () => {
     const { ok, h, read, store } = setup(DOC);
@@ -301,6 +387,6 @@ describe("runBlockScript – verlässlich", () => {
 
   it("die Hilfe nennt jede Anweisung und die Farben aus dem Kern", () => {
     for (const word of ["set", "move", "indent", "outdent", "dup", "del", "check", "uncheck", "uncols", "cell", "row", "col", "md:", "after=", "before=", "in=", "left=", "right=", "page=", "blue", "yellow"]) expect(BLOCK_SCRIPT_HELP, word).toContain(word);
-    expect(BLOCK_SCRIPT_HELP.length, "die Beschreibung kostet bei jedem Gespräch Token").toBeLessThan(2400);
+    expect(BLOCK_SCRIPT_HELP.length, "die Beschreibung kostet Token: sie steht in der Anleitung (based_guide blocks), nicht an jedem Werkzeug").toBeLessThan(3400);
   });
 });

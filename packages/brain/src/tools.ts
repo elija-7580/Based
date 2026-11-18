@@ -10,8 +10,8 @@
 // - `undo_last` nimmt den letzten eigenen Schreib-Aufruf zurück (genau diesen Schritt, auch wenn danach der Mensch
 //   weitergeschrieben hat; was seither geändert wurde, bleibt).
 import {
-  attachSearchIndex, isPageLike, isTrashed, MarkdownExporter, MarkdownImporter, pageFormat, titleOf,
-  type Author, type Block, type BoardFileInfo, type JSONValue, type SearchFilters, type SearchIndex, type WorkspaceStore,
+  attachSearchIndex, isPageLike, isTrashed, MarkdownExporter, MarkdownImporter, markdownWithDateMentions, pageFormat, titleOf,
+  type Author, type Block, type BoardFileInfo, type BookmarkMeta, type JSONValue, type SearchFilters, type SearchIndex, type WorkspaceStore,
 } from "@based/core";
 import type { ToolHost, ToolResult } from "./engine.js";
 import type { ToolSpec } from "./messages.js";
@@ -63,6 +63,8 @@ export interface WorkspaceToolsOptions {
    * bevor `draw_board` sie anordnet). Läuft nur über `call()`; die Werkzeuge selbst bleiben synchron und eine Transaktion.
    */
   before?: (name: string, input: JSONValue) => Promise<void> | void;
+  /** Vorschau eines Links (Titel, Beschreibung, Bild), wenn der Host sie in `before` geholt hat. */
+  linkPreview?: (url: string) => BookmarkMeta | undefined;
   /** Nur diese Bereiche anbieten (ohne: alle). */
   groups?: readonly ToolGroup[];
   /**
@@ -244,6 +246,8 @@ export class WorkspaceTools implements ToolHost {
           return isPageLike(store.blocks.get(id)) ? id : undefined;
         },
       }),
+      markdown: (md) => markdownWithDateMentions(this.ctx.importer().parse(md)),
+      linkPreview: (url) => this.opts.linkPreview?.(url),
       exporter: () => new MarkdownExporter(store, { pageLink: (id) => ({ title: titleOf(store, id), url: PAGE_URI + id }) }),
       search: (query, limit, filters) => {
         if (this.opts.search) return this.opts.search(query, limit, filters);

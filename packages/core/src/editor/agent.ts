@@ -12,17 +12,21 @@ import type { Block, BlockProps, RichText } from "../model/records.js";
 import { ENUMS } from "../model/schema.js";
 import type { Tx, WorkspaceStore } from "../store/store.js";
 import { insertPage, isPageLike, sortKeys, type InsertPosition } from "../store/pages.js";
-import { createDatabase } from "../store/database-ops.js";
+import { createDatabase, createLinkedView } from "../store/database-ops.js";
+import { syncedOriginal, syncedPasteProblem, unsyncCopy } from "../store/synced.js";
+import { setButton, type ButtonAction } from "../store/button-ops.js";
+import { parseDate } from "../query/value.js";
+import type { BookmarkMeta } from "../interop/link-preview.js";
 import { createMeeting } from "../store/meeting-ops.js";
 import { insertBoardPage, isBoardPage } from "../whiteboard/records.js";
 import type { BoardFileInfo } from "../whiteboard/placefile.js";
-import { encodeInlineMarkdown, type MarkdownBlock, type MarkdownImporter } from "../interop/markdown.js";
+import { encodeInlineMarkdown, formatDateValue, type MarkdownBlock, type MarkdownImporter } from "../interop/markdown.js";
 import { makeBlock, makeRecordID } from "../interop/builder.js";
 import { toRichText, type Run } from "../interop/runs.js";
 import { plainText } from "../richtext.js";
 import { titleOf } from "../query/engine.js";
 import { CODE_VIEWS, codeLanguageID, codePreviewKind } from "./syntax.js";
-import { create, deleteBlocks, dissolveColumns, duplicateBlocks, indentBlocks, moveBlocks, moveBlocksToPage, outdentBlocks, setBlockProps, setBlockText, setChecked, turnInto, turnIntoEquation, turnIntoPage } from "./commands/blocks.js";
+import { create, wrapInSyncedBlock, deleteBlocks, dissolveColumns, duplicateBlocks, indentBlocks, moveBlocks, moveBlocksToPage, outdentBlocks, setBlockProps, setBlockText, setChecked, turnInto, turnIntoEquation, turnIntoPage } from "./commands/blocks.js";
 import { addTableColumn, addTableRow, deleteTableColumn, deleteTableRow, setTableCell, tableModel, tableProps } from "./commands/table.js";
 import { blockText, plainRuns } from "./commands/text.js";
 import { canNestUnder, isToggle, liveChildren, TEXT_TYPES } from "./commands/tree.js";
@@ -41,12 +45,12 @@ const TYPE_NAMES: readonly (readonly [string, string])[] = [
   ["toc", "tableOfContents"], ["table", "table"], ["cols", "columnList"], ["col", "column"], ["page", "page"], ["database", "databaseInline"],
   ["synced", "syncedBlock"], ["button", "button"], ["meeting", "meeting"], ["breadcrumb", "breadcrumb"], ["link", "linkToPage"],
 ];
-const TO_TYPE = new Map(TYPE_NAMES.map(([n, t]) => [n, t]));
+const TO_TYPE = new Map<string, string>([...TYPE_NAMES, ["linked", "databaseInline"]]);
 const TO_NAME = new Map(TYPE_NAMES.map(([n, t]) => [t, n]));
 TO_NAME.set("databasePage", "database");
 const MEDIA = new Set(["image", "video", "audio", "file", "pdf"]);
 /** Was `<art>: …` anlegen kann (dazu `md` und `board`). */
-const CREATABLE = ["text", "h1", "h2", "h3", "h4", "bullet", "number", "todo", "toggle", "quote", "callout", "code", "divider", "equation", "image", "video", "audio", "file", "pdf", "bookmark", "embed", "toc", "table", "cols", "page", "database", "meeting"];
+const CREATABLE = ["text", "h1", "h2", "h3", "h4", "bullet", "number", "todo", "toggle", "quote", "callout", "code", "divider", "equation", "image", "video", "audio", "file", "pdf", "bookmark", "embed", "toc", "table", "cols", "page", "database", "meeting", "linked", "synced", "button"];
 
 /** Farbnamen der Blöcke (`color=` Textfarbe, `bg=` Hintergrund) aus der Liste des Kerns. */
 export const BLOCK_COLOR_NAMES: readonly string[] = (ENUMS.TColor as readonly string[]).filter((c) => c !== "default" && !c.endsWith("Background"));
@@ -61,6 +65,8 @@ export const BLOCK_SCRIPT_HELP = [
   `Create: <kind>: text  or  <kind> name: text — kinds: ${CREATABLE.join(" ")}. Text is inline Markdown (**bold**, *italic*, \`code\`, [link](url), [Page](based://page/<id>) = mention).`,
   "  md: <Markdown> inserts any number of blocks (headings, nested lists, tables, code fences). page/database/board/meeting: the text is the title. image/video/audio/file/pdf: a file ref (list_files, upload_file) or an https URL. bookmark/embed: a URL. equation: TeX. table: cells with | and rows with \\n (a | b\\nc | d). cols: the number of columns (2–5); fill them with {in=name.1}, {in=name.2}.",
   "Where: {after=h} {before=h} {in=h} (as the last block inside a toggle, callout, list item, column …) {left=h} {right=h} (in a column beside h). Without it: after the block the previous line put into the flow (lines with in=, left=, right= don't count), else at the end of the page.",
+  "  linked: <database id> shows an existing database here ({view=table|board|…}). synced: <id of a synced block> puts a live copy here; sync h [h…] turns blocks into a synced block others can copy; unsync h makes a copy independent. button: Label {add=<database id> open=<page id> url=https://… confirm=\"Sure?\" insert} – the steps run in this order; insert adds the blocks you put {in=} the button.",
+  "  A date in a text: @2026-11-20, @2026-11-20 14:00, @2026-11-20 → 2026-11-22, with a reminder @2026-11-20 09:00 (remind).",
   "Change: set h: new text | set h {attrs} | move h [h…] {after=|before=|in=|left=|right=|page=<page id>} | indent h… | outdent h… | dup h… | del h… | check h… | uncheck h… | uncols h (columns back to one flow)",
   "Tables: cell h 2,1: text (row,column from 1) | row h add | row h del 3 | col h add | col h del 2",
   `Attributes go last in braces: {color=blue} or {bg=blue} (${BLOCK_COLOR_NAMES.join(" ")}; color=default clears) · {type=h2} turns a block into another kind (also page, equation) · {toggle} on headings · {open=false} · {checked} · {icon=💡} on callouts · {lang=js wrap} on code · {show=code|both|result} on html and mermaid code · {width=400 align=center caption="…"} on media · {ratio=0.6} on a column (h.1 = first column of cols h) · {header=false} on tables.`,
@@ -186,8 +192,14 @@ export function blockOutline(store: WorkspaceStore, pageID: string, opts: BlockO
       case "databaseInline": body = `${quote(p.databaseID ? plainText(store.databases.get(p.databaseID)?.title) || "Untitled" : "Untitled")}${p.databaseID ? ` (id: ${p.databaseID})` : ""}`; break;
       case "linkToPage": body = p.linkTarget ? `${quote(titleOf(store, p.linkTarget) || "Untitled")} (id: ${p.linkTarget})` : "(empty)"; break;
       case "meeting": body = quote(oneLine(plainText(b.text) || "Meeting", max)); break;
-      case "syncedBlock": if (p.syncSource) body = `copy of ${p.syncSource}`; break;
-      case "button": body = quote(p.buttonLabel ?? plainText(b.text)); break;
+      case "syncedBlock": body = p.syncSource ? `copy of ${p.syncSource}` : `(id: ${b.id})`; break;
+      case "button": {
+        body = quote(p.buttonLabel ?? (plainText(b.text) || "Button"));
+        for (const act of p.buttonActions ?? (p.buttonAction ? [p.buttonAction] : [])) {
+          attrs.push(act.kind === "addPage" ? `add=${act.targetID ?? "?"}` : act.kind === "openPage" ? `open=${act.targetID ?? "?"}` : act.kind === "openURL" ? `url=${act.url ?? "?"}` : act.kind === "confirm" ? `confirm=${quote(act.message ?? "")}` : act.kind === "insertBlocks" ? "insert" : String(act.kind));
+        }
+        break;
+      }
       case "divider": case "tableOfContents": case "breadcrumb": break;
       default: {
         body = quote(oneLine(md(b.text), max));
@@ -228,6 +240,42 @@ export interface BlockScriptOptions {
   importer: MarkdownImporter;
   /** Was über eine Datei bekannt ist (Name, Art, Größe) – für `image`, `file` … mit einer Datei-Adresse. */
   files?: (ref: string) => BoardFileInfo | undefined;
+  /**
+   * Vorschau eines Links (Titel, Beschreibung, Bild), wenn der Host sie vorher geholt hat – dann zeigt ein neues
+   * Bookmark gleich die Karte. Ohne: nur der Link (der Mensch kann „Fetch preview“ drücken).
+   */
+  linkPreview?: (url: string) => BookmarkMeta | undefined;
+}
+
+const DATE_MENTION = /@(\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2})?)(?: (?:→|->) (\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2})?))?( \(remind\))?/g;
+
+/**
+ * Daten im Text (`@2026-11-20`, mit Uhrzeit, als Bereich, mit „(remind)“) werden Datums-Erwähnungen – dieselbe Form,
+ * in der der Markdown-Export sie schreibt. Nur in gewöhnlichem Text (nicht in Code, Links, anderen Erwähnungen).
+ */
+export function withDateMentions(runs: readonly Run[]): Run[] {
+  const out: Run[] = [];
+  for (const r of runs) {
+    if (r.mention !== undefined || r.eq !== undefined || r.m.c || r.m.link || !r.t.includes("@")) { out.push(r); continue; }
+    let last = 0;
+    for (const m of r.t.matchAll(DATE_MENTION)) {
+      const start = parseDate(m[1]!);
+      const end = m[2] ? parseDate(m[2]) : undefined;
+      if (!start || (m[2] && !end)) continue;
+      const value = { start: start.start, includeTime: start.includeTime, ...(end ? { end: end.start } : {}), ...(m[3] ? { remind: true } : {}) };
+      if (m.index > last) out.push({ ...r, t: r.t.slice(last, m.index) });
+      out.push({ t: "@" + formatDateValue(value), m: {}, mention: { date: { _0: value } } } as Run);
+      last = m.index + m[0].length;
+    }
+    if (last === 0) out.push(r);
+    else if (last < r.t.length) out.push({ ...r, t: r.t.slice(last) });
+  }
+  return out;
+}
+
+/** Wie `withDateMentions`, für ganze Markdown-Blöcke (auch verschachtelt; Code bleibt, wie er ist). */
+export function markdownWithDateMentions(blocks: MarkdownBlock[]): MarkdownBlock[] {
+  return blocks.map((b) => ({ ...b, text: b.type === "code" ? b.text : withDateMentions(b.text), children: markdownWithDateMentions(b.children) }));
 }
 
 export interface BlockScriptResult {
@@ -239,6 +287,8 @@ export interface BlockScriptResult {
   names: Map<string, string>;
   /** Neu angelegte Datenbanken: Block-ID → Datenbank-ID (für add_row, create_view …). */
   databases: Map<string, string>;
+  /** IDs neuer Synced-Originale (`sync …`) – mit `synced: <id>` auf jeder Seite als Kopie einsetzbar. */
+  synced: string[];
   /** Übersprungene Zeilen mit Grund („line 3: …“). */
   errors: string[];
 }
@@ -303,7 +353,7 @@ const flag = (attrs: Attrs, k: string): boolean | undefined => {
  * sie, ist nichts von ihr geschrieben, und der Grund steht in `errors`.
  */
 export function runBlockScript(store: WorkspaceStore, pageID: string, script: string, opts: BlockScriptOptions): BlockScriptResult {
-  const result: BlockScriptResult = { added: 0, changed: 0, moved: 0, removed: 0, names: new Map(), databases: new Map(), errors: [] };
+  const result: BlockScriptResult = { added: 0, changed: 0, moved: 0, removed: 0, names: new Map(), databases: new Map(), synced: [], errors: [] };
   if (script.length > BLOCK_SCRIPT_MAX) {
     result.errors.push(`script too long (${script.length} characters, max ${BLOCK_SCRIPT_MAX}) — nothing was changed`);
     return result;
@@ -381,7 +431,8 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
         return { parent: b.parent, position: { kind: key, id }, flow: true };
       case "in":
         if (b.type === "columnList") return fail(`${v} is a column list — use in=${v}.1, in=${v}.2 …`);
-        if (b.type !== "column" && b.type !== "syncedBlock" && !canNestUnder(b)) return fail(`nothing can go inside a ${TO_NAME.get(b.type) ?? b.type} block — use after=${v}`);
+        if (b.type === "syncedBlock" && b.props?.syncSource) return fail(`${v} is a copy of a synced block — change the original (${b.props.syncSource})`);
+        if (b.type !== "column" && b.type !== "syncedBlock" && b.type !== "button" && !canNestUnder(b)) return fail(`nothing can go inside a ${TO_NAME.get(b.type) ?? b.type} block — use after=${v}`);
         return { parent: "b:" + id, position: { kind: "end" }, flow: false };
       default:
         if (b.type === "column" || b.type === "columnList") return fail(`${key}= needs a block, not a column`);
@@ -404,7 +455,7 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
     result.added += ids.length;
   };
 
-  const inline = (s: string): Run[] => opts.importer.inline(s);
+  const inline = (s: string): Run[] => withDateMentions(opts.importer.inline(s));
 
   const mediaProps = (type: string, content: string, attrs: Attrs): { type: string; props: BlockProps } => {
     const props: Record<string, unknown> = {};
@@ -493,7 +544,7 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
     const content = unescape(raw);
     if (kindName === "md") {
       checkKnown(attrs, known, "md");
-      const blocks = opts.importer.parse(content);
+      const blocks = markdownWithDateMentions(opts.importer.parse(content));
       if (blocks.length === 0) return fail("md: nothing to insert");
       const ids = store.transact("Insert", (tx) => putMarkdownBlocks(store, tx, blocks, place.parent, keyAt(tx, place, blocks.length)));
       return placed(ids, place, name);
@@ -520,6 +571,60 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
     if (kindName === "meeting") {
       checkKnown(attrs, known, "meeting");
       const id = createMeeting(store, { parent: place.parent, sk: sortKeys(store, place.parent, place.position, 1)[0]!, ...(content.trim() ? { title: content.trim() } : {}) });
+      return placed([id], place, name);
+    }
+    const dbPosition = (): { before: string } | { after: string } | "end" => (place.position.kind === "end" ? "end" : place.position.kind === "before" ? { before: place.position.id } : { after: place.position.id });
+    if (kindName === "linked") {
+      known.add("view");
+      checkKnown(attrs, known, "linked");
+      const view = attrs.get("view") === undefined ? "table" : String(attrs.get("view"));
+      if (!(ENUMS.ViewType as readonly string[]).includes(view)) return fail(`view must be one of ${(ENUMS.ViewType as readonly string[]).join(", ")}`);
+      const given = content.trim();
+      const db = store.databases.get(given) ?? [...store.databases.values()].find((d) => d.blockID === given);
+      if (!db) return fail("linked needs the id of a database (list_databases shows the ids)");
+      const made = createLinkedView(store, db.id, place.parent, view, { position: dbPosition() });
+      if (!made) return fail("could not link that database");
+      result.databases.set(made.blockID, db.id);
+      return placed([made.blockID], place, name);
+    }
+    if (kindName === "synced") {
+      checkKnown(attrs, known, "synced");
+      const given = content.trim();
+      if (!given) return fail("synced needs the id of a synced block (read_blocks shows it as synced (id: …)); to make one use: sync h [h…]");
+      let source = given;
+      try { source = resolve(given); } catch { /* eine ID von einer anderen Seite */ }
+      const problem = syncedPasteProblem(store, source, pageID);
+      if (problem) return fail(problem === "noSource" ? `${given} is not a synced block` : problem === "insideItself" ? "a synced block can't contain a copy of itself" : "this page already shows that synced block");
+      const original = syncedOriginal(store, source)!;
+      const id = store.transact("Synced copy", (tx) => create(store, tx, "syncedBlock", place.parent, keyAt(tx, place)[0]!, [], { syncSource: original }));
+      return placed([id], place, name);
+    }
+    if (kindName === "button") {
+      const actions: ButtonAction[] = [];
+      for (const [k, v] of attrs) {
+        if ((PLACE_KEYS as readonly string[]).includes(k)) continue;
+        const val = v === true ? "" : String(v);
+        switch (k) {
+          case "add": {
+            const db = store.databases.get(val) ?? [...store.databases.values()].find((d) => d.blockID === val);
+            if (!db) return fail("add= needs the id of a database");
+            actions.push({ kind: "addPage", targetID: db.id });
+            break;
+          }
+          case "open": {
+            const pg = store.blocks.get(val);
+            if (!pg || !isPageLike(pg)) return fail("open= needs the id of a page");
+            actions.push({ kind: "openPage", targetID: pg.id });
+            break;
+          }
+          case "url": if (!/^https?:\/\//i.test(val)) return fail("url= needs an http(s) URL"); actions.push({ kind: "openURL", url: val }); break;
+          case "confirm": actions.push({ kind: "confirm", message: unescape(val) || "Continue?" }); break;
+          case "insert": actions.push({ kind: "insertBlocks" }); break;
+          default: return fail(`button has no attribute ${k} — use add=, open=, url=, confirm=, insert`);
+        }
+      }
+      if (actions.length === 0) actions.push({ kind: "insertBlocks" });
+      const id = store.transact("New button", (tx) => create(store, tx, "button", place.parent, keyAt(tx, place)[0]!, [], { buttonLabel: content.trim() || "Button", buttonActions: actions }));
       return placed([id], place, name);
     }
     const type = TO_TYPE.get(kindName);
@@ -563,6 +668,8 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
     } else if (type === "bookmark" || type === "embed") {
       if (!/^https?:\/\//i.test(content.trim())) return fail(`${kindName} needs an http(s) URL`);
       props.url = content.trim();
+      const preview = type === "bookmark" ? opts.linkPreview?.(content.trim()) : undefined;
+      if (preview && Object.keys(preview).length > 0) props.bookmark = preview;
     } else if (type === "equation") props.expression = content;
     else if (type === "divider" || type === "tableOfContents") { if (content.trim()) return fail(`${kindName} takes no text`); }
     else {
@@ -608,11 +715,13 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
       else if (b.type === "equation") setBlockProps(store, [id], { expression: content });
       else if (b.type === "bookmark" || b.type === "embed") {
         if (!/^https?:\/\//i.test(content.trim())) return fail(`${TO_NAME.get(b.type)} needs an http(s) URL`);
-        setBlockProps(store, [id], { url: content.trim(), ...(b.type === "bookmark" ? { bookmark: undefined } : {}) } as Partial<BlockProps>);
+        const preview = b.type === "bookmark" ? opts.linkPreview?.(content.trim()) : undefined;
+        setBlockProps(store, [id], { url: content.trim(), ...(b.type === "bookmark" ? { bookmark: preview && Object.keys(preview).length > 0 ? preview : undefined } : {}) } as Partial<BlockProps>);
       } else if (MEDIA.has(b.type)) {
         const m = mediaProps(b.type, content, new Map());
         setBlockProps(store, [id], { asset: undefined, url: undefined, ...m.props });
-      } else if (b.type === "meeting") store.transact("Rename", (tx) => tx.update(id, (x) => { x.text = content.trim() || "Meeting"; }));
+      } else if (b.type === "button") setButton(store, id, { label: content.trim() });
+      else if (b.type === "meeting") store.transact("Rename", (tx) => tx.update(id, (x) => { x.text = content.trim() || "Meeting"; }));
       else return fail(`a ${TO_NAME.get(b.type) ?? b.type} block has no text to set`);
     }
     // 3. Stil
@@ -674,7 +783,7 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
   const statement = (line: string) => {
     const { rest, attrs } = splitAttrs(line);
     // Anweisungen ohne Doppelpunkt
-    const verb = /^(set|move|del|dup|indent|outdent|check|uncheck|uncols|row|col)\s+([^:]*)$/.exec(rest);
+    const verb = /^(set|move|del|dup|indent|outdent|check|uncheck|uncols|sync|unsync|row|col)\s+([^:]*)$/.exec(rest);
     if (verb) {
       const [, v, arg] = verb as unknown as [string, string, string];
       switch (v) {
@@ -699,6 +808,17 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
             if (store.blocks.get(id)?.type !== "todo") return fail("check works on to-do blocks");
             setChecked(store, id, v === "check");
           }
+          result.changed += ids.length;
+          return;
+        case "sync": {
+          const made = wrapInSyncedBlock(store, ids);
+          if (!made) return fail("sync needs blocks that sit next to each other (same parent)");
+          result.synced.push(made);
+          result.changed += 1;
+          return;
+        }
+        case "unsync":
+          for (const id of ids) if (!unsyncCopy(store, id)) return fail("unsync works on a copy of a synced block");
           result.changed += ids.length;
           return;
         case "uncols": {

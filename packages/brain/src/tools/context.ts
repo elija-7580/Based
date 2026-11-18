@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Was die Werkzeug-Dateien vom Host bekommen: den Store und ein paar gemeinsame Helfer. `WorkspaceTools` baut das.
-import type { Author, Block, BoardFileInfo, MarkdownExporter, MarkdownImporter, SearchFilters, WorkspaceStore } from "@based/core";
+import type { Author, Block, BoardFileInfo, BookmarkMeta, MarkdownBlock, MarkdownExporter, MarkdownImporter, SearchFilters, WorkspaceStore } from "@based/core";
 import type { AgentBrain } from "../agentbrain/store.js";
 import type { Recall } from "../recall/recall.js";
 import type { RelationGraph } from "../recall/graph.js";
@@ -20,6 +20,10 @@ export interface ToolCtx {
   /** „- Titel (id: …)“ */
   line(id: string): string;
   importer(): MarkdownImporter;
+  /** Markdown → Blöcke, wie die Werkzeuge es schreiben (Links auf Seiten werden Erwähnungen, `@2026-11-20` ein Datum). */
+  markdown(md: string): MarkdownBlock[];
+  /** Vorschau eines Links, falls der Host sie vor dem Aufruf geholt hat (Bookmark-Karte). */
+  linkPreview(url: string): BookmarkMeta | undefined;
   exporter(): MarkdownExporter;
   search(query: string, limit: number, filters?: SearchFilters): { pageID: string; snippet?: string | undefined }[];
   fileInfo(ref: string, known: BoardFileInfo | undefined): BoardFileInfo | undefined;

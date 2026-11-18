@@ -7,6 +7,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { afterEach, describe, expect, it } from "vitest";
+import { LinkPreviews } from "../src/file-tools.js";
 import { authorKindOf, createPage } from "@based/core";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
@@ -268,6 +269,51 @@ describe("Agent-Parität 2/7: Seiten-Editor über MCP", () => {
     expect(refused.isError).toBe(true);
     expect(textOf(refused)).toContain("Not allowed by the permission rules");
     expect((await call("read_blocks", { id })).isError).toBeFalsy();
+  });
+});
+
+describe("Agent-Parität: Dateien direkt in eine Seite, Bookmark mit Vorschau", () => {
+  it("upload_file { page, after, caption } legt ein Bild als Block an die Stelle; ein falscher Ort ist ein Fehler", async () => {
+    const { app, call } = await httpClient();
+    const id = idIn(textOf(await call("create_page", { title: "Album", markdown: "First\n\nLast" })));
+    const first = textOf(await call("read_blocks", { id })).split("\n")[0]!.split(" ")[0]!;
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR4nGNgYGD4z8DAwMAAAA0AAQ1Ml4gAAAAASUVORK5CYII=", "base64");
+    const up = textOf(await call("upload_file", { name: "dot.png", data: png.toString("base64"), page: id, after: first, caption: 'A "dot"' }));
+    expect(up).toContain("Edited “Album”: 1 added");
+    const lines = textOf(await call("read_blocks", { id })).split("\n").map((l) => l.replace(/^[0-9a-f]+ /, ""));
+    expect(lines[0]).toBe('text "First"');
+    expect(lines[1]).toMatch(/^image "dot.png" based-asset:[0-9a-f]{64} \{caption="A \\"dot\\""\}$/);
+    expect(lines[2]).toBe('text "Last"');
+    const block = app.sync.store.children("b:" + id).map((b) => app.sync.store.blocks.get(b)!)[1]!;
+    expect(block.props?.asset).toMatchObject({ name: "dot.png", mime: "image/png" });
+    const bad = await call("upload_file", { name: "dot.png", data: png.toString("base64"), page: id, after: "zzzz" });
+    expect(bad.isError).toBe(true);
+    expect(textOf(bad)).toContain("no block zzzz");
+    expect((await call("upload_file", { name: "dot.png", data: png.toString("base64"), page: id, board: id })).isError).toBe(true);
+  });
+
+  it("ein Bookmark aus edit_blocks bekommt die Vorschau der Seite (geholt mit den Schutzregeln); scheitert das Holen, bleibt der Link", async () => {
+    const { app, call } = await httpClient();
+    const asked: string[] = [];
+    app.pages.previews = new LinkPreviews(async (url) => {
+      asked.push(url);
+      if (url.includes("down")) throw new Error("no answer");
+      return { bytes: Buffer.from('<html><head><title>Based Notes</title><meta name="description" content="Your data. Based."></head></html>'), mime: "text/html" };
+    });
+    const id = idIn(textOf(await call("create_page", { title: "Links" })));
+    const out = textOf(await call("edit_blocks", { id, script: "bookmark: https://basednotes.app/\nbookmark: https://down.example/\ntext: not a bookmark https://other.example/" }));
+    expect(out).toContain("3 added");
+    expect(asked.sort()).toEqual(["https://basednotes.app/", "https://down.example/"]);
+    const kids = app.sync.store.children("b:" + id).map((b) => app.sync.store.blocks.get(b)!);
+    expect(kids[0]!.props).toMatchObject({ url: "https://basednotes.app/", bookmark: { title: "Based Notes", summary: "Your data. Based." } });
+    expect(kids[1]!.props).toEqual({ url: "https://down.example/" });
+  });
+
+  it("LinkPreviews holt nie aus dem eigenen Netz", async () => {
+    const real = new LinkPreviews();
+    await real.prepare("bookmark: http://127.0.0.1:9/secret\nbookmark: http://169.254.169.254/latest/meta-data");
+    expect(real.get("http://127.0.0.1:9/secret")).toBeUndefined();
+    expect(real.get("http://169.254.169.254/latest/meta-data")).toBeUndefined();
   });
 });
 
