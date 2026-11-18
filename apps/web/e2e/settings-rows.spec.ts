@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 // BSD-509: In einer Einstellungszeile bleibt der Wert oder Knopf rechts neben dem Text, auch wenn der Hinweis lang ist –
 // der Hinweis bricht um, statt den Knopf in eine eigene Zeile nach links zu schieben. Alle Einstellungsseiten, drei Größen.
 
-const PAGES = ["account", "my-settings", "workspace", "language", "agents", "import", "sync", "updates", "diagnostics", "about"];
+const PAGES = ["account", "appearance", "editor", "meetings", "workspace", "language", "agents", "import", "sync", "updates", "diagnostics", "about"];
 
 // 900 × 600: dort darf ein breiter Umschalter in die nächste Zeile rutschen (overflow.spec prüft, dass nichts überläuft).
 for (const [w, h] of [[1280, 820], [1728, 1000]] as const) {

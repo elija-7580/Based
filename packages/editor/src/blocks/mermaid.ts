@@ -2,7 +2,9 @@
 // Mermaid ist gebündelt und wird erst beim ersten Diagramm geladen (eigener Chunk); nichts kommt von fremden Servern.
 // securityLevel „strict“, Beschriftungen als reines SVG (htmlLabels aus). Das fertige SVG wird nur als Bild gezeigt
 // (<img> mit blob:-URL): ein Bild führt keine Skripte aus und erreicht die App nicht. Farben aus den Based-Tokens;
-// beim Umschalten hell/dunkel zeichnen sich die Vorschauen neu.
+// beim Umschalten von hell/dunkel, Stil oder Dichte zeichnen sich die Vorschauen neu.
+
+import { APPEARANCE_ATTRS, appearanceKey } from "./hostAppearance.js";
 
 type Mermaid = typeof import("mermaid").default;
 
@@ -13,10 +15,6 @@ const load = () => (loading ??= import("mermaid").then((m) => m.default));
 const cache = new Map<string, Promise<string>>();
 const CACHE_MAX = 40;
 let counter = 0;
-
-function theme(): "dark" | "light" {
-  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-}
 
 /** Farben aus den Tokens (berechnete Werte, damit Mermaid sie lesen kann). */
 function themeVariables(): Record<string, string> {
@@ -33,7 +31,7 @@ function themeVariables(): Record<string, string> {
 
 /** Mermaid-Code → SVG-Text. Wirft mit Mermaids Meldung, wenn der Code kein gültiges Diagramm ist. */
 export async function renderMermaid(code: string): Promise<string> {
-  const key = theme() + "\n" + code;
+  const key = appearanceKey() + "\n" + code;
   let hit = cache.get(key);
   if (!hit) {
     hit = (async () => {
@@ -79,11 +77,12 @@ export function pruneDetached() {
 
 function watchTheme() {
   if (observer || typeof MutationObserver === "undefined") return;
+  // Auch Stil und Dichte: die Schrift steht als fester Wert im SVG (themeVariables).
   observer = new MutationObserver(() => {
     pruneDetached();
     for (const el of live) void draw(el);
   });
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: [...APPEARANCE_ATTRS] });
 }
 
 async function draw(wrap: HTMLElement) {

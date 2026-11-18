@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { registerContextItems } from "@based/ui/native";
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
-import { boardFileView, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
+import { boardFileView, boardPagesWithoutCard, insertBoardPageCards, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
 import { BlockIcon, type BlockIconName } from "../blocks/icons.js";
 import { BOARD_TOOLS, BoardController, FILL_COLORS, HIGHLIGHT_COLORS, isEditTool, minimapTransform, PEN_COLORS, SNAP_HOLD_MS, STROKE_COLORS, type BoardEdit, type BoardFile, type BoardTool, type ColorRow } from "./controller.js";
 import { BoardImageCache } from "./images.js";
@@ -32,6 +32,17 @@ export interface BoardViewProps {
   pickPage?: () => Promise<string | undefined>;
   /** Eine Seite als ganze, bearbeitbare Seite auf dem Board zeigen (Editor der App). `editable`: die Karte ist gewählt. */
   renderPage?: (pageID: string, editable: boolean) => ReactNode;
+  /** Board mitten in einer Seite (Elija 18.11.): gesperrter Ausschnitt und Zugriff auf die Kamera zum Sperren. */
+  embed?: BoardEmbed | undefined;
+}
+
+export interface BoardEmbed {
+  /** Gesperrter Ausschnitt: die Fläche öffnet dort und springt beim Verlassen dorthin zurück. */
+  camera?: Camera | undefined;
+  /** Gesperrt und nicht betreten (keine Bedienung; die Hülle legt eine Fläche für den Doppelklick darüber). */
+  frozen: boolean;
+  /** Die Fläche reicht eine Abfrage ihrer aktuellen Kamera heraus (zum Sperren des Ausschnitts). */
+  bindCamera?: ((read: (() => Camera) | undefined) => void) | undefined;
 }
 
 /** Gemerkte Stifte je Gerät (höchstens so viele). */
@@ -159,7 +170,9 @@ const modKey = (key: string) => (isApple() ? `⌘${key}` : `Ctrl+${key}`);
 /** Safari meldet Pinch als eigene Gesten-Ereignisse (kein Strg+Rad). */
 interface GestureEvent extends UIEvent { scale: number; clientX: number; clientY: number }
 
-export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl, onOpenPage, pageTitles, pickPage, renderPage }: BoardViewProps) {
+export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl, onOpenPage, pageTitles, pickPage, renderPage, embed }: BoardViewProps) {
+  const embedCamera = useRef(embed?.camera);
+  embedCamera.current = embed?.camera;
   const openPage = useRef(onOpenPage);
   openPage.current = onOpenPage;
   const [ctl, setCtl] = useState<BoardController>();
@@ -168,7 +181,7 @@ export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl,
   useEffect(() => {
     const session = new BoardSession(store, pageID);
     const controller = new BoardController(session, {
-      camera: cameras.get(pageID),
+      camera: embedCamera.current ?? cameras.get(pageID),
       onOpenPage: (id) => openPage.current?.(id),
       // Öffnen heißt sichern: eine Datei (etwa HTML) läuft nie im Fenster der App.
       onOpenFile: (o) => {
@@ -193,6 +206,23 @@ export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl,
   }, [store, pageID]);
   // Seite nur lesbar (Papierkorb, gesperrt, Gast): die Sitzung nimmt dann keine Änderungen an.
   useEffect(() => { ctl?.session.setLocked(readOnly); }, [ctl, readOnly]);
+  // Gesperrter Ausschnitt: beim Verlassen (wieder gesperrt) zurück auf den Ausschnitt; Kamera zum Sperren herausreichen.
+  const frozen = embed?.frozen === true;
+  const lockedAt = embed?.camera;
+  useEffect(() => { if (ctl && frozen && lockedAt) ctl.showCamera(lockedAt); }, [ctl, frozen, lockedAt?.x, lockedAt?.y, lockedAt?.zoom]);
+  const bind = embed?.bindCamera;
+  useEffect(() => {
+    if (!ctl || !bind) return;
+    bind(() => ctl.camera);
+    return () => bind(undefined);
+  }, [ctl, bind]);
+  // Elija 18.11.: Unterseiten, die schon vor dem Fix in der Seitenleiste angelegt wurden, beim Öffnen einmal als Karte
+  // aufs Board legen (feste Karten-ID: kein Doppel, eine gelöschte Karte kommt nicht wieder). Kein eigener Undo-Schritt.
+  useEffect(() => {
+    if (!ctl || readOnly) return;
+    const missing = boardPagesWithoutCard(store, pageID);
+    if (missing.length > 0) store.transact("Board pages", (tx) => insertBoardPageCards(store, tx, pageID, missing), { undoable: false });
+  }, [ctl, store, pageID, readOnly]);
   return ctl ? <BoardSurface key={pageID} ctl={ctl} host={host} pageID={pageID} titles={pageTitles} /> : <div className="wb-root" aria-busy="true" />;
 }
 

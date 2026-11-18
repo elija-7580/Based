@@ -12,12 +12,11 @@ const nav = (page: Page) => page.getByRole("navigation", { name: "Settings pages
 /** Zeile der Navigation (Astryx setzt aria-current und den „Not yet“-Hinweis an das Listenelement, nicht an den Button). */
 const navRow = (page: Page, name: string) => nav(page).getByRole("listitem").filter({ has: page.getByRole("button", { name, exact: true }) });
 
-test("Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen", { tag: "@smoke" }, async ({ page }) => {
+test("Navigation: 19 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen", { tag: "@smoke" }, async ({ page }) => {
   await open(page);
-  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "my-settings");
-  await expect(nav(page).getByRole("button")).toHaveCount(17);
-  await expect(nav(page).getByText("Account", { exact: true })).toBeVisible();
-  await expect(nav(page).getByText("Workspace", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
+  await expect(nav(page).getByRole("button")).toHaveCount(19);
+  for (const group of ["App", "Workspace", "System"]) await expect(nav(page).getByText(group, { exact: true })).toBeVisible();
 
   await nav(page).getByRole("button", { name: "Sync & server" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Sync & server" })).toBeVisible();
@@ -28,7 +27,7 @@ test("Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adres
 
   // Zurück im Verlauf führt zur vorigen Einstellungsseite
   await page.goBack();
-  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "my-settings");
+  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
 });
 
 test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", async ({ page }) => {

@@ -57,7 +57,7 @@ const TasksScreen = lazy(() => import("./tasks/TasksScreen.js").then((m) => ({ d
 const Welcome = lazy(() => import("./screens/Welcome.js").then((m) => ({ default: m.Welcome })));
 const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
-/** Bold-Schriften nur laden, wenn der Stil sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
+/** Mitgelieferte Schriften nur laden, wenn Font = Based sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
 function ensureBoldFonts() {
   void import("./boldFonts.js").catch(() => undefined);
 }
@@ -84,7 +84,7 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   useEffect(() => {
     applyAppearance(appearance);
-    if (appearance.style === "bold") ensureBoldFonts();
+    if (appearance.font === "based") ensureBoldFonts();
     return appearance.theme === "system" ? onSystemThemeChange(() => applyAppearance(appearance)) : undefined;
   }, [appearance]);
 

@@ -76,7 +76,7 @@ test("Anklickbares ist mindestens 14 px groß (Kernflächen)", async ({ page }) 
   await expect(page.getByRole("dialog").first()).toBeVisible();
   found.push(...await small(page, "Quick Find"));
   await page.keyboard.press("Escape");
-  for (const [hash, where] of [["#library", "Library"], ["#graph", "Graph"], ["#trash", "Papierkorb"], ["#prefs-my-settings", "Einstellungen"], ["#prefs-sync", "Einstellungen Sync"], ["#prefs-agents", "Einstellungen Agenten"], ["#prefs-import", "Einstellungen Import"]] as const) {
+  for (const [hash, where] of [["#library", "Library"], ["#graph", "Graph"], ["#trash", "Papierkorb"], ["#prefs-appearance", "Einstellungen"], ["#prefs-sync", "Einstellungen Sync"], ["#prefs-agents", "Einstellungen Agenten"], ["#prefs-import", "Einstellungen Import"]] as const) {
     await page.evaluate((h) => { location.hash = h; }, hash);
     await page.waitForTimeout(300);
     found.push(...await small(page, where));

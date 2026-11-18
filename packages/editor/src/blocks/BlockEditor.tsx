@@ -3,8 +3,9 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, type CodeView, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
+import { boardEmbedView, setBoardEmbedView, type Camera, isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, type CodeView, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
+import { appearanceKey, watchAppearance } from "./hostAppearance.js";
 import { HTML_DOCUMENT_HEIGHT, HTML_PREVIEW_HEIGHT, htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme, isHtmlDocument, rememberHeight, rememberedHeight } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
@@ -1745,14 +1746,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return <hr className="bx2-divider" />;
     case "page": case "databasePage": case "linkToPage": {
       const target = b.type === "linkToPage" ? b.props?.linkTarget : b.id;
-      if (b.type === "page" && isBoardPage(b) && props.renderBoard) {
-        return (
-          <div className="bx2-embed bx2-board" data-embed="" data-no-marquee="" contentEditable={false} data-testid="board-block">
-            <PageLink target={target} />
-            <div className="bx2-board-body">{props.renderBoard({ blockID: b.id, pageID: b.id })}</div>
-          </div>
-        );
-      }
+      if (b.type === "page" && isBoardPage(b) && props.renderBoard) return <BoardBlock block={b} />;
       return <PageLink target={target} />;
     }
     case "databaseInline": {
@@ -1857,6 +1851,67 @@ function numberLabel(n: number, depth: number): string {
   return String(k);
 }
 
+/**
+ * Board mitten in der Seite (Elija 17./18.11.): Kopfzeile wie eine Seite – Icon (änderbar, Standard Board-Icon) und
+ * Titel (öffnet das Board) –, rechts die Sperre. Gesperrt bleibt die Fläche auf ihrem Ausschnitt stehen und die Seite
+ * scrollt darüber hinweg; ein Doppelklick betritt sie, Esc oder ein Klick daneben verlässt sie wieder.
+ */
+function BoardBlock({ block: b }: { block: Block }) {
+  const { store, editable, props } = useCtx();
+  const [picking, setPicking] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const read = useRef<(() => Camera) | undefined>(undefined);
+  const root = useRef<HTMLDivElement>(null);
+  const view = boardEmbedView(b);
+  const locked = view !== undefined;
+  const frozen = locked && !entered;
+  useEffect(() => {
+    if (!entered) return;
+    const down = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setEntered(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape" && root.current?.contains(document.activeElement)) setEntered(false); };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("keydown", key, true);
+    return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("keydown", key, true); };
+  }, [entered]);
+  const bindCamera = useCallback((r: (() => Camera) | undefined) => { read.current = r; }, []);
+  const camera = useMemo(() => (view ? { x: view.x, y: view.y, zoom: view.zoom } : undefined), [view?.x, view?.y, view?.zoom]);
+  const embed = useMemo(() => ({ camera, frozen, bindCamera }), [camera, frozen, bindCamera]);
+  const icon = typeof b.props?.icon === "string" ? b.props.icon : undefined;
+  const title = plainText(b.text);
+  const toggleLock = () => {
+    if (locked) { setBoardEmbedView(store, b.id, undefined); return; }
+    const c = read.current?.();
+    if (!c) return;
+    setBoardEmbedView(store, b.id, { x: Math.round(c.x * 100) / 100, y: Math.round(c.y * 100) / 100, zoom: c.zoom });
+    setEntered(false);
+  };
+  return (
+    <div ref={root} className="bx2-embed bx2-board" data-embed="" data-no-marquee="" contentEditable={false} data-testid="board-block" data-locked={locked ? "" : undefined} data-entered={entered ? "" : undefined}>
+      <div className="bx2-board-head">
+        <span className="bx2-board-icon">
+          <BasedIconButton label="Change icon" disabled={!editable} icon={<IconView icon={icon} fallback={<MenuIcon name="board" />} />} onClick={() => setPicking(true)} />
+          {picking ? (
+            <EmojiPicker className="bx-callout-picker" current={icon} onClose={() => setPicking(false)}
+              onPick={(e) => { setPicking(false); cmd.setBlockProps(store, [b.id], { icon: e ?? undefined }, e ? "Change icon" : "Remove icon"); }} />
+          ) : null}
+        </span>
+        <span className="bx2-board-title"><BasedButton label={title || "Untitled"} variant="ghost" ariaLabel={`Open ${title || "Untitled"}`} onClick={() => props.onOpenPage?.(b.id)} /></span>
+        {editable ? (
+          <span className="bx2-board-tools">
+            {entered ? <BasedButton label="Done" variant="ghost" onClick={() => setEntered(false)} /> : null}
+            <BasedIconButton label={locked ? "Unlock view" : "Lock view"} tooltip={locked ? "Unlock view" : "Lock view here"} pressed={locked} testID="board-lock"
+              icon={<MenuIcon name={locked ? "lock" : "unlock"} />} onClick={toggleLock} />
+          </span>
+        ) : null}
+      </div>
+      <div className="bx2-board-frame">
+        <div className="bx2-board-body" {...(frozen ? { inert: true } : {})}>{props.renderBoard?.({ blockID: b.id, pageID: b.id, embed })}</div>
+        {frozen ? <div className="bx2-board-shield" data-testid="board-shield" title="Double-click to enter" onDoubleClick={() => setEntered(true)} /> : null}
+      </div>
+    </div>
+  );
+}
+
 function PageLink({ target }: { target: string | undefined }) {
   const { store, props } = useCtx();
   const dir = props.pages;
@@ -1866,7 +1921,7 @@ function PageLink({ target }: { target: string | undefined }) {
   const icon = ref?.icon ?? (typeof local?.props?.icon === "string" ? local.props.icon : undefined);
   return (
     <button type="button" className="bx2-pagelink" data-embed="" contentEditable={false} onClick={() => target && props.onOpenPage?.(target)}>
-      <span className="bx2-pagelink-icon" aria-hidden="true"><IconView icon={icon} fallback={<MenuIcon name="page" />} /></span>
+      <span className="bx2-pagelink-icon" aria-hidden="true"><IconView icon={icon} fallback={<MenuIcon name={isBoardPage(local) ? "board" : "page"} />} /></span>
       <span className="bx2-pagelink-title">{title || "Untitled"}</span>
     </button>
   );
@@ -2736,18 +2791,19 @@ function MermaidPreview({ code }: { code: string }) {
   return <div ref={ref} className="bx2-mermaid" contentEditable={false} data-embed="" />;
 }
 
-/** Zählt hoch, wenn die App zwischen hell und dunkel wechselt (Einstellung oder System). */
-function useSchemeTick(): string {
-  const [scheme, setScheme] = useState(() => hostScheme());
+/**
+ * Hell/Dunkel plus ein Schlüssel für alles, was das Ergebnis als festen Wert übernimmt (Stil, Dichte, Seitenschrift).
+ * Nur auf `data-theme` zu hören reicht nicht: nach Bold → Default blieb im Rahmen die Bold-Schrift stehen.
+ */
+function useHostAppearance(host: React.RefObject<HTMLElement | null>): { scheme: "light" | "dark"; key: string } {
+  const read = () => ({ scheme: hostScheme(), key: hostScheme() + "/" + appearanceKey(document, host.current) });
+  const [state, setState] = useState(read);
   useEffect(() => {
-    const update = () => setScheme(hostScheme());
-    const mo = new MutationObserver(update);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const mq = globalThis.matchMedia?.("(prefers-color-scheme: dark)");
-    mq?.addEventListener("change", update);
-    return () => { mo.disconnect(); mq?.removeEventListener("change", update); };
+    const update = () => setState((cur) => { const next = read(); return next.key === cur.key ? cur : next; });
+    update();
+    return watchAppearance(update, host.current);
   }, []);
-  return scheme;
+  return state;
 }
 
 /**
@@ -2761,7 +2817,7 @@ interface HtmlSize { width?: number | undefined; height?: number | undefined }
 function HtmlPreview({ code, fill = false, size, onResize }: { code: string; fill?: boolean; size?: HtmlSize; onResize?: (s: HtmlSize) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
-  const scheme = useSchemeTick();
+  const { scheme, key: appearance } = useHostAppearance(host);
   const [doc, setDoc] = useState<string>();
   const [height, setHeight] = useState<number | undefined>(() => rememberedHeight(code));
   const [live, setLive] = useState<HtmlSize>();
@@ -2803,7 +2859,7 @@ function HtmlPreview({ code, fill = false, size, onResize }: { code: string; fil
     if (first.current) { first.current = false; make(); return; }
     const t = setTimeout(make, 250);
     return () => clearTimeout(t);
-  }, [code, scheme]);
+  }, [code, appearance]);
   useEffect(() => {
     if (fill) return;
     const onMessage = (e: MessageEvent) => {

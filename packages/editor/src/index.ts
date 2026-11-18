@@ -30,7 +30,7 @@ export { setBlockEditorProbe } from "./ui/probe.js";
 export type { BlockEditorProbe, BlockEditorProbeTarget, BlockProbeSelection } from "./ui/probe.js";
 // BSD-264: Board-Fläche (Whiteboard 2)
 export { BoardView } from "./whiteboard/BoardView.js";
-export type { BoardViewProps } from "./whiteboard/BoardView.js";
+export type { BoardEmbed, BoardViewProps } from "./whiteboard/BoardView.js";
 export { BOARD_TOOLS, BoardController, describeObject, minimapTransform } from "./whiteboard/controller.js";
 export type { BoardScene, BoardTool } from "./whiteboard/controller.js";
 export { BoardSession } from "./whiteboard/session.js";

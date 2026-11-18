@@ -31,7 +31,7 @@ import { TranscriptionSetup } from "../../meeting/TranscriptionSetup.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
 import { AI_OPTION, aiSetting } from "../../shell/ai.js";
 
-type ChoiceKey = "theme" | "style" | "marker" | "density";
+type ChoiceKey = "theme" | "font" | "style" | "marker" | "density";
 interface Choice { key: ChoiceKey; label: string; hint?: string; options: { value: string; label: string; swatch?: string }[] }
 
 const CHOICES: Choice[] = [
@@ -39,7 +39,9 @@ const CHOICES: Choice[] = [
     key: "theme", label: "Theme", hint: "System follows your device",
     options: [{ value: "light", label: "Light", swatch: "light" }, { value: "dark", label: "Dark", swatch: "dark" }, { value: "system", label: "System" }],
   },
-  { key: "style", label: "Style", hint: "Default is quiet; Bold adds character", options: [{ value: "default", label: "Default" }, { value: "bold", label: "Bold" }] },
+  // Elija 18.11.: Schrift und Stil getrennt – „Font“ wählt die Schrift der ganzen App, „Style“ nur noch Größe und Gewicht.
+  { key: "font", label: "Font", hint: "For the whole app. Based uses Schibsted Grotesk and Literata, bundled with the app", options: [{ value: "system", label: "System" }, { value: "based", label: "Based" }] },
+  { key: "style", label: "Style", hint: "Bold makes titles larger and headings heavier", options: [{ value: "default", label: "Default" }, { value: "bold", label: "Bold" }] },
   {
     key: "marker", label: "Marker", hint: "How Based marks its work",
     options: (["butter", "mint", "sky", "rose"] as const).map((m) => ({ value: m, label: m[0]!.toUpperCase() + m.slice(1), swatch: m })),
@@ -357,7 +359,7 @@ function AboutSection() {
       <Row label="Source code" hint="Opens GitHub in a new tab">
         <Link href="https://github.com/elija-7580/Based" target="_blank">github.com/elija-7580/Based</Link>
       </Row>
-      <Row label="Fonts" hint="Style Bold uses Schibsted Grotesk and Literata (SIL Open Font License 1.1), bundled with the app">
+      <Row label="Fonts" hint="Font Based uses Schibsted Grotesk and Literata (SIL Open Font License 1.1), bundled with the app">
         <Text type="supporting" color="secondary">No requests to font servers</Text>
       </Row>
       <Row label="Icons" hint="Page icons from Phosphor Icons (MIT License, © Phosphor Icons), bundled with the app">
@@ -410,7 +412,7 @@ function WritingSection(_: SettingsSectionProps) {
   return (
     <VStack gap={4}>
       <Group>
-        <Row label="Font" hint="For new pages; each page can still change it in its ••• menu">
+        <Row label="Default font" hint="For new pages; each page can still change it in its ••• menu">
           <SegmentedControl label="Font for new pages" value={fmt.font} onChange={(v) => newPageFormat.set({ ...fmt, font: v as typeof fmt.font })}>
             {FONTS.map((f) => <SegmentedControlItem key={f.value} value={f.value} label={f.label} />)}
           </SegmentedControl>
@@ -452,27 +454,35 @@ let registered = false;
 export function registerBuiltinSettings() {
   if (registered) return;
   registered = true;
-  registerSettingsSection({ id: "device", page: "account", title: "This device", order: 10, component: DeviceSection });
-  registerSettingsSection({ id: "appearance", page: "my-settings", title: "Appearance", order: 10, component: AppearanceSection });
-  registerSettingsSection({ id: "start-page", page: "my-settings", title: "Home", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
-  registerSettingsSection({ id: "writing", page: "my-settings", title: "Writing", order: 30, component: WritingSection, provides: ["Default font, small text and full width for new pages", "Spell-check"] });
-  if (featureVisible("meetings")) registerSettingsSection({ id: "meetings", page: "my-settings", title: "Meeting notes", order: 40, component: MeetingsSection });
-  registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection, provides: ["Workspace icon"] });
-  registerSettingsSection({ id: "language", page: "language", title: "Week", order: 10, component: LanguageSection, provides: ["Start week on Monday"] });
-  registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection });
-  registerSettingsSection({ id: "sync-server", page: "sync", title: "Based server", order: 10, component: SyncSection });
-  registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection });
-  registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection, provides: ["Automatic update checks on or off"] });
+  // `keywords`: wonach man im Suchfeld der Einstellungen sucht (Namen der Zeilen und übliche Wörter dafür). Nur nennen,
+  // was der Abschnitt in diesem Kanal zeigt – Marker und Calm mode gibt es auf beta nicht.
+  const marks = featureVisible("agentMarks");
+  registerSettingsSection({ id: "appearance", page: "appearance", title: "Appearance", order: 10, component: AppearanceSection,
+    keywords: ["Theme", "Dark mode", "Light mode", "Font", "Typeface", "Style", "Density", "Compact", ...(marks ? ["Marker color", "Calm mode"] : [])] });
+  registerSettingsSection({ id: "start-page", page: "editor", title: "Home", order: 10, component: StartPageSection, keywords: ["Home page", "Start page"] });
+  registerSettingsSection({ id: "writing", page: "editor", title: "New pages", order: 20, component: WritingSection,
+    keywords: ["Default font", "Serif", "Mono", "Small text", "Full width", "Spell-check", "Spelling"] });
+  if (featureVisible("meetings")) registerSettingsSection({ id: "meetings", page: "meetings", title: "Meeting notes", order: 10, component: MeetingsSection,
+    keywords: ["Transcribe recordings", "Transcription", "Whisper model", "Recording", "Battery"] });
+  registerSettingsSection({ id: "language", page: "language", title: "Week", order: 10, component: LanguageSection, provides: ["Start week on Monday"], keywords: ["Start week on", "Monday", "Sunday", "Calendar"] });
+  registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection, provides: ["Workspace icon"],
+    keywords: ["Workspace name", "Workspace icon", "Export all content", "Trash", "Empty trash"] });
+  registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection, keywords: ["Import from Notion", "Markdown", "Export", "ZIP"] });
+  registerSettingsSection({ id: "sync-server", page: "sync", title: "Based server", order: 10, component: SyncSection,
+    keywords: ["Server address", "Token", "Sync status", "Storage", "Database columns", ...(featureVisible("realtimeText") ? ["Real-time text"] : []), ...(featureVisible("fastStart") ? ["Fast start"] : [])] });
+  registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection, keywords: ["Current plan", "Price", "Free"] });
+  registerSettingsSection({ id: "device", page: "account", title: "This device", order: 10, component: DeviceSection, keywords: ["Device ID", "Storage"] });
+  registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection, provides: ["Automatic update checks on or off"], keywords: ["Check for updates", "Check automatically", "Version"] });
   // BSD-319: Diagnostics in Gruppen (diagnostics.tsx)
-  registerSettingsSection({ id: "diagnostics-status", page: "diagnostics", title: "Status", order: 10, component: StatusSection });
-  registerSettingsSection({ id: "diagnostics-problems", page: "diagnostics", title: "Problems", order: 20, component: ProblemsSection, provides: ["Hang reports"] });
-  registerSettingsSection({ id: "diagnostics-hangs", page: "diagnostics", title: "Hangs", order: 22, component: HangsSection });
-  registerSettingsSection({ id: "diagnostics-crash", page: "diagnostics", title: "Crash reports", order: 25, component: CrashReportsSection });
-  registerSettingsSection({ id: "diagnostics-reports", page: "diagnostics", title: "Reports", order: 30, component: ReportsSection, provides: ["Layout audit"] });
-  registerSettingsSection({ id: "diagnostics-log", page: "diagnostics", title: "Log", order: 40, component: LogSection, provides: ["Logs"] });
-  registerSettingsSection({ id: "diagnostics-dev", page: "diagnostics", title: "For developers", order: 50, component: DeveloperSection });
-  if (AI_OPTION) registerSettingsSection({ id: "ai-switch", page: "agents", title: "AI", order: 5, component: AiSwitchSection });
+  registerSettingsSection({ id: "diagnostics-status", page: "diagnostics", title: "Status", order: 10, component: StatusSection, keywords: ["Version", "Sync", "Storage", "Clock"] });
+  registerSettingsSection({ id: "diagnostics-problems", page: "diagnostics", title: "Problems", order: 20, component: ProblemsSection, provides: ["Hang reports"], keywords: ["Errors", "Warnings", "Freezes"] });
+  registerSettingsSection({ id: "diagnostics-hangs", page: "diagnostics", title: "Hangs", order: 22, component: HangsSection, keywords: ["Freeze", "Slow"] });
+  registerSettingsSection({ id: "diagnostics-crash", page: "diagnostics", title: "Crash reports", order: 25, component: CrashReportsSection, keywords: ["Offer a report after a crash", "Send report"] });
+  registerSettingsSection({ id: "diagnostics-reports", page: "diagnostics", title: "Reports", order: 30, component: ReportsSection, provides: ["Layout audit"], keywords: ["Report a problem", "Bug report", "Feedback"] });
+  registerSettingsSection({ id: "diagnostics-log", page: "diagnostics", title: "Log", order: 40, component: LogSection, provides: ["Logs"], keywords: ["Events on this device"] });
+  registerSettingsSection({ id: "diagnostics-dev", page: "diagnostics", title: "For developers", order: 50, component: DeveloperSection, keywords: ["Developer view", "Editor recording", "Design kit"] });
+  if (AI_OPTION) registerSettingsSection({ id: "ai-switch", page: "agents", title: "AI", order: 5, component: AiSwitchSection, keywords: ["AI features", "Turn AI off"] });
   // BSD-159: Anbieter, Schlüssel, Modelle und Freigaben aus dem Chat-Bereich.
-  registerSettingsSection({ id: "ai-providers", page: "agents", title: "Models and keys", order: 10, ai: true, component: () => <AiSettingsSection />, provides: ["API keys for AI providers", "Permissions"] });
-  registerSettingsSection({ id: "about", page: "about", title: "About", order: 10, component: AboutSection });
+  registerSettingsSection({ id: "ai-providers", page: "agents", title: "Models and keys", order: 10, ai: true, component: () => <AiSettingsSection />, provides: ["API keys for AI providers", "Permissions"], keywords: ["API keys", "Models", "Providers", "Permissions"] });
+  registerSettingsSection({ id: "about", page: "about", title: "About", order: 10, component: AboutSection, keywords: ["License", "Source code", "Fonts", "Icons", "Open source"] });
 }

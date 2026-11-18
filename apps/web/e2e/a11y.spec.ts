@@ -147,7 +147,7 @@ test("Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens", 
   await page.waitForTimeout(500);
   const db = await page.evaluate(() => location.hash);
   const found: string[] = [];
-  for (const [name, hash] of [["Home", "#home"], ["Seite", "#page-" + pageID], ["Datenbank", db], ["Library", "#library"], ["Trash", "#trash"], ["Settings", "#prefs-my-settings"]] as const) {
+  for (const [name, hash] of [["Home", "#home"], ["Seite", "#page-" + pageID], ["Datenbank", db], ["Library", "#library"], ["Trash", "#trash"], ["Settings", "#prefs-appearance"]] as const) {
     await page.evaluate((h) => { location.hash = h; }, hash);
     await page.waitForTimeout(500);
     found.push(...(await walk(page, name)));

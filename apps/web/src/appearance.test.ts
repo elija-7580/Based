@@ -10,6 +10,14 @@ describe("appearance", () => {
     const a = loadAppearance({ getItem: () => JSON.stringify({ theme: "dark", marker: "neon", calm: true }) });
     expect(a).toMatchObject({ theme: "dark", marker: "butter", calm: true });
   });
+  it("Schrift und Stil sind getrennt; wer früher Bold gespeichert hat, behält dessen Schrift", () => {
+    const load = (v: object) => loadAppearance({ getItem: () => JSON.stringify(v) });
+    expect(load({ style: "bold" })).toMatchObject({ style: "bold", font: "based" });
+    expect(load({ style: "bold", font: "system" })).toMatchObject({ style: "bold", font: "system" });
+    expect(load({ font: "based" })).toMatchObject({ style: "default", font: "based" });
+    expect(load({ font: "comic" }).font).toBe("system");
+    expect(DEFAULT_APPEARANCE.font).toBe("system");
+  });
   it("Glas nur auf Apple-Plattformen", () => {
     expect(platformMaterial({ platform: "MacIntel" })).toBe("glass");
     expect(platformMaterial({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0)" })).toBe("glass");

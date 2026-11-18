@@ -29,7 +29,7 @@ You don't need an account. On the welcome screen you can:
   templates later.
 
 The welcome screen also offers **Turn on meeting notes**. It starts Based's local server on your Mac and downloads a
-speech model once (488 MB, from huggingface.co). You can do this later in **Settings → My settings → Meeting notes**,
+speech model once (488 MB, from huggingface.co). You can do this later in **Settings → Meeting notes**,
 where you can also pick a smaller or a more accurate model.
 
 Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Settings → Import & export**.

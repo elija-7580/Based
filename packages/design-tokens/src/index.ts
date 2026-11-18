@@ -33,7 +33,7 @@ const block = (selector: string, vars: [string, string][]): string =>
   `${selector} {\n${vars.map(([k, v]) => `  --${k}: ${v};`).join("\n")}\n}\n`;
 
 /** The whole stylesheet. Switches live on the root element:
- *  data-theme="light|dark", data-style="bold", data-density="compact",
+ *  data-theme="light|dark", data-typeface="based", data-style="bold", data-density="compact",
  *  data-marker="mint|sky|rose", data-calm. */
 function typeVars(): [string, string][] {
   const out: [string, string][] = [];
@@ -82,8 +82,10 @@ export function buildCss(): string {
     ["chrome-edge", "inset 0 1px 0 var(--glass-edge)"],
   ];
   const solid: [string, string][] = [["chrome-bg", "var(--surface-raised)"], ["chrome-filter", "none"], ["chrome-edge", "none"]];
+  // Elija 18.11.: Schrift und Stil sind zwei Einstellungen. data-typeface="based" wählt die mitgelieferten Schriften,
+  // data-style="bold" nur noch Größen und Gewichte (vorher wechselte Bold heimlich auch die Schrift).
+  const typeface: [string, string][] = [["font-ui", families["bold-sans"]], ["font-head", families["bold-sans"]], ["font-body", families["bold-serif"]]];
   const bold: [string, string][] = [
-    ["font-ui", families["bold-sans"]], ["font-head", families["bold-sans"]], ["font-body", families["bold-serif"]],
     ["size-title", "40px"], ["weight-title", "800"], ["tracking-title", "-0.035em"],
     ["size-greeting", "36px"], ["weight-heading", "700"],
     ["size-body", "17px"], ["leading-body", "1.7"],
@@ -95,6 +97,7 @@ export function buildCss(): string {
     block(':root,\n[data-theme="light"]', themed("light")),
     block('[data-theme="dark"]', themed("dark")),
     block(":root", plain),
+    block('[data-typeface="based"]', typeface),
     block('[data-style="bold"]', bold),
     block('[data-density="compact"]', compact),
     ...markers.map((m) => block(`[data-marker="${m}"]`, [["marker", `var(--marker-${m})`], ["marker-strong", `var(--marker-${m}-strong)`]])),
