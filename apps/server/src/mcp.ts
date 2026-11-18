@@ -8,7 +8,7 @@ import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInR
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
 import { AgentBrain, WorkspaceTools, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
-import type { WorkspaceStore } from "@based/core";
+import type { Author, WorkspaceStore } from "@based/core";
 import { resolveInboxText, createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
 export const SERVER_NAME = "based";
@@ -83,6 +83,12 @@ export function mcpRuleRefusal(store: WorkspaceStore, tool: string, args: unknow
   return undefined;
 }
 
+/** BSD-522: Autor für Schreibzugriffe über MCP – der Name, den der Client beim Verbinden nennt. */
+export function mcpActor(server: McpServer): Author {
+  const name = server.server.getClientVersion()?.name?.trim();
+  return { kind: "agent", name: name ? name.slice(0, 80) : "MCP client" };
+}
+
 /** Ein MCP-Server über den Seiten des Workspaces. Pro HTTP-Anfrage neu (zustandslos), für stdio einmal. */
 export function createMcpServer(pages: Pages): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION }, { instructions: INSTRUCTIONS });
@@ -92,7 +98,8 @@ export function createMcpServer(pages: Pages): McpServer {
     (server as unknown as { registerTool: typeof register }).registerTool = (name, config, cb) =>
       register(name, config, config.annotations?.readOnlyHint ? cb : (...a: unknown[]) => {
         const refused = mcpRuleRefusal(pages.store, name, a[0]);
-        return refused ? fail(refused) : cb(...a);
+        // BSD-522: alles, was ein MCP-Client schreibt, gilt als von einem Agenten (Seite „ai“ bzw. „mixed“, Autor je Block).
+        return refused ? fail(refused) : pages.store.withActor(mcpActor(server), () => cb(...a));
       });
   }
   const line = (id: string) => `- ${pages.title(id)} (id: ${id})`;

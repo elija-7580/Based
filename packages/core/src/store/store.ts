@@ -6,6 +6,8 @@ import { canonicalStringify, cloneRecord } from "../json.js";
 import { compareStamps, StampClock, ZERO_STAMP, type Stamp } from "../hlc.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { diffProperties } from "../model/property-records.js";
+import type { Actor } from "../model/provenance.js";
+import { applyProvenance } from "./provenance-ops.js";
 import type { Block, Database, DatabaseView, PropertyRecord, PropertySchema, RecordKind, WireRecord, Workspace } from "../model/records.js";
 
 export type RecordKeyString = `${RecordKind}:${string}`;
@@ -422,6 +424,11 @@ export class WorkspaceStore {
   readonly persistence: Persistence | undefined;
   now: () => number;
   userID: string | null;
+  /**
+   * BSD-522: Wer gerade schreibt, wenn es nicht der Mensch am Gerät ist (Agent über MCP, Gast). Nur über `withActor`
+   * setzen; `undefined` = der Nutzer.
+   */
+  actor: Actor = undefined;
   undoCoalesceInterval = 1.5;
   maxUndo = 300;
   revision = 0;
@@ -880,6 +887,9 @@ export class WorkspaceStore {
     tx.lww = opts.keepStamps === true;
     try {
       const result = body(tx);
+      // BSD-522: Herkunft (Autor je Block, origin je Seite) nur bei eigenen Änderungen – nicht bei Sync/Importen mit
+      // fertigen Stempeln und nicht bei aus Y-Dokumenten abgeleiteten Änderungen (die hat der Schreiber schon gesetzt).
+      if (!opts.keepStamps && !opts.derived && tx.order.length > 0) applyProvenance(this, tx, this.actor);
       // BSD-220 `derived`: aus einem /collab-Y.Doc abgeleitet (nie rückgängig, nicht pushen); gestempelt wie sonst auch.
       const origin: ChangeOrigin = opts.derived ? "derived" : opts.keepStamps ? "import" : "local";
       this.commit(tx, name, opts.coalesce, origin, opts.keepStamps || opts.derived ? false : opts.undoable ?? true, !opts.keepStamps);
@@ -887,6 +897,20 @@ export class WorkspaceStore {
     } catch (e) {
       this.rollback(tx);
       throw e;
+    }
+  }
+
+  /**
+   * BSD-522: `body` als `actor` ausführen – jede Transaktion darin setzt Autor und Herkunft für ihn. Nur für
+   * synchrone Arbeit (Promises danach laufen wieder als Nutzer).
+   */
+  withActor<T>(actor: Actor, body: () => T): T {
+    const prev = this.actor;
+    this.actor = actor;
+    try {
+      return body();
+    } finally {
+      this.actor = prev;
     }
   }
 

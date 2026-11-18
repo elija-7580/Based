@@ -7,6 +7,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { afterEach, describe, expect, it } from "vitest";
+import { authorKindOf, createPage } from "@based/core";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { AgentBrain, AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, TASK_TYPE, type ProjectData } from "@based/brain";
@@ -75,6 +76,29 @@ describe("MCP über Streamable HTTP", () => {
     expect(inbox).toContain("1 run needs you:");
     expect(inbox).toContain("May I send the mail?");
     expect(inbox).not.toContain("Details…");
+  });
+
+  it("BSD-522: Schreiben über MCP setzt Herkunft „ai“ und Agent-Autor; in eine Seite des Nutzers → „mixed“", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    const page = idIn(textOf(await call("create_page", { title: "From the agent", markdown: "First line" })));
+    expect(store.blocks.get(page)?.origin).toBe("ai");
+    const author = store.blocks.get(page)?.author;
+    expect(author).toMatch(/^a-/);
+    expect(authorKindOf(author)).toBe("agent");
+    expect(store.workspace.authors?.[author!]?.kind).toBe("agent");
+    const kids = store.children("b:" + page).map((id) => store.blocks.get(id)!);
+    expect(kids.length).toBeGreaterThan(0);
+    for (const k of kids) expect(k.author).toBe(author);
+    // Seite des Nutzers (ohne Herkunft): ein Agent hängt an → gemischt; Lesen ändert nichts
+    const mine = createPage(store, { title: "Mine" });
+    expect(store.blocks.get(mine)?.origin).toBeUndefined();
+    await call("read_page", { id: mine });
+    expect(store.blocks.get(mine)?.origin).toBeUndefined();
+    await call("append_markdown", { id: mine, markdown: "Added by the agent" });
+    expect(store.blocks.get(mine)?.origin).toBe("mixed");
+    // danach schreibt der Nutzer wieder ohne Agent-Kennung
+    expect(store.actor).toBeUndefined();
   });
 
   it("BSD-221 Teil 2: find_replace, move_page, duplicate_page, backlinks, set_favorite", async () => {
