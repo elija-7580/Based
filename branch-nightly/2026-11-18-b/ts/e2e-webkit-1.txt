@@ -1,2 +1,61 @@
-cancelled 5f8d86d2240a72e840d072118b2f1d0ef484aa50
-(kein Log – Lauf vorher abgebrochen)
+cancelled 527079387777774d6f3f16a187d9b266274713a7
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, /home/runner/work/Based/Based/apps/web/src/screens/WelcomeTour.tsx, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 292 tests using 2 workers, shard 1 of 2
+
+  ✓    2 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (light) (19.7s)
+  ✓    3 [webkit] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (dark) (14.5s)
+  ✓    4 [webkit] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (2.7s)
+  ✓    5 [webkit] › e2e/ai-switch.spec.ts:57:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (3.3s)
+  -    6 [webkit] › e2e/ai-switch.spec.ts:84:3 › Screenshots ohne AI (light)
+  -    7 [webkit] › e2e/ai-switch.spec.ts:84:3 › Screenshots ohne AI (dark)
+  ✓    8 [webkit] › e2e/ai-switch.spec.ts:104:1 › ohne AI: kein Ask AI im Block-Editor (2.4s)
+  ✓    9 [webkit] › e2e/ai-switch.spec.ts:125:1 › ohne AI: Rechtsklick auf die Home-Seite ohne „Use dashboard as Home“, andere Seite „Set as Home“ (4.5s)
+
+  ✓    1 [webkit] › e2e/a11y.spec.ts:129:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (49.9s)
+  -   11 [webkit] › e2e/a11y.spec.ts:168:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓   10 [webkit] › e2e/app-heads.spec.ts:24:3 › Köpfe der App-Screens: Titel 20/600, Anzahl in meta daneben (light) (3.3s)
+  ✓   12 [webkit] › e2e/a11y.spec.ts:210:1 › Quick Find: Esc gibt den Fokus zurück (2.6s)
+  ✓   13 [webkit] › e2e/app-heads.spec.ts:24:3 › Köpfe der App-Screens: Titel 20/600, Anzahl in meta daneben (dark) (3.2s)
+  ✓   14 [webkit] › e2e/a11y.spec.ts:226:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (4.5s)
+(node:6504) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   15 [webkit] › e2e/appearance-baked.spec.ts:12:1 › HTML-Ergebnis folgt Stil und Seitenschrift – auch wieder zurück (5.7s)
+  -   17 [webkit] › e2e/beta-build.spec.ts:39:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (light)
+  -   18 [webkit] › e2e/beta-build.spec.ts:39:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (dark)
+  -   19 [webkit] › e2e/beta-build.spec.ts:158:1 › Beta-Build: Problem melden führt zur Mail an hello@basednotes.app
+  -   20 [webkit] › e2e/beta-build.spec.ts:188:1 › Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home
+  ✓   16 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (10.7s)
+(node:6802) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   22 [webkit] › e2e/backups.spec.ts:114:1 › BSD-449: gewählter Backup-Ordner – Backup landet dort, fehlender Ordner sichtbar, kein stiller Rückfall (8.5s)
+  ✓   23 [webkit] › e2e/block-drag.spec.ts:52:1 › Drei gewählte Blöcke ziehen gemeinsam; ⌘Z holt in einem Schritt zurück; Esc bricht ab (5.1s)
+  ✓   24 [webkit] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (light, 1280×820) (3.9s)
+  ✓   25 [webkit] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (light, 900×600) (3.8s)
+  ✓   26 [webkit] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (light, 1728×1000) (4.5s)
+  ✓   27 [webkit] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (dark, 1280×820) (2.4s)
+  ✓   21 [webkit] › e2e/beta-data.spec.ts:129:1 › BSD-469 Beta-Weg 2: Notion-Export importieren, als Markdown/HTML/Archiv exportieren und wieder importieren, Sicherung vor dem Update zurückspielen (39.0s)
+(node:7368) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   28 [webkit] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (dark, 900×600) (1.5s)
+  ✓   30 [webkit] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (dark, 1728×1000) (2.7s)
+  ✓   31 [webkit] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (2.8s)
+  ✓   32 [webkit] › e2e/block-editor.spec.ts:64:1 › Nach dem Neuladen ist alles da (dauerhaftes Profil, Records über den Store-Worker) (5.6s)
