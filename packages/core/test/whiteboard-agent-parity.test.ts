@@ -52,6 +52,36 @@ describe("Skript: Stil und Stelle", () => {
   });
 });
 
+describe("Skript: kopieren und Rahmen verschieben", () => {
+  const frame: WBShape = { id: "ffff0000", kind: "frame", z: "a0", x: 0, y: 0, w: 500, h: 300, rot: 0, text: "F" };
+  const a = { ...note("aaaa1111", 20, "A"), y: 60 }, b = { ...note("bbbb2222", 250, "B"), y: 60 };
+  const c: WBConnector = { id: "cccc3333", kind: "connector", z: "a9", from: { id: a.id, side: "auto" }, to: { id: b.id, side: "auto" }, shape: "curved", label: "then" };
+  const outside = note("dddd4444", 900, "D");
+  it("copy wie ⌘D, mit at=, ein Rahmen mit Inhalt und Verbindung; Name für Pfeile nutzbar", () => {
+    const plan = planBoardScript("copy dddd as d2\ncopy ffff as f2 {at=0,600}\nd2 -> aaaa", [frame, a, b, c, outside], ids());
+    expect(plan.errors).toEqual([]);
+    const d2 = plan.add.find((o) => o.id === plan.names.get("d2")) as WBShape;
+    expect(d2).toMatchObject({ x: 916, y: 16, text: "D", style: { agent: true } });
+    const f2 = plan.add.filter((o) => o.kind !== "connector" && (o as WBShape).y >= 600) as WBShape[];
+    expect(f2.map((o) => o.kind).sort()).toEqual(["frame", "note", "note"]);
+    const lines = plan.add.filter((o) => o.kind === "connector") as WBConnector[];
+    expect(lines).toHaveLength(2); // die mitkopierte Verbindung und d2 -> aaaa
+    expect(lines.some((l) => l.label === "then" && f2.some((o) => o.id === l.from.id))).toBe(true);
+  });
+  it("copy von einem anderen Board kommt neben das Vorhandene; unbekanntes Board wird gemeldet", () => {
+    const plan = planBoardScript("copy dddd as x {from=other}\ncopy dddd as y {from=nope}", [frame], ids(), { boardObjects: (id) => (id === "other" ? [outside] : undefined) });
+    expect(plan.errors).toHaveLength(1);
+    expect(plan.errors[0]).toMatch(/no board nope/);
+    expect((plan.add[0] as WBShape).x).toBeGreaterThan(500);
+  });
+  it("set Rahmen {at=…} nimmt seinen Inhalt mit", () => {
+    const plan = planBoardScript("set ffff {at=100,1000}", [frame, a, b, c, outside], ids());
+    expect(plan.patch.get(a.id)).toEqual({ x: 120, y: 1060 });
+    expect(plan.patch.get(b.id)).toEqual({ x: 350, y: 1060 });
+    expect(plan.patch.has(outside.id)).toBe(false);
+  });
+});
+
 describe("Skript: freies Zeichnen", () => {
   it("SVG-Pfad wird ein Strich je Teilpfad, mit Farbe und Breite; at=0,0 heißt Board-Koordinaten", () => {
     const plan = planBoardScript("ink s: M 100 100 L 200 100 M 100 150 Q 150 200 200 150 {color=red width=thick at=0,0}", [], ids());

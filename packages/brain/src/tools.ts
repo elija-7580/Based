@@ -350,7 +350,11 @@ export class WorkspaceTools implements ToolHost {
           const existing = given ? boardObjectsOf(store, given) : [];
           let known: ReturnType<typeof workspaceFiles> | undefined;
           const files = (ref: string) => this.fileInfo(ref, (known ??= workspaceFiles(store)).get(ref));
-          const plan = planBoardScript(need(a, "script"), existing, () => makeRecordID(), { files });
+          const boardObjects = (id: string) => {
+            try { this.page(id, true); } catch { return undefined; }
+            return isBoardPage(store.blocks.get(id)) ? boardObjectsOf(store, id) : undefined;
+          };
+          const plan = planBoardScript(need(a, "script"), existing, () => makeRecordID(), { files, boardObjects });
           // Seitenkarten: nur vorhandene Seiten, mit ihrem Titel als Text (für Suche und Vorschau).
           plan.add = plan.add.filter((o) => {
             if (o.kind !== "page") return true;

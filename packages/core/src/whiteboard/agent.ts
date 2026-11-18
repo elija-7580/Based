@@ -9,6 +9,7 @@
 // Lesen – `boardOutline`: eine Zeile je Objekt (Kennung, Art, Text, Stelle, Größe, Stil), Verbindungen als Pfeile.
 // Schreiben – `planBoardScript`: eine Anweisung je Zeile, `BOARD_SCRIPT_HELP` beschreibt sie für Agenten.
 import { keyBetween } from "../sortkeys.js";
+import { duplicateObjects } from "./geometry.js";
 import { danglingConnectors, type ConnectorShape, type WBConnector, type WBObject, type WBShape, type WBStyleValue } from "./model.js";
 import { encodeInk, decodeInk } from "./ink.js";
 import { inkObjectGeometry } from "./stroke.js";
@@ -25,6 +26,7 @@ export const BOARD_SCRIPT_HELP = [
   "One statement per line. Create: note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> | image a: <file ref> | file a: <file ref> | ink a: <SVG path d or x,y x,y …>",
   "Connect: a -> b: optional label (a, b: names from this script or handles from read_board). Group: frame f: Title { a b c }",
   "Change: set <handle>: new text | set <handle> {attrs} | del <handle> | background dots|lines|grid|plain",
+  "Copy: copy <handle> [<handle> …] as c {at=x,y from=<board id>} – copies objects (a frame with what is inside, lines between copied objects too); without at= offset by 16 px, from another board beside what is there.",
   "Attributes go last in braces, on create, set, -> and frame lines: {color=green fill=blue at=120,40 size=200x100 rot=15 pin=true z=front}",
   `color: ${BOARD_STROKE_COLORS.join(" ")} (text, shape border, line, pen); on notes and frames a fill: ${BOARD_FILL_COLORS.join(" ")}; highlighter: ${BOARD_HIGHLIGHT_COLORS.join(" ")}. fill= (shapes): fill colors.`,
   "at=x,y is the top-left corner in board px (read_board shows @x,y and WxH); without it Based lays things out beside what is there. z=front|back. shape=rect|oval|diamond. line=curved|straight|elbow (on ->). full=true shows a whole page.",
@@ -111,6 +113,8 @@ export interface BoardPlan {
 export interface BoardScriptOptions {
   /** Was über eine Datei bekannt ist (Name, Art, Maße, PDF-Seiten); `undefined`: keine solche Datei. */
   files?: (ref: string) => BoardFileInfo | undefined;
+  /** Objekte eines anderen Boards (für `copy … {from=…}`); `undefined`: kein Board, das der Agent sehen darf. */
+  boardObjects?: (boardID: string) => readonly WBObject[] | undefined;
 }
 
 const SIZES = { note: { w: 168, h: 150 }, shape: { w: 180, h: 72 }, text: { w: 320, h: 26 }, page: { w: 240, h: 72 } } as const;
@@ -156,6 +160,7 @@ export function planBoardScript(script: string, existing: readonly WBObject[], n
   const edges: { from: string; to: string; label?: string; attrs: Attrs; row: string }[] = [];
   const frames: { name: string; title: string; members: string[]; attrs: Attrs; row: string }[] = [];
   const zMoves: { id: string; to: "front" | "back" }[] = [];
+  const copies: { name: string; handles: string[]; attrs: Attrs; row: string }[] = [];
   const byID = new Map(existing.map((o) => [o.id, o]));
   const find = (handle: string): WBObject | undefined => {
     const exact = byID.get(handle);
@@ -189,6 +194,10 @@ export function planBoardScript(script: string, existing: readonly WBObject[], n
       } else if ((m = /^del\s+([\w.-]+)$/.exec(row))) {
         const o = find(m[1]!);
         if (!o) bad(`no single object matches “${m[1]}”`); else plan.remove.push(o.id);
+      } else if ((m = /^copy\s+([\w.\- ]+?)\s+as\s+([\w.-]+)$/.exec(row))) {
+        if (nodes.has(m[2]!) || copies.some((c) => c.name === m![2])) { bad(`name “${m[2]}” is used twice`); continue; }
+        for (const k of attrs.keys()) if (k !== "at" && k !== "from") throw new ScriptError("copy takes at= and from= only");
+        copies.push({ name: m[2]!, handles: m[1]!.split(/\s+/).filter(Boolean), attrs, row: raw });
       } else if ((m = /^background\s+(\w+)$/.exec(row))) {
         if (!BACKGROUNDS.has(m[1] as BoardBackground)) bad("background is dots, lines, grid or plain");
         else plan.background = m[1] as BoardBackground;
@@ -254,6 +263,34 @@ export function planBoardScript(script: string, existing: readonly WBObject[], n
     rowH = Math.max(rowH, n.h);
   });
 
+  // Kopien: wie ⌘D (16 px versetzt) oder an at=; von einem anderen Board neben das Vorhandene.
+  for (const c of copies) {
+    try {
+      const fromID = c.attrs.get("from");
+      const source = fromID !== undefined ? opts.boardObjects?.(fromID) : existing;
+      if (!source) throw new ScriptError(`no board ${fromID ?? ""} to copy from`);
+      const pick = (h: string) => { const hit = source.filter((o) => o.id === h || (h.length >= 4 && o.id.startsWith(h))); return hit.length === 1 ? hit[0] : undefined; };
+      const ids = new Set<string>();
+      for (const h of c.handles) { const o = pick(h); if (!o) throw new ScriptError(`no single object matches “${h}”`); ids.add(o.id); }
+      // Ein Rahmen nimmt mit, was ganz in ihm liegt (wie beim Verschieben).
+      for (const id of [...ids]) {
+        const f = source.find((o) => o.id === id);
+        if (f && isShape(f) && f.kind === "frame") for (const o of source) if (isShape(o) && o.kind !== "frame" && inside(o, f)) ids.add(o.id);
+      }
+      // Verbindungen zwischen kopierten Objekten kommen mit.
+      for (const o of source) if (!isShape(o) && ids.has(o.from.id) && ids.has(o.to.id)) ids.add(o.id);
+      const shapes = source.filter((o): o is WBShape => isShape(o) && ids.has(o.id));
+      if (shapes.length === 0) throw new ScriptError("nothing to copy");
+      const x0 = Math.min(...shapes.map((o) => o.x)), y0 = Math.min(...shapes.map((o) => o.y));
+      const at = c.attrs.has("at") ? pair(c.attrs.get("at")!, ",", "at") : fromID !== undefined ? [ox, gy + (loose.length ? GAP_Y : 0)] : undefined;
+      const offset = at ? { x: Math.round(at[0]! - x0), y: Math.round(at[1]! - y0) } : { x: 16, y: 16 };
+      const made = duplicateObjects(source, ids, newID, offset).map((o) => ({ ...o, z: nextZ(), style: { ...(o.style ?? {}), agent: true } }) as WBObject);
+      plan.add.push(...made);
+      const first = made.find(isShape);
+      if (first) { placed.set(c.name, first); plan.names.set(c.name, first.id); }
+    } catch (err) { plan.errors.push(`${c.row} — ${err instanceof Error ? err.message : "not understood"}`); }
+  }
+
   const endOf = (name: string): string | undefined => placed.get(name)?.id ?? (() => { const o = find(name); return o && isShape(o) ? o.id : undefined; })();
   for (const e of edges) {
     const from = endOf(e.from), to = endOf(e.to);
@@ -283,6 +320,19 @@ export function planBoardScript(script: string, existing: readonly WBObject[], n
     plan.names.set(f.name, id);
     plan.add.push({ id, kind: "frame", z: backZ(), x: x0 - FRAME_PAD, y: y0 - FRAME_TOP, w: x1 - x0 + FRAME_PAD * 2, h: y1 - y0 + FRAME_TOP + FRAME_PAD, rot: 0, text: f.title, style });
   }
+  // Ein verschobener Rahmen nimmt mit, was ganz in ihm lag (wie beim Ziehen mit der Hand).
+  for (const [id, fields] of [...plan.patch]) {
+    const f = byID.get(id);
+    if (!f || !isShape(f) || f.kind !== "frame" || (fields.x === undefined && fields.y === undefined)) continue;
+    const dx = Number(fields.x ?? f.x) - f.x, dy = Number(fields.y ?? f.y) - f.y;
+    if (!dx && !dy) continue;
+    for (const o of existing) {
+      if (!isShape(o) || o.kind === "frame" || !inside(o, f)) continue;
+      const own = plan.patch.get(o.id) ?? {};
+      if (own.x !== undefined || own.y !== undefined) continue;
+      plan.patch.set(o.id, { ...own, x: o.x + dx, y: o.y + dy });
+    }
+  }
   // Nach vorn / nach hinten (bestehende Objekte).
   for (const mv of zMoves) {
     const fields = plan.patch.get(mv.id) ?? {};
@@ -295,6 +345,8 @@ export function planBoardScript(script: string, existing: readonly WBObject[], n
 }
 
 class ScriptError extends Error {}
+
+const inside = (o: WBShape, f: WBShape) => o.x >= f.x && o.y >= f.y && o.x + o.w <= f.x + f.w && o.y + o.h <= f.y + f.h;
 
 function oneOf<T extends string>(v: string, list: readonly T[], what: string): T {
   if ((list as readonly string[]).includes(v)) return v as T;

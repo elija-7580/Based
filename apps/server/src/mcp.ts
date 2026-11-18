@@ -4,10 +4,10 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { BOARD_SCRIPT_HELP, PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
+import { BOARD_SCRIPT_HELP, PRIVATE, workspaceFiles, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { assetFileInfo, fetchRemote, readLocalFile, storeBytes, UploadError } from "./board-files.js";
+import { assetFileInfo, fetchRemote, prepareFiles, readLocalFile, storeBytes, UploadError } from "./board-files.js";
 import type { AssetStore } from "./assets.js";
 import { AgentBrain, looksSensitive, MEMORY_KINDS, Recall, RememberError, WorkspaceTools, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
 import type { Author, WorkspaceStore } from "@based/core";
@@ -412,8 +412,11 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
       description: ["Add to or change a whiteboard with a short script. Based lays new objects out beside what is there unless they have at=. Omit `id` to create a new board (`title`, `parent` optional).", BOARD_SCRIPT_HELP].join("\n"),
       inputSchema: { id: z.string().optional(), script: z.string().min(1), title: z.string().optional(), parent: z.string().optional() },
     },
-    guarded((a: { id?: string | undefined; script: string; title?: string | undefined; parent?: string | undefined }) =>
-      board("draw_board", { page_id: a.id, script: a.script, title: a.title, parent_id: a.parent })),
+    async (a: { id?: string | undefined; script: string; title?: string | undefined; parent?: string | undefined }) => {
+      // PDFs im Skript vorher genau vermessen (pdf.js ist asynchron, das Werkzeug selbst nicht).
+      if (assets) await prepareFiles(assets, a.script.match(/[0-9a-f]{64}/g) ?? []);
+      return guarded(() => board("draw_board", { page_id: a.id, script: a.script, title: a.title, parent_id: a.parent }))(undefined);
+    },
   );
   server.registerTool(
     "list_files",
@@ -422,7 +425,13 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
       inputSchema: { query: z.string().optional().describe("Part of the file name"), limit, offset: z.number().int().min(0).optional() },
       annotations: { readOnlyHint: true },
     },
-    guarded((a: { query?: string | undefined; limit?: number | undefined; offset?: number | undefined }) => board("list_files", a)),
+    async (a: { query?: string | undefined; limit?: number | undefined; offset?: number | undefined }) => {
+      if (assets) {
+        const q = a.query?.toLowerCase();
+        await prepareFiles(assets, [...workspaceFiles(pages.store).values()].filter((f) => !q || f.name.toLowerCase().includes(q)).map((f) => f.ref));
+      }
+      return guarded(() => board("list_files", a))(undefined);
+    },
   );
   if (assets) {
     const local = opts.localFiles === true;
@@ -431,7 +440,7 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
       {
         description: [
           "Put a file (image, PDF, any document) into the workspace's file storage and get its ref for draw_board. Give exactly one of",
-          local ? "`path` (a file on this computer), `url` (https) or `data` (base64)." : "`url` (https) or `data` (base64).",
+          local ? "`path` (a file on this computer), `url` (http/https; redirects are followed) or `data` (base64)." : "`url` (http/https; redirects are followed) or `data` (base64).",
           "With `board` the file is placed on that whiteboard right away (`at` = x,y top-left; a PDF becomes one object per page).",
         ].join(" "),
         inputSchema: {
@@ -457,6 +466,7 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
             name ||= "file";
           }
           const ref = await storeBytes(assets, bytes, name, mime);
+          await prepareFiles(assets, [ref]);
           const info = assetFileInfo(assets, ref);
           const what = info?.pages?.length ? `PDF, ${info.pages.length} page${info.pages.length === 1 ? "" : "s"}` : info?.width ? `${info.width}x${info.height}` : (info?.mime ?? mime ?? "file");
           const lines = [`Stored “${name}” (${what}, ${Math.max(1, Math.round(bytes.length / 1024))} KB): ${ref}`];
