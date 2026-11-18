@@ -38,7 +38,8 @@ token) and ask "Which projects are running and what needs me?".
 
 A client loads the whole tool list into every conversation. Based has about 70 tools; their descriptions and schemas
 come to roughly 12,500 tokens before an agent has done anything. So `tools/list` shows only 19: the 17 core tools
-(search, read, write pages, rows, memory, undo) plus two that reach the rest. That is about 3,400 tokens, 71 % less.
+(search, read, write pages, rows, memory, undo) plus two that reach the rest. That is about 3,200 tokens, roughly
+three quarters less (estimated from the size of descriptions and schemas, four characters per token).
 
 | Tool | What it does |
 |---|---|
