@@ -1,39 +1,9 @@
-failure e23712634a75bc015382303a21ac3b22d8edd30d
-      158 |   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
-      159 |   console.log(found.join("\n"));
-    > 160 |   expect(found).toEqual([]);
-          |                 ^
-      161 | });
-      162 |
-      163 | // Fotos der in BSD-304 geänderten Stellen (Gliederung 24 px, Quick Find, Tabelle mit Fokus), hell und dunkel in
-        at /home/runner/work/Based/Based/apps/web/e2e/a11y.spec.ts:160:17
-
-    Error Context: test-results/a11y-Tab-Durchlauf-Namen-F-db003-chen-auf-allen-Hauptscreens-webkit-retry1/error-context.md
-
-  2) [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
-
-    Test timeout of 30000ms exceeded.
-
-    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Test timeout of 30000ms exceeded.
-
-    Error: locator.click: Target page, context or browser has been closed
-    Call log:
-      - waiting for getByTestId('block-editor').first().locator('[data-editable-id]').last()
-        - locator resolved to <div role="textbox" aria-label="Code" spellcheck="false" aria-multiline="true" contenteditable="true" data-placeholder="Code" writingsuggestions="false" class="bx2-field bx2-t-code" data-editable-id="a0000000-0000-4000-8000-000000000028"><div class="mystery-widget" id="a0000000-0000-400…</div>
-      - attempting click action
-        2 × waiting for element to be visible, enabled and stable
-          - element is not visible
-        - retrying click action
-        - waiting 20ms
+failure a2ca73945c5497e2862b24959475f9bd39da45d3
         2 × waiting for element to be visible, enabled and stable
           - element is not visible
         - retrying click action
           - waiting 100ms
-        41 × waiting for element to be visible, enabled and stable
+        40 × waiting for element to be visible, enabled and stable
            - element is not visible
          - retrying click action
            - waiting 500ms
@@ -49,13 +19,43 @@ failure e23712634a75bc015382303a21ac3b22d8edd30d
       179 |   await page.goBack();
         at /home/runner/work/Based/Based/apps/web/e2e/editor-passthrough.spec.ts:176:23
 
+    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Test timeout of 30000ms exceeded.
+
     Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-webkit-retry1/error-context.md
+
+  3) [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Row 24"
+    Received: null
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      26 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
+      27 |   await page.mouse.click(x, y);
+    > 28 |   await expect.poll(() => activeRow(page)).toBe(under);
+         |                                            ^
+      29 |   await page.keyboard.press("Escape"); // Zelleneditor zu
+      30 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
+      31 | }
+        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:28:44)
+        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:47:40
+
+    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
 
   2 failed
     [webkit] › e2e/a11y.spec.ts:126:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens 
     [webkit] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
+  1 flaky
+    [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
   26 skipped
-  239 passed (16.2m)
+  238 passed (16.0m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
