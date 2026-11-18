@@ -30,6 +30,13 @@
   line-height: var(--type-ui-leading);
   font-variant-numeric: tabular-nums;
 }
+/* BSD-571: wie body in apps/web (BSD-562) – Schibsted Grotesk (Font „Based“) tauscht mit Tabellenziffern auch Komma
+   und Punkt gegen Ziffernbreite („Nov 18 , 2026“). Mit dieser Schrift sind Text und Datum proportional; Zahlenwerte
+   (Zahlenspalte, Formel/Rollup) behalten Tabellenziffern für die Ziffern, ihr Komma und Punkt (`.dbui-punct`) sind
+   schmal – rechtsbündig fluchten die Stellen trotzdem, weil Trenner bei gleichem Format an derselben Stelle stehen. */
+[data-typeface="based"] .dbui-root, [data-typeface="based"] .dbui-data { font-variant-numeric: normal; }
+[data-typeface="based"] .dbui-num, [data-typeface="based"] .dbui-tnum { font-variant-numeric: tabular-nums; }
+[data-typeface="based"] .dbui-punct { font-variant-numeric: normal; }
 .dbui-popover, .dbui-rowprops { --dbui-tone-gray: var(--status-neutral); --dbui-tone-blue: var(--status-ready); --dbui-tone-pink: var(--status-review); --dbui-tone-orange: var(--status-blocked);
   --dbui-tone-green: color-mix(in srgb, var(--synced) 22%, var(--bg)); --dbui-tone-red: color-mix(in srgb, var(--danger) 18%, var(--bg));
   --dbui-strong-gray: var(--muted); --dbui-strong-blue: color-mix(in srgb, var(--status-ready), var(--ink) 40%); --dbui-strong-pink: color-mix(in srgb, var(--status-review), var(--ink) 35%);
