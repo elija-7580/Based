@@ -262,6 +262,27 @@ test("Beta-Release-Notes: oberster Abschnitt passt in den Update-Dialog (≤ 8 Z
   }
 });
 
+// BSD-542: latest.json der Beta bekommt nur die Kurzfassung (der Dialog von 0.2.2–0.2.4 scrollt nicht).
+test("BSD-542: Kurzfassung der Beta-Notizen für den Updater – höchstens 3 Punkte à 80 Zeichen, Workflow nutzt sie", async () => {
+  const { shortNotes, topSection } = await import("../scripts/beta-notes.mjs");
+  const notes = readFileSync(new URL("../../../docs/beta/RELEASE_NOTES.md", import.meta.url), "utf8");
+  const short = shortNotes(notes).split("\n");
+  assert.ok(short.length >= 1 && short.length <= 3, short.join("\n"));
+  for (const l of short) {
+    assert.ok([...l].length <= 82, `${[...l].length}: ${l}`); // „• “ + 80
+    assert.match(l, /^• \S/);
+  }
+  assert.equal(short[0].slice(2, 22), topSection(notes)[0].replace(/^- /, "").slice(0, 20)); // die ersten Punkte des obersten Abschnitts
+  const long = "## 1\n\n- " + "word ".repeat(40) + "\n- two\n- three\n- four\n## old\n- no";
+  assert.deepEqual(shortNotes(long).split("\n").map((l) => [...l].length <= 82), [true, true, true]);
+  assert.equal(shortNotes(long).split("\n").length, 3);
+  assert.ok(shortNotes(long).startsWith("• word word") && shortNotes(long).split("\n")[0].endsWith(" …"));
+  assert.equal(shortNotes("# nothing\n"), "• Small fixes and improvements");
+  const wf = readFileSync(new URL("../../../ci/github-actions-desktop-beta.yml", import.meta.url), "utf8");
+  assert.match(wf, /beta-notes\.mjs docs\/beta\/RELEASE_NOTES\.md --short > dist\/notes-short\.md/);
+  assert.match(wf, /--arg notes "\$\(cat dist\/notes-short\.md\)"/);
+});
+
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.
 // BSD-514 (17.11.): sichtbarer Name „Based Notes Beta“; Bundle-ID und Updater-Kanal bleiben (Daten und Updates der Tester).
 test("Beta-Overlay: eigener Name, eigene Bundle-ID, Updater auf beta-latest", () => {

@@ -184,6 +184,34 @@ auf seinem echten Workspace nach main.
 5. Größe: rund 20 000 Seiten in Elijas Workspace – die Größenordnung der 520 000-Records-Messung. Stufe B ist damit
    für den eigenen Alltag nötig, nicht erst für Mobil.
 
+## Herkunft pro Seite und Block (BSD-522, Elija 17.11.: vor der Beta, nur Datenmodell)
+
+Damit alle Seiten von Anfang an wissen, wer was geschrieben hat, trägt das Format drei optionale Felder (nur TS-Stack,
+rein additiv: Alt-Daten und Importe bleiben leer = unbekannt, keine Migration, alte Records byte-gleich):
+
+- `block.origin` an Seiten (`page`, `databasePage`): `human` | `ai` | `reviewed` | `mixed` (offenes Enum).
+- `block.author`: Kennung aus `workspace.authors`; der Zeitpunkt ist `updatedAt` des Blocks. Leer heißt: der Mensch
+  aus `updatedBy` – Blöcke, die Menschen schreiben, kosten kein Byte mehr.
+- `workspace.authors`: Kennung → `{ kind: user | agent | guest, name, model? }`. Kennungen sind deterministisch
+  (`a-`/`g-`/`u-` + FNV-1a über Name und Modell), damit zwei Geräte denselben Agenten gleich nennen und die Art auch
+  ohne Tabelleneintrag lesbar bleibt (der Workspace-Record ist Last-Writer-Wins).
+
+Regeln (`packages/core/src/model/provenance.ts`, angewandt in `store/provenance-ops.ts` am Ende jeder eigenen
+Transaktion – nicht für Sync, Importe mit fertigen Stempeln und aus Y-Dokumenten abgeleitete Änderungen; dort hat
+der Schreiber sie schon gesetzt):
+
+- Wer schreibt, sagt `store.withActor(actor, …)`; ohne ist es der Mensch am Gerät. Der MCP-Server führt jedes
+  schreibende Werkzeug als Agent aus (Name aus der Client-Kennung; über zustandsloses HTTP „MCP client“).
+- Agent legt eine Seite an oder schreibt in eine `ai`-Seite → `ai`; in jede andere (auch unbekannte) → `mixed`.
+  Mensch ändert eine `ai`-Seite → `mixed`; sonst bleibt die Herkunft (neue Seiten und Importe bleiben leer).
+- Inhaltsänderung (Typ, Text, Props, Werte – nicht Verschieben oder Papierkorb) setzt `author` des Agenten bzw. löscht
+  ihn, wenn ein Mensch den Block ändert.
+- Ausdrücklich setzen (`setPageOrigin`): Agenten nur `ai`, `reviewed` nur der Nutzer; sonst `ProvenanceError`.
+- Notion- und andere Importe lassen die Felder leer; das Based-Archiv trägt sie unverändert mit.
+
+Nicht enthalten: Anzeige (Balken, Filter, Seitenstatus) und die eigenen Agenten der App (AI ist in der Beta aus) –
+die rufen `withActor` nach, wenn AI wieder an ist.
+
 ## Bereiche und Agenten (Vorschlag zur Entscheidung 3, Feinentwurf offen)
 
 - **Zwei Stufen je Bereich, vererbt wie Rechte** (Workspace → Teamspace → Seite): *Private* und *Open to agents*.

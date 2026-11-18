@@ -134,6 +134,9 @@ jobs:
           # Release Notes für Tester: oberster Abschnitt von docs/beta/RELEASE_NOTES.md (ohne die Überschrift).
           awk '/^## /{n++; next} n==1' docs/beta/RELEASE_NOTES.md | sed '/^$/N;/^\n$/D' > dist/notes.md
           [ -s dist/notes.md ] || echo "• Small fixes and improvements" > dist/notes.md
+          # BSD-542: für den Updater (latest.json) nur die Kurzfassung – höchstens 3 Punkte à 80 Zeichen. Der Dialog der
+          # installierten Beta 0.2.2–0.2.4 scrollt nicht; viele lange Zeilen schöben „Install and Restart“ aus dem Fenster.
+          node apps/desktop/scripts/beta-notes.mjs docs/beta/RELEASE_NOTES.md --short > dist/notes-short.md || echo "• Small fixes and improvements" > dist/notes-short.md
           ditto "$BUNDLE/$APP_NAME.app" "$RUNNER_TEMP/dmg/$APP_NAME.app"
           ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
           hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Notes-Beta.dmg
@@ -152,7 +155,7 @@ jobs:
             SIG="$(cat dist/Based-Notes-Beta.app.tar.gz.sig)"
             # Ein universelles Paket für beide Architekturen.
             jq -n --arg v "$V" --arg url "$URL" --arg sig "$SIG" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              --arg notes "$(cat dist/notes.md)" \
+              --arg notes "$(cat dist/notes-short.md)" \
               '{version:$v, notes:$notes, pub_date:$date, platforms:{
                  "darwin-aarch64":{signature:$sig,url:$url},
                  "darwin-x86_64":{signature:$sig,url:$url}}}' > dist/latest.json
