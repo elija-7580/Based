@@ -1,61 +1,61 @@
-cancelled e0015d60697e509664efeaf151640c1b5d47ad47
-  ✓   69 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1728 × 1000 dark: leer und gefüllt, nichts läuft über oder überdeckt sich (2.5s)
-  ✓   71 [chromium] › e2e/brain.spec.ts:167:1 › memory suggestions are saved only after Save (2.7s)
-  -   73 [chromium] › e2e/brain.spec.ts:189:1 › Screenshots web-brain-*
-  ✓   72 [chromium] › e2e/board.spec.ts:342:1 › Stift, Textmarker, Radierer: zeichnen, Farbe wählen, radieren, Undo; nach dem Neuladen ist die Tinte da (4.0s)
-  ✓   74 [chromium] › e2e/brain.spec.ts:223:1 › trashing the Agent Brain shows why it stays (2.7s)
-  -   76 [chromium] › e2e/brain.spec.ts:234:1 › Screenshots web-brain-refused-*
-  ✓   75 [chromium] › e2e/board.spec.ts:372:1 › Text: Doppelklick ins Leere tippt los; Zettel nimmt sofort Text, Tab legt den nächsten an; Frame und Verbindung (1.8s)
-  ✓   77 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (3.3s)
-  ✓   78 [chromium] › e2e/board.spec.ts:408:3 › Zeichnen light: Werkzeugleiste mit Optionen passt in 1280 × 820, 900 × 600 und 390 × 760 (3.8s)
-  ✓   79 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (1.5s)
-  ✓   81 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (1.9s)
-  ✓   80 [chromium] › e2e/board.spec.ts:408:3 › Zeichnen dark: Werkzeugleiste mit Optionen passt in 1280 × 820, 900 × 600 und 390 × 760 (3.7s)
-  ✓   82 [chromium] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (1.9s)
-  ✓   84 [chromium] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (1.7s)
-  ✓   83 [chromium] › e2e/board.spec.ts:453:1 › Dateien: Bild und HTML-Datei ablegen – Bild als Bild, Datei als Karte; bleibt nach dem Neuladen; im Record steht nur die Adresse (2.5s)
-  -   85 [chromium] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-(node:5667) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   86 [chromium] › e2e/board.spec.ts:486:1 › Dateien in drei Stufen: PDF als Ausdruck (je Seite ein Objekt), Agent-Log und HTML als Vorschau; HTML läuft ohne Skripte (3.5s)
-  ✓   87 [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (3.0s)
-  ✓   88 [chromium] › e2e/board.spec.ts:518:1 › Einfügen: kurzer Text wird ein Text-Objekt (1.3s)
-(node:5758) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   89 [chromium] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (661ms)
-  ✓   90 [chromium] › e2e/board.spec.ts:531:1 › Seite über @ (Suche wie ⌘K) als ganze Seite, Untergrund im •••-Menü, gemerkter Stift (2.9s)
-  ✓   92 [chromium] › e2e/board.spec.ts:570:1 › Present: Frames als Folien – Knopf erscheint mit dem ersten Frame, Pfeile blättern, Esc zurück; Leisten treten zurück (1.6s)
-  ✓   93 [chromium] › e2e/board.spec.ts:596:1 › Text-Werkzeug: klicken und tippen legt Text an; T und einfach lostippen auch (1.2s)
-  ✓   91 [chromium] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (6.4s)
-  ✓   94 [chromium] › e2e/board.spec.ts:616:1 › Auswahl umfärben über die Farbleiste; Rechtsklick zeigt nur Board-Einträge (2.0s)
-  ✓   96 [chromium] › e2e/board.spec.ts:639:1 › Whiteboard in einer Seite: /whiteboard legt ein Board an, das in der Seite als Fläche erscheint (1.5s)
-  ✓   97 [chromium] › e2e/crash-report.spec.ts:23:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (1.2s)
-  ✓   98 [chromium] › e2e/crash-report.spec.ts:45:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (1.9s)
-  ✓   95 [chromium] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (5.1s)
-  ✓   99 [chromium] › e2e/crash-report.spec.ts:81:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (2.8s)
-  ✓  100 [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (6.8s)
-  ✓  102 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (6.1s)
-  ✓  103 [chromium] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (3.6s)
-  ✓  104 [chromium] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus (2.3s)
-  ✓  105 [chromium] › e2e/database-click.spec.ts:65:1 › Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite (1.9s)
-  ✓  106 [chromium] › e2e/database-click.spec.ts:100:1 › Kästchen der ausgewählten Zeile ist gesetzt (950ms)
-  ✓  107 [chromium] › e2e/database-columns.spec.ts:45:1 › Inline-Datenbanken in Spalten: nichts ragt in die Nachbarspalte, lange Titel brechen um (1.5s)
-  ✓  108 [chromium] › e2e/database-columns.spec.ts:90:1 › Inline-Datenbank als ganze Seite: Knopf und Blockmenü, Titel der Datenbank überall (1.7s)
-  ✓  109 [chromium] › e2e/database-create.spec.ts:20:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (1.3s)
-  ✓  110 [chromium] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (1.2s)
-  ✓  111 [chromium] › e2e/database-edges.spec.ts:45:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (1.4s)
-  ✓  112 [chromium] › e2e/database-edges.spec.ts:66:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (934ms)
-  ✓  113 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (1.7s)
-  ✓  114 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (1.3s)
-  ✓  115 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (1.3s)
-  ✓  116 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (1.3s)
-  ✓  117 [chromium] › e2e/database-inline.spec.ts:129:1 › Inline-Liste: Titel ausblenden, keine Tabellenlinien (1.8s)
-  ✓  118 [chromium] › e2e/database-look.spec.ts:23:1 › Section mit Inline-Datenbank: Fläche, kein Einzel-Tab, Daten in UI-Schrift (997ms)
-  ✓  119 [chromium] › e2e/database-look.spec.ts:65:1 › Daten in UI-Schrift, IDs in Monospace (676ms)
-  ✓  120 [chromium] › e2e/database-look.spec.ts:76:1 › Ansichts-Tab: Klick auf den aktiven Tab öffnet das Menü – umbenennen, duplizieren, löschen (1.1s)
-  ✓  121 [chromium] › e2e/database-polish.spec.ts:7:1 › Inline-Tabelle: leere Titel bleiben leer, Zelleneditor ist ein BasedField, kein Rahmen um den Block (1.2s)
-  ✓  122 [chromium] › e2e/database-polish.spec.ts:50:1 › Textzelle bearbeiten zeigt genau einen Rahmen (978ms)
-  ✓  123 [chromium] › e2e/database-polish.spec.ts:79:1 › Lostippen in einer Zelle verliert keine Zeichen, während der Editor öffnet (2.0s)
-  ✓  124 [chromium] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (1.1s)
-  ✓  125 [chromium] › e2e/database-views.spec.ts:110:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (4.8s)
-  ✓  126 [chromium] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (4.7s)
+failure f0f870d000529b025c28ab28ed7ce8da66a1498b
+      158 |   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
+      159 |   console.log(found.join("\n"));
+    > 160 |   expect(found).toEqual([]);
+          |                 ^
+      161 | });
+      162 |
+      163 | // Fotos der in BSD-304 geänderten Stellen (Gliederung 24 px, Quick Find, Tabelle mit Fokus), hell und dunkel in
+        at /home/runner/work/Based/Based/apps/web/e2e/a11y.spec.ts:160:17
+
+    Error Context: test-results/a11y-Tab-Durchlauf-Namen-F-db003-chen-auf-allen-Hauptscreens-chromium-retry1/error-context.md
+
+  2) [chromium] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
+
+    Test timeout of 30000ms exceeded.
+
+    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Target page, context or browser has been closed
+    Call log:
+      - waiting for getByTestId('block-editor').first().locator('[data-editable-id]').last()
+        - locator resolved to <div role="textbox" aria-label="Code" spellcheck="false" aria-multiline="true" contenteditable="true" data-placeholder="Code" writingsuggestions="false" class="bx2-field bx2-t-code" data-editable-id="a0000000-0000-4000-8000-000000000028"><div class="mystery-widget" id="a0000000-0000-400…</div>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+          - waiting 100ms
+        52 × waiting for element to be visible, enabled and stable
+           - element is not visible
+         - retrying click action
+           - waiting 500ms
+        - waiting for element to be visible, enabled and stable
+
+
+      174 |   await fields.first().click();
+      175 |   await page.keyboard.press("End");
+    > 176 |   await fields.last().click();
+          |                       ^
+      177 |   await page.keyboard.press("Escape");
+      178 |   await page.getByRole("button", { name: "Home", exact: true }).first().click();
+      179 |   await page.goBack();
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-passthrough.spec.ts:176:23
+
+    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-chromium-retry1/error-context.md
+
+  2 failed
+    [chromium] › e2e/a11y.spec.ts:126:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens 
+    [chromium] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
+  17 skipped
+  249 passed (7.2m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
