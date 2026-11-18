@@ -53,6 +53,7 @@ export const SETTINGS_PAGES: readonly SettingsPageDef[] = [
   { id: "sync", group: "workspace", title: "Sync & server", summary: "Use your workspace on your other devices.", missing: [] },
   { id: "billing", group: "workspace", title: "Billing", summary: "Based is free during the beta. Donations keep it running.", ai: "missing", missing: ["AI usage overview"] },
   { id: "account", group: "system", title: "This device", summary: "This device and how it stores your workspace.", missing: ["Preferred name and initials", "Based server account (email, password)", "Delete account"] },
+  { id: "ai-apps", group: "system", title: "Connect AI apps", summary: "Use Based from Claude Code, Claude Desktop, Cursor and other MCP apps.", missing: [] },
   { id: "updates", group: "system", title: "Updates", summary: "How this copy of Based stays current.", missing: [] },
   { id: "diagnostics", group: "system", title: "Diagnostics", summary: "What the app knows about its own state.", missing: ["Logs", "Hang reports", "Layout audit"] },
   { id: "about", group: "system", title: "About", summary: `${productName()} — the notes app that keeps your data yours.`, missing: [] },

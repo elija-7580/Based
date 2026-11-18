@@ -19,7 +19,9 @@ export type CLICommand =
   /** BSD-319: Fehlerberichte der Mac-App (lokal, ohne Server). */
   | { name: "reports"; limit?: number }
   /** BSD-30: Probelauf der Umstellung „Properties als eigene Records“ auf einem Based-Archiv. Liest nur, braucht keinen Server. */
-  | { name: "check"; path: string };
+  | { name: "check"; path: string }
+  /** BSD-581: MCP über stdio für Claude Desktop, Claude Code, Cursor … – leitet an `POST /mcp` des Servers weiter. */
+  | { name: "mcp" };
 
 export interface CLIOptions {
   url?: string;
@@ -55,6 +57,7 @@ Usage:
   based config
   based reports [--limit N]                   (problem reports from ⇧⌘B, no server needed)
   based check <export.based.zip>              (dry run of the properties migration; reads only, no server)
+  based mcp                                   (MCP over stdio for Claude Desktop, Claude Code, Cursor …)
 
 Options (any command):
   --url <url>          Server URL (default: BASED_URL, then the config file)
@@ -196,6 +199,7 @@ export function parseArgs(argv: string[]): { command: CLICommand; options: CLIOp
     case "inbox":
     case "tools":
     case "config":
+    case "mcp":
       only([]);
       if (args.length > 0) throw new CLIError(`\`based ${cmd}\` takes no arguments`, 2);
       return done({ name: cmd });

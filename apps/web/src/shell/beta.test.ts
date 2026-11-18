@@ -61,7 +61,7 @@ describe("Beta-Gate: Einstellungen", () => {
       expect(settingsPageVisible(id, "beta"), id).toBe(false);
       expect(settingsPageVisible(id, "dev"), id).toBe(true);
     }
-    for (const id of ["appearance", "editor", "meetings", "import", "sync", "updates", "diagnostics", "about"]) expect(settingsPageVisible(id, "beta"), id).toBe(true);
+    for (const id of ["appearance", "editor", "meetings", "import", "sync", "ai-apps", "updates", "diagnostics", "about"]) expect(settingsPageVisible(id, "beta"), id).toBe(true);
     expect(BETA_HIDDEN_SETTINGS.size).toBe(7);
   });
 
@@ -71,7 +71,7 @@ describe("Beta-Gate: Einstellungen", () => {
       expect(settingsPageVisible(id, "dev"), id).toBe(true);
     }
     const beta = SETTINGS_PAGES.filter((p) => settingsPageVisible(p.id, "beta")).map((p) => p.id);
-    expect(beta).toEqual(["appearance", "editor", "meetings", "language", "workspace", "import", "sync", "billing", "account", "updates", "diagnostics", "about"]);
+    expect(beta).toEqual(["appearance", "editor", "meetings", "language", "workspace", "import", "sync", "billing", "account", "ai-apps", "updates", "diagnostics", "about"]);
     expect(SETTINGS_PAGES.filter((p) => settingsPageVisible(p.id, "dev")).length).toBe(SETTINGS_PAGES.length);
   });
 });
