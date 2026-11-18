@@ -1,0 +1,61 @@
+failure c3ba1fe4aed34bf869a643011925b4f47e2ecd0e
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+    Expected pattern: /Imported 1 page, 1 attached file\./
+    Received string:  "Imported 2 pages, 1 attached file."
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveText" getByRole('dialog', { name: 'Import' }).getByTestId('import-summary') with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+        9 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
+          - unexpected value "Imported 2 pages, 1 attached file."
+
+
+      192 |   const dialog = page.getByRole("dialog", { name: "Import" });
+      193 |   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });
+    > 194 |   await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 1 page, 1 attached file\./);
+          |                                                      ^
+      195 |   await dialog.getByRole("button", { name: "Done" }).click();
+      196 |   await page.getByRole("treeitem", { name: "Hike" }).click();
+      197 |   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
+        at /home/runner/work/Based/Based/apps/web/e2e/shell-parity.spec.ts:194:54
+
+    Error Context: test-results/shell-parity-Import-eines--d7962-Bild-aus-dem-Asset-Speicher-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+    Expected pattern: /Imported 1 page, 1 attached file\./
+    Received string:  "Imported 2 pages, 1 attached file."
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveText" getByRole('dialog', { name: 'Import' }).getByTestId('import-summary') with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+        11 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
+           - unexpected value "Imported 2 pages, 1 attached file."
+
+
+      192 |   const dialog = page.getByRole("dialog", { name: "Import" });
+      193 |   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });
+    > 194 |   await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 1 page, 1 attached file\./);
+          |                                                      ^
+      195 |   await dialog.getByRole("button", { name: "Done" }).click();
+      196 |   await page.getByRole("treeitem", { name: "Hike" }).click();
+      197 |   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
+        at /home/runner/work/Based/Based/apps/web/e2e/shell-parity.spec.ts:194:54
+
+    Error Context: test-results/shell-parity-Import-eines--d7962-Bild-aus-dem-Asset-Speicher-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher 
+  56 skipped
+  235 passed (12.5m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf

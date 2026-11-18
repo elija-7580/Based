@@ -1,0 +1,61 @@
+success c3ba1fe4aed34bf869a643011925b4f47e2ecd0e
+  ✓  268 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.1s)
+  ✓  269 [webkit] › e2e/html-block-file.spec.ts:41:1 › Größe ziehen: Breite rechts, Höhe unten; bleibt nach dem Neuladen; ⌘Z nimmt sie zurück (5.8s)
+  ✓  270 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (4.2s)
+  ✓  272 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.1s)
+  -  273 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  274 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  271 [webkit] › e2e/html-block-file.spec.ts:79:1 › HTML-Datei öffnen ersetzt den Code; HTML-Datei auf die Seite ziehen legt einen HTML-Block an (5.1s)
+  ✓  275 [webkit] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (6.7s)
+  ✓  276 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1280×820) (5.5s)
+  ✓  278 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 900×600) (3.3s)
+  ✓  277 [webkit] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (8.6s)
+  ✓  279 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1728×1000) (5.5s)
+  ✓  281 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1280×820) (2.6s)
+  ✓  282 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 900×600) (2.2s)
+  ✓  280 [webkit] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (5.3s)
+  -  284 [webkit] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  283 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1728×1000) (2.9s)
+  ✓  285 [webkit] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (3.7s)
+  ✓  286 [webkit] › e2e/html-block-file.spec.ts:116:1 › HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos (6.4s)
+  ✓  287 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (3.9s)
+  ✓  288 [webkit] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (3.0s)
+  ✓  289 [webkit] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.9s)
+  ✓  290 [webkit] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (2.8s)
+  ✓  291 [webkit] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (2.6s)
+  ✓  292 [webkit] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (2.6s)
+  ✓  293 [webkit] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.5s)
+  ✓  294 [webkit] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (3.7s)
+  ✓  295 [webkit] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (2.6s)
+  ✓  296 [webkit] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.7s)
+  ✓  297 [webkit] › e2e/interop.spec.ts:328:1 › Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563) (2.5s)
+  ✓  298 [webkit] › e2e/interop.spec.ts:352:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (2.5s)
+  ✓  299 [webkit] › e2e/interop.spec.ts:371:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (2.4s)
+  ✓  300 [webkit] › e2e/interop.spec.ts:390:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.7s)
+  ✓  301 [webkit] › e2e/interop.spec.ts:416:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (3.6s)
+
+
+  1) [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs 
+
+    Error: page.reload: Navigation canceled by policy check
+    Call log:
+      - waiting for navigation until "load"
+
+
+      145 |   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      146 |   expect((await fetch(`${serverURL}/share/v1/links/${link.id}/revoke`, { method: "POST", headers: owner })).ok).toBe(true);
+    > 147 |   await page.reload();
+          |              ^
+      148 |   await expect(page.getByRole("heading", { name: "This link no longer works" })).toBeVisible({ timeout: 20_000 });
+      149 |   await expect(page.getByTestId("based-root")).toHaveCount(0);
+      150 |   await page.getByRole("button", { name: "Open Based" }).click();
+        at /home/runner/work/Based/Based/apps/web/e2e/guest.spec.ts:147:14
+
+    Error Context: test-results/guest-Teil-3-widerrufener--98ff8-leeren-Gast-Arbeitsbereichs-webkit/error-context.md
+
+    Error Context: test-results/guest-Teil-3-widerrufener--98ff8-leeren-Gast-Arbeitsbereichs-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs 
+  28 skipped
+  271 passed (13.6m)
