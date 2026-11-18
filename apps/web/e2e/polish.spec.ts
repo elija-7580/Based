@@ -700,3 +700,36 @@ test("Font „Based“: keine Lücke vor Komma und Punkt in der Datenbank-Tabell
     }
   }
 });
+
+// BSD-567: der Import-Dialog zeigt die Quellen als Liste (je App eine Zeile mit dem Weg zum Export). Die Liste rollt
+// selbst – auch in 900 × 600 bleiben die Knöpfe sichtbar. Bildschirmfotos mit BASED_SCREENSHOTS=1.
+test("Import-Dialog: Quellen als Liste, Knöpfe in allen Größen sichtbar (BSD-567)", async ({ page, browserName }) => {
+  await fresh(page);
+  await page.addInitScript(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "system", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false })));
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const list = dialog.getByTestId("import-sources");
+  await expect(list.locator("dt")).toHaveCount(14);
+  await expect(list.locator("dt").first()).toHaveText("Notion");
+  await expect(list.locator(".import-sources-row").filter({ hasText: "Obsidian" })).toContainText("Canvases and Excalidraw drawings become boards");
+  for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }, { width: 1728, height: 1000 }]) {
+    await page.setViewportSize(size);
+    for (const name of ["Choose files…", "Choose folder…", "Close"]) await expect(dialog.getByRole("button", { name })).toBeInViewport({ ratio: 1 });
+    await expect(dialog.getByRole("button", { name: /Connect Notion directly/ })).toBeInViewport();
+    // Zeilen sind Text, nichts davon ist kleiner als 13 px.
+    const small = await list.evaluate((el) => [...el.querySelectorAll("dt, dd")].filter((n) => parseFloat(getComputedStyle(n).fontSize) < 13).length);
+    expect(small).toBe(0);
+    if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+      for (const theme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme: theme });
+        await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+        await page.waitForTimeout(250);
+        await page.screenshot({ path: `../../docs/design/screens/web-import-sources-${size.width}x${size.height}-${theme}.png` });
+      }
+    }
+  }
+});

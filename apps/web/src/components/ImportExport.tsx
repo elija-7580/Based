@@ -124,11 +124,15 @@ export function ImportDialog({ client, onClose, onOpenPage, initial = "pick" }: 
         {...{ webkitdirectory: "" }} onChange={(e) => void start(e.target.files)} />
       {phase.k === "pick" || phase.k === "error" ? (
         <>
-          <p className="t-desc">
-            Exports from Notion (HTML or Markdown &amp; CSV — the .zip, all of its parts, or the unpacked folder), an Obsidian vault, a Logseq graph, a Bear export, Evernote (.enex), Joplin (.jex), Roam Research (.json), Google Keep (Takeout), Simplenote, Standard Notes, ChatGPT and Claude.
-            Also folders of Markdown or text files, Word (.docx), outlines (.opml), CSV and JSON (a list of objects becomes a database), and Based archives.
-            Importing the same Notion export again updates those pages and keeps what you changed in Based.
-          </p>
+          <p className="t-desc">Choose an export from one of these apps, or files and folders. Importing the same Notion export again updates those pages and keeps what you changed in Based.</p>
+          <dl className="import-sources" aria-label="What you can import" data-testid="import-sources">
+            {IMPORT_SOURCES.map((src) => (
+              <div key={src.app} className="import-sources-row">
+                <dt>{src.app}</dt>
+                <dd className="t-desc">{src.how}</dd>
+              </div>
+            ))}
+          </dl>
           {phase.k === "error" ? <p role="alert" className="dialog-error">Import failed: {phase.message}</p> : null}
           <button type="button" className="import-source" onClick={() => setPhase({ k: "notion" })}>
             <span className="grow">
@@ -163,6 +167,24 @@ export function ImportDialog({ client, onClose, onOpenPage, initial = "pick" }: 
     </Dialog>
   );
 }
+
+/** BSD-567: je App eine Zeile – wo der Export liegt und was man wählt. */
+export const IMPORT_SOURCES: readonly { app: string; how: string }[] = [
+  { app: "Notion", how: "Settings → Export all workspace content → HTML or Markdown & CSV. Choose the .zip, all of its parts, or the unpacked folder." },
+  { app: "Obsidian", how: "Choose the vault folder or a .zip of it. Canvases and Excalidraw drawings become boards." },
+  { app: "Logseq", how: "Choose the graph folder or a .zip of it." },
+  { app: "Bear", how: "File → Export Notes as Markdown or TextBundle, or a backup (.bear2bk)." },
+  { app: "Evernote", how: "Export a notebook as .enex. Each notebook becomes a database." },
+  { app: "Joplin", how: "File → Export all → JEX (.jex), or the RAW folder." },
+  { app: "Roam Research", how: "Export All → JSON." },
+  { app: "Google Keep", how: "Google Takeout with Keep selected. Choose the .zip." },
+  { app: "Simplenote", how: "Settings → Tools → Export notes. Choose the .zip." },
+  { app: "Standard Notes", how: "Preferences → Backups → download a decrypted backup." },
+  { app: "ChatGPT, Claude", how: "Export your data in the app's settings. Choose the .zip from the email." },
+  { app: "Markdown, text", how: "Files or whole folders. Folders become pages." },
+  { app: "Word, OPML, CSV, JSON", how: ".docx, .opml, .csv, .json. CSV and a JSON list of objects become databases." },
+  { app: "Based", how: "A Based archive from Settings → Import & export → Export workspace." },
+];
 
 function ImportReport({ summary, report, onClose, onMore, onOpenPage }: { summary: ImportSummary; report?: string | undefined; onClose: () => void; onMore: () => void; onOpenPage?: ((id: string) => void) | undefined }) {
   const shown = summary.warnings.slice(0, 50);
