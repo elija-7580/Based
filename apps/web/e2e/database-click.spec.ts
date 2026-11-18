@@ -40,10 +40,15 @@ test("Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unt
   const x = box.x + 120;
   await page.mouse.move(x, box.y + box.height / 2);
   for (const steps of [3, 10]) {
-    for (let i = 0; i < steps; i++) await page.mouse.wheel(0, 400);
-    // WebKit rollt weich nach: erst klicken, wenn die Position steht (sonst misst der Test vor dem Ende des Rollens)
+    // BSD-547: Rollen per scrollBy statt Mausrad. WebKit verarbeitet Mausrad-Ereignisse versetzt und rollt weich nach –
+    // auch nach 150 ms Stillstand kam gelegentlich noch ein Schritt (gemessen: scrollTop 700 → 1200 zwischen Messen
+    // und Klick), dann prüfte der Test eine Zeile, die beim Klick schon weggerollt war. Das ist kein Fehler der
+    // Tabelle; geprüft wird hier, dass nach dem Rollen (virtualisierte Zeilen neu gesetzt) der Klick die Zeile unter der
+    // Maus trifft.
+    for (let i = 0; i < steps; i++) await scroll.evaluate((el) => el.scrollBy({ top: 400, behavior: "instant" as ScrollBehavior }));
     let last = -1;
     await expect.poll(async () => { const now = await scroll.evaluate((el) => el.scrollTop); const still = now === last; last = now; return still; }, { intervals: [150] }).toBe(true);
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(0)))));
     for (const f of [0.3, 0.55, 0.85]) await clickAt(page, x, box.y + box.height * f);
   }
   // ⇧-Klick auf die Kästchen wählt genau den Bereich zwischen den Zeilen unter der Maus
@@ -60,6 +65,25 @@ test("Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unt
   expect(selected[0]).toBe(a);
   expect(selected.at(-1)).toBe(b);
   expect(selected).toHaveLength(4);
+});
+
+test("BSD-547: Rollt die Tabelle zwischen Drücken und Loslassen noch (WebKit-Nachrollen), gilt der Klick der Zeile beim Drücken", async ({ page }) => {
+  await fresh(page);
+  await command(page, { op: "seedDatabase", count: 300 });
+  await page.getByRole("treeitem", { name: "Big 300" }).click();
+  const scroll = page.getByTestId("table-scroll");
+  await expect(scroll.getByText("Row 1", { exact: true })).toBeVisible();
+  const box = (await scroll.boundingBox())!;
+  const x = box.x + 120;
+  const y = await page.evaluate(([xx, yy]) => { const r = document.elementFromPoint(xx!, yy!)?.closest("[data-row-id]")?.getBoundingClientRect(); return r ? r.y + r.height / 2 : yy!; }, [x, box.y + box.height * 0.4]);
+  const under = await rowUnder(page, x, y);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await scroll.evaluate((el) => el.scrollBy({ top: 400, behavior: "instant" as ScrollBehavior }));
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(0)))));
+  expect(await rowUnder(page, x, y)).not.toBe(under); // unter der Maus liegt jetzt eine andere Zeile
+  await page.mouse.up();
+  await expect.poll(() => activeRow(page)).toBe(under);
 });
 
 test("Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite", async ({ page }) => {
