@@ -369,6 +369,7 @@ export function createMcpServer(pages: Pages): McpServer {
         "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
         "a -> b: optional label (a, b: names from this script or handles from read_board)",
         "frame f: Title { a b c } | set <handle>: new text | del <handle>",
+        "Text in notes, shapes and text objects is Markdown: # headings, **bold**, *italic*, `code`, ~~strike~~, ==highlight==, [links](url), - lists, 1. lists, - [ ] tasks, > quotes, ``` code blocks. Write line breaks as \\n.",
       ].join("\n"),
       inputSchema: { id: z.string().optional(), script: z.string().min(1), title: z.string().optional(), parent: z.string().optional() },
     },

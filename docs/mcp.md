@@ -139,4 +139,7 @@ page a: <page id>     a -> b: optional label               frame f: Title { a b 
 set <handle>: text    del <handle>
 ```
 
+Text in notes, shapes and text objects is Markdown (`# heading`, `**bold**`, `*italic*`, `` `code` ``, `- list`,
+`- [ ] task`, `> quote`, code fences); write line breaks in a statement as `\n`.
+
 Everything an agent adds carries the marker bar; its connectors are dashed in the marker colour.

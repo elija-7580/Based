@@ -5,7 +5,7 @@
 import {
   backZ, BoardIndex, boardFileView, centerOn, DEFAULT_CAMERA, duplicateObjects, encodeInk, fitCamera, frontZs, hitHandle, inkObjectGeometry, inkPointsOf, isConnector, isShape, nudgeDelta, objectBounds,
   objectsInRect, panBy, pointInPolygon, readingOrder, recognizeShape, rectContains, rectFromPoints, resizeRect, scaleInto, screenToWorld, selectionBounds, shareInside, simplifyInk, unionRect,
-  visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
+  toggleTask, visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
   type BoardPoint as Point, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
 } from "@based/core";
 import type { BoardBackground, BoardSession } from "./session.js";
@@ -20,7 +20,7 @@ export const BOARD_TOOLS: readonly { id: BoardTool; label: string; key: string; 
   { id: "highlighter", label: "Highlighter", key: "⇧P", hint: "Highlighter · shows through what is underneath · no yellow: yellow means an agent wrote it" },
   { id: "eraser", label: "Eraser", key: "E", hint: "Eraser · rub over a line to remove it" },
   { id: "lasso", label: "Lasso", key: "L", hint: "Lasso · circle ink and objects to select them" },
-  { id: "text", label: "Text", key: "T", group: true, hint: "Text · click anywhere and type" },
+  { id: "text", label: "Text", key: "T", group: true, hint: "Text · click anywhere and type · Markdown works: # heading, **bold**, - list, - [ ] task" },
   { id: "note", label: "Sticky note", key: "N", hint: "Sticky note · N, then type · Tab adds the next one beside it" },
   { id: "shape", label: "Shape", key: "R", hint: "Shape · R rectangle, O oval, D diamond · click to place or drag for a custom size" },
   { id: "connector", label: "Connector", key: "A", hint: "Connector · drag from one object to another" },
@@ -159,6 +159,8 @@ export interface BoardControllerOptions {
   onOpenFile?: (obj: WBShape) => void;
   /** Doppelklick auf eine Seitenkarte: die Seite öffnen. */
   onOpenPage?: (pageID: string) => void;
+  /** Markdown-Aufgabe (`- [ ]`) unter dem Punkt (Welt): ihre Zeile im Text. Ein Klick darauf hakt sie ab. */
+  taskAt?: (obj: WBShape, world: Point) => number | undefined;
 }
 
 /** Eine abgelegte Datei: `ref` ist die Adresse im Dateispeicher (`based-asset:<sha256>`), nie der Inhalt. */
@@ -217,6 +219,7 @@ export class BoardController {
   private readonly now: () => number;
   private readonly onOpenFile: ((obj: WBShape) => void) | undefined;
   private readonly onOpenPage: ((pageID: string) => void) | undefined;
+  private readonly taskAt: ((obj: WBShape, world: Point) => number | undefined) | undefined;
   private space = false;
   private fitted: boolean;
   /** Die Fläche hatte schon eine Größe (erst dann lohnt es, die Kamera zu merken). */
@@ -234,6 +237,7 @@ export class BoardController {
     this.now = opts.now ?? (() => Date.now());
     this.onOpenFile = opts.onOpenFile;
     this.onOpenPage = opts.onOpenPage;
+    this.taskAt = opts.taskAt;
     this.camera = opts.camera ?? DEFAULT_CAMERA;
     this.fitted = opts.camera !== undefined;
     this.stopSession = session.subscribe(() => {
@@ -728,6 +732,19 @@ export class BoardController {
     this.changed();
     return id;
   }
+  /** Klick auf ein Aufgaben-Kästchen in Markdown: abhaken bzw. wieder öffnen (wie in Notion, ohne Bearbeiten). */
+  private toggleTaskAt(id: string, world: Point): boolean {
+    if (this.readOnly || !this.taskAt) return false;
+    const o = this.session.get(id);
+    if (!o || !isShape(o) || isLocked(o) || !o.text || (o.kind !== "note" && o.kind !== "text" && o.kind !== "shape")) return false;
+    const line = this.taskAt(o, world);
+    if (line === undefined) return false;
+    const next = toggleTask(o.text, line);
+    if (next === o.text) return false;
+    this.session.patch(new Map([[id, { text: next }]]));
+    this.changed();
+    return true;
+  }
   cancelEdit() {
     if (!this.editing) return;
     this.editing = undefined;
@@ -746,7 +763,12 @@ export class BoardController {
     if (this.gesture?.kind === "move") return "move";
     const h = this.handleAt(p);
     if (h) return HANDLE_CURSORS[h];
-    return this.pick(screenToWorld(this.camera, p), 2 / this.camera.zoom) ? "move" : "default";
+    const world = screenToWorld(this.camera, p);
+    const hit = this.pick(world, 2 / this.camera.zoom);
+    if (!hit) return "default";
+    const o = this.session.get(hit);
+    if (!this.readOnly && this.taskAt && o && isShape(o) && !isLocked(o) && o.text && this.taskAt(o, world) !== undefined) return "pointer";
+    return "move";
   }
 
   private handleAt(p: Point): Handle | undefined {
@@ -846,6 +868,7 @@ export class BoardController {
       return;
     }
     const hit = this.pick(world, 2 / this.camera.zoom);
+    if (hit && !e.shift && !e.alt && this.toggleTaskAt(hit, world)) return;
     this.gesture = { kind: "press", start: p, world, hit, wasSelected: hit !== undefined && this.selection.has(hit), shift: e.shift === true, alt: e.alt === true };
     if (hit && !this.selection.has(hit)) this.select(e.shift ? [...this.selection, hit] : [hit]);
     else if (this.focused) { this.focused = undefined; this.changed(); }
