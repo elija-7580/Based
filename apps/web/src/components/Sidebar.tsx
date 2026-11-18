@@ -292,7 +292,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     if (row.kind === "action") {
       return (
         <div role="treeitem" aria-selected={false} aria-label={row.label} className="tree-action-row" style={style}>
-          <button type="button" className="tree-row tree-create t-desc" style={{ ...style, paddingLeft: indent(1) }} onClick={() => setEditTeamspace({ name: "" })}>
+          <button type="button" className="tree-row tree-create" style={{ ...style, paddingLeft: indent(1) }} onClick={() => setEditTeamspace({ name: "" })}>
             <Icon name="plus" size={16} />
             {row.label}
           </button>

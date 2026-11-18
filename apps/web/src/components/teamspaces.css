@@ -1,8 +1,8 @@
 /* Seitenleiste: Teamspace-Zeilen, „Create a teamspace“, Fuß (Library · Trash · Settings); „Move to…“-Liste. Nur Tokens. */
 .tree-teamspace { font-weight: var(--weight-heading); color: var(--ink); }
 .tree-teamspace .tree-icon { color: var(--ink-2); }
-.tree-create { width: 100%; border: 0; background: transparent; color: var(--muted); text-align: left; gap: var(--space-2); }
-.tree-create:hover { color: var(--ink); }
+.tree-create, .tree-row.tree-create { width: 100%; border: 0; background: transparent; color: var(--muted); text-align: left; gap: var(--space-2); }
+.tree-create:hover, .tree-row.tree-create:hover { color: var(--ink); }
 .sidebar-footer { flex: none; display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-2); border-top: 1px solid var(--line); }
 .sidebar-footer .nav-item { min-height: var(--space-6); }
 .sidebar .synced { margin-top: 0; padding-block: var(--space-2); }
