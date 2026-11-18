@@ -153,7 +153,10 @@ eine Tastenkappe (`BasedKeys`, Seitenleiste, Tabs, ⌘-Anzeige, Übersicht), ein
 Library und Meetings und die Sprachliste im Code-Block. **18. 11. (BSD-525):** `BasedSwitcher`, `BasedPicker`,
 `BasedSheet` und `BasedToast` liegen in `packages/ui/src/astryx` und im Design-Kit (Fotos `screens/web-elements-v11-kit-*.png`,
 `-sheet-*.png`); die Views nutzen `BasedSwitcher` statt `SegmentedControl` (außer den Einstellungen mit Farbfeldern).
-Offen: `BasedTabs` (Meeting) auf den Umschalter, das eine Menü (Punkt 3), anklickbare
+Ebenfalls 18. 11.: Menü-Familien sehen gleich aus (BSD-527, `e2e/one-menu.spec.ts`), Anklickbares ≥ 14 px
+(BSD-528, `e2e/elements-size.spec.ts`), nur noch die drei Keyframes `fade-in`, `rise-in`, `pulse` (BSD-529, Wächter in
+`apps/web/src/tokens-only.test.ts`; `rise-in` nimmt den Abstand aus `--rise`), Köpfe von Trash, Graph und Einstellungen
+(BSD-530). Offen: `BasedTabs` (Meeting) auf den Umschalter, das eine Menü als ein Baustein im Code, anklickbare
 Texte unter 14 px (Rest von Punkt 4), die Animationen (Punkt 5), die Köpfe von Trash, Graph und Einstellungen.
 
 Der Bestand wird in dieser Reihenfolge umgestellt (je ein Backlog-Eintrag „Design · Element-System …“):

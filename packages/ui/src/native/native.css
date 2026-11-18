@@ -10,10 +10,9 @@
   top: 0; left: 0; overflow: auto; max-height: calc(100vh - var(--space-4)); max-width: calc(100vw - var(--space-4));
   background: var(--surface-card); color: var(--ink); border-radius: var(--radius-xl); box-shadow: var(--shadow-menu); padding: var(--space-1);
   font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading);
-  -webkit-user-select: none; user-select: none; cursor: default; animation: nf-in var(--duration-fast) var(--ease-out);
+  -webkit-user-select: none; user-select: none; cursor: default; --rise: var(--overlay-gap, var(--space-1)); animation: rise-in var(--duration-fast) var(--ease-out);
 }
 [data-material="glass"] .nf-layer { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
-@keyframes nf-in { from { opacity: 0; transform: translateY(calc(-1 * var(--space-1))); } }
 
 /* Menü und Auswahlliste – Zeilen wie .menu-item */
 /* Lange Listen (Uhrzeiten, viele Optionen) scrollen in der Liste, statt das Fenster zu füllen. */
