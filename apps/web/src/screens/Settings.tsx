@@ -1,18 +1,19 @@
-// Einstellungen im Notion-Stil (Vorlage: legacy/App/Shared/Views/Settings/SettingsView.swift): links die Seiten in den
-// Gruppen Account und Workspace, rechts die Abschnitte der gewählten Seite – aus Astryx-Komponenten im Theme
+// Einstellungen: links ein Suchfeld und die Seiten in den Gruppen App, Workspace und System (Elija 18.11.), rechts
+// die Abschnitte der gewählten Seite – aus Astryx-Komponenten im Theme
 // „Based Default“. Die Ansicht ist dünn: Seiten und „Coming later“ kommen aus shell/settings.ts, die Abschnitte
 // aus der Registry (settings/registry.ts); eingebaute Abschnitte stehen in settings/sections.tsx.
 import { Card } from "@astryxdesign/core/Card";
 import { Layout, LayoutContent, LayoutPanel, VStack } from "@astryxdesign/core/Layout";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { useSyncExternalStore } from "react";
+import { BasedField } from "@based/ui/astryx";
+import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import type { Appearance } from "../appearance.js";
 import type { Route } from "../shell/router.js";
 import { aiSetting } from "../shell/ai.js";
 import { settingsPageVisible } from "../shell/beta.js";
 import { devViewPref } from "../shell/storage.js";
-import { resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages } from "../shell/settings.js";
+import { resolveSettingsPage, searchSettings, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages, type SettingsHit } from "../shell/settings.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import { AstryxKit } from "./settings/AstryxKit.js";
 import { settingsRegistry } from "./settings/registry.js";
@@ -25,7 +26,7 @@ import "./settings/settings.css";
 registerBuiltinSettings();
 
 export interface SettingsProps {
-  /** Gewählte Seite (ID aus SETTINGS_PAGES); fehlt sie, gilt „My settings“. */
+  /** Gewählte Seite (ID aus SETTINGS_PAGES); fehlt sie, gilt „Appearance“. */
   page?: string | undefined;
   value: Appearance;
   onChange: (a: Appearance) => void;
@@ -49,9 +50,65 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
   const missing = sections.length === 0 || dev ? allMissing : [];
   const props = { client, state, appearance: value, setAppearance: onChange, navigate: onNavigate };
 
+  // Suche: ersetzt die Seitenliste durch Treffer (Seiten, Abschnitte, einzelne Einstellungen). ↓/↑ wandern, Enter
+  // öffnet, Escape leert. Bewusst nicht in ⌘K – dort stehen Seiten und Befehle, keine Einstellungen.
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+  const hits = searchSettings(query, pages, settingsRegistry, view);
+  const cur = Math.min(active, Math.max(0, hits.length - 1));
+  const target = useRef<string | undefined>(undefined);
+  const open = (hit: SettingsHit) => {
+    target.current = hit.section;
+    setQuery("");
+    setActive(0);
+    onNavigate({ name: "settings", page: hit.page });
+  };
+  // Nach dem Öffnen eines Treffers zum Abschnitt rollen und ihn fokussieren (Screenreader lesen die Überschrift).
+  useEffect(() => {
+    const id = target.current;
+    if (!id) return;
+    const el = document.querySelector<HTMLElement>(`[data-testid="settings-section-${CSS.escape(id)}"]`);
+    if (!el) return;
+    target.current = undefined;
+    el.scrollIntoView({ block: "start" });
+    el.focus({ preventScroll: true });
+  });
+  const onSearchKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (!hits.length) return;
+      e.preventDefault();
+      setActive((cur + (e.key === "ArrowDown" ? 1 : hits.length - 1)) % hits.length);
+    } else if (e.key === "Escape" && query) {
+      e.preventDefault();
+      e.stopPropagation();
+      setQuery("");
+    }
+  };
+  const searching = query.trim() !== "";
+
+  const results = hits.length ? (
+    <List density="compact" data-testid="settings-results" header={<Text type="supporting" weight="semibold" color="secondary" className="settings-nav-head">Results</Text>}>
+      {hits.map((h, i) => (
+        <ListItem
+          key={h.page + "/" + (h.section ?? "") + "/" + h.label}
+          label={<Text type="body" weight={i === cur ? "semibold" : "medium"}>{h.label}</Text>}
+          description={h.where}
+          isSelected={i === cur}
+          onClick={() => open(h)}
+        />
+      ))}
+    </List>
+  ) : (
+    <Text type="supporting" color="secondary" display="block" className="settings-no-results" data-testid="settings-no-results">No settings match “{query.trim()}”.</Text>
+  );
+
   const nav = (
     <VStack gap={4}>
-      {SETTINGS_GROUPS.map((g) => (
+      <span className="settings-search" data-testid="settings-search">
+        <BasedField label="Search settings" labelHidden type="search" placeholder="Search settings" value={query}
+          onChange={(v) => { setQuery(v); setActive(0); }} onEnter={() => { if (hits[cur]) open(hits[cur]); }} onKeyDown={onSearchKey} />
+      </span>
+      {searching ? results : SETTINGS_GROUPS.map((g) => (
         <List key={g.id} density="compact" header={<Text type="supporting" weight="semibold" color="secondary" className="settings-nav-head">{g.title}</Text>}>
           {pages.filter((p) => p.group === g.id).map((p) => (
             <ListItem
@@ -81,11 +138,14 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
                 <Text type="supporting" color="secondary" display="block">{page.summary}</Text>
               </VStack>
               {sections.map((s) => (
-                <VStack key={s.id} gap={2} data-testid={`settings-section-${s.id}`}>
-                  <VStack gap={0}>
-                    <Heading level={2}>{s.title}</Heading>
-                    {s.description ? <Text type="supporting" color="secondary" display="block">{s.description}</Text> : null}
-                  </VStack>
+                <VStack key={s.id} gap={2} data-testid={`settings-section-${s.id}`} tabIndex={-1} className="settings-section">
+                  {/* Eine Seite mit nur einem gleichnamigen Abschnitt (Appearance, Updates, About) nennt ihren Namen nicht zweimal. */}
+                  {sections.length === 1 && s.title === page.title && !s.description ? null : (
+                    <VStack gap={0}>
+                      <Heading level={2}>{s.title}</Heading>
+                      {s.description ? <Text type="supporting" color="secondary" display="block">{s.description}</Text> : null}
+                    </VStack>
+                  )}
                   <s.component {...props} />
                 </VStack>
               ))}

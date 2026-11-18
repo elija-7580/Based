@@ -177,7 +177,7 @@ export function astryxThemeSpec(opts: { density?: Density } = {}): AstryxThemeSp
 
     "--focus-outline-color": pair("focus-ring"),
 
-    // Schrift: Systemschrift; die Variablen folgen data-style="bold"
+    // Schrift: Systemschrift; die Variablen folgen data-typeface="based"
     "--font-family-body": "var(--font-ui)",
     "--font-family-heading": "var(--font-head)",
     "--font-family-code": "var(--font-mono)",

@@ -41,13 +41,21 @@ Abbildung in Kürze:
 
 Der **Marker ist nicht abgebildet** – er ist nie Akzent-, Button- oder Statusfarbe (ein Test prüft das).
 
-Schalter aus Einstellungen → My settings:
+**Aufbau der Einstellungen (18. 11. 2026):** drei Gruppen – *App* (Appearance, Pages, Meeting notes, Language & region,
+Notifications, Connected accounts), *Workspace* (General … Billing), *System* (This device, Updates, Diagnostics,
+About). Über der Seitenliste steht ein Suchfeld; es findet Seiten, Abschnitte und einzelne Einstellungen über die
+`keywords` der Abschnitte (`registerSettingsSection`), verzeiht einen Tippfehler und zeigt nur, was Kanal und
+AI-Schalter gerade zeigen. Wer eine Einstellung baut, trägt ihren Namen in `keywords` ein. ⌘K findet bewusst keine
+Einstellungen. „Not yet“-Seiten bleiben in Based Next sichtbar und fehlen nur auf beta (`BETA_HIDDEN_SETTINGS`).
+
+Schalter aus Einstellungen → Appearance:
 
 | Schalter | Wirkung auf Astryx |
 |---|---|
 | Theme Hell / Dunkel / System | `<Theme mode>`; „System“ wird in `appearance.ts` aufgelöst, damit `data-theme` für tokens.css und Astryx gleich ist |
 | Dichte | eigenes Theme `based-compact` (Steuerhöhen 24/28/36 statt 28/32/40) |
-| Stil Bold | über `--font-ui`, `--font-head`, `--size-title`, `--weight-title` aus tokens.css |
+| Font Based | `data-typeface="based"`: `--font-ui`, `--font-head`, `--font-body` aus tokens.css (Schibsted Grotesk, Literata – lokal gebündelt) |
+| Stil Bold | `data-style="bold"`: nur `--size-title`, `--weight-title`, `--weight-heading`, `--size-body` – keine Schrift |
 | Marker, Calm | keine – der Marker ist kein Theme-Wert |
 
 Wichtig: `<Theme>` färbt seinen Wrapper mit `--color-text-primary`, und alles mit `color: inherit` erbt das. Läuft

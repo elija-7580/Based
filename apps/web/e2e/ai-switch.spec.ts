@@ -48,7 +48,7 @@ test("ohne AI: kein Chat, keine Agenten, Home ist eine Seite", { tag: "@smoke" }
 
   // BSD-461: Einstellungen → Home nennt die Seite, die Home ist (keine „neue Seite Home“ mehr)
   await page.evaluate(() => localStorage.removeItem("based.startPage"));
-  await page.goto("/#prefs-my-settings");
+  await page.goto("/#prefs-editor");
   await page.reload();
   await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
   await expect(page.getByTestId("settings-section-start-page")).not.toContainText("A new page called Home");

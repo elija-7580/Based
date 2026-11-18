@@ -27,7 +27,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
     const wrong: string[] = [];
-    for (const [hash, name, withCount] of [["#library", "Library", true], ["#trash", "Trash", true], ["#graph", "Graph", true], ["#prefs-my-settings", "Settings", false]] as const) {
+    for (const [hash, name, withCount] of [["#library", "Library", true], ["#trash", "Trash", true], ["#graph", "Graph", true], ["#prefs-appearance", "Settings", false]] as const) {
       await page.evaluate((h) => { location.hash = h; }, hash);
       await page.waitForTimeout(400);
       const h = await head(page);

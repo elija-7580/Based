@@ -46,7 +46,7 @@ for (const theme of ["light", "dark"] as const) {
     await go("#page-" + db);
     await expect(page.locator(".dbui-table").first()).toBeVisible();
     found.push(...await scan(page, "database"));
-    for (const [n, h] of [["library", "#library"], ["trash", "#trash"], ["chat", "#chat"], ["settings", "#prefs-my-settings"]] as const) {
+    for (const [n, h] of [["library", "#library"], ["trash", "#trash"], ["chat", "#chat"], ["settings", "#prefs-appearance"]] as const) {
       await go(h);
       found.push(...await scan(page, n));
     }

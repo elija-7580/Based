@@ -87,7 +87,7 @@ test("Leerer Workspace: nichts läuft über", async ({ page, browserName }) => {
   await ready(page);
   const found = await check(page, [
     { name: "home", hash: "#home", primary: HOME_COMPOSER }, { name: "library", hash: "#library", primary: LIBRARY_SEARCH }, { name: "trash", hash: "#trash" },
-    { name: "chat", hash: "#chat", primary: ".chat-composer" }, { name: "settings", hash: "#prefs-my-settings" },
+    { name: "chat", hash: "#chat", primary: ".chat-composer" }, { name: "settings", hash: "#prefs-appearance" },
   ], "empty", browserName);
   expect(found).toEqual([]);
 });
