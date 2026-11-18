@@ -36,10 +36,10 @@ test("Seitenfenster (BSD-202): Rechte gelten auch für page-*, Fenster dürfen a
   assert.ok(cap.permissions.includes("core:webview:allow-create-webview-window"));
 });
 
-test("BSD-467: Opener darf nur mailto öffnen (Problem melden → Mail), keine beliebigen Adressen", () => {
+test("BSD-467: Opener darf nur mailto (Problem melden → Mail) und die Sponsors-Seite (Billing → Spenden) öffnen, keine beliebigen Adressen", () => {
   const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/default.json", import.meta.url), "utf8"));
   const open = cap.permissions.filter((x) => (typeof x === "string" ? x : x.identifier).startsWith("opener:allow-open"));
-  assert.deepEqual(open, [{ identifier: "opener:allow-open-url", allow: [{ url: "mailto:*" }] }]);
+  assert.deepEqual(open, [{ identifier: "opener:allow-open-url", allow: [{ url: "mailto:*" }, { url: "https://github.com/sponsors/elija-7580*" }] }]);
   assert.ok(!cap.permissions.includes("opener:default"));
 });
 
