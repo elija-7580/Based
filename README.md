@@ -51,7 +51,7 @@ It's open source, built in Austria by one person and a night shift of agents, an
 Based has no investors and sells no ads. During the beta every feature is free for everyone, and donations pay for
 the servers. **$3 a month is enough.** It's a donation: you get nothing extra for it, just a notes app that stays yours.
 
-**Goal: 1,000 monthly sponsors.** At 1,000, Based Cloud goes live for everyone.
+**Paid plans start once Based is out of beta and has 1,000 users.** Until then, nothing costs money.
 
 <p>
   <a href="https://github.com/sponsors/elija-7580"><img alt="Sponsor Based on GitHub" src="https://img.shields.io/badge/Sponsor%20on%20GitHub-%E2%99%A5-E7CE6A?style=for-the-badge&labelColor=1F1F1D"></a>
