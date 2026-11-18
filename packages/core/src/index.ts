@@ -220,7 +220,8 @@ export {
 export {
   BOARD_BACKGROUNDS, boardBackground, setBoardBackground, type BoardBackground,
   BOARD_FORMAT, BOARD_OBJECT_TYPE, boardObjectFromBlock, boardObjectProps, boardObjectsOf, boardObjectToBlock, createBoardPage, insertBoardPage, isBoardObjectBlock,
-  isBoardPage, sameBoardObject,
+  isBoardPage, sameBoardObject, BOARD_PAGE_CARD, boardPageCardID, boardPagesWithoutCard, insertBoardPageCards,
+  boardEmbedView, setBoardEmbedView, type BoardEmbedView,
 } from "./whiteboard/records.js";
 export {
   BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, FEEDBACK_EMAIL, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
