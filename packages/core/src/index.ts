@@ -204,8 +204,12 @@ export {
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
 export { boardFileView, fileExtension, PREVIEW_BYTES, PREVIEW_LINES, textPreview, type BoardFileView, type PreviewLine, type TextPreview } from "./whiteboard/files.js";
+export { BOARD_FILL_COLORS, BOARD_HIGHLIGHT_COLORS, BOARD_HIGHLIGHT_WIDTHS, BOARD_PEN_WIDTHS, BOARD_STROKE_COLORS, BOARD_WIDTH_NAMES, type BoardFillColor, type BoardHighlightColor, type BoardStrokeColor } from "./whiteboard/style.js";
+export { PATH_POINTS_MAX, PathError, pathToStrokes, type PathPoint } from "./whiteboard/path.js";
+export { boardFileParts, FILE_CARD_SIZE, IMAGE_MAX_SIDE, IMAGE_UNKNOWN_SIZE, PDF_PAGE_WIDTH, PREVIEW_SIZES, sniffImageSize, sniffMime, sniffPdfPages, type BoardFileInfo, type BoardFilePart } from "./whiteboard/placefile.js";
 export { continueList, hasMarkdown, markdownPlain, parseInline, parseMarkdown, toggleTask, type MdBlock, type MdRun } from "./whiteboard/markdown.js";
-export { BOARD_SCRIPT_MAX, boardHandles, boardOutline, planBoardScript, type BoardPlan } from "./whiteboard/agent.js";
+export { fileRefOf, workspaceFiles, type WorkspaceFile } from "./whiteboard/workspace-files.js";
+export { BOARD_SCRIPT_HELP, BOARD_SCRIPT_MAX, boardHandles, boardOutline, inkPointsOfObject, OUTLINE_INK_MAX, planBoardScript, type BoardPlan, type BoardScriptOptions } from "./whiteboard/agent.js";
 // BSD-265 (Whiteboard 3): Tinte – ausdünnen, Treffer, Lasso
 export { distanceToInk, inkBounds, inkObjectGeometry, inkPointsOf, pointInPolygon, recognizeShape, shareInside, simplifyInk } from "./whiteboard/stroke.js";
 // BSD-264 (Whiteboard 2): Kamera, Geometrie, Raumindex und Board-Objekte als Records

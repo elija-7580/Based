@@ -4,6 +4,7 @@
 // Konfiguration auch über BASED_TOKEN, BASED_DB, BASED_PORT, BASED_HOST, BASED_NODE, BASED_PUBLIC_URL,
 // BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV, BASED_CHANNEL (beta: Discovery-Datei
 // der Based Beta, BSD-455). Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
+import { AssetStore } from "./assets.js";
 import { readFileSync } from "node:fs";
 import { CodingSessions, DEFAULT_AGENTS, type AcpMcpServer, type AgentDefinition } from "@based/brain";
 import { spawnAgent } from "@based/brain/acp-node";
@@ -265,7 +266,11 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   if (opts.stdio) {
     // stdio ist lokal (der Client startet den Prozess): kein Token nötig. stdout gehört dem Protokoll.
     const sync = new SyncService(openNodeDatabase(opts.db), { node: opts.node });
-    const server = createMcpServer(new Pages(sync.store));
+    // Dateien wie beim HTTP-Server neben der Datenbank (oder --assets): Agenten wählen Dateien aus und laden welche
+    // hoch; lokale Pfade sind erlaubt, weil der Client auf diesem Rechner läuft.
+    const persistent = opts.db !== ":memory:";
+    const assets = persistent || opts.assetsDir ? new AssetStore(opts.assetsDir ?? opts.db.replace(/(\.sqlite)?$/, ".assets"), opts.maxAssetMB !== undefined ? { maxBytes: Math.round(opts.maxAssetMB * 1048576) } : {}) : undefined;
+    const server = createMcpServer(new Pages(sync.store), { assets, localFiles: true });
     await server.connect(new StdioServerTransport());
     log.info("mcp on stdio", { db: opts.db });
     return;

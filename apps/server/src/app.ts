@@ -346,7 +346,7 @@ export function createApp(opts: AppOptions): App {
       } catch {
         return json({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }, 400);
       }
-      const server = createMcpServer(pages);
+      const server = createMcpServer(pages, { assets });
       const transport = new StreamableHTTPServerTransport({ enableJsonResponse: true }) // ohne sessionIdGenerator: zustandslos;
       res.on("close", () => {
         void transport.close();

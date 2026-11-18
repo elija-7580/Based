@@ -4,9 +4,11 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
+import { BOARD_SCRIPT_HELP, PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
+import { assetFileInfo, fetchRemote, readLocalFile, storeBytes, UploadError } from "./board-files.js";
+import type { AssetStore } from "./assets.js";
 import { AgentBrain, WorkspaceTools, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
 import type { Author, WorkspaceStore } from "@based/core";
 import { resolveInboxText, createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
@@ -89,8 +91,15 @@ export function mcpActor(server: McpServer): Author {
   return { kind: "agent", name: name ? name.slice(0, 80) : "MCP client" };
 }
 
+export interface McpServerOptions {
+  /** Dateispeicher: Agenten wählen Dateien aus (Maße, PDF-Seiten aus den Bytes) und laden welche hoch. */
+  assets?: AssetStore | undefined;
+  /** stdio: der Client läuft auf diesem Rechner – upload_file darf lokale Pfade lesen. */
+  localFiles?: boolean;
+}
+
 /** Ein MCP-Server über den Seiten des Workspaces. Pro HTTP-Anfrage neu (zustandslos), für stdio einmal. */
-export function createMcpServer(pages: Pages): McpServer {
+export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION }, { instructions: INSTRUCTIONS });
   // Jedes schreibende Werkzeug (ohne readOnlyHint) prüft vorher die Regeln (BSD-221 Teil 3e).
   {
@@ -351,31 +360,86 @@ export function createMcpServer(pages: Pages): McpServer {
 
   // BSD-508: Whiteboards als Text (wenige Token, keine Koordinaten – die Anordnung rechnet Based). Dieselbe Logik wie
   // für Baseds eigene Agenten (WorkspaceTools), damit beide Wege genau dasselbe können.
-  const boards = new WorkspaceTools(pages.store);
+  const assets = opts.assets;
+  const boards = new WorkspaceTools(pages.store, assets ? { fileInfo: (ref) => assetFileInfo(assets, ref) } : {});
   const board = (name: string, input: Record<string, unknown>): CallToolResult => {
     const r = boards.callSync(name, Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)) as never);
     return { content: [{ type: "text", text: r.text }], ...(r.isError ? { isError: true } : {}) };
   };
   server.registerTool(
     "read_board",
-    { description: "A whiteboard as compact text: one line per object (short handle, kind, text, position), connectors as `a -> b: label`. Use the handles in draw_board.", inputSchema: { id: z.string() }, annotations: { readOnlyHint: true } },
+    { description: "A whiteboard as compact text: one line per object (short handle, kind, text, @x,y WxH, {style}), connectors as `a -> b: label [handle]`. Use the handles in draw_board.", inputSchema: { id: z.string() }, annotations: { readOnlyHint: true } },
     guarded(({ id }: { id: string }) => board("read_board", { page_id: id })),
   );
   server.registerTool(
     "draw_board",
     {
-      description: [
-        "Add to or change a whiteboard with a short script. Based lays the objects out (columns follow the arrows) and puts new content beside what is there. Omit `id` to create a new board (`title`, `parent` optional). One statement per line:",
-        "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
-        "a -> b: optional label (a, b: names from this script or handles from read_board)",
-        "frame f: Title { a b c } | set <handle>: new text | del <handle>",
-        "Text in notes, shapes and text objects is Markdown: # headings, **bold**, *italic*, `code`, ~~strike~~, ==highlight==, [links](url), - lists, 1. lists, - [ ] tasks, > quotes, ``` code blocks. Write line breaks as \\n.",
-      ].join("\n"),
+      description: ["Add to or change a whiteboard with a short script. Based lays new objects out beside what is there unless they have at=. Omit `id` to create a new board (`title`, `parent` optional).", BOARD_SCRIPT_HELP].join("\n"),
       inputSchema: { id: z.string().optional(), script: z.string().min(1), title: z.string().optional(), parent: z.string().optional() },
     },
     guarded((a: { id?: string | undefined; script: string; title?: string | undefined; parent?: string | undefined }) =>
       board("draw_board", { page_id: a.id, script: a.script, title: a.title, parent_id: a.parent })),
   );
+  server.registerTool(
+    "list_files",
+    {
+      description: "Files already in the workspace (images, PDFs, attachments) with the ref to place them on a board (draw_board: image a: <ref> / file a: <ref>).",
+      inputSchema: { query: z.string().optional().describe("Part of the file name"), limit, offset: z.number().int().min(0).optional() },
+      annotations: { readOnlyHint: true },
+    },
+    guarded((a: { query?: string | undefined; limit?: number | undefined; offset?: number | undefined }) => board("list_files", a)),
+  );
+  if (assets) {
+    const local = opts.localFiles === true;
+    server.registerTool(
+      "upload_file",
+      {
+        description: [
+          "Put a file (image, PDF, any document) into the workspace's file storage and get its ref for draw_board. Give exactly one of",
+          local ? "`path` (a file on this computer), `url` (https) or `data` (base64)." : "`url` (https) or `data` (base64).",
+          "With `board` the file is placed on that whiteboard right away (`at` = x,y top-left; a PDF becomes one object per page).",
+        ].join(" "),
+        inputSchema: {
+          name: z.string().optional().describe("File name with extension (decides how it shows); default: from path or URL"),
+          ...(local ? { path: z.string().optional() } : {}),
+          url: z.string().optional(),
+          data: z.string().optional().describe("Base64 of the bytes"),
+          mime: z.string().optional(),
+          board: z.string().optional().describe("Whiteboard page id to place the file on"),
+          at: z.string().optional().describe("x,y on the board"),
+        },
+      },
+      async (a: { name?: string | undefined; path?: string | undefined; url?: string | undefined; data?: string | undefined; mime?: string | undefined; board?: string | undefined; at?: string | undefined }) => {
+        try {
+          const given = [a.path, a.url, a.data].filter((v) => v !== undefined && v !== "").length;
+          if (given !== 1) return fail(local ? "Give exactly one of path, url or data." : "Give exactly one of url or data.");
+          let bytes: Buffer, name = a.name?.trim() || "", mime = a.mime;
+          if (a.path !== undefined && local) { const f = readLocalFile(a.path, assets.maxBytes); bytes = f.bytes; name ||= f.name; }
+          else if (a.url) { const f = await fetchRemote(a.url, assets.maxBytes); bytes = f.bytes; name ||= f.name; mime ??= f.mime; }
+          else {
+            if (!/^[A-Za-z0-9+/=\s_-]+$/.test(a.data!)) return fail("data is not base64.");
+            bytes = Buffer.from(a.data!, "base64");
+            name ||= "file";
+          }
+          const ref = await storeBytes(assets, bytes, name, mime);
+          const info = assetFileInfo(assets, ref);
+          const what = info?.pages?.length ? `PDF, ${info.pages.length} page${info.pages.length === 1 ? "" : "s"}` : info?.width ? `${info.width}x${info.height}` : (info?.mime ?? mime ?? "file");
+          const lines = [`Stored “${name}” (${what}, ${Math.max(1, Math.round(bytes.length / 1024))} KB): ${ref}`];
+          if (a.board) {
+            const kind = info?.mime?.startsWith("image/") && info.mime !== "image/svg+xml" ? "image" : "file";
+            const at = a.at && /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(a.at.replace(/\s/g, "")) ? ` {at=${a.at.replace(/\s/g, "")}}` : "";
+            const r = board("draw_board", { page_id: a.board, script: `${kind} f: ${ref}${at}` });
+            lines.push(...r.content.map((c) => (c.type === "text" ? c.text : "")));
+            if (r.isError) return { content: [{ type: "text", text: lines.join("\n") }], isError: true };
+          }
+          return text(lines.join("\n"));
+        } catch (e) {
+          if (e instanceof UploadError || e instanceof ToolError) return fail(e.message);
+          throw e;
+        }
+      },
+    );
+  }
 
   server.registerTool(
     "append_markdown",
