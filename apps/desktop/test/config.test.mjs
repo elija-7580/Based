@@ -263,12 +263,13 @@ test("Beta-Release-Notes: oberster Abschnitt passt in den Update-Dialog (≤ 8 Z
 });
 
 // Beta-Release (16.11.2026): eigene App-Identität „Based Beta“, neben Based Next installierbar, eigener Update-Kanal.
+// BSD-514 (17.11.): sichtbarer Name „Based Notes Beta“; Bundle-ID und Updater-Kanal bleiben (Daten und Updates der Tester).
 test("Beta-Overlay: eigener Name, eigene Bundle-ID, Updater auf beta-latest", () => {
   const beta = JSON.parse(readFileSync(new URL("../src-tauri/tauri.beta.conf.json", import.meta.url), "utf8"));
-  assert.equal(beta.productName, "Based Beta");
+  assert.equal(beta.productName, "Based Notes Beta");
   assert.equal(beta.identifier, "com.friedrich-ulrich.based.beta");
   assert.notEqual(beta.identifier, conf.identifier);
-  assert.equal(beta.app.windows[0].title, "Based Beta");
+  assert.equal(beta.app.windows[0].title, "Based Notes Beta");
   // Das Overlay ersetzt das Fenster-Array ganz (JSON Merge Patch): alles außer dem Titel muss gleich bleiben.
   assert.deepEqual({ ...beta.app.windows[0], title: conf.app.windows[0].title }, conf.app.windows[0]);
   assert.equal(beta.plugins.updater.pubkey, conf.plugins.updater.pubkey);

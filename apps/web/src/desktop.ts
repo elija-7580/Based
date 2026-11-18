@@ -6,7 +6,7 @@
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
 import { checkReleasesFallback, isMissingUpdateManifest, releaseLine } from "./shell/updateFallback.js";
-import { CHANNEL } from "./shell/beta.js";
+import { CHANNEL, productName } from "./shell/beta.js";
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
 import { askUser, showMessage } from "./shell/prompts.js";
@@ -34,7 +34,7 @@ export function applyDesktopShell(root: HTMLElement = document.documentElement) 
 
 let checking = false;
 
-/** Name und Version dieser App, wie sie im Bundle stehen („Based Next“ 0.1.155, „Based Beta“ 0.2.3). */
+/** Name und Version dieser App, wie sie im Bundle stehen („Based Next“ 0.1.155, „Based Notes Beta“ 0.2.5). */
 export interface AppIdentity { name: string; version: string }
 let identity: Promise<AppIdentity> | undefined;
 export function appIdentity(): Promise<AppIdentity> {
@@ -206,7 +206,7 @@ export async function openPageWindow(hash: string, title: string): Promise<void>
   const [{ WebviewWindow }, { LogicalPosition }] = await Promise.all([import("@tauri-apps/api/webviewWindow"), import("@tauri-apps/api/dpi")]);
   const label = "page-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   new WebviewWindow(label, {
-    url, title: title || "Based Next", width: 1000, height: 760, minWidth: 600, minHeight: 400,
+    url, title: title || productName(), width: 1000, height: 760, minWidth: 600, minHeight: 400,
     titleBarStyle: "overlay", hiddenTitle: true, trafficLightPosition: new LogicalPosition(18, 22), dragDropEnabled: false,
   });
 }

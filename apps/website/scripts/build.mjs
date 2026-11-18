@@ -85,7 +85,7 @@ const INFO = [
     description: "Is the Based beta free, where is my data, can I import from Notion, what is not in the beta yet? Short answers." },
   { name: "download", path: "/download", index: false,
     title: "Download the Based Notes beta for Mac",
-    description: "Download Based Beta for macOS, install it and send feedback." }
+    description: "Download Based Notes Beta for macOS, install it and send feedback." }
 ];
 
 const stripTags = (s) => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()

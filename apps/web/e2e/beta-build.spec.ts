@@ -102,9 +102,9 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
       await clean(page, "My settings");
       await shoot(page, "settings");
-      // BSD-485: About heißt „Based Beta“, ohne Agenten
+      // BSD-485/514: About heißt „Based Notes Beta“, ohne Agenten
       await nav.getByRole("button", { name: "About", exact: true }).click();
-      await expect(settings).toContainText("Based Beta — the notes app that keeps your data yours.");
+      await expect(settings).toContainText("Based Notes Beta — the notes app that keeps your data yours.");
       await expect(settings).not.toContainText(/Based Next|agent/i);
       await clean(page, "About");
       await shoot(page, "settings-about");
@@ -119,7 +119,7 @@ for (const theme of ["light", "dark"] as const) {
       await clean(page, "Diagnostics");
       await shoot(page, "settings-diagnostics");
 
-      // Library ohne Graph, mit Meetings; ⌘N mit Meeting notes, ohne AI-Chat, mit den Vorlagen
+      // Library ohne Graph, mit Meetings; ⌘N mit Meeting notes und Board (seit be879bf0 auf beta), ohne AI-Chat, mit den Vorlagen
       await page.goto("/#library");
       await expect(page.getByRole("heading", { name: "Library" })).toBeVisible();
       await expect(page.getByText(/^Loading/)).toHaveCount(0, { timeout: 15_000 });
@@ -129,7 +129,7 @@ for (const theme of ["light", "dark"] as const) {
       await shoot(page, "library");
       await page.keyboard.press("ControlOrMeta+n");
       const palette = page.getByTestId("new-palette");
-      await expect(palette.getByRole("option")).toHaveText([/New page/, /meeting notes/i, /New database/, /Import/, /Tasks template/, /Notes template/, /Journal template/, /Wiki template/]);
+      await expect(palette.getByRole("option")).toHaveText([/New page/, /meeting notes/i, /New database/, /Import/, /New board/, /Tasks template/, /Notes template/, /Journal template/, /Wiki template/]);
       await page.keyboard.type("tasks");
       await page.keyboard.press("Enter");
       await expect(page.locator(".shell-database.full")).toBeVisible();
@@ -142,7 +142,7 @@ for (const theme of ["light", "dark"] as const) {
 }
 
 // BSD-467: ⇧⌘B → Speichern → der Dialog nennt hello@basednotes.app und der Knopf „Email report“ öffnet eine Mail mit
-// „Based Beta“ und Kanal beta – ohne Seiteninhalt und ohne die Notiz.
+// „Based Notes Beta“ (BSD-514) und Kanal beta – ohne Seiteninhalt und ohne die Notiz.
 test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async ({ playwright, browserName, baseURL }) => {
   test.setTimeout(90_000);
   const { page, close } = await fresh(playwright, browserName, baseURL!, "light");
@@ -161,7 +161,7 @@ test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async
     await expect(box).toContainText("Send it to hello@basednotes.app");
     await expect(box.getByRole("button", { name: "Email report" })).toBeVisible();
     const text = decodeURIComponent((await box.getAttribute("data-mailto"))!);
-    expect(text.startsWith("mailto:hello@basednotes.app?subject=Based Beta ")).toBe(true);
+    expect(text.startsWith("mailto:hello@basednotes.app?subject=Based Notes Beta ")).toBe(true);
     expect(text).toContain("Channel: beta");
     for (const leak of ["Secret beta page text", "My private note"]) expect(text).not.toContain(leak);
     await clean(page, "Report saved");
