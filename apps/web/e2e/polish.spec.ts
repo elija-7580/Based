@@ -582,3 +582,33 @@ test("Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenst
     }
   }
 });
+
+// BSD-562: Mit Font „Based“ (Schibsted Grotesk) machten die globalen Tabellenziffern auch Komma und Punkt so breit wie
+// eine Ziffer – im Fließtext stand eine Lücke vor jedem Satzzeichen. Im Fließtext ist das Komma deutlich schmaler als
+// in `t-meta` (Tabellenziffern, Komma so breit wie eine Ziffer).
+test("Font „Based“: Komma und Punkt im Fließtext ohne Lücke, Zeiten behalten Tabellenziffern", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light", font: "based" })));
+  await page.goto("/#prefs-appearance");
+  await expect(page.getByTestId("settings-page")).toBeVisible();
+  const widths = await page.evaluate(async () => {
+    await document.fonts.load("450 13px 'Schibsted Grotesk'");
+    await document.fonts.ready;
+    const measure = (cls: string) => {
+      const el = document.createElement("span");
+      el.className = cls;
+      el.textContent = "0,.";
+      document.querySelector("[data-testid=settings-page]")!.appendChild(el);
+      const w = (i: number) => { const r = document.createRange(); r.setStart(el.firstChild!, i); r.setEnd(el.firstChild!, i + 1); return r.getBoundingClientRect().width; };
+      const out = { zero: w(0), comma: w(1), period: w(2), font: getComputedStyle(el).fontFamily };
+      el.remove();
+      return out;
+    };
+    return { desc: measure("t-desc"), meta: measure("t-meta") };
+  });
+  expect(widths.desc.font).toContain("Schibsted Grotesk");
+  expect(widths.meta.comma, JSON.stringify(widths)).toBeGreaterThanOrEqual(widths.meta.zero);
+  expect(widths.desc.comma, JSON.stringify(widths)).toBeLessThan(widths.meta.comma * 0.7);
+  expect(widths.desc.period, JSON.stringify(widths)).toBeLessThan(widths.meta.period * 0.7);
+  // Zeit und Anzahl: Tabellenziffern bleiben
+  expect(await page.evaluate(() => { const el = document.createElement("span"); el.className = "t-meta"; document.body.appendChild(el); const v = getComputedStyle(el).fontVariantNumeric; el.remove(); return v; })).toBe("tabular-nums");
+});
