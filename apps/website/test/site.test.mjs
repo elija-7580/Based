@@ -140,6 +140,14 @@ test("claims (BSD-434): no promise the Mac beta can't keep", () => {
   }
   const home = readFileSync(join(out, "index.html"), "utf8");
   assert.match(home, /Sync between your Macs through iCloud Drive \(preview\)/);
+  // BSD-502 (Elija 18.11.): transcription is part of the beta again (BSD-231), on desktop and phone, and the FAQ agrees
+  assert.match(home, /<li>Meeting notes transcribed on your device<\/li>/, "desktop list");
+  assert.match(home, /'Meeting notes transcribed on your device'/, "phone list");
+  assert.ok(!home.includes("comes after the beta"), "no 'transcription after the beta' line");
+  const faq = readFileSync(join(out, "faq", "index.html"), "utf8");
+  const notYet = /<h2>What is not in the beta yet\?<\/h2>\s*<p>([^<]*)<\/p>/.exec(faq)[1];
+  assert.ok(!/meeting/i.test(notYet), "FAQ no longer lists meeting notes as missing");
+  assert.match(faq, /<li>Meeting notes, transcribed on your Mac\./);
   assert.match(home, /Math\.round\(236 \* ease\)/);
 });
 
