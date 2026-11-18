@@ -15,6 +15,11 @@ body {
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
+/* BSD-562: Schibsted Grotesk (Font „Based“) tauscht mit Tabellenziffern auch Komma und Punkt gegen Varianten in
+   Ziffernbreite – im Fließtext stand dann eine Lücke vor jedem Satzzeichen („Theme , font“). Dort also normale
+   Ziffern; Zeit und Anzahl (`t-meta`) und Stellen mit eigener Regel behalten die Tabellenziffern. */
+[data-typeface="based"] body { font-variant-numeric: normal; }
+[data-typeface="based"] .t-meta { font-variant-numeric: tabular-nums; }
 /* Element-Grundregeln im untersten Layer (`reset`, derselbe wie Astryx' reset.css): Based-Klassen (ohne Layer)
    gewinnen weiterhin, aber Astryx-Komponenten behalten ihre eigene Schrift-, Text- und Fokusfarbe. */
 @layer reset {
