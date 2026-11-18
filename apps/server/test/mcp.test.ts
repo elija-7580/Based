@@ -41,7 +41,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent", "read_board", "draw_board", "list_files", "upload_file"].sort(),
+      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_view", "database_schema", "delete_view", "draw_board", "duplicate_page", "find_replace", "get_project", "get_run", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_trash", "list_views", "move_page", "query_database", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "update_database", "update_page", "update_project_status", "update_row", "update_view", "upload_file"].sort(),
     );
   });
 
@@ -208,6 +208,65 @@ describe("MCP über Streamable HTTP", () => {
   });
 });
 
+describe("MCP: Agent Brain (BSD-541)", () => {
+  it("recall, related, about_me, remember – der Weg eines Agenten von der Frage bis zur gemerkten Tatsache", async () => {
+    const { app, call, client } = await httpClient();
+    expect(client.getInstructions()).toContain("Start with `recall`");
+    expect(textOf(await call("based_guide", { topic: "brain" }))).toContain("remember(fact");
+    expect(textOf(await call("about_me"))).toBe("Nothing saved about the user yet.");
+    expect(textOf(await call("recall", { query: "" }))).toContain("Give a query");
+
+    const adr = idIn(textOf(await call("create_page", { title: "ADR 0017", markdown: "Storage decisions." })));
+    const plan = idIn(textOf(await call("create_page", { title: "Sync plan", markdown: `Devices sync through the server. See [ADR 0017](based://page/${adr}).` })));
+    const proto = idIn(textOf(await call("create_page", { title: "Protocol v4", markdown: `Compact records for sync, see [ADR 0017](based://page/${adr}).` })));
+
+    const saved = textOf(await call("remember", { fact: "Sync must work fully offline on every device.", type: "Preference", about: [plan] }));
+    expect(saved).toMatch(/^Remembered \(id: [0-9A-Fa-f-]{36}\)\.$/);
+    const mem = idIn(saved);
+    expect(textOf(await call("remember", { fact: "sync must work fully offline on every device" }))).toContain("Already remembered");
+    const r = (await call("remember", { fact: "x", about: ["missing"] }));
+    expect(r.isError).toBe(true);
+    expect(textOf(r)).toContain("No page with id missing");
+    expect(textOf(await call("remember", { fact: "Pays 900 € salary to an assistant." }))).toContain("To review");
+
+    const out = textOf(await call("recall", { query: "what did we decide about sync?" }));
+    expect(out).toContain(`## Memories\n- Sync must work fully offline on every device. (Preference; about: Sync plan; id: ${mem})`);
+    expect(out).toContain(`(id: ${plan})`);
+    expect(out).toContain(`(id: ${proto})`);
+    expect(out).toContain("mentions: ADR 0017");
+    expect(out).toContain(`## Connected\n- ADR 0017 (id: ${adr})`);
+    expect(out).not.toContain("salary");
+
+    const rel = textOf(await call("related", { id: adr }));
+    expect(rel).toContain("Mentioned by:");
+    expect(rel).toContain(`- Sync plan (id: ${plan})`);
+    expect(textOf(await call("related", { id: plan }))).toContain(`Mentioned by:\n- Sync must work fully offline on every device. (id: ${mem})`);
+    expect(textOf(await call("about_me"))).toContain("# Profile and preferences\n- Sync must work fully offline on every device.");
+
+    // Was der Agent schreibt, trägt seine Herkunft (BSD-522) und liegt als normale Zeile in „Memories“.
+    const store = app.pages.store;
+    const brain = new AgentBrain(store);
+    expect(brain.memories().find((m) => m.id === mem)).toMatchObject({ kind: "Preference", status: "Active" });
+    expect(store.blocks.get(mem)!.origin).toBe("ai");
+
+    // Ersetzen: die alte Tatsache bleibt als „Superseded“ und fällt aus dem Abruf.
+    const next = textOf(await call("remember", { fact: "Sync must work offline on phones and laptops, tablets can wait.", type: "Preference", replaces: mem }));
+    expect(next).toContain("the old memory is now Superseded");
+    const again = textOf(await call("recall", { query: "sync offline" }));
+    expect(again).toContain("tablets can wait");
+    expect(again).not.toContain("fully offline on every device");
+  });
+
+  it("Berechtigungsregeln gelten auch für remember", async () => {
+    const { app, call } = await httpClient();
+    const store = app.pages.store;
+    store.transact("rules", (tx) => putRecord(store, tx, AGENT_TYPE, MAIN_AGENT_ID, "Main", { ...defaultMainAgent(), permissions: { ...defaultMainAgent().permissions, rules: "deny based.remember" } }));
+    const r = await call("remember", { fact: "Likes tea." });
+    expect(r.isError).toBe(true);
+    expect(new AgentBrain(store).memories()).toHaveLength(0);
+  });
+});
+
 describe("MCP über stdio", () => {
   it("startet ohne Token, schreibt in die Datenbank", async () => {
     const dir = mkdtempSync(join(tmpdir(), "based-mcp-"));
@@ -224,6 +283,9 @@ describe("MCP über stdio", () => {
     try {
       const r = (await client.callTool({ name: "create_page", arguments: { title: "Über stdio" } })) as ToolResult;
       expect(textOf(r)).toContain("Created Über stdio");
+      // BSD-541: der Weg, den Claude Code oder Codex lokal gehen
+      expect(textOf((await client.callTool({ name: "remember", arguments: { fact: "Arbeitet am liebsten morgens.", type: "Preference" } })) as ToolResult)).toContain("Remembered");
+      expect(textOf((await client.callTool({ name: "recall", arguments: { query: "morgens arbeiten" } })) as ToolResult)).toContain("Arbeitet am liebsten morgens.");
     } finally {
       await client.close();
     }

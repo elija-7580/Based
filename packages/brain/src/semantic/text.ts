@@ -37,6 +37,17 @@ export function tokenize(s: string): string[] {
   return out;
 }
 
+/** Inhaltswörter einer Anfrage (gefaltet, ohne Stoppwörter, NICHT gestemmt) – für die Suche Wort für Wort. */
+export function contentWords(s: string): string[] {
+  const out: string[] = [];
+  for (const m of foldText(s).matchAll(/[\p{L}\p{N}]+/gu)) {
+    const w = m[0];
+    if (w.length < 2 || STOP.has(w) || out.includes(w)) continue;
+    out.push(w);
+  }
+  return out;
+}
+
 export function termCounts(terms: readonly string[]): Map<string, number> {
   const m = new Map<string, number>();
   for (const t of terms) m.set(t, (m.get(t) ?? 0) + 1);
