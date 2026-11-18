@@ -339,7 +339,10 @@ describe("Diagramm, Berechnungen, Anzeige", () => {
     expect(formatNumber(1234.5, "dollar")).toBe("$1,234.50");
     expect(formatNumber(-3, "euro")).toBe("-€3.00");
     expect(formatNumber(1234.567, "numberWithCommas")).toBe("1,234.57");
-    expect(formatNumber(12.5, "percent")).toBe("12.5%");
+    // BSD-564: gespeichert ist der Anteil, gezeigt wird Prozent (wie Notion)
+    expect(formatNumber(0.125, "percent")).toBe("12.5%");
+    expect(formatNumber(0.07, "percent")).toBe("7%");
+    expect(formatNumber(1, "percent")).toBe("100%");
     expect(formatNumber(1500, "yen")).toBe("¥1,500");
   });
 });

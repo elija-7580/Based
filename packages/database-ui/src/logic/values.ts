@@ -1,5 +1,5 @@
 // BSD-155: Werte zwischen Zellen-Editoren und dem Speicherformat umwandeln (rein, ohne React).
-import { plainText, pv, valueCase, values, type Block, type DateValue, type PropertySchema, type PropertyValue } from "@based/core";
+import { percentShown, plainText, pv, valueCase, values, type Block, type DateValue, type PropertySchema, type PropertyValue } from "@based/core";
 
 const { fromJSDate, toJSDate } = values;
 
@@ -36,7 +36,8 @@ export function editText(row: Block, p: PropertySchema): string {
   const c = valueCase(row.values?.[p.id]);
   if (!c) return "";
   if (c[0] === "text") return plainText(c[1] as Block["text"]);
-  if (c[0] === "number") return String(c[1]);
+  // BSD-564: Prozent wird bearbeitet, wie es dasteht (25), gespeichert bleibt der Anteil (0.25)
+  if (c[0] === "number") return p.numberFormat === "percent" ? String(percentShown(c[1] as number)) : String(c[1]);
   if (c[0] === "place") {
     const raw = String(c[1]);
     try {
@@ -49,10 +50,15 @@ export function editText(row: Block, p: PropertySchema): string {
 }
 
 /** Eingabe eines Text-Editors → gespeicherter Wert (`null` = leeren, `undefined` = ungültig, nichts tun). */
-export function parseTextInput(type: string, s: string): PropertyValue | null | undefined {
+export function parseTextInput(type: string, s: string, numberFormat?: string): PropertyValue | null | undefined {
   const t = type === "text" || type === "title" ? s : s.trim();
   if (t === "") return null;
   if (type === "number") {
+    if (numberFormat === "percent") {
+      // „25“ und „25 %“ sind 25 % (Anteil 0.25)
+      const n = parseNumberInput(t.replace(/\s*%$/, ""));
+      return n === undefined ? undefined : pv("number", Number((n / 100).toPrecision(12)));
+    }
     const n = parseNumberInput(t);
     return n === undefined ? undefined : pv("number", n);
   }

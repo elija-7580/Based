@@ -11,12 +11,16 @@ const CURRENCY: Record<string, string> = {
 const en = (min: number, max: number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: min, maximumFractionDigits: max });
 const decimal2 = en(0, 2), currency2 = en(2, 2), currency0 = en(0, 0);
 
+/** Anteil → Prozentzahl ohne Rundungsreste (0.07 → 7, nicht 7.000000000000001). */
+export const percentShown = (n: number) => Number((n * 100).toPrecision(12));
+
 /** Zahl im Format der Property (Swift `CellFormatter.number`, Locale en_US). */
 export function formatNumber(n: number, format?: string): string {
   switch (format ?? "number") {
     case "number": return plainNumber(n);
     case "numberWithCommas": return decimal2.format(n);
-    case "percent": return decimal2.format(n) + "%";
+    // BSD-564: gespeichert wird der Anteil (0.25), gezeigt 25 % – wie Notion, dessen Import, API und Formeln so rechnen.
+    case "percent": return decimal2.format(percentShown(n)) + "%";
     default: {
       const sym = CURRENCY[format ?? ""] ?? "";
       const f = format === "yen" || format === "won" ? currency0 : currency2;
