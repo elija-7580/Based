@@ -348,7 +348,7 @@ test("Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einst
   }
 });
 
-// BSD-551: ⌘K → „Show welcome tour“ (in der Mac-App auch Hilfe → Show Welcome Tour) zeigt den Einstieg erneut – ohne
+// BSD-551: ⌘K → „Show the tour“ (in der Mac-App auch Hilfe → Show Welcome Tour) zeigt den Einstieg erneut – ohne
 // die Wahl am Ende, ohne etwas anzulegen; Done, Close und Escape schließen.
 test("Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen", async ({ playwright, browserName, baseURL }) => {
   test.setTimeout(90_000);
@@ -363,8 +363,8 @@ test("Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape 
     const before = await tree.count();
     const open = async () => {
       await page.keyboard.press("ControlOrMeta+k");
-      await page.keyboard.type("welcome tour");
-      await page.getByRole("option", { name: /Show welcome tour/ }).click();
+      await page.keyboard.type("tour");
+      await page.getByRole("option", { name: /Show the tour/ }).click();
       await expect(page.getByTestId("welcome-tour")).toBeVisible();
     };
     await open();
