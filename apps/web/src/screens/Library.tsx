@@ -201,7 +201,7 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
     <div className="lib" data-testid="library" data-count={rows.length} data-loaded={items ? "" : undefined}>
       <header className="lib-head">
         <h1 className="t-heading">Library</h1>
-        <p className="t-meta" role="status" aria-live="polite" data-testid="library-count">
+        <p className="t-meta" role="status" aria-live="polite" data-testid="library-count" data-head-count="">
           {items === undefined ? "Loading…" : filtered ? `${rows.length.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} items` : `${total.toLocaleString("en-US")} ${total === 1 ? "item" : "items"}`}
           {notice ? ` · ${notice}` : ""}
         </p>

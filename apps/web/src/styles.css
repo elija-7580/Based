@@ -430,7 +430,10 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .block-media { background: var(--surface-soft); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4); }
 .mention { border: 0; background: transparent; padding: 0; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); }
 .empty-page { padding: var(--space-2) 0; }
-.trash-head { display: flex; align-items: flex-end; gap: var(--space-4); justify-content: space-between; flex-wrap: wrap; }
+.trash-head { display: flex; align-items: center; gap: var(--space-4); justify-content: space-between; flex-wrap: wrap; }
+.trash-title { display: flex; align-items: baseline; gap: var(--space-4); }
+.trash-title .t-meta { font-variant-numeric: tabular-nums; }
+.trash-hint { margin-top: calc(-1 * var(--space-2)); }
 .trash-head .actions { display: flex; gap: var(--space-2); }
 .trash-more { display: flex; align-items: center; gap: var(--space-2); }
 .group .row .btn { flex: none; }

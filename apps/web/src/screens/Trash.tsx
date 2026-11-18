@@ -32,9 +32,10 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
     <div className="content">
       <div className="column">
         <header className="trash-head">
-          <div>
-            <h1 className="t-title">Trash</h1>
-            <p className="t-desc" style={{ marginTop: "var(--space-1)" }}>{forever ? "Pages stay here until you delete them forever." : "Pages stay here until the owner deletes them."}</p>
+          {/* BSD-530: Kopf eines App-Screens – Titel heading + Anzahl in meta, rechts die Hauptaktion */}
+          <div className="trash-title">
+            <h1 className="t-heading">Trash</h1>
+            <p className="t-meta" data-head-count="" data-testid="trash-count">{entries.length.toLocaleString("en-US")} {entries.length === 1 ? "page" : "pages"}</p>
           </div>
           {emptying !== undefined ? (
             <span className="t-desc" role="status" data-testid="trash-emptying">Deleting {emptying} {emptying === 1 ? "page" : "pages"} forever…</span>
@@ -49,6 +50,7 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
             )
           ) : null}
         </header>
+        <p className="t-desc trash-hint">{forever ? "Pages stay here until you delete them forever." : "Pages stay here until the owner deletes them."}</p>
         {entries.length === 0 ? (
           <p className="t-desc">The Trash is empty.</p>
         ) : (
