@@ -1,6 +1,7 @@
 // Props des Seiten-Editors (Block-Editor, ADR 0016). Bis BSD-407 Teil 4 lagen sie beim alten BlockNote-Editor.
 import type { BookmarkMeta, WorkspaceStore } from "@based/core";
 import type { ReactNode } from "react";
+import type { BoardEmbed } from "../whiteboard/BoardView.js";
 import type { CollabSource } from "../yjs/collab.js";
 import type { DatabaseRenderProps, EquationRenderProps, PageDirectory, Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
@@ -14,7 +15,7 @@ export interface PageEditorProps {
   /** Zeichnet eine eingebettete Datenbank-Ansicht (anderes Paket). Ohne: Platzhalter. */
   renderDatabase?: (p: DatabaseRenderProps) => ReactNode;
   /** Elija 17.11.: ein Board als Unterseite erscheint in der Seite als Fläche (bearbeitbar), nicht nur als Link. */
-  renderBoard?: (p: { blockID: string; pageID: string }) => ReactNode;
+  renderBoard?: (p: { blockID: string; pageID: string; embed?: BoardEmbed }) => ReactNode;
   /** Zeichnet eine Gleichung (KaTeX, eigener Eintrag). Ohne: TeX als Code. */
   renderEquation?: (p: EquationRenderProps) => ReactNode;
   /**

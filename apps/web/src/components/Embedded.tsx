@@ -2,7 +2,7 @@
 // bearbeitbare Seite auf einem Board. Beide öffnen ihre eigene Replik der Seite (wie PageView) und zeigen den
 // Editor bzw. die Board-Fläche der App. Tiefe begrenzt: ein Board in einer Seite in einem Board … endet nach zwei Stufen.
 import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
-import { BoardView } from "@based/editor";
+import { BoardView, type BoardEmbed } from "@based/editor";
 import type { WorkspaceStore } from "@based/core";
 import { assets } from "../assetBridge.js";
 import { slots } from "../slots.js";
@@ -43,7 +43,7 @@ export function EmbeddedPage({ client, pageID, editable, onOpenPage }: { client:
 }
 
 /** Ein Board mitten in einer Seite (Board-Unterseite). */
-export function EmbeddedBoard({ client, pageID, onOpenPage }: { client: StoreClient; pageID: string; onOpenPage: (id: string) => void }) {
+export function EmbeddedBoard({ client, pageID, onOpenPage, embed }: { client: StoreClient; pageID: string; onOpenPage: (id: string) => void; embed?: BoardEmbed | undefined }) {
   const depth = useContext(Depth);
   const { store, failed } = useReplica(client, pageID);
   const titles = useSyncExternalStore(client.subscribe, () => client.getState().titles);
@@ -53,7 +53,7 @@ export function EmbeddedBoard({ client, pageID, onOpenPage }: { client: StoreCli
   const files = assets();
   return (
     <Depth.Provider value={depth + 1}>
-      <BoardView store={store} pageID={pageID} readOnly={store.isReadOnly} onOpenPage={onOpenPage} pageTitles={titles} pickPage={pickPage}
+      <BoardView store={store} pageID={pageID} readOnly={store.isReadOnly} onOpenPage={onOpenPage} pageTitles={titles} pickPage={pickPage} embed={embed}
         renderPage={(id, editable) => <EmbeddedPage client={client} pageID={id} editable={editable} onOpenPage={onOpenPage} />}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
     </Depth.Provider>

@@ -19,6 +19,8 @@ import {
   dropPages,
   emptyTrash,
   insertPage,
+  insertBoardPageCards,
+  isBoardPage,
   isDescendant,
   hasPageTitle,
   isPageLike,
@@ -403,7 +405,12 @@ export class StoreHost {
         if (c.section && c.section !== PRIVATE_SECTION) opts.section = { kind: "teamspace", id: c.section };
         if (c.after) opts.position = { kind: "after", id: c.after };
         if (c.format) opts.format = c.format;
-        const id = createPage(store, opts);
+        // Elija 18.11.: eine Unterseite eines Boards (Seitenleiste „Add a page inside“) liegt im selben Schritt als
+        // Karte auf dem Board.
+        const parent = c.parent;
+        const id = parent && isBoardPage(store.blocks.get(parent))
+          ? store.transact("New page", (tx) => { const made = insertPage(store, tx, opts); insertBoardPageCards(store, tx, parent, [made]); return made; })
+          : createPage(store, opts);
         return store.blocks.has(id) ? id : undefined;
       }
       case "pageAncestors": return pageAncestors(store, c.id);

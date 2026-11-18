@@ -210,6 +210,19 @@
 .bx2-embed { flex: 1 1 auto; min-width: 0; }
 /* Elija 17.11.: Board mitten in der Seite – Titelzeile (öffnet das Board) und darunter die Fläche. */
 .bx2-board { display: flex; flex-direction: column; gap: var(--space-1); }
+/* Elija 18.11.: Kopfzeile wie eine Seite (Icon änderbar, Titel öffnet das Board), rechts die Sperre des Ausschnitts. */
+.bx2-board-head { display: flex; align-items: center; gap: var(--space-half); min-height: var(--control-md); user-select: none; -webkit-user-select: none; }
+.bx2-board-icon { position: relative; display: inline-flex; flex: 0 0 auto; font-size: 1.125em; }
+.bx2-board-icon .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); color: var(--muted); }
+/* Titel als Geister-Knopf, aber in Seitenschrift und halbfett (öffnet das Board). */
+.bx2-board-title { display: inline-flex; min-width: 0; font-weight: 600; }
+.bx2-board-title button { font-weight: 600; }
+.bx2-board-tools { display: inline-flex; align-items: center; gap: var(--space-1); margin-left: auto; opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.bx2-board:hover .bx2-board-tools, .bx2-board:focus-within .bx2-board-tools, .bx2-board[data-locked] .bx2-board-tools, .bx2-board[data-entered] .bx2-board-tools { opacity: 1; }
+.bx2-board-frame { position: relative; display: flex; flex-direction: column; }
+/* Gesperrt: eine leere Fläche über dem Board fängt den Doppelklick; das Rad scrollt die Seite. */
+.bx2-board-shield { position: absolute; inset: 0; border-radius: var(--radius-lg); cursor: default; }
+.bx2-board[data-entered] .bx2-board-body { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 var(--space-half) var(--focus-ring); }
 .bx2-board-body {
   position: relative; display: flex; height: calc(var(--space-8) * 8); border-radius: var(--radius-lg); overflow: hidden;
   box-shadow: inset 0 0 0 1px var(--line); user-select: none; -webkit-user-select: none;

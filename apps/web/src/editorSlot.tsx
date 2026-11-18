@@ -5,7 +5,7 @@
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { BlockEditor, textDocName, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { BlockEditor, textDocName, type BoardEmbed, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { migrateEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
 import { EmbeddedBoard } from "./components/Embedded.js";
@@ -80,7 +80,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
   };
   // Elija 17.11.: ein Board als Unterseite erscheint mitten in der Seite als Fläche.
-  const renderBoard = client ? (p: { pageID: string }) => <EmbeddedBoard client={client} pageID={p.pageID} onOpenPage={onOpenPage} /> : undefined;
+  const renderBoard = client ? (p: { pageID: string; embed?: BoardEmbed }) => <EmbeddedBoard client={client} pageID={p.pageID} onOpenPage={onOpenPage} embed={p.embed} /> : undefined;
   const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
   // BSD-407: Inline-Gleichungen im neuen Editor als KaTeX-HTML (KaTeX lädt erst bei der ersten Gleichung)
   const renderEquationHTML = (tex: string, onReady: () => void): string | undefined => {

@@ -316,6 +316,8 @@ export class BoardController {
     }
     this.changed();
   }
+  /** Ausschnitt setzen (gesperrter Ausschnitt eines eingebetteten Boards). */
+  showCamera(c: Camera) { this.fitted = true; this.setCamera(c); }
   private setCamera(c: Camera) {
     if (c.x === this.camera.x && c.y === this.camera.y && c.zoom === this.camera.zoom) return;
     this.camera = c;

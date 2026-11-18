@@ -1,6 +1,10 @@
 // Icons für Menüs im Editor: derselbe Satz wie in der Shell (24er-Raster, 2 px Strich, runde Enden), damit das
 // Blockmenü aussieht wie das Seitenmenü. Der Editor ist ein eigenes Paket und kann die Icons der Shell nicht einbinden.
 const P = {
+  // Elija 18.11.: Board in der Seite – Board-Icon (Standard statt Dokument) und Sperre des Ausschnitts
+  board: "M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5zM8 15c1.5-3 3-1 4.5-3.5S15 8 16.5 9",
+  lock: "M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-6A1.5 1.5 0 0 1 5.5 11z",
+  unlock: "M7 11V8a5 5 0 0 1 9.6-2M5.5 11h13a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-6A1.5 1.5 0 0 1 5.5 11z",
   turn: "M4 8h13M13.5 4.5 17 8l-3.5 3.5M20 16H7M10.5 12.5 7 16l3.5 3.5",
   color: "M5 4.5h11A1.5 1.5 0 0 1 17.5 6v2A1.5 1.5 0 0 1 16 9.5H5A1.5 1.5 0 0 1 3.5 8V6A1.5 1.5 0 0 1 5 4.5zM17.5 7H19a1.5 1.5 0 0 1 1.5 1.5V11a1.5 1.5 0 0 1-1.5 1.5h-7V15M12 15v5",
   link: "M10.5 13.5a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M13.5 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1",

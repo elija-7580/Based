@@ -664,3 +664,71 @@ test("Whiteboard in einer Seite: /whiteboard legt ein Board an, das in der Seite
   expect(await overflows(page)).toEqual([]);
   if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-in-page-light.png` });
 });
+
+// Elija 18.11.: eine Unterseite, die in der Seitenleiste unter einem Board angelegt wird, liegt als Karte auf dem Board.
+test("Unterseite über die Seitenleiste: erscheint als Karte auf dem Board", async ({ page }) => {
+  await fresh(page);
+  const board = await newBoard(page);
+  await expect(board).toHaveAttribute("data-objects", "0");
+  const item = page.getByRole("treeitem", { name: "Untitled board" });
+  await item.hover();
+  await page.getByRole("button", { name: "Add a page inside Untitled board" }).click();
+  await expect(page.getByTestId("block-editor")).toBeVisible(); // die neue Seite ist offen
+  await item.click();
+  await expect(page.getByTestId("board")).toHaveAttribute("data-objects", "1");
+});
+
+// Elija 18.11.: Board in der Seite – Kopf wie eine Seite (Icon änderbar), Ausschnitt sperren, Doppelklick betritt.
+test("Board in der Seite: Icon ändern, Ausschnitt sperren, Doppelklick zum Betreten, Esc verlässt", async ({ page, browserName }) => {
+  await fresh(page);
+  const id = await page.evaluate(async () => {
+    const b = (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based;
+    return b.client.command({ op: "createPage", title: "Notes with a locked board" });
+  });
+  await page.goto(`/#page-${id}`);
+  const editor = page.getByTestId("block-editor");
+  await expect(editor).toBeVisible();
+  await editor.getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/whiteboard");
+  await page.keyboard.press("Enter");
+  const block = page.getByTestId("board-block");
+  await expect(block.getByTestId("board")).toBeVisible();
+
+  // Icon: Standard ist das Board-Icon, ein Klick öffnet den Picker
+  await block.getByRole("button", { name: "Change icon" }).click();
+  await expect(page.locator(".bx-callout-picker")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".bx-callout-picker")).toHaveCount(0);
+
+  // Sperren: danach liegt eine Fläche darüber, das Board nimmt keine Bedienung an
+  await block.hover();
+  await block.getByTestId("board-lock").click();
+  await expect(block).toHaveAttribute("data-locked", "");
+  const shield = block.getByTestId("board-shield");
+  await expect(shield).toBeVisible();
+  const zoomBefore = await block.getByTestId("board").getAttribute("data-zoom");
+
+  // Doppelklick betritt: Fläche weg, Board bedienbar; Esc verlässt
+  await shield.dblclick();
+  await expect(block).toHaveAttribute("data-entered", "");
+  await expect(shield).toHaveCount(0);
+  await block.getByTestId("board").focus();
+  await page.keyboard.press("Escape");
+  await expect(block).not.toHaveAttribute("data-entered", "");
+  await expect(block.getByTestId("board-shield")).toBeVisible();
+  if (zoomBefore !== null) await expect(block.getByTestId("board")).toHaveAttribute("data-zoom", zoomBefore);
+
+  // Betreten und daneben klicken verlässt auch
+  await block.getByTestId("board-shield").dblclick();
+  await expect(block).toHaveAttribute("data-entered", "");
+  await page.getByTestId("page-edited").click();
+  await expect(block.getByTestId("board-shield")).toBeVisible();
+
+  // Entsperren
+  await block.getByTestId("board-lock").click();
+  await expect(block).not.toHaveAttribute("data-locked", "");
+  await expect(block.getByTestId("board-shield")).toHaveCount(0);
+  await page.mouse.move(0, 0);
+  expect(await overflows(page)).toEqual([]);
+  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-in-page-header-light.png` });
+});
