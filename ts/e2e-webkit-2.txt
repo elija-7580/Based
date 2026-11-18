@@ -1,17 +1,61 @@
-failure a4ad91b543132913f66e01d568f4e5dde82db0ab
-(kein Testlog – Lauf vor den Tests beendet; Ende des Playwright-Setups:)
-Get:15 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libsrt1.5-gnutls amd64 1.5.3-1build2 [316 kB]
-Get:16 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 libssh-gcrypt-4 amd64 0.10.6-2ubuntu0.5 [226 kB]
-Get:17 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libavformat60 amd64 7:6.1.1-3ubuntu5 [1153 kB]
-Get:18 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libbs2b0 amd64 3.1.0+dfsg-7build1 [10.6 kB]
-Get:19 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libflite1 amd64 2.2-6build3 [13.6 MB]
-Get:20 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libserd-0-0 amd64 0.32.2-1 [43.6 kB]
-Get:21 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libzix-0-0 amd64 0.4.2-2build1 [23.6 kB]
-Get:22 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libsord-0-0 amd64 0.16.16-2build1 [15.8 kB]
-Get:23 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libsratom-0-0 amd64 0.6.16-1build1 [17.3 kB]
-Get:24 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 liblilv-0-0 amd64 0.24.22-1build1 [41.0 kB]
-Get:25 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libmysofa1 amd64 1.3.2+dfsg-2ubuntu2 [1158 kB]
-Get:26 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libplacebo338 amd64 6.338.2-2build1 [2654 kB]
-Get:27 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 libblas3 amd64 3.12.0-3build1.1 [238 kB]
-::warning title=Playwright-Setup::Systempakete (apt): hängt – nach 300 s abgebrochen (Versuch 2/2)
-::error title=Playwright-Setup (BSD-548)::Systempakete (apt) für [webkit] nach 2 Versuchen gescheitert (hängt – nach 300 s abgebrochen). Kein Testergebnis – Runner-Image/apt/Netz prüfen, nicht die Tests.
+success 18b9ff81ec65788132b1acdf0c42ef41a52ea46e
+  ✓  266 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.1s)
+  ✓  264 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (6.8s)
+  ✓  267 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.3s)
+  ✓  268 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.5s)
+  ✓  269 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (4.3s)
+  ✓  271 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (4.1s)
+  ✓  272 [webkit] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (3.4s)
+  ✓  273 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.9s)
+  ✓  270 [webkit] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (12.6s)
+  ✓  274 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.3s)
+  ✓  276 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.4s)
+  ✓  275 [webkit] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (5.3s)
+  ✓  277 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (5.2s)
+  ✓  278 [webkit] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.6s)
+  ✓  279 [webkit] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (2.3s)
+  -  280 [webkit] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
+  ✓  281 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (5.8s)
+  ✓  282 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (6.6s)
+  ✓  283 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.6s)
+  ✓  284 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.4s)
+  ✓  285 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (7.1s)
+  ✓  286 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (6.4s)
+  ✓  287 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.8s)
+  ✓  288 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.6s)
+  -  289 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+
+
+  1) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+        "Chat",
+        "Search",
+    -   "Home",
+        "Library",
+    +   "Home",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      104 |   // Library aus dem Fuß nach oben hinter Home
+      105 |   await drag(tools.getByRole("button", { name: "Library" }), item("Home"), (b) => ({ x: b.width / 2, y: b.height - 4 }));
+    > 106 |   await expect.poll(top).toEqual(["Chat", "Search", "Home", "Library"]);
+          |                          ^
+      107 |   await expect.poll(footer).toEqual(["Trash", "Settings"]);
+      108 |   // Search in den Fuß vor Trash
+      109 |   await drag(item("Search"), tools.getByRole("button", { name: /^Trash/ }), (b) => ({ x: 4, y: b.height / 2 }));
+        at /home/runner/work/Based/Based/apps/web/e2e/sidebar-nav.spec.ts:106:26
+
+    Error Context: test-results/sidebar-nav-Einträge-ziehe-52dba--bleibt-nach-Neuladen-Reset-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+  56 skipped
+  231 passed (12.2m)
