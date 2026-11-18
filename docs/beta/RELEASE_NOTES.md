@@ -1,4 +1,4 @@
-# Based Beta – release notes
+# Based Notes Beta – release notes
 
 The build workflow puts the **top section** into the update dialog and the release. Keep it short: at most 8 lines,
 one line per point (no wrapped lines), each at most 110 characters – a test checks this
@@ -6,6 +6,7 @@ one line per point (no wrapped lines), each at most 110 characters – a test ch
 
 ## 0.2 – release candidate
 
+- Based Beta is now called Based Notes Beta; your workspace, backups and settings stay as they are
 - Meeting notes: type /meet to record, take timestamped notes and get a transcript made on your Mac
 - Start from a template: Tasks, Notes, Journal or Wiki
 - Video and audio blocks with their own controls
@@ -18,6 +19,8 @@ one line per point (no wrapped lines), each at most 110 characters – a test ch
 
 New since the first test build (0.2.2):
 
+- The app is now called **Based Notes Beta** (Based Notes is the official name). Bundle, data folder, backups
+  (`Based Beta Backups`), iCloud folder (`Based Beta`) and the `based-beta` command keep their names.
 - Meeting notes: type `/meet` to record a meeting, take notes with timestamps and get a transcript made on your Mac.
   Turn it on from the welcome screen or in Settings → Meeting notes (downloads a speech model once, 488 MB).
 - Start from a template on the welcome screen: Tasks, Notes, Journal or Wiki. **⌘N** offers them later, too.

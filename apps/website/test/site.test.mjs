@@ -103,7 +103,11 @@ test("seo (BSD-457): short descriptions, structured data, FAQ indexed, download 
 
   const download = readFileSync(join(out, "download", "index.html"), "utf8");
   assert.match(download, /<meta name="robots" content="noindex">/);
+  // BSD-514: „Based Notes Beta“. Der Link bleibt auf dem festen Asset beta-latest/Based-Beta.dmg – der Beta-Workflow
+  // lädt die DMG unter beiden Namen hoch; den alten Namen gibt es schon heute, den neuen erst nach dem ersten Lauf.
   assert.match(download, /releases\/download\/beta-latest\/Based-Beta\.dmg/);
+  assert.match(download, /Download Based Notes Beta for Mac/);
+  assert.doesNotMatch(download.replace(/Based-Beta\.dmg/g, ""), /Based Beta\b/);
 
   const sitemap = readFileSync(join(out, "sitemap.xml"), "utf8");
   assert.match(sitemap, /basednotes\.app\/faq</);

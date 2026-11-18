@@ -30,9 +30,9 @@ It's open source, built in Austria by one person and a night shift of agents, an
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/app-board-dark.png">
-  <img alt="Based Beta on the Mac: the Tasks database as a board" src="docs/readme/app-board-light.png">
+  <img alt="Based Notes Beta on the Mac: the Tasks database as a board" src="docs/readme/app-board-light.png">
 </picture>
-<p align="center"><sub>Based Beta on the Mac. A database as a board, pages in the sidebar.</sub></p>
+<p align="center"><sub>Based Notes Beta on the Mac. A database as a board, pages in the sidebar.</sub></p>
 
 ## Why Based
 
@@ -75,7 +75,7 @@ AI is off by default and the beta ships without it. Based is a complete workspac
 
 ## Download
 
-**Beta testers:** [Based-Beta.dmg](https://github.com/elija-7580/Based/releases/download/beta-latest/Based-Beta.dmg).
+**Beta testers:** [Based Notes Beta for Mac (DMG)](https://github.com/elija-7580/Based/releases/download/beta-latest/Based-Beta.dmg).
 Join the waitlist on [basednotes.app](https://basednotes.app) to get an invite. Tester guide: [`docs/beta/README.md`](docs/beta/README.md).
 
 **Development build:** [Based-Next.dmg](https://github.com/elija-7580/Based/releases/download/next-latest/Based-Next.dmg).

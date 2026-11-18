@@ -72,12 +72,16 @@ export function settingsPageVisible(id: string, channel: Channel = CHANNEL): boo
   return channel !== "beta" || !BETA_HIDDEN_SETTINGS.has(id);
 }
 
-/** Name der App im Kanal (Fenstertitel, Über-Seite, Problem melden). */
-export const APP_NAME = CHANNEL === "beta" ? "Based Beta" : "Based";
+/**
+ * Name der App im Kanal (Fenstertitel, Über-Seite, Problem melden). BSD-514: offizieller Name „Based Notes“, die
+ * Beta heißt sichtbar „Based Notes Beta“. Nur Anzeige – Kennungen (Bundle-ID, Ports, Discovery-Besitzer, Ordner,
+ * CLI `based-beta`) stehen in @based/core desktopPlaces und bleiben, damit Tester Daten und Updates behalten.
+ */
+export const APP_NAME = CHANNEL === "beta" ? "Based Notes Beta" : "Based";
 
-/** BSD-485: Produktname auf der Über-Seite – „Based Beta“ auf beta, sonst „Based Next“. */
+/** BSD-485/514: Produktname auf der Über-Seite – „Based Notes Beta“ auf beta, sonst „Based Next“. */
 export function productName(channel: Channel = CHANNEL): string {
-  return channel === "beta" ? "Based Beta" : "Based Next";
+  return channel === "beta" ? "Based Notes Beta" : "Based Next";
 }
 
 /** BSD-485: Kurzbeschreibung auf der Über-Seite – auf beta ohne Agenten (die gibt es dort nicht). */

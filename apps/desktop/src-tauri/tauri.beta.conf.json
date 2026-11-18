@@ -1,12 +1,12 @@
 {
-  "productName": "Based Beta",
+  "productName": "Based Notes Beta",
   "identifier": "com.friedrich-ulrich.based.beta",
   "app": {
     "windows": [
       {
         "label": "main",
         "create": false,
-        "title": "Based Beta",
+        "title": "Based Notes Beta",
         "width": 1280,
         "height": 820,
         "minWidth": 640,

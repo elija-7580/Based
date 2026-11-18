@@ -127,8 +127,8 @@ describe("features.csv passt zum Beta-Gate", () => {
     for (const f of hidden) expect(rows.find((r) => r.feature === f)?.beta, f).not.toBe("beta");
   });
 
-  it("Über-Seite: beta heißt „Based Beta“ und nennt keine Agenten, dev bleibt „Based Next“ (BSD-485)", () => {
-    expect(productName("beta")).toBe("Based Beta");
+  it("Über-Seite: beta heißt „Based Notes Beta“ und nennt keine Agenten, dev bleibt „Based Next“ (BSD-485, BSD-514)", () => {
+    expect(productName("beta")).toBe("Based Notes Beta");
     expect(productBlurb("beta")).not.toMatch(/agent/i);
     expect(productName("dev")).toBe("Based Next");
     expect(productBlurb("dev")).toMatch(/agents/);
