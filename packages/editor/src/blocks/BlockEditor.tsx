@@ -5,7 +5,7 @@
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
 import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, type CodeView, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
-import { HTML_PREVIEW_HEIGHT, htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme } from "./htmlPreview.js";
+import { HTML_DOCUMENT_HEIGHT, HTML_PREVIEW_HEIGHT, htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme, isHtmlDocument, rememberHeight, rememberedHeight } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/props.js";
@@ -2751,8 +2751,9 @@ function useSchemeTick(): string {
 }
 
 /**
- * Ergebnis eines HTML-Codeblocks (htmlPreview.ts): Rahmen mit sandbox ohne same-origin, CSP, kein Netz. Ohne Rand und
- * Beschriftung, Schrift und Farbe der Seite, Höhe nach dem Inhalt; `fill` (Vollansicht) füllt stattdessen den Dialog.
+ * Ergebnis eines HTML-Codeblocks (htmlPreview.ts): Rahmen mit sandbox ohne same-origin, CSP, kein Netz, auf einer
+ * Based-Karte. Schnipsel mit Innenabstand in Schrift und Farbe der Seite, ganze Dateien bis an den Rand; Höhe nach dem
+ * Inhalt; `fill` (Vollansicht) füllt stattdessen den Dialog.
  */
 /** BSD-535: von Hand gezogene Größe des HTML-Ergebnisses (Pixel); fehlt = volle Breite, Höhe nach Inhalt. */
 interface HtmlSize { width?: number | undefined; height?: number | undefined }
@@ -2762,8 +2763,11 @@ function HtmlPreview({ code, fill = false, size, onResize }: { code: string; fil
   const frame = useRef<HTMLIFrameElement>(null);
   const scheme = useSchemeTick();
   const [doc, setDoc] = useState<string>();
-  const [height, setHeight] = useState<number>();
+  const [height, setHeight] = useState<number | undefined>(() => rememberedHeight(code));
   const [live, setLive] = useState<HtmlSize>();
+  const document_ = isHtmlDocument(code);
+  const codeRef = useRef(code);
+  codeRef.current = code;
   // Breite am rechten Rand, Höhe am unteren Rand ziehen (wie Bild/Embed); ein Undo-Schritt beim Loslassen.
   const startResize = (e: React.PointerEvent, axis: "x" | "y") => {
     e.preventDefault();
@@ -2805,18 +2809,21 @@ function HtmlPreview({ code, fill = false, size, onResize }: { code: string; fil
     const onMessage = (e: MessageEvent) => {
       if (!frame.current || e.source !== frame.current.contentWindow) return;
       const h = htmlPreviewHeight(e.data);
-      if (h !== undefined) setHeight(h);
+      if (h === undefined) return;
+      setHeight(h);
+      rememberHeight(codeRef.current, h);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, [fill]);
   return (
     <div ref={host} className="bx2-html-preview" contentEditable={false} data-embed="" data-fill={fill ? "" : undefined}
-      data-sized={height !== undefined || fixedHeight !== undefined ? "" : undefined} data-testid="html-preview"
+      data-document={document_ ? "" : undefined}
+      data-sized={height !== undefined || fixedHeight !== undefined || document_ ? "" : undefined} data-testid="html-preview"
       style={shown?.width ? { width: shown.width } : undefined}>
       {doc !== undefined ? (
         <iframe ref={frame} className="bx-html-preview" sandbox="allow-scripts" referrerPolicy="no-referrer" title="HTML preview" srcDoc={doc}
-          style={{ colorScheme: scheme, ...(fill ? {} : fixedHeight !== undefined ? { height: fixedHeight } : height !== undefined ? { height } : {}) }} />
+          style={{ colorScheme: scheme, ...(fill ? {} : { height: fixedHeight ?? height ?? (document_ ? HTML_DOCUMENT_HEIGHT : undefined) }) }} />
       ) : null}
       {onResize && !fill ? (
         <>

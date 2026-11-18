@@ -29,11 +29,11 @@ async function htmlBlock(page: Page, code: string) {
   await editor(page).getByTestId("block-editor-tail").click();
   await page.keyboard.type("```");
   await page.keyboard.insertText(code);
-  await editor(page).locator(".bx2-code-lang-btn").click();
+  await editor(page).locator(".bx2-code-lang-btn").last().click();
   await page.getByLabel("Search languages").fill("html");
   await page.keyboard.press("Enter");
   await page.getByLabel("Page title").click();
-  const wrap = editor(page).getByTestId("code-block");
+  const wrap = editor(page).getByTestId("code-block").last();
   await expect(wrap).toHaveAttribute("data-code-hidden", "");
   return wrap;
 }
@@ -111,3 +111,28 @@ for (const theme of ["light", "dark"] as const) {
     });
   }
 }
+
+// Klareres Einbetten: Ergebnis auf einer Based-Karte, Grundstil in Based-Optik, Höhe stimmt und schaukelt sich nicht auf.
+test("HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos", async ({ page }) => {
+  await newPage(page);
+  const snip = await htmlBlock(page, "<h2>Packing list</h2><p>Text</p><button>Add item</button>");
+  const preview = snip.getByTestId("html-preview");
+  await expect(preview).toHaveCSS("background-color", await page.evaluate(() => {
+    const p = document.createElement("i"); p.style.color = "var(--surface-soft)"; document.body.append(p);
+    const c = getComputedStyle(p).color; p.remove(); return c;
+  }));
+  const inner = page.frameLocator("iframe.bx-html-preview").first();
+  await expect(inner.locator("button")).toHaveCSS("height", "32px");
+  await expect(inner.locator("button")).toHaveCSS("border-top-width", "0px");
+  // die ganze Höhe des Inhalts ist zu sehen (Außenabstand der Überschrift fällt nicht aus dem body)
+  await expect.poll(async () => inner.locator("body").evaluate((b) => b.scrollHeight <= innerHeight)).toBe(true);
+  // eine Datei mit min-height: 100vh und Innenabstand hängt an der Fensterhöhe: der Rahmen hört auf zu wachsen
+  const doc = await htmlBlock(page, "<!doctype html><html><body style='min-height:100vh;padding:24px'><p>Full page</p></body></html>");
+  const frame = doc.locator("iframe.bx-html-preview");
+  await expect(doc.getByTestId("html-preview")).toHaveAttribute("data-document", "");
+  await page.waitForTimeout(800);
+  const h1 = (await frame.boundingBox())!.height;
+  await page.waitForTimeout(800);
+  expect((await frame.boundingBox())!.height).toBe(h1);
+  expect(h1).toBeLessThan(600);
+});

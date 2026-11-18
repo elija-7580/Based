@@ -273,8 +273,8 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 }
 .bx-mermaid-image { display: block; max-width: 100%; height: auto; }
 .bx-mermaid-error { color: var(--muted); font-size: var(--type-meta-size); overflow-wrap: anywhere; }
-/* HTML-Ergebnis: Teil der Seite – kein Rand, durchsichtiger Grund; die Höhe meldet der Inhalt (htmlPreview.ts). */
-.bx-html-preview { display: block; width: 100%; min-height: calc(var(--space-8) * 3); border: 0; border-radius: var(--radius-sm); background: transparent; }
+/* HTML-Ergebnis: Rahmen ohne eigenen Rand, liegt auf der Karte (.bx2-html-preview); die Höhe meldet der Inhalt (htmlPreview.ts). */
+.bx-html-preview { display: block; width: 100%; min-height: calc(var(--space-8) * 3); border: 0; background: transparent; }
 
 /* BSD-211: Auswahl nach dem Einfügen einer URL (Link / Bookmark / Embed) */
 .bx-url-menu {
