@@ -127,16 +127,37 @@ Every enabled skill is a prompt (name, description, optional argument `input`).
 
 ## Whiteboards (BSD-508)
 
-Agents draw as text – few tokens, no coordinates, no browser. Based lays the objects out and writes them as records,
-so an open board updates at once and sync, history and search apply as for any edit.
+Agents draw as text – few tokens, no browser. Based lays the objects out and writes them as records, so an open board
+updates at once and sync, history and search apply as for any edit. Since 18.11.2026 an agent can do on a board what
+a person can (Elija: „alles, was der Mensch kann – extrem effizient und verlässlich“): colours, exact position and
+size, rotation, pinning, layers, freehand ink, images and files, background.
 
-- `read_board { id }` – one line per object with a short handle, connectors as `a -> b: label`.
+- `read_board { id }` – one line per object: handle, kind, text, `@x,y WxH`, `{style}`; ink strokes one per line
+  (up to 80, then a count); connectors as `a -> b: label {style} [handle]`; `background …` when not dots.
 - `draw_board { id?, script, title?, parent? }` – without `id` a new board is created. One statement per line:
 
 ```
 note a: text          box a: text (also oval, diamond)     text a: text
-page a: <page id>     a -> b: optional label               frame f: Title { a b }
-set <handle>: text    del <handle>
+page a: <page id>     image a: <file ref>                  file a: <file ref>
+ink a: <SVG path d | x,y x,y …>
+a -> b: optional label               frame f: Title { a b }
+set <handle>: text    set <handle> {attrs}    del <handle>    background dots|lines|grid|plain
 ```
+
+Attributes go last in braces on create, `set`, `->` and `frame` lines: `{color=green fill=blue at=120,40 size=200x100
+rot=15 pin=true z=front}`; `shape=` on shapes, `line=curved|straight|elbow` on connectors, `full=true` on page cards,
+`tool=pen|highlighter width=thin|medium|thick|<px>` on ink, `page=N` on PDFs. Colours are the board's names (no
+yellow – yellow marks agents). Ink path coordinates are relative to `at=` (`at=0,0` → board coordinates); every `M`
+starts a new stroke; M L H V C S Q T A Z. A wrong line is skipped with its reason, the rest is applied.
+
+- `list_files { query?, limit?, offset? }` – files already in the workspace (page images and attachments, board
+  files) with their ref, name, image size or PDF page count.
+- `upload_file { name?, data | url | path, mime?, board?, at? }` – stores the bytes (content-addressed, like any
+  upload) and returns the ref; with `board` it places the file right away (a PDF becomes one object per page).
+  `url`: https only, no private network addresses, no redirects. `path`: only over stdio (the client runs on the
+  same computer). Size limit as for uploads (`--max-asset-mb`).
+
+Text in notes, shapes and text objects is Markdown (`# heading`, `**bold**`, `*italic*`, `` `code` ``, `- list`,
+`- [ ] task`, `> quote`, code fences); write line breaks in a statement as `\n`.
 
 Everything an agent adds carries the marker bar; its connectors are dashed in the marker colour.

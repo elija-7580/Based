@@ -1,16 +1,17 @@
 // BSD-264 (Whiteboard 2): die Board-Fläche als Ansicht. Dünn: Sitzung (session.ts) hält die Daten, der Controller
 // (controller.ts) die Bedienung, render.ts zeichnet. Hier: Canvas an die Größe und Pixeldichte anpassen, Zeiger, Rad
 // und Tasten weiterreichen, die schwebenden Pillen (Werkzeuge, Hinweis, Zoom, Undo) und die Minimap.
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { registerContextItems } from "@based/ui/native";
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
-import { boardFileView, boardPagesWithoutCard, insertBoardPageCards, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
+import { boardFileView, boardPagesWithoutCard, continueList, insertBoardPageCards, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
 import { BlockIcon, type BlockIconName } from "../blocks/icons.js";
 import { BOARD_TOOLS, BoardController, FILL_COLORS, HIGHLIGHT_COLORS, isEditTool, minimapTransform, PEN_COLORS, SNAP_HOLD_MS, STROKE_COLORS, type BoardEdit, type BoardFile, type BoardTool, type ColorRow } from "./controller.js";
 import { BoardImageCache } from "./images.js";
 import { BoardPdfCache, pdfPageSizes } from "./pdf.js";
 import { BoardTextCache } from "./texts.js";
 import { PREVIEW_HEADER } from "./render.js";
+import { boardTaskAt, boardTextHeight } from "./markdown.js";
 import { PASTE_TEXT_MAX } from "./controller.js";
 import { drawBoardObjects, drawBoardOverlay, drawLiveInk, drawMinimap, fillToken, highlightToken, penToken, readBoardTheme, type BoardTheme } from "./render.js";
 import { BoardSession } from "./session.js";
@@ -154,6 +155,59 @@ function markHintSeen(tool: string) {
 }
 const WIDTH_NAMES = ["Fine", "Medium", "Bold"] as const;
 /** Schrift des Eingabefelds je Objektart – dieselben Maße, mit denen render.ts den Text zeichnet. */
+/** Text-Eingabefeld so hoch wie sein Inhalt. */
+const grow = (t: HTMLTextAreaElement) => { t.style.height = "auto"; t.style.height = `${t.scrollHeight}px`; };
+/** Steht die Einfügemarke in einer Listenzeile? (Dann rückt Tab ein, statt den nächsten Zettel anzulegen.) */
+function listLine(t: HTMLTextAreaElement): boolean {
+  const start = t.value.lastIndexOf("\n", t.selectionStart - 1) + 1;
+  return /^\s*([-*+]|\d{1,9}[.)])(\s|$)/.test(t.value.slice(start));
+}
+/** Text im Eingabefeld ersetzen, so dass Rückgängig (⌘Z) es kennt. */
+function replaceRange(t: HTMLTextAreaElement, from: number, to: number, text: string, caret?: [number, number]) {
+  t.setSelectionRange(from, to);
+  const done = text === "" ? from === to || document.execCommand("delete") : document.execCommand("insertText", false, text);
+  if (!done) t.setRangeText(text, from, to, "end");
+  if (caret) t.setSelectionRange(caret[0], caret[1]);
+}
+/**
+ * Markdown-Tasten im Eingabefeld (Elija 18.11.): Enter setzt Listen fort (leerer Punkt beendet sie), Tab/⇧Tab rückt
+ * Listenzeilen ein und aus, ⌘B/⌘I/⌘E/⌘⇧X umschließen die Auswahl mit **, *, ` bzw. ~~. `true`: erledigt.
+ */
+function markdownKey(e: ReactKeyboardEvent<HTMLTextAreaElement>): boolean {
+  const t = e.currentTarget;
+  const { selectionStart: a, selectionEnd: b, value } = t;
+  const lineStart = value.lastIndexOf("\n", a - 1) + 1;
+  const mod = e.metaKey || e.ctrlKey;
+  if (e.key === "Enter" && !mod && !e.shiftKey && !e.altKey && a === b && !e.nativeEvent.isComposing) {
+    const lineEnd = value.indexOf("\n", a) === -1 ? value.length : value.indexOf("\n", a);
+    if (a !== lineEnd) return false;
+    const next = continueList(value.slice(lineStart, a));
+    if (!next) return false;
+    if ("end" in next) replaceRange(t, lineStart, a, "");
+    else replaceRange(t, a, a, `\n${next.insert}`);
+    return true;
+  }
+  if (e.key === "Tab" && !mod && !e.altKey && listLine(t)) {
+    const end = value.indexOf("\n", b) === -1 ? value.length : value.indexOf("\n", b);
+    const block = value.slice(lineStart, end);
+    const lines = block.split("\n");
+    const changed = lines.map((l) => (e.shiftKey ? l.replace(/^( {1,2}|\t)/, "") : `  ${l}`)).join("\n");
+    if (changed === block) return true;
+    const first = changed.split("\n")[0]!.length - lines[0]!.length;
+    replaceRange(t, lineStart, end, changed, [Math.max(lineStart, a + first), b + (changed.length - block.length)]);
+    return true;
+  }
+  if (!mod || e.altKey) return false;
+  const k = e.key.toLowerCase();
+  const wrap = k === "b" && !e.shiftKey ? "**" : k === "i" && !e.shiftKey ? "*" : k === "e" && !e.shiftKey ? "`" : k === "x" && e.shiftKey ? "~~" : undefined;
+  if (!wrap) return false;
+  const inner = value.slice(a, b);
+  // Schon umschlossen: wieder lösen.
+  if (value.slice(a - wrap.length, a) === wrap && value.slice(b, b + wrap.length) === wrap) {
+    replaceRange(t, a - wrap.length, b + wrap.length, inner, [a - wrap.length, b - wrap.length]);
+  } else replaceRange(t, a, b, `${wrap}${inner}${wrap}`, [a + wrap.length, b + wrap.length]);
+  return true;
+}
 const EDIT_TYPE: Record<BoardEdit["kind"], { size: number; weight: number; leading: number; pad: number }> = {
   text: { size: 17, weight: 400, leading: 1.5, pad: 0 }, note: { size: 15, weight: 500, leading: 1.4, pad: 14 }, shape: { size: 14, weight: 500, leading: 1.4, pad: 12 },
   frame: { size: 13, weight: 600, leading: 1.4, pad: 14 }, connector: { size: 12, weight: 500, leading: 1.4, pad: 6 },
@@ -183,6 +237,7 @@ export function BoardView({ store, pageID, readOnly, uploadFile, resolveFileUrl,
     const controller = new BoardController(session, {
       camera: embedCamera.current ?? cameras.get(pageID),
       onOpenPage: (id) => openPage.current?.(id),
+      taskAt: boardTaskAt,
       // Öffnen heißt sichern: eine Datei (etwa HTML) läuft nie im Fenster der App.
       onOpenFile: (o) => {
         const resolve = host.current.resolve;
@@ -632,7 +687,13 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
   const current: InkPreset = { tool: ctl.tool === "highlighter" ? "highlighter" : "pen", color: inkStyle.color, width: inkStyle.width };
   const edit = ctl.editing;
   const editType = edit ? EDIT_TYPE[edit.kind] : undefined;
-  const commit = (el: HTMLTextAreaElement, next = false) => { ctl.commitEdit(el.value, { height: el.scrollHeight, next }); if (!next) root.current?.focus({ preventScroll: true }); };
+  // Text-Objekte wachsen mit: so hoch wie der Text im Eingabefeld – mit Markdown so hoch wie der gesetzte Text, den die
+  // Fläche danach zeigt (Überschriften größer, Zaunzeilen weg).
+  const commit = (el: HTMLTextAreaElement, next = false) => {
+    const height = (edit?.kind === "text" ? boardTextHeight(el.value.replace(/\s+$/, ""), edit.rect.w) : undefined) ?? el.scrollHeight;
+    ctl.commitEdit(el.value, { height, next });
+    if (!next) root.current?.focus({ preventScroll: true });
+  };
   return (
     <div ref={root} className="wb-root" tabIndex={0} role="application" aria-label="Board" aria-roledescription="whiteboard" data-testid="board"
       data-tool={ctl.tool} data-editing={edit ? "" : undefined} data-present={ctl.presenting !== undefined ? ctl.presenting + 1 : undefined} data-objects={session.objects.length} data-selected={ctl.selection.size}
@@ -666,12 +727,13 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
             minHeight: edit.rect.h, transform: `scale(${ctl.camera.zoom})`, padding: editType.pad, fontSize: editType.size, fontWeight: editType.weight, lineHeight: editType.leading,
           }}
           onFocus={(e) => { const n = e.currentTarget.value.length; e.currentTarget.setSelectionRange(n, n); }}
-          onInput={(e) => { if (edit.kind === "text") { const t = e.currentTarget; t.style.height = "auto"; t.style.height = `${t.scrollHeight}px`; } }}
+          onInput={(e) => { if (edit.kind === "text") grow(e.currentTarget); }}
           onBlur={(e) => { if (ctl.editing === edit) commit(e.currentTarget); }}
           onKeyDown={(e) => {
             e.stopPropagation();
             if (e.key === "Escape" || (e.key === "Enter" && (e.metaKey || e.ctrlKey || edit.kind === "frame" || edit.kind === "connector"))) { e.preventDefault(); commit(e.currentTarget); }
-            else if (e.key === "Tab" && edit.kind === "note") { e.preventDefault(); commit(e.currentTarget, true); }
+            else if (e.key === "Tab" && edit.kind === "note" && !listLine(e.currentTarget)) { e.preventDefault(); commit(e.currentTarget, true); }
+            else if (edit.kind !== "frame" && edit.kind !== "connector" && markdownKey(e)) { e.preventDefault(); if (edit.kind === "text") grow(e.currentTarget); }
           }} />
       ) : null}
       {embeds.map((o) => (

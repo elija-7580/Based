@@ -3,10 +3,11 @@
 // lebt bis zum Loslassen nur hier als Vorschau; erst dann geht sie als ein Schritt in die Sitzung (ein Undo-Schritt,
 // ein Schreiben in den Store).
 import {
-  backZ, BoardIndex, boardFileView, centerOn, DEFAULT_CAMERA, duplicateObjects, encodeInk, fitCamera, frontZs, hitHandle, inkObjectGeometry, inkPointsOf, isConnector, isShape, nudgeDelta, objectBounds,
+  backZ, BoardIndex, centerOn, DEFAULT_CAMERA, duplicateObjects, encodeInk, fitCamera, frontZs, hitHandle, inkObjectGeometry, inkPointsOf, isConnector, isShape, nudgeDelta, objectBounds,
   objectsInRect, panBy, pointInPolygon, readingOrder, recognizeShape, rectContains, rectFromPoints, resizeRect, scaleInto, screenToWorld, selectionBounds, shareInside, simplifyInk, unionRect,
-  visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
-  type BoardPoint as Point, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
+  toggleTask, visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
+  BOARD_FILL_COLORS, BOARD_HIGHLIGHT_COLORS, BOARD_HIGHLIGHT_WIDTHS, BOARD_PEN_WIDTHS, BOARD_STROKE_COLORS, boardFileParts, FILE_CARD_SIZE, IMAGE_MAX_SIDE, PDF_PAGE_WIDTH, PREVIEW_SIZES,
+  type BoardFileInfo, type BoardPoint as Point, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
 } from "@based/core";
 import type { BoardBackground, BoardSession } from "./session.js";
 
@@ -20,7 +21,7 @@ export const BOARD_TOOLS: readonly { id: BoardTool; label: string; key: string; 
   { id: "highlighter", label: "Highlighter", key: "⇧P", hint: "Highlighter · shows through what is underneath · no yellow: yellow means an agent wrote it" },
   { id: "eraser", label: "Eraser", key: "E", hint: "Eraser · rub over a line to remove it" },
   { id: "lasso", label: "Lasso", key: "L", hint: "Lasso · circle ink and objects to select them" },
-  { id: "text", label: "Text", key: "T", group: true, hint: "Text · click anywhere and type" },
+  { id: "text", label: "Text", key: "T", group: true, hint: "Text · click anywhere and type · Markdown works: # heading, **bold**, - list, - [ ] task" },
   { id: "note", label: "Sticky note", key: "N", hint: "Sticky note · N, then type · Tab adds the next one beside it" },
   { id: "shape", label: "Shape", key: "R", hint: "Shape · R rectangle, O oval, D diamond · click to place or drag for a custom size" },
   { id: "connector", label: "Connector", key: "A", hint: "Connector · drag from one object to another" },
@@ -37,14 +38,15 @@ const isBoxTool = (t: BoardTool): t is BoxTool => t === "note" || t === "shape" 
 // Elija 17.11.: Farben von Based – die Textfarben des Editors für Striche und Text, die Marker-Familie für den
 // Textmarker (die eigene Marker-Farbe fällt in der Ansicht heraus: sie gehört den Agenten), die Hintergründe des
 // Editors für Zettel und Flächen. Namen statt Werte: hell/dunkel und spätere Themen kommen aus den Tokens.
-export const STROKE_COLORS = ["ink", "gray", "brown", "orange", "green", "blue", "purple", "pink", "red"] as const;
+// Die Listen selbst stehen in @based/core (whiteboard/style.ts): Agenten nutzen dieselben Namen.
+export const STROKE_COLORS = BOARD_STROKE_COLORS;
 export const PEN_COLORS = STROKE_COLORS;
-export const HIGHLIGHT_COLORS = ["mint", "sky", "rose", "calm"] as const;
-export const FILL_COLORS = ["gray", "brown", "orange", "green", "blue", "purple", "pink", "red"] as const;
+export const HIGHLIGHT_COLORS = BOARD_HIGHLIGHT_COLORS;
+export const FILL_COLORS = BOARD_FILL_COLORS;
 /** Welche Farbreihen für eine Auswahl gelten. */
 export type ColorRow = "stroke" | "fill" | "highlight";
-export const PEN_WIDTHS = [1.6, 2.6, 4.4] as const;
-export const HIGHLIGHT_WIDTHS = [10, 16, 24] as const;
+export const PEN_WIDTHS = BOARD_PEN_WIDTHS;
+export const HIGHLIGHT_WIDTHS = BOARD_HIGHLIGHT_WIDTHS;
 export const SHAPE_KINDS = ["rect", "oval", "diamond"] as const;
 export type ShapeKind = (typeof SHAPE_KINDS)[number];
 /** Radius des Radierers und Fangweite der Verbindung (Bildschirm-px). */
@@ -159,17 +161,13 @@ export interface BoardControllerOptions {
   onOpenFile?: (obj: WBShape) => void;
   /** Doppelklick auf eine Seitenkarte: die Seite öffnen. */
   onOpenPage?: (pageID: string) => void;
+  /** Markdown-Aufgabe (`- [ ]`) unter dem Punkt (Welt): ihre Zeile im Text. Ein Klick darauf hakt sie ab. */
+  taskAt?: (obj: WBShape, world: Point) => number | undefined;
 }
 
 /** Eine abgelegte Datei: `ref` ist die Adresse im Dateispeicher (`based-asset:<sha256>`), nie der Inhalt. */
-export interface BoardFile {
-  ref: string; name: string; mime: string; size: number;
-  /** Bildmaße in px, wenn es ein Bild ist. */
-  width?: number; height?: number;
-  /** Seitenmaße (Punkt), wenn es ein PDF ist: jede Seite wird ein Objekt. */
-  pages?: readonly { width: number; height: number }[];
-}
-export const FILE_CARD: Size = { w: 264, h: 72 };
+export type BoardFile = BoardFileInfo;
+export const FILE_CARD: Size = FILE_CARD_SIZE;
 export const PAGE_CARD: Size = { w: 240, h: 72 };
 /** Ganze Seite auf dem Board (Elija 17.11.: Seiten als ganze zeigen und dort bearbeiten). */
 export const PAGE_FULL: Size = { w: 520, h: 620 };
@@ -177,12 +175,12 @@ export const PAGE_FULL: Size = { w: 520, h: 620 };
 // nicht mehr – PDF-Seiten lassen sich wählen und verschieben (Elija 17.11.).
 const isLocked = (o: WBObject) => o.style?.pin === true;
 /** Größe der Vorschau je Stufe-2-Art und Breite einer PDF-Seite (Welt-px). */
-export const PREVIEW_SIZE: Record<"text" | "html" | "video" | "audio", Size> = { text: { w: 440, h: 320 }, html: { w: 560, h: 400 }, video: { w: 480, h: 310 }, audio: { w: 360, h: 104 } };
-export const PDF_WIDTH = 560;
+export const PREVIEW_SIZE: Record<"text" | "html" | "video" | "audio", Size> = PREVIEW_SIZES;
+export const PDF_WIDTH = PDF_PAGE_WIDTH;
 /** Längerer eingefügter Text wird eine Datei mit Vorschau statt eines Text-Objekts. */
 export const PASTE_TEXT_MAX = 400;
 /** Größte Kante eines frisch abgelegten Bildes (Welt-px). */
-export const IMAGE_MAX = 480;
+export const IMAGE_MAX = IMAGE_MAX_SIDE;
 
 export class BoardController {
   camera: Camera;
@@ -217,6 +215,7 @@ export class BoardController {
   private readonly now: () => number;
   private readonly onOpenFile: ((obj: WBShape) => void) | undefined;
   private readonly onOpenPage: ((pageID: string) => void) | undefined;
+  private readonly taskAt: ((obj: WBShape, world: Point) => number | undefined) | undefined;
   private space = false;
   private fitted: boolean;
   /** Die Fläche hatte schon eine Größe (erst dann lohnt es, die Kamera zu merken). */
@@ -234,6 +233,7 @@ export class BoardController {
     this.now = opts.now ?? (() => Date.now());
     this.onOpenFile = opts.onOpenFile;
     this.onOpenPage = opts.onOpenPage;
+    this.taskAt = opts.taskAt;
     this.camera = opts.camera ?? DEFAULT_CAMERA;
     this.fitted = opts.camera !== undefined;
     this.stopSession = session.subscribe(() => {
@@ -625,17 +625,7 @@ export class BoardController {
     const c = at ?? screenToWorld(this.camera, { x: this.viewport.w / 2, y: this.viewport.h / 2 });
     // Je Datei ein Objekt – bei einem PDF eines je Seite (der „Ausdruck“: Seiten untereinander, zum Draufschreiben).
     const parts: { f: BoardFile; kind: "image" | "file"; size: Size; style: Record<string, string | number | boolean> }[] = [];
-    for (const f of files) {
-      const view = boardFileView(f.name, f.mime);
-      const base = { name: f.name, mime: f.mime, size: f.size };
-      if (view === "image" && (f.width ?? 0) > 0 && (f.height ?? 0) > 0) {
-        const k = Math.min(1, IMAGE_MAX / Math.max(f.width!, f.height!));
-        parts.push({ f, kind: "image", size: { w: Math.max(8, Math.round(f.width! * k)), h: Math.max(8, Math.round(f.height! * k)) }, style: base });
-      } else if (view === "pdf" && f.pages?.length) {
-                f.pages.forEach((p, i) => parts.push({ f, kind: "file", size: { w: PDF_WIDTH, h: Math.max(8, Math.round((PDF_WIDTH * p.height) / Math.max(1, p.width))) }, style: { ...base, view: "pdf", page: i + 1, pages: f.pages!.length } }));
-      } else if (view === "text" || view === "html" || view === "video" || view === "audio") parts.push({ f, kind: "file", size: PREVIEW_SIZE[view], style: { ...base, view } });
-      else parts.push({ f, kind: "file", size: FILE_CARD, style: base });
-    }
+    for (const f of files) for (const p of boardFileParts(f)) parts.push({ f, ...p });
     // Ohne feste Stelle (Auswahl, Einfügen): liegt in der Mitte schon etwas, kommt das Neue rechts neben den Inhalt –
     // sonst stapeln sich nacheinander hinzugefügte Dateien übereinander.
     if (!at && parts.length) {
@@ -728,6 +718,19 @@ export class BoardController {
     this.changed();
     return id;
   }
+  /** Klick auf ein Aufgaben-Kästchen in Markdown: abhaken bzw. wieder öffnen (wie in Notion, ohne Bearbeiten). */
+  private toggleTaskAt(id: string, world: Point): boolean {
+    if (this.readOnly || !this.taskAt) return false;
+    const o = this.session.get(id);
+    if (!o || !isShape(o) || isLocked(o) || !o.text || (o.kind !== "note" && o.kind !== "text" && o.kind !== "shape")) return false;
+    const line = this.taskAt(o, world);
+    if (line === undefined) return false;
+    const next = toggleTask(o.text, line);
+    if (next === o.text) return false;
+    this.session.patch(new Map([[id, { text: next }]]));
+    this.changed();
+    return true;
+  }
   cancelEdit() {
     if (!this.editing) return;
     this.editing = undefined;
@@ -746,7 +749,12 @@ export class BoardController {
     if (this.gesture?.kind === "move") return "move";
     const h = this.handleAt(p);
     if (h) return HANDLE_CURSORS[h];
-    return this.pick(screenToWorld(this.camera, p), 2 / this.camera.zoom) ? "move" : "default";
+    const world = screenToWorld(this.camera, p);
+    const hit = this.pick(world, 2 / this.camera.zoom);
+    if (!hit) return "default";
+    const o = this.session.get(hit);
+    if (!this.readOnly && this.taskAt && o && isShape(o) && !isLocked(o) && o.text && this.taskAt(o, world) !== undefined) return "pointer";
+    return "move";
   }
 
   private handleAt(p: Point): Handle | undefined {
@@ -846,6 +854,7 @@ export class BoardController {
       return;
     }
     const hit = this.pick(world, 2 / this.camera.zoom);
+    if (hit && !e.shift && !e.alt && this.toggleTaskAt(hit, world)) return;
     this.gesture = { kind: "press", start: p, world, hit, wasSelected: hit !== undefined && this.selection.has(hit), shift: e.shift === true, alt: e.alt === true };
     if (hit && !this.selection.has(hit)) this.select(e.shift ? [...this.selection, hit] : [hit]);
     else if (this.focused) { this.focused = undefined; this.changed(); }
