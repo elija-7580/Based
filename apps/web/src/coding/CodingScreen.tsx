@@ -8,7 +8,6 @@ import { CodeBlock } from "@astryxdesign/core/CodeBlock";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { List, ListItem } from "@astryxdesign/core/List";
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Selector } from "@astryxdesign/core/Selector";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
@@ -23,6 +22,7 @@ const TerminalView = lazy(() => import("./TerminalView.js").then((m) => ({ defau
 import { codingModelFor, useCodingConnection } from "./connection.js";
 import type { CodingModel } from "./model.js";
 import "./coding.css";
+import { BasedSwitcher } from "@based/ui/astryx";
 
 type Pane = "sessions" | "history" | "setup";
 
@@ -60,11 +60,8 @@ function CodingBody({ model }: { model: CodingModel }) {
     <VStack className="coding" gap={4} data-testid="coding-screen">
       <HStack hAlign="between" vAlign="center" wrap="wrap" gap={2}>
         <Text as="h1" type="large" weight="bold">Coding agents</Text>
-        <SegmentedControl label="View" value={pane} onChange={(v) => setPane(v as Pane)}>
-          <SegmentedControlItem value="sessions" label="Sessions" />
-          <SegmentedControlItem value="history" label="CLI history" />
-          <SegmentedControlItem value="setup" label="Setup" />
-        </SegmentedControl>
+        <BasedSwitcher label="View" value={pane} onChange={(v) => setPane(v as Pane)}
+          items={[{ id: "sessions", label: "Sessions" }, { id: "history", label: "CLI history" }, { id: "setup", label: "Setup" }]} />
       </HStack>
       {s.error ? <Banner status="error" title="Coding agents" description={s.error} /> : null}
       {s.inbox.length > 0 ? <Inbox items={s.inbox} onAnswer={(id, opt) => void model.answer(id, opt)} /> : null}
@@ -134,10 +131,8 @@ function Sessions({ model }: { model: CodingModel }) {
               <SwitchAgent model={model} from={current.id} cwd={current.cwd} />
               <Button variant="ghost" onClick={() => void model.close(current.id)} isDisabled={current.state === "closed"} label="End session" />
             </HStack>
-            <SegmentedControl label="Console view" value={view} onChange={(v) => setView(v as "transcript" | "terminal")}>
-              <SegmentedControlItem value="transcript" label="Transcript" />
-              <SegmentedControlItem value="terminal" label="Terminal" />
-            </SegmentedControl>
+            <BasedSwitcher label="Console view" value={view} onChange={(v) => setView(v as "transcript" | "terminal")}
+              items={[{ id: "transcript", label: "Transcript" }, { id: "terminal", label: "Terminal" }]} />
             {view === "terminal" ? <Suspense fallback={<Text type="supporting">Loading terminal…</Text>}><TerminalView model={model} sessionId={current.id} /></Suspense> : <Console items={s.items} running={running} />}
             <Composer key={current.id} model={model} session={current} />
           </>

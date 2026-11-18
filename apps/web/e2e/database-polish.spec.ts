@@ -72,3 +72,34 @@ test("Textzelle bearbeiten zeigt genau einen Rahmen", async ({ page }) => {
   expect(Math.abs(e!.y - c!.y)).toBeLessThanOrEqual(1);
   expect(Math.abs(e!.height - c!.height)).toBeLessThanOrEqual(1);
 });
+
+// BSD-536: Wer in einer Zelle sofort lostippt, verliert keine Zeichen, während der Editor öffnet. Das erste Zeichen
+// öffnet den Editor; was eintrifft, bevor das Feld den Fokus hat, landet trotzdem im Feld (10 Wiederholungen, ohne
+// Verzögerung zwischen den Tasten).
+test("Lostippen in einer Zelle verliert keine Zeichen, während der Editor öffnet", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "New page" }).first().click();
+  await expectEditable(page);
+  await focusEditorEnd(page);
+  await page.keyboard.type("/database");
+  await page.getByRole("option", { name: "Database", exact: true }).click();
+  const db = page.locator(".shell-database.inline");
+  const titles = db.locator(".dbui-cell.title");
+  await expect(titles.nth(1)).toBeVisible();
+  const editor = page.locator(".dbui-cell-editor");
+  for (let i = 0; i < 10; i++) {
+    const text = `Clawther.com - Instructions ${i}`;
+    // Erste Zeile öffnen, mit Enter übernehmen: die aktive Zelle springt eine Zeile tiefer, der Editor ist zu.
+    await titles.first().click();
+    await expect(editor.locator("input")).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(editor).toHaveCount(0);
+    await page.keyboard.type(text);
+    await expect(editor.locator("input")).toHaveValue(text);
+    await page.keyboard.press("Enter");
+    // Zellentext ohne den „Open“-Knopf, der in der Titelzelle mitsteht
+    await expect(titles.nth(1)).toHaveText(new RegExp(`^${text}(Open)?$`));
+  }
+});

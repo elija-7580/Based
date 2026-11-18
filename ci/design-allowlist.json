@@ -3,7 +3,7 @@
   "totals": {
     "px": 137,
     "button": 261,
-    "astryx": 183
+    "astryx": 175
   },
   "files": {
     "apps/web/src/assets.css": {
@@ -20,7 +20,7 @@
       "px": 1
     },
     "apps/web/src/chat/AiSettingsSection.tsx": {
-      "astryx": 4
+      "astryx": 3
     },
     "apps/web/src/chat/ChatMessages.tsx": {
       "astryx": 6
@@ -38,7 +38,7 @@
       "astryx": 3
     },
     "apps/web/src/coding/CodingScreen.tsx": {
-      "astryx": 12
+      "astryx": 11
     },
     "apps/web/src/coding/Composer.tsx": {
       "astryx": 8
@@ -66,9 +66,6 @@
     },
     "apps/web/src/components/ImportExport.tsx": {
       "button": 4,
-      "astryx": 2
-    },
-    "apps/web/src/components/LibraryTabs.tsx": {
       "astryx": 1
     },
     "apps/web/src/components/MoveDialog.tsx": {
@@ -116,7 +113,7 @@
       "px": 2
     },
     "apps/web/src/database/FormView.tsx": {
-      "astryx": 16
+      "astryx": 15
     },
     "apps/web/src/database/RowPeek.tsx": {
       "astryx": 4
@@ -154,8 +151,7 @@
       "astryx": 7
     },
     "apps/web/src/screens/Home.tsx": {
-      "button": 4,
-      "astryx": 1
+      "button": 4
     },
     "apps/web/src/screens/Library.tsx": {
       "button": 1,
@@ -186,7 +182,7 @@
       "astryx": 4
     },
     "apps/web/src/screens/settings/diagnostics.tsx": {
-      "astryx": 4
+      "astryx": 3
     },
     "apps/web/src/screens/settings/parts.tsx": {
       "astryx": 3
@@ -204,7 +200,7 @@
       "px": 22
     },
     "apps/web/src/tasks/AgentSettingsSection.tsx": {
-      "astryx": 9
+      "astryx": 8
     },
     "apps/web/src/tasks/TasksScreen.tsx": {
       "astryx": 9

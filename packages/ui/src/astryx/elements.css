@@ -1,0 +1,23 @@
+/* Element-System v11 (docs/design/elements.md): Aussehen der neuen Bausteine, nur Tokens. */
+.based-switcher, .based-picker { display: inline-flex; }
+.based-switcher[data-fill] { display: flex; width: 100%; }
+.based-switcher .astryx-segmented-control { min-height: var(--control-md); }
+.based-picker[data-active] .astryx-button { background: var(--selected); }
+
+/* Seitenblatt: Inhalt auf derselben Linie wie der Titel im Kopf. */
+.based-sheet, .based-sheet-body { display: block; }
+.based-sheet-body { padding-inline: var(--space-4); }
+
+/* Hinweis: unten Mitte, Fläche und Schatten wie das Menü, 180 ms mit 8 px von unten (ohne @keyframes). */
+.based-toast {
+  position: fixed; left: 50%; bottom: var(--space-5); z-index: 1000;
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  min-height: var(--control-md); padding: var(--space-2) var(--space-4);
+  background: var(--surface-card); color: var(--ink); border-radius: var(--radius-xl); box-shadow: var(--shadow-menu);
+  font-family: var(--font-ui); font-size: var(--type-ui-size); font-weight: var(--type-ui-weight); line-height: var(--type-ui-leading);
+  translate: -50% 0; opacity: 1;
+  transition: opacity var(--duration) var(--ease-out), translate var(--duration) var(--ease-out);
+  user-select: none;
+}
+@starting-style { .based-toast { opacity: 0; translate: -50% var(--space-2); } }
+@media (prefers-reduced-motion: reduce) { .based-toast { transition: none; } }

@@ -11,7 +11,6 @@ import { FormLayout } from "@astryxdesign/core/FormLayout";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
 import { IconButton } from "@astryxdesign/core/IconButton";
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
@@ -25,6 +24,7 @@ import {
 } from "@based/database-ui";
 import { Icon } from "../icons.js";
 import "./form.css";
+import { BasedSwitcher } from "@based/ui/astryx";
 
 /** Eingabe, die lokal tippt und an den Store schreibt (ohne dass Store-Echos den Cursor springen lassen). */
 function useLocalText(stored: string, key: string): [string, (v: string) => void, () => void] {
@@ -165,10 +165,8 @@ export function FormView(p: FormRenderProps) {
     <div className="db-form-scroll">
     <div className="db-form" data-testid="form-view" data-mode={shown}>
       {!p.locked && (
-        <SegmentedControl label="Form mode" value={shown} onChange={(v) => setMode(v === "fill" ? "fill" : "edit")}>
-          <SegmentedControlItem value="edit" label="Edit form" />
-          <SegmentedControlItem value="fill" label="Fill out" />
-        </SegmentedControl>
+        <BasedSwitcher label="Form mode" value={shown} onChange={(v) => setMode(v === "fill" ? "fill" : "edit")}
+          items={[{ id: "edit", label: "Edit form" }, { id: "fill", label: "Fill out" }]} />
       )}
       {shown === "edit" ? <Editor p={p} /> : <Filler p={p} />}
     </div>

@@ -54,3 +54,15 @@ export function menuItems(items: readonly BasedMenuItem[]): AstryxMenuOption[] {
   if (last && "type" in last) out.pop();
   return out;
 }
+
+export interface BasedPickerOption {
+  id: string;
+  label: string;
+  description?: string;
+}
+
+/** Text der Filter-Pille (BasedPicker): „Type: All types“. Fehlt der Wert in den Optionen, nur das Label. */
+export function pickerText(label: string, options: readonly BasedPickerOption[], value: string): string {
+  const current = options.find((o) => o.id === value);
+  return current ? `${label}: ${current.label}` : label;
+}

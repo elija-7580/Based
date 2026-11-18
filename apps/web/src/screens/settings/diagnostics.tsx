@@ -1,11 +1,10 @@
 // BSD-319: Settings → Diagnostics in klaren Gruppen: Status, Problems, Reports, Log, For developers. Gleiche Zeilen und
 // Abstände wie die übrigen Einstellungen (parts.tsx), keine Debug-Optik; alles per Tastatur erreichbar.
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
 import { HStack, StackItem, VStack } from "@astryxdesign/core/Layout";
 import type { DiagnosticsEntry, DiagnosticsLevel } from "@based/core";
-import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
+import { BasedButton, BasedConfirm, BasedField, BasedSwitcher } from "@based/ui/astryx";
 import { useEffect, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { isTauri } from "../../desktop.js";
@@ -198,9 +197,7 @@ export function LogSection({ state }: SettingsSectionProps) {
         </HStack>
       </Row>
       <HStack gap={3} vAlign="end" wrap="wrap">
-        <SegmentedControl label="Level" value={level} onChange={(v) => setLevel(v as LevelFilter)}>
-          {LEVELS.map((l) => <SegmentedControlItem key={l.value} value={l.value} label={l.label} />)}
-        </SegmentedControl>
+        <BasedSwitcher label="Level" value={level} onChange={(v) => setLevel(v as LevelFilter)} items={LEVELS.map((l) => ({ id: l.value, label: l.label }))} />
         <StackItem size="fill">
           <BasedField label="Search the log" value={query} onChange={setQuery} placeholder="Filter…" />
         </StackItem>
