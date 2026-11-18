@@ -85,6 +85,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.6.7)
+      pdfjs-dist:
+        specifier: 5.4.394
+        version: 5.4.394
       tsx:
         specifier: ^4.23.15
         version: 4.23.15

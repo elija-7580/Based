@@ -142,20 +142,25 @@ page a: <page id>     image a: <file ref>                  file a: <file ref>
 ink a: <SVG path d | x,y x,y …>
 a -> b: optional label               frame f: Title { a b }
 set <handle>: text    set <handle> {attrs}    del <handle>    background dots|lines|grid|plain
+copy <handle> [<handle> …] as c {at=x,y from=<board id>}
 ```
 
 Attributes go last in braces on create, `set`, `->` and `frame` lines: `{color=green fill=blue at=120,40 size=200x100
 rot=15 pin=true z=front}`; `shape=` on shapes, `line=curved|straight|elbow` on connectors, `full=true` on page cards,
 `tool=pen|highlighter width=thin|medium|thick|<px>` on ink, `page=N` on PDFs. Colours are the board's names (no
 yellow – yellow marks agents). Ink path coordinates are relative to `at=` (`at=0,0` → board coordinates); every `M`
-starts a new stroke; M L H V C S Q T A Z. A wrong line is skipped with its reason, the rest is applied.
+starts a new stroke; M L H V C S Q T A Z. `copy` works like ⌘D (16 px offset) or to `at=`; a frame takes what is
+inside with it, connectors between copied objects come along, `from=` copies from another board. Moving a frame with
+`set f {at=…}` moves what is inside, as by hand. A wrong line is skipped with its reason, the rest is applied.
 
 - `list_files { query?, limit?, offset? }` – files already in the workspace (page images and attachments, board
   files) with their ref, name, image size or PDF page count.
 - `upload_file { name?, data | url | path, mime?, board?, at? }` – stores the bytes (content-addressed, like any
   upload) and returns the ref; with `board` it places the file right away (a PDF becomes one object per page).
-  `url`: https only, no private network addresses, no redirects. `path`: only over stdio (the client runs on the
-  same computer). Size limit as for uploads (`--max-asset-mb`).
+  `url`: http or https; up to five redirects are followed, each checked; never into the private network (the
+  connection goes to the checked address, so DNS tricks do not help). `path`: only over stdio (the client runs on the
+  same computer). Size limit as for uploads (`--max-asset-mb`). PDFs are measured with pdf.js (every page with its
+  own size and rotation, at most 200 pages), like dropping a PDF in the app.
 
 Text in notes, shapes and text objects is Markdown (`# heading`, `**bold**`, `*italic*`, `` `code` ``, `- list`,
 `- [ ] task`, `> quote`, code fences); write line breaks in a statement as `\n`.
