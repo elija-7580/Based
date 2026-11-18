@@ -1,2 +1,61 @@
-cancelled 3a2354083d3e6dba9b0b4bebf4a34ca0db869d97
-(kein Log – Lauf vorher abgebrochen)
+failure a1e901a049d11431ee83a469a5654e6898b1f6c6
+
+    - Array []
+    + Array [
+    +   "Datenbank: div.dbui-table „Table“ – kein sichtbarer Fokusrahmen",
+    + ]
+
+      158 |   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
+      159 |   console.log(found.join("\n"));
+    > 160 |   expect(found).toEqual([]);
+          |                 ^
+      161 | });
+      162 |
+      163 | // Fotos der in BSD-304 geänderten Stellen (Gliederung 24 px, Quick Find, Tabelle mit Fokus), hell und dunkel in
+        at /home/runner/work/Based/Based/apps/web/e2e/a11y.spec.ts:160:17
+
+    Error Context: test-results/a11y-Tab-Durchlauf-Namen-F-db003-chen-auf-allen-Hauptscreens-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Datenbank: div.dbui-table „Table“ – kein sichtbarer Fokusrahmen",
+    + ]
+
+      158 |   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
+      159 |   console.log(found.join("\n"));
+    > 160 |   expect(found).toEqual([]);
+          |                 ^
+      161 | });
+      162 |
+      163 | // Fotos der in BSD-304 geänderten Stellen (Gliederung 24 px, Quick Find, Tabelle mit Fokus), hell und dunkel in
+        at /home/runner/work/Based/Based/apps/web/e2e/a11y.spec.ts:160:17
+
+    Error Context: test-results/a11y-Tab-Durchlauf-Namen-F-db003-chen-auf-allen-Hauptscreens-chromium-retry1/error-context.md
+
+  2) [chromium] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
+
+    Test timeout of 30000ms exceeded.
+
+    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-chromium-retry1/error-context.md
+
+  2 failed
+    [chromium] › e2e/a11y.spec.ts:126:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens 
+    [chromium] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
+  17 skipped
+  248 passed (8.7m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
