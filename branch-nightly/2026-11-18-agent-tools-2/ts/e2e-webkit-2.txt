@@ -1,61 +1,61 @@
-cancelled 2bca76d33a462b25bf9d1246281e0aaf96224e51
-  -  113 [webkit] › e2e/replay/record-sample.spec.ts:59:1 › Beispielbündel Block-Editor
-  ✓  112 [webkit] › e2e/polish.spec.ts:88:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (5.2s)
-  -  114 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung
-  -  116 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung
-  ✓  115 [webkit] › e2e/polish.spec.ts:123:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (5.9s)
-  ✓  117 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-webkit wiedergeben (input): gleicher Endzustand, keine Überdeckung (7.3s)
-  ✓  118 [webkit] › e2e/polish.spec.ts:192:1 › Fokusrahmen und Textauswahl neutral, unabhängig vom Marker (2.3s)
-  ✓  119 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-webkit wiedergeben (steps): gleicher Endzustand, keine Überdeckung (3.0s)
-  ✓  120 [webkit] › e2e/polish.spec.ts:223:1 › Icon-Auswahl: kein seitliches Rollen, Raster passt zur Breite (5.8s)
-  ✓  122 [webkit] › e2e/polish.spec.ts:245:1 › Icon-Auswahl: Rasterzellen überlappen sich nicht (3.6s)
-  ✓  121 [webkit] › e2e/report.spec.ts:30:70 › ⇧⌘B (Block-Editor): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext (7.7s)
-  ✓  123 [webkit] › e2e/polish.spec.ts:262:1 › Icon-Auswahl: Phosphor-Icon mit Farbe als Seiten-Icon (4.7s)
-  ✓  125 [webkit] › e2e/polish.spec.ts:290:1 › Unterseite, Erwähnung und Datei ohne Icon: Linien-Icon statt Emoji (2.4s)
-  ✓  124 [webkit] › e2e/report.spec.ts:71:1 › Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem (6.2s)
-  ✓  126 [webkit] › e2e/polish.spec.ts:333:1 › Luft unter der letzten Zeile nur auf langen Seiten (3.2s)
-  ✓  128 [webkit] › e2e/polish.spec.ts:380:1 › Sync-Status: Karte beim Überfahren und mit der Tastatur, Klick öffnet die Sync-Einstellungen (2.2s)
-  ✓  127 [webkit] › e2e/report.spec.ts:95:49 › ⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (light) (5.6s)
-  ✓  130 [webkit] › e2e/report.spec.ts:95:49 › ⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (dark) (4.1s)
-  ✓  129 [webkit] › e2e/polish.spec.ts:424:1 › Synced Block: Griff und Plus der Kinder schneiden die Randlinie nicht (8.0s)
-  ✓  131 [webkit] › e2e/report.spec.ts:143:1 › Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht (4.8s)
-  ✓  132 [webkit] › e2e/polish.spec.ts:463:1 › Datei-Block: Vorschau für Text und CSV (4.2s)
-  ✓  133 [webkit] › e2e/report.spec.ts:178:1 › Entwickler-Ansicht zeigt die letzten Ereignisse live (4.2s)
-  ✓  134 [webkit] › e2e/polish.spec.ts:508:1 › Slash-Menü: Gruppenköpfe kommen je einmal vor, auch beim Filtern (2.2s)
-  ✓  135 [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen (3.6s)
-  ✓  136 [webkit] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster (5.5s)
-  ✓  137 [webkit] › e2e/report.spec.ts:213:1 › Aufzeichnung kostet beim Tippen messbar nichts (3.1s)
-  ✓  138 [webkit] › e2e/polish.spec.ts:589:1 › Font „Based“: Komma und Punkt im Fließtext ohne Lücke, Zeiten behalten Tabellenziffern (1.3s)
-(node:15267) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  140 [webkit] › e2e/polish.spec.ts:619:1 › Font „Based“: keine Lücke vor Komma und Punkt in der Datenbank-Tabelle, Zahlen fluchten (1.8s)
-  ✓  139 [webkit] › e2e/schedules-server.spec.ts:39:1 › BSD-243: Hinweis unter Schedules – ohne Server nur bei offener App, mit Server mit Modellzugang auch geschlossen (5.0s)
-  ✓  141 [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es (5.1s)
-  ✓  143 [webkit] › e2e/settings-billing.spec.ts:5:1 › Billing: Spenden-Knöpfe öffnen GitHub Sponsors, Plan sagt gratis während der Beta (2.4s)
-  ✓  142 [webkit] › e2e/select-all.spec.ts:21:1 › ⌘A neben dem Text wählt alle Blöcke der Seite – keinen Titel, keine Metazeile, nichts von der Oberfläche @smoke (3.5s)
-  ✓  144 [webkit] › e2e/settings-billing.spec.ts:21:1 › Billing: Suche in den Einstellungen findet „Donate“ (1.9s)
-  -  146 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1280 × 820 (light)
-  -  147 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1280 × 820 (dark)
-  -  148 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 900 × 600 (light)
-  -  149 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 900 × 600 (dark)
-  -  150 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1728 × 1000 (light)
-  -  151 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1728 × 1000 (dark)
-  ✓  145 [webkit] › e2e/select-all.spec.ts:34:1 › im Titel: erstes ⌘A markiert den Titel, das zweite die Blöcke (3.5s)
-  ✓  153 [webkit] › e2e/select-all.spec.ts:45:1 › im Text bleibt es wie bisher: erst der Block, dann alle Blöcke (3.0s)
-  ✓  154 [webkit] › e2e/select-all.spec.ts:54:1 › ohne Seite (Home, Einstellungen) markiert ⌘A nichts; Felder behalten ihr ⌘A (3.2s)
-  ✓  152 [webkit] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (7.9s)
-  ✓  156 [webkit] › e2e/settings-region.spec.ts:41:1 › Workspace-Name in Einstellungen → General (2.3s)
-  ✓  155 [webkit] › e2e/select-all.spec.ts:71:1 › Kopfzeile, Metazeile und Backlinks lassen sich nicht markieren (Ziehen, Doppelklick) (3.6s)
-  ✓  157 [webkit] › e2e/settings-region.spec.ts:53:1 › Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205) (3.7s)
-  ✓  158 [webkit] › e2e/settings-rows.spec.ts:10:3 › Einstellungszeilen: Knopf bleibt rechts neben langem Hinweis (1280 × 820) (5.0s)
-  ✓  159 [webkit] › e2e/settings-search.spec.ts:19:1 › Font schaltet die Schrift der App, Style nur Größe und Gewicht – und beides wieder zurück (3.6s)
-  ✓  161 [webkit] › e2e/settings-search.spec.ts:44:1 › alter Stand „Bold“ ohne Schrift-Wahl behält seine Schrift; alter Link #prefs-my-settings öffnet Appearance (1.3s)
-  ✓  162 [webkit] › e2e/settings-search.spec.ts:52:1 › Suche: findet einzelne Einstellungen, verzeiht Tippfehler, Tastatur öffnet den Treffer und rollt zum Abschnitt (2.4s)
-  ✓  160 [webkit] › e2e/settings-rows.spec.ts:10:3 › Einstellungszeilen: Knopf bleibt rechts neben langem Hinweis (1728 × 1000) (5.2s)
-  -  164 [webkit] › e2e/settings-rows.spec.ts:37:3 › Foto: Einstellungszeilen in Sync & server (light)
-  -  165 [webkit] › e2e/settings-rows.spec.ts:37:3 › Foto: Einstellungszeilen in Sync & server (dark)
-  ✓  163 [webkit] › e2e/settings-search.spec.ts:98:1 › ⌘K findet keine Einstellungen (2.1s)
-  ✓  166 [webkit] › e2e/settings.spec.ts:15:1 › Navigation: 20 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (2.3s)
-  ✓  167 [webkit] › e2e/settings-search.spec.ts:108:1 › eine Seite mit nur einem gleichnamigen Abschnitt nennt ihren Namen einmal (1.4s)
-  -  169 [webkit] › e2e/settings-search.spec.ts:116:3 › Bildschirmfotos: Suche in den Einstellungen (light)
-  -  170 [webkit] › e2e/settings-search.spec.ts:116:3 › Bildschirmfotos: Suche in den Einstellungen (dark)
+failure 54eadcbb6558d86ad9ca0a54ff01df3a2ca53333
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+    Expected pattern: /Imported 1 page, 1 attached file\./
+    Received string:  "Imported 2 pages, 1 attached file."
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveText" getByRole('dialog', { name: 'Import' }).getByTestId('import-summary') with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+        11 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
+           - unexpected value "Imported 2 pages, 1 attached file."
+
+
+      192 |   const dialog = page.getByRole("dialog", { name: "Import" });
+      193 |   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });
+    > 194 |   await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 1 page, 1 attached file\./);
+          |                                                      ^
+      195 |   await dialog.getByRole("button", { name: "Done" }).click();
+      196 |   await page.getByRole("treeitem", { name: "Hike" }).click();
+      197 |   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
+        at /home/runner/work/Based/Based/apps/web/e2e/shell-parity.spec.ts:194:54
+
+    Error Context: test-results/shell-parity-Import-eines--d7962-Bild-aus-dem-Asset-Speicher-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+    Expected pattern: /Imported 1 page, 1 attached file\./
+    Received string:  "Imported 2 pages, 1 attached file."
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveText" getByRole('dialog', { name: 'Import' }).getByTestId('import-summary') with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
+        11 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
+           - unexpected value "Imported 2 pages, 1 attached file."
+
+
+      192 |   const dialog = page.getByRole("dialog", { name: "Import" });
+      193 |   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });
+    > 194 |   await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 1 page, 1 attached file\./);
+          |                                                      ^
+      195 |   await dialog.getByRole("button", { name: "Done" }).click();
+      196 |   await page.getByRole("treeitem", { name: "Hike" }).click();
+      197 |   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
+        at /home/runner/work/Based/Based/apps/web/e2e/shell-parity.spec.ts:194:54
+
+    Error Context: test-results/shell-parity-Import-eines--d7962-Bild-aus-dem-Asset-Speicher-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher 
+  56 skipped
+  235 passed (10.0m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf

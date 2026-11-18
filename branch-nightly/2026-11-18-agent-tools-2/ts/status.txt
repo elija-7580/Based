@@ -1,1 +1,1 @@
-rot 2bca76d33a462b25bf9d1246281e0aaf96224e51 nightly/2026-11-18-agent-tools-2 · ts-fast=success e2e=failure perf=success (nicht blockierend) · run 44344262164
+rot 54eadcbb6558d86ad9ca0a54ff01df3a2ca53333 nightly/2026-11-18-agent-tools-2 · ts-fast=success e2e=failure perf=success (nicht blockierend) · run 44346065911
