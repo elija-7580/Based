@@ -288,7 +288,7 @@ test("Feedback 17. 11.: ohne Transkription aufnehmen, später einrichten → „
 
 // Einstellungen → Meeting notes: im Browser ohne Server steht, was fehlt – kein Knopf, der ins Leere führt.
 test("Feedback 17. 11.: Einstellungen nennen den fehlenden Schritt für die Transkription", async ({ page, browserName }) => {
-  await page.goto("/#prefs-my-settings");
+  await page.goto("/#prefs-meetings");
   await expect(page.getByTestId("settings-page")).toBeVisible();
   const section = page.getByTestId("settings-section-meetings");
   await expect(section).toContainText("Transcription");
@@ -342,7 +342,7 @@ test("Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, ber
   await page.getByLabel("Token").fill("secret");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByLabel("Server URL")).toBeDisabled();
-  await page.goto("/#prefs-my-settings");
+  await page.goto("/#prefs-meetings");
   const section = page.getByTestId("settings-section-meetings");
   const shot = async (name: string) => {
     if (!SHOTS || browserName !== "chromium") return;

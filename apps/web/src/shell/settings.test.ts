@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS_PAGE, resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES, SettingsRegistry, validateSyncForm, visibleSettingsPages } from "./settings.js";
+import { DEFAULT_SETTINGS_PAGE, resolveSettingsPage, searchSettings, SETTINGS_GROUPS, SETTINGS_PAGES, SettingsRegistry, validateSyncForm, visibleSettingsPages } from "./settings.js";
 
 describe("Einstellungen: Modell", () => {
-  it("Seiten wie in der Swift-Vorlage: 5 unter Account, 12 unter Workspace, IDs eindeutig", () => {
-    expect(SETTINGS_PAGES.filter((p) => p.group === "account").map((p) => p.title)).toEqual(["My account", "My settings", "My notifications", "My connections", "Language & region"]);
-    expect(SETTINGS_PAGES.filter((p) => p.group === "workspace")).toHaveLength(12);
+  it("drei Gruppen: App, Workspace, System; IDs eindeutig, jede Seite in einer Gruppe", () => {
+    expect(SETTINGS_GROUPS.map((g) => g.title)).toEqual(["App", "Workspace", "System"]);
+    expect(SETTINGS_PAGES.filter((p) => p.group === "app").map((p) => p.title)).toEqual(["Appearance", "Pages", "Meeting notes", "Language & region", "Notifications", "Connected accounts"]);
+    expect(SETTINGS_PAGES.filter((p) => p.group === "workspace")).toHaveLength(9);
+    expect(SETTINGS_PAGES.filter((p) => p.group === "system").map((p) => p.title)).toEqual(["This device", "Updates", "Diagnostics", "About"]);
     expect(new Set(SETTINGS_PAGES.map((p) => p.id)).size).toBe(SETTINGS_PAGES.length);
-    expect(SETTINGS_GROUPS.map((g) => g.id)).toEqual(["account", "workspace"]);
+    for (const p of SETTINGS_PAGES) expect(SETTINGS_GROUPS.some((g) => g.id === p.group), p.id).toBe(true);
+  });
+  it("alte Links auf „My settings“ öffnen Appearance", () => {
+    expect(resolveSettingsPage("my-settings").id).toBe("appearance");
   });
   it("unbekannte Seite fällt auf die Standardseite zurück", () => {
     expect(resolveSettingsPage("sync").id).toBe("sync");
@@ -92,5 +97,57 @@ describe("Einstellungen: AI-Schalter", () => {
     expect(r.sectionsFor("agents").map((s) => s.id)).toEqual(["switch", "models"]);
     expect(r.missingFor("agents", { ai: false })).toEqual([]);
     expect(r.missingFor("agents")).toContain("Skills");
+  });
+});
+
+describe("Einstellungen: Suche", () => {
+  const reg = () => {
+    const r = new SettingsRegistry<string>();
+    r.register({ id: "appearance", title: "Appearance", page: "appearance", component: "", keywords: ["Theme", "Dark mode", "Font", "Density"] });
+    r.register({ id: "writing", title: "New pages", page: "editor", component: "", keywords: ["Default font", "Spell-check", "Full width"] });
+    r.register({ id: "sync-server", title: "Based server", page: "sync", description: "Address and token of your own server", component: "", keywords: ["Server address", "Token"] });
+    r.register({ id: "keys", title: "Models and keys", page: "agents", ai: true, component: "", keywords: ["API keys"] });
+    return r;
+  };
+  const find = (q: string, opts = {}) => searchSettings(q, SETTINGS_PAGES, reg(), opts);
+  it("findet einzelne Einstellungen über ihr Stichwort und nennt, wo sie liegen", () => {
+    expect(find("dark")[0]).toEqual({ page: "appearance", section: "appearance", label: "Dark mode", where: "Appearance" });
+    expect(find("spell")[0]).toEqual({ page: "editor", section: "writing", label: "Spell-check", where: "Pages · New pages" });
+    expect(find("token")[0]!.page).toBe("sync");
+  });
+  it("findet Seiten am Titel, auch ohne Abschnitte", () => {
+    expect(find("diagn")[0]).toEqual({ page: "diagnostics", label: "Diagnostics", where: "Page" });
+    expect(find("sync")[0]!.page).toBe("sync");
+  });
+  it("verzeiht einen Tippfehler", () => {
+    expect(find("thme")[0]!.label).toBe("Theme");
+    expect(find("apearance")[0]!.page).toBe("appearance");
+    expect(find("spellchek")[0]?.label ?? find("spell chek")[0]?.label).toBe("Spell-check");
+  });
+  it("alle Wörter müssen passen; Leeres und Unsinn finden nichts", () => {
+    expect(find("default font")[0]!.label).toBe("Default font");
+    expect(find("font")[0]!.page).toBe("appearance");
+    expect(find("")).toEqual([]);
+    expect(find("   ")).toEqual([]);
+    expect(find("xyzzy")).toEqual([]);
+    // ein Tippfehler heißt nicht „irgendein ähnliches Wort“: „font“ findet nichts mit „content“
+    const r = reg();
+    r.register({ id: "ws", title: "Workspace", page: "workspace", component: "", keywords: ["Export all content"] });
+    expect(searchSettings("font", SETTINGS_PAGES, r).some((h) => h.label === "Export all content")).toBe(false);
+    r.register({ id: "week", title: "Week", page: "language", component: "", keywords: ["Calendar"] });
+    expect(searchSettings("calm", SETTINGS_PAGES, r)).toEqual([]);
+    expect(searchSettings("calen", SETTINGS_PAGES, r)[0]!.label).toBe("Calendar");
+    expect(searchSettings("calandar", SETTINGS_PAGES, r)[0]!.label).toBe("Calendar");
+  });
+  it("je Abschnitt ein Treffer, höchstens `limit`", () => {
+    const hits = find("font");
+    expect(new Set(hits.map((h) => h.page + "/" + h.section)).size).toBe(hits.length);
+    expect(searchSettings("e", SETTINGS_PAGES, reg(), {}, 3).length).toBeLessThanOrEqual(3);
+  });
+  it("ohne AI keine AI-Abschnitte; nur Seiten, die übergeben werden", () => {
+    expect(find("api keys", { ai: false }).some((h) => h.section === "keys")).toBe(false);
+    expect(find("api keys").some((h) => h.section === "keys")).toBe(true);
+    const beta = SETTINGS_PAGES.filter((p) => p.id !== "agents");
+    expect(searchSettings("agents", beta, reg()).some((h) => h.page === "agents")).toBe(false);
   });
 });

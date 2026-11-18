@@ -8,6 +8,12 @@
   -webkit-user-select: text; user-select: text;
 }
 .settings-nav { background: var(--sidebar); }
+/* Suche über der Seitenliste: füllt die Breite der Leiste; der Hinweis „nichts gefunden“ steht bündig mit den Zeilen. */
+.settings-search { display: block; }
+.settings-no-results { padding-inline: var(--space-3); }
+/* Ein Abschnitt bekommt nach einem Suchtreffer den Fokus (zum Vorlesen), zeichnet dafür aber keinen Rahmen –
+   Behälter zeichnen keinen Fokusrahmen (elements.md, Abschnitt 3). */
+.settings-section:focus { outline: none; }
 .settings-nav-head { padding-inline: var(--space-3); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--type-meta-size); }
 /* Seitentitel und Abschnitte in der Kopfschrift (Charakter wie Seitentitel). */
 .settings-page h1, .settings-page h2 { font-family: var(--font-head); }

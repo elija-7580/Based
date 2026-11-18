@@ -11,6 +11,7 @@ import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Popover } from "@astryxdesign/core/Popover";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import type { KeyboardEvent, ReactNode, Ref } from "react";
+import { SearchGlyph } from "./mediaIcons.js";
 import { buttonVariant, dialogPurpose, fieldStatus, menuItems, type BasedButtonVariant, type BasedMenuItem } from "./variants.js";
 
 export { buttonVariant, dialogPurpose, fieldStatus, menuItems, pickerText } from "./variants.js";
@@ -190,7 +191,10 @@ export interface BasedFieldProps {
   autoFocus?: boolean;
 }
 
-/** Einzeiliges Formularfeld mit sichtbarem Label; nimmt die volle Breite seines Containers. */
+/**
+ * Einzeiliges Formularfeld mit sichtbarem Label; nimmt die volle Breite seines Containers.
+ * `type="search"` ist das Suchfeld aus elements.md: links die Lupe, rechts „leeren“, sobald etwas drinsteht.
+ */
 export function BasedField({ label, value, onChange, type = "text", hint, placeholder, error, disabled = false, required = false, autoComplete, onEnter, labelHidden, inputRef, onKeyDown, inputMode, autoFocus }: BasedFieldProps) {
   const status = fieldStatus(error);
   return (
@@ -214,6 +218,7 @@ export function BasedField({ label, value, onChange, type = "text", hint, placeh
       {...(inputRef ? { ref: inputRef } : {})}
       {...(onKeyDown ? { onKeyDown } : {})}
       {...(autoFocus ? { hasAutoFocus: true } : {})}
+      {...(type === "search" ? { startIcon: SearchGlyph, hasClear: true } : {})}
     />
   );
 }

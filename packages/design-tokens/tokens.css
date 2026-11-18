@@ -299,10 +299,13 @@
   --chrome-edge: none;
 }
 
-[data-style="bold"] {
+[data-typeface="based"] {
   --font-ui: "Schibsted Grotesk", system-ui, sans-serif;
   --font-head: "Schibsted Grotesk", system-ui, sans-serif;
   --font-body: Literata, Georgia, serif;
+}
+
+[data-style="bold"] {
   --size-title: 40px;
   --weight-title: 800;
   --tracking-title: -0.035em;

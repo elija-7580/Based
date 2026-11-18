@@ -163,6 +163,6 @@ function MemoriesSection({ client: store, state, navigate }: SettingsSectionProp
   );
 }
 
-registerSettingsSection({ id: "brain-skills", page: "agents", title: "Skills", order: 20, component: SkillsSection, provides: ["Skills"] });
-registerSettingsSection({ id: "brain-privacy", page: "agents", title: "Privacy", order: 30, ai: true, component: PrivacySection });
-registerSettingsSection({ id: "brain-memories", page: "agents", title: "Memories", order: 40, component: MemoriesSection });
+registerSettingsSection({ id: "brain-skills", page: "agents", title: "Skills", order: 20, component: SkillsSection, provides: ["Skills"], keywords: ["Import skills", "Agent Brain"] });
+registerSettingsSection({ id: "brain-privacy", page: "agents", title: "Privacy", order: 30, ai: true, component: PrivacySection, keywords: ["Redact", "What to redact"] });
+registerSettingsSection({ id: "brain-memories", page: "agents", title: "Memories", order: 40, component: MemoriesSection, keywords: ["Saved memories"] });

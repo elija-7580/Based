@@ -63,12 +63,14 @@ export function hiddenBlockTypes(channel: Channel = CHANNEL): ReadonlySet<string
  * Einstellungsseiten, die auf beta fehlen (Review 16.11.2026, BSD-458): Agents & AI und Connections gehören zu
  * AI/Agenten, My notifications handelt nur von Agenten. BSD-460: die „Not yet“-Seiten ohne eigene Einstellungen
  * (My connections, People, Teamspaces, Security) – Konten, Mitglieder und Freigaben sind nicht in der Beta.
- * Alte Links (#settings/agents) fallen auf My settings zurück.
+ * Alte Links (#settings/agents) fallen auf Appearance zurück.
  */
 export const BETA_HIDDEN_SETTINGS: ReadonlySet<string> = new Set(["agents", "connections", "notifications", "my-connections", "people", "teamspaces", "security"]);
 
 /** Darf die Einstellungsseite mit dieser ID in diesem Kanal erscheinen? */
 export function settingsPageVisible(id: string, channel: Channel = CHANNEL): boolean {
+  // Die Seite „Meeting notes“ gibt es nur, wo es Meeting-Notizen gibt (sonst wäre sie leer).
+  if (id === "meetings" && !featureVisible("meetings", channel)) return false;
   return channel !== "beta" || !BETA_HIDDEN_SETTINGS.has(id);
 }
 
