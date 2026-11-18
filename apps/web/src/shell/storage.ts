@@ -248,6 +248,8 @@ export const autoUpdatePref = devicePref<boolean>("based.autoUpdateCheck", true,
  */
 export type MeetingTranscribeWhen = "now" | "plugged-in";
 export const meetingTranscribePref = devicePref<MeetingTranscribeWhen>("based.meeting.transcribe", "now", (v): v is MeetingTranscribeWhen => v === "now" || v === "plugged-in");
+/** Feedback 18. 11.: Mac-App fragt, ob transkribiert werden soll, wenn eine Meeting-App das Mikrofon einschaltet (pro Gerät). */
+export const meetingDetectPref = devicePref<boolean>("based.meeting.detect", true, isBool);
 /** Meetings, deren Transkript auf später wartet (Seite + Block), damit es auch nach einem Neustart nachgeholt wird. */
 export const pendingTranscripts = {
   get: (): { page: string; meeting: string }[] => {

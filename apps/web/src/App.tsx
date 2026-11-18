@@ -16,7 +16,9 @@ import { ShortcutHud } from "./components/ShortcutHud.js";
 import { ShortcutSheet } from "./components/ShortcutSheet.js";
 import { installArrowNav } from "./shell/arrowNav.js";
 import { COMMAND_EVENT, installCommands } from "./shell/commands.js";
-import { isTauri, REPORT_PROBLEM_EVENT } from "./desktop.js";
+import { bringToFront, isPageWindow, isTauri, REPORT_PROBLEM_EVENT } from "./desktop.js";
+import { meetingHost } from "./editorSlot.js";
+import { startMeetingDetection } from "./meeting/detect.js";
 import { startReport } from "./shell/reportUI.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { Notice } from "./components/Notice.js";
@@ -41,7 +43,7 @@ import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
 import { markFreshPage } from "./shell/freshPage.js";
 import { hiddenRoute } from "./shell/hiddenRoute.js";
-import { fallbackHomePage, homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
+import { fallbackHomePage, homeTarget, meetingDetectPref, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
 // BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
@@ -194,6 +196,23 @@ export function App({ client, history }: { client: StoreClient; history: History
   const newMeeting = useCallback(async () => {
     const id = await client.command<string | undefined>({ op: "createMeetingPage" });
     if (id) openPage(id);
+  }, [client, openPage]);
+
+  // Feedback 18. 11.: Mac-App – startet eine Meeting-App (Zoom, Teams, Meet …) das Mikrofon, fragt ein kleines Fenster
+  // oben rechts, ob Based transkribieren soll. „Start transcribing“: neues Meeting, Fenster nach vorn, Aufnahme läuft.
+  useEffect(() => {
+    if (!isTauri() || isPageWindow() || !meetingHost()) return;
+    return startMeetingDetection({
+      enabled: () => meetingDetectPref.get(),
+      recording: () => meetingHost()?.getState().recording === true,
+      onStart: () => void (async () => {
+        await bringToFront();
+        const id = await client.command<string | undefined>({ op: "createMeetingPage" });
+        if (!id) return;
+        openPage(id);
+        await meetingHost()?.startOnPage(id);
+      })(),
+    });
   }, [client, openPage]);
 
   const outlineRef = useRef(state.outline);

@@ -151,8 +151,13 @@ test("Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfas
   await expect(block(page)).toHaveAttribute("data-status", "recording");
   await expect(block(page)).toContainText("Let everyone know this conversation is being recorded and transcribed");
   await expect(page.getByTestId("meeting-clock")).not.toHaveText("0:00", { timeout: 5000 });
-  // BSD-281: laufende Aufnahme als Pille oben in der Seitenleiste
-  await expect(page.getByTestId("recording-pill")).toContainText("Recording");
+  // Feedback 18. 11.: im Block steht sichtbar, dass gerade (live) transkribiert wird – mit Uhr
+  const live = block(page).getByTestId("meeting-live-status");
+  await expect(live).toHaveAttribute("data-state", "live");
+  await expect(live).toContainText("Transcribing");
+  await expect(live.getByTestId("meeting-clock")).toBeVisible();
+  // BSD-281: laufende Aufnahme als Pille oben in der Seitenleiste (der feste Test-Transcriber schreibt live)
+  await expect(page.getByTestId("recording-pill")).toContainText("Transcribing");
 
   await typeNote(page, "Ship on Friday");
   const stamped = page.getByTestId("meeting-stamped-notes");
@@ -167,8 +172,15 @@ test("Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfas
   await expect(page.getByTestId("meeting-transcript")).toContainText("Welcome everyone.");
   await shots(page, browserName, "-recording");
 
+  await block(page).getByRole("button", { name: "Pause" }).click();
+  await expect(live).toHaveAttribute("data-state", "paused");
+  await block(page).getByRole("button", { name: "Resume" }).click();
+  await expect(live).toHaveAttribute("data-state", "live");
+
   await block(page).getByRole("button", { name: "Stop" }).click();
   await expect(block(page)).toHaveAttribute("data-status", "done", { timeout: 15_000 });
+  // fertig: keine Anzeige mehr
+  await expect(block(page).getByTestId("meeting-live-status")).toHaveCount(0);
   // BSD-418: Hänger-Breadcrumbs nennen Meeting-Aktionen mit festen Namen, nie Titel, Notizen oder Transkript
   type HangHooks = { __basedTest: { hangs: { hang(ms: number): void; hangs(): { breadcrumbs: string[] }[] } } };
   await page.evaluate(() => (globalThis as unknown as HangHooks).__basedTest.hangs.hang(400));

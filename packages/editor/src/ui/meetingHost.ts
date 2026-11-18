@@ -24,6 +24,12 @@ export interface MeetingHostState {
   error: string | undefined;
   warning: string | undefined;
   playback: MeetingPlayback | undefined;
+  /**
+   * Feedback 18. 11.: wie die laufende Aufnahme zum Transkript kommt – `live` (Text erscheint schon jetzt), `after`
+   * (nach dem Stop), `deferred` (später, z. B. am Strom), `off` (keine Transkription eingerichtet). Fehlt es, zeigt
+   * der Block nur „Recording“.
+   */
+  transcription?: "live" | "after" | "deferred" | "off";
 }
 
 export interface MeetingHost {
