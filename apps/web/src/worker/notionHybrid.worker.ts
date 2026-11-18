@@ -97,9 +97,9 @@ async function start(m: Extract<HybridWorkerRequest, { type: "start" }>) {
   const client = new NotionClient(m.token, proxy, { ...(m.baseURL ? { baseURL: m.baseURL } : {}), signal: abort.signal, ...(m.requestsPerSecond !== undefined ? { requestsPerSecond: m.requestsPerSecond } : {}) });
   try {
     let index: NotionExportIndex | undefined;
-    if (m.zip) {
+    if (m.zips?.length) {
       post({ type: "progress", progress: { phase: "structure", fraction: 0, message: "Reading the export…", done: 0, total: 0 } });
-      index = openNotionExport(blobSource(m.zip));
+      index = openNotionExport(m.zips.map(blobSource));
     }
     const stream = new StreamingAssetSink((a) => {
       const id = nextID++;

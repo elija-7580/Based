@@ -26,6 +26,12 @@ interface Props {
   onClose: () => void;
 }
 
+/** Name eines gewählten Exports; mehrere Teile als „erster Teil + N more“ (BSD-565). */
+export const zipsLabel = (files: readonly { name: string }[]): string | undefined => {
+  const sorted = [...files].map((f) => f.name).sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
+  if (sorted.length === 0) return undefined;
+  return sorted.length === 1 ? sorted[0] : `${sorted[0]} + ${sorted.length - 1} more`;
+};
 const shortDate = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 export function NotionImport({ client, onBack, onDone, onBusy, onClose }: Props) {
@@ -50,7 +56,9 @@ export function NotionImport({ client, onBack, onDone, onBusy, onClose }: Props)
   }, []);
   // BSD-317: mit Notions HTML-Export (ZIP) kommt der Inhalt aus der Datei, die API liefert nur die Struktur.
   const hybrid = useHybridImport();
-  const [zip, setZip] = useState<File | undefined>(undefined);
+  // BSD-565: ein großer Export kommt in Teilen (…-Part-1.zip, …-Part-2.zip) – alle Teile zusammen wählen.
+  const [zips, setZips] = useState<File[]>([]);
+  const zip = zips.length > 0;
   const zipInput = useRef<HTMLInputElement>(null);
   const hybridRunning = hybrid.k === "running" || hybrid.k === "stopping";
   const busy = phase.k === "running" || phase.k === "writing";
@@ -87,7 +95,7 @@ export function NotionImport({ client, onBack, onDone, onBusy, onClose }: Props)
       }
       if (token.trim()) await notionToken.set(remember ? token : undefined);
       setPhase({ k: "form" });
-      hybridImport.start({ client, token: t, mode, zip, zipName: zip?.name, transport: await notionTransport(), baseURL: base, downloadFiles: files });
+      hybridImport.start({ client, token: t, mode, zips, zipName: zipsLabel(zips), transport: await notionTransport(), baseURL: base, downloadFiles: files });
     } catch (e) {
       if (alive.current) setPhase({ k: "error", message: describeNotionError(e, { customBase: base !== undefined }) });
     }
@@ -200,14 +208,14 @@ export function NotionImport({ client, onBack, onDone, onBusy, onClose }: Props)
       <div className="field">
         <span className="t-meta" id="notion-zip-label">Notion export for large workspaces (optional)</span>
         <span className="field-row hybrid-zip">
-          <input ref={zipInput} type="file" accept=".zip" className="sr-only" tabIndex={-1} aria-labelledby="notion-zip-label" data-testid="hybrid-zip"
-            onChange={(e) => { setZip(e.target.files?.[0]); if (hybrid.k === "error") hybridImport.dismiss(); }} />
-          <span className="hybrid-zip-name t-desc" data-empty={zip ? undefined : ""}>{zip ? zip.name : "No export chosen"}</span>
-          {zip ? <button type="button" className="btn ghost" onClick={() => { setZip(undefined); if (zipInput.current) zipInput.current.value = ""; }}>Remove</button> : null}
+          <input ref={zipInput} type="file" accept=".zip" multiple className="sr-only" tabIndex={-1} aria-labelledby="notion-zip-label" data-testid="hybrid-zip"
+            onChange={(e) => { setZips(Array.from(e.target.files ?? [])); if (hybrid.k === "error") hybridImport.dismiss(); }} />
+          <span className="hybrid-zip-name t-desc" data-empty={zip ? undefined : ""}>{zip ? zipsLabel(zips) : "No export chosen"}</span>
+          {zip ? <button type="button" className="btn ghost" onClick={() => { setZips([]); if (zipInput.current) zipInput.current.value = ""; }}>Remove</button> : null}
           <button type="button" className="btn" onClick={() => zipInput.current?.click()}>{zip ? "Change…" : "Choose ZIP…"}</button>
         </span>
         <span className="t-desc">
-          In Notion: Settings → Export all workspace content → HTML, with subpages and folders. Page content is then read from the file and Notion only supplies structure — thousands of pages take minutes instead of hours.
+          In Notion: Settings → Export all workspace content → HTML, with subpages and folders. A large export comes in several parts – choose them all at once. Page content is then read from the file and Notion only supplies structure — thousands of pages take minutes instead of hours.
         </span>
       </div>
       {zip ? null : <label className="field">

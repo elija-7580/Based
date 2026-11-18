@@ -89,8 +89,10 @@ export class NotionExportIndex {
  * Öffnet einen Notion-Export. Verschachtelte Teile („Export-…-Part-1.zip“) werden wie Ordner behandelt. Wirft
  * `HybridImportError`, wenn das Archiv kein HTML-Export ist (Markdown & CSV trägt keine Seiten-IDs im Inhalt und rät
  * Spaltentypen – dafür bleibt der gewöhnliche ZIP-Import).
+ * BSD-565: Mehrere Archive (die einzeln geladenen Teile eines großen Exports) bilden einen Export: alle landen in
+ * derselben Wurzel, wie Teil-Archive in einem äußeren ZIP. Eine Seiten-ID zählt einmal (die erste Datei gewinnt).
  */
-export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExportOptions = {}): NotionExportIndex {
+export function openNotionExport(input: Uint8Array | ByteSource | readonly (Uint8Array | ByteSource)[], opts: OpenExportOptions = {}): NotionExportIndex {
   // Nichts wird vorab entpackt, deshalb darf das Verzeichnis groß sein (ein Workspace mit 20.000 Seiten und ihren
   // Bildern hat schnell über 100.000 Einträge). Die Grenzen je Datei gelten weiter.
   const limits = { ...DEFAULT_ZIP_LIMITS, maxEntries: 1_000_000, ...opts.limits };
@@ -129,7 +131,8 @@ export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExpor
       index._add(dest, src, entry);
     }
   };
-  visit(input instanceof Uint8Array ? bytesSource(input) : input, "", 0);
+  const inputs = Array.isArray(input) ? input : [input as Uint8Array | ByteSource];
+  for (const one of inputs) visit(one instanceof Uint8Array ? bytesSource(one) : one, "", 0);
   if (index.htmlCount === 0) {
     if (index.markdownCount > 0) {
       throw new HybridImportError("markdownExport", "This is a “Markdown & CSV” export. The fast import needs the HTML export: in Notion choose Export → HTML, include subpages and create folders for subpages.");

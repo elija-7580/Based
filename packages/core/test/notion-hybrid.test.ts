@@ -15,12 +15,12 @@ function setup(w: World) {
   const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
   const state = new MemoryHybridState();
   let clock = new Date("2026-11-05T10:00:00Z");
-  const make = (o: { zip?: Uint8Array | null; options?: HybridImportOptions } = {}) => {
+  const make = (o: { zip?: Uint8Array | Uint8Array[] | null; options?: HybridImportOptions } = {}) => {
     const client = new NotionClient("secret_x", w.transport(), { requestsPerSecond: 0, sleep: async () => {} });
     const index = o.zip === null ? undefined : openNotionExport(o.zip ?? w.zip());
     return new HybridNotionImport(client, index, storeHybridTarget(store, state), undefined, { clock: () => clock, ...o.options });
   };
-  const run = (mode: HybridMode, o: { zip?: Uint8Array | null; options?: HybridImportOptions } = {}) => make(o).run(mode);
+  const run = (mode: HybridMode, o: { zip?: Uint8Array | Uint8Array[] | null; options?: HybridImportOptions } = {}) => make(o).run(mode);
   return { store, state, run, make, at: (iso: string) => { clock = new Date(iso); } };
 }
 
@@ -334,6 +334,27 @@ describe("Notion-Hybrid-Import (BSD-317)", () => {
     const full = await run("full");
     expect(store.blocks.get(IDS.NESTED)!.trashedAt).toBeUndefined();
     expect(full.state.deviations.filter((d) => d.kind === "deletedInNotion").map((d) => d.title)).toContain("Nested in toggle");
+  });
+
+  it("BSD-565: einzeln geladene Teil-ZIPs ergeben denselben Import wie ein Archiv", async () => {
+    const w = smallWorld();
+    const files = w.files().map((f) => ({ path: "Export/" + f.path, data: f.data }));
+    expect(files.length).toBeGreaterThan(2);
+    const half = Math.ceil(files.length / 2);
+    const parts = [writeZip(files.slice(0, half), w.exportedAt), writeZip(files.slice(half), w.exportedAt)];
+    const single = openNotionExport(w.zip());
+    const split = openNotionExport(parts);
+    expect([...split.ids].sort()).toEqual([...single.ids].sort());
+    for (const id of single.ids) expect(split.pageFile(id)).toBe(single.pageFile(id));
+    expect(split.htmlCount).toBe(single.htmlCount);
+    // Nur ein Teil gewählt: es fehlen Seiten, kein Absturz.
+    expect([...openNotionExport(parts[1]!).ids].length).toBeLessThan([...single.ids].length);
+
+    const a = setup(smallWorld());
+    await a.run("full");
+    const b = setup(smallWorld());
+    await b.run("full", { zip: parts });
+    expect(outline(b.store)).toEqual(outline(a.store));
   });
 
   it("Markdown-&-CSV-Export wird mit klarer Meldung abgelehnt; Delta ohne früheren Import ebenso", async () => {
