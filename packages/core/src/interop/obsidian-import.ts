@@ -8,7 +8,8 @@
 // - Frontmatter (YAML) bleibt erhalten: als „Properties“-Codeblock (yaml) oben auf der Seite – Seiten außerhalb von
 //   Datenbanken haben in Based keine Properties.
 // - %%Kommentare%% und ^Block-IDs fallen weg; Callouts (> [!note]) liest der Markdown-Parser.
-// - .obsidian/, .trash/, Punkt-Dateien und .canvas werden übersprungen (Canvas mit Hinweis).
+// - .obsidian/, .trash/ und Punkt-Dateien werden übersprungen.
+// - BSD-566: Obsidian Canvas (.canvas) und Excalidraw-Zeichnungen (….excalidraw.md, .excalidraw) werden Boards.
 import type { BlockProps, WireRecord } from "../model/records.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { AssetRejected, emptyReport, importAssetFrom, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportReport } from "./builder.js";
@@ -18,6 +19,9 @@ import { MarkdownImporter, type MarkdownBlock } from "./markdown.js";
 import { PLAIN, toRichText } from "./runs.js";
 import { ImportCancelled } from "./zip.js";
 import { bundleTitle, highlightToMark, isBearExport, isBundleDir, isNoteFile } from "./bear.js";
+import { canvasToBoard, excalidrawToBoard, isExcalidrawMarkdown, readExcalidraw, type BoardImportContext } from "./board-import.js";
+import { boardObjectToBlock, BOARD_FORMAT } from "../whiteboard/records.js";
+import type { WBObject } from "../whiteboard/model.js";
 import { isLogseqGraph, logseqBlockIDs, logseqSkip, logseqTitle, logseqToMarkdown } from "./logseq.js";
 
 export interface ObsidianImportOptions {
@@ -185,26 +189,32 @@ export class ObsidianImporter {
     const given = this.opts.titles?.get(this.rel(p));
     if (given !== undefined) return given;
     if (isBundleDir(dirname(p))) return bundleTitle(p);
+    if (this.isBoardFile(p)) return basename(stripExtension(p)).replace(/\.excalidraw$/i, "");
     return this.logseq ? logseqTitle(this.rel(p)) : basename(stripExtension(p));
   }
 
   private skipped(p: string): boolean {
     const rel = this.rel(p);
-    return hidden(rel) || (this.logseq && logseqSkip(rel)) || this.isDrawing(p);
+    return hidden(rel) || (this.logseq && logseqSkip(rel));
   }
 
   /** Excalidraw-Zeichnung des Obsidian-Plugins („….excalidraw.md“ bzw. Frontmatter `excalidraw-plugin`): der Inhalt
-   *  ist gepacktes JSON – als Seite wäre das Zeichensalat. Wird mit Hinweis übersprungen. */
+   *  ist gepacktes JSON – als Seite wäre das Zeichensalat. Wird ein Board (BSD-566). */
   private drawings = new Map<string, boolean>();
   private isDrawing(p: string): boolean {
     if (extname(p).toLowerCase() !== "md") return false;
     let d = this.drawings.get(p);
     if (d === undefined) {
-      d = /\.excalidraw\.md$/i.test(p) || /^---\n[\s\S]*?\bexcalidraw-plugin:/.test((this.files.readText(p) ?? "").slice(0, 600).replaceAll("\r\n", "\n"));
+      d = isExcalidrawMarkdown(p, (this.files.readText(p) ?? "").slice(0, 600));
       this.drawings.set(p, d);
-      if (d) this.warn(`Skipped ${this.rel(p)} (Excalidraw drawings aren't supported yet)`);
     }
     return d;
+  }
+
+  /** Wird die Datei ein Board? (Canvas, Excalidraw-Datei oder -Notiz; BSD-566) */
+  private isBoardFile(p: string): boolean {
+    const ext = extname(p).toLowerCase();
+    return ext === "canvas" || ext === "excalidraw" || this.isDrawing(p);
   }
 
   private rel(p: string): string {
@@ -215,7 +225,12 @@ export class ObsidianImporter {
     const all = this.files.walk(this.vault).filter((p) => !this.skipped(p));
     for (const p of all) {
       const ext = extname(p).toLowerCase();
-      if (ext === "md" || isNoteFile(p)) {
+      if (ext === "canvas" || ext === "excalidraw") {
+        // Boards: verlinkt werden sie mit Endung ([[Board.canvas]]).
+        this.ids.set(p, makeRecordID());
+        const n = basename(p).toLowerCase();
+        this.byName.set(n, [...(this.byName.get(n) ?? []), p]);
+      } else if (ext === "md" || isNoteFile(p)) {
         const id = makeRecordID();
         this.ids.set(p, id);
         this.byPath.set(stripExtension(this.rel(isBundleDir(dirname(p)) ? dirname(p) : p)).toLowerCase(), p);
@@ -376,6 +391,7 @@ export class ObsidianImporter {
   /** Notiz als Seite; `extra` = Kinder nach dem Inhalt (Ordner-Inhalt bei Folder Notes). */
   private note(p: string, parent: string, sk: string, id: string = this.ids.get(p) ?? makeRecordID(), children?: () => void): string {
     if (this.opts.isCancelled?.()) throw new ImportCancelled();
+    if (this.isBoardFile(p)) { this.board(p, parent, sk, id); children?.(); return id; }
     const raw = this.text(p);
     const { yaml, body: afterYaml } = splitFrontmatter(raw);
     const title = this.title(p);
@@ -398,6 +414,44 @@ export class ObsidianImporter {
     return id;
   }
 
+  /** BSD-566: Canvas bzw. Excalidraw-Zeichnung als Board-Seite; Karten für Notizen verweisen auf deren Seiten. */
+  private board(p: string, parent: string, sk: string, id: string) {
+    const title = this.title(p);
+    const label = this.rel(p);
+    const ctx: BoardImportContext = {
+      newID: () => makeRecordID(),
+      warn: (m) => this.warn(m),
+      page: (target) => {
+        const direct = normalizePath(joinPath(this.vault, target));
+        const note = this.ids.has(direct) ? direct : this.resolveNote(target, p);
+        const pid = note ? this.ids.get(note) : undefined;
+        return note && pid ? { id: pid, title: this.title(note) } : undefined;
+      },
+      file: (target) => {
+        const f = this.resolveFile(target, p);
+        const a = f ? this.asset(f).asset : undefined;
+        return f && a ? { ref: "based-asset:" + a.id, name: a.name, mime: a.mime ?? mimeFor(extname(f)) ?? "application/octet-stream", size: a.size ?? this.files.size(f) ?? 0 } : undefined;
+      },
+    };
+    let objs: WBObject[] = [];
+    try {
+      const text = this.files.readText(p) ?? "";
+      objs = extname(p).toLowerCase() === "canvas" ? canvasToBoard(text, ctx, label) : excalidrawToBoard(readExcalidraw(text), ctx, label);
+    } catch {
+      this.warn(`Couldn't read the drawing in ${label} – imported as an empty board`);
+    }
+    const now = this.now();
+    this.put({ kind: "block", data: makeBlock({ id, type: "page", parent, sk, text: title, props: { board: { v: BOARD_FORMAT } } as BlockProps, createdBy: this.userID }, now) });
+    this.report.pages += 1;
+    const byID = new Map(objs.map((o) => [o.id, o]));
+    for (const o of objs) {
+      const b = boardObjectToBlock(o, id, now, undefined, byID);
+      this.put({ kind: "block", data: makeBlock({ id: b.id, type: b.type, parent: b.parent, sk: b.sk, ...(b.text !== undefined ? { text: b.text } : {}), ...(b.props ? { props: b.props } : {}), createdBy: this.userID }, now) });
+    }
+    this.done += 1;
+    this.opts.progress?.(Math.min(1, this.done / this.total));
+  }
+
   /** Ordner als Seite: Unterordner und Notizen (Ordner zuerst, dann Notizen, je nach Name). */
   private folder(dir: string, parent: string, sk: string, title: string): string {
     const entries = this.files.list(dir).filter((p) => !this.skipped(p) && !(dir === this.vault && basename(p) === ".obsidian"));
@@ -406,11 +460,10 @@ export class ObsidianImporter {
       const dirs = entries.filter((p) => this.files.isDirectory(p) && !this.files.isFile(p) && !isBundleDir(p)).sort((a, b) => comparePaths(basename(a), basename(b)));
       // BSD-260 Teil 9: ein TextBundle ist eine Notiz (ihr Text), kein Ordner
       const bundles = entries.filter((p) => isBundleDir(p) && this.files.isDirectory(p)).map((d) => this.files.list(d).find((f) => isNoteFile(f) && dirname(f) === d)).filter((f): f is string => f !== undefined);
-      const notes = [...entries.filter((p) => this.files.isFile(p) && extname(p).toLowerCase() === "md" && p !== folderNote), ...bundles].sort((a, b) => comparePaths(this.title(a), this.title(b)));
-      for (const c of entries) if (this.files.isFile(c) && extname(c).toLowerCase() === "canvas") this.warn(`Skipped ${this.rel(c)} (Obsidian Canvas isn't supported yet)`);
+      const notes = [...entries.filter((p) => this.files.isFile(p) && (extname(p).toLowerCase() === "md" || this.isBoardFile(p)) && p !== folderNote), ...bundles].sort((a, b) => comparePaths(this.title(a), this.title(b)));
       let k = startAfter;
       for (const d of dirs) {
-        if (!this.files.walk(d).some((f) => !this.skipped(f) && isNoteFile(f))) continue; // reine Anhang-Ordner
+        if (!this.files.walk(d).some((f) => !this.skipped(f) && (isNoteFile(f) || this.isBoardFile(f)))) continue; // reine Anhang-Ordner
         k = keyBetween(k, undefined);
         // Logseq: die Ordner pages/ und journals/ als „Pages“ und „Journals“
         const name = basename(d);

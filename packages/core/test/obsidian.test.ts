@@ -1,6 +1,6 @@
 // BSD-260 Teil 1: Obsidian-Vault importieren – Ordner/Folder Notes, Wikilinks (Alias, Überschrift, Pfad, Aliases aus
 // dem Frontmatter, gleicher Ordner vor kürzestem Pfad), Einbettungen (Bild, PDF, Audio, Notiz), Frontmatter als
-// yaml-Codeblock, Kommentare, Block-IDs, Code bleibt unberührt, ZIP mit Vault, .obsidian/.trash/Canvas übersprungen.
+// yaml-Codeblock, Kommentare, Block-IDs, Code bleibt unberührt, ZIP mit Vault, .obsidian/.trash übersprungen; Canvas wird ein Board (BSD-566).
 import { zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import {
@@ -82,9 +82,9 @@ describe("Obsidian-Vault", () => {
     const root = s.blocks.get(r.rootIDs[0]!)!;
     expect(plainText(root.text)).toBe("My Vault");
     // Ordner zuerst (Archive, Projects – ohne reinen Anhang-Ordner), dann Notizen; .obsidian/.trash fehlen
-    expect(tree(s, "b:" + root.id).map((b) => plainText(b.text))).toEqual(["Archive", "Projects", "Home"]);
-    expect(r.warnings.some((w) => w.includes("Board.canvas"))).toBe(true);
-    expect(r.warnings[0]).toContain("5 notes");
+    expect(tree(s, "b:" + root.id).map((b) => plainText(b.text))).toEqual(["Archive", "Projects", "Board", "Home"]);
+    expect(r.warnings.some((w) => w.includes("Board.canvas"))).toBe(false); // BSD-566: ein (leeres) Board
+    expect(r.warnings[0]).toContain("6 notes");
 
     const projects = pageNamed(s, "Projects");
     const pKids = tree(s, "b:" + projects.id);

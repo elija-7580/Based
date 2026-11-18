@@ -10,7 +10,7 @@ im Browser: `apps/web/e2e/interop.spec.ts`. Für den großen Notion-Import über
 |---|---|---|
 | Notion, HTML | .zip (auch alle Teile `…-Part-N.zip`), Ordner | Seiten, Datenbanken mit Typen, Farben, Zeilenseiten |
 | Notion, Markdown & CSV | .zip, Ordner | Seiten, Datenbanken (Typen aus den Werten geraten), Relationen |
-| Obsidian | Vault als Ordner oder .zip | Ordner und Notizen als Seiten, `[[Links]]` als Erwähnungen |
+| Obsidian | Vault als Ordner oder .zip | Ordner und Notizen als Seiten, `[[Links]]` als Erwähnungen; Canvas (.canvas) und Excalidraw-Zeichnungen (`….excalidraw.md`, .excalidraw) als Boards (BSD-566) |
 | Logseq | Graph als Ordner oder .zip | wie Obsidian; Journale, Namensräume, Aufgaben-Marken |
 | Bear | Markdown, TextBundle, .bear2bk, .textpack | Seiten |
 | Evernote | .enex | Datenbank je Notizbuch (Tags, Daten, Quelle) |
@@ -22,8 +22,13 @@ im Browser: `apps/web/e2e/interop.spec.ts`. Für den großen Notion-Import über
 | Markdown, Text | Dateien, Ordner, .zip | Seiten; Ordner werden Seiten |
 | Word, OPML, CSV, JSON | .docx, .opml, .csv, .json, .jsonl | Seite, Gliederung, Datenbank |
 
-Nicht lesbar, mit Hinweis im Bericht: OneNote (.one, .onepkg), Pages, Obsidian Canvas, Excalidraw-Zeichnungen,
-verschlüsselte Standard-Notes-Sicherungen.
+Nicht lesbar, mit Hinweis im Bericht: OneNote (.one, .onepkg), Pages, verschlüsselte Standard-Notes-Sicherungen.
+
+Canvas und Excalidraw im Vault (`interop/board-import.ts`): Textkarten werden Formen mit Markdown, Notiz-Karten
+Seitenkarten (echte Links), Bilder und Dateien Datei-Objekte, Gruppen und Excalidraw-Rahmen Rahmen, Kanten und an
+zwei Formen gebundene Pfeile Verbindungen, Freihand und lose Linien Tinte. Farben nach dem Farbton auf die Board-Palette
+(Gelb → Orange). Einbettungen, Webseiten und Unbekanntes fallen mit Hinweis weg; eine unlesbare Zeichnung wird ein
+leeres Board mit Hinweis.
 
 ## Wie andere Apps eingebunden sind
 

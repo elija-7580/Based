@@ -176,7 +176,7 @@ describe("Markdown-Leser", () => {
 });
 
 describe("Obsidian und Logseq", () => {
-  it("Obsidian: Excalidraw-Zeichnungen fallen mit Hinweis weg; Dateien in Listen bleiben in der Liste", () => {
+  it("Obsidian: unlesbare Excalidraw-Zeichnung wird ein leeres Board mit Hinweis; Dateien in Listen bleiben in der Liste", () => {
     const { s, r } = load({
       "Vault/.obsidian/app.json": "{}",
       "Vault/Note.md": "- item with file [doc](attachments/doc.pdf)\n- ![[pic.png]]\n- [/] started [[Other]]\n",
@@ -185,7 +185,7 @@ describe("Obsidian und Logseq", () => {
       "Vault/attachments/doc.pdf": "%PDF",
       "Vault/attachments/pic.png": "PNG",
     }, ["Vault"]);
-    expect(titles(s, "b:" + r.rootIDs[0]!)).toEqual(["Note", "Other"]);
+    expect(titles(s, "b:" + r.rootIDs[0]!)).toEqual(["Drawing", "Note", "Other"]); // BSD-566: Zeichnungen werden Boards
     expect(r.warnings.some((w) => w.includes("Drawing.excalidraw.md"))).toBe(true);
     expect(outline(s, "b:" + named(s, "Note").id)).toEqual(["bulletedList: item with file", "  pdf: ", "image: ", "todo: started Other"]);
   });
