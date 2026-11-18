@@ -590,9 +590,10 @@ export function inferCSVType(name: string, column: string[]): string {
   if (values.length === 0) return "text";
   if (values.every((v) => v === "Yes" || v === "No")) return "checkbox";
   if (values.every((v) => isSwiftDouble(v.replaceAll(",", "")))) return "number";
-  // BSD-487: leere Zellen nur, wenn die Spalte „ID“ heißt (Notions Standardname) – sonst bliebe eine Textspalte mit
-  // einem einzelnen „ABC-1“ nicht mehr bearbeitbar.
-  if ((values.length === column.length || /\bid\b/i.test(name)) && uniqueIDPrefix(values) !== undefined) return "uniqueID";
+  // BSD-487/543: Unique-ID nur, wenn die Spalte so heißt („ID“, „Task ID“ – Notions Standardname; dann auch mit leeren
+  // Zellen) oder mindestens drei Zeilen dicht nummeriert sind. Sonst würde eine Textspalte mit „COVID-19“ oder
+  // „JIRA-12, JIRA-40“ eine gesperrte Nummernspalte, die nicht mehr bearbeitbar ist und selbst weiterzählt.
+  if (/\bid\b/i.test(name) ? uniqueIDPrefix(values) !== undefined : values.length === column.length && denseUniqueIDs(values)) return "uniqueID";
   if (values.every((v) => parseDate(v) !== undefined)) return "date";
   if (values.every((v) => v.startsWith("http://") || v.startsWith("https://"))) return "url";
   if (values.every((v) => v.includes("@") && v.includes(".") && !v.includes(" "))) return "email";
@@ -607,6 +608,13 @@ export function inferCSVType(name: string, column: string[]): string {
 }
 
 const UNIQUE_ID = /^([A-Za-z][A-Za-z0-9_]*)-(\d+)$/;
+
+/** BSD-543: ohne „ID“ im Namen: mindestens 3 Werte mit gemeinsamem Präfix, Nummern dicht (Spanne ≤ doppelte Anzahl). */
+function denseUniqueIDs(values: string[]): boolean {
+  if (values.length < 3 || uniqueIDPrefix(values) === undefined) return false;
+  const nums = values.map((v) => Number(UNIQUE_ID.exec(v)![2]));
+  return Math.max(...nums) - Math.min(...nums) + 1 <= 2 * values.length;
+}
 
 /** BSD-487: Präfix einer Unique-ID-Spalte („TASK-1“, „TASK-2“ …) – alle Werte mit demselben Präfix, keine Nummer doppelt.
  *  So schreiben unser Markdown-Export und Notions CSV-Export die Eigenschaft; sonst `undefined`. */

@@ -23,6 +23,31 @@ const snapshot = (store: WorkspaceStore) => JSON.stringify([...store.blocks.valu
 
 const body = (store: WorkspaceStore, page: string) => store.children("b:" + page).map((id) => store.blocks.get(id)!);
 
+describe("BSD-522: Werkzeuge schreiben als Agent", () => {
+  it("create_page → Herkunft ai und Agent-Autor; Lesen ändert nichts; der Store schreibt danach wieder als Nutzer", () => {
+    const { store, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { markdown: "# From the tools\n\nFirst line" }));
+    expect(store.blocks.get(id)?.origin).toBe("ai");
+    const author = store.blocks.get(id)?.author;
+    expect(author).toMatch(/^a-/);
+    expect(store.workspace.authors?.[author!]?.name).toBe("Based agent");
+    ok("read_page", { page_id: id });
+    expect(store.actor).toBeUndefined();
+    const mine = createPage(store, { title: "Mine" });
+    expect(store.blocks.get(mine)?.origin).toBeUndefined();
+  });
+
+  it("eigener Autor (Option) und der am Store eingetragene (MCP) gehen vor", () => {
+    const store = memoryStore();
+    const named = new WorkspaceTools(store, { actor: { kind: "agent", name: "Planner", model: "m1" } });
+    const a = /\(id: ([^)]+)\)/.exec(named.callSync("create_page", { title: "A" } as never).text)![1]!;
+    expect(store.workspace.authors?.[store.blocks.get(a)!.author!]).toEqual({ kind: "agent", name: "Planner", model: "m1" });
+    const plain = new WorkspaceTools(store);
+    const b = store.withActor({ kind: "agent", name: "claude-code" }, () => /\(id: ([^)]+)\)/.exec(plain.callSync("create_page", { title: "B" } as never).text)![1]!);
+    expect(store.workspace.authors?.[store.blocks.get(b)!.author!]?.name).toBe("claude-code");
+  });
+});
+
 describe("WorkspaceTools – Seiten", () => {
   it("create_page aus Markdown, read_page, list_pages, search", () => {
     const { store, ok, idIn } = setup();

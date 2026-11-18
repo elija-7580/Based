@@ -42,4 +42,19 @@ describe("CSV-Import: Unique-ID (BSD-487)", () => {
     expect(uniqueIDPrefix(["BSD-487", "BSD-12"])).toBe("BSD");
     expect(uniqueIDPrefix(["487"])).toBeUndefined();
   });
+
+  it("BSD-543: Textspalten mit Kennungen bleiben Text und bearbeitbar", () => {
+    // eine Zeile: „COVID-19“, „GPT-4“ sind Text
+    for (const v of ["COVID-19", "GPT-4", "ISO-9001"]) expect(inferCSVType("Topic", [v]), v).toBe("text");
+    // Ticket-Verweise: zwei Werte oder weit auseinander → Text
+    expect(inferCSVType("Ticket", ["JIRA-12", "JIRA-40"])).toBe("text");
+    expect(inferCSVType("Ticket", ["JIRA-12", "JIRA-400", "JIRA-7"])).toBe("text");
+    const { db } = importCSV("Name,Ticket\nA,JIRA-12\nB,JIRA-40\n");
+    expect(db.properties.find((p) => p.name === "Ticket")!.type).toBe("text");
+    expect(db.nextUniqueID).toBeUndefined();
+    // dicht nummeriert ab drei Zeilen (auch ohne „ID“ im Namen) und alles mit „ID“ im Namen bleiben Unique-ID
+    expect(inferCSVType("Number", ["TASK-1", "TASK-2", "TASK-4"])).toBe("uniqueID");
+    expect(inferCSVType("ID", ["COVID-19"])).toBe("uniqueID");
+    expect(inferCSVType("Task ID", ["T-5", "T-900"])).toBe("uniqueID");
+  });
 });
