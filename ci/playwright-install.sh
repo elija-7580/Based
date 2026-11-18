@@ -11,6 +11,10 @@
 #   18.11.: apt holt Pakete mit kurzen Timeouts und Wiederholungen (vorher hing der Download auf dem EC2-Mirror minutenlang
 #   je Paket); das Zeitlimit für apt läuft als root (sudo timeout), sonst kann es `sudo apt-get` nicht beenden und `tee`
 #   wartet bis zum Zeitlimit des Schritts.
+#   Die .deb-Dateien landen in PW_APT_CACHE (Standard in der CI ~/.cache/apt-archives), den die Workflow-Vorlage per
+#   actions/cache zwischen Läufen behält – auch halb fertige Downloads (partial/). Liefert der Mirror nur ~100 KB/s
+#   (18.11.), installiert der nächste Lauf aus dem Cache statt 125 MB neu zu laden. Kam etwas Neues dazu, schreibt das
+#   Skript apt-new=true nach GITHUB_OUTPUT (der Workflow speichert den Cache nur dann).
 # Jeder Teil bis zu PW_TRIES Versuche. Hängt oder scheitert er endgültig, endet das Skript mit Exit 1 und einer
 # ::error-Zeile, die den Teil, das Zeitlimit und den Grund nennt – der Job bleibt nicht offen.
 # Ausgabe zusätzlich in pw-install.log (für „Log sichern“, wenn die Tests gar nicht erst starten).
@@ -69,10 +73,25 @@ else
       | sudo tee /etc/apt/apt.conf.d/99based-ci >/dev/null || true
     # timeout als root, damit es apt-get (unter sudo) samt Kindern beenden kann
     as_root=(sudo -n -E env "PATH=$PATH")
+    apt_cache="${PW_APT_CACHE:-$HOME/.cache/apt-archives}"
+    mkdir -p "$apt_cache/partial"
+    printf 'Dir::Cache::Archives "%s";\n' "$apt_cache" | sudo tee -a /etc/apt/apt.conf.d/99based-ci >/dev/null || true
+    apt_before=$(find "$apt_cache" -type f -printf '%P %s\n' 2>/dev/null | sort | md5sum)
+    say "Playwright-Setup: apt-Cache $apt_cache ($(find "$apt_cache" -maxdepth 1 -name '*.deb' | wc -l) Pakete)"
+    # Auch wenn apt scheitert: Besitz zurück an den Runner (damit actions/cache speichern kann) und melden, ob sich
+    # etwas geändert hat – halb fertige Downloads sind beim nächsten Lauf schon da.
+    apt_done() {
+      sudo chown -R "$(id -u):$(id -g)" "$apt_cache" 2>/dev/null || true
+      local after
+      after=$(find "$apt_cache" -type f -printf '%P %s\n' 2>/dev/null | sort | md5sum)
+      [ -n "${GITHUB_OUTPUT:-}" ] && { [ "$after" != "$apt_before" ] && echo "apt-new=true" || echo "apt-new=false"; } >> "$GITHUB_OUTPUT"
+    }
+    trap apt_done EXIT
   fi
   export DEBIAN_FRONTEND=noninteractive
   step "Systempakete (apt)" "$deps_to" "${pw[@]}" install-deps "$@" || exit 1
   as_root=()
+  if declare -F apt_done >/dev/null; then apt_done; trap - EXIT; fi
 fi
 
 # 2. Browser (Download oder Cache)
