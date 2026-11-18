@@ -1,2 +1,61 @@
-cancelled e28c12abf3913c9c6c75b1cbac781a6833d08364
-(kein Log – Lauf vorher abgebrochen)
+failure 8aad6f2bd4d458746bd7dd611ac78df311f48ccc
+  ✓  274 [webkit] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (3.3s)
+  ✓  275 [webkit] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (4.8s)
+  ✓  276 [webkit] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (3.5s)
+  ✓  277 [webkit] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (3.3s)
+  ✓  278 [webkit] › e2e/interop.spec.ts:309:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (2.8s)
+  ✓  279 [webkit] › e2e/interop.spec.ts:328:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (4.1s)
+  ✓  280 [webkit] › e2e/interop.spec.ts:354:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (3.8s)
+
+
+  1) [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Row 24"
+    Received: null
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      26 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
+      27 |   await page.mouse.click(x, y);
+    > 28 |   await expect.poll(() => activeRow(page)).toBe(under);
+         |                                            ^
+      29 |   await page.keyboard.press("Escape"); // Zelleneditor zu
+      30 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
+      31 | }
+        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:28:44)
+        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:47:40
+
+    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Row 24"
+    Received: "Row 37"
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      26 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
+      27 |   await page.mouse.click(x, y);
+    > 28 |   await expect.poll(() => activeRow(page)).toBe(under);
+         |                                            ^
+      29 |   await page.keyboard.press("Escape"); // Zelleneditor zu
+      30 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
+      31 | }
+        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:28:44)
+        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:47:40
+
+    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+  27 skipped
+  251 passed (15.8m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
