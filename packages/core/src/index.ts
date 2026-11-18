@@ -53,6 +53,10 @@ export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/o
 export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFingerprint, IMPORT_FINGERPRINT_KEY, notionIDInName, notionUUID, versionHash } from "./interop/importids.js";
 export { ImportFiles, basename, bytesSource, dirname, extname, joinPath, normalizePath, stripExtension, subSource } from "./interop/files.js";
 export type { ByteSource, LazyFile } from "./interop/files.js";
+export {
+  commitImportPayload, DRAIN_WINDOW_BYTES, DRAIN_WINDOW_FILES, drainDeferred, prepareFiles, StreamingAssetSink,
+  type ImportFile, type ImportPayload, type ImportSummary, type PreparedArchive, type PrepareOptions, type StreamedAsset,
+} from "./interop/prepare-files.js";
 export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZIP_EAGER_BYTES, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData, zipEntryStart } from "./interop/zip.js";
 export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
 export { extractTar, isTar } from "./interop/tar.js";

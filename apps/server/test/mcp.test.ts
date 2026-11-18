@@ -1,5 +1,5 @@
 // MCP: Werkzeuge und Ressourcen über das offizielle SDK – über Streamable HTTP (/mcp, Bearer-Token) und stdio.
-import { mkdtempSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,7 +49,7 @@ describe("MCP über Streamable HTTP", () => {
     cleanup.push(() => all.close());
     const full = (await all.listTools()).tools;
     expect(full.map((t) => t.name).sort()).toEqual(
-      ["about_me", "add_row", "add_rows", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_teamspace", "create_view", "database_schema", "delete_forever", "delete_teamspace", "delete_view", "draw_board", "due", "duplicate_page", "edit_blocks", "empty_trash", "export_page", "export_workspace", "find_replace", "get_project", "get_run", "get_workspace", "inbox", "list_connections", "list_databases", "list_files", "list_meetings", "list_pages", "list_projects", "list_runs", "list_schedules", "list_shares", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_blocks", "read_board", "read_meeting", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "revoke_share", "search", "set_favorite", "share_page", "trash_page", "undo_last", "update_database", "update_meeting", "update_page", "update_project", "update_project_status", "update_row", "update_rows", "update_schedule", "update_teamspace", "update_view", "update_workspace", "upload_file"].sort(),
+      ["about_me", "add_row", "add_rows", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_teamspace", "create_view", "database_schema", "delete_forever", "delete_teamspace", "delete_view", "draw_board", "due", "duplicate_page", "edit_blocks", "empty_trash", "export_page", "export_workspace", "find_replace", "get_project", "get_run", "get_workspace", "import_files", "inbox", "list_connections", "list_databases", "list_files", "list_meetings", "list_pages", "list_projects", "list_runs", "list_schedules", "list_shares", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "notion_import", "query_database", "read_blocks", "read_board", "read_meeting", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "revoke_share", "search", "set_favorite", "share_page", "trash_page", "undo_last", "update_database", "update_meeting", "update_page", "update_project", "update_project_status", "update_row", "update_rows", "update_schedule", "update_teamspace", "update_view", "update_workspace", "upload_file"].sort(),
     );
     // Die kurze Liste kostet höchstens ein Drittel der ganzen (gemessen an Beschreibung + Schema).
     const size = (l: unknown[]) => JSON.stringify(l).length;
@@ -90,6 +90,65 @@ describe("MCP über Streamable HTTP", () => {
     expect(textOf(await call("export_workspace", { format: "archive" }))).toMatch(/Archived \d+ records\.\nFile “.*\.based\.zip”/);
     const refused = await call("export_page", { id, path: "/tmp/x.md" });
     expect(refused.isError, "Pfade nur über stdio").toBe(true);
+  });
+
+  it("import_files: Text und hochgeladene Dateien über die Importer der App", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    const parent = idIn(textOf(await call("create_page", { title: "Inbox" })));
+    const first = textOf(await call("import_files", { text: "# Trip plan\n\n- [ ] Book train\n- [x] Pack", name: "Trip plan.md", parent }));
+    expect(first).toMatch(/^Imported 1 page\./);
+    const page = idIn(first);
+    expect(store.blocks.get(page)!.parent).toBe("b:" + parent);
+    expect(textOf(await call("read_page", { id: page }))).toContain("- [x] Pack");
+    // CSV wird eine Datenbank; die Datei kommt aus dem Dateispeicher (upload_file → ref)
+    const up = textOf(await call("upload_file", { name: "Books.csv", data: Buffer.from("Name,Pages\nDune,612\nEmma,474\n").toString("base64") }));
+    const ref = /based-asset:[0-9a-f]{64}/.exec(up)![0];
+    const csv = textOf(await call("import_files", { refs: [ref] }));
+    expect(csv).toContain("1 database");
+    expect(csv).toContain("2 rows");
+    expect(textOf(await call("list_databases"))).toContain("Books");
+    expect((await call("import_files", {})).isError).toBe(true);
+    expect((await call("import_files", { path: "/etc" })).isError, "Pfade nur über stdio").toBe(true);
+    expect((await call("import_files", { refs: ["based-asset:" + "0".repeat(64)] })).isError).toBe(true);
+  });
+
+  it("import_files über stdio: ein Ordner von der Platte wird mit Unterordnern importiert; versteckte Dateien nicht", async () => {
+    const { app } = await httpClient();
+    const dir = mkdtempSync(join(tmpdir(), "based-import-"));
+    mkdirSync(join(dir, "Notes", "Sub"), { recursive: true });
+    mkdirSync(join(dir, "Notes", ".git"));
+    writeFileSync(join(dir, "Notes", "Alpha.md"), "# Alpha\n\nFirst.");
+    writeFileSync(join(dir, "Notes", "Sub", "Beta.md"), "# Beta\n\nSecond.");
+    writeFileSync(join(dir, "Notes", ".git", "config.md"), "# secret");
+    const tools = app.pages.tools({ assets: app.assets, localFiles: true });
+    const r = await tools.call("import_files", { path: join(dir, "Notes") });
+    expect(r.isError, r.text).toBe(false);
+    const titles = [...app.sync.store.blocks.values()].filter((b) => b.type === "page").map((b) => (typeof b.text === "string" ? b.text : JSON.stringify(b.text)));
+    expect(titles.join("|")).toContain("Alpha");
+    expect(titles.join("|")).toContain("Beta");
+    expect(titles.join("|")).not.toContain("secret");
+    expect((await tools.call("import_files", { path: "Notes" })).text).toBe("path must be absolute.");
+    expect((await tools.call("import_files", { path: join(dir, "nope") })).isError).toBe(true);
+  });
+
+  it("notion_import: ohne Token am Server startet nichts; das Token nennt kein Werkzeug", async () => {
+    const { call } = await httpClient();
+    const old = process.env.BASED_NOTION_TOKEN;
+    delete process.env.BASED_NOTION_TOKEN;
+    try {
+      expect(textOf(await call("notion_import", { action: "status" }))).toBe("No Notion import has run on this server since it started.");
+      const r = await call("notion_import", { action: "start" });
+      expect(r.isError).toBe(true);
+      expect(textOf(r)).toContain("BASED_NOTION_TOKEN");
+      expect(textOf(await call("notion_import", { action: "cancel" }))).toBe("No Notion import is running.");
+      process.env.BASED_NOTION_TOKEN = "secret_test";
+      const bad = await call("notion_import", { action: "start", links: ["https://example.com/x"] });
+      expect(textOf(bad)).toBe("None of the links is a Notion page or database link.");
+      expect(textOf(bad)).not.toContain("secret_test");
+    } finally {
+      if (old === undefined) delete process.env.BASED_NOTION_TOKEN; else process.env.BASED_NOTION_TOKEN = old;
+    }
   });
 
   it("Teilen: ansehen und entziehen immer; freigeben fragt in der Inbox, außer Agenten dürfen frei arbeiten", async () => {

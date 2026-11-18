@@ -8,6 +8,7 @@ import type { AssetStore } from "./assets.js";
 import { assetFileInfo } from "./board-files.js";
 import { fileTools, LinkPreviews, prepareForTool } from "./file-tools.js";
 import { exportTools } from "./export-tools.js";
+import { importTools } from "./import-tools.js";
 
 export { PAGE_URI, ToolError };
 
@@ -69,7 +70,7 @@ export class Pages {
       const assets = opts.assets;
       t = new WorkspaceTools(this.store, {
         index: () => this.index, graph: () => this.graph, brain: () => this.brain, vectors: () => this.vectors?.(),
-        ...(assets ? { fileInfo: (ref: string) => assetFileInfo(assets, ref), extra: (ctx: ToolCtx) => [...fileTools(assets, opts.localFiles === true)(ctx), ...exportTools(assets, opts.localFiles === true)(ctx), ...(this.shareTools?.(ctx) ?? [])], before: (name: string, input: JSONValue) => prepareForTool(assets, this.store, this.previews)(name, input), linkPreview: (url: string) => this.previews.get(url) } : {}),
+        ...(assets ? { fileInfo: (ref: string) => assetFileInfo(assets, ref), extra: (ctx: ToolCtx) => [...fileTools(assets, opts.localFiles === true)(ctx), ...exportTools(assets, opts.localFiles === true)(ctx), ...importTools(assets, opts.localFiles === true)(ctx), ...(this.shareTools?.(ctx) ?? [])], before: (name: string, input: JSONValue) => prepareForTool(assets, this.store, this.previews)(name, input), linkPreview: (url: string) => this.previews.get(url) } : {}),
       });
       this.toolSets.set(key, t);
     }
