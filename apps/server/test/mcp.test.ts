@@ -41,7 +41,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent", "read_board", "draw_board"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent", "read_board", "draw_board", "list_files", "upload_file"].sort(),
     );
   });
 
@@ -438,5 +438,22 @@ describe("Whiteboard über MCP", () => {
     const read = textOf(await call("read_board", { id: board }));
     expect(read).toContain(`page ${page} "Lecture 5"`);
     expect(read).toMatch(/\w+ -> \w+: explains/);
+  });
+
+  it("Elija 18.11.: upload_file legt ein Bild in den Speicher und aufs Board; list_files findet es; HTTP liest keine lokalen Pfade", async () => {
+    const { call } = await httpClient();
+    const board = idIn(textOf(await call("draw_board", { title: "Moodboard", script: "text t: Ideas {color=blue}" })));
+    // 2 × 1 PNG (Kopf genügt für die Maße).
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR4nGNgYGD4z8DAwMAAAA0AAQ1Ml4gAAAAASUVORK5CYII=", "base64");
+    const up = textOf(await call("upload_file", { name: "dot.png", data: png.toString("base64"), board, at: "40,200" }));
+    expect(up).toMatch(/Stored “dot.png” \(2x1, 1 KB\): based-asset:[0-9a-f]{64}/);
+    expect(up).toContain("1 added");
+    const read = textOf(await call("read_board", { id: board }));
+    expect(read).toMatch(/image "dot.png" based-asset:[0-9a-f]{64} @40,200 8x8 \{agent\}/);
+    expect(textOf(await call("list_files", { query: "dot" }))).toMatch(/"dot.png" 2x1/);
+    const local = await call("upload_file", { path: "/etc/hosts" });
+    expect(local.isError).toBe(true);
+    expect((await call("upload_file", { url: "http://example.com/x.png" })).isError).toBe(true);
+    expect(textOf(await call("upload_file", { url: "https://127.0.0.1/x.png" }))).toContain("not reachable");
   });
 });

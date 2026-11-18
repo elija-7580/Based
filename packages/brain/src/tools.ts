@@ -6,9 +6,9 @@
 // Rumpf, dreht der Store alles zurück; kein Zwischenstand im Sync). `find_replace` ersetzt lauf-weise im RichText
 // (`replaceInRichText`), Fett/Kursiv/Links/Erwähnungen bleiben.
 import {
-  attachSearchIndex, addRow, pageLocation, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
+  attachSearchIndex, addRow, pageLocation, BOARD_SCRIPT_HELP, boardBackground, boardFileParts, boardHandles, workspaceFiles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
   parseCSVValue, plainText, QueryEngine, replaceInRichText, rowsOf, sortKeys, titleOf, titleProperty, toRichText,
-  type Author, type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
+  type Author, type Block, type BoardFileInfo, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
 import type { ToolHost, ToolResult } from "./engine.js";
 import type { ToolSpec } from "./messages.js";
@@ -64,6 +64,11 @@ export interface WorkspaceToolsOptions {
    * eingetragen ist (z. B. der MCP-Client), sonst „Based agent“ – diese Werkzeuge benutzen immer Agenten.
    */
   actor?: Author;
+  /**
+   * Was der Host aus den Bytes einer Datei weiß (Art, Größe, Bildmaße, PDF-Seiten) – ergänzt, was die Records kennen,
+   * damit ein Agent Dateien aufs Board legen kann. Ohne: nur das Wissen der Records.
+   */
+  fileInfo?: (ref: string) => Partial<BoardFileInfo> | undefined;
 }
 
 const DEFAULT_ACTOR: Author = { kind: "agent", name: "Based agent" };
@@ -74,6 +79,21 @@ export class WorkspaceTools implements ToolHost {
 
   constructor(readonly store: WorkspaceStore, private readonly opts: WorkspaceToolsOptions = {}) {
     for (const d of this.build()) this.defs.set(d.spec.name, d);
+  }
+
+  /**
+   * Alles über eine Datei: was die Records wissen (Name), ergänzt um das Wissen des Hosts aus den Bytes (Art, Größe,
+   * Maße, PDF-Seiten). `undefined`: weder Records noch Host kennen die Adresse.
+   */
+  private fileInfo(ref: string, known: BoardFileInfo | undefined): BoardFileInfo | undefined {
+    const host = this.opts.fileInfo?.(ref);
+    if (!known && !host) return undefined;
+    const out: BoardFileInfo = { ref, name: known?.name || host?.name || `file-${ref.slice(-64, -56)}`, mime: host?.mime || known?.mime || "", size: host?.size || known?.size || 0 };
+    const w = host?.width ?? known?.width, h = host?.height ?? known?.height;
+    if (w && h) { out.width = w; out.height = h; }
+    const pages = host?.pages ?? known?.pages;
+    if (pages?.length) out.pages = pages;
+    return out;
   }
 
   dispose() {
@@ -284,27 +304,42 @@ export class WorkspaceTools implements ToolHost {
           return `Created page “${title ?? "Untitled"}” (id: ${id})`;
         },
       },
-      // BSD-93: Whiteboards als Text – wenige Token, keine Koordinaten; die Anordnung rechnet Based (whiteboard/agent.ts).
+      // BSD-93: Whiteboards als Text – wenige Token; die Anordnung rechnet Based (whiteboard/agent.ts). Elija 18.11.:
+      // Agenten können auf dem Board alles, was ein Mensch kann (Farben, Stellen, Zeichnen, Bilder, Dateien).
       {
         write: false,
-        spec: { name: "read_board", description: "A whiteboard as compact text: one line per object (short handle, kind, text, position), connectors as “a -> b: label”. Use the handles in draw_board.", inputSchema: obj({ page_id: pageID }, ["page_id"]) },
+        spec: { name: "read_board", description: "A whiteboard as compact text: one line per object (short handle, kind, text, @x,y WxH, {style}), connectors as “a -> b: label [handle]”. Use the handles in draw_board.", inputSchema: obj({ page_id: pageID }, ["page_id"]) },
         run: (a) => {
           const id = need(a, "page_id");
           this.page(id, true);
           if (!isBoardPage(store.blocks.get(id))) throw new Error("That page is not a whiteboard. Use read_page.");
-          return boardOutline(boardObjectsOf(store, id), (pid) => titleOf(store, pid) || undefined);
+          return boardOutline(boardObjectsOf(store, id), (pid) => titleOf(store, pid) || undefined, boardBackground(store, id));
+        },
+      },
+      {
+        write: false,
+        spec: {
+          name: "list_files",
+          description: "Files already in the workspace (images, PDFs, attachments) with their ref for draw_board (image a: <ref> / file a: <ref>): ref, name, type, size, image size. Filter by name with query.",
+          inputSchema: obj({ query: S, limit: limitSchema, offset: offsetSchema }),
+        },
+        run: (a) => {
+          const q = str(a, "query")?.toLowerCase();
+          const files = [...workspaceFiles(store).values()].map((f) => this.fileInfo(f.ref, f)!).filter((f) => !q || f.name.toLowerCase().includes(q));
+          files.sort((x, y) => x.name.localeCompare(y.name));
+          const lines = files.map((f) => {
+            const parts = boardFileParts(f);
+            const what = f.pages?.length ? `PDF, ${f.pages.length} page${f.pages.length === 1 ? "" : "s"}` : f.width && f.height ? `${f.width}x${f.height}` : parts[0]!.kind === "image" ? "image" : (f.mime || "file");
+            return `${f.ref} "${f.name}" ${what}${f.size ? ` ${Math.max(1, Math.round(f.size / 1024))} KB` : ""}`;
+          });
+          return lines.length ? paged(lines, Math.min(500, Math.max(1, num(a, "limit", 50))), num(a, "offset", 0)) : (q ? `No file matches “${q}”.` : "No files in this workspace yet. Use upload_file.");
         },
       },
       {
         write: true,
         spec: {
           name: "draw_board",
-          description: [
-            "Add to or change a whiteboard with a short script; Based lays the objects out (columns follow the arrows) and puts new content beside what is there. Omit page_id to create a new board (title, parent_id optional). One statement per line:",
-            "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
-            "a -> b: optional label (a, b: names from this script or handles from read_board)",
-            "frame f: Title { a b c } | set <handle>: new text | del <handle>",
-          ].join("\n"),
+          description: ["Add to or change a whiteboard with a short script; Based lays new objects out beside what is there unless they have at=. Omit page_id to create a new board (title, parent_id optional).", BOARD_SCRIPT_HELP].join("\n"),
           inputSchema: obj({ page_id: pageID, script: S, title: S, parent_id: pageID }, ["script"]),
         },
         run: (a) => {
@@ -313,7 +348,9 @@ export class WorkspaceTools implements ToolHost {
           if (given !== undefined) { this.page(given); if (!isBoardPage(store.blocks.get(given))) throw new Error("That page is not a whiteboard."); }
           else if (parent !== undefined) this.page(parent);
           const existing = given ? boardObjectsOf(store, given) : [];
-          const plan = planBoardScript(need(a, "script"), existing, () => makeRecordID());
+          let known: ReturnType<typeof workspaceFiles> | undefined;
+          const files = (ref: string) => this.fileInfo(ref, (known ??= workspaceFiles(store)).get(ref));
+          const plan = planBoardScript(need(a, "script"), existing, () => makeRecordID(), { files });
           // Seitenkarten: nur vorhandene Seiten, mit ihrem Titel als Text (für Suche und Vorschau).
           plan.add = plan.add.filter((o) => {
             if (o.kind !== "page") return true;
@@ -335,12 +372,19 @@ export class WorkspaceTools implements ToolHost {
               if (block && cur) tx.put({ kind: "block", data: boardObjectToBlock({ ...cur, ...fields } as typeof cur, pid, now, block) });
             }
             for (const id of plan.remove) if (store.blocks.get(id)) tx.remove(keyOf("block", id));
+            if (plan.background) {
+              const bg = plan.background;
+              tx.update(pid, (b) => {
+                const props = (b.props ?? {}) as Record<string, unknown>;
+                b.props = { ...props, board: { ...((props.board as Record<string, unknown> | undefined) ?? {}), bg } } as Block["props"];
+              });
+            }
             return pid;
           });
           const handles = boardHandles(boardObjectsOf(store, page));
           const names = [...plan.names].filter(([, id]) => handles.has(id)).map(([n, id]) => `${n}=${handles.get(id)!}`).join(" ");
           return [
-            `${given ? "Updated" : "Created"} board (id: ${page}): ${plan.add.length} added, ${plan.patch.size} changed, ${plan.remove.length} removed.`,
+            `${given ? "Updated" : "Created"} board (id: ${page}): ${plan.add.length} added, ${plan.patch.size} changed, ${plan.remove.length} removed${plan.background ? `, background ${plan.background}` : ""}.`,
             ...(names ? [`Handles: ${names}`] : []),
             ...(plan.errors.length ? ["Skipped:", ...plan.errors.map((e) => `- ${e}`)] : []),
           ].join("\n");

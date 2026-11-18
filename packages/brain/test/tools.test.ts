@@ -1,7 +1,7 @@
 // BSD-159 / BSD-74: Werkzeuge gegen einen In-Memory-Store – lesen, schreiben, atomar (ein Undo-Schritt, alles oder
 // nichts), Formatierung bleibt beim Ersetzen.
 import { describe, expect, it } from "vitest";
-import { addOption, addProperty, createDatabase, createPage, keyOf, plainText, rowsOf, trashPages, type WorkspaceStore } from "@based/core";
+import { addOption, addProperty, createDatabase, createPage, keyOf, makeBlock, plainText, rowsOf, trashPages, type WorkspaceStore } from "@based/core";
 import { WorkspaceTools } from "../src/index.js";
 import { memoryStore } from "./helpers.js";
 
@@ -193,7 +193,7 @@ describe("WorkspaceTools – Seiten", () => {
     const { tools } = setup();
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
     expect(write).toEqual(["create_page", "draw_board", "append_markdown", "replace_page_content", "find_replace", "update_page", "add_row", "update_row"]);
-    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual(["search", "read_page", "list_pages", "read_board", "list_databases", "query_database"]);
+    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual(["search", "read_page", "list_pages", "read_board", "list_files", "list_databases", "query_database"]);
     expect(tools.isWrite("unknown"), "Unbekanntes gilt als Schreiben").toBe(true);
     for (const s of tools.specs) expect(s.inputSchema).toMatchObject({ type: "object" });
   });
@@ -295,8 +295,28 @@ describe("Whiteboard für Agenten", () => {
     expect(second).toContain("0 added, 1 changed, 2 removed");
     expect(second).toContain("no such page");
     expect(second).toContain("not understood");
-    expect(ok("read_board", { page_id: board })).toBe(`${a} note "renamed" @0,0`);
+    expect(ok("read_board", { page_id: board })).toBe(`${a} note "renamed" @0,0 168x150 {agent}`);
     expect(store.children("b:" + board)).toHaveLength(1);
+  });
+  it("Elija 18.11.: Dateien aus dem Workspace wählen und aufs Board legen; Farben, Zeichnen, Hintergrund", () => {
+    const store = memoryStore();
+    const hash = "d".repeat(64);
+    const page = createPage(store, { title: "Trip" });
+    store.transact("img", (tx) => tx.put({ kind: "block", data: makeBlock({ id: "img-1", type: "image", parent: "b:" + page, sk: "a0", props: { asset: { id: hash, name: "beach.jpg" } } }, store.now()) }));
+    // Der Host kennt die Bytes: Maße kommen dazu.
+    const tools = new WorkspaceTools(store, { fileInfo: (ref) => (ref.endsWith(hash) ? { mime: "image/jpeg", width: 1200, height: 800, size: 2048 } : undefined) });
+    const run = (name: string, input: Record<string, unknown>) => { const r = tools.callSync(name, input as never); expect(r.isError, r.text).toBe(false); return r.text; };
+    expect(run("list_files", {})).toBe(`based-asset:${hash} "beach.jpg" 1200x800 2 KB`);
+    expect(run("list_files", { query: "nope" })).toContain("No file matches");
+    const out = run("draw_board", { script: `image i: based-asset:${hash} {at=0,0}\nnote n: Look! {color=green}\nink s: M0 0 C 20 -20 40 20 60 0 {color=red at=0,300}\nbackground lines` });
+    expect(out).toContain("background lines");
+    const board = /\(id: ([^)]+)\)/.exec(out)![1]!;
+    const read = run("read_board", { page_id: board });
+    expect(read).toContain('image "beach.jpg"');
+    expect(read).toContain("@0,0 480x320");
+    expect(read).toMatch(/note "Look!" .*\{color=green agent\}/);
+    expect(read).toMatch(/ink @-?\d+,29\d \d+x\d+ \{color=red agent\}/);
+    expect(read.split("\n")[0]).toBe("background lines");
   });
   it("auf einer gewöhnlichen Seite lehnen beide ab", () => {
     const { store, call } = setup();

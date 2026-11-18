@@ -55,13 +55,13 @@ describe("planBoardScript", () => {
 });
 
 describe("boardOutline", () => {
-  it("eine Zeile je Objekt mit kurzer Kennung; Tinte nur als Zahl; Verbindungen als Pfeile", () => {
+  it("eine Zeile je Objekt mit kurzer Kennung, Stelle und Größe; Striche einzeln; Verbindungen als Pfeile mit Kennung", () => {
     const a = note("aaaa1111", 0, "Idea"), b = note("aaab2222", 300, "Build\nit");
     const ink: WBShape = { id: "iiii", kind: "ink", z: "a5", x: 0, y: 0, w: 5, h: 5, rot: 0 };
     const conn: WBConnector = { id: "cccc", kind: "connector", z: "a9", from: { id: a.id, side: "auto" }, to: { id: b.id, side: "auto" }, shape: "curved", label: "then" };
     const objs: WBObject[] = [a, b, ink, conn];
     expect(boardHandles(objs).get(a.id)).toBe("aaaa");
-    expect(boardOutline(objs)).toBe('aaaa note "Idea" @0,0\naaab note "Build it" @300,0\naaaa -> aaab: then\n(1 handwritten stroke)');
+    expect(boardOutline(objs)).toBe('aaaa note "Idea" @0,0 168x150\niiii ink @0,0 5x5\naaab note "Build it" @300,0 168x150\naaaa -> aaab: then [cccc]');
     expect(boardOutline([])).toBe("(empty board)");
   });
 });
