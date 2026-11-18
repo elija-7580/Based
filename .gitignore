@@ -24,3 +24,4 @@ test-results/
 # BSD-379: Code-Graph (codebase-memory-mcp) – nie committen
 .codebase-memory/
 .cbmignore.off
+pw-install.log
