@@ -67,7 +67,7 @@ export { classRules, cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter,
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
 export { codeSpan, decodeCSV, decodeInlineMarkdown, escapeTagLike, linkTarget, encodeCSV, guardCSVFormula, unguardCSVFormula, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
-export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, uniqueIDPrefix, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
+export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, parseRelationCell, uniqueIDPrefix, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { findObsidianVault, ObsidianImporter, parseWikiTarget, splitFrontmatter, yamlList, type ObsidianImportOptions } from "./interop/obsidian-import.js";
 export { isLogseqGraph, logseqBlockIDs, logseqTitle, logseqToMarkdown } from "./interop/logseq.js";
