@@ -13,7 +13,62 @@ import {
   type Block, type BlockProps, type MarkdownBlock, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
 import { decodeSkill, encodeSkill, isTextData, skillFileLanguage, type SkillDocument, type SkillFolder } from "../skills/codec.js";
-import { MEMORY_KINDS, similarTitles, type MemoryKind, type MemoryRecord } from "../memory/suggestions.js";
+import { MEMORY_KINDS, MEMORY_STATUSES, normalizedWords, similarTitles, type MemoryKind, type MemoryRecord, type MemoryStatus } from "../memory/suggestions.js";
+import { tokenize } from "../semantic/text.js";
+
+/** Link auf eine Seite in Markdown (wird beim Schreiben eine Erwähnung und damit eine Kante im Graphen). */
+export const PAGE_LINK = "based://page/";
+
+/** Längster Titel einer gemerkten Tatsache; der Rest steht im Rumpf. */
+export const MEMORY_TITLE_CHARS = 160;
+
+export interface RememberInput {
+  /** Die Tatsache in einem Satz. */
+  fact: string;
+  kind?: MemoryKind | undefined;
+  /** Seiten, um die es geht (Person, Projekt, Thema) – werden als Erwähnungen verknüpft. */
+  about?: readonly string[] | undefined;
+  /** Seite, aus der die Tatsache stammt. */
+  source?: string | undefined;
+  /** Memory, die damit überholt ist (bekommt den Status „Superseded“). */
+  replaces?: string | undefined;
+  /** Mehr Text zur Tatsache (Markdown). */
+  detail?: string | undefined;
+  /** Als „To review“ ablegen (heikle Inhalte von Agenten). */
+  review?: boolean | undefined;
+}
+
+export interface RememberResult {
+  id: string;
+  /** saved = neu; duplicate = stand schon da; linked = stand schon da, neue Verknüpfungen ergänzt. */
+  outcome: "saved" | "duplicate" | "linked";
+  status: MemoryStatus;
+  title: string;
+}
+
+export class RememberError extends Error {}
+
+/** Seiten-IDs aus den Zeilen „About: …“ eines Memory-Rumpfs. */
+export function aboutIDs(body: string): string[] {
+  const out: string[] = [];
+  for (const line of body.split("\n")) {
+    if (!/^About:/.test(line.trim())) continue;
+    for (const m of line.matchAll(/\(based:\/\/page\/([^)\s]+)\)/g)) if (!out.includes(m[1]!)) out.push(m[1]!);
+  }
+  return out;
+}
+
+/** Dieselbe Aussage: gleich nach Normalisieren oder fast dieselben Wörter (Stammformen, ohne Füllwörter). */
+export function sameFact(a: string, b: string): boolean {
+  const x = normalizedWords(a), y = normalizedWords(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const ta = new Set(tokenize(a)), tb = new Set(tokenize(b));
+  if (ta.size < 3 || tb.size < 3) return false;
+  let common = 0;
+  for (const t of ta) if (tb.has(t)) common += 1;
+  return common / (ta.size + tb.size - common) >= 0.8;
+}
 
 export const BRAIN_TITLE = "Agent Brain";
 const BASE64_LANGUAGE = "base64";
@@ -285,8 +340,22 @@ export class AgentBrain {
     return new MarkdownExporter(this.store).exportBlocks(this.contentBlocks(id, false), 0).replace(/^\n+|\n+$/g, "");
   }
 
-  private putMarkdown(tx: Tx, parent: string, md: string, position: "start" | "end" = "end") {
-    const items = new MarkdownImporter().parse(md);
+  /** Wie `body`, aber Erwähnungen als Links `based://page/<id>` (für Memories: die Verknüpfungen bleiben lesbar). */
+  private linkedBody(id: string): string {
+    const ex = new MarkdownExporter(this.store, { pageLink: (pid) => ({ title: titleOf(this.store, pid), url: PAGE_LINK + pid }) });
+    return ex.exportBlocks(this.contentBlocks(id, false), 0).replace(/^\n+|\n+$/g, "");
+  }
+
+  private putMarkdown(tx: Tx, parent: string, md: string, position: "start" | "end" = "end", mentions = false) {
+    // `mentions`: Links auf based://page/<id> werden Erwähnungen (und damit Kanten für Backlinks und den Graphen).
+    const importer = mentions
+      ? new MarkdownImporter({ resolveLink: (target) => {
+          const id = target.startsWith(PAGE_LINK) ? target.slice(PAGE_LINK.length) : target;
+          const b = this.store.blocks.get(id);
+          return b && (b.type === "page" || b.type === "databasePage") ? id : undefined;
+        } })
+      : new MarkdownImporter();
+    const items = importer.parse(md);
     if (items.length === 0) return;
     const put = (list: MarkdownBlock[], p: string, keys: string[]) => list.forEach((item, i) => {
       const id = makeRecordID();
@@ -410,8 +479,100 @@ export class AgentBrain {
       const v = typeID ? (row.values?.[typeID] as { select?: { _0: string } } | undefined) : undefined;
       const name = v?.select ? schema?.options?.find((o) => o.id === v.select!._0)?.name : undefined;
       if (name && (MEMORY_KINDS as readonly string[]).includes(name)) kind = name as MemoryKind;
-      return { id: row.id, title: titleOf(this.store, row.id), kind, body: this.body(row.id), updatedAt: row.updatedAt };
+      const body = this.linkedBody(row.id);
+      const about = aboutIDs(body);
+      return { id: row.id, title: titleOf(this.store, row.id), kind, body, status: this.statusOf(row, db), ...(about.length ? { about } : {}), updatedAt: row.updatedAt };
     }).sort((a, b) => b.updatedAt - a.updatedAt).map(({ updatedAt: _u, ...m }) => m);
+  }
+
+  private optionName(row: Block, db: string, property: string): string | undefined {
+    const pid = this.propID(db, property);
+    const v = pid ? (row.values?.[pid] as { select?: { _0: string } } | undefined) : undefined;
+    return v?.select ? this.store.databases.get(db)?.properties.find((p) => p.id === pid)?.options?.find((o) => o.id === v.select!._0)?.name : undefined;
+  }
+
+  private statusOf(row: Block, db: string): MemoryStatus {
+    const name = this.optionName(row, db, "Status");
+    return name && (MEMORY_STATUSES as readonly string[]).includes(name) ? (name as MemoryStatus) : "Active";
+  }
+
+  /** Wert einer Auswahl-Spalte; Spalte und Option werden bei Bedarf angelegt. */
+  private selectValue(db: string, property: string, option: string, all: readonly string[]): Record<string, PropertyValue> {
+    let pid = this.propID(db, property);
+    if (!pid) {
+      pid = addProperty(this.store, db, property, "select");
+      if (pid) for (const o of all) addOption(this.store, db, pid, o);
+    }
+    if (!pid) return {};
+    const opt = this.store.databases.get(db)?.properties.find((p) => p.id === pid)?.options?.find((o) => o.name === option)?.id ?? addOption(this.store, db, pid, option);
+    return opt ? { [pid]: { select: { _0: opt } } as PropertyValue } : {};
+  }
+
+  /** Memories, die zählen (ohne überholte und ohne „To review“). */
+  activeMemories(): MemoryRecord[] {
+    return this.memories().filter((m) => (m.status ?? "Active") === "Active");
+  }
+
+  isMemory(id: string): boolean {
+    const ids = this.find();
+    return !!ids && this.store.blocks.get(id)?.parent === "d:" + ids.memoriesDB;
+  }
+
+  setMemoryStatus(id: string, status: MemoryStatus): void {
+    const ids = this.find();
+    if (!ids || !this.isMemory(id)) throw new RememberError(`No memory with id ${id}`);
+    const v = this.selectValue(ids.memoriesDB, "Status", status, MEMORY_STATUSES);
+    for (const [pid, value] of Object.entries(v)) setValue(this.store, id, pid, value);
+  }
+
+  /**
+   * BSD-541: eine Tatsache merken – eine Zeile je Tatsache, mit Verknüpfungen zu den Seiten, um die es geht.
+   * Regeln: steht dieselbe Aussage schon da, wird nichts verdoppelt (fehlende Verknüpfungen werden ergänzt);
+   * `replaces` setzt die alte Memory auf „Superseded“ statt sie zu überschreiben; `review` legt sie als „To review“ ab.
+   */
+  remember(input: RememberInput): RememberResult {
+    const fact = input.fact.replace(/\s+/g, " ").trim();
+    if (!fact) throw new RememberError("Nothing to remember: `fact` is empty.");
+    const isPage = (id: string) => {
+      const b = this.store.blocks.get(id);
+      return !!b && (b.type === "page" || b.type === "databasePage") && !isTrashed(this.store, id);
+    };
+    const about = [...new Set(input.about ?? [])];
+    const bad = [...about, ...(input.source ? [input.source] : [])].filter((id) => !isPage(id));
+    if (bad.length) throw new RememberError(`No page with id ${bad.join(", ")} (use ids from search or recall).`);
+    if (input.replaces !== undefined && !this.isMemory(input.replaces)) throw new RememberError(`No memory with id ${input.replaces} to replace.`);
+    const ids = this.ensure();
+    const db = ids.memoriesDB;
+    const link = (id: string) => `[${(titleOf(this.store, id) || "Untitled").replace(/[\[\]]/g, "")}](${PAGE_LINK}${id})`;
+
+    const existing = this.memories().find((m) => m.id !== input.replaces && m.status !== "Superseded"
+      && (sameFact(m.title, fact) || m.body.split("\n").some((line) => sameFact(line.replace(/^[-*]\s+/, ""), fact))));
+    if (existing) {
+      const missing = about.filter((id) => !(existing.about ?? []).includes(id));
+      if (missing.length) this.store.transact("Update memory", (tx) => this.putMarkdown(tx, existing.id, `About: ${missing.map(link).join(", ")}`, "end", true));
+      return { id: existing.id, outcome: missing.length ? "linked" : "duplicate", status: existing.status ?? "Active", title: existing.title };
+    }
+
+    let title = fact, rest = "";
+    if (fact.length > MEMORY_TITLE_CHARS) {
+      const cut = fact.slice(0, MEMORY_TITLE_CHARS);
+      const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
+      title = end > 40 ? cut.slice(0, end + 1) : cut.slice(0, cut.lastIndexOf(" ") > 40 ? cut.lastIndexOf(" ") : MEMORY_TITLE_CHARS) + "…";
+      rest = fact;
+    }
+    const status: MemoryStatus = input.review ? "To review" : "Active";
+    const values = { ...this.selectValue(db, "Type", input.kind ?? "Notes", MEMORY_KINDS), ...this.selectValue(db, "Status", status, MEMORY_STATUSES) };
+    const lines = [
+      rest,
+      input.detail?.trim() ?? "",
+      about.length ? `About: ${about.map(link).join(", ")}` : "",
+      input.source ? `Source: ${link(input.source)}` : "",
+      input.replaces ? `Replaces: ${link(input.replaces)}` : "",
+    ].filter(Boolean);
+    const id = addRow(this.store, db, { title, values })!;
+    if (lines.length) this.store.transact("New memory", (tx) => this.putMarkdown(tx, id, lines.join("\n\n"), "end", true));
+    if (input.replaces) this.setMemoryStatus(input.replaces, "Superseded");
+    return { id, outcome: "saved", status, title };
   }
 
   /** Memory speichern – NUR nach Bestätigung des Nutzers aufrufen. Ähnlicher Titel → an diese Memory anhängen. */

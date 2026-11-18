@@ -9,7 +9,7 @@ import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
 import { assetFileInfo, fetchRemote, readLocalFile, storeBytes, UploadError } from "./board-files.js";
 import type { AssetStore } from "./assets.js";
-import { AgentBrain, WorkspaceTools, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import { AgentBrain, looksSensitive, MEMORY_KINDS, Recall, RememberError, WorkspaceTools, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
 import type { Author, WorkspaceStore } from "@based/core";
 import { resolveInboxText, createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
@@ -17,6 +17,8 @@ export const SERVER_NAME = "based";
 export const SERVER_VERSION = "0.1.0";
 
 export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, databases). Pages are read and written as Markdown.
+- Start with \`recall\` when you need context: one call returns what Based remembers about the user, matching pages with a passage, and how they are connected. \`about_me\` gives the user's profile; \`related\` lists a page's neighbours.
+- When the user tells you something durable about themselves, their projects or people, save it with \`remember\` (one fact per call, link the pages it is about).
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
@@ -24,7 +26,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Schema and views: \`create_database\`, \`update_database\`, \`list_views\`, \`create_view\`, \`update_view\`, \`delete_view\`.
 - Writing tools follow the user's permission rules in Based; a refused call says why – don't retry it, tell the user.
-- Call \`based_guide\` for details (topics: overview, markdown, safety).`;
+- Call \`based_guide\` for details (topics: overview, markdown, brain, safety).`;
 
 export const GUIDE: Record<string, string> = {
   overview: `# Based overview
@@ -35,6 +37,26 @@ devices through the Based server (last writer wins per record).`,
 Supported: # / ## / ### headings, paragraphs, - bullets, 1. numbered lists, - [ ] / - [x] to-dos, > quotes,
 > [!NOTE] callouts, \`\`\`code\`\`\` blocks, tables, ---, images ![alt](url), **bold**, *italic*, ~~strike~~, \`code\`,
 [links](https://…). Link to another page with [Title](based://page/<id>): it becomes a mention. Indent by 4 spaces to nest.`,
+  brain: `# Agent Brain
+The page "Agent Brain" holds what agents know about the user: "About me" (profile, written by the user), the database
+"Memories" (one row per fact, with Type and Status) and "Skills" (available as prompts). Everything is ordinary pages the
+user can read and edit.
+
+recall(query, about?) – use it first. It merges word search (typos allowed), search by meaning (when the user switched the
+local model on) and one step along the links of the best hits. It returns memories, pages with a passage and block id, each
+page's neighbours by kind of link, and pages that connect several hits. Pass \`about\` (a page id) to stay around one page;
+with an empty query it lists that page's surroundings. Read a page with read_page before relying on details.
+
+related(id) – neighbours of a page with ids: database relations (with the column name), mentions in both directions,
+parent and sub-pages.
+
+remember(fact, type?, about?, source?, replaces?, detail?) – one durable fact per call, one sentence, written so it makes
+sense on its own ("Elija prefers answers in German"). Not for things that only matter in this conversation.
+- \`about\`: ids of the pages it concerns (person, project, topic). They become links, so the fact shows up around those pages.
+- Call recall first. If a fact changed, pass the old memory's id as \`replaces\`: the old one is kept as Superseded.
+- The same fact is never stored twice; you get the existing memory back.
+- Health, money and similar private facts are stored as "To review" and only count once the user sets them to Active.
+Types: Profile, Preference, Work, People, Notes.`,
   safety: `# Safety
 Prefer appending over replacing. Never empty pages or move many pages without the user asking. trash_page is reversible;
 nothing here deletes forever.`,
@@ -50,6 +72,18 @@ function guarded<A>(body: (args: A) => CallToolResult): (args: A) => CallToolRes
       return body(args);
     } catch (e) {
       if (e instanceof ToolError) return fail(e.message);
+      throw e;
+    }
+  };
+}
+
+/** Wie `guarded`, für Werkzeuge, die warten müssen (Suche nach Bedeutung). */
+function guardedAsync<A>(body: (args: A) => Promise<CallToolResult>): (args: A) => Promise<CallToolResult> {
+  return async (args) => {
+    try {
+      return await body(args);
+    } catch (e) {
+      if (e instanceof ToolError || e instanceof RememberError) return fail(e.message);
       throw e;
     }
   };
@@ -567,6 +601,79 @@ export function createMcpServer(pages: Pages, opts: McpServerOptions = {}): McpS
       pageOf(id);
       const ids = backlinksTo(store, id);
       return text(ids.length === 0 ? "No backlinks." : paged(ids.map(line), n ?? 50, o ?? 0));
+    }),
+  );
+
+  // MARK: Agent Brain (BSD-541): Abruf mit Relationen, Tatsachen merken
+  server.registerTool(
+    "recall",
+    {
+      description:
+        "Context in one call – use this first. Returns what Based remembers about the user (memories), matching pages and rows with a passage and block id, " +
+        "each hit's neighbours by kind of link (relation column, mentions, parent), and pages that connect several hits. Whole questions work; typos are fine. " +
+        "`about`: a page id to stay around that page (empty query = just its surroundings).",
+      inputSchema: { query: z.string().describe("What you need to know; may be empty together with `about`"), about: z.string().optional().describe("Page id to search around"), limit: z.number().int().min(1).max(30).optional().describe("Max pages (default 8)") },
+      annotations: { readOnlyHint: true },
+    },
+    guardedAsync(async ({ query, about, limit: n }: { query: string; about?: string | undefined; limit?: number | undefined }) => {
+      if (about !== undefined) pageOf(about);
+      if (!query.trim() && about === undefined) return fail("Give a query, or `about` with a page id.");
+      return text(Recall.format(await pages.recall().run(query, { about, limit: n })));
+    }),
+  );
+
+  server.registerTool(
+    "related",
+    {
+      description: "A page's neighbours with ids, grouped by kind of link: database relations (with the column name, both directions), mentions and backlinks, parent, sub-pages.",
+      inputSchema: { id: z.string(), limit: z.number().int().min(1).max(100).optional().describe("Max per kind (default 20)") },
+      annotations: { readOnlyHint: true },
+    },
+    guarded(({ id, limit: n }: { id: string; limit?: number | undefined }) => {
+      pageOf(id);
+      const groups = new Map<string, string[]>();
+      for (const nb of pages.graph.neighbors(id, n ?? 20)) {
+        const key = nb.kind === "relation" ? (nb.out ? `Relation “${nb.label ?? "related"}”` : `Related from (“${nb.label ?? "related"}”)`) : nb.kind === "mention" ? (nb.out ? "Mentions" : "Mentioned by") : nb.kind === "parent" ? "In" : "Sub-pages";
+        const list = groups.get(key) ?? [];
+        list.push(line(nb.id));
+        groups.set(key, list);
+      }
+      if (groups.size === 0) return text("No connections.");
+      return text([...groups].map(([k, lines]) => `${k}:\n${lines.join("\n")}`).join("\n\n"));
+    }),
+  );
+
+  server.registerTool(
+    "about_me",
+    { description: "The user's profile (“About me” in the Agent Brain) and their standing preferences. Read it once at the start of a task that depends on who the user is.", inputSchema: {}, annotations: { readOnlyHint: true } },
+    guarded(() => {
+      const about = pages.brain.about().trim();
+      const prefs = pages.brain.activeMemories().filter((m) => m.kind === "Profile" || m.kind === "Preference").slice(0, 25);
+      const out = [about ? `# About me\n${about}` : "", prefs.length ? `# Profile and preferences\n${prefs.map((m) => `- ${m.title} (${m.kind}; id: ${m.id})`).join("\n")}` : ""].filter(Boolean).join("\n\n");
+      return text(out || "Nothing saved about the user yet.");
+    }),
+  );
+
+  server.registerTool(
+    "remember",
+    {
+      description:
+        "Save one durable fact about the user, their projects or people as a memory (one sentence that makes sense on its own). Call `recall` first. " +
+        "The same fact is never stored twice. If a fact changed, pass the old memory's id as `replaces`. Private facts (health, money) wait for the user's review.",
+      inputSchema: {
+        fact: z.string().min(1).max(2000),
+        type: z.enum(MEMORY_KINDS).optional().describe("Profile, Preference, Work, People or Notes (default Notes)"),
+        about: z.array(z.string()).max(10).optional().describe("Ids of the pages this fact concerns (person, project, topic)"),
+        source: z.string().optional().describe("Id of the page the fact comes from"),
+        replaces: z.string().optional().describe("Id of the memory this one supersedes"),
+        detail: z.string().max(4000).optional().describe("More context as Markdown"),
+      },
+    },
+    guardedAsync(async (a: { fact: string; type?: (typeof MEMORY_KINDS)[number] | undefined; about?: string[] | undefined; source?: string | undefined; replaces?: string | undefined; detail?: string | undefined }) => {
+      const r = pages.brain.remember({ fact: a.fact, kind: a.type, about: a.about, source: a.source, replaces: a.replaces, detail: a.detail, review: looksSensitive(`${a.fact} ${a.detail ?? ""}`) });
+      if (r.outcome === "duplicate") return text(`Already remembered: “${r.title}” (id: ${r.id}). Nothing added.`);
+      if (r.outcome === "linked") return text(`Already remembered: “${r.title}” (id: ${r.id}). Added the new links.`);
+      return text(`Remembered (id: ${r.id})${r.status === "To review" ? " as “To review”: it looks private, so it only counts once the user sets it to Active in Based" : ""}${a.replaces ? `; the old memory is now Superseded` : ""}.`);
     }),
   );
 

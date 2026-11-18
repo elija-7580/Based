@@ -25,6 +25,7 @@ import {
   type Tx,
   type WorkspaceStore,
 } from "@based/core";
+import { AgentBrain, Recall, RelationGraph, type RecallDeps } from "@based/brain";
 
 export const PAGE_URI = "based://page/";
 
@@ -53,11 +54,35 @@ function putMarkdownBlocks(store: WorkspaceStore, tx: Tx, items: MarkdownBlock[]
 export class Pages {
   private search: { index: SearchIndex; dispose: () => void } | undefined;
 
+  private relations: { graph: RelationGraph; dispose: () => void } | undefined;
+  private brainRef: AgentBrain | undefined;
+  /**
+   * BSD-541: Vektor-Index und Modell für die Suche nach Bedeutung – setzt der Server, wenn das lokale Modell
+   * eingeschaltet und geladen ist (`BrainIndex`). Ohne bleibt `recall` bei Wörtern und Nachbarn.
+   */
+  vectors: RecallDeps["vectors"];
+
   constructor(readonly store: WorkspaceStore) {}
 
   dispose() {
     this.search?.dispose();
     this.search = undefined;
+    this.relations?.dispose();
+    this.relations = undefined;
+  }
+
+  /** Relationen, Erwähnungen und Hierarchie als Graph (folgt dem Store, wird beim ersten Gebrauch gebaut). */
+  get graph(): RelationGraph {
+    return (this.relations ??= RelationGraph.attach(this.store)).graph;
+  }
+
+  get brain(): AgentBrain {
+    return (this.brainRef ??= new AgentBrain(this.store));
+  }
+
+  /** Abruf für Agenten: Wörter, Bedeutung (falls geladen) und Nachbarn in einer Antwort. */
+  recall(): Recall {
+    return new Recall(this.store, this.brain, { search: () => this.index, graph: () => this.graph, vectors: () => this.vectors?.() });
   }
 
   private get index(): SearchIndex {
