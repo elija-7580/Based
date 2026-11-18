@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Seiten-Editor für Agenten (Agent-Parität 2/7): einzelne Blöcke lesen und ändern – verschieben, Spalten, Farben,
 // Turn into, Bilder und Dateien einfügen, Tabellen. Die Logik liegt im Kern (`blockOutline`, `runBlockScript`);
 // hier stehen Name, Beschreibung und die Antwort.

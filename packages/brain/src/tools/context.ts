@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Was die Werkzeug-Dateien vom Host bekommen: den Store und ein paar gemeinsame Helfer. `WorkspaceTools` baut das.
 import type { Author, Block, BoardFileInfo, MarkdownExporter, MarkdownImporter, SearchFilters, WorkspaceStore } from "@based/core";
 import type { AgentBrain } from "../agentbrain/store.js";

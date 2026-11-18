@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // BSD-93 / BSD-508: Whiteboards als Text – wenige Token; die Anordnung rechnet Based (core whiteboard/agent.ts).
 // Elija 18.11.: Agenten können auf dem Board alles, was ein Mensch kann (Farben, Stellen, Zeichnen, Bilder, Dateien).
 import {

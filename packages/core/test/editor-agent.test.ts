@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Agent-Parität 2/7: der Seiten-Editor als Text – Umriss lesen (`blockOutline`), per Skript ändern (`runBlockScript`).
 import { describe, expect, it } from "vitest";
 import {

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Agent-Parität (docs/agent-parity.md, Regel 1): die eine Werkzeug-Schicht. Hier liegt, was jede Werkzeug-Datei
 // braucht: die Definition eines Werkzeugs, Schema-Helfer, die Prüfung der Argumente und kleine Text-Helfer.
 import type { Author, JSONValue } from "@based/core";

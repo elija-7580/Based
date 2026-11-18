@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Seiten: suchen, lesen, auflisten, anlegen, schreiben (Markdown), umbenennen, verschieben, duplizieren, Papierkorb,
 // Favoriten, Backlinks. Jedes Schreib-Werkzeug ist eine Transaktion (ein Undo-Schritt, alles oder nichts).
 import {

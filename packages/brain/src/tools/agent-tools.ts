@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Läufe, Inbox, Hauptagent und Projekte (BSD-221 Teil 3). Die Texte folgen dem, was die CLI erwartet (`runs.ts`).
 import { AgentStore } from "../agents/store.js";
 import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, type AgentData } from "../agents/records.js";

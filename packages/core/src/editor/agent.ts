@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Agent-Parität (docs/agent-parity.md, Eintrag 2/7): der Seiten-Editor für Agenten – als Text, wie das Whiteboard
 // (whiteboard/agent.ts). Wenige Token, nie halb geschrieben.
 //

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Datenbanken: auflisten, Schema, Zeilen lesen und schreiben, Schema ändern, Ansichten. Die Logik liegt in
 // `Databases`; hier stehen nur Name, Beschreibung, Argumente und die Antwort.
 import { plainText, titleOf, type JSONValue } from "@based/core";

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Agent Brain (BSD-541): Abruf mit Relationen, Profil, Skills, Tatsachen merken. Alles liegt in gewöhnlichen Seiten.
 import { MEMORY_KINDS, looksSensitive } from "../memory/suggestions.js";
 import { Recall } from "../recall/recall.js";

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Werkzeuge, die nur der Server bauen kann, weil sie Netz, Dateisystem und den Dateispeicher brauchen. Sie stehen in
 // derselben Werkzeug-Schicht wie alle anderen (`WorkspaceToolsOptions.extra`), mit den Schutzregeln aus board-files.ts.
 import { ToolError, type ToolCtx, type ToolDef } from "@based/brain";

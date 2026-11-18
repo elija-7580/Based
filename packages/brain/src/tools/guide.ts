@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Anleitung für Agenten (wie Notions MCP): kurze Themen, die ein Modell bei Bedarf nachliest (`based_guide`, und als
 // Ressourcen based://docs/<topic>).
 import { obj, optStr, str, ToolError, type ToolDef } from "./base.js";
