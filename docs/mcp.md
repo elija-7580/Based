@@ -34,12 +34,40 @@ token) and ask "Which projects are running and what needs me?".
 
 ## Tools
 
+### The tool list is short on purpose (tokens)
+
+A client loads the whole tool list into every conversation. Based has about 70 tools; their descriptions and schemas
+come to roughly 11,800 tokens before an agent has done anything. So `tools/list` shows only 19: the 17 core tools
+(search, read, write pages, rows, memory, undo) plus two that reach the rest. That is about 3,400 tokens, 71 % less.
+
+| Tool | What it does |
+|---|---|
+| `more_tools` | Everything else by area, one line each; `query` filters; `names` returns full descriptions and argument schemas |
+| `run_tool` | Calls one of them: `{ name, args }`. Permission rules, inbox questions and authorship apply to the tool named inside |
+
+Every tool can still be called directly by name. To list all of them (for clients that load tools on demand
+themselves, like Claude Code with tool search): `POST /mcp?tools=all`, or `BASED_MCP_TOOLS=all` for
+`based-server --stdio` and `based mcp`. The `based` CLI always asks for the full list.
+
+How others do it, and what Based took from it: Anthropic's tool search (`defer_loading`, about 85 % fewer tokens)
+and Claude Code's deferred MCP tools need the client to support it; GitHub's MCP server has dynamic toolsets
+(`list_available_toolsets`, `enable_toolset`) and merged tools; several servers expose only
+search/describe/execute. Based does the last one on the server, so it works with any client, and keeps the
+tools an agent needs in nearly every conversation in the list so they cost no extra round trip. The long script
+grammars moved out of the descriptions into `based_guide` (topics `blocks`, `boards`).
+
+### Never without the user
+
+`delete_forever`, `empty_trash` and (unless agents may “Work freely”) `share_page` don't run when called. They put a
+question into Based's inbox (a run with status “Needs you”) and return its id; the call runs when the user clicks
+Allow in Based. `resolve_inbox` refuses these, with or without an allow rule: an agent can't approve its own request.
+
 ### Pages and content
 
 | Tool | What it does |
 |---|---|
-| `based_guide` | How Based works, by topic (overview, markdown, brain, safety) |
-| `search` | Titles, full text and row values; typos allowed; `within` a page or database, `title_only` |
+| `based_guide` | How Based works, by topic (overview, markdown, blocks, boards, databases, brain, safety) |
+| `search` | Titles, full text and row values; typos allowed; `within` a page or database, `title_only`, `kind` (page, row, database, board), `edited_after` / `edited_before` |
 | `read_page` | A page as Markdown, with its properties when it is a database row |
 | `list_pages` | Top-level pages (each with its section when there are teamspaces), one `section`, or the sub-pages of `parent` |
 | `create_page` | New page from Markdown under `parent`, at the top of a `section`, or right `after` another page; or from a starter `template` (tasks, notes, journal, wiki) |
@@ -50,6 +78,11 @@ token) and ask "Which projects are running and what needs me?".
 | `move_page` | One page or several (`ids`): under a page, to a section (Private or a teamspace), or right `before` / `after` another page |
 | `duplicate_page` | Copy a page with its content |
 | `trash_page` / `restore_page` / `list_trash` | Trash (restorable); works for database rows too |
+| `delete_forever` / `empty_trash` | Delete for good – always asks the user in the inbox first (see above) |
+| `page_history` / `read_version` / `restore_version` | Saved versions of a page (only inside the Based app; the server keeps no history) |
+| `list_meetings` / `read_meeting` / `update_meeting` | Meetings: list; notes, summary and paged transcript with speakers; title, summary, speaker names, context pages |
+| `export_page` / `export_workspace` | Files: Markdown, HTML, Word, JSON, OPML; whole workspace as Markdown or HTML ZIP or lossless archive. Returns a file ref, over stdio also saves to `path` |
+| `list_shares` / `share_page` / `revoke_share` | Who has access; link, invite or publish (asks first unless agents work freely); take access away. HTTP server only |
 | `backlinks` | Pages that link to or mention a page |
 | `set_favorite` | Add to / remove from Favorites |
 | `undo_last` | Take back your last writing call (exactly that step; what was edited since stays) |
@@ -101,10 +134,11 @@ sub-pages and databases.
 | Tool | What it does |
 |---|---|
 | `list_databases` / `database_schema` | Databases with ids, row counts and property schemas; one schema with allowed values |
-| `query_database` | Rows with property values as text (dates as YYYY-MM-DD); `search`, `sort`, paged |
-| `add_row` / `update_row` | Title and properties by name with plain strings; a new select option is created |
-| `create_database` / `update_database` | Create; rename, add / rename / retype / delete properties, add options |
-| `list_views` / `create_view` / `update_view` / `delete_view` | Views with filters, sorts, grouping |
+| `query_database` | Rows with property values as text (dates as YYYY-MM-DD); `view` (its filters, sorts, visible properties, footer calculations), `filters`, `properties`, `search`, `sort`, paged |
+| `add_row` / `update_row` | Title and properties by name with plain strings; a new select option is created; relations take row ids or titles, files take refs or links; `template` |
+| `add_rows` / `update_rows` | Many rows in one step, all or nothing |
+| `create_database` / `update_database` | Create; rename; properties (add, rename, retype, delete); options (add, rename, colour, delete, order); formulas, relations (also two-way), rollups; number formats, ID prefix, descriptions; row templates; lock |
+| `list_views` / `create_view` / `update_view` / `delete_view` | Views with filters, sorts, grouping; visible properties and their order, wrap, card and date settings, footer calculations, chart settings, dashboard widgets |
 
 ### Agent brain (BSD-541)
 
@@ -132,7 +166,7 @@ How `recall` finds things (`packages/brain/src/recall/`):
 The lists are merged with Reciprocal Rank Fusion. Superseded and "To review" memories never appear, neither as hits
 nor as neighbours. Skills are never returned by `recall` (they are instructions, not knowledge).
 
-Not ported from the Swift server: `read_skill_file`, `list_connections`, the resources `brain://about` and
+Not ported from the Swift server: `read_skill_file`, the resources `brain://about` and
 `brain://memories` (use `about_me` and `recall`).
 
 ### Projects, runs, inbox, main agent (BSD-58)
@@ -142,9 +176,13 @@ Not ported from the Swift server: `read_skill_file`, `list_connections`, the res
 | `list_projects` / `get_project` | Projects with status, goal and run count (filter `status`); one project by id or name with recent runs |
 | `create_project` | New project with overview page; refuses a duplicate name |
 | `update_project_status` | Dated entry on the project page, optional status change |
+| `update_project` | Name, goal, status, monthly budget |
+| `list_schedules` / `update_schedule` | Scheduled runs; turn on or off, change, delete |
+| `due` | Rows that are due across all databases, between two dates |
+| `list_connections` | MCP connections set up in Based (no secrets) |
 | `list_runs` / `get_run` | Runs newest first (filter `status`); one run with usage, result and sub-runs |
 | `inbox` | Runs that wait for the user |
-| `resolve_inbox` | Allow or deny the tool call a run asked for; only with the rule `allow based.resolve_inbox` |
+| `resolve_inbox` | Allow or deny the tool call a run asked for; only with the rule `allow based.resolve_inbox`. Never for requests like `delete_forever` |
 | `ask_main_agent` | Hand a task to the main agent; it appears on Home and its run shows up in `list_runs` |
 
 The app's own chat gets the groups pages, blocks, boards, files and databases from the same layer; memories, skills,
@@ -173,10 +211,11 @@ Every enabled skill is a prompt (name, description, optional argument `input`).
 
 What a person can do in the app and an agent can't yet is listed in `docs/agent-parity-matrix.md`.
 
-- Only in the frozen Swift server, not in the TypeScript one: `add_button`, `create_chart`, `read_skill_file`,
-  `list_connections`, captures (`capture`, `list_captures`, `file_capture`) and the host tools for coding sessions
-  (`spawn_agent`, `wait_for_agents`, `agent_sessions`, `read_agent_session`, `message_agent`, `stop_agent`, `approval`).
-  HTML and Mermaid blocks are written as code blocks (`code: … {lang=html show=result}`).
+- Importing files other than Markdown text, and the Notion import, as tools.
+- An “Undo” at each agent action in Based's chat (agents themselves have `undo_last`).
+- `ask_user`, skill files (`read_skill_file`), captures and the host tools for coding sessions (`spawn_agent`,
+  `wait_for_agents`, `agent_sessions`, `read_agent_session`, `message_agent`, `stop_agent`, `approval`) exist only in
+  the frozen Swift server. HTML and Mermaid blocks are written as code blocks (`code: … {lang=html show=result}`).
 - Comments (come with multi-user).
 - Server-sent notifications (`listChanged`, resource subscriptions).
 

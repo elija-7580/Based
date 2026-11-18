@@ -4,7 +4,7 @@
 import {
   addDashboardWidget, addOption, addProperty, addRow, addTemplate, addView, calculationOptions, calculationText, cellText, changePropertyType, createDatabase, deleteOption, deleteProperty,
   deleteTemplate, deleteView, ENUMS, Formula, isTrashed, makeRelationTwoWay, parseCSVValue, values, plainText, QueryEngine, renameProperty, rowsOf, setDatabaseLocked, setDatabaseTitle,
-  setDefaultTemplate, setRelation, setRelationTarget, setRollup, setRowTitle, setValue, templatesOf, titleOf, titleProperty, updateChart, updateOption, updateProperty, updateView, viewsForBlock,
+  setDefaultTemplate, setRelation, setRelationTarget, setRollup, setRowTitle, setValue, templatesOf, titleProperty, updateChart, updateOption, updateProperty, updateView, viewsForBlock,
   visiblePropertyIDs, WIDGET_TYPES, workspaceFiles, wouldCreateRollupCycle,
   type Database, type DatabaseView, type PropertySchema, type PropertyValue, type Value, type WorkspaceStore,
 } from "@based/core";

@@ -3,9 +3,21 @@
 Bestandsaufnahme vom 18.11.2026, gelesen auf `main` (f07b0bf) plus `feat/board-markdown` (f27f9b9, dort liegt der
 Auftrag `docs/agent-parity.md`). Wird je Eintrag fortgeschrieben (Lücke → „erledigt“).
 
-**Stand 18.11., Abend:** Eintrag 1/7 (eine Werkzeug-Schicht) und 2/7 (Seiten-Editor) sind gebaut, von 4/7 (Shell)
-alles außer Suche-Filtern und endgültigem Löschen – Abschnitte G, E und S unten. Die vier Punkte „Was vor der Matrix zu wissen ist“ beschreiben den Stand davor; 1, 2 und 4 sind damit
-erledigt, 3 ebenfalls (`read_blocks`, `edit_blocks`). Schritt 2 ist entschieden, siehe „Entscheidungen“.
+**Stand 18.11., Nacht:** Alle sieben Einträge sind gebaut, bis auf das, was unten unter „Noch offen“ steht. Schritt 2
+ist entschieden, siehe „Entscheidungen“. Die vier Punkte „Was vor der Matrix zu wissen ist“ beschreiben den Stand vor
+dem Umbau.
+
+**Noch offen** (jeweils eigener Backlog-Eintrag):
+- V6/V7 Import von Dateien (Markdown-Text geht, alle anderen Importer nicht) und Notion-Import als Werkzeug: die
+  Importer hängen an der App (`apps/web/src/worker/importer.ts`) und müssen erst in ein gemeinsames Paket.
+- E35 „Undo“ an jeder Agenten-Aktion im Chat (sichtbare Oberfläche; `undo_last` für den Agenten selbst gibt es).
+- B7 `ask_user` (braucht ein Antwortfeld in der Inbox), B4/B5 Skill-Dateien und ein/aus, B12 Captures, B14 Coding-Sitzungen.
+- D19 Formular-Fragen, D11 Datumsformat, D12 Status-Gruppen, D14 verschachtelte Filter, S1/S18 Sortierung und
+  Dubletten, S17 Graph mit Tiefe, V3 PDF, T4 Embeds, X2 Workspace-Einstellungen.
+- Rechte-Stufen Private/Balanced/Open gibt es in Based noch nicht. Bis dahin gilt: „Work freely“ = Open, alles andere
+  fragt beim Freigeben in der Inbox.
+- Die Werkzeuge der App-eigenen Agenten kommen noch als ganze Liste; die kurze Liste (`more_tools`, `run_tool`) gilt
+  bisher nur für MCP.
 
 Aufwand: **S** = dünne Hülle um Logik, die es in `packages/core` schon gibt · **M** = neues Werkzeug mit eigener
 Logik oder Leseformat · **L** = braucht neue Kernlogik, einen Host-Weg (Dateien, Netz, Gerät) oder eine offene
@@ -126,18 +138,18 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Editor | E15 To-do abhaken, Toggle auf/zu | Klick, ⌘Enter | `find_replace` trifft `[ ]` nicht | erledigt | erledigt 18.11.: `check`, `uncheck`, `{open=}` | – |
 | Editor | E16 Callout-Icon | Emoji-Picker | Markdown-Callout (festes Icon) | erledigt | erledigt 18.11.: `{icon=}` | – |
 | Editor | E17 Code: Sprache, Umbruch | Leiste am Block | Sprache über Code-Zaun | erledigt | erledigt 18.11.: `{lang= wrap}` | – |
-| Editor | E18 Bild einfügen (Upload, Link), Breite, Ausrichtung, Unterschrift | Slash, Ablegen, Bildleiste | Bild per Link im Markdown; `upload_file` legt nur aufs Board | hochgeladene Datei kommt nicht in eine Seite; Breite, Ausrichtung, Unterschrift fehlen | teils 18.11.: einfügen, Breite, Ausrichtung, Unterschrift über `edit_blocks`; offen: `upload_file { page }` legt direkt in eine Seite | M |
+| Editor | E18 Bild einfügen (Upload, Link), Breite, Ausrichtung, Unterschrift | Slash, Ablegen, Bildleiste | Bild per Link im Markdown; `upload_file` legt nur aufs Board | erledigt | erledigt 18.11.: `linked: <Datenbank-ID> {view=}` | – |
 | Editor | E19 Video, Audio, Datei, PDF einfügen | Slash, Ablegen | – | erledigt | erledigt 18.11.: `file: <ref>` (Art aus der Datei), `video`, `audio`, `pdf` | – |
-| Editor | E20 Web-Bookmark, Embed | Slash, URL einfügen | – | fehlt; Vorschau holt Netz | teils 18.11.: `bookmark:` und `embed:` legen an; offen: Vorschau holen (Netz, Schutzregeln) | M |
+| Editor | E20 Web-Bookmark, Embed | Slash, URL einfügen | – | erledigt | erledigt 18.11.: `synced:`, `sync`, `unsync` | – |
 | Editor | E21 Einfache Tabelle: Zellen, Zeile/Spalte | Tabelle | Markdown-Tabelle beim Anlegen | erledigt | erledigt 18.11.: `table`, `cell`, `row`, `col` | – |
 | Editor | E22 Gleichung (Block, inline) | Slash | `$$…$$`, `$…$` im Markdown | erledigt | erledigt 18.11.: `equation:` und Markdown | – |
 | Editor | E23 Mermaid, HTML-Block (Code/Ergebnis zeigen) | Slash, Blockleiste | Code-Zaun `mermaid`/`html`; `add_html`/`add_mermaid` nur Swift | erledigt | erledigt 18.11.: `code: … {lang=html show=result}` | – |
 | Editor | E24 Unterseite, Inline-Datenbank, Whiteboard im Inhalt | Slash „Page“, „Database“, „Whiteboard“ | `create_page {parent}`, `create_database {inline}`, `draw_board {parent}` | erledigt | erledigt 18.11.: `page`, `database`, `board` an jeder Stelle über `edit_blocks` | – |
-| Editor | E25 Linked view of database | Slash | – | fehlt | `add linked after a: <database id>` | M |
-| Editor | E26 Synced Block (Copy and sync, Unsync) | Blockmenü | – | fehlt | `sync a to <page id>` / `unsync a` | M |
-| Editor | E27 Button-Block mit Schritten | Slash „Button“, „Edit“ | `add_button` nur Swift | fehlt | `button after a: Label {steps…}` oder eigenes Werkzeug | M |
+| Editor | E25 Linked view of database | Slash | – | erledigt | erledigt 18.11.: `button: Label {add= open= url= confirm= insert}` | – |
+| Editor | E26 Synced Block (Copy and sync, Unsync) | Blockmenü | – | erledigt | erledigt 18.11.: Datums-Erwähnung `@2026-11-20[ 14:00][ → …][ (remind)]` | – |
+| Editor | E27 Button-Block mit Schritten | Slash „Button“, „Edit“ | `add_button` nur Swift | erledigt | erledigt 18.11.: Bookmark-Vorschau holt der Server | – |
 | Editor | E28 Inhaltsverzeichnis, Trenner | Slash | Trenner `---` | erledigt | erledigt 18.11.: `toc`, `divider` | – |
-| Editor | E29 Erwähnung (Seite, Datum, Erinnerung) | `@`, `[[` | Seite über `[Titel](based://page/<id>)` | Datum und „Remind me“ fehlen | `@date(2026-11-20 14:00 remind=1d)` im Markdown | M |
+| Editor | E29 Erwähnung (Seite, Datum, Erinnerung) | `@`, `[[` | Seite über `[Titel](based://page/<id>)` | erledigt | erledigt 18.11.: `upload_file { page, after, caption }` | – |
 | Editor | E30 Unverlinkte Erwähnung verlinken | Backlinks „Link“ | – | fehlt | `link_mention` oder Teil von `edit_blocks` | S |
 | Editor | E31 Link auf einen Block kopieren | Blockmenü | – | Kennung fehlt | teils 18.11.: Kennung da; offen: Link `based://page/<id>#<block>` in der Antwort | S |
 | Editor | E32 Als Markdown kopieren | ⌘C, Blockmenü | `read_page` | – | erledigt | – |
@@ -152,26 +164,26 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
 | Datenbank | D1 Datenbanken und Schema lesen | – | `list_databases`, `database_schema` | – | erledigt (nur MCP, siehe G1) | – |
-| Datenbank | D2 Zeilen lesen | Ansicht | `query_database { search, sort }` | kein Filter, keine Ansicht als Quelle, keine Spaltenauswahl | `query_database { view?, filters?, properties? }` mit denselben Filtern wie `update_view` | M |
-| Datenbank | D3 Zeile anlegen, Werte setzen | „New“, Zelle | `add_row`, `update_row` | Relation („read-only here“), Person, Dateien, Ort nicht setzbar | Relation über Zeilen-ID oder Titel; Dateien über Ref; Ort über Text | M |
-| Datenbank | D4 Viele Zeilen auf einmal | Einfügen, Autofill, Mehrfachauswahl | – | ein Aufruf je Zeile | `add_rows { id, rows[] }` / CSV; `update_rows` | M |
+| Datenbank | D2 Zeilen lesen | Ansicht | `query_database { search, sort }` | erledigt | erledigt 18.11.: `query_database { view, filters, filter_mode, properties }`; Fußzeile der Ansicht als „Calculations: …“ | – |
+| Datenbank | D3 Zeile anlegen, Werte setzen | „New“, Zelle | `add_row`, `update_row` | erledigt | erledigt 18.11.: Relation über Zeilen-ID oder Titel (Gegenseite wird mitgeführt), Person, Dateien (Ref oder Link), Ort als Text | – |
+| Datenbank | D4 Viele Zeilen auf einmal | Einfügen, Autofill, Mehrfachauswahl | – | erledigt | erledigt 18.11.: `add_rows`, `update_rows` (alles oder nichts, ein Undo-Schritt) | – |
 | Datenbank | D5 Zeile löschen, duplizieren, verschieben | Zeilenmenü | `trash_page`, `duplicate_page` (Zeile ist Seite) | nicht dokumentiert, nicht getestet für Zeilen | Test + Hinweis in der Beschreibung | S |
 | Datenbank | D6 Zeile als Seite schreiben | Zeile öffnen | `append_markdown`, `read_page` | – | erledigt | – |
 | Datenbank | D7 Datenbank anlegen, umbenennen | Slash, ⌘N | `create_database`, `update_database` | – | erledigt (nur MCP) | – |
-| Datenbank | D8 Property anlegen, umbenennen, Typ, löschen | Property-Menü | `update_database` | Löschen und Typwechsel ohne `destructiveHint` | G2 | S |
-| Datenbank | D9 Formel | Property-Menü „Formula“ | Typ anlegbar | Ausdruck nicht setzbar | `update_database { formulas: {name: expr} }`, Fehler nennt die Stelle | M |
-| Datenbank | D10 Relation und Rollup einrichten | Property-Menü | Typ anlegbar | Zieldatenbank, Rollup-Relation, -Property, -Funktion nicht setzbar | `update_database { relations, rollups }` | M |
-| Datenbank | D11 Zahlen- und Datumsformat, ID-Präfix, Beschreibung | Property-Menü | – | fehlt | `update_database { formats }` | S |
-| Datenbank | D12 Optionen: Farbe, umbenennen, löschen, Reihenfolge, Status-Gruppen | Property-Menü | `add_options` | nur anfügen | `update_database { options }` mit den Farbnamen aus core | M |
-| Datenbank | D13 Ansicht anlegen, umbenennen, löschen | Reiter, „Add view“ | `create_view`, `update_view`, `delete_view`, `list_views` | `list_views` nicht als lesend markiert | G2 | S |
-| Datenbank | D14 Filter, Sortierung, Gruppierung | Filter, Sort, Group | `update_view` | verschachtelte Filtergruppen, Untergruppen, „Hide empty groups“, Datums-Gruppierung prüfen | Filter-Liste aus core, Rest als `options` | M |
-| Datenbank | D15 Sichtbare Properties, Reihenfolge, Spaltenbreite, Umbruch | View settings „Properties“, Ziehen | – | fehlt | `update_view { properties: [namen in Reihenfolge], wrap }`; Breite bewusst nicht | S |
-| Datenbank | D16 Layout-Optionen (Karten-Vorschau, -Größe, Datums-Property, Zeitraum, Karte, „Open pages in“, Titel und Icon zeigen) | View settings | – | fehlt | `update_view { options }` mit Namen wie in der Oberfläche | M |
-| Datenbank | D17 Berechnungen (Summe, Anzahl …) | Tabellenfuß | – | fehlt; Ergebnis auch nicht lesbar | `update_view { calculations }`; `query_database` gibt die Fußzeile aus | M |
-| Datenbank | D18 Chart und Dashboard-Widgets | View settings „Chart“, „Widgets“ | `create_chart` nur Swift; `create_view type=chart` ohne Achsen | Achsen, Aggregat, Typ, Widgets fehlen | `update_view { chart }` | M |
+| Datenbank | D8 Property anlegen, umbenennen, Typ, löschen | Property-Menü | `update_database` | erledigt | erledigt 18.11.: `update_database` ist als zerstörend markiert | – |
+| Datenbank | D9 Formel | Property-Menü „Formula“ | Typ anlegbar | erledigt | erledigt 18.11.: `update_database { formulas }`; Fehler nennt die Stelle | – |
+| Datenbank | D10 Relation und Rollup einrichten | Property-Menü | Typ anlegbar | erledigt | erledigt 18.11.: `update_database { relations, two_way, rollups }` | – |
+| Datenbank | D11 Zahlen- und Datumsformat, ID-Präfix, Beschreibung | Property-Menü | – | erledigt | erledigt 18.11.: `update_database { number_formats, id_prefixes, descriptions }`; Datumsformat offen | – |
+| Datenbank | D12 Optionen: Farbe, umbenennen, löschen, Reihenfolge, Status-Gruppen | Property-Menü | `add_options` | erledigt | erledigt 18.11.: `update_database { update_options, option_order }` (umbenennen, Farbe, löschen, Reihenfolge); Status-Gruppen offen | – |
+| Datenbank | D13 Ansicht anlegen, umbenennen, löschen | Reiter, „Add view“ | `create_view`, `update_view`, `delete_view`, `list_views` | erledigt | erledigt 18.11.: `list_views` ist lesend markiert | – |
+| Datenbank | D14 Filter, Sortierung, Gruppierung | Filter, Sort, Group | `update_view` | erledigt | erledigt 18.11.: `update_view { hide_empty_groups, date_grouping }`; verschachtelte Filtergruppen und Untergruppen offen | – |
+| Datenbank | D15 Sichtbare Properties, Reihenfolge, Spaltenbreite, Umbruch | View settings „Properties“, Ziehen | – | erledigt | erledigt 18.11.: `update_view { properties, wrap }` | – |
+| Datenbank | D16 Layout-Optionen (Karten-Vorschau, -Größe, Datums-Property, Zeitraum, Karte, „Open pages in“, Titel und Icon zeigen) | View settings | – | erledigt | erledigt 18.11.: `update_view { card_preview, card_size, date_property, end_date_property, map_property, open_in, show_icons, show_title, limit }` | – |
+| Datenbank | D17 Berechnungen (Summe, Anzahl …) | Tabellenfuß | – | erledigt | erledigt 18.11.: `update_view { calculations }`; `query_database { view }` gibt sie aus | – |
+| Datenbank | D18 Chart und Dashboard-Widgets | View settings „Chart“, „Widgets“ | `create_chart` nur Swift; `create_view type=chart` ohne Achsen | erledigt | erledigt 18.11.: `update_view { chart, add_widgets }` | – |
 | Datenbank | D19 Formular-Ansicht | Form | `create_view type=form` | Fragen, Pflichtfelder fehlen | `update_view { form }` | M |
-| Datenbank | D20 Zeilen-Vorlagen | „New“ ▾, „Templates“ | – | fehlt | `update_database { templates }`; `add_row { template }` | M |
-| Datenbank | D21 Datenbank sperren | View settings „Lock database“ | – | fehlt | `update_database { locked }` | S |
+| Datenbank | D20 Zeilen-Vorlagen | „New“ ▾, „Templates“ | – | erledigt | erledigt 18.11.: `update_database { add_templates, delete_templates, default_template }`, `add_row { template }` | – |
+| Datenbank | D21 Datenbank sperren | View settings „Lock database“ | – | erledigt | erledigt 18.11.: `update_database { locked }` | – |
 | Datenbank | D22 Als ganze Seite öffnen, Zeilen-Vorschau, Suche in der Ansicht | Kopfzeile | – | bewusst nicht | Rein visuell; `query_database { search }` deckt die Suche. | – |
 | Datenbank | D23 Karte: Ort suchen (Geocoding) | Ort-Zelle | – | bewusst nicht | Geocoding nur über den Knopf (Entscheidung 10.11.); der Agent setzt Text oder Koordinaten. | – |
 
@@ -179,7 +191,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
-| Shell | S1 Suchen | ⌘K | `search`, `recall` | Filter (Art, Ort, Datum) und Sortierung wie in ⌘K fehlen | `search { kind?, within?, sort? }` | S |
+| Shell | S1 Suchen | ⌘K | `search`, `recall` | erledigt | erledigt 18.11.: `search { kind, edited_after, edited_before }`; Sortierung offen | – |
 | Shell | S2 Seitenbaum lesen | Sidebar | `list_pages` | erledigt | erledigt 18.11.: `list_pages` nennt den Bereich, `section`; `get_workspace` | – |
 | Shell | S3 Seite anlegen (auch aus Vorlage) | ⌘N, „+“, Starter-Vorlagen | `create_page` | erledigt | erledigt 18.11.: `create_page { section, after, template }` | – |
 | Shell | S4 Umbenennen, Emoji-Icon | Titel, Icon | `update_page` | – | erledigt | – |
@@ -191,7 +203,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Shell | S10 Duplizieren | Menü | `duplicate_page` | – | erledigt (nur MCP) | – |
 | Shell | S11 Favoriten | Seitenmenü, Sidebar | `set_favorite` | Reihenfolge der Favoriten | bewusst nicht (persönliche Anordnung), sonst `after` | – |
 | Shell | S12 Papierkorb: hinein, zurück, Liste | Menü, Trash | `trash_page`, `restore_page`, `list_trash` | – | erledigt (nur MCP) | – |
-| Shell | S13 Endgültig löschen, Papierkorb leeren | Trash „Delete forever“, „Empty Trash“ | – | fehlt | `delete_forever`, `empty_trash`: immer erst Frage in der Inbox (Entscheidung 3), `destructiveHint` | M |
+| Shell | S13 Endgültig löschen, Papierkorb leeren | Trash „Delete forever“, „Empty Trash“ | – | erledigt | erledigt 18.11.: `delete_forever`, `empty_trash`: legen eine Rückfrage an („Needs you“), laufen erst nach Allow in Based; `resolve_inbox` von außen lehnt sie ab | – |
 | Shell | S14 Teamspaces: anlegen, umbenennen, Icon, löschen | Sidebar | – | erledigt | erledigt 18.11.: `create_teamspace`, `update_teamspace`, `delete_teamspace` (zerstörend markiert, Seiten wandern nach Private) | – |
 | Shell | S15 Workspace-Name und -Icon | Sidebar-Kopf | – | erledigt | erledigt 18.11.: `update_workspace` | – |
 | Shell | S16 Backlinks, Verwandtes | Backlinks-Leiste | `backlinks`, `related` | – | erledigt | – |
@@ -207,10 +219,10 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
-| Verlauf | V1 Versionen ansehen | Seitenmenü „Version history“ | – | fehlt | `page_history { id }`: Zeit, Autor, Kurz-Diff; `read_page { version }` | M |
-| Verlauf | V2 Version wiederherstellen | „Restore“ | – | fehlt | `restore_version` (ein Undo-Schritt, `destructiveHint`) | S |
-| Export | V3 Seite exportieren (Markdown, HTML, PDF, Word, JSON, OPML, Archiv) | „Export…“ | `read_page` (Markdown als Text) | Dateiformate fehlen; Datei muss zum Agenten | `export_page { id, format, subpages? }` → Datei-Ref, über stdio auch Pfad | L |
-| Export | V4 Ganzen Workspace exportieren | Settings → Import | – | fehlt | wie V3; nur stdio oder als Download-Link des Servers | L |
+| Verlauf | V1 Versionen ansehen | Seitenmenü „Version history“ | – | erledigt | erledigt 18.11.: `page_history`, `read_version` (in der App; der Server führt keinen Verlauf) | – |
+| Verlauf | V2 Version wiederherstellen | „Restore“ | – | erledigt | erledigt 18.11.: `restore_version` (in der App) | – |
+| Export | V3 Seite exportieren (Markdown, HTML, PDF, Word, JSON, OPML, Archiv) | „Export…“ | `read_page` (Markdown als Text) | erledigt | erledigt 18.11.: `export_page { format: markdown, html, docx, json, opml; subpages; path }` am Server → Datei-Adresse, über stdio auch Pfad; PDF offen | – |
+| Export | V4 Ganzen Workspace exportieren | Settings → Import | – | erledigt | erledigt 18.11.: `export_workspace { format: markdown, html, archive }` am Server | – |
 | Export | V5 Drucken | ⌘P | – | bewusst nicht | Gerät. PDF deckt V3. | – |
 | Import | V6 Dateien importieren (Markdown, HTML, Word, Notion-ZIP, Obsidian, Logseq, Bear, Evernote, OPML, Archiv) | ⌘N „Import“, Settings | `create_page { markdown }` | alles außer Markdown-Text fehlt | `import_files { refs \| path, parent? }` über die Importer aus core; Antwort ist der Bericht | L |
 | Import | V7 Notion-Import (Hybrid, API) starten, pausieren, Stand lesen | Settings → Import | – | fehlt | `notion_import { start \| pause \| status }`; Token nur aus den Einstellungen (Entscheidung 5) | L |
@@ -220,10 +232,10 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
 | Meetings | M1 Meeting anlegen | ⌘N „Meeting notes“, Slash | – | erledigt | erledigt 18.11.: `edit_blocks` mit `meeting: Titel` | – |
-| Meetings | M2 Meetings auflisten | Library „Meetings“ | `search` findet Seiten | Liste mit Datum, Dauer, Zustand fehlt | `list_meetings` | S |
-| Meetings | M3 Notizen, Zusammenfassung, Transkript lesen | Reiter im Block | `read_page` (prüfen, was vom Block ankommt) | Transkript kann sehr lang sein, Zeitmarken und Sprecher | `read_meeting { id, part, from?, limit? }` | M |
-| Meetings | M4 Notizen und Zusammenfassung schreiben | Tippen | – | fehlt | `edit_blocks` in den Abschnitten; Zusammenfassung als eigener Abschnitt | M |
-| Meetings | M5 Sprecher benennen, Kontext anhängen | Block | – | fehlt | `update_meeting { speakers, context }` | M |
+| Meetings | M2 Meetings auflisten | Library „Meetings“ | `search` findet Seiten | erledigt | erledigt 18.11.: `list_meetings` | – |
+| Meetings | M3 Notizen, Zusammenfassung, Transkript lesen | Reiter im Block | `read_page` (prüfen, was vom Block ankommt) | erledigt | erledigt 18.11.: `read_meeting { part: overview \| transcript, offset, limit }` | – |
+| Meetings | M4 Notizen und Zusammenfassung schreiben | Tippen | – | erledigt | erledigt 18.11.: Notizen über `edit_blocks {in=<Abschnitt>}` (die Kennung nennt `read_meeting`), Zusammenfassung über `update_meeting { summary }` | – |
+| Meetings | M5 Sprecher benennen, Kontext anhängen | Block | – | erledigt | erledigt 18.11.: `update_meeting { speakers, add_context, remove_context }` | – |
 | Meetings | M6 Aufnahme starten/stoppen, später transkribieren, Modell laden | Block, Pop-up, Settings | – | bewusst nicht | Mikrofon und Modell gehören dem Gerät; ein Agent darf nicht aufnehmen. | – |
 | Meetings | M7 Aufnahme abspielen | Block | – | bewusst nicht | Wiedergabe am Gerät. | – |
 
@@ -238,10 +250,10 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Brain | B5 Skill anlegen, ändern, ein/aus, importieren | Settings → Agents & AI | Skills sind Seiten → `create_page` | ein/aus und Import fehlen | `save_skill`, `set_skill_enabled`; nach Rechte-Stufe (Entscheidung 3) | M |
 | Inbox | B6 Inbox lesen, beantworten | Home, Inbox | `inbox`, `resolve_inbox` | – | erledigt | – |
 | Inbox | B7 Agent per @ ansprechen, Frage stellen | Inbox-Format (Vaultite) | `ask_main_agent` | Frage an den Nutzer aus MCP heraus fehlt | `ask_user { question, options? }` → Inbox | S |
-| Home | B8 Projekte lesen, anlegen, Status | Home, Projekt-Ansicht | `list_projects`, `get_project`, `create_project`, `update_project_status` | Ziel, Budget, Ordner ändern; archivieren | `update_project` | S |
+| Home | B8 Projekte lesen, anlegen, Status | Home, Projekt-Ansicht | `list_projects`, `get_project`, `create_project`, `update_project_status` | erledigt | erledigt 18.11.: `update_project { name, goal, status, budget_eur }` | – |
 | Home | B9 Läufe lesen | Home, Agent-Ansicht | `list_runs`, `get_run` | – | erledigt | – |
-| Home | B10 Aufgaben-Karten, Zeitpläne (Cron) | Home, Tasks | – | anlegen, ändern, löschen fehlt | `list_schedules`, `update_schedule`; Karten über `ask_main_agent` | M |
-| Home | B11 Fällige Aufgaben | Home rechts | `query_database` je Datenbank | kein „was ist fällig“ über alle | `due { from, to }` (Logik gibt es: `dueItems`) | S |
+| Home | B10 Aufgaben-Karten, Zeitpläne (Cron) | Home, Tasks | – | anlegen, ändern, löschen fehlt | teils 18.11.: `list_schedules`, `update_schedule` (an/aus, wann, was, löschen); anlegen über `ask_main_agent` | M |
+| Home | B11 Fällige Aufgaben | Home rechts | `query_database` je Datenbank | erledigt | erledigt 18.11.: `due { from, to }` | – |
 | Home | B12 Captures | Quick capture | nur Swift | fehlt im TS-Server | `capture`, `list_captures`, `file_capture` nachziehen, sobald Captures in Based Next da sind | M |
 | Home | B13 Zeitraum wählen, Begrüßung | Home | – | bewusst nicht | Darstellung. | – |
 | Chat | B14 Chats lesen, Coding-Sitzungen steuern | Chat, Coding | Host-Werkzeuge nur Swift | fehlt im TS-Server | zurückgestellt: AI-Schalter ist für die Beta aus (12.11.) | L |
@@ -250,10 +262,10 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
-| Teilen | T1 Sehen, wer Zugriff hat | „Share“ | – | fehlt | `list_shares { id }` (lesend) | S |
-| Teilen | T2 Link anlegen (view, comment, edit), Einladung | „Share a link“, „Create invite“ | – | fehlt | `share_page`; nach Rechte-Stufe (Entscheidung 3) | M |
-| Teilen | T3 Zugriff entziehen, Rolle ändern | „Revoke“, „Remove“ | – | fehlt | `revoke_share`; Entziehen ist die sichere Richtung | S |
-| Teilen | T4 Im Web veröffentlichen, Embeds erlauben | „Publish to web“ | – | fehlt | `publish_page`; nach Rechte-Stufe (Entscheidung 3) | M |
+| Teilen | T1 Sehen, wer Zugriff hat | „Share“ | – | erledigt | erledigt 18.11.: `list_shares` (HTTP-Server) | – |
+| Teilen | T2 Link anlegen (view, comment, edit), Einladung | „Share a link“, „Create invite“ | – | erledigt | erledigt 18.11.: `share_page { kind: link \| invite }`: ohne „Work freely“ Rückfrage in der Inbox, der Server führt nach Allow aus | – |
+| Teilen | T3 Zugriff entziehen, Rolle ändern | „Revoke“, „Remove“ | – | erledigt | erledigt 18.11.: `revoke_share` | – |
+| Teilen | T4 Im Web veröffentlichen, Embeds erlauben | „Publish to web“ | – | erledigt | erledigt 18.11.: `share_page { kind: publish }`; Embeds erlauben offen | – |
 | Teilen | T5 Kommentare | – | – | gibt es in Based noch nicht | kommt mit Multi-User (Entscheidung 11.11.) | – |
 
 ### X · Einstellungen
@@ -263,7 +275,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Einstellungen | X1 Darstellung: Theme, Schrift, Dichte, Sprache, Feel | Settings → App | – | bewusst nicht | Gelten je Gerät und liegen nicht im Workspace. | – |
 | Einstellungen | X2 Seiten: was zuerst öffnet, wie neue Seiten starten | Settings → Pages | – | fehlt | nur wenn im Workspace gespeichert: `get_settings`/`set_setting` mit fester Liste | S |
 | Einstellungen | X3 Agenten-Regeln, Rechte-Stufe (Private/Balanced/Open), API-Schlüssel | Settings → Agents & AI | – | bewusst nicht | Ein Agent darf seine eigenen Grenzen und Schlüssel nie ändern. Lesen der geltenden Regeln („was darf ich?“) als `based_guide safety`. | S |
-| Einstellungen | X4 Verbindungen (MCP-Server) | Settings → Connections | `list_connections` nur Swift | lesen fehlt; anlegen bewusst nicht | `list_connections` nachziehen | S |
+| Einstellungen | X4 Verbindungen (MCP-Server) | Settings → Connections | `list_connections` nur Swift | erledigt | erledigt 18.11.: `list_connections` (ohne Geheimnisse) | – |
 | Einstellungen | X5 Sync & Server, Backups, iCloud, Tailnet, Updates, Diagnose | Settings → Workspace/System | – | bewusst nicht | Betreffen Gerät, Zugangsdaten oder Datensicherheit. Lesend: Sync-Zustand in `based_guide overview` genügt. | – |
 | Einstellungen | X6 Workspace zurücksetzen, Undo-Verlauf leeren | Settings → General (noch nicht gebaut) | – | bewusst nicht | Nicht umkehrbar. | – |
 
@@ -272,14 +284,14 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Bereich | Zeilen | erledigt | Lücke | bewusst nicht | offen |
 | --- | --- | --- | --- | --- | --- |
 | Grundlage | 4 | 4 | 0 | 0 | 0 |
-| Editor | 37 | 24 | 10 (E5, E18, E20, E25–E27, E29–E31, E35; vier davon teils) | 3 | 0 |
-| Datenbanken | 23 | 3 | 18 | 2 | 0 |
-| Shell | 23 | 15 | 4 (S1, S13, S17, S18) | 4 | 0 |
-| Verlauf, Export, Import | 7 | 0 | 6 | 1 | 0 |
-| Meetings | 7 | 1 | 4 | 2 | 0 |
-| Brain, Inbox, Home | 14 | 4 | 8 | 2 | 0 |
-| Teilen | 5 | 0 | 4 | 0 | 1 (T5, kommt mit Multi-User) |
-| Einstellungen | 6 | 0 | 2 | 4 | 0 |
+| Editor | 37 | 30 | 4 (E5, E30, E31, E35) | 3 | 0 |
+| Datenbanken | 23 | 20 | 1 (D19; Reste bei D11, D12, D14) | 2 | 0 |
+| Shell | 23 | 17 | 2 (S17, S18) | 4 | 0 |
+| Verlauf, Export, Import | 7 | 4 | 2 (V6, V7) | 1 | 0 |
+| Meetings | 7 | 5 | 0 | 2 | 0 |
+| Brain, Inbox, Home | 14 | 6 | 6 (B4, B5, B7, B10 teils, B12, B14) | 2 | 0 |
+| Teilen | 5 | 4 | 0 | 0 | 1 (T5, kommt mit Multi-User) |
+| Einstellungen | 6 | 1 | 1 (X2) | 4 | 0 |
 
 ## Nicht geprüft
 
