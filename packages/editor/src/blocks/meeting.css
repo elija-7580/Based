@@ -21,3 +21,21 @@
 
 /* Feedback 14. 11.: Transkript wartet (Akku) – Hinweis mit „Transcribe now“ in der Statuszeile. */
 .bx-meet-pending { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* Feedback 18. 11.: Anzeige oben rechts im Block, ob gerade aufgenommen/transkribiert wird (gleicher Punkt wie die
+   Pille in der Seitenleiste, .rec-dot). Pulsieren nur, solange etwas läuft; Animation „pulse“ aus styles.css. */
+.bx2-meet-live {
+  flex: none; display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--control-md); padding: 0 var(--space-3);
+  border-radius: var(--radius-pill); background: var(--bg); color: var(--ink); font-size: var(--type-ui-size); font-weight: var(--type-ui-weight);
+  white-space: nowrap;
+}
+.bx2-meet-live-dot { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--muted); flex: none; }
+.bx2-meet-live[data-state="live"] .bx2-meet-live-dot, .bx2-meet-live[data-state="recording"] .bx2-meet-live-dot { background: var(--danger); animation: pulse var(--duration-pulse) var(--ease-out) infinite; }
+.bx2-meet-live[data-state="processing"] .bx2-meet-live-dot { animation: pulse var(--duration-pulse) var(--ease-out) infinite; }
+.bx2-meet-live[data-state="paused"], .bx2-meet-live[data-state="pending"] { color: var(--muted); }
+.bx2-meet-live .bx-meet-clock { color: inherit; }
+.bx2-meet-live-detail { color: var(--muted); font-size: var(--type-description-size); font-weight: var(--type-description-weight); }
+/* schmale Spalte: die Anzeige rutscht unter den Titel statt ihn zu quetschen */
+.bx2-meet .bx-meet-head { flex-wrap: wrap; }
+.bx2-meet .bx-meet-head .bx-meet-title { flex: 1 1 12em; }
+@media (prefers-reduced-motion: reduce) { .bx2-meet-live-dot { animation: none !important; } }

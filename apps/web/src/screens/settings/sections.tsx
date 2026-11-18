@@ -19,7 +19,7 @@ import { appIdentity, checkForUpdates, isTauri, type AppIdentity } from "../../d
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { HangsSection } from "./hangs.js";
-import { autoUpdatePref, deviceNode, fallbackHomePage, lazyStoreSetting, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, fallbackHomePage, lazyStoreSetting, meetingDetectPref, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { browserKeep, keepRow } from "../../shell/storagePersist.js";
 import { weekStartForLocale } from "@based/core";
@@ -286,8 +286,14 @@ function LanguageSection(_: SettingsSectionProps) {
 /** Feedback 14. 11.: Meeting-Aufnahmen sofort oder erst am Strom transkribieren (Akku sparen; pro Gerät). */
 function MeetingsSection(_: SettingsSectionProps) {
   const when = useSyncExternalStore(meetingTranscribePref.subscribe, meetingTranscribePref.get);
+  const detect = useSyncExternalStore(meetingDetectPref.subscribe, meetingDetectPref.get);
   return (
     <Group>
+      {/* Feedback 18. 11.: nur die Mac-App sieht, welche App das Mikrofon nutzt */}
+      {isTauri() ? (
+        <Switch label="Ask when a meeting starts" description="When Zoom, Teams, Meet or another call app turns on your microphone, a small window offers to transcribe it"
+          value={detect} onChange={(on) => meetingDetectPref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
+      ) : null}
       <Row label="Transcribe recordings" hint={when === "plugged-in"
         ? "On battery, Based only records. The transcript is made once this device is plugged in — or right away with “Transcribe now” in the meeting."
         : "The transcript is made right after you stop recording."}>

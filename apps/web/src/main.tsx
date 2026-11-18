@@ -13,6 +13,7 @@ import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareF
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
+import { ANY_APP, isPromptWindow } from "./meeting/detect.js";
 import { installBrowserKeep } from "./shell/storagePersist.js";
 import { installSelectAll } from "./shell/selectAll.js";
 import { installWheelLatch } from "./shell/wheelLatch.js";
@@ -53,13 +54,17 @@ registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 }
 // BSD-374: Scroll-Gesten bleiben am Bereich, in dem sie begonnen haben (innere Felder fangen sie nicht ab).
 installWheelLatch();
-// BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
-installDiagnostics();
-// BSD-418: Hänger ab 250 ms mit Ursache, Breadcrumbs und Watchdog-Worker (ersetzt den 2-s-Detektor).
-installHangMonitor();
-// BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.
-installBugRecorder();
-exposeReplayHooks();
+// Das Meeting-Fenster (Feedback 18. 11.) bekommt keine eigene Diagnose: es würde die Sitzungs-Marke des Hauptfensters
+// überschreiben, und sein Schließen sähe wie ein Absturz aus.
+if (!isPromptWindow()) {
+  // BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
+  installDiagnostics();
+  // BSD-418: Hänger ab 250 ms mit Ursache, Breadcrumbs und Watchdog-Worker (ersetzt den 2-s-Detektor).
+  installHangMonitor();
+  // BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.
+  installBugRecorder();
+  exposeReplayHooks();
+}
 // Zeit bis hierher = Laden und Auswerten aller Skripte (die Importe oben laufen vor dieser Zeile).
 bootMark("scripts loaded");
 
@@ -71,7 +76,10 @@ applyAppearance(appearanceStore.get());
 interface GuestBoot { id: string; config: GuestConfig; me: GuestMe | undefined; start: string | undefined }
 
 const share = parseShareFragment(location.hash);
-if (share) {
+if (isPromptWindow()) {
+  // Feedback 18. 11.: kleines Fenster „Meeting detected“ – nur dieses, ohne Speicher-Worker und ohne Tabs.
+  void showMeetingPrompt();
+} else if (share) {
   void rememberGuest(secretVault(), share).then(
     (id) => location.replace(`${location.pathname}?guest=${id}`),
     () => location.replace(location.pathname),
@@ -99,6 +107,22 @@ if (share) {
       start({ id, config, me, start: guestStartPage(config, me) });
     });
   }
+}
+
+async function showMeetingPrompt() {
+  const root = document.getElementById("root");
+  if (!root) throw new Error("#root fehlt");
+  document.documentElement.classList.add("meeting-prompt-window");
+  const { MeetingPrompt } = await import("./meeting/MeetingPrompt.js");
+  const app = new URLSearchParams(location.search).get("app") ?? ANY_APP;
+  const appearance = appearanceStore.get();
+  createRoot(root).render(
+    <StrictMode>
+      <Theme theme={astryxThemes[appearance.density]} mode={effectiveTheme(appearance)}>
+        <MeetingPrompt app={app} />
+      </Theme>
+    </StrictMode>,
+  );
 }
 
 function showGuestRevoked() {

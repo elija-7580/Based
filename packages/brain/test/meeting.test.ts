@@ -104,6 +104,40 @@ describe("MeetingRecorder", () => {
     expect(rec.getState().recording).toBe(false);
   });
 
+  it("Feedback 18. 11.: der Zustand sagt, wie die Aufnahme zum Transkript kommt (live, nach dem Stop, später, gar nicht)", async () => {
+    const live = setup();
+    expect(live.rec.getState().transcription).toBe("off");
+    await live.rec.start(live.store, live.m);
+    expect(live.rec.getState().transcription).toBe("live");
+    await live.rec.stop();
+    expect(live.rec.getState().transcription).toBe("off");
+
+    const deferred = setup({ defer: () => true });
+    await deferred.rec.start(deferred.store, deferred.m);
+    expect(deferred.rec.getState().transcription).toBe("deferred");
+    await deferred.rec.stop();
+
+    const none = setup({ transcriber: false });
+    await none.rec.start(none.store, none.m);
+    expect(none.rec.getState().transcription).toBe("off");
+    await none.rec.stop();
+
+    // Whisper auf dem Server: nur `final`, kein `live` → Transkript erst nach dem Stop
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+    const m = createMeeting(store, { parent: "w" });
+    const after = new MeetingRecorder({
+      capture: async (o) => new FakeCapture(["microphone"], o),
+      saveAudio: async (t) => ({ id: "a-" + t.role, name: t.name, mime: t.mime }),
+      loadAudio: async () => "x",
+      transcriber: () => ({ id: "test.final", final: async () => ({ segments: [] }) }),
+      engine: () => undefined,
+      tickMs: 0,
+    });
+    await after.start(store, m);
+    expect(after.getState().transcription).toBe("after");
+    await after.stop();
+  });
+
   it("Feedback 14. 11.: später transkribieren (Akku) – kein Live-Transkript, Aufnahme gesichert, am Strom bzw. von Hand nachholen", async () => {
     let onBattery = true;
     const { store, m, rec, cap } = setup({ defer: () => onBattery });
