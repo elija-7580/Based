@@ -30,6 +30,67 @@ describe("WorkspaceStore", () => {
     expect(s.canUndo).toBe(false);
   });
 
+  it("atomic: mehrere Transaktionen werden ein Undo-Schritt und ein Commit", () => {
+    const { s } = store([block("a", "w", "a0", "alt"), block("b", "w", "a1", "alt")]);
+    const changes: number[] = [];
+    s.observe((c) => changes.push(c.keys.length));
+    s.atomic("Agent", () => {
+      s.setText("a", "eins");
+      s.transact("zwei", (tx) => tx.update("b", (x) => { x.text = "zwei"; }));
+      // Lesen sieht, was die Teile schon geschrieben haben
+      expect(s.blocks.get("a")?.text).toBe("eins");
+    });
+    expect(changes).toEqual([2]);
+    expect(s.undo().name).toBe("Agent");
+    expect([s.blocks.get("a")?.text, s.blocks.get("b")?.text]).toEqual(["alt", "alt"]);
+    expect(s.canUndo).toBe(false);
+  });
+
+  it("atomic: wirft der Rumpf, ist nichts geschrieben; ein gefangener Fehler eines Teils dreht nur diesen Teil zurück", () => {
+    const { s } = store([block("a", "w", "a0", "alt"), block("b", "w", "a1", "alt")]);
+    expect(() => s.atomic("Agent", () => {
+      s.setText("a", "neu");
+      throw new Error("kaputt");
+    })).toThrow("kaputt");
+    expect(s.blocks.get("a")?.text).toBe("alt");
+    expect(s.canUndo).toBe(false);
+
+    s.atomic("Agent", () => {
+      s.setText("a", "eins");
+      try {
+        s.transact("Teil", (tx) => {
+          tx.update("a", (x) => { x.text = "halb"; });
+          tx.update("b", (x) => { x.text = "halb"; });
+          throw new Error("Zeile falsch");
+        });
+      } catch { /* der Rest gilt */ }
+      expect(s.blocks.get("a")?.text).toBe("eins");
+    });
+    expect([s.blocks.get("a")?.text, s.blocks.get("b")?.text]).toEqual(["eins", "alt"]);
+    s.undo();
+    expect(s.blocks.get("a")?.text).toBe("alt");
+  });
+
+  it("undoStep nimmt genau einen Schritt zurück, auch wenn danach andere kamen; Fremdes bleibt", () => {
+    const { s } = store([block("a", "w", "a0", "alt"), block("b", "w", "a1", "alt")]);
+    s.setText("a", "Agent");
+    const step = s.lastUndoStep!;
+    s.setText("b", "Nutzer");
+    expect(s.undoStep(step)).toMatchObject({ name: "Typing", applied: 1, skipped: 0 });
+    expect([s.blocks.get("a")?.text, s.blocks.get("b")?.text]).toEqual(["alt", "Nutzer"]);
+    // den Schritt gibt es nicht mehr
+    expect(s.undoStep(step).name).toBeNull();
+    // der Schritt des Nutzers ist weiter der oberste
+    s.undo();
+    expect(s.blocks.get("b")?.text).toBe("alt");
+
+    s.setText("a", "Agent");
+    const again = s.lastUndoStep!;
+    s.transact("Nutzer", (tx) => tx.update("a", (x) => { x.text = "vom Nutzer überschrieben"; }), { undoable: false });
+    expect(s.undoStep(again)).toMatchObject({ applied: 0, skipped: 1 });
+    expect(s.blocks.get("a")?.text).toBe("vom Nutzer überschrieben");
+  });
+
   it("lokale Änderung bekommt neuen Stempel, Bearbeiter und Zeit", () => {
     const { s } = store([block("a", "w", "a0")]);
     s.setText("a", "neu");

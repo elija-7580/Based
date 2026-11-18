@@ -127,7 +127,7 @@ describe("gegen den Server (MCP)", () => {
     const s = await connect(url, TOKEN);
     await new BasedCLI(s, { out: (l) => lines.push(l), stdin: () => "Hello from the **CLI**\n" }).execute({ name: "pageNew", title: "CLI Notes", parent });
     await s.close();
-    expect(lines.join("\n")).toMatch(/^Created CLI Notes \(id: [0-9A-F-]{36}/);
+    expect(lines.join("\n")).toMatch(/^Created page “CLI Notes” \(id: [0-9A-F-]{36}/);
     const got = await run(["page", "get", "CLI Notes"]);
     expect(got.code).toBe(0);
     expect(got.out).toBe("# CLI Notes\n\nHello from the **CLI**\n");

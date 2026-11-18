@@ -64,7 +64,7 @@ describe("WorkspaceTools – Seiten", () => {
     expect(ok("list_pages")).toBe(`- Lisbon trip (id: ${id})`);
     expect(ok("list_pages", { parent_id: id })).toBe(`- Day 1 (id: ${sub})`);
     expect(ok("search", { query: "sunscreen" })).toContain(`- Lisbon trip (id: ${id})`);
-    expect(ok("search", { query: "zzzz-nothing" })).toBe("No pages found.");
+    expect(ok("search", { query: "zzzz-nothing" })).toBe("No matches.");
   });
 
   it("jedes Schreib-Werkzeug ist genau ein Undo-Schritt", () => {
@@ -152,13 +152,13 @@ describe("WorkspaceTools – Seiten", () => {
     trashPages(store, [id]);
     const before = snapshot(store);
     const undoable = store.canUndo;
-    expect(call("append_markdown", { page_id: id, markdown: "y" })).toEqual({ text: `Page ${id} is in the Trash`, isError: true });
+    expect(call("append_markdown", { page_id: id, markdown: "y" })).toEqual({ text: `Page ${id} is in the Trash (restore_page brings it back)`, isError: true });
     expect(call("append_markdown", { page_id: "nope", markdown: "y" })).toEqual({ text: "No page with id nope", isError: true });
     expect(call("create_page", { title: "Child", parent_id: "nope" }).isError).toBe(true);
     expect(call("find_replace", { page_id: id }).isError).toBe(true);
     expect(call("update_page", { page_id: id }).isError).toBe(true);
     expect(call("launch_rocket", {})).toEqual({ text: "Unknown tool launch_rocket", isError: true });
-    expect(call("read_page", "not an object" as never).text).toBe("Missing argument page_id");
+    expect(call("read_page", "not an object" as never).text).toBe("Missing argument id.");
     expect(snapshot(store)).toBe(before);
     expect(store.canUndo).toBe(undoable);
     // lesen geht auch im Papierkorb, mit Hinweis
@@ -192,8 +192,17 @@ describe("WorkspaceTools – Seiten", () => {
   it("Schreib-Werkzeuge sind als solche markiert (für „Ask before edits“)", () => {
     const { tools } = setup();
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
-    expect(write).toEqual(["create_page", "draw_board", "append_markdown", "replace_page_content", "find_replace", "update_page", "add_row", "update_row"]);
-    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual(["search", "read_page", "list_pages", "read_board", "list_files", "list_databases", "query_database"]);
+    expect(write).toEqual([
+      "create_page", "append_markdown", "replace_page_content", "find_replace", "update_page", "move_page", "duplicate_page", "trash_page", "restore_page", "set_favorite",
+      "draw_board", "add_row", "update_row", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
+      "ask_main_agent", "resolve_inbox", "create_project", "update_project_status", "undo_last",
+    ]);
+    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual([
+      "based_guide", "search", "read_page", "list_pages", "list_trash", "backlinks", "read_board", "list_files", "list_databases", "database_schema", "query_database", "list_views",
+      "recall", "related", "about_me", "list_skills", "load_skill", "list_runs", "get_run", "inbox", "list_projects", "get_project",
+    ]);
+    // was etwas verwerfen kann, ist als solches markiert
+    expect(tools.specs.map((s) => s.name).filter((n) => tools.isDestructive(n))).toEqual(["replace_page_content", "trash_page", "update_database", "delete_view"]);
     expect(tools.isWrite("unknown"), "Unbekanntes gilt als Schreiben").toBe(true);
     for (const s of tools.specs) expect(s.inputSchema).toMatchObject({ type: "object" });
   });
@@ -216,7 +225,7 @@ describe("WorkspaceTools – Datenbanken", () => {
   it("list_databases zeigt Schema und Optionen", () => {
     const { ok, db } = withDatabase();
     const text = ok("list_databases");
-    expect(text).toContain(`- Tasks (id: ${db}, 0 rows)`);
+    expect(text).toContain(`- Tasks (id: ${db}) — 0 rows — `);
     expect(text).toContain("Stage: select [Todo, Done]");
     expect(text).toContain("Points: number");
   });
@@ -250,14 +259,14 @@ describe("WorkspaceTools – Datenbanken", () => {
   it("ungültige Werte: Fehler mit Hinweis, es wird nichts geschrieben (auch keine halbe Zeile)", () => {
     const { store, call, db, ok, idIn } = withDatabase();
     const before = snapshot(store);
-    expect(call("add_row", { database_id: db, title: "X", properties: { Stage: "Maybe" } })).toEqual({ text: "Property “Stage” (select): can't read “Maybe”. Options: Todo, Done", isError: true });
-    expect(call("add_row", { database_id: db, title: "X", properties: { Nope: "1" } }).text).toContain("No property “Nope” in this database. Properties: ");
+    // eine Auswahl, die es noch nicht gibt, wird angelegt (wie beim Tippen in der Zelle) – ein Status nicht
+    expect(call("add_row", { database_id: db, title: "X", properties: { Nope: "1" } }).text).toContain("No property “Nope”. Properties: ");
     expect(call("add_row", { database_id: db, title: "X", properties: { Points: "many" } }).isError).toBe(true);
     expect(call("add_row", { database_id: "missing" }).isError).toBe(true);
     expect(snapshot(store)).toBe(before);
     const row = idIn(ok("add_row", { database_id: db, title: "Y", properties: { Points: "1" } }));
     const after = snapshot(store);
-    expect(call("update_row", { row_id: row, title: "Z", properties: { Points: "2", Stage: "Maybe" } }).isError).toBe(true);
+    expect(call("update_row", { row_id: row, title: "Z", properties: { Stage: "Later", Points: "many" } }).isError).toBe(true);
     expect(snapshot(store), "gültige Teile werden nicht vorab geschrieben").toBe(after);
     expect(call("update_row", { row_id: "nope", title: "Z" }).isError).toBe(true);
   });
@@ -267,6 +276,145 @@ describe("WorkspaceTools – Datenbanken", () => {
     for (let i = 0; i < 5; i++) ok("add_row", { database_id: db, title: "Row " + i });
     const text = ok("query_database", { database_id: db, limit: 2, offset: 1 });
     expect(text.split("\n").map((l) => l.replace(/ \(id: [^)]+\)/, ""))).toEqual(["- Row 1", "- Row 2", "… 2 more (offset: 3)"]);
+  });
+});
+
+// docs/agent-parity.md: eine Werkzeug-Schicht – was für alle Werkzeuge gilt, steht einmal in WorkspaceTools.
+describe("Agent-Parität: Regeln für alle Werkzeuge", () => {
+  it("Argumente werden vor dem Lauf geprüft; die Meldung sagt, was richtig wäre", () => {
+    const { store, call, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Doc" }));
+    const before = snapshot(store);
+    expect(call("append_markdown", { id, markdown: "x", colour: "red" }).text).toBe("Unknown argument colour. Arguments: id, markdown.");
+    expect(call("append_markdown", { id }).text).toBe("Missing argument markdown.");
+    expect(call("list_pages", { limit: "many" }).text).toBe("Argument limit must be a number.");
+    expect(call("list_pages", { limit: 0 }).text).toBe("Argument limit must be at least 1.");
+    expect(call("remember", { fact: "x", type: "Secret" }).text).toBe("Argument type must be one of: Profile, Preference, Work, People, Notes.");
+    expect(call("set_favorite", { id, favorite: "maybe" }).text).toBe("Argument favorite must be true or false.");
+    expect(snapshot(store)).toBe(before);
+    // Was Modelle gern falsch schreiben, wird angenommen: Zahl als Text, Wahrheitswert als Text, null = weggelassen
+    expect(call("list_pages", { limit: "5", parent: null }).isError).toBe(false);
+    expect(call("set_favorite", { id, favorite: "true" }).isError).toBe(false);
+    expect(store.workspace.favorites).toContain(id);
+  });
+
+  it("frühere Argumentnamen gehen weiter (page_id, parent_id, database_id, row_id, properties)", () => {
+    const { store, ok, idIn } = setup();
+    const a = idIn(ok("create_page", { title: "A" }));
+    const b = idIn(ok("create_page", { title: "B", parent_id: a }));
+    expect(store.blocks.get(b)?.parent).toBe("b:" + a);
+    expect(ok("read_page", { page_id: b })).toBe(ok("read_page", { id: b }));
+    expect(ok("list_pages", { parent_id: a })).toBe(ok("list_pages", { parent: a }));
+  });
+
+  it("ein Werkzeug, das intern mehrere Schritte macht, ist trotzdem EIN Undo-Schritt und ein Change", () => {
+    const { store, ok, idIn } = setup();
+    const made = ok("create_database", { title: "Tasks", properties: { Stage: "select", Points: "number", Due: "date" } });
+    const db = /Created database (\S+)/.exec(made)![1]!;
+    const changes: string[] = [];
+    const off = store.observe((c) => changes.push(c.name ?? ""));
+    // neue Auswahl-Option + Zeile + drei Werte: im Kern fünf Transaktionen
+    const row = idIn(ok("add_row", { id: db, values: { Name: "Ship", Stage: "Doing", Points: "3", Due: "2026-11-20" } }));
+    off();
+    expect(changes).toEqual(["Agent: add row"]);
+    expect(ok("query_database", { id: db })).toBe(`- Ship (id: ${row}) — Stage: Doing; Points: 3; Due: 2026-11-20`);
+    store.undo();
+    expect(rowsOf(store, db)).toEqual([]);
+    expect(store.databases.get(db)!.properties.find((p) => p.name === "Stage")!.options ?? [], "auch die neue Option ist wieder weg").toEqual([]);
+    // create_database selbst (Datenbank, Ansicht, drei Properties) war auch einer
+    store.undo();
+    expect(store.databases.has(db)).toBe(false);
+  });
+
+  it("alles oder nichts über mehrere Schritte: scheitert der dritte, sind die ersten beiden nicht geschrieben", () => {
+    const { store, ok, call } = setup();
+    const db = /Created database (\S+)/.exec(ok("create_database", { title: "T", properties: { Points: "number" } }))![1]!;
+    const before = snapshot(store);
+    const dbBefore = JSON.stringify(store.databases.get(db));
+    const r = call("add_row", { id: db, values: { Name: "X", Tag: "new" } });
+    expect(r.isError).toBe(true);
+    const u = call("update_database", { database_id: db, title: "Renamed", add_properties: { Stage: "select" }, delete_properties: ["Nope"] });
+    expect(u.isError).toBe(true);
+    expect(snapshot(store)).toBe(before);
+    expect(JSON.stringify(store.databases.get(db))).toBe(dbBefore);
+  });
+
+  it("wirft ein Werkzeug, nachdem Kern-Funktionen schon geschrieben haben, ist nichts davon im Store (auch kein Undo-Schritt)", () => {
+    const store = memoryStore();
+    const tools = new WorkspaceTools(store, {
+      extra: () => [{
+        group: "pages", write: true,
+        spec: { name: "half_done", description: "Writes two pages with core functions, then fails.", inputSchema: { type: "object", properties: {}, required: [], additionalProperties: false } },
+        run: () => {
+          createPage(store, { title: "One" });
+          createPage(store, { title: "Two" });
+          throw new Error("third step failed");
+        },
+      }],
+    });
+    const changes: number[] = [];
+    store.observe((c) => changes.push(c.keys.length));
+    expect(tools.callSync("half_done", {})).toEqual({ text: "Tool half_done failed: third step failed", isError: true });
+    expect(store.blocks.size).toBe(0);
+    expect(store.canUndo).toBe(false);
+    expect(changes, "kein Beobachter (Sync, Suche) hat den halben Stand gesehen").toEqual([]);
+  });
+
+  it("undo_last nimmt genau den letzten eigenen Aufruf zurück – auch wenn der Mensch danach weitergeschrieben hat", () => {
+    const { store, ok, call, idIn } = setup();
+    expect(call("undo_last").text).toBe("There is nothing of yours to undo here.");
+    const id = idIn(ok("create_page", { title: "Doc", markdown: "keep" }));
+    ok("append_markdown", { id, markdown: "agent line" });
+    const mine = createPage(store, { title: "Typed by the user" });
+    expect(ok("undo_last")).toBe("Undid append_markdown (1 record restored).");
+    expect(body(store, id).map((b) => plainText(b.text))).toEqual(["keep"]);
+    expect(store.blocks.has(mine), "die Seite des Nutzers bleibt").toBe(true);
+    // nur der letzte Aufruf, nicht der davor
+    expect(call("undo_last").isError).toBe(true);
+    expect(store.blocks.has(id)).toBe(true);
+    // hat der Mensch dieselbe Stelle inzwischen geändert, bleibt seine Fassung
+    ok("update_page", { id, title: "From the agent" });
+    store.transact("user", (tx) => tx.update(id, (x) => { x.text = "From the user"; }));
+    expect(call("undo_last")).toEqual({ text: "Your last change (update_page) was not undone: everything it touched has been edited since.", isError: true });
+    expect(plainText(store.blocks.get(id)!.text)).toBe("From the user");
+  });
+
+  it("undo_last gilt je Agent: keiner nimmt den Schritt eines anderen zurück", () => {
+    const store = memoryStore();
+    const tools = new WorkspaceTools(store);
+    const as = (name: string) => ({ kind: "agent" as const, name });
+    const a = /\(id: ([^)]+)\)/.exec(tools.callSync("create_page", { title: "By A" }, as("A")).text)![1]!;
+    expect(tools.callSync("undo_last", {}, as("B")).isError).toBe(true);
+    expect(store.blocks.has(a)).toBe(true);
+    expect(tools.callSync("undo_last", {}, as("A")).isError).toBe(false);
+    expect(store.blocks.has(a)).toBe(false);
+  });
+
+  it("Bereiche: ein Host bietet nur an, was er braucht; wartende Werkzeuge laufen über call()", async () => {
+    const store = memoryStore();
+    const few = new WorkspaceTools(store, { groups: ["pages"] });
+    expect(few.specs.map((s) => s.name)).not.toContain("query_database");
+    expect(few.callSync("query_database", { id: "x" })).toEqual({ text: "Unknown tool query_database", isError: true });
+    const all = new WorkspaceTools(store);
+    createPage(store, { title: "Zebra finch notes" });
+    expect(all.callSync("recall", { query: "zebra" }).text).toContain("call()");
+    const r = await all.call("recall", { query: "zebra finch" });
+    expect(r.isError, r.text).toBe(false);
+    expect(r.text).toContain("Zebra finch notes");
+    all.dispose();
+    few.dispose();
+  });
+
+  it("jedes Werkzeug hat Bereich, Beschreibung und ein geschlossenes Schema", () => {
+    const { tools } = setup();
+    expect(new Set(tools.all.map((d) => d.spec.name)).size).toBe(tools.all.length);
+    for (const d of tools.all) {
+      expect(d.spec.description.length, d.spec.name).toBeGreaterThan(20);
+      expect(d.spec.inputSchema, d.spec.name).toMatchObject({ type: "object", additionalProperties: false });
+      // jeder frühere Name zeigt auf ein Argument, das es gibt
+      const props = Object.keys((d.spec.inputSchema as { properties: object }).properties);
+      for (const now of Object.values(d.aliases ?? {})) expect(props, d.spec.name).toContain(now);
+    }
   });
 });
 

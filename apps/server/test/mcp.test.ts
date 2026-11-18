@@ -41,7 +41,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_view", "database_schema", "delete_view", "draw_board", "duplicate_page", "find_replace", "get_project", "get_run", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "update_database", "update_page", "update_project_status", "update_row", "update_view", "upload_file"].sort(),
+      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_view", "database_schema", "delete_view", "draw_board", "duplicate_page", "find_replace", "get_project", "get_run", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "undo_last", "update_database", "update_page", "update_project_status", "update_row", "update_view", "upload_file"].sort(),
     );
   });
 
@@ -78,6 +78,32 @@ describe("MCP über Streamable HTTP", () => {
     expect(inbox).not.toContain("Details…");
   });
 
+  it("Agent-Parität: MCP meldet genau die Werkzeuge der einen Schicht an – Name, Beschreibung, Schema, Einordnung", async () => {
+    const { app, client, call } = await httpClient();
+    const listed = (await client.listTools()).tools;
+    const layer = app.pages.tools({ assets: app.assets }).all;
+    expect(listed.map((t) => t.name)).toEqual(layer.map((d) => d.spec.name));
+    for (const d of layer) {
+      const t = listed.find((x) => x.name === d.spec.name)!;
+      expect(t.description).toBe(d.spec.description);
+      expect(t.inputSchema).toEqual(d.spec.inputSchema);
+      expect(t.annotations?.readOnlyHint, d.spec.name).toBe(!d.write);
+    }
+    const hint = (name: string) => listed.find((t) => t.name === name)!.annotations;
+    expect(hint("list_views")).toEqual({ readOnlyHint: true });
+    for (const name of ["delete_view", "update_database", "trash_page", "replace_page_content"]) expect(hint(name)?.destructiveHint, name).toBe(true);
+    expect(hint("append_markdown")?.destructiveHint).toBe(false);
+    // Fehler in den Argumenten kommen als Antwort des Werkzeugs (das Modell liest sie), nicht als Protokollfehler
+    const bad = await call("append_markdown", { id: "x", text: "y" });
+    expect(bad.isError).toBe(true);
+    expect(textOf(bad)).toBe("Unknown argument text. Arguments: id, markdown.");
+    expect(textOf(await call("launch_rocket"))).toBe("Unknown tool launch_rocket");
+    // undo_last über MCP: der letzte Aufruf dieses Clients
+    const id = idIn(textOf(await call("create_page", { title: "Oops" })));
+    expect(textOf(await call("undo_last"))).toContain("Undid create_page");
+    expect(app.sync.store.blocks.has(id)).toBe(false);
+  });
+
   it("BSD-522: Schreiben über MCP setzt Herkunft „ai“ und Agent-Autor; in eine Seite des Nutzers → „mixed“", async () => {
     const { app, call } = await httpClient();
     const store = app.sync.store;
@@ -106,10 +132,13 @@ describe("MCP über Streamable HTTP", () => {
     const store = app.sync.store;
     const a = idIn(textOf(await call("create_page", { title: "Alpha", markdown: "Hallo **Welt**, Hallo Welt" })));
     const b = idIn(textOf(await call("create_page", { title: "Beta", markdown: `Siehe [Alpha](based://page/${a})` })));
-    expect(textOf(await call("find_replace", { id: a, find: "Hallo", replace: "Servus" }))).toBe("Replaced 1 match(es) in Alpha.");
+    expect(textOf(await call("find_replace", { id: a, find: "Hallo", replace: "Servus" }))).toBe("Replaced 1 occurrence in “Alpha”");
     expect(textOf(await call("read_page", { id: a }))).toContain("Servus **Welt**, Hallo Welt");
-    expect(textOf(await call("find_replace", { id: a, find: "Hallo", replace: "Grüß", all: true }))).toBe("Replaced 1 match(es) in Alpha.");
-    expect(textOf(await call("find_replace", { id: a, find: "fehlt", replace: "x" }))).toBe("No match for that text in Alpha.");
+    expect(textOf(await call("find_replace", { id: a, find: "Hallo", replace: "Grüß", all: true }))).toBe("Replaced 1 occurrence in “Alpha”");
+    // nicht gefunden: Fehler, nichts geändert (so merkt der Agent es sicher)
+    const miss = await call("find_replace", { id: a, find: "fehlt", replace: "x" });
+    expect(miss.isError).toBe(true);
+    expect(textOf(miss)).toBe("“fehlt” was not found in “Alpha”. Nothing was changed.");
 
     expect(textOf(await call("backlinks", { id: a }))).toBe(`- Beta (id: ${b})`);
     expect(textOf(await call("backlinks", { id: b }))).toBe("No backlinks.");
@@ -289,7 +318,7 @@ describe("MCP über stdio", () => {
     await client.connect(transport);
     try {
       const r = (await client.callTool({ name: "create_page", arguments: { title: "Über stdio" } })) as ToolResult;
-      expect(textOf(r)).toContain("Created Über stdio");
+      expect(textOf(r)).toContain("Created page “Über stdio”");
       // BSD-541: der Weg, den Claude Code oder Codex lokal gehen
       expect(textOf((await client.callTool({ name: "remember", arguments: { fact: "Arbeitet am liebsten morgens.", type: "Preference" } })) as ToolResult)).toContain("Remembered");
       expect(textOf((await client.callTool({ name: "recall", arguments: { query: "morgens arbeiten" } })) as ToolResult)).toContain("Arbeitet am liebsten morgens.");
@@ -318,14 +347,17 @@ describe("MCP: Datenbanken (BSD-221)", () => {
     expect(textOf(await call("database_schema", { id: dbID }))).toContain("| Due | date | YYYY-MM-DD or YYYY-MM-DD HH:mm |");
 
     const added = textOf(await call("add_row", { id: dbID, values: { Name: "Write docs", Status: "Doing", Points: "3", Due: "2026-11-12" } }));
-    const rowID = /Added row ([0-9a-f-]{36})/.exec(added)![1]!;
+    expect(added).toMatch(/^Added row “Write docs” \(id: /);
+    const rowID = idIn(added);
     expect(store.databases.get(dbID)!.properties.find((p) => p.name === "Status")!.options!.map((o) => o.name)).toContain("Doing");
     await call("add_row", { id: dbID, values: { Name: "Fix bug", Points: "8" } });
 
     let rows = textOf(await call("query_database", { id: dbID, sort: "Points", descending: true }));
-    expect(rows.split("\n")[0]).toContain("[Fix bug]");
-    expect(rows).toContain(`[Write docs](based://page/${rowID}) — `);
+    expect(rows.split("\n")[0]).toContain("- Fix bug (id: ");
+    expect(rows).toContain(`- Write docs (id: ${rowID}) — `);
     expect(rows).toContain("Status: Doing");
+    // Daten kommen so zurück, wie man sie schreibt
+    expect(rows).toContain("Due: 2026-11-12");
     expect(textOf(await call("query_database", { id: dbID, search: "doing" })).split("\n")).toHaveLength(1);
 
     await call("update_row", { id: rowID, values: { Points: "5", Status: "" } });

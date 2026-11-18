@@ -58,7 +58,7 @@ describe("Chat über den Store-Worker", () => {
     await settle();
     expect(a.client.getState().chats?.map((c) => c.title)).toEqual(["make it"]);
     // ⌘Z (Befehl undo) nimmt die Seite samt Inhalt zurück – in einem Schritt; der Chat bleibt
-    expect(await a.client.command({ op: "undo" })).toBe("Agent: new page");
+    expect(await a.client.command({ op: "undo" })).toBe("Agent: create page");
     await settle();
     expect([...a.client.getState().titles.values()]).not.toContain("From agent");
     expect((await a.client.chatLoad(chat.id)).events).toHaveLength(5);

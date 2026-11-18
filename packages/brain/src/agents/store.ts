@@ -2,7 +2,7 @@
 // Methode ist synchron und schreibt in genau einer Transaktion; Auftrags- und Run-Verwaltung ist kein Undo-Schritt
 // (⌘Z nimmt keinen Zustandswechsel zurück) – nur das Ausführen eines Plans ist einer (executor.ts).
 import { insertPage, makeRecordID, MarkdownImporter, plainText, sortKeys, type WorkspaceStore } from "@based/core";
-import { putMarkdownBlocks } from "../tools.js";
+import { putMarkdownBlocks } from "../tools/base.js";
 import { spentThisMonth, usdToEUR } from "./budget.js";
 import { assignTargets, executePlan, fileAsNote, undoChanges } from "./executor.js";
 import type { PlannerExample } from "./planner.js";
