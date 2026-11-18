@@ -281,6 +281,12 @@ for (const theme of ["light", "dark"] as const) {
         }
       };
       const welcome = page.getByTestId("welcome");
+      // BSD-551: Einstieg in Schritten – Punkte, Fortschritt und Knöpfe nur mit Token-Farben, dann zur Wahl
+      await look("Einstieg: Punkt", welcome.locator(".tour-point").first(), ["rest"]);
+      await look("Einstieg: Fortschritt", welcome.getByTestId("tour-progress"), ["rest"]);
+      await look("Einstieg: Continue", welcome.getByRole("button", { name: "Continue" }), ["rest", "hover", "pressed", "focus"]);
+      await look("Einstieg: Skip", welcome.getByRole("button", { name: "Skip" }), ["rest", "hover", "pressed", "focus"]);
+      await welcome.getByRole("button", { name: "Skip" }).click();
       await look("Willkommen: Karte", welcome.getByRole("button", { name: /Start empty/ }), ["rest", "hover", "pressed", "focus"]);
       await look("Willkommen: Vorlage", welcome.getByRole("button", { name: "Journal", exact: true }), ["rest", "hover", "pressed", "focus"]);
 

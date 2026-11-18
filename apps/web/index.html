@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Based</title>
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // BSD-550: Hell/Dunkel vor dem ersten Bild, noch bevor die App lädt (kein heller Blitz auf einem dunklen Mac).
+      // Dieselbe Regel wie src/appearance.ts: gespeicherte Wahl, sonst „system“.
+      try {
+        var t = JSON.parse(localStorage.getItem("based.appearance") || "{}").theme;
+        if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = t;
+        document.documentElement.style.colorScheme = t;
+      } catch (e) {}
+    </script>
   </head>
   <body writingsuggestions="false">
     <div id="root"></div>

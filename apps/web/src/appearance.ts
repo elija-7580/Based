@@ -23,7 +23,10 @@ export interface Appearance {
   agentDetails: boolean;
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { theme: "light", font: "system", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false };
+// BSD-550 (Elija 18.11.): Standard ist „system“ – ein dunkler Mac zeigt beim ersten Start eine dunkle App. Gespeicherte
+// Werte bleiben, wie sie sind (saveAppearance schreibt das Theme immer mit). Dieselbe Regel steht in index.html, damit
+// schon das erste Bild stimmt (kein heller Blitz).
+export const DEFAULT_APPEARANCE: Appearance = { theme: "system", font: "system", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false };
 
 const KEY = "based.appearance";
 
@@ -33,7 +36,7 @@ export function loadAppearance(storage: Pick<Storage, "getItem"> | undefined = s
     if (!raw) return { ...DEFAULT_APPEARANCE };
     const v = JSON.parse(raw) as Partial<Appearance>;
     return {
-      theme: v.theme === "dark" || v.theme === "system" ? v.theme : "light",
+      theme: v.theme === "light" || v.theme === "dark" || v.theme === "system" ? v.theme : DEFAULT_APPEARANCE.theme,
       // Vor dem 18.11. brachte Stil Bold seine Schrift mit: wer Bold gespeichert hat, behält sie.
       font: v.font === "based" || (v.font === undefined && v.style === "bold") ? "based" : "system",
       style: v.style === "bold" ? "bold" : "default",
