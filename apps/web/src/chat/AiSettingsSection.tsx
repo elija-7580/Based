@@ -3,13 +3,13 @@
 // Schlüssel gehen nur in die verschlüsselte Ablage (shell/secrets.ts) und werden nie wieder angezeigt. Hier wird
 // nichts ins Netz geschickt.
 import { Button } from "@astryxdesign/core/Button";
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { codingErrorMessage, type ChatGPTStatus, type PermissionMode } from "@based/brain";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { aiConfig, parseModelList, PROVIDERS, providerInfo, type AiConfig, type ProviderKind } from "./aiConfig.js";
 import "./chat.css";
+import { BasedSwitcher } from "@based/ui/astryx";
 
 export const PERMISSIONS: { mode: PermissionMode; name: string; desc: string }[] = [
   { mode: "ask", name: "Ask every time", desc: "Confirm each action, also searching and reading" },
@@ -55,9 +55,8 @@ export function AiSettingsSection({ config = aiConfig(), compact = false }: { co
           Use your own API key or a model on this computer. Keys are stored encrypted in this browser and only sent to the provider you choose — when you send a message.
         </p>
       </div>
-      <SegmentedControl label="Provider" value={kind} onChange={(v) => pick(v as ProviderKind)} layout={compact ? "fill" : "hug"}>
-        {PROVIDERS.map((x) => <SegmentedControlItem key={x.kind} value={x.kind} label={x.kind === "compatible" ? "Other" : x.name} />)}
-      </SegmentedControl>
+      <BasedSwitcher label="Provider" value={kind} onChange={(v) => pick(v as ProviderKind)} fill={compact}
+        items={PROVIDERS.map((x) => ({ id: x.kind, label: x.kind === "compatible" ? "Other" : x.name }))} />
       <p className="t-desc">{info.hint}{kind === "ollama" ? " Ollama must allow this app's address (OLLAMA_ORIGINS)." : ""}</p>
       {info.viaServer ? <ChatGPTPanel config={config} on={p.models.length > 0} /> : (
       <form className="fields" onSubmit={(e) => { e.preventDefault(); void save(); }}>
@@ -83,9 +82,8 @@ export function AiSettingsSection({ config = aiConfig(), compact = false }: { co
       )}
       <div className="fields">
         <span className="setting-label" id="ai-permission">What Based may do alone</span>
-        <SegmentedControl label="What Based may do alone" value={state.settings.permission} onChange={(v) => config.setPermission(v as PermissionMode)} layout={compact ? "fill" : "hug"}>
-          {PERMISSIONS.map((x) => <SegmentedControlItem key={x.mode} value={x.mode} label={x.name} />)}
-        </SegmentedControl>
+        <BasedSwitcher label="What Based may do alone" value={state.settings.permission} onChange={(v) => config.setPermission(v as PermissionMode)} fill={compact}
+          items={PERMISSIONS.map((x) => ({ id: x.mode, label: x.name }))} />
         <p className="t-desc">{PERMISSIONS.find((x) => x.mode === state.settings.permission)?.desc}</p>
       </div>
     </section>

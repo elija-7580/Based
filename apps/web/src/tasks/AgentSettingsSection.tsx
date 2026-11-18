@@ -4,7 +4,6 @@
 import { Button } from "@astryxdesign/core/Button";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { NumberInput } from "@astryxdesign/core/NumberInput";
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
@@ -17,6 +16,7 @@ import { PERMISSIONS } from "../chat/AiSettingsSection.js";
 import { scheduleHint, useServerRuns } from "./serverRuns.js";
 import { Group, Row } from "../screens/settings/parts.js";
 import { registerSettingsSection, type SettingsSectionProps } from "../screens/settings/registry.js";
+import { BasedSwitcher } from "@based/ui/astryx";
 
 const SAME = "same";
 
@@ -65,9 +65,8 @@ export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
             onChange={(v) => void (v === SAME ? save({}, ["model"]) : save({ model: v }))} />
         </Row>
         <Row label="What the main agent may do alone" hint={PERMISSIONS.find((p) => p.mode === main.permissions.mode)?.desc}>
-          <SegmentedControl label="What the main agent may do alone" value={main.permissions.mode} onChange={(v) => void save({ mode: v as PermissionMode })}>
-            {PERMISSIONS.map((p) => <SegmentedControlItem key={p.mode} value={p.mode} label={p.name} />)}
-          </SegmentedControl>
+          <BasedSwitcher label="What the main agent may do alone" value={main.permissions.mode} onChange={(v) => void save({ mode: v as PermissionMode })}
+            items={PERMISSIONS.map((p) => ({ id: p.mode, label: p.name }))} />
         </Row>
         <TextArea label="Rules" width="100%" rows={4} value={rules} onChange={setRules}
           placeholder={"allow based.create_page\nask based.spawn_agent\ndeny based.*(path:Private/**)"}
@@ -104,11 +103,8 @@ export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
         {snap.projects.length === 0 ? <Text type="supporting" color="secondary">No projects yet. The main agent creates one when you file something into a new project.</Text> : null}
         {snap.projects.map((p) => (
           <Row key={p.id} label={p.name} hint={p.data.goal}>
-            <SegmentedControl label={`Status of ${p.name}`} value={p.data.status} onChange={(v) => void client.agents({ op: "updateProject", id: p.id, patch: { status: v as ProjectStatus } })}>
-              <SegmentedControlItem value="active" label="Active" />
-              <SegmentedControlItem value="paused" label="Paused" />
-              <SegmentedControlItem value="done" label="Done" />
-            </SegmentedControl>
+            <BasedSwitcher label={`Status of ${p.name}`} value={p.data.status} onChange={(v) => void client.agents({ op: "updateProject", id: p.id, patch: { status: v as ProjectStatus } })}
+              items={[{ id: "active", label: "Active" }, { id: "paused", label: "Paused" }, { id: "done", label: "Done" }]} />
           </Row>
         ))}
         <form onSubmit={(e) => { e.preventDefault(); if (newProject.trim()) void client.agents({ op: "createProject", name: newProject.trim() }).then(() => setNewProject("")); }}>

@@ -169,6 +169,10 @@ const KIT: Item[] = [
   { name: "Chip pressed", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Title only" }), states: ["rest", "hover"] },
   { name: "Chip disabled", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Shared only" }), states: ["disabled"] },
   { name: "Menu trigger", loc: (p) => p.getByTestId("astryx-kit").getByRole("button", { name: "Page menu" }), states: ["rest", "hover", "focus"] },
+  // Element-System v11 (BSD-525): Umschalter und Filter-Pille
+  { name: "Switcher segment", loc: (p) => p.getByTestId("kit-switcher").getByRole("radio", { name: "Graph" }), states: ["rest", "hover", "focus"] },
+  { name: "Switcher selected", loc: (p) => p.getByTestId("kit-switcher").getByRole("radio", { name: "Pages" }), states: ["rest", "hover"] },
+  { name: "Picker", loc: (p) => p.getByTestId("kit-picker").getByRole("button"), states: ["rest", "hover", "focus"] },
 ];
 
 // Zwei Hälften je Theme (Knöpfe | Felder, Tabs, Token, Pillen, Menü): jede bleibt auch unter Last weit unter 30 s.
@@ -637,3 +641,51 @@ test("Zustands-Galerie erkennt eine fremde Überfahren-Farbe", async ({ page }) 
   const bad = Object.values(await colorsOf(b)).filter((c) => !transparent(c) && !isToken(c, allowed));
   expect(bad).toContain("rgb(35, 131, 226)");
 });
+
+// BSD-525: die neuen Bausteine des Element-Systems (docs/design/elements.md, Abschnitt 4) im Design-Kit – Höhe md,
+// Filter-Pille mit Häkchen und aktivem Zustand, Seitenblatt rechts mit 480 px und Escape, Hinweis unten Mitte.
+for (const theme of ["light", "dark"] as const) {
+  test(`Design-Kit: Umschalter, Filter, Seitenblatt und Hinweis nach dem Element-System (${theme})`, async ({ page }) => {
+    await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.goto("/#prefs-kit");
+    const kit = page.getByTestId("astryx-kit");
+    await expect(kit).toBeVisible();
+    const height = async (l: Locator) => Math.round((await l.boundingBox())!.height);
+    // Umschalter: Höhe md (32), Wechsel per Klick
+    const sw = page.getByTestId("kit-switcher");
+    expect(await height(sw.getByRole("radiogroup"))).toBeGreaterThanOrEqual(32);
+    await sw.getByRole("radio", { name: "Graph" }).click();
+    await expect(sw.getByRole("radio", { name: "Graph" })).toBeChecked();
+    // Filter-Pille: „Type: All types“, Menü mit Häkchen; gesetzter Filter = selected
+    const pick = page.getByTestId("kit-picker");
+    const trigger = pick.getByRole("button");
+    await expect(trigger).toHaveText(/Type: All types/);
+    expect(await height(trigger)).toBe(32);
+    await expect(pick).not.toHaveAttribute("data-active", "");
+    await trigger.click();
+    await page.getByRole("menuitem", { name: "Pages" }).click();
+    await expect(trigger).toHaveText(/Type: Pages/);
+    await expect(pick).toHaveAttribute("data-active", "");
+    const selected = await page.evaluate(() => { const p = document.createElement("span"); p.style.color = "var(--selected)"; document.body.append(p); const c = getComputedStyle(p).color; p.remove(); return c; });
+    await page.mouse.move(5, 5);
+    await expect(trigger).toHaveCSS("background-color", selected);
+    // Seitenblatt: rechte Kante, 480 px, Escape schließt
+    await kit.getByRole("button", { name: "Open sheet" }).click();
+    const sheet = page.getByRole("dialog", { name: "Page history" });
+    await expect(sheet).toBeVisible();
+    // nach dem Einblenden (180 ms von rechts) an der rechten Kante
+    await expect.poll(async () => { const b = (await sheet.boundingBox())!; return [Math.round(b.width), Math.round(b.x + b.width)]; }).toEqual([480, 1280]);
+    await page.screenshot({ path: `../../docs/design/screens/web-elements-v11-sheet-${theme}.png` });
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+    // Hinweis: unten Mitte, Fläche wie das Menü, verschwindet nach 4 s
+    await kit.getByRole("button", { name: "Show toast" }).click();
+    const toast = page.getByTestId("kit-toast");
+    await expect(toast).toBeVisible();
+    await expect(toast).toHaveText(/Page moved to Trash/);
+    await expect.poll(async () => { const t = (await toast.boundingBox())!; return [Math.round(t.x + t.width / 2), Math.round(820 - (t.y + t.height))]; }).toEqual([640, 24]);
+    await page.screenshot({ path: `../../docs/design/screens/web-elements-v11-kit-${theme}.png` });
+    await expect(toast).toBeHidden({ timeout: 6000 });
+  });
+}

@@ -4,7 +4,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedKeys, BasedMediaPlayer, BasedMenu, BasedPopover, BasedTabs, BasedToken } from "@based/ui/astryx";
+import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedKeys, BasedMediaPlayer, BasedMenu, BasedPicker, BasedPopover, BasedSheet, BasedSwitcher, BasedTabs, BasedToast, BasedToken } from "@based/ui/astryx";
 import { useState } from "react";
 import { Icon } from "../../icons.js";
 
@@ -16,6 +16,10 @@ export function AstryxKit() {
   const [picked, setPicked] = useState("nothing yet");
   const [tab, setTab] = useState("notes");
   const [chip, setChip] = useState(true);
+  const [view, setView] = useState("pages");
+  const [type, setType] = useState("all");
+  const [sheet, setSheet] = useState(false);
+  const [toast, setToast] = useState(false);
   return (
     <VStack gap={6} className="kit" data-testid="astryx-kit">
       <VStack gap={1}>
@@ -76,6 +80,26 @@ export function AstryxKit() {
         </Card>
       </VStack>
 
+      {/* Element-System v11 (docs/design/elements.md, Abschnitt 4): Umschalter, Filter, Seitenblatt, Hinweis */}
+      <VStack gap={2}>
+        <Heading level={2}>Switcher, picker, sheet, toast</Heading>
+        <Card>
+          <VStack gap={3}>
+            <HStack gap={2} wrap="wrap" vAlign="center">
+              <BasedSwitcher label="Library view" testID="kit-switcher" value={view} onChange={setView}
+                items={[{ id: "pages", label: "Pages" }, { id: "graph", label: "Graph" }, { id: "meetings", label: "Meetings" }]} />
+              <BasedPicker label="Type" testID="kit-picker" value={type} onChange={setType} defaultValue="all"
+                options={[{ id: "all", label: "All types" }, { id: "pages", label: "Pages" }, { id: "databases", label: "Databases" }]} />
+              <BasedField label="Search" labelHidden type="search" placeholder="Search" value="" onChange={() => undefined} />
+            </HStack>
+            <HStack gap={2} wrap="wrap" vAlign="center">
+              <BasedButton label="Open sheet" onClick={() => setSheet(true)} />
+              <BasedButton label="Show toast" onClick={() => setToast(true)} />
+            </HStack>
+          </VStack>
+        </Card>
+      </VStack>
+
       <VStack gap={2}>
         <Heading level={2}>Tabs and tokens</Heading>
         <Card>
@@ -122,6 +146,12 @@ export function AstryxKit() {
       >
         <BasedField label="Page name" value={name} onChange={setName} />
       </BasedDialog>
+      <BasedSheet open={sheet} onClose={() => setSheet(false)} title="Page history" subtitle="Versions of this page" testID="kit-sheet">
+        <Text type="body" display="block">A sheet opens at the right edge and closes with Escape.</Text>
+      </BasedSheet>
+      <BasedToast open={toast} onClose={() => setToast(false)} testID="kit-toast" action={<BasedButton label="Undo" variant="ghost" onClick={() => setToast(false)} />}>
+        Page moved to Trash
+      </BasedToast>
       <BasedConfirm open={confirm} onClose={() => setConfirm(false)} title="Empty the Trash?" description="3 pages will be deleted for good. This can't be undone." actionLabel="Empty Trash" onConfirm={() => undefined} />
     </VStack>
   );

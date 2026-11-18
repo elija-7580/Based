@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buttonVariant, dialogPurpose, fieldStatus, menuItems } from "../src/astryx/variants.js";
+import { buttonVariant, dialogPurpose, fieldStatus, menuItems, pickerText } from "../src/astryx/variants.js";
 
 describe("Based-Wrapper um Astryx", () => {
   it("Button: danger heißt bei Astryx destructive, Standard ist secondary", () => {
@@ -11,6 +11,12 @@ describe("Based-Wrapper um Astryx", () => {
     expect(dialogPurpose({})).toBe("info");
     expect(dialogPurpose({ form: true })).toBe("form");
     expect(dialogPurpose({ form: true, busy: true })).toBe("required");
+  });
+  it("Filter-Pille (BasedPicker): „Label: Wert“, ohne passenden Wert nur das Label", () => {
+    const opts = [{ id: "all", label: "All types" }, { id: "page", label: "Pages" }];
+    expect(pickerText("Type", opts, "all")).toBe("Type: All types");
+    expect(pickerText("Type", opts, "page")).toBe("Type: Pages");
+    expect(pickerText("Type", opts, "gone")).toBe("Type");
   });
   it("Feld: nur ein nicht leerer Fehlertext wird zum Status", () => {
     expect(fieldStatus(undefined)).toBeUndefined();
