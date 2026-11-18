@@ -139,8 +139,8 @@ test("Theme „System“ folgt dem Betriebssystem", async ({ page }) => {
   const html = page.locator("html");
   // BSD-550: „System“ ist der Standard – ein dunkles System gibt sofort eine dunkle App
   await expect(html).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByRole("radio", { name: "System" })).toBeChecked();
-  await page.getByRole("radio", { name: "Light" }).click();
+  await expect(page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "System" })).toBeChecked();
+  await page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "Light" }).click();
   await expect(html).toHaveAttribute("data-theme", "light");
   await page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "System" }).click();
   await expect(html).toHaveAttribute("data-theme", "dark");
@@ -204,7 +204,7 @@ test("erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeich
   await page.goto("/#appearance");
   await ready(page);
   await expect(html).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByRole("radio", { name: "System" })).toBeChecked();
+  await expect(page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "System" })).toBeChecked();
 
   // gespeicherte Wahl bleibt (Update von 0.2.x)
   await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false })));
@@ -215,5 +215,5 @@ test("erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeich
   await page.reload();
   await ready(page);
   await expect(html).toHaveAttribute("data-theme", "light");
-  await expect(page.getByRole("radio", { name: "Light" })).toBeChecked();
+  await expect(page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "Light" })).toBeChecked();
 });
