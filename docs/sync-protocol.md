@@ -83,6 +83,12 @@ match the server's, nothing is exchanged:
 
 Convert the server first (`based-server --property-records`), then each device.
 
+**Later protocols (BSD-583).** `info` is sent with the same header. A later server (e.g. protocol 4 with end-to-end
+envelopes) that can still serve the client answers `info` with the client's protocol; one that cannot reports its own,
+higher number. A client that sees a `protocol` above the highest it speaks (TypeScript client: 3) stops before the
+push, like on a `426`: nothing is sent or pulled, cursors stay, local changes wait, and the status says
+"Sync paused: update Based to keep syncing …".
+
 ### `GET /sync/v2/info`
 
 ```json
