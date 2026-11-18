@@ -68,7 +68,10 @@
 }
 .bx2-gutter-btn:hover { background: var(--selected); color: var(--ink); }
 .bx2-grip { width: 18px; cursor: grab; touch-action: none; }
-.bx2-is-dragging, .bx2-is-dragging * { cursor: grabbing !important; }
+/* BSD-532: Greif-Cursor über eine Decke (BlockEditor startHandle), nicht über „*“ – das rechnete beim Start jedes Element
+   der Seite neu (300 Blöcke: Start 100 → 25 ms in Chromium) */
+.bx2-is-dragging { cursor: grabbing; }
+.bx2-drag-cover { position: fixed; inset: 0; z-index: 998; cursor: grabbing; touch-action: none; }
 
 /* Textfelder (Überschriften stecken in einem Rahmen mit Rolle „heading“) */
 .bx2-field-wrap { display: flex; flex: 1 1 auto; min-width: 1px; }

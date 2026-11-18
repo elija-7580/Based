@@ -1128,6 +1128,11 @@ export function BlockEditor(props: PageEditorProps) {
     indicator.className = "bx2-drop";
     const ghost = doc.createElement("div");
     ghost.className = "bx2-ghost";
+    // BSD-532: eine durchsichtige Decke trägt den Greif-Cursor – statt „.bx2-is-dragging *“, das beim Start jedes
+    // Element der Seite neu berechnete (300 Blöcke: Start 100 → 25 ms in Chromium). Darunter ruht auch das Überfahren.
+    const cover = doc.createElement("div");
+    cover.className = "bx2-drag-cover";
+    let cancelled = false;
 
     const update = () => {
       frame = 0;
@@ -1169,22 +1174,39 @@ export function BlockEditor(props: PageEditorProps) {
         for (const x of ids) root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(x)}"]`)?.setAttribute("data-dragging", "");
         rows = measure(new Set(ids));
         ghost.textContent = ids.map((x) => plainText(store.blocks.get(x)?.text) || labelOf(store.blocks.get(x))).join(" · ").slice(0, 80) || "Block";
-        doc.body.append(indicator, ghost);
+        doc.body.append(cover, indicator, ghost);
         doc.documentElement.classList.add("bx2-is-dragging");
       }
       if (!frame) frame = requestAnimationFrame(update);
     };
-    const finish = (ev: PointerEvent) => {
+    const cleanup = () => {
       doc.removeEventListener("pointermove", onMove);
       doc.removeEventListener("pointerup", finish);
       doc.removeEventListener("pointercancel", finish);
+      doc.removeEventListener("keydown", onKey, true);
       if (frame) cancelAnimationFrame(frame);
-      // letzte Position sicher auswerten (schnelle Bewegungen, gedrosseltes rAF)
-      if (dragging) { last = { x: ev.clientX, y: ev.clientY }; update(); if (frame) cancelAnimationFrame(frame); }
+      frame = 0;
       indicator.remove();
       ghost.remove();
+      cover.remove();
       doc.documentElement.classList.remove("bx2-is-dragging");
       root.querySelectorAll("[data-dragging]").forEach((x) => x.removeAttribute("data-dragging"));
+    };
+    // BSD-532: Esc bricht das Ziehen ab – nichts bewegt sich, die Auswahl bleibt.
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key !== "Escape" || !dragging) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      cancelled = true;
+      cleanup();
+    };
+    const finish = (ev: PointerEvent) => {
+      if (cancelled) return;
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      // letzte Position sicher auswerten (schnelle Bewegungen, gedrosseltes rAF)
+      if (dragging) { last = { x: ev.clientX, y: ev.clientY }; update(); if (frame) cancelAnimationFrame(frame); }
+      cleanup();
       if (!dragging) {
         // Klick auf den Griff: Block wählen und Blockmenü öffnen (die Seite bewegt sich nicht)
         ctrl.select(ids);
@@ -1199,6 +1221,7 @@ export function BlockEditor(props: PageEditorProps) {
     doc.addEventListener("pointermove", onMove);
     doc.addEventListener("pointerup", finish);
     doc.addEventListener("pointercancel", finish);
+    doc.addEventListener("keydown", onKey, true);
   };
 
   /** Text-Auswahl, die einen anderen Block erreicht, wird zur Blockauswahl (wie Notion). */
