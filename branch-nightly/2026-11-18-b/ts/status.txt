@@ -1,1 +1,1 @@
-grün 8f4c77b64749710041ce696bd14989d407799a7c nightly/2026-11-18-b · ts-fast=success e2e=success perf=success (nicht blockierend) · run 44230836959
+abgebrochen 0d8f08f5580465d3664c34a97ab20c9a3e5f5b17 nightly/2026-11-18-b · ts-fast=success e2e=cancelled perf=success (nicht blockierend) · run 44234015027
