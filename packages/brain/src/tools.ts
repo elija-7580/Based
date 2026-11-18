@@ -8,7 +8,7 @@
 import {
   attachSearchIndex, addRow, pageLocation, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
   parseCSVValue, plainText, QueryEngine, replaceInRichText, rowsOf, sortKeys, titleOf, titleProperty, toRichText,
-  type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
+  type Author, type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
 import type { ToolHost, ToolResult } from "./engine.js";
 import type { ToolSpec } from "./messages.js";
@@ -59,7 +59,14 @@ function paged(lines: string[], limit: number, offset: number): string {
 export interface WorkspaceToolsOptions {
   /** Eigene Suche (z. B. der Index, den der Store-Host ohnehin pflegt). Ohne: eigener Volltextindex. */
   search?: (query: string, limit: number) => { pageID: string; snippet?: string | undefined }[];
+  /**
+   * BSD-522: Als wer die Werkzeuge schreiben (Herkunft: Seite „ai“/„mixed“, Autor je Block). Ohne: wer gerade am Store
+   * eingetragen ist (z. B. der MCP-Client), sonst „Based agent“ – diese Werkzeuge benutzen immer Agenten.
+   */
+  actor?: Author;
 }
+
+const DEFAULT_ACTOR: Author = { kind: "agent", name: "Based agent" };
 
 export class WorkspaceTools implements ToolHost {
   private readonly defs = new Map<string, ToolDef>();
@@ -94,7 +101,7 @@ export class WorkspaceTools implements ToolHost {
     try {
       if (def.write && this.store.isReadOnly) throw new ToolError("The workspace is read-only right now (saving failed). Nothing was changed.");
       const revision = this.store.revision;
-      const text = def.run(args);
+      const text = def.write ? this.store.withActor(this.opts.actor ?? this.store.actor ?? DEFAULT_ACTOR, () => def.run(args)) : def.run(args);
       // Ein Schreiben, das der Store abgewiesen hat (schreibgeschützt), darf nicht als Erfolg gemeldet werden.
       if (def.write && this.store.isReadOnly && this.store.revision === revision) throw new ToolError("Saving failed; nothing was changed.");
       return { text, isError: false };
