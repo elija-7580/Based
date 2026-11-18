@@ -976,7 +976,7 @@ export class WorkspaceStore {
       const unchanged = prev !== undefined && (prev.data === cur.data || same(cur, prev));
       if (unchanged && !tx.forced.has(key)) continue;
       if (restamp) {
-        // BSD-570: Datum ohne Uhrzeit bekommt seinen Kalendertag (nur eigene Änderungen; was von anderen Geräten
+        // BSD-578: Datum ohne Uhrzeit bekommt seinen Kalendertag (nur eigene Änderungen; was von anderen Geräten
         // kommt, trägt den Tag seines Schreibers schon)
         if (cur.kind === "block" && !unchanged) {
           const dated = withCalendarDays(cur.data, prev?.kind === "block" ? prev.data : undefined);

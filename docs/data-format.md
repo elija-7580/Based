@@ -1,6 +1,6 @@
 # Datenformat: was fest ist, was sich noch ändert
 
-Stand 18. 11. 2026 · BSD-569, BSD-570. Frage dahinter: Bleiben die Daten eines Beta-Testers bis zur Release-Version so, wie sie
+Stand 18. 11. 2026 · BSD-569, BSD-578, BSD-579. Frage dahinter: Bleiben die Daten eines Beta-Testers bis zur Release-Version so, wie sie
 sind? Diese Seite sagt je Schicht, was gilt. Sie wird bei jeder Formatänderung nachgeführt.
 
 ## Regeln (gelten für jede Änderung)
@@ -24,7 +24,7 @@ sind? Diese Seite sagt je Schicht, was gilt. Sie wird bei jeder Formatänderung 
 | Datenbank-Spalten als eigene Records (ADR 0014) | **neue Dateien beginnen so (BSD-569)**; alte werden ausdrücklich umgestellt | wer mit der Beta anfängt, braucht keine Umstellung |
 | Workspace-Listen (Favoriten, Teamspaces) als feinere Records | offen (ADR 0014, Schritt 9) | spätere Migration, ohne Verlust |
 | Prozent-Zahlen | fest: gespeichert wird der Anteil (0.25 = 25 %), wie Notion (BSD-564) | – |
-| Datum ohne Uhrzeit | **fest (BSD-570): trägt den Kalendertag `day` / `endDay`**, gilt in jeder Zeitzone | neue Werte sind eindeutig; ältere ohne `day` bekommen ihn bei der nächsten Änderung |
+| Datum ohne Uhrzeit | **fest (BSD-578): trägt den Kalendertag `day` / `endDay`**, gilt in jeder Zeitzone | neue Werte sind eindeutig; ältere ohne `day` bekommen ihn bei der nächsten Änderung |
 | Wer hat geschrieben (`createdBy`, `updatedBy`, Personen-Werte) | fest als Regel: **`"me"` heißt „der Besitzer des Workspaces“** (s. u.) | kein Record wird je umgeschrieben; das erste Konto setzt einmal `workspace.ownerID` |
 | Herkunft Mensch/Agent (`origin`, `author`) | im Format (BSD-522) | – |
 | Datei `based.sqlite` | Records als Zeilen, fest; Spalten und Indizes darüber sind abgeleitet (ADR 0017 B) | Index-Aufbau beim Start, keine Umstellung der Daten |
@@ -65,7 +65,7 @@ Was das für die geplanten Schritte heißt – sie sind so zu bauen, nicht als e
 | Natives SQLite am Mac | dieselbe Datei an einem anderen Ort; einmal kopieren, nicht umschreiben |
 | Konten und Teilen | `"me"` behält seine Bedeutung (unten); neue Schreiber tragen ihre Kennung |
 
-## Festgelegt: `"me"`
+## Festgelegt: `"me"` (BSD-579)
 
 `createdBy`, `updatedBy`, Personen-Werte und Personen-Erwähnungen tragen heute `"me"`. Das heißt ab jetzt verbindlich:
 **der Besitzer dieses Workspaces.** Solange es keine Konten gibt, ist das der eine Mensch am Gerät. Mit dem ersten
@@ -74,7 +74,7 @@ schreiben von Anfang an ihre eigene Kennung (`u-…`, `g-…`, `a-…`, BSD-522)
 Voraussetzung, die deshalb gilt: Vor Konten darf kein zweiter Mensch als `"me"` in denselben Workspace schreiben
 (Gäste schreiben als Gast).
 
-## Festgelegt: Datum ohne Uhrzeit (BSD-570)
+## Festgelegt: Datum ohne Uhrzeit (BSD-578)
 
 Bisher war ein Datum ohne Uhrzeit nur ein Zeitpunkt: Mitternacht in der Zeitzone des schreibenden Geräts.
 „18. November“ aus Wien ist `2026-11-17T23:00Z` und stand auf einem UTC-Server oder in New York als 17. November

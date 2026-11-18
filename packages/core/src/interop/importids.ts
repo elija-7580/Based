@@ -136,7 +136,7 @@ export function contentFingerprint(b: Block): string {
   if (BLOCK_TYPES.has(b.type)) c.type = b.type;
   c.parent = "w";
   c.sk = "";
-  // BSD-570: der Kalendertag eines Datums (`day`) ist ein Zusatzfeld – der Fingerabdruck bleibt, wie er vor ihm war
+  // BSD-578: der Kalendertag eines Datums (`day`) ist ein Zusatzfeld – der Fingerabdruck bleibt, wie er vor ihm war
   if (!isEmptyText(b.text)) c.text = stripCalendarDays(b.text);
   if (b.props && Object.keys(b.props).some((k) => (b.props as Record<string, unknown>)[k] !== undefined)) c.props = b.props;
   if (b.values && Object.keys(b.values).length > 0) c.values = stripCalendarDays(b.values);

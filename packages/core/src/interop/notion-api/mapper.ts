@@ -1186,7 +1186,7 @@ class Mapper {
     const e = endRaw !== undefined ? this.parseDate(endRaw) : undefined;
     const d: DateValue = { start: s.date, includeTime: s.time };
     if (e) d.end = e.date;
-    // BSD-570: ohne Uhrzeit ein Kalendertag – der Tag steht mit im Wert
+    // BSD-578: ohne Uhrzeit ein Kalendertag – der Tag steht mit im Wert
     return d.includeTime ? d : stampDay(d);
   }
 

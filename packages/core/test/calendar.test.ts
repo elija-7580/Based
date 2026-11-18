@@ -272,7 +272,7 @@ describe("Schreib-Operationen", () => {
     resizeRowSpan(store, "r", { dateID: "when" }, "end", D(2026, 2, 5));
     expect(local(val(store, "r", "when")!.end!)).toBe("2026-02-05 00:00");
     resizeRowSpan(store, "r", { dateID: "when" }, "start", D(2026, 2, 9)); // hinter das Ende: wird eintägig
-    expect(val(store, "r", "when")).toEqual({ start: at(2026, 2, 5), includeTime: false, day: "2026-02-05" }); // BSD-570: mit Kalendertag
+    expect(val(store, "r", "when")).toEqual({ start: at(2026, 2, 5), includeTime: false, day: "2026-02-05" }); // BSD-578: mit Kalendertag
     resizeRowSpan(store, "r", { dateID: "when" }, "end", D(2026, 2, 1)); // vor den Beginn: bleibt eintägig
     expect(val(store, "r", "when")!.end).toBeUndefined();
     setRowSpan(store, "n", { dateID: "when" }, D(2026, 3, 10), D(2026, 3, 8));

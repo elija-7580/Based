@@ -293,7 +293,7 @@ export class QueryEngine {
       case "number": return num(x as number);
       case "select": case "status": { const o = optionById(p, x as string); return o ? str(o.name) : EMPTY; }
       case "multiSelect": return list((x as string[]).flatMap((id) => { const o = optionById(p, id); return o ? [str(o.name)] : []; }));
-      case "date": return date(resolveDate(x as DateValue)); // BSD-570: derselbe Kalendertag in jeder Zeitzone
+      case "date": return date(resolveDate(x as DateValue)); // BSD-578: derselbe Kalendertag in jeder Zeitzone
       case "person": return list((x as string[]).map((id) => ({ t: "person", v: id }) as Value));
       case "files": return list((x as { name: string }[]).map((f) => str(f.name)));
       case "checkbox": return bool(x as boolean);

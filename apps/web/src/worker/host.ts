@@ -320,7 +320,7 @@ export class StoreHost {
     };
     this.ws = await this.opts.open({ device: deviceStore, ...(opfs === undefined ? {} : { opfs }), ...(propertyRecords === undefined ? {} : { propertyRecords }), ...(lazy ? { lazy: true } : {}) });
     const store = this.ws.store;
-    // BSD-570: „me“ heißt „der Besitzer des Workspaces“ (docs/data-format.md) – ein Gast schreibt unter seiner Kennung
+    // BSD-579: „me“ heißt „der Besitzer des Workspaces“ (docs/data-format.md) – ein Gast schreibt unter seiner Kennung
     if (userID) store.userID = userID;
     // ADR 0017 Stufe B: festhalten, wer doch den ganzen Workspace in den Speicher holt (Diagnose, Zeitmess-Test).
     store.onFullLoad = (why) => {

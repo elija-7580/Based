@@ -208,7 +208,7 @@ export interface DatabaseInfo {
 }
 
 export type Request =
-  | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string; propertyRecords?: boolean; lazy?: boolean; /** BSD-570: wer hier schreibt, wenn es nicht der Besitzer ist (Gast: `g-…`); ohne Angabe „me“. */ userID?: string }
+  | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string; propertyRecords?: boolean; lazy?: boolean; /** BSD-579: wer hier schreibt, wenn es nicht der Besitzer ist (Gast: `g-…`); ohne Angabe „me“. */ userID?: string }
   | { type: "command"; command: Command }
   | { type: "search"; query: string; limit?: number; filters?: SearchFilters; sort?: SearchSort }
   | { type: "warmSearch" }

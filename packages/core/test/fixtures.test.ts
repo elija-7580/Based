@@ -65,7 +65,7 @@ describe("Fixture-Dateien sind gültig", () => {
 });
 
 /**
- * BSD-570: Der TS-Kern schreibt bei jedem Datum ohne Uhrzeit zusätzlich den Kalendertag (`day`, `endDay`) – die
+ * BSD-578: Der TS-Kern schreibt bei jedem Datum ohne Uhrzeit zusätzlich den Kalendertag (`day`, `endDay`) – die
  * Swift-Fixtures kennen das Feld nicht. Für den Vergleich fällt es überall weg (eine Abweichung für alle Fälle,
  * statt je Fall einer); dass es geschrieben wird, prüft calendar-day.test.ts.
  */

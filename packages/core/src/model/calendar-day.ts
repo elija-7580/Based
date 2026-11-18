@@ -1,4 +1,4 @@
-// BSD-570: Ein Datum ohne Uhrzeit ist ein Kalendertag, kein Zeitpunkt. Gespeichert war bisher nur `start` = Mitternacht
+// BSD-578: Ein Datum ohne Uhrzeit ist ein Kalendertag, kein Zeitpunkt. Gespeichert war bisher nur `start` = Mitternacht
 // in der Zeitzone des schreibenden Geräts – auf einem Gerät oder Server weiter westlich ist das der Vortag
 // („18. November“ aus Wien = 2026-11-17T23:00Z). Deshalb trägt jedes Datum ohne Uhrzeit zusätzlich den Tag selbst:
 //   `day: "2026-11-18"` (und `endDay` für das Ende eines Bereichs).

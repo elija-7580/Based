@@ -1,4 +1,4 @@
-// BSD-570: Ein Datum ohne Uhrzeit trägt seinen Kalendertag (`day`) und zeigt in jeder Zeitzone denselben Tag.
+// BSD-578: Ein Datum ohne Uhrzeit trägt seinen Kalendertag (`day`) und zeigt in jeder Zeitzone denselben Tag.
 // Die Suite läuft in UTC; die Zeitzonen-Fälle starten deshalb einen eigenen Prozess mit TZ (tsx).
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";

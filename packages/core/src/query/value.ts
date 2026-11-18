@@ -9,7 +9,7 @@ export interface DateValue {
   end?: number;
   includeTime: boolean;
   remind?: boolean;
-  /** BSD-570: Kalendertag eines Datums ohne Uhrzeit („2026-11-18“) – gilt in jeder Zeitzone (model/calendar-day.ts). */
+  /** BSD-578: Kalendertag eines Datums ohne Uhrzeit („2026-11-18“) – gilt in jeder Zeitzone (model/calendar-day.ts). */
   day?: string;
   /** Kalendertag des Endes eines Bereichs ohne Uhrzeit. */
   endDay?: string;
@@ -427,7 +427,7 @@ export function parseDate(raw: string): DateValue | undefined {
   }
   for (const p of PARSERS) {
     const r = p(s);
-    // BSD-570: ohne Uhrzeit ist es ein Kalendertag – der Tag steht mit im Wert
+    // BSD-578: ohne Uhrzeit ist es ein Kalendertag – der Tag steht mit im Wert
     if (r) return r.time ? { start: r.start, includeTime: true } : stampDay({ start: r.start, includeTime: false });
   }
   return undefined;
