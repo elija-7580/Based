@@ -309,8 +309,9 @@
   overscroll-behavior: contain;
   padding: var(--space-1);
   border: 0;
-  border-radius: var(--radius-lg);
-  background: var(--bg);
+  /* BSD-527: das eine Menü (elements.md, Abschnitt 4) – Fläche surface-card, Radius xl */
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
   box-shadow: var(--shadow-menu);
   color: var(--ink);
   font-family: var(--font-ui);

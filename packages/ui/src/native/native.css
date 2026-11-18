@@ -8,7 +8,7 @@
    Glas mit Unschärfe und Kanten-Licht, derselbe Menü-Schatten, gleiche Zeilenhöhe, Icons und Abstände. */
 .nf-layer {
   top: 0; left: 0; overflow: auto; max-height: calc(100vh - var(--space-4)); max-width: calc(100vw - var(--space-4));
-  background: var(--bg); color: var(--ink); border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); padding: var(--space-1);
+  background: var(--surface-card); color: var(--ink); border-radius: var(--radius-xl); box-shadow: var(--shadow-menu); padding: var(--space-1);
   font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading);
   -webkit-user-select: none; user-select: none; cursor: default; animation: nf-in var(--duration-fast) var(--ease-out);
 }
