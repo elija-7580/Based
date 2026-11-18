@@ -21,6 +21,8 @@ function setup() {
 /** Zustand aller Blöcke ohne Stempel/Zeiten (zum Vergleich „nichts geändert“). */
 const snapshot = (store: WorkspaceStore) => JSON.stringify([...store.blocks.values()].map((b) => ({ ...b, stamp: undefined, updatedAt: undefined })).sort((a, b) => (a.id < b.id ? -1 : 1)));
 
+const dbIn = (text: string) => /Created database (\S+)/.exec(text)![1]!;
+const viewIn = (text: string) => /Created view ([^.\s]+)/.exec(text)![1]!;
 const body = (store: WorkspaceStore, page: string) => store.children("b:" + page).map((id) => store.blocks.get(id)!);
 
 describe("BSD-522: Werkzeuge schreiben als Agent", () => {
@@ -194,7 +196,7 @@ describe("WorkspaceTools – Seiten", () => {
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
     expect(write).toEqual([
       "create_page", "append_markdown", "replace_page_content", "find_replace", "update_page", "move_page", "duplicate_page", "trash_page", "restore_page", "set_favorite",
-      "update_workspace", "create_teamspace", "update_teamspace", "delete_teamspace", "edit_blocks", "draw_board", "add_row", "update_row", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
+      "update_workspace", "create_teamspace", "update_teamspace", "delete_teamspace", "edit_blocks", "draw_board", "add_row", "update_row", "add_rows", "update_rows", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
       "ask_main_agent", "resolve_inbox", "create_project", "update_project_status", "undo_last",
     ]);
     expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual([
@@ -269,6 +271,123 @@ describe("WorkspaceTools – Datenbanken", () => {
     expect(call("update_row", { row_id: row, title: "Z", properties: { Stage: "Later", Points: "many" } }).isError).toBe(true);
     expect(snapshot(store), "gültige Teile werden nicht vorab geschrieben").toBe(after);
     expect(call("update_row", { row_id: "nope", title: "Z" }).isError).toBe(true);
+  });
+
+  it("query_database: Ansicht (Filter, Spalten, Fußzeile), eigene Filter, Spaltenauswahl", () => {
+    const { ok, call, db } = withDatabase();
+    ok("add_rows", { id: db, rows: [
+      { title: "A", values: { Stage: "Todo", Points: "3" } },
+      { title: "B", values: { Stage: "Done", Points: "5" } },
+      { title: "C", values: { Stage: "Done", Points: "8", Urgent: "Yes" } },
+    ] });
+    ok("create_view", { database_id: db, type: "table", name: "Done", filters: [{ property: "Stage", value: "Done" }], sorts: [{ property: "Points", direction: "descending" }], properties: ["Name", "Points"], calculations: { Points: "sum" } });
+    const text = ok("query_database", { id: db, view: "done" });
+    const lines = text.split("\n").map((l) => l.replace(/ \(id: [^)]+\)/, ""));
+    expect(lines).toEqual(["- C — Points: 8", "- B — Points: 5", "Calculations: Points sum: 13"]);
+    expect(ok("query_database", { id: db, filters: [{ property: "Points", op: "greater", value: 4 }], properties: ["Stage"] }).split("\n").map((l) => l.replace(/ \(id: [^)]+\)/, ""))).toEqual(["- B — Stage: Done", "- C — Stage: Done"]);
+    expect(ok("query_database", { id: db, view: "Done", filters: [{ property: "Urgent", value: true }] })).toContain("- C (id: ");
+    expect(call("query_database", { id: db, view: "Nope" }).text).toContain("No view “Nope” in this database. Views: ");
+    expect(ok("list_views", { database_id: db })).toContain("shows: Name, Points; calculations: Points sum");
+  });
+
+  it("add_rows / update_rows: alles oder nichts, ein Undo-Schritt", () => {
+    const { store, ok, call, db, idIn } = withDatabase();
+    const before = snapshot(store);
+    expect(call("add_rows", { id: db, rows: [{ title: "ok", values: { Points: "1" } }, { title: "bad", values: { Points: "x" } }] }).isError).toBe(true);
+    expect(snapshot(store)).toBe(before);
+    const text = ok("add_rows", { id: db, rows: [{ title: "One" }, { title: "Two", values: { Points: "2" } }] });
+    expect(text).toContain("Added 2 rows to “Tasks”:");
+    const ids = [...text.matchAll(/\(id: ([^)]+)\)/g)].map((m) => m[1]!);
+    expect(rowsOf(store, db).map((r) => r.id)).toEqual(ids);
+    const mid = snapshot(store);
+    expect(call("update_rows", { rows: [{ id: ids[0], values: { Points: "9" } }, { id: ids[1], values: { Points: "no" } }] }).isError).toBe(true);
+    expect(snapshot(store)).toBe(mid);
+    ok("update_rows", { rows: [{ id: ids[0], title: "Uno", values: { Points: "9" } }, { id: ids[1], values: { Stage: "Done" } }] });
+    expect(ok("query_database", { id: db })).toContain("- Uno (id: " + ids[0] + ") — Points: 9");
+    store.undo();
+    expect(snapshot(store)).toBe(mid);
+    store.undo();
+    expect(snapshot(store)).toBe(before);
+    void idIn;
+  });
+
+  it("Relation, Person, Dateien und Ort lassen sich als Text setzen", () => {
+    const { store, ok, call, db, idIn } = withDatabase();
+    const other = dbIn(ok("create_database", { title: "People", properties: { Role: "text" } }));
+    const ada = idIn(ok("add_row", { id: other, title: "Ada" }));
+    ok("add_row", { id: other, title: "Bob" });
+    ok("update_database", { database_id: db, relations: { Owner: other }, two_way: { Owner: "Tasks" }, add_properties: { Who: "person", Docs: "files", Where: "place" } });
+    const row = idIn(ok("add_row", { id: db, title: "T", values: { Owner: "ada, Bob", Who: "Elija", Docs: "https://example.com/a%20b.pdf", Where: "Krems" } }));
+    const line = ok("query_database", { id: db });
+    expect(line).toContain("Owner: Ada, Bob");
+    expect(line).toContain("Who: Elija");
+    expect(line).toContain("a b.pdf");
+    expect(line).toContain("Where: Krems");
+    expect(ok("query_database", { id: other }), "Gegenseite der Relation ist gefüllt").toContain(`- Ada (id: ${ada}) — Tasks: T`);
+    const before = snapshot(store);
+    expect(call("update_row", { id: row, values: { Owner: "Nobody" } }).text).toContain("No row “Nobody” in “People”");
+    expect(call("update_row", { id: row, values: { Docs: "notes.txt" } }).isError).toBe(true);
+    expect(snapshot(store)).toBe(before);
+    ok("update_row", { id: row, values: { Owner: ada } });
+    expect(ok("query_database", { id: db, properties: ["Owner"] })).toMatch(/— Owner: Ada$/);
+    expect(ok("query_database", { id: other, search: "Bob" }), "Gegenseite wird mitgeführt").not.toContain("Tasks: T");
+  });
+
+  it("update_database: Formel, Rollup, Formate, Optionen, Vorlagen, Sperre", () => {
+    const { store, ok, call, db, idIn } = withDatabase();
+    const other = dbIn(ok("create_database", { title: "Sprints" }));
+    ok("update_database", { database_id: other, relations: { Tasks: db }, rollups: { Total: { relation: "Tasks", property: "Points", function: "sum" } } });
+    ok("add_rows", { id: db, rows: [{ title: "A", values: { Points: "3" } }, { title: "B", values: { Points: "4" } }] });
+    ok("add_row", { id: other, title: "S1", values: { Tasks: "A, B" } });
+    expect(ok("query_database", { id: other })).toContain("Total: 7");
+
+    ok("update_database", { database_id: db, formulas: { Double: 'prop("Points") * 2' }, number_formats: { Points: "euro" }, descriptions: { Points: "Story points" } });
+    expect(ok("query_database", { id: db, properties: ["Double"] })).toContain("Double: 6");
+    expect(ok("database_schema", { id: db })).toContain("Story points");
+    const before = snapshot(store);
+    expect(call("update_database", { database_id: db, formulas: { Bad: "prop(" }, title: "Never" }).text).toContain("Formula for “Bad”");
+    expect(call("update_database", { database_id: db, number_formats: { Points: "bitcoin" } }).text).toContain("Number format must be one of: ");
+    expect(call("update_database", { database_id: db, update_options: { Stage: { Nope: { name: "x" } } } }).text).toContain("No option “Nope” in Stage. Options: Todo, Done");
+    expect(snapshot(store) + JSON.stringify([...store.databases.values()].map((d) => d.title))).toBe(before + JSON.stringify([...store.databases.values()].map((d) => d.title)));
+
+    ok("update_database", { database_id: db, update_options: { Stage: { Todo: { name: "Open", color: "red" } } }, add_options: { Stage: ["Later"] }, option_order: { Stage: ["Later", "Done"] } });
+    const stage = store.databases.get(db)!.properties.find((p) => p.name === "Stage")!;
+    expect(stage.options!.map((o) => o.name)).toEqual(["Later", "Done", "Open"]);
+    expect(stage.options!.find((o) => o.name === "Open")!.color).toBe("red");
+    ok("update_database", { database_id: db, update_options: { Stage: { Later: { delete: true } } } });
+    expect(store.databases.get(db)!.properties.find((p) => p.name === "Stage")!.options!.map((o) => o.name)).toEqual(["Done", "Open"]);
+
+    const tpl = ok("update_database", { database_id: db, add_templates: ["Bug"], locked: true });
+    expect(tpl).toContain("templates: Bug (id: ");
+    expect(store.databases.get(db)!.locked).toBe(true);
+    ok("update_database", { database_id: db, default_template: "bug" });
+    ok("update_row", { id: idIn(tpl), values: { Stage: "Open" } });
+    const made = idIn(ok("add_row", { id: db, title: "From template" }));
+    expect(ok("query_database", { id: db, search: "From template" })).toContain(`- From template (id: ${made}) — Stage: Open`);
+    expect(ok("query_database", { id: db }), "Vorlagen sind keine Zeilen").not.toContain("- Bug (id:");
+    ok("update_database", { database_id: db, default_template: "", delete_templates: ["Bug"] });
+    expect(store.databases.get(db)!.defaultTemplateID).toBeUndefined();
+  });
+
+  it("update_view: Anzeige, Diagramm, Dashboard – unbekannte Werte nennen die erlaubten", () => {
+    const { store, ok, call, db } = withDatabase();
+    const id = viewIn(ok("create_view", { database_id: db, type: "chart", name: "By stage", chart: { kind: "donut", x: "Stage", y: "Points", aggregate: "sum", caption: "Points per stage" } }));
+    const v = () => store.views.get(id)!;
+    expect(v().chart).toMatchObject({ kind: "donut", aggregate: "sum", caption: "Points per stage" });
+    expect(ok("list_views", { database_id: db })).toContain("chart: donut x=Stage y=Points sum");
+    expect(call("update_view", { view_id: id, chart: { kind: "radar" } }).text).toContain("chart.kind must be one of: ");
+    expect(call("update_view", { view_id: id, calculations: { Urgent: "sum" } }).text).toContain("Calculation for “Urgent” must be one of: ");
+    ok("update_view", { view_id: id, type: "calendar", date_property: "Due", wrap: true, open_in: "centerPeek", card_size: "large", card_preview: "pageCover", properties: ["Points", "Name"] });
+    expect(v()).toMatchObject({ type: "calendar", wrapCells: true, openIn: "centerPeek", cardSize: "large" });
+    expect(v().properties!.filter((p) => p.visible).length).toBe(2);
+    store.undo();
+    expect(v().type, "eine Änderung, ein Undo-Schritt").toBe("chart");
+    const dash = viewIn(ok("create_view", { database_id: db, type: "dashboard", name: "Overview", add_widgets: ["chart", "table"] }));
+    const widgets = () => [...store.views.values()].filter((x) => x.widgetOf === dash).length;
+    const n = widgets();
+    ok("update_view", { view_id: dash, add_widgets: ["list"] });
+    expect(widgets()).toBe(n + 1);
+    expect(call("update_view", { view_id: dash, add_widgets: ["pivot"] }).text).toContain("Widget must be one of: ");
   });
 
   it("Listen sind gepaged", () => {

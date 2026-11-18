@@ -109,7 +109,7 @@ export {
   setGroupHidden, setPropertyVisible, setRelationLimitOne, setRelationTarget, setRollup, setRowTitle, setSorts, setValue, setValues, setViewType,
   uniquePropertyName, updateChart, updateOption, updateProperty, updateView, valueCase, valueForGroup, viewsForBlock, visiblePropertyIDs,
   wouldCreateRollupCycle, DASHBOARD_COLUMNS, DASHBOARD_MAX_WIDGETS_PER_ROW, WIDGET_TYPES,
-  databasesNeedingIDCheck, repairUniqueIDs, uniqueIDRepair, valuesMatchingSchema,
+  databasesNeedingIDCheck, repairUniqueIDs, uniqueIDRepair, valuesMatchingSchema, deleteTemplate, setDefaultTemplate, templatesOf,
 } from "./store/database-ops.js";
 export type { AddRowOptions, CreatedDatabase, InsertPosition as RowInsertPosition } from "./store/database-ops.js";
 export { addStarterTemplate, STARTER_TEMPLATES, type StarterTemplate, type StarterTemplateID } from "./store/starter-templates.js";
