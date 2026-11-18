@@ -1,61 +1,61 @@
-cancelled 91e0ddeb61b9d70ffa8fd4723d4af1834d05b75a
-(node:3961) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   12 [chromium] › e2e/backups.spec.ts:114:1 › BSD-449: gewählter Backup-Ordner – Backup landet dort, fehlender Ordner sichtbar, kein stiller Rückfall (5.6s)
-  -   13 [chromium] › e2e/beta-build.spec.ts:39:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (light)
-  -   14 [chromium] › e2e/beta-build.spec.ts:39:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (dark)
-  -   15 [chromium] › e2e/beta-build.spec.ts:146:1 › Beta-Build: Problem melden führt zur Mail an hello@basednotes.app
-  -   16 [chromium] › e2e/beta-build.spec.ts:175:1 › Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home
-  ✓   17 [chromium] › e2e/beta-data.spec.ts:129:1 › BSD-469 Beta-Weg 2: Notion-Export importieren, als Markdown/HTML/Archiv exportieren und wieder importieren, Sicherung vor dem Update zurückspielen (8.5s)
-(node:4169) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   18 [chromium] › e2e/block-editor-collab.spec.ts:61:1 › Neuer Editor, Echtzeit: zwei Geräte im selben Block, live, nichts doppelt, Schreibmarke des anderen (7.2s)
-  ✓   19 [chromium] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (1.2s)
-  ✓   20 [chromium] › e2e/block-editor.spec.ts:64:1 › Nach dem Neuladen ist alles da (dauerhaftes Profil, Records über den Store-Worker) (2.1s)
-  ✓   21 [chromium] › e2e/block-editor.spec.ts:86:1 › Tab rückt ein, ⇧Tab aus; Pfeile wechseln zwischen Blöcken (1.0s)
-  ✓   22 [chromium] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (1.6s)
-  ✓   23 [chromium] › e2e/block-editor.spec.ts:155:1 › Ziehen am Griff: davor/danach, Spalte rechts daneben und wieder heraus (1.9s)
-  ✓   24 [chromium] › e2e/block-editor.spec.ts:182:1 › Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, ⌫ löscht (1.4s)
-  ✓   25 [chromium] › e2e/block-editor.spec.ts:220:1 › Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift (1.4s)
-  ✓   26 [chromium] › e2e/block-editor.spec.ts:250:1 › Formatierung: ⌘B auf Auswahl, Formatleiste erscheint (1.1s)
-  ✓   27 [chromium] › e2e/block-editor.spec.ts:277:1 › Einfügen aus dem Web: HTML wird zu Blöcken, URL über Auswahl wird Link; ⌘K setzt Link (1.1s)
-  ✓   28 [chromium] › e2e/block-editor.spec.ts:300:1 › @ erwähnt eine Seite (1.2s)
-  ✓   29 [chromium] › e2e/block-editor.spec.ts:321:1 › Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel (1.0s)
-Datenbank: div.dbui-table „Table“ – kein sichtbarer Fokusrahmen
-  ✘   11 [chromium] › e2e/a11y.spec.ts:126:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (retry #1) (41.4s)
-  -   31 [chromium] › e2e/a11y.spec.ts:165:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
-  ✓   32 [chromium] › e2e/a11y.spec.ts:206:1 › Quick Find: Esc gibt den Fokus zurück (1.1s)
-  ✓   30 [chromium] › e2e/block-editor.spec.ts:335:1 › Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per @ (3.8s)
-  ✓   33 [chromium] › e2e/a11y.spec.ts:222:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (1.5s)
-  ✓   34 [chromium] › e2e/block-editor.spec.ts:389:1 › ⌘⌥-Kürzel, Textfarbe, Spalten per Slash, Toggle-Überschrift, Syntax-Hervorhebung (2.6s)
-  ✓   36 [chromium] › e2e/block-editor.spec.ts:437:1 › Spaltenbreite ziehen (2.3s)
-  ✓   37 [chromium] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (light) (2.8s)
-  ✓   35 [chromium] › e2e/block-link.spec.ts:10:1 › Link zu einem Block kopieren und öffnen (7.7s)
-  ✓   38 [chromium] › e2e/block-editor.spec.ts:466:3 › Screenshots neuer Editor (dark) (2.5s)
-  ✓   39 [chromium] › e2e/board.spec.ts:46:1 › Board anlegen: leere Fläche erklärt den nächsten Schritt; Zettel setzen, verschieben, Undo/Redo @smoke (2.9s)
-  ✓   40 [chromium] › e2e/block-editor.spec.ts:493:1 › Blockmenü: Suchfeld filtert, Enter führt aus, Copy as Markdown (1.8s)
-  ✓   41 [chromium] › e2e/board.spec.ts:83:1 › Board bleibt nach sofortigem Neuladen: Zettel und Lage sind da (2.3s)
-  ✓   43 [chromium] › e2e/board.spec.ts:115:1 › Tastatur: N + Enter legt an, Tab wählt in Leserichtung und sagt es an, Pfeile schieben, Entf löscht, ⌘Z holt zurück (2.3s)
-  ✓   44 [chromium] › e2e/board.spec.ts:147:1 › Zoom: Knöpfe, ⌘+Rad um den Zeiger, Fit; waagrechtes Wischen auf der Fläche blättert nicht zurück (2.8s)
-  ✓   42 [chromium] › e2e/block-editor.spec.ts:540:1 › Blockmenü-Fotos: Suchfeld, gefiltert, leer (8.6s)
-  ✓   45 [chromium] › e2e/board.spec.ts:183:1 › Seitenaktionen auf einem Board: ⌘F, •••-Menü, Verlauf und Export öffnen ohne Fehler (1.8s)
-  ✓   47 [chromium] › e2e/board.spec.ts:240:1 › Rechtsklick auf der Fläche: Based-Menü für die Auswahl, kein Systemmenü (2.0s)
-  ✓   46 [chromium] › e2e/block-editor.spec.ts:584:1 › Blockmenü: Move to in eine andere Seite, Turn into page (3.3s)
-  ✓   49 [chromium] › e2e/block-editor.spec.ts:632:1 › [[ verlinkt eine Seite (1.5s)
-  ✓   48 [chromium] › e2e/board.spec.ts:259:1 › Board im Papierkorb: nur lesen – ansehen und zoomen ja, ändern nein; nach dem Wiederherstellen wieder bearbeitbar (3.4s)
-  ✓   50 [chromium] › e2e/block-editor.spec.ts:650:1 › URL einfügen: leere Zeile → Bookmark (1.5s)
-  ✓   52 [chromium] › e2e/block-editor.spec.ts:669:1 › Bookmark: Fetch preview holt Titel und Beschreibung (1.4s)
-  ✓   51 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1280 × 820 light: leer und gefüllt, nichts läuft über oder überdeckt sich (2.9s)
-  ✓   53 [chromium] › e2e/block-editor.spec.ts:694:1 › Bild per Link (1.4s)
-  ✓   55 [chromium] › e2e/block-editor.spec.ts:709:1 › Inline-Gleichung anlegen und bearbeiten (1.4s)
-  ✓   54 [chromium] › e2e/board.spec.ts:287:5 › Fläche 900 × 600 light: leer und gefüllt, nichts läuft über oder überdeckt sich (3.3s)
-  ✓   56 [chromium] › e2e/block-editor.spec.ts:742:1 › Embed: YouTube als iframe, sonst Karte (1.8s)
-  ✓   58 [chromium] › e2e/block-editor.spec.ts:763:1 › Tabelle: Zeile und Spalte löschen (1.4s)
-  ✓   57 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1728 × 1000 light: leer und gefüllt, nichts läuft über oder überdeckt sich (3.4s)
-  ✓   59 [chromium] › e2e/block-editor.spec.ts:784:1 › Copy and sync: Original und synchronisierte Kopie (2.5s)
-  ✓   60 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1280 × 820 dark: leer und gefüllt, nichts läuft über oder überdeckt sich (3.2s)
-  ✓   61 [chromium] › e2e/block-editor.spec.ts:823:1 › HTML-Codeblock: Ergebnis wie ein Teil der Seite, Code ausblendbar, Vollansicht (3.7s)
-  ✓   62 [chromium] › e2e/board.spec.ts:287:5 › Fläche 900 × 600 dark: leer und gefüllt, nichts läuft über oder überdeckt sich (2.6s)
-  ✓   63 [chromium] › e2e/block-editor.spec.ts:883:1 › @-Menü: New page legt eine Unterseite an und erwähnt sie (2.1s)
-  ✓   64 [chromium] › e2e/board.spec.ts:287:5 › Fläche 1728 × 1000 dark: leer und gefüllt, nichts läuft über oder überdeckt sich (2.7s)
-  ✓   65 [chromium] › e2e/block-editor.spec.ts:903:1 › @-Menü: Datum, Wochentag, getipptes Datum, Erinnerung; Wähler mit Ende und Uhrzeit (4.6s)
+cancelled a2ca73945c5497e2862b24959475f9bd39da45d3
+
+    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /home/runner/.cache/ms-playwright/chromium_headless_shell-1254/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,AvoidCorsURLLoaderRestartOnRedirect,TcpPortRandomizationWin,OptimizationHints,NetworkTimeServiceQuerying,AimEnabled,PreconnectToSearch,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface,SkipListAccountsWithoutGaiaCookies --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --enable-unsafe-swiftshader --edge-skip-compat-layer-relaunch --disable-stack-profiler --disable-infobars --disable-sync --do-not-de-elevate --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/based-passthrough-VuStLi --remote-debugging-pipe about:blank
+    <launched> pid=11172
+    [pid=11172][err] [1118/024134.429276:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=11172][err] [1118/024134.429317:WARNING:dbus/object_proxy.cc:439] Failed to connect to NameOwnerChanged signal for object: /org/freedesktop/portal/desktop
+    [pid=11172][err] [1118/024134.429327:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=11172][err] [1118/024134.429334:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=11172][err] [1118/024134.429542:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=11172][err] [1118/024134.452030:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+    [pid=11172][err] [1118/024134.452363:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=11172][err] [1118/024134.460499:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+    [pid=11172][err] [1118/024134.462094:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+    [pid=11172] <gracefully close start>
+    Call log:
+      - waiting for getByTestId('block-editor').first().locator('[data-editable-id]').last()
+        - locator resolved to <div role="textbox" aria-label="Code" spellcheck="false" aria-multiline="true" contenteditable="true" data-placeholder="Code" writingsuggestions="false" class="bx2-field bx2-t-code" data-editable-id="a0000000-0000-4000-8000-000000000028"><div class="mystery-widget" id="a0000000-0000-400…</div>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+          - waiting 100ms
+        52 × waiting for element to be visible, enabled and stable
+           - element is not visible
+         - retrying click action
+           - waiting 500ms
+        - waiting for element to be visible, enabled and stable
+
+
+      174 |   await fields.first().click();
+      175 |   await page.keyboard.press("End");
+    > 176 |   await fields.last().click();
+          |                       ^
+      177 |   await page.keyboard.press("Escape");
+      178 |   await page.getByRole("button", { name: "Home", exact: true }).first().click();
+      179 |   await page.goBack();
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-passthrough.spec.ts:176:23
+
+    Error Context: test-results/editor-passthrough-Notion--2f77d-Editor-ändert-keine-Records-chromium-retry1/error-context.md
+
+  2 failed
+    [chromium] › e2e/a11y.spec.ts:126:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens 
+    [chromium] › e2e/editor-passthrough.spec.ts:152:1 › Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records 
+  17 skipped
+  248 passed (7.1m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
