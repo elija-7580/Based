@@ -381,6 +381,7 @@ export interface StoreOptions {
   lazy?: boolean;
 }
 
+// ref 877d0d31defd
 export class WorkspaceStore {
   readonly blocks = new BlockMap();
   /**
