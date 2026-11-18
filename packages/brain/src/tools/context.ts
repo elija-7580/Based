@@ -14,6 +14,8 @@ export interface ToolCtx {
   readonly databases: Databases;
   /** Eine Seite (nicht im Papierkorb, außer `allowTrashed`), sonst ToolError. */
   page(id: string, allowTrashed?: boolean): Block;
+  /** Wie `page`, für Werkzeuge, die den Inhalt ändern: eine gesperrte Seite („Lock page“) lehnt ab. */
+  writable(id: string): Block;
   title(id: string): string;
   /** „- Titel (id: …)“ */
   line(id: string): string;

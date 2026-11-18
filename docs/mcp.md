@@ -33,18 +33,24 @@ token) and ask "Which projects are running and what needs me?".
 | `based_guide` | How Based works, by topic (overview, markdown, brain, safety) |
 | `search` | Titles, full text and row values; typos allowed; `within` a page or database, `title_only` |
 | `read_page` | A page as Markdown, with its properties when it is a database row |
-| `list_pages` | Top-level pages or the sub-pages of `parent` |
-| `create_page` | New page from Markdown under `parent` (or at the root) |
+| `list_pages` | Top-level pages (each with its section when there are teamspaces), one `section`, or the sub-pages of `parent` |
+| `create_page` | New page from Markdown under `parent`, at the top of a `section`, or right `after` another page; or from a starter `template` (tasks, notes, journal, wiki) |
 | `append_markdown` | Append Markdown blocks to a page |
 | `replace_page_content` | Replace the whole body (only when the user wants a rewrite) |
 | `find_replace` | Replace a passage inside a page's blocks; an error when the text is not found |
-| `update_page` | Title, emoji icon, remove cover |
-| `move_page` | Move under another page or to the root |
+| `update_page` | Title; icon (emoji, `phosphor:<name>:<colour>`, file ref, image URL); cover (colour, `gradient:N`, file ref, image URL, `none`) with height and position; font, small text, full width, lock |
+| `move_page` | One page or several (`ids`): under a page, to a section (Private or a teamspace), or right `before` / `after` another page |
 | `duplicate_page` | Copy a page with its content |
 | `trash_page` / `restore_page` / `list_trash` | Trash (restorable); works for database rows too |
 | `backlinks` | Pages that link to or mention a page |
 | `set_favorite` | Add to / remove from Favorites |
 | `undo_last` | Take back your last writing call (exactly that step; what was edited since stays) |
+| `get_workspace` | Name, icon, sections (Private and teamspaces with ids and page counts), favorites |
+| `update_workspace` | Rename the workspace, change its icon |
+| `create_teamspace` / `update_teamspace` / `delete_teamspace` | Teamspaces; deleting one moves its pages to Private |
+
+A locked page (“Lock page”) refuses every tool that changes its content (`append_markdown`, `replace_page_content`,
+`find_replace`, `edit_blocks`, `draw_board`); the answer says so. `update_page { locked: false }` unlocks it.
 
 ### Blocks (page editor)
 

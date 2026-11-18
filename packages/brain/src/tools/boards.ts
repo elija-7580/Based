@@ -51,7 +51,7 @@ export function boardTools(ctx: ToolCtx): ToolDef[] {
       run: (a) => {
         const given = optStr(a, "id");
         const parent = optStr(a, "parent");
-        if (given !== undefined) { ctx.page(given); if (!isBoardPage(store.blocks.get(given))) throw new Error("That page is not a whiteboard."); }
+        if (given !== undefined) { ctx.writable(given); if (!isBoardPage(store.blocks.get(given))) throw new Error("That page is not a whiteboard."); }
         else if (parent !== undefined) ctx.page(parent);
         const existing = given ? boardObjectsOf(store, given) : [];
         let known: ReturnType<typeof workspaceFiles> | undefined;

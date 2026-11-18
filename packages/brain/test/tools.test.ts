@@ -194,15 +194,15 @@ describe("WorkspaceTools – Seiten", () => {
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
     expect(write).toEqual([
       "create_page", "append_markdown", "replace_page_content", "find_replace", "update_page", "move_page", "duplicate_page", "trash_page", "restore_page", "set_favorite",
-      "edit_blocks", "draw_board", "add_row", "update_row", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
+      "update_workspace", "create_teamspace", "update_teamspace", "delete_teamspace", "edit_blocks", "draw_board", "add_row", "update_row", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
       "ask_main_agent", "resolve_inbox", "create_project", "update_project_status", "undo_last",
     ]);
     expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual([
-      "based_guide", "search", "read_page", "list_pages", "list_trash", "backlinks", "read_blocks", "read_board", "list_files", "list_databases", "database_schema", "query_database", "list_views",
+      "based_guide", "search", "read_page", "list_pages", "list_trash", "backlinks", "get_workspace", "read_blocks", "read_board", "list_files", "list_databases", "database_schema", "query_database", "list_views",
       "recall", "related", "about_me", "list_skills", "load_skill", "list_runs", "get_run", "inbox", "list_projects", "get_project",
     ]);
     // was etwas verwerfen kann, ist als solches markiert
-    expect(tools.specs.map((s) => s.name).filter((n) => tools.isDestructive(n))).toEqual(["replace_page_content", "trash_page", "update_database", "delete_view"]);
+    expect(tools.specs.map((s) => s.name).filter((n) => tools.isDestructive(n))).toEqual(["replace_page_content", "trash_page", "delete_teamspace", "update_database", "delete_view"]);
     expect(tools.isWrite("unknown"), "Unbekanntes gilt als Schreiben").toBe(true);
     for (const s of tools.specs) expect(s.inputSchema).toMatchObject({ type: "object" });
   });
@@ -415,6 +415,112 @@ describe("Agent-Parität: Regeln für alle Werkzeuge", () => {
       const props = Object.keys((d.spec.inputSchema as { properties: object }).properties);
       for (const now of Object.values(d.aliases ?? {})) expect(props, d.spec.name).toContain(now);
     }
+  });
+});
+
+// Agent-Parität 4/7: was der Mensch im Seitenmenü, im Seitenkopf und in der Seitenleiste macht.
+describe("Shell für Agenten: Seitenoptionen, Icon und Cover, Bereiche, Reihenfolge", () => {
+  it("update_page: Titel, Phosphor-Icon, Cover, Schrift, Breite – ein Aufruf, ein Undo-Schritt", () => {
+    const { store, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Trip" }));
+    const before = snapshot(store);
+    ok("update_page", { id, title: "Lisbon", icon: "phosphor:airplane-tilt:blue", cover: "gradient:3", cover_height: 1.5, cover_position: 0.2, font: "serif", small_text: true, full_width: true });
+    expect(store.blocks.get(id)).toMatchObject({
+      text: "Lisbon",
+      props: { icon: "phosphor:airplane-tilt:blue", cover: { gradient: { _0: 3 } }, format: { font: "serif", smallText: true, fullWidth: true, coverHeight: 1.5, coverPosition: 0.2 } },
+    });
+    store.undo();
+    expect(snapshot(store)).toBe(before);
+    // einzeln: Farbe als Cover, Bild-Link als Icon, wieder entfernen
+    ok("update_page", { id, cover: "blue", icon: "https://example.com/logo.png" });
+    expect(store.blocks.get(id)!.props).toMatchObject({ cover: { color: { _0: "blue" } }, icon: { url: "https://example.com/logo.png" } });
+    ok("update_page", { id, cover: "none", icon: "", font: "default" });
+    expect(store.blocks.get(id)!.props).toBeUndefined();
+  });
+
+  it("update_page prüft erst alles: ein falscher Wert ändert nichts", () => {
+    const { store, ok, call, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Doc" }));
+    const before = snapshot(store);
+    expect(call("update_page", { id, title: "Changed", cover: "turquoise" }).text).toContain("cover takes gray, blue, pink, orange, default, gradient:0…11");
+    expect(call("update_page", { id, title: "Changed", icon: "rocket" }).text).toContain("icon takes an emoji");
+    expect(call("update_page", { id, icon: "phosphor:Not Valid" }).text).toContain("phosphor:<name>:<colour>");
+    expect(call("update_page", { id, cover: "based-asset:" + "0".repeat(64) }).text).toContain("Unknown file");
+    expect(call("update_page", { id, cover_height: 2 }).text).toBe("This page has no cover; set `cover` too.");
+    expect(call("update_page", { id, font: "comic" }).text).toBe("Argument font must be one of: default, serif, mono.");
+    expect(call("update_page", { id }).isError).toBe(true);
+    expect(snapshot(store)).toBe(before);
+  });
+
+  it("eine gesperrte Seite lehnt Inhalt ändern ab – auf jedem Weg; entsperren geht nur ausdrücklich", () => {
+    const { store, ok, call, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Contract", markdown: "Signed text" }));
+    ok("update_page", { id, locked: true });
+    const before = snapshot(store);
+    for (const [name, input] of [
+      ["append_markdown", { id, markdown: "more" }], ["replace_page_content", { id, markdown: "new" }], ["find_replace", { id, find: "Signed", replace: "Draft" }], ["edit_blocks", { id, script: "text: more" }],
+    ] as const) {
+      const r = call(name, input);
+      expect(r.isError, name).toBe(true);
+      expect(r.text, name).toContain("“Contract” is locked");
+    }
+    expect(snapshot(store)).toBe(before);
+    // lesen geht, Titel und Optionen auch
+    expect(call("read_blocks", { id }).isError).toBe(false);
+    ok("update_page", { id, locked: false });
+    expect(call("append_markdown", { id, markdown: "more" }).isError).toBe(false);
+  });
+
+  it("Teamspaces und Workspace: anlegen, umbenennen, Seiten hinein, löschen (Seiten wandern nach Private)", () => {
+    const { store, ok, call, idIn } = setup();
+    const a = idIn(ok("create_page", { title: "Private note" }));
+    const made = ok("create_teamspace", { name: "Company", icon: "🏢" });
+    const ts = /teamspace id: ([^)]+)\)/.exec(made)![1]!;
+    expect(call("create_teamspace", { name: "company" }).text).toContain("already exists");
+    const wiki = idIn(ok("create_page", { title: "Wiki", section: "Company" }));
+    expect(store.blocks.get(wiki)?.props?.teamspace).toBe(ts);
+    ok("move_page", { id: a, section: ts });
+    expect(ok("list_pages")).toBe(`- Wiki (id: ${wiki}) · in Company\n- Private note (id: ${a}) · in Company`);
+    expect(ok("list_pages", { section: "private" })).toBe("(none)");
+    ok("update_teamspace", { teamspace: "Company", name: "Acme" });
+    ok("update_workspace", { name: "Elija's notes", icon: "📓" });
+    expect(ok("get_workspace").split("\n").slice(0, 4)).toEqual(["Workspace “Elija's notes” 📓", "Sections:", "- Private — 0 pages", `- Acme 🏢 (teamspace id: ${ts}) — 2 pages`]);
+    expect(call("move_page", { id: a, section: "Nope" }).text).toBe("No teamspace “Nope”. Sections: private, Acme.");
+    expect(ok("delete_teamspace", { teamspace: "Acme" })).toBe("Deleted teamspace “Acme”; 2 pages moved to Private.");
+    expect(store.blocks.get(wiki)?.props?.teamspace).toBeUndefined();
+    expect(store.blocks.has(wiki)).toBe(true);
+    store.undo();
+    expect(store.blocks.get(wiki)?.props?.teamspace, "ein Undo holt den Teamspace mit seinen Seiten zurück").toBe(ts);
+  });
+
+  it("move_page: mehrere Seiten in einem Schritt, an eine genaue Stelle; create_page hinter eine Seite", () => {
+    const { store, ok, call, idIn } = setup();
+    const [a, b, c, d] = ["A", "B", "C", "D"].map((t) => idIn(ok("create_page", { title: t }))) as [string, string, string, string];
+    const order = (parent = "w") => store.children(parent).map((id) => plainText(store.blocks.get(id)!.text));
+    ok("move_page", { ids: [d, c], before: a });
+    expect(order()).toEqual(["D", "C", "A", "B"]);
+    expect(ok("move_page", { ids: [a, b], parent_id: d })).toBe("Moved 2 pages under “D”.");
+    expect(order("b:" + d)).toEqual(["A", "B"]);
+    ok("move_page", { id: b, before: a });
+    expect(order("b:" + d)).toEqual(["B", "A"]);
+    store.undo();
+    store.undo();
+    expect(order(), "jeder Aufruf war genau ein Schritt").toEqual(["D", "C", "A", "B"]);
+    const e = idIn(ok("create_page", { title: "E", after: d }));
+    expect(order()).toEqual(["D", "E", "C", "A", "B"]);
+    expect(store.blocks.get(e)?.parent).toBe("w");
+    expect(call("move_page", { id: d, after: d }).isError).toBe(true);
+    expect(call("move_page", { id: d, parent_id: a, section: "private" }).text).toBe("Give parent_id or section, not both.");
+    expect(call("move_page", {}).text).toBe("Give `id` or `ids`.");
+  });
+
+  it("create_page aus einer Startvorlage", () => {
+    const { store, ok, call } = setup();
+    const out = ok("create_page", { template: "tasks" });
+    expect(out).toMatch(/^Created “.+” from the template tasks \(id: /);
+    expect(store.databases.size).toBeGreaterThan(0);
+    expect(call("create_page", { template: "tasks", title: "x" }).text).toContain("A template comes as it is");
+    expect(call("create_page", { template: "recipes" }).text).toBe("Argument template must be one of: tasks, notes, journal, wiki.");
   });
 });
 

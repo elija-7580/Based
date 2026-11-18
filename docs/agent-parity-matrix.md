@@ -3,8 +3,8 @@
 Bestandsaufnahme vom 18.11.2026, gelesen auf `main` (f07b0bf) plus `feat/board-markdown` (f27f9b9, dort liegt der
 Auftrag `docs/agent-parity.md`). Wird je Eintrag fortgeschrieben (Lücke → „erledigt“).
 
-**Stand 18.11., Abend:** Eintrag 1/7 (eine Werkzeug-Schicht) und 2/7 (Seiten-Editor) sind gebaut – Abschnitte G und
-E unten. Die vier Punkte „Was vor der Matrix zu wissen ist“ beschreiben den Stand davor; 1, 2 und 4 sind damit
+**Stand 18.11., Abend:** Eintrag 1/7 (eine Werkzeug-Schicht) und 2/7 (Seiten-Editor) sind gebaut, von 4/7 (Shell)
+alles außer Suche-Filtern und endgültigem Löschen – Abschnitte G, E und S unten. Die vier Punkte „Was vor der Matrix zu wissen ist“ beschreiben den Stand davor; 1, 2 und 4 sind damit
 erledigt, 3 ebenfalls (`read_blocks`, `edit_blocks`). Schritt 2 ist entschieden, siehe „Entscheidungen“.
 
 Aufwand: **S** = dünne Hülle um Logik, die es in `packages/core` schon gibt · **M** = neues Werkzeug mit eigener
@@ -180,20 +180,20 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
 | Shell | S1 Suchen | ⌘K | `search`, `recall` | Filter (Art, Ort, Datum) und Sortierung wie in ⌘K fehlen | `search { kind?, within?, sort? }` | S |
-| Shell | S2 Seitenbaum lesen | Sidebar | `list_pages` | Teamspaces und Bereiche nicht sichtbar | `list_pages` nennt Bereich; ohne `parent` Gruppen je Bereich | S |
-| Shell | S3 Seite anlegen (auch aus Vorlage) | ⌘N, „+“, Starter-Vorlagen | `create_page` | Bereich, Stelle, Starter-Vorlage (Tasks, Notes, Journal, Wiki) fehlen | `create_page { section?, after?, template? }` | S |
+| Shell | S2 Seitenbaum lesen | Sidebar | `list_pages` | erledigt | erledigt 18.11.: `list_pages` nennt den Bereich, `section`; `get_workspace` | – |
+| Shell | S3 Seite anlegen (auch aus Vorlage) | ⌘N, „+“, Starter-Vorlagen | `create_page` | erledigt | erledigt 18.11.: `create_page { section, after, template }` | – |
 | Shell | S4 Umbenennen, Emoji-Icon | Titel, Icon | `update_page` | – | erledigt | – |
-| Shell | S5 Icon aus Phosphor (mit Farbe) oder Bild | Icon-Picker „Icons“ | – | fehlt | `update_page { icon: "phosphor:…" \| <ref> }`, Liste aus core | S |
-| Shell | S6 Cover: Farbe, Verlauf, Bild, Link, Höhe, Position | „Change cover“ | nur `remove_cover` | fehlt | `update_page { cover }` | M |
-| Shell | S7 Schrift, Small text, Full width | Seitenmenü | nur beim Anlegen in der App | fehlt | `update_page { font, small_text, full_width }` | S |
-| Shell | S8 Seite sperren | Seitenmenü „Lock page“ | – | fehlt; schreiben Agenten heute in gesperrte Seiten? prüfen | `update_page { locked }`; Schreib-Werkzeuge lehnen gesperrte Seiten ab | S |
-| Shell | S9 Verschieben in Seite | Ziehen, „Move to…“ | `move_page` | Stelle (davor/danach), Bereich/Teamspace, mehrere fehlen | `move_page { ids, parent \| section, before?/after? }` | S |
+| Shell | S5 Icon aus Phosphor (mit Farbe) oder Bild | Icon-Picker „Icons“ | – | erledigt | erledigt 18.11.: `update_page { icon }` (Phosphor, Datei-Adresse, Bild-Link) | – |
+| Shell | S6 Cover: Farbe, Verlauf, Bild, Link, Höhe, Position | „Change cover“ | nur `remove_cover` | erledigt | erledigt 18.11.: `update_page { cover, cover_height, cover_position }`; Farb- und Verlaufsliste jetzt im Kern | – |
+| Shell | S7 Schrift, Small text, Full width | Seitenmenü | nur beim Anlegen in der App | erledigt | erledigt 18.11.: `update_page { font, small_text, full_width }` | – |
+| Shell | S8 Seite sperren | Seitenmenü „Lock page“ | – | erledigt | erledigt 18.11.: `update_page { locked }`; jedes inhaltsändernde Werkzeug lehnt gesperrte Seiten ab | – |
+| Shell | S9 Verschieben in Seite | Ziehen, „Move to…“ | `move_page` | erledigt | erledigt 18.11.: `move_page { ids, parent_id \| section, before \| after }` | – |
 | Shell | S10 Duplizieren | Menü | `duplicate_page` | – | erledigt (nur MCP) | – |
 | Shell | S11 Favoriten | Seitenmenü, Sidebar | `set_favorite` | Reihenfolge der Favoriten | bewusst nicht (persönliche Anordnung), sonst `after` | – |
 | Shell | S12 Papierkorb: hinein, zurück, Liste | Menü, Trash | `trash_page`, `restore_page`, `list_trash` | – | erledigt (nur MCP) | – |
 | Shell | S13 Endgültig löschen, Papierkorb leeren | Trash „Delete forever“, „Empty Trash“ | – | fehlt | `delete_forever`, `empty_trash`: immer erst Frage in der Inbox (Entscheidung 3), `destructiveHint` | M |
-| Shell | S14 Teamspaces: anlegen, umbenennen, Icon, löschen | Sidebar | – | fehlt | Einzelwerkzeuge oder `workspace`-Skript; Löschen mit `destructiveHint` | M |
-| Shell | S15 Workspace-Name und -Icon | Sidebar-Kopf | – | fehlt | `update_workspace` | S |
+| Shell | S14 Teamspaces: anlegen, umbenennen, Icon, löschen | Sidebar | – | erledigt | erledigt 18.11.: `create_teamspace`, `update_teamspace`, `delete_teamspace` (zerstörend markiert, Seiten wandern nach Private) | – |
+| Shell | S15 Workspace-Name und -Icon | Sidebar-Kopf | – | erledigt | erledigt 18.11.: `update_workspace` | – |
 | Shell | S16 Backlinks, Verwandtes | Backlinks-Leiste | `backlinks`, `related` | – | erledigt | – |
 | Shell | S17 Graph lesen | Library „Graph“ | `related` (eine Seite) | ganzer Graph bzw. Nachbarschaft mit Tiefe fehlt | `related { depth }`; ganzer Graph nur als Zählung | S |
 | Shell | S18 Library: filtern, sortieren, „Same title“, Mehrfachauswahl | Library | `search`, `list_pages` | Liste nach Art, Datum, Dubletten fehlt | `search` ohne Query mit `kind`, `sort`, `duplicates` | S |
@@ -274,7 +274,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Grundlage | 4 | 4 | 0 | 0 | 0 |
 | Editor | 37 | 24 | 10 (E5, E18, E20, E25–E27, E29–E31, E35; vier davon teils) | 3 | 0 |
 | Datenbanken | 23 | 3 | 18 | 2 | 0 |
-| Shell | 23 | 6 | 13 | 4 | 0 |
+| Shell | 23 | 15 | 4 (S1, S13, S17, S18) | 4 | 0 |
 | Verlauf, Export, Import | 7 | 0 | 6 | 1 | 0 |
 | Meetings | 7 | 0 | 5 | 2 | 0 |
 | Brain, Inbox, Home | 14 | 4 | 8 | 2 | 0 |

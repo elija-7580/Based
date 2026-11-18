@@ -147,7 +147,7 @@ export { wikilinkBefore } from "./editor/wikilink.js";
 export type { EmojiEntry } from "./editor/emoji.js";
 export { ICON_COLORS, iconAsText, parsePhosphorIcon, phosphorIcon } from "./editor/icon-ref.js";
 export type { IconColor, PhosphorIconRef } from "./editor/icon-ref.js";
-export { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
+export { COVER_COLOR_IDS, COVER_GRADIENT_COUNT, COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
 export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";
 export { CODE_LANGUAGES, CODE_VIEWS, codeLanguageID, codePreviewKind, codeView, syntaxTokens, type CodeView } from "./editor/syntax.js";

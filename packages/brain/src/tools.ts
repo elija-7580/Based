@@ -10,7 +10,7 @@
 // - `undo_last` nimmt den letzten eigenen Schreib-Aufruf zurück (genau diesen Schritt, auch wenn danach der Mensch
 //   weitergeschrieben hat; was seither geändert wurde, bleibt).
 import {
-  attachSearchIndex, isPageLike, isTrashed, MarkdownExporter, MarkdownImporter, titleOf,
+  attachSearchIndex, isPageLike, isTrashed, MarkdownExporter, MarkdownImporter, pageFormat, titleOf,
   type Author, type Block, type BoardFileInfo, type JSONValue, type SearchFilters, type SearchIndex, type WorkspaceStore,
 } from "@based/core";
 import type { ToolHost, ToolResult } from "./engine.js";
@@ -28,6 +28,7 @@ import { databaseTools } from "./tools/database-tools.js";
 import { brainTools } from "./tools/brain-tools.js";
 import { agentTools } from "./tools/agent-tools.js";
 import { guideTools } from "./tools/guide.js";
+import { workspaceTools } from "./tools/workspace.js";
 
 export { PAGE_URI, ToolError, putMarkdownBlocks, checkArgs, type Args, type ToolDef, type ToolGroup, type ToolRunContext } from "./tools/base.js";
 export type { ToolCtx } from "./tools/context.js";
@@ -88,7 +89,7 @@ export class WorkspaceTools implements ToolHost {
   constructor(readonly store: WorkspaceStore, private readonly opts: WorkspaceToolsOptions = {}) {
     this.ctx = this.context();
     const groups = opts.groups ? new Set(opts.groups) : undefined;
-    const all = [...guideTools(), ...pageTools(this.ctx), ...blockTools(this.ctx), ...boardTools(this.ctx), ...databaseTools(this.ctx), ...brainTools(this.ctx), ...agentTools(this.ctx), ...(opts.extra?.(this.ctx) ?? []), this.undoTool()];
+    const all = [...guideTools(), ...pageTools(this.ctx), ...workspaceTools(this.ctx), ...blockTools(this.ctx), ...boardTools(this.ctx), ...databaseTools(this.ctx), ...brainTools(this.ctx), ...agentTools(this.ctx), ...(opts.extra?.(this.ctx) ?? []), this.undoTool()];
     for (const d of all) {
       if (groups && !groups.has(d.group)) continue;
       if (this.defs.has(d.spec.name)) throw new Error(`Tool ${d.spec.name} is defined twice`);
@@ -222,12 +223,18 @@ export class WorkspaceTools implements ToolHost {
       if (!allowTrashed && isTrashed(store, id)) throw new ToolError(`Page ${id} is in the Trash (restore_page brings it back)`);
       return b;
     };
+    const writable = (id: string): Block => {
+      const b = page(id);
+      if (pageFormat(store, id).locked) throw new ToolError(`“${titleOf(store, id) || "Untitled"}” is locked, so its content can't be changed. The user locked it on purpose; unlock it (update_page with locked: false) only if they ask.`);
+      return b;
+    };
     const graph = () => this.opts.graph?.() ?? (this.ownGraph ??= RelationGraph.attach(store)).graph;
     const brain = () => this.opts.brain?.() ?? (this.ownBrain ??= new AgentBrain(store));
     return {
       store,
       databases: new Databases(store),
       page,
+      writable,
       title: (id) => titleOf(store, id) || "Untitled",
       line: (id) => `- ${titleOf(store, id) || "Untitled"} (id: ${id})`,
       importer: () => new MarkdownImporter({

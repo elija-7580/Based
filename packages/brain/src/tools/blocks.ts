@@ -44,6 +44,7 @@ export function blockTools(ctx: ToolCtx): ToolDef[] {
       run: (a) => {
         const id = needStr(a, "id");
         editable(id);
+        ctx.writable(id);
         let known: ReturnType<typeof workspaceFiles> | undefined;
         const r = runBlockScript(store, id, needStr(a, "script"), {
           importer: ctx.importer(),

@@ -25,6 +25,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - To change single blocks (insert at a place, move, columns, colours, turn into, images, tables): \`read_blocks\` gives every block a short handle, \`edit_blocks\` takes a short script.
 - Every writing call is one step; \`undo_last\` takes your last one back.
+- Page look and place: \`update_page\` (icon, cover, font, width, lock), \`move_page\` (under a page, into a section, before/after another page); \`get_workspace\` shows the sections.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
 - Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user (\`resolve_inbox\` answers an approval, only if the user allowed it); \`ask_main_agent\` hands Based's main agent a task; projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).

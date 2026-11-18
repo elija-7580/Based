@@ -2,7 +2,7 @@
 // „Change cover“ und „Reposition“ (senkrecht ziehen), und das Bild-Icon. Werte wie Swift (PageCover, PageIcon).
 import { useEffect, useRef, useState } from "react";
 import { ASSET_URL_PREFIX } from "@based/editor";
-import { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight, pageCover, setCoverPosition, setPageCover, setPageIconImage, type CoverAsset, type PageCoverValue, type WorkspaceStore } from "@based/core";
+import { COVER_GRADIENT_COUNT, COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight, pageCover, setCoverPosition, setPageCover, setPageIconImage, type CoverAsset, type PageCoverValue, type WorkspaceStore } from "@based/core";
 import { assets } from "../assetBridge.js";
 import { BasedButton } from "@based/ui/astryx";
 
@@ -18,7 +18,9 @@ export const COVER_COLORS: { id: string; label: string; css: string }[] = [
  * BSD-201 Teil 3: Verläufe wie in der Swift-App (Covers.gradients, gleiche Reihenfolge = gleiche Nummer im Record),
  * damit ein Cover auf jedem Gerät gleich aussieht. Die Farben sind Tokens (`--cover-gradient-<n>-from/-to`).
  */
-export const COVER_GRADIENT_COUNT = 12;
+// Die Zahl der Verläufe und die Farb-Kennungen stehen im Kern (`COVER_GRADIENT_COUNT`, `COVER_COLOR_IDS`), damit Agenten
+// dieselben Namen benutzen (docs/agent-parity.md, Regel 6); ein Test hält `COVER_COLORS` damit gleich.
+export { COVER_GRADIENT_COUNT };
 const gradientCss = (i: number) => {
   const n = ((i % COVER_GRADIENT_COUNT) + COVER_GRADIENT_COUNT) % COVER_GRADIENT_COUNT;
   return `linear-gradient(135deg, var(--cover-gradient-${n}-from), var(--cover-gradient-${n}-to))`;
