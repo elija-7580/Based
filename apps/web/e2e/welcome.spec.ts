@@ -23,15 +23,42 @@ async function ready(page: Page) {
 }
 
 const welcome = (page: Page) => page.getByTestId("welcome");
+const step = (page: Page) => page.getByTestId("tour-step");
 
-test("Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
+/** BSD-551: vom ersten Schritt des Einstiegs direkt zur Wahl („How do you want to start?“). */
+async function toStart(page: Page) {
+  await expect(step(page)).toHaveAttribute("data-step", "welcome");
+  await welcome(page).getByRole("button", { name: "Skip" }).click();
+  await expect(step(page)).toHaveAttribute("data-step", "start");
+}
+
+test("Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
   const { page, close } = await fresh(playwright, browserName, baseURL!);
   try {
     await page.goto("/");
     await ready(page);
     await expect(welcome(page)).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1, name: "Welcome to Based" })).toBeVisible();
     await expect(page.getByTestId("home")).toHaveCount(0);
+    // BSD-551: Schritt 1, dann mit Return, → und ← durch die Schritte (im Browser ohne Meeting-Schritt)
+    await expect(page.getByRole("heading", { level: 1, name: "Welcome to Based Notes" })).toBeVisible();
+    await expect(page.getByTestId("tour-progress")).toHaveAttribute("aria-label", "Step 1 of 4");
+    await expect(welcome(page).getByRole("button", { name: "Continue" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(step(page)).toHaveAttribute("data-step", "data");
+    await expect(page.getByRole("heading", { level: 1, name: "Your data stays on this device" })).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(step(page)).toHaveAttribute("data-step", "beta");
+    await expect(step(page)).toContainText("hello@basednotes.app");
+    await page.keyboard.press("ArrowLeft");
+    await expect(step(page)).toHaveAttribute("data-step", "data");
+    // Neuladen mitten im Einstieg: derselbe Schritt
+    await page.reload();
+    await ready(page);
+    await expect(step(page)).toHaveAttribute("data-step", "data");
+    await welcome(page).getByRole("button", { name: "Continue" }).click();
+    await welcome(page).getByRole("button", { name: "Continue" }).click();
+    await expect(step(page)).toHaveAttribute("data-step", "start");
+    await expect(page.getByRole("heading", { level: 1, name: "How do you want to start?" })).toBeVisible();
     // der erste Weg hat den Fokus (Enter wählt ihn ohne Maus)
     await expect(welcome(page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
     // BSD-463: der Datei-Import bringt keine Ansichten – die Karte verspricht sie nur für die direkte Verbindung
@@ -73,6 +100,7 @@ test("Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect
   try {
     await page.goto("/");
     await ready(page);
+    await toStart(page);
     await expect(welcome(page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
     await page.keyboard.press("Enter"); // ohne Maus
     const dialog = page.getByRole("dialog", { name: "Import" });
@@ -111,6 +139,16 @@ test("Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn
     await page.goto("/");
     await ready(page);
     await expect(welcome(page)).toBeVisible();
+    // BSD-551: jeder Schritt passt ohne Scrollen, „Continue“ und „Skip“ sind sichtbar
+    for (const s of ["welcome", "data", "beta"]) {
+      await expect(step(page)).toHaveAttribute("data-step", s);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), s).toBe(true);
+      for (const name of ["Continue", "Skip"]) await expect(welcome(page).getByRole("button", { name }), `${s}: ${name}`).toBeInViewport({ ratio: 1 });
+      const clippedTour = await step(page).locator(".tour-point strong").evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).length);
+      expect(clippedTour, s).toBe(0);
+      await welcome(page).getByRole("button", { name: "Continue" }).click();
+    }
+    await expect(step(page)).toHaveAttribute("data-step", "start");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     for (const name of [/Import from Notion/, /Start empty/, /^Tasks$/, /^Notes$/, /^Journal$/, /^Wiki$/, /Turn on agents/]) await expect(welcome(page).getByRole("button", { name })).toBeInViewport({ ratio: 1 });
     // Beschriftungen der Wege laufen nicht heraus
@@ -150,6 +188,7 @@ test("Willkommen: Bildschirmfotos", async ({ playwright, browserName, baseURL })
       await page.setViewportSize({ width: 1280, height: 820 });
     };
     await page.mouse.move(0, 0);
+    await toStart(page);
     await shoot("start");
     await welcome(page).getByRole("button", { name: /Start empty/ }).click();
     await expect(page.getByTestId("page-content").getByText("Your data", { exact: true })).toBeVisible();
@@ -175,6 +214,7 @@ test("ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seit
       }, theme);
       await page.goto("/");
       await ready(page);
+      await toStart(page);
       await welcome(page).getByRole("button", { name: /Start empty/ }).click();
       await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
       await page.getByRole("button", { name: "Home" }).click();
@@ -206,11 +246,11 @@ test("Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen ber
       await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
       await page.goto("/");
       await ready(page);
+      await toStart(page);
       const tpl = welcome(page).getByRole("group", { name: "Or start from a template" });
       await expect(tpl.getByRole("button")).toHaveText(["Tasks", "Notes", "Journal", "Wiki"]);
       if (browserName === "chromium") {
         await page.mouse.move(0, 0);
-        await expect(welcome(page).getByTestId("logo-intro")).toHaveAttribute("data-state", "done"); // Logo-Intro abwarten
         await page.screenshot({ path: `${SHOTS}web-welcome-templates-${theme}.png` });
       }
       const t0 = Date.now();
@@ -278,4 +318,165 @@ test("Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ so
     expect(await logo.getAttribute("data-state")).toBe("done"); // ohne Warten
     expect(await rest()).toEqual(played);
   } finally { await close(); }
+});
+
+// BSD-551: „Skip“ auf jedem Schritt führt zur Wahl; danach (nach der Wahl) nie wieder automatisch.
+test("Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(90_000);
+  const { page, close } = await fresh(playwright, browserName, baseURL!);
+  try {
+    await page.goto("/");
+    await ready(page);
+    for (const [i, s] of (["welcome", "data", "beta"] as const).entries()) {
+      for (let k = 0; k < i; k++) await welcome(page).getByRole("button", { name: "Continue" }).click();
+      await expect(step(page)).toHaveAttribute("data-step", s);
+      await welcome(page).getByRole("button", { name: "Skip" }).click();
+      await expect(step(page)).toHaveAttribute("data-step", "start");
+      // Zurück zum Anfang (über „Back“ bis zum ersten Schritt)
+      while ((await step(page).getAttribute("data-step")) !== "welcome") await welcome(page).getByRole("button", { name: "Back" }).click();
+    }
+    await toStart(page);
+    await welcome(page).getByRole("button", { name: /Start empty/ }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+    await page.reload();
+    await ready(page);
+    await page.getByRole("button", { name: "Home" }).click();
+    await expect(welcome(page)).toHaveCount(0);
+    await expect(step(page)).toHaveCount(0);
+  } finally {
+    await close();
+  }
+});
+
+// BSD-551: ⌘K → „Show welcome tour“ (in der Mac-App auch Hilfe → Show Welcome Tour) zeigt den Einstieg erneut – ohne
+// die Wahl am Ende, ohne etwas anzulegen; Done, Close und Escape schließen.
+test("Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(90_000);
+  const { page, close } = await fresh(playwright, browserName, baseURL!);
+  try {
+    await page.goto("/");
+    await ready(page);
+    await toStart(page);
+    await welcome(page).getByRole("button", { name: /Start empty/ }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+    const tree = page.getByRole("treeitem");
+    const before = await tree.count();
+    const open = async () => {
+      await page.keyboard.press("ControlOrMeta+k");
+      await page.keyboard.type("welcome tour");
+      await page.getByRole("option", { name: /Show welcome tour/ }).click();
+      await expect(page.getByTestId("welcome-tour")).toBeVisible();
+    };
+    await open();
+    const tour = page.getByTestId("welcome-tour");
+    await expect(tour.getByRole("heading", { level: 1, name: "Welcome to Based Notes" })).toBeVisible();
+    await expect(tour.getByRole("button", { name: "Continue" })).toBeFocused();
+    for (const s of ["data", "beta"]) {
+      await page.keyboard.press("Enter");
+      await expect(tour.getByTestId("tour-step")).toHaveAttribute("data-step", s);
+    }
+    // letzter Schritt: „Done“ statt der Wahl
+    await expect(tour.getByRole("button", { name: /Start empty|Import from Notion/ })).toHaveCount(0);
+    await tour.getByRole("button", { name: "Done" }).click();
+    await expect(tour).toHaveCount(0);
+    await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+    expect(await tree.count()).toBe(before);
+    await open();
+    await tour.getByRole("button", { name: "Close" }).click();
+    await expect(tour).toHaveCount(0);
+    await open();
+    await page.keyboard.press("Escape");
+    await expect(tour).toHaveCount(0);
+    // Wechsel zu einer Seite schließt ihn ebenfalls
+    await open();
+    await page.goto("/#trash");
+    await expect(tour).toHaveCount(0);
+    expect(await tree.count()).toBe(before);
+    expect(await page.evaluate(() => localStorage.getItem("based.welcome"))).toBeNull();
+  } finally {
+    await close();
+  }
+});
+
+// BSD-551: Workspaces aus 0.2.x mit noch ausstehendem Willkommen (Merker ohne Schritt) sehen den Einstieg nicht
+// ungefragt, sondern direkt die Wahl.
+test("Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl", async ({ playwright, browserName, baseURL }) => {
+  const { page, close } = await fresh(playwright, browserName, baseURL!);
+  try {
+    await page.goto("/");
+    await ready(page);
+    await expect(step(page)).toHaveAttribute("data-step", "welcome");
+    await page.evaluate(() => { const v = JSON.parse(localStorage.getItem("based.welcome")!) as { page: string }; localStorage.setItem("based.welcome", JSON.stringify({ page: v.page })); });
+    await page.reload();
+    await ready(page);
+    await expect(step(page)).toHaveAttribute("data-step", "start");
+    await expect(page.getByTestId("tour-progress")).toHaveCount(0);
+    await expect(welcome(page).getByRole("button", { name: "Back" })).toHaveCount(0);
+  } finally {
+    await close();
+  }
+});
+
+// BSD-551: Schritt „Meeting notes“ (sonst nur in der Mac-App) – hier mit `__basedTourMeetings` eingeschaltet.
+test("Einstieg: Schritt Meeting notes mit „Turn on meeting notes“", async ({ playwright, browserName, baseURL }) => {
+  const { page, close } = await fresh(playwright, browserName, baseURL!);
+  try {
+    await page.addInitScript(() => { (globalThis as { __basedTourMeetings?: boolean }).__basedTourMeetings = true; });
+    await page.goto("/");
+    await ready(page);
+    await expect(page.getByTestId("tour-progress")).toHaveAttribute("aria-label", "Step 1 of 5");
+    await welcome(page).getByRole("button", { name: "Continue" }).click();
+    await welcome(page).getByRole("button", { name: "Continue" }).click();
+    await expect(step(page)).toHaveAttribute("data-step", "meetings");
+    await expect(welcome(page).getByTestId("welcome-meetings")).toBeVisible();
+    await expect(welcome(page).getByTestId("welcome-meetings")).toContainText("488 MB");
+    await welcome(page).getByRole("button", { name: "Continue" }).click();
+    await expect(step(page)).toHaveAttribute("data-step", "beta");
+    await expect(step(page)).toContainText("meeting notes");
+  } finally {
+    await close();
+  }
+});
+
+// Bildschirmfotos des Einstiegs (nur mit BASED_SCREENSHOTS=1, Chromium): jeder Schritt in 1280 × 820, 900 × 600 und
+// 1728 × 1000, hell und dunkel; dazu „Everything in Based“ in 1280 × 820.
+test("Einstieg: Bildschirmfotos", async ({ playwright, browserName, baseURL }) => {
+  test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium", "nur auf Wunsch");
+  test.setTimeout(180_000);
+  const { page, close } = await fresh(playwright, browserName, baseURL!);
+  try {
+    await page.addInitScript(() => { (globalThis as { __basedTourMeetings?: boolean }).__basedTourMeetings = true; });
+    await page.goto("/");
+    await ready(page);
+    await expect(welcome(page).getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
+    const sizes = [{ w: 1280, h: 820, s: "" }, { w: 900, h: 600, s: "-900" }, { w: 1728, h: 1000, s: "-1728" }];
+    const shoot = async (name: string, all = true) => {
+      for (const theme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme: theme });
+        await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+        for (const z of all ? sizes : sizes.slice(0, 1)) {
+          await page.setViewportSize({ width: z.w, height: z.h });
+          await page.waitForTimeout(250);
+          expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+          await page.screenshot({ path: `${SHOTS}web-welcome-tour-${name}-${theme}${z.s}.png` });
+        }
+      }
+      await page.emulateMedia({ colorScheme: "light" });
+      await page.setViewportSize({ width: 1280, height: 820 });
+    };
+    await page.mouse.move(0, 0);
+    for (const s of ["welcome", "data", "meetings", "beta", "start"]) {
+      await expect(step(page)).toHaveAttribute("data-step", s);
+      // Fokus sichtbar wie per Tastatur (nur auf dem ersten Foto je Schritt egal)
+      await shoot(s);
+      if (s !== "start") await welcome(page).getByRole("button", { name: "Continue" }).click();
+    }
+    await welcome(page).getByRole("button", { name: /Start empty/ }).click();
+    await page.getByTestId("page-content").getByText("Everything in Based", { exact: true }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Everything in Based");
+    await page.mouse.move(0, 0);
+    await shoot("everything", false);
+  } finally {
+    await close();
+  }
 });

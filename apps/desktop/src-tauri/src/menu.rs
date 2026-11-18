@@ -20,6 +20,9 @@ pub const CLOSE_WINDOW: &str = "close-window";
 pub const REPORT_PROBLEM: &str = "report-problem";
 /// Vorsatz der Menü-Kennungen für Befehle aus dem Register.
 pub const COMMAND_PREFIX: &str = "cmd:";
+/// BSD-551: Hilfe → „Show Welcome Tour“ – ohne Taste; geht wie ein Register-Befehl als `desktop://command` mit
+/// „welcomeTour“ an das Fenster vorn (App.tsx öffnet den Einstieg erneut, ohne Daten anzufassen).
+pub const WELCOME_TOUR: &str = "cmd:welcomeTour";
 
 /// Eintrag für einen Befehl aus dem Register. Lässt sich das Kürzel nicht lesen, kommt der Eintrag ohne – ein
 /// Tippfehler darf den Start der App nicht verhindern.
@@ -126,6 +129,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         true,
         &[
             &command(app, "shortcuts", "Keyboard Shortcuts", "CmdOrCtrl+Shift+/")?,
+            &MenuItem::with_id(app, WELCOME_TOUR, "Show Welcome Tour", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, REPORT_PROBLEM, "Report a Problem…", true, Some("CmdOrCtrl+Shift+B"))?,
         ],

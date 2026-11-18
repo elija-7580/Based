@@ -45,10 +45,19 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
       const welcome = page.getByTestId("welcome");
       await expect(welcome).toBeVisible();
+      // BSD-551: Einstieg in Schritten, ohne ein Wort über AI; im Browser ohne den Meeting-Schritt (nur Mac-App)
+      const step = welcome.getByTestId("tour-step");
+      await expect(welcome.getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
+      for (const s of ["welcome", "data", "beta"]) {
+        await expect(step).toHaveAttribute("data-step", s);
+        await expect(step).not.toContainText(/\bAI\b|agent/i);
+        await clean(page, `Einstieg ${s}`);
+        await shoot(page, `welcome-tour-${s}`);
+        await welcome.getByRole("button", { name: "Continue" }).click();
+      }
+      await expect(step).toHaveAttribute("data-step", "start");
       await expect(welcome.getByRole("group", { name: "Or start from a template" }).getByRole("button")).toHaveText(["Tasks", "Notes", "Journal", "Wiki"]);
       await expect(welcome.getByText("AI stays off")).toHaveCount(0);
-      // das Logo-Intro läuft einmal und steht dann still (erst danach das Bildschirmfoto)
-      await expect(welcome.getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
       await clean(page, "Willkommen");
       await shoot(page, "welcome");
 
@@ -65,6 +74,14 @@ for (const theme of ["light", "dark"] as const) {
       await page.getByTestId("page-content").getByText("Your data", { exact: true }).click();
       await expect(page.getByLabel("Page title")).toHaveValue("Your data");
       await expect(page.getByTestId("block-editor")).not.toContainText(/\bAI\b|agent/i);
+      // BSD-552: „Everything in Based“ nennt keine ausgeblendete Funktion und endet mit „Not in this beta yet“
+      await page.getByRole("button", { name: "Home" }).click();
+      await page.getByTestId("page-content").getByText("Everything in Based", { exact: true }).click();
+      await expect(page.getByLabel("Page title")).toHaveValue("Everything in Based");
+      await expect(page.getByTestId("block-editor")).not.toContainText(/\bAI\b|agent|graph view|real-time/i);
+      await expect(page.getByTestId("block-editor")).toContainText("Not in this beta yet");
+      await clean(page, "Everything in Based");
+      await shoot(page, "everything");
       await page.getByRole("button", { name: "Home" }).click();
       await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
 
@@ -162,6 +179,7 @@ test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async
   try {
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: "Skip" }).click();
     await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
     await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
     await page.keyboard.type("Secret beta page text");
@@ -191,6 +209,7 @@ test("Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home", asyn
   try {
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: "Skip" }).click();
     await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
     await expect(page.getByLabel("Page title")).toBeVisible();
     // BSD-507: Meetings sind seit BSD-231 in der Beta – #meetings bleibt und zeigt die Meetings-Liste
