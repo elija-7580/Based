@@ -520,9 +520,21 @@ describe("Whiteboard über MCP", () => {
     const read = textOf(await call("read_board", { id: board }));
     expect(read).toMatch(/image "dot.png" based-asset:[0-9a-f]{64} @40,200 8x8 \{agent\}/);
     expect(textOf(await call("list_files", { query: "dot" }))).toMatch(/"dot.png" 2x1/);
+    // PDF: jede Seite mit ihrem Maß (pdf.js), eine Seite je Objekt.
+    const objs = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 595 842] >>", "<< /Type /Page /Parent 2 0 R >>", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 300] >>"];
+    let pdf = "%PDF-1.4\n";
+    const offs: number[] = [];
+    objs.forEach((o, i) => { offs.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offs.map((o) => `${String(o).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    const upPdf = textOf(await call("upload_file", { name: "notes.pdf", data: Buffer.from(pdf).toString("base64"), board, at: "600,0" }));
+    expect(upPdf).toContain("PDF, 2 pages");
+    const withPdf = textOf(await call("read_board", { id: board }));
+    expect(withPdf).toMatch(/file "notes.pdf" p1 based-asset:\w+ @600,0 560x792/);
+    expect(withPdf).toMatch(/file "notes.pdf" p2 based-asset:\w+ @600,808 560x560/);
     const local = await call("upload_file", { path: "/etc/hosts" });
     expect(local.isError).toBe(true);
-    expect((await call("upload_file", { url: "http://example.com/x.png" })).isError).toBe(true);
+    expect(textOf(await call("upload_file", { url: "ftp://example.com/x.png" }))).toContain("only http and https");
     expect(textOf(await call("upload_file", { url: "https://127.0.0.1/x.png" }))).toContain("not reachable");
   });
 });
