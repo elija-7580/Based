@@ -133,6 +133,7 @@ async function serverUsesPropertyRecords(url: string): Promise<boolean | undefin
  */
 async function propertyRecordsMode(syncURL: string | undefined, wanted: boolean): Promise<{ propertyRecords?: boolean }> {
   if (wanted) return { propertyRecords: true };
+  if (propertyRecordsSetting.pinnedOld()) return { propertyRecords: false };
   if (syncURL === undefined) return {};
   const server = await serverUsesPropertyRecords(syncURL);
   return server === false ? { propertyRecords: false } : {};

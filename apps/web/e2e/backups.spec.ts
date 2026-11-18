@@ -60,7 +60,7 @@ test("BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup
   await openSettings();
   await patch({ status: "running", enabled: true, url: serverURL, token: TOKEN });
   // der Server hat die Seite (sonst wäre sie nicht im Backup)
-  await expect.poll(async () => JSON.stringify(await (await fetch(`${serverURL}/sync/v2/pull?after=0&limit=500`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json()), { timeout: 20_000 }).toContain("Precious notes");
+  await expect.poll(async () => JSON.stringify(await (await fetch(`${serverURL}/sync/v2/pull?after=0&limit=500`, { headers: { Authorization: `Bearer ${TOKEN}`, "X-Based-Protocol": "3" } })).json()), { timeout: 20_000 }).toContain("Precious notes");
   await page.getByRole("button", { name: "Back up now" }).click();
   await expect(page.getByTestId("backup-message")).toHaveText("Backed up.");
   await expect(page.getByTestId("backup-not-synced")).toHaveCount(0);
