@@ -1,5 +1,5 @@
-failure 3a652dc43554bcc08b5194469e89853333d200e4
-  ✓  293 [chromium] › e2e/interop.spec.ts:354:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.5s)
+failure 7d59ed257bca838439961bf0252e6f48ad55a908
+  ✓  293 [chromium] › e2e/interop.spec.ts:354:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (3.0s)
 
 
   1) [chromium] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen 
@@ -55,7 +55,7 @@ failure 3a652dc43554bcc08b5194469e89853333d200e4
   1 failed
     [chromium] › e2e/feedback-1111.spec.ts:164:1 › Feedback 14. 11.: Home in den Einstellungen per Suche wählen (Tippfehler und Pfad finden), zurücksetzen 
   17 skipped
-  274 passed (6.8m)
+  274 passed (8.7m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf

@@ -1,5 +1,5 @@
-failure 3a652dc43554bcc08b5194469e89853333d200e4
-  ✓  273 [webkit] › e2e/welcome.spec.ts:256:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.2s)
+cancelled 7d59ed257bca838439961bf0252e6f48ad55a908
+  -  279 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
 
 
   1) [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
@@ -54,8 +54,8 @@ failure 3a652dc43554bcc08b5194469e89853333d200e4
 
   1 failed
     [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
-  49 skipped
-  222 passed (9.5m)
+  50 skipped
+  227 passed (9.6m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf

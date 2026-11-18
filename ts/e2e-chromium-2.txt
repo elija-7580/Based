@@ -1,4 +1,26 @@
-failure 3a652dc43554bcc08b5194469e89853333d200e4
+failure 7d59ed257bca838439961bf0252e6f48ad55a908
+  -  279 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+
+
+  1) [chromium] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('settings-section-start-page')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('settings-section-start-page') with timeout 5000ms
+      - waiting for getByTestId('settings-section-start-page')
+
+
+      91 |   await ready(page);
+      92 |   await page.keyboard.press("ControlOrMeta+Comma");
+    > 93 |   await expect(page.getByTestId("settings-section-start-page")).toBeVisible();
+         |                                                                 ^
+      94 |   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
       95 |   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
       96 |   const pageID = decodeURIComponent(new URL(page.url()).hash.replace(/^#\/?page-/, ""));
         at /home/runner/work/Based/Based/apps/web/e2e/shell-layout.spec.ts:93:65
@@ -30,32 +52,10 @@ failure 3a652dc43554bcc08b5194469e89853333d200e4
 
     Error Context: test-results/shell-layout-Letzten-Tab-s-29c48-selbst-gewählten-Startseite-chromium-retry1/error-context.md
 
-  2) [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
-
-    Test timeout of 30000ms exceeded.
-
-    Error: locator.boundingBox: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('[data-editable-id]:focus')
-
-
-      544 |     // Zeilen bis kurz vor den unteren Rand
-      545 |     for (let i = 0; i < 40; i++) {
-    > 546 |       const box = await page.locator("[data-editable-id]:focus").boundingBox();
-          |                                                                  ^
-      547 |       if (box && box.y > h - 140) break;
-      548 |       await page.keyboard.type(`Line ${i + 1}`);
-      549 |       await page.keyboard.press("Enter");
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:546:66
-
-    Error Context: test-results/polish-Slash--und--Menü-üb-7f046-nicht-auch-unten-im-Fenster-chromium/error-context.md
-
   1 failed
     [chromium] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite 
-  1 flaky
-    [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
-  12 skipped
-  258 passed (5.7m)
+  13 skipped
+  264 passed (6.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
