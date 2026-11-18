@@ -78,6 +78,9 @@
       "allow": [
         {
           "url": "mailto:*"
+        },
+        {
+          "url": "https://github.com/sponsors/elija-7580*"
         }
       ]
     }

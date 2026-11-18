@@ -237,6 +237,21 @@ export async function openMailto(href: string): Promise<void> {
   a.click();
 }
 
+/**
+ * Eine erlaubte Web-Adresse (shell/support.ts) im Browser öffnen. Mac-App: über das Opener-Plugin, weil die Webview
+ * `target="_blank"` nicht nach außen gibt; Browser: neuer Tab.
+ */
+export async function openExternal(href: string): Promise<void> {
+  const { isAllowedExternal } = await import("./shell/support.js");
+  if (!isAllowedExternal(href)) throw new Error("Address not allowed");
+  if (isTauri()) {
+    const { openUrl } = await import("@tauri-apps/plugin-opener");
+    await openUrl(href);
+    return;
+  }
+  window.open(href, "_blank", "noopener,noreferrer");
+}
+
 /** BSD-358: HTML der Zwischenablage aus der Hülle (nur macOS); ohne: undefined. */
 async function readClipboardHTML(): Promise<string | undefined> {
   try {
