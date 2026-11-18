@@ -1,1 +1,1 @@
-success 0506b78c30a7365877dba8c91eb03461d8516c9f nightly/2026-11-18-parity
+success 09fe04aa2733d56d1cbb7c331c7951e608949cca nightly/2026-11-18-parity
