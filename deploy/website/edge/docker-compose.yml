@@ -13,11 +13,14 @@ services:
     cap_drop: ["ALL"]
     environment:
       WAITLIST_DB: /data/waitlist.sqlite
+      BETA_DIR: /beta
       PORT: "8790"
       TZ: Europe/Vienna
     volumes:
       - ../../../apps/website/server/waitlist.mjs:/app/waitlist.mjs:ro
       - waitlist-data:/data
+      # BSD-553: the beta DMG, uploaded by the Desktop Beta workflow via rsync (ci/setup-beta-deploy.sh)
+      - /srv/based-beta:/beta:ro
     networks: [edge]
 volumes:
   waitlist-data:

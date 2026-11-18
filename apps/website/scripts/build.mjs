@@ -218,6 +218,7 @@ const PAGE_PATCHES = {
 
 // ---- claims: only promise what the Mac beta can do (BSD-434, docs/website-claims.md) ----
 // Decided by Elija on 16.11.: agents and offline transcription move from "Beta" to "Release",
+// (BSD-502, Elija 18.11.: transcription is back in the beta since BSD-231, "Meeting notes transcribed on your device";)
 // iCloud is a preview, 100,000 rows stay (BSD-435), feature numbers follow replica/features.csv,
 // "a drive you choose" waits for BSD-449. Each entry: [text on the artboard, text on the site].
 // Strings inside the page scripts are single-quoted JavaScript: no plain apostrophes in replacements.
