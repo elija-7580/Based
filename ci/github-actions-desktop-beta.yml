@@ -128,6 +128,14 @@ jobs:
         env:
           V: ${{ steps.version.outputs.version }}
           HAS_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          # Beta-Agent 18.11.: auch die DMG selbst mit Developer ID signieren, notarisieren und stapeln (die App darin ist
+          # es seit beta-v0.2.5). Ohne Secrets bleibt sie unsigniert wie bisher.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: |
           BUNDLE="apps/desktop/src-tauri/target/$TARGET/release/bundle/macos"
           mkdir -p dist "$RUNNER_TEMP/dmg"
@@ -146,6 +154,37 @@ jobs:
             [ "$i" = 5 ] && exit 1
             sleep 5
           done
+          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_SIGNING_IDENTITY" ]; then
+            # Eigener Schlüsselbund (der des Build-Schritts ist weg), vorn in die Suchliste – wie sign-node.mjs.
+            KC="$RUNNER_TEMP/based-dmg.keychain-db"; KCP="$(openssl rand -hex 16)"
+            printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/dmg-cert.p12"
+            security create-keychain -p "$KCP" "$KC"
+            security set-keychain-settings -lut 3600 "$KC"
+            security unlock-keychain -p "$KCP" "$KC"
+            security import "$RUNNER_TEMP/dmg-cert.p12" -k "$KC" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+            rm -f "$RUNNER_TEMP/dmg-cert.p12"
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCP" "$KC" > /dev/null
+            security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+            codesign --force --sign "$APPLE_SIGNING_IDENTITY" --timestamp --keychain "$KC" dist/Based-Notes-Beta.dmg
+            codesign -dv dist/Based-Notes-Beta.dmg 2>&1 | grep -E "Identifier|TeamIdentifier|Timestamp" || true
+            if [ -n "$APPLE_API_KEY_P8" ] && [ -n "$APPLE_API_KEY" ] && [ -n "$APPLE_API_ISSUER" ]; then
+              P8="$RUNNER_TEMP/AuthKey_dmg_${APPLE_API_KEY}.p8"
+              printf '%s' "$APPLE_API_KEY_P8" > "$P8"
+              # Notarisierung der Hülle: scheitert sie, bleibt die signierte DMG (die App darin ist notarisiert) – Warnung.
+              if xcrun notarytool submit dist/Based-Notes-Beta.dmg --key "$P8" --key-id "$APPLE_API_KEY" \
+                   --issuer "$APPLE_API_ISSUER" --wait --timeout 20m; then
+                xcrun stapler staple dist/Based-Notes-Beta.dmg
+                spctl -a -t open --context context:primary-signature -vv dist/Based-Notes-Beta.dmg
+                echo "DMG: signiert, notarisiert, gestapelt"
+              else
+                echo "::warning::DMG signiert, aber nicht notarisiert (notarytool). Die App darin ist notarisiert."
+              fi
+              rm -f "$P8"
+            else
+              echo "::warning::DMG signiert, aber ohne APPLE_API_* nicht notarisiert."
+            fi
+            security delete-keychain "$KC" || true
+          fi
           # BSD-514: alter Name als Kopie, damit Links auf beta-latest/Based-Beta.dmg (Einladungen, alte Seiten) weiter gehen.
           cp dist/Based-Notes-Beta.dmg dist/Based-Beta.dmg
           if [ -f "$BUNDLE/$APP_NAME.app.tar.gz" ]; then
