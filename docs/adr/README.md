@@ -22,5 +22,6 @@ decision, consequences. Source: the architecture review of 2026-11-08.
 | [0015](0015-folder-sync-icloud.md) | *Vorgeschlagen:* Sync über einen geteilten Ordner (iCloud Drive) – ein Schreiber je Datei, Segmente mit Endmarke, LWW wie der Server; Spike hinter Schalter (BSD-296). |
 | [0016](0016-block-editor.md) | Eigener Block-Editor nach dem Anytype-Prinzip (Clean-Room, kein Code übernommen): ein Modell (Block-Records), Befehle im Kern, ein Textfeld pro Block, Fokus-Manager, Auswahl- und Zieh-Schicht; BlockNote hinter Schalter bis Parität (Phasen E0–E8). |
 | [0017](0017-storage-and-sync-efficiency.md) | Speicher und Sync für große Workspaces: SQLite als eine Quelle, im Speicher nur Gerüst und Offenes (Schema v4); jedes Gerät hält alles offline; Protokoll v4 mit geordnetem Pull, kompakten Records und E2E-Umschlag; Server ohne Store im Speicher; Messungen in `spikes/storage-bench`. |
+| [0018](0018-agent-brain-recall.md) | *Vorgeschlagen:* Agent Brain über MCP – Erinnerungen als Zeilen, Relationen als Graph über vorhandene Kanten, kleiner Vektor-Index (Bits + int8, eine abgeleitete Datei), `recall` führt Wörter, Bedeutung und Nachbarn zusammen. |
 
 New decisions get the next number. A superseded ADR keeps its file and gets status "superseded by NNNN".

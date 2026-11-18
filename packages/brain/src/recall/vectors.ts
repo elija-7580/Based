@@ -4,8 +4,16 @@
 // Bei 384 Dimensionen sind das 436 Byte je Abschnitt statt 1 536 Byte als Float32. Gesucht wird durch alles
 // (kein ANN-Graph): bis in die Hunderttausende Abschnitte ist das schnell genug und braucht keinen Speicher extra.
 // Abgeleitet, nie synchronisiert: die Datei darf jederzeit fehlen und wird neu berechnet.
+//
+// Die Bits werden um den Mittelwert aller Vektoren genommen, nicht um null: Embedding-Modelle wie E5 legen alle
+// Texte in dieselbe Ecke des Raums (gemessen mit multilingual-e5-small: 313 von 384 Dimensionen haben bei über 90 %
+// der Texte dasselbe Vorzeichen) – rohe Vorzeichen unterscheiden dann kaum. Mit Mittelwert lag der beste Treffer in
+// der Messung immer in der Vorauswahl (68/68 bei 5 % Vorauswahl), ohne nur 62/68. Bis genug Vektoren für einen
+// Mittelwert da sind, wird ohne Vorauswahl gerechnet (bei so wenigen ist das ohnehin schnell).
 
 const MAGIC = 0x42565831; // "BVX1"
+/** Ab so vielen Abschnitten gibt es einen Mittelwert und damit die Vorauswahl über Bits. */
+export const CENTER_AFTER = 1000;
 
 export interface VectorHit {
   pageID: string;
@@ -45,10 +53,15 @@ export class VectorIndex {
   private pageIDs: string[] = [];
   private pageIndex = new Map<string, number>();
   private slotsOf = new Map<number, number[]>();
+  /** Mittelwert der Vektoren, um den die Bits genommen werden; `undefined` = noch keine Vorauswahl. */
+  private center: Float32Array | undefined;
+  /** Zahl der Abschnitte, als der Mittelwert zuletzt bestimmt wurde (bei doppelter Größe wird er erneuert). */
+  private centeredAt = 0;
   /** Seit dem letzten `serialize()` geändert. */
   dirty = false;
 
-  constructor(readonly dim: number, readonly model: string, capacity = 256) {
+  /** `centerAfter`: ab so vielen Abschnitten wird der Mittelwert bestimmt (Standard `CENTER_AFTER`). */
+  constructor(readonly dim: number, readonly model: string, capacity = 256, private readonly centerAfter = CENTER_AFTER) {
     if (dim <= 0 || dim % 32 !== 0) throw new Error(`vector dimension must be a multiple of 32, got ${dim}`);
     this.words = dim / 32;
     this.capacity = capacity;
@@ -104,7 +117,7 @@ export class VectorIndex {
   }
 
   private write(slot: number, v: Float32Array) {
-    const { dim, words } = this;
+    const { dim } = this;
     let max = 0;
     for (let i = 0; i < dim; i++) {
       const a = Math.abs(v[i]!);
@@ -117,12 +130,39 @@ export class VectorIndex {
     let n = 0;
     for (let i = 0; i < dim; i++) n += this.q8[base + i]! * this.q8[base + i]!;
     this.scale[slot] = n > 0 ? 1 / Math.sqrt(n) : 0;
-    const wb = slot * words;
+    this.writeBits(slot);
+  }
+
+  /** Bits eines Platzes aus seinem int8-Vektor (auf Länge 1 gebracht) um den Mittelwert. */
+  private writeBits(slot: number) {
+    const { dim, words } = this;
+    const base = slot * dim, wb = slot * words, k = this.scale[slot]!, c = this.center;
     for (let w = 0; w < words; w++) {
       let x = 0;
-      for (let b = 0; b < 32; b++) if (v[w * 32 + b]! > 0) x |= 1 << b;
+      for (let b = 0; b < 32; b++) {
+        const i = w * 32 + b;
+        if (this.q8[base + i]! * k - (c ? c[i]! : 0) > 0) x |= 1 << b;
+      }
       this.bits[wb + w] = x >>> 0;
     }
+  }
+
+  /** Mittelwert bestimmen bzw. erneuern, sobald genug (oder doppelt so viele) Abschnitte da sind. */
+  private maybeCenter() {
+    const n = this.size;
+    if (n < this.centerAfter || (this.center && n < this.centeredAt * 2)) return;
+    const { dim } = this;
+    const sum = new Float64Array(dim);
+    for (let s = 0; s < this.used; s++) {
+      if (this.owner[s]! < 0) continue;
+      const base = s * dim, k = this.scale[s]!;
+      for (let i = 0; i < dim; i++) sum[i] = sum[i]! + this.q8[base + i]! * k;
+    }
+    const c = new Float32Array(dim);
+    for (let i = 0; i < dim; i++) c[i] = sum[i]! / n;
+    this.center = c;
+    this.centeredAt = n;
+    for (let s = 0; s < this.used; s++) if (this.owner[s]! >= 0) this.writeBits(s);
   }
 
   removePage(pageID: string): void {
@@ -186,6 +226,7 @@ export class VectorIndex {
     if (next.length) this.slotsOf.set(p, next);
     else this.slotsOf.delete(p);
     this.dirty = true;
+    this.maybeCenter();
   }
 
   /**
@@ -195,32 +236,37 @@ export class VectorIndex {
   search(query: Float32Array, k = 10, opts: { preselect?: number; filter?: (pageID: string) => boolean } = {}): VectorHit[] {
     if (query.length !== this.dim || this.size === 0 || k <= 0) return [];
     const { dim, words } = this;
-    const qb = new Uint32Array(words);
     let qn = 0;
-    for (let i = 0; i < dim; i++) {
-      if (query[i]! > 0) qb[i >>> 5] = (qb[i >>> 5]! | (1 << (i & 31))) >>> 0;
-      qn += query[i]! * query[i]!;
-    }
+    for (let i = 0; i < dim; i++) qn += query[i]! * query[i]!;
     qn = Math.sqrt(qn) || 1;
-    const pre = Math.max(k, Math.min(this.size, opts.preselect ?? Math.max(200, k * 20)));
+    const c = this.center;
+    // Ohne Mittelwert (kleiner Index) oder wenn ohnehin fast alles gewählt würde: alles nachrechnen.
+    const pre = c ? Math.max(k, Math.min(this.size, opts.preselect ?? Math.max(1000, k * 50))) : this.size;
+    const qb = new Uint32Array(words);
+    if (c) for (let i = 0; i < dim; i++) if (query[i]! / qn - c[i]! > 0) qb[i >>> 5] = (qb[i >>> 5]! | (1 << (i & 31))) >>> 0;
     // Vorauswahl: Zählen nach Abstand (0…dim), dann die Schwelle bestimmen – ein Durchlauf, keine Sortierung über alles.
     const dist = new Uint16Array(this.used);
     const counts = new Uint32Array(dim + 1);
-    for (let s = 0; s < this.used; s++) {
-      if (this.owner[s]! < 0) {
-        dist[s] = 0xffff;
-        continue;
+    let threshold = dim;
+    if (pre < this.size) {
+      for (let s = 0; s < this.used; s++) {
+        if (this.owner[s]! < 0) {
+          dist[s] = 0xffff;
+          continue;
+        }
+        let d = 0;
+        const wb = s * words;
+        for (let w = 0; w < words; w++) d += popcount(this.bits[wb + w]! ^ qb[w]!);
+        dist[s] = d;
+        counts[d] = counts[d]! + 1;
       }
-      let d = 0;
-      const wb = s * words;
-      for (let w = 0; w < words; w++) d += popcount(this.bits[wb + w]! ^ qb[w]!);
-      dist[s] = d;
-      counts[d] = counts[d]! + 1;
-    }
-    let threshold = 0;
-    for (let seen = 0; threshold <= dim; threshold++) {
-      seen += counts[threshold]!;
-      if (seen >= pre) break;
+      threshold = 0;
+      for (let seen = 0; threshold <= dim; threshold++) {
+        seen += counts[threshold]!;
+        if (seen >= pre) break;
+      }
+    } else {
+      for (let s = 0; s < this.used; s++) dist[s] = this.owner[s]! < 0 ? 0xffff : 0;
     }
     const out: VectorHit[] = [];
     for (let s = 0; s < this.used; s++) {
@@ -249,12 +295,12 @@ export class VectorIndex {
         ids.push(this.pageIDs[p]!);
       }
     }
-    const meta = new TextEncoder().encode(JSON.stringify({ model: this.model, pages: ids }));
+    const meta = new TextEncoder().encode(JSON.stringify({ model: this.model, pages: ids, ...(this.center ? { centeredAt: this.centeredAt } : {}) }));
     const n = live.length;
     const pad = (4 - (meta.length % 4)) % 4;
     const head = 20 + meta.length + pad;
     const per = this.words * 4 + 4 + 4 + 4 + 2 + this.dim;
-    const out = new Uint8Array(head + n * per);
+    const out = new Uint8Array(head + (this.center ? this.dim * 4 : 0) + n * per);
     const dv = new DataView(out.buffer);
     dv.setUint32(0, MAGIC, true);
     dv.setUint32(4, 1, true);
@@ -263,6 +309,7 @@ export class VectorIndex {
     dv.setUint32(16, meta.length, true);
     out.set(meta, 20);
     let o = head;
+    if (this.center) for (let i = 0; i < this.dim; i++, o += 4) dv.setFloat32(o, this.center[i]!, true);
     for (const s of live) for (let w = 0; w < this.words; w++, o += 4) dv.setUint32(o, this.bits[s * this.words + w]!, true);
     for (const s of live) { dv.setFloat32(o, this.scale[s]!, true); o += 4; }
     for (const s of live) { dv.setUint32(o, this.hash[s]!, true); o += 4; }
@@ -281,12 +328,18 @@ export class VectorIndex {
       if (dv.getUint32(0, true) !== MAGIC || dv.getUint32(4, true) !== 1) return undefined;
       const dim = dv.getUint32(8, true), n = dv.getUint32(12, true), metaLen = dv.getUint32(16, true);
       if (dim !== expect.dim) return undefined;
-      const meta = JSON.parse(new TextDecoder().decode(data.subarray(20, 20 + metaLen))) as { model?: unknown; pages?: unknown };
+      const meta = JSON.parse(new TextDecoder().decode(data.subarray(20, 20 + metaLen))) as { model?: unknown; pages?: unknown; centeredAt?: unknown };
       if (meta.model !== expect.model || !Array.isArray(meta.pages)) return undefined;
       const idx = new VectorIndex(dim, expect.model, Math.max(256, n));
       const words = idx.words;
       let o = 20 + metaLen + ((4 - (metaLen % 4)) % 4);
-      if (data.length < o + n * (words * 4 + 14 + dim)) return undefined;
+      const centered = typeof meta.centeredAt === "number";
+      if (data.length < o + (centered ? dim * 4 : 0) + n * (words * 4 + 14 + dim)) return undefined;
+      if (centered) {
+        idx.center = new Float32Array(dim);
+        for (let i = 0; i < dim; i++, o += 4) idx.center[i] = dv.getFloat32(o, true);
+        idx.centeredAt = meta.centeredAt as number;
+      }
       for (let i = 0; i < n * words; i++, o += 4) idx.bits[i] = dv.getUint32(o, true);
       for (let i = 0; i < n; i++, o += 4) idx.scale[i] = dv.getFloat32(o, true);
       for (let i = 0; i < n; i++, o += 4) idx.hash[i] = dv.getUint32(o, true);

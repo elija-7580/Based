@@ -19,6 +19,23 @@ export const RRF_K = 60;
 /** Gewicht der Wort-für-Wort-Suche gegenüber der ganzen Anfrage. */
 const TERM_WEIGHT = 0.5;
 const MAX_TERMS = 6;
+/** Treffer über Tippfehler oder eine andere Wortform zählen halb. */
+const APPROX_WEIGHT = 0.5;
+/** Bedeutung zählt mehr als ein einzelnes Wort, wenn das Modell sich sicher ist. */
+const VECTOR_WEIGHT = 1.5;
+/** Was weniger als diesen Anteil des besten Treffers erreicht, wird nicht gezeigt (Rauschen). */
+const SHOW_FRACTION = 0.25;
+
+/**
+ * Ab welchem Kosinus ein Abschnitt als ähnlich gilt (`floor`) und ab wann voll (`floor + span`). Modelle der
+ * E5-Familie drücken alle Werte in ein schmales Band: Unverwandtes liegt bei 0,75–0,81, Passendes ab etwa 0,82
+ * (gemessen mit multilingual-e5-small, 18.11.2026). Ohne Schwelle käme zu jeder Anfrage irgendetwas zurück.
+ */
+export interface VectorCalibration {
+  floor: number;
+  span: number;
+}
+export const E5_CALIBRATION: VectorCalibration = { floor: 0.81, span: 0.05 };
 
 export interface RecallOptions {
   /** Höchstens so viele Seiten (Memories und Verbundenes kommen dazu). */
@@ -67,7 +84,7 @@ export interface RecallDeps {
   search: () => SearchIndex;
   graph: () => RelationGraph;
   /** Vektor-Index und Modell, wenn eingeschaltet und geladen. */
-  vectors?: (() => { index: VectorIndex; embedder: TextEmbedder } | undefined) | undefined;
+  vectors?: (() => { index: VectorIndex; embedder: TextEmbedder; calibration?: VectorCalibration | undefined } | undefined) | undefined;
 }
 
 const flat = (s: string, max = 220) => {
@@ -109,22 +126,51 @@ export class Recall {
     // 1. Ranglisten sammeln
     const score = new Map<string, number>();
     const best = new Map<string, { snippet?: string; blockID?: string }>();
-    const fuse = (list: readonly { pageID: string; snippet?: string | undefined; blockID?: string | undefined }[], weight: number) => {
-      let rank = 0;
+    type Hit = { pageID: string; snippet?: string | undefined; blockID?: string | undefined; approx?: boolean | undefined; weight?: number | undefined };
+    const note = (h: Hit) => {
+      if (h.snippet && !best.get(h.pageID)?.snippet) best.set(h.pageID, { snippet: h.snippet, ...(h.blockID ? { blockID: h.blockID } : {}) });
+    };
+    /** Eine Rangliste: jede Seite einmal, Rang nach Reihenfolge. */
+    const ranks = (list: readonly Hit[]) => {
+      const out: { hit: Hit; rank: number }[] = [];
       const seen = new Set<string>();
       for (const h of list) {
         if (seen.has(h.pageID) || hidden.has(h.pageID) || !this.live(h.pageID)) continue;
         seen.add(h.pageID);
-        rank += 1;
-        score.set(h.pageID, (score.get(h.pageID) ?? 0) + weight / (RRF_K + rank));
-        if (h.snippet && !best.get(h.pageID)?.snippet) best.set(h.pageID, { snippet: h.snippet, ...(h.blockID ? { blockID: h.blockID } : {}) });
+        out.push({ hit: h, rank: out.length + 1 });
+      }
+      return out;
+    };
+    const fuse = (list: readonly Hit[], weight: number) => {
+      for (const { hit, rank } of ranks(list)) {
+        const w = weight * (hit.weight ?? 1) * (hit.approx ? APPROX_WEIGHT : 1);
+        if (w <= 0) continue;
+        score.set(hit.pageID, (score.get(hit.pageID) ?? 0) + w / (RRF_K + rank));
+        note(hit);
       }
     };
     if (q) {
       const index = this.deps.search();
       fuse(index.run(q, { extended: true, limit: 40 }) ?? [], 1);
-      const words = contentWords(q);
-      if (words.length > 1) for (const w of [...words].sort((a, b) => b.length - a.length).slice(0, MAX_TERMS)) fuse(index.run(w, { extended: true, limit: 25 }) ?? [], TERM_WEIGHT);
+      // Wort für Wort (für ganze Sätze): eine Seite zählt umso mehr, je mehr der Wörter sie trifft – ein einzelnes
+      // Allerweltswort aus einer langen Frage soll nicht gewinnen.
+      const words = [...contentWords(q)].sort((a, b) => b.length - a.length).slice(0, MAX_TERMS);
+      if (words.length > 1) {
+        const perPage = new Map<string, { sum: number; matched: number }>();
+        for (const w of words) {
+          const list = index.run(w, { extended: true, limit: 25 }) ?? [];
+          // Ein Wort, das überall steht (Liste voll), unterscheidet wenig.
+          const rarity = list.length >= 25 ? 0.5 : 1;
+          for (const { hit, rank } of ranks(list)) {
+            const e = perPage.get(hit.pageID) ?? { sum: 0, matched: 0 };
+            e.sum += (rarity * (hit.approx ? APPROX_WEIGHT : 1)) / (RRF_K + rank);
+            e.matched += 1;
+            perPage.set(hit.pageID, e);
+            note(hit);
+          }
+        }
+        for (const [id, e] of perPage) score.set(id, (score.get(id) ?? 0) + TERM_WEIGHT * e.sum * (e.matched / words.length));
+      }
     }
     let semantic = false;
     const vec = q ? this.deps.vectors?.() : undefined;
@@ -132,14 +178,15 @@ export class Recall {
       try {
         const [qv] = await vec.embedder.embed([q], opts.signal, "query");
         if (qv) {
-          const hits = vec.index.search(qv, 40, { filter: (id) => !hidden.has(id) });
+          const cal = vec.calibration ?? E5_CALIBRATION;
+          const hits = vec.index.search(qv, 40, { filter: (id) => !hidden.has(id) }).filter((h) => h.score > cal.floor);
           const sections = new Map<string, ReturnType<typeof pageSections>>();
           fuse(hits.map((h) => {
             let s = sections.get(h.pageID);
             if (!s) sections.set(h.pageID, (s = pageSections(this.store, h.pageID)));
             const sec = s[h.chunk];
-            return { pageID: h.pageID, snippet: sec?.body ? flat(sec.body) : undefined, blockID: sec?.blockID };
-          }), 1);
+            return { pageID: h.pageID, snippet: sec?.body ? flat(sec.body) : undefined, blockID: sec?.blockID, weight: Math.min(1, (h.score - cal.floor) / cal.span) };
+          }), VECTOR_WEIGHT);
           semantic = true;
         }
       } catch (e) {
@@ -174,7 +221,9 @@ export class Recall {
 
     const memoryHits: RecallMemory[] = [];
     const pages: RecallItem[] = [];
+    const cutoff = q ? (final[0]?.[1] ?? 0) * SHOW_FRACTION : 0;
     for (const [id, s] of final) {
+      if (s < cutoff) break;
       const m = memories.get(id);
       if (m) {
         if (memoryHits.length >= 8) continue;

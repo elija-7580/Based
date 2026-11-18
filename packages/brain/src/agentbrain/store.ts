@@ -543,7 +543,7 @@ export class AgentBrain {
     if (input.replaces !== undefined && !this.isMemory(input.replaces)) throw new RememberError(`No memory with id ${input.replaces} to replace.`);
     const ids = this.ensure();
     const db = ids.memoriesDB;
-    const link = (id: string) => `[${(titleOf(this.store, id) || "Untitled").replace(/[\[\]]/g, "")}](${PAGE_LINK}${id})`;
+    const link = (id: string) => `[${(titleOf(this.store, id) || "Untitled").replace(/[[\]]/g, "")}](${PAGE_LINK}${id})`;
 
     const existing = this.memories().find((m) => m.id !== input.replaces && m.status !== "Superseded"
       && (sameFact(m.title, fact) || m.body.split("\n").some((line) => sameFact(line.replace(/^[-*]\s+/, ""), fact))));
