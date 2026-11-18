@@ -36,7 +36,7 @@ import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion, toggleSidebarFocus } from "./shell/regions.js";
 import { FIND_EVENT, matchShortcut, menuOwnsShortcut, parentPage } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
-import { firstRun } from "./shell/firstRun.js";
+import { firstRun, welcomeTour } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
 import { markFreshPage } from "./shell/freshPage.js";
@@ -55,6 +55,7 @@ const Trash = lazy(() => import("./screens/Trash.js").then((m) => ({ default: m.
 const TasksScreen = lazy(() => import("./tasks/TasksScreen.js").then((m) => ({ default: m.TasksScreen })));
 // BSD-275: Willkommensbildschirm nur beim ersten Start
 const Welcome = lazy(() => import("./screens/Welcome.js").then((m) => ({ default: m.Welcome })));
+const WelcomeTourScreen = lazy(() => import("./screens/WelcomeTour.js").then((m) => ({ default: m.WelcomeTourScreen })));
 const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
 /** Mitgelieferte Schriften nur laden, wenn Font = Based sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
@@ -81,6 +82,8 @@ export function App({ client, history }: { client: StoreClient; history: History
   const pick = useSyncExternalStore(pagePick.subscribe, pagePick.get);
   const [recent, setRecent] = useState<RecentEntry[]>(recentPages.get);
   const welcome = useSyncExternalStore(firstRun.subscribe, firstRun.get);
+  // BSD-551: Einstieg erneut (Hilfe → Show Welcome Tour, ⌘K); schließt, sobald man woandershin geht.
+  const tourOpen = useSyncExternalStore(welcomeTour.subscribe, welcomeTour.get);
 
   useEffect(() => {
     applyAppearance(appearance);
@@ -100,6 +103,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   }, [state.ready, client, ai]);
   useEffect(() => {
     if (route.name === "page") recentPages.touch(route.id);
+    welcomeTour.close();
   }, [route]);
 
   // ⌘-Klick / Mittelklick: in einem neuen Tab im Hintergrund (shell/newTabIntent.ts)
@@ -149,7 +153,8 @@ export function App({ client, history }: { client: StoreClient; history: History
   useEffect(() => installArrowNav(window), []);
   useEffect(() => {
     const commands = installCommands(window);
-    const onCommand = (e: Event) => { commands.run(String((e as CustomEvent).detail)); };
+    // BSD-551: Hilfe → „Show Welcome Tour“ (menu.rs, ohne Taste) kommt über denselben Weg.
+    const onCommand = (e: Event) => { const id = String((e as CustomEvent).detail); if (id === "welcomeTour") welcomeTour.show(); else commands.run(id); };
     window.addEventListener(COMMAND_EVENT, onCommand);
     return () => { window.removeEventListener(COMMAND_EVENT, onCommand); commands.dispose(); };
   }, []);
@@ -317,6 +322,8 @@ export function App({ client, history }: { client: StoreClient; history: History
         <p className="t-desc">{state.error}</p>
       </div></div>
     );
+  } else if (tourOpen) {
+    screen = <WelcomeTourScreen onClose={welcomeTour.close} onNavigate={navigate} />;
   } else if (route.name === "page") {
     screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} focusBlock={route.block} />;
   } else if (route.name === "trash") {
@@ -383,6 +390,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           else if (id === "dashboard") navigate({ name: "home" });
           else if (id === "report") void startReport();
           else if (id === "shortcuts") setSheet(true);
+          else if (id === "welcomeTour") welcomeTour.show();
           else if (id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
         }} /> : null}
     </div>

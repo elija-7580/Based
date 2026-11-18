@@ -137,6 +137,10 @@ test("Theme „System“ folgt dem Betriebssystem", async ({ page }) => {
   await page.goto("/#appearance");
   await ready(page);
   const html = page.locator("html");
+  // BSD-550: „System“ ist der Standard – ein dunkles System gibt sofort eine dunkle App
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "System" })).toBeChecked();
+  await page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "Light" }).click();
   await expect(html).toHaveAttribute("data-theme", "light");
   await page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "System" }).click();
   await expect(html).toHaveAttribute("data-theme", "dark");
@@ -181,3 +185,35 @@ for (const style of ["default", "bold"] as const) {
     expect(await page.evaluate(() => [...document.querySelectorAll("link[href], script[src]")].map((e) => (e as HTMLLinkElement).href || (e as HTMLScriptElement).src).filter((u) => !u.startsWith(location.origin)))).toEqual([]);
   });
 }
+
+// BSD-550: frisches Profil auf dunklem System ist dunkel, bevor die App überhaupt lädt (kein heller Blitz); eine
+// gespeicherte Wahl „light“ bleibt hell, auch auf dunklem System.
+test("erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  // das App-Skript nicht laden: was jetzt zu sehen ist, ist das erste Bild
+  await page.route(/\/assets\/.*\.js$|\/src\/main\.tsx/, (r) => r.abort());
+  await page.goto("/");
+  const html = page.locator("html");
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate(() => document.documentElement.style.colorScheme)).toBe("dark");
+  // color-scheme dark: der Browser malt die leere Seite schon dunkel (Canvas-Farbe), nicht weiß
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe("dark");
+  await page.unrouteAll();
+
+  await page.goto("about:blank");
+  await page.goto("/#appearance");
+  await ready(page);
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "System" })).toBeChecked();
+
+  // gespeicherte Wahl bleibt (Update von 0.2.x)
+  await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false })));
+  await page.route(/\/assets\/.*\.js$|\/src\/main\.tsx/, (r) => r.abort());
+  await page.reload();
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await page.unrouteAll();
+  await page.reload();
+  await ready(page);
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect(page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "Light" })).toBeChecked();
+});

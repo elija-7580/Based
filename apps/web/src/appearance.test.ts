@@ -6,6 +6,13 @@ describe("appearance", () => {
     expect(loadAppearance({ getItem: () => null })).toEqual(DEFAULT_APPEARANCE);
     expect(loadAppearance({ getItem: () => "{kaputt" })).toEqual(DEFAULT_APPEARANCE);
   });
+  it("BSD-550: Standard ist „system“; eine gespeicherte Wahl bleibt", () => {
+    expect(DEFAULT_APPEARANCE.theme).toBe("system");
+    expect(loadAppearance({ getItem: () => null }).theme).toBe("system");
+    expect(loadAppearance({ getItem: () => JSON.stringify({ ...DEFAULT_APPEARANCE, theme: "light" }) }).theme).toBe("light");
+    expect(loadAppearance({ getItem: () => JSON.stringify({ ...DEFAULT_APPEARANCE, theme: "dark" }) }).theme).toBe("dark");
+    expect(loadAppearance({ getItem: () => JSON.stringify({ density: "compact" }) }).theme).toBe("system");
+  });
   it("übernimmt nur bekannte Werte", () => {
     const a = loadAppearance({ getItem: () => JSON.stringify({ theme: "dark", marker: "neon", calm: true }) });
     expect(a).toMatchObject({ theme: "dark", marker: "butter", calm: true });
