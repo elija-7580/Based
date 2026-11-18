@@ -8,6 +8,9 @@
 #   1. Systempakete (apt): nur, wenn `install-deps --dry-run` fehlende Pakete meldet; man-db-Trigger aus (bremst apt
 #      auf den GitHub-Runnern minutenlang); Zeitlimit PW_DEPS_TIMEOUT.
 #   2. Browser-Download (aus dem Cache ~/.cache/ms-playwright meist sofort): Zeitlimit PW_DL_TIMEOUT.
+#   18.11.: apt holt Pakete mit kurzen Timeouts und Wiederholungen (vorher hing der Download auf dem EC2-Mirror minutenlang
+#   je Paket); das Zeitlimit für apt läuft als root (sudo timeout), sonst kann es `sudo apt-get` nicht beenden und `tee`
+#   wartet bis zum Zeitlimit des Schritts.
 # Jeder Teil bis zu PW_TRIES Versuche. Hängt oder scheitert er endgültig, endet das Skript mit Exit 1 und einer
 # ::error-Zeile, die den Teil, das Zeitlimit und den Grund nennt – der Job bleibt nicht offen.
 # Ausgabe zusätzlich in pw-install.log (für „Log sichern“, wenn die Tests gar nicht erst starten).
@@ -28,6 +31,7 @@ log="${PW_INSTALL_LOG:-pw-install.log}"
 : > "$log"
 
 say() { echo "$*" | tee -a "$log"; }
+as_root=() # Präfix für step(): leer = als aktueller Nutzer
 
 # step <Name> <Zeitlimit in s> <Befehl…>: Wiederholung mit Zeitlimit; Exit 0 bei Erfolg, sonst 1 mit ::error.
 step() {
@@ -36,7 +40,7 @@ step() {
   for ((i = 1; i <= tries; i++)); do
     start=$(date +%s)
     # timeout läuft in eigener Prozessgruppe und beendet auch Kindprozesse (apt unter sudo, Download).
-    timeout --kill-after=20 "$to" "$@" 2>&1 | tee -a "$log"
+    "${as_root[@]}" timeout --kill-after=20 "$to" "$@" 2>&1 | tee -a "$log"
     rc=${PIPESTATUS[0]}
     if [ "$rc" -eq 0 ]; then
       say "Playwright-Setup: $name fertig in $(( $(date +%s) - start )) s (Versuch $i/$tries)"
@@ -60,9 +64,15 @@ else
   if [ "${GITHUB_ACTIONS:-}" = true ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
     # man-db baut nach jedem apt-Lauf den Index neu (auf ubuntu-24.04-Runnern oft Minuten) – für die CI unnötig
     sudo rm -f /var/lib/man-db/auto-update 2>/dev/null || true
+    # Hängende Verbindungen nach 20 s abbrechen und neu versuchen, statt minutenlang auf ein Paket zu warten
+    printf 'Acquire::http::Timeout "20";\nAcquire::https::Timeout "20";\nAcquire::Retries "5";\n' \
+      | sudo tee /etc/apt/apt.conf.d/99based-ci >/dev/null || true
+    # timeout als root, damit es apt-get (unter sudo) samt Kindern beenden kann
+    as_root=(sudo -n -E env "PATH=$PATH")
   fi
   export DEBIAN_FRONTEND=noninteractive
   step "Systempakete (apt)" "$deps_to" "${pw[@]}" install-deps "$@" || exit 1
+  as_root=()
 fi
 
 # 2. Browser (Download oder Cache)
