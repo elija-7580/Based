@@ -1,61 +1,17 @@
-cancelled 0506b78c30a7365877dba8c91eb03461d8516c9f
-  ✓  167 [webkit] › e2e/settings.spec.ts:33:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (3.1s)
-  ✓  168 [webkit] › e2e/settings-search.spec.ts:108:1 › eine Seite mit nur einem gleichnamigen Abschnitt nennt ihren Namen einmal (2.0s)
-  -  170 [webkit] › e2e/settings-search.spec.ts:116:3 › Bildschirmfotos: Suche in den Einstellungen (light)
-  -  171 [webkit] › e2e/settings-search.spec.ts:116:3 › Bildschirmfotos: Suche in den Einstellungen (dark)
-  ✓  169 [webkit] › e2e/settings.spec.ts:64:1 › Seiten mit echten Einstellungen zeigen keine Liste offener Punkte (Updates: kein „Update channel“) (2.4s)
-(node:17213) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  173 [webkit] › e2e/settings.spec.ts:76:1 › Sync-Formular prüft die Adresse, bevor es verbindet (3.7s)
-  ✓  174 [webkit] › e2e/settings.spec.ts:94:1 › General: Zahlen aus dem Workspace, Papierkorb leeren mit Rückfrage (4.7s)
-  ✓  175 [webkit] › e2e/settings.spec.ts:120:1 › Account und Diagnostics zeigen echten Gerätezustand (2.3s)
-  ✓  172 [webkit] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 (11.8s)
-  ✓  176 [webkit] › e2e/settings.spec.ts:129:1 › Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token (2.4s)
-  ✓  178 [webkit] › e2e/settings.spec.ts:156:1 › Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen (2.0s)
-  -  179 [webkit] › e2e/settings.spec.ts:176:3 › Screenshot Einstellungen (light)
-  -  180 [webkit] › e2e/settings.spec.ts:176:3 › Screenshot Einstellungen (dark)
-  -  181 [webkit] › e2e/settings.spec.ts:190:1 › Sync & server zeigt, ob der Browser-Speicher geschützt ist
-  -  182 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1280×820 light – Zeile vollständig, nichts gekürzt
-  -  183 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 900×600 light – Zeile vollständig, nichts gekürzt
-  -  184 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1728×1000 light – Zeile vollständig, nichts gekürzt
-  -  185 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1280×820 dark – Zeile vollständig, nichts gekürzt
-  -  186 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 900×600 dark – Zeile vollständig, nichts gekürzt
-  -  187 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1728×1000 dark – Zeile vollständig, nichts gekürzt
-  -  188 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1280×820 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
-  -  189 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 900×600 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
-  -  190 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1728×1000 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
-  -  191 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1280×820 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
-  -  192 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 900×600 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
-  -  193 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1728×1000 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
-  ✓  194 [webkit] › e2e/shell-layout.spec.ts:12:1 › Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen (3.5s)
-  ✓  195 [webkit] › e2e/shell-layout.spec.ts:31:1 › Seitenleiste: Breite ziehen (gemerkt), ⌘\ blendet aus und ein (2.6s)
-  ✓  177 [webkit] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis (14.5s)
-  ✓  196 [webkit] › e2e/shell-layout.spec.ts:54:1 › „/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten nutzen die volle Breite (7.3s)
-  ✓  198 [webkit] › e2e/shell-layout.spec.ts:74:1 › Fokusrahmen per Tastatur neutral (Token focus-ring, nicht Marker – BSD-367) (1.4s)
-  ✓  197 [webkit] › e2e/shell-parity.spec.ts:71:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (10.6s)
-  ✓  199 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (4.9s)
-  ✓  201 [webkit] › e2e/shell-layout.spec.ts:108:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) (7.8s)
-  ✓  200 [webkit] › e2e/shell-parity.spec.ts:109:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (13.0s)
-  ✓  203 [webkit] › e2e/shell-parity.spec.ts:168:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (4.3s)
-  ✓  202 [webkit] › e2e/shell.spec.ts:34:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (11.9s)
-  ✓  204 [webkit] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher (6.0s)
-  ✓  205 [webkit] › e2e/shell.spec.ts:97:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (7.1s)
-  ✓  207 [webkit] › e2e/shell.spec.ts:117:1 › Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Position (3.2s)
-  ✓  206 [webkit] › e2e/shell-parity.spec.ts:204:1 › Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet (8.6s)
-  ✓  209 [webkit] › e2e/shortcut-toggle.spec.ts:30:1 › ⌘F zweimal: Suchleiste zu, Schreibmarke zurück (2.8s)
-  ✓  210 [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘K zweimal: Quick Find zu, Schreibmarke zurück (2.9s)
-  ✓  208 [webkit] › e2e/shell.spec.ts:196:1 › Neuladen behält Daten (OPFS) @smoke (7.7s)
-  ✓  211 [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘P zweimal: Quick Find zu, Schreibmarke zurück (2.6s)
-  ✓  213 [webkit] › e2e/shortcut-toggle.spec.ts:52:1 › ⌘N zweimal: Neu-Palette zu, Schreibmarke zurück (2.6s)
-  ✓  212 [webkit] › e2e/shell.spec.ts:224:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (5.8s)
-  ✓  214 [webkit] › e2e/shortcut-toggle.spec.ts:62:1 › ⌘, zweimal: Einstellungen auf und zurück zur Seite (3.3s)
-  ✓  215 [webkit] › e2e/shortcuts.spec.ts:13:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite (1.9s)
-  ✓  216 [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen (1.8s)
-  ✓  217 [webkit] › e2e/shortcuts.spec.ts:35:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) (2.1s)
-  ✓  218 [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen (2.0s)
-  ✓  220 [webkit] › e2e/shortcut-toggle.spec.ts:110:1 › Quick Find: nach Weitertippen ist der erste Eintrag ausgewählt, Enter öffnet ihn (1.6s)
-  ✓  219 [webkit] › e2e/shortcuts.spec.ts:64:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs (2.8s)
-  ✓  222 [webkit] › e2e/shortcuts.spec.ts:87:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen (4.2s)
-  ✓  221 [webkit] › e2e/sidebar-inline-db.spec.ts:9:1 › Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich als ganze Seite (7.1s)
-  ✓  223 [webkit] › e2e/shortcuts.spec.ts:116:1 › Neue Seite: Schreibmarke steht im Titel, Enter geht in den Text; Öffnen einer Seite fokussiert nichts (4.2s)
-  ✓  224 [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown (5.5s)
+failure 09fe04aa2733d56d1cbb7c331c7951e608949cca
+(kein Testlog – Lauf vor den Tests beendet; Ende des Playwright-Setups:)
+Get:140 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libgupnp-igd-1.6-0 amd64 1.6.0-3build3 [16.5 kB]
+Get:141 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/main amd64 libharfbuzz-icu0 amd64 8.3.0-2build2 [13.3 kB]
+Get:142 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/main amd64 libhyphen0 amd64 2.8.8-7build3 [26.5 kB]
+Get:143 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libimath-3-1-29t64 amd64 3.1.9-3.1ubuntu2 [72.2 kB]
+Get:144 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/main amd64 liblc3-1 amd64 1.0.4-3build1 [69.7 kB]
+Get:145 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/main amd64 libldacbt-enc2 amd64 2.0.2.3+git20200429+ed310a0-4ubuntu2 [27.1 kB]
+Get:146 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 libraptor2-0 amd64 2.0.16-3ubuntu0.1 [165 kB]
+Get:147 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 liblrdf0 amd64 0.6.1-4build1 [18.5 kB]
+Get:148 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libltc11 amd64 1.3.2-1build1 [13.0 kB]
+Get:149 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/main amd64 libmanette-0.2-0 amd64 0.2.7-1build2 [30.6 kB]
+Get:150 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libmfx1 amd64 22.5.4-1 [3124 kB]
+Get:151 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libmjpegutils-2.1-0t64 amd64 1:2.1.0+debian-8.1build1 [25.5 kB]
+Get:152 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libmodplug1 amd64 1:0.8.9.0-3build1 [166 kB]
+Get:153 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libmpcdec6 amd64 2:0.1~r495-2build1 [32.7 kB]
+Get:154 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 libmpeg2encpp-2.1-0t64 amd64 1:2.1.0+debian-8.1build1 [75.6 kB]
