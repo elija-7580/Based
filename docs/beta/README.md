@@ -5,8 +5,8 @@ This beta is an early version: please keep a copy of anything you can't afford t
 
 ## Install
 
-1. Download the disk image (**Based-Notes-Beta.dmg**, older links give **Based-Beta.dmg** – same app) from the
-   link in your invitation.
+1. Download the disk image (**Based-Notes-Beta.dmg**) from the personal link in your invitation. The link works for
+   30 days and up to 5 downloads. Please don't share it; if it stops working, write to hello@basednotes.app.
 2. Open it and drag **Based Notes Beta** into Applications.
 3. Open Based Notes Beta from Applications.
    - Until the app is signed by Apple, macOS asks before the first start: right-click the app → **Open** → **Open**.

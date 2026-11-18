@@ -8,6 +8,9 @@
 #     installierte Kopien („Based Beta.app“) das Update finden; Based-Beta.dmg wird weiter nach beta-latest geladen (alte Links).
 #   - Version 0.2.<Lauf>, Pre-Release beta-v<Version>, fester Kanal beta-latest (latest.json für den Updater)
 #   - Release Notes aus docs/beta/RELEASE_NOTES.md (oberster Abschnitt), nicht aus den Commits
+#   - BSD-553 (18.11.): Die DMG geht per rsync auf den Website-Server (Download nur mit Einladung, basednotes.app/download?i=…),
+#     nicht mehr an die GitHub-Releases. Ohne Secrets BETA_DEPLOY_HOST/USER/KEY bleibt der alte Weg (Warnung).
+#     Update-Paket (.app.tar.gz) und latest.json bleiben unverändert an beta-v<Version>/beta-latest. Einrichtung: ci/setup-beta-deploy.sh
 name: Desktop Beta
 
 on:
@@ -213,19 +216,68 @@ jobs:
           path: dist/
           retention-days: 14
 
+      - name: DMG auf den Server (BSD-553, nur für Eingeladene)
+        id: deploy
+        if: github.ref == 'refs/heads/beta' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          BETA_DEPLOY_HOST: ${{ secrets.BETA_DEPLOY_HOST }}
+          BETA_DEPLOY_USER: ${{ secrets.BETA_DEPLOY_USER }}
+          BETA_DEPLOY_KEY: ${{ secrets.BETA_DEPLOY_KEY }}
+          BETA_DEPLOY_KNOWN_HOSTS: ${{ secrets.BETA_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$BETA_DEPLOY_HOST" ] || [ -z "$BETA_DEPLOY_USER" ] || [ -z "$BETA_DEPLOY_KEY" ]; then
+            echo "::warning::Secrets BETA_DEPLOY_HOST/USER/KEY fehlen – die DMG geht wie bisher öffentlich an die GitHub-Releases. Einrichten: ci/setup-beta-deploy.sh"
+            echo "server=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # macOS bringt openrsync mit; für den Server (rrsync) das echte rsync nehmen.
+          RSYNC=rsync
+          if ! rsync --version 2>/dev/null | grep -q "rsync  version 3"; then
+            brew install rsync >/dev/null && RSYNC="$(brew --prefix)/bin/rsync"
+          fi
+          umask 077
+          KEY="$RUNNER_TEMP/beta-deploy-key"; KH="$RUNNER_TEMP/beta-known-hosts"
+          printf '%s\n' "$BETA_DEPLOY_KEY" > "$KEY"
+          if [ -n "$BETA_DEPLOY_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$BETA_DEPLOY_KNOWN_HOSTS" > "$KH"
+          else
+            echo "::warning::Ohne Secret BETA_DEPLOY_KNOWN_HOSTS wird der Host-Schlüssel des Servers ungeprüft übernommen."
+            ssh-keyscan -T 15 "$BETA_DEPLOY_HOST" > "$KH" 2>/dev/null || true
+          fi
+          SSH="ssh -i $KEY -o IdentitiesOnly=yes -o UserKnownHostsFile=$KH -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=20"
+          # Der Schlüssel darf auf dem Server nur „rrsync -wo <Beta-Ordner>“: Zielpfade sind relativ zu diesem Ordner.
+          # rsync schreibt in eine Temp-Datei und benennt erst am Ende um – laufende Downloads bekommen die alte Datei ganz.
+          if "$RSYNC" -t -e "$SSH" dist/Based-Notes-Beta.dmg "$BETA_DEPLOY_USER@$BETA_DEPLOY_HOST:Based-Notes-Beta.dmg"; then
+            echo "server=true" >> "$GITHUB_OUTPUT"
+            echo "DMG auf dem Server – Download nur mit Einladung (basednotes.app/download?i=…)."
+          else
+            # Nicht öffentlich ausweichen: Updates erscheinen trotzdem, der Lauf wird am Ende rot.
+            echo "::error::rsync auf $BETA_DEPLOY_HOST fehlgeschlagen – die DMG wird NICHT öffentlich hochgeladen. Updates gehen trotzdem raus."
+            echo "server=failed" >> "$GITHUB_OUTPUT"
+          fi
+          rm -f "$KEY"
+
       - name: Release veröffentlichen
         # BSD-337: auch ein Lauf von Hand (workflow_dispatch) auf main veröffentlicht – sonst baut er nur.
         if: github.ref == 'refs/heads/beta' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
           V: ${{ steps.version.outputs.version }}
+          SERVER: ${{ steps.deploy.outputs.server }}
         run: |
+          if [ "$SERVER" = "false" ]; then
+            GET="Installieren: Based-Notes-Beta.dmg öffnen, „Based Notes Beta“ nach Programme ziehen."
+          else
+            GET="Download nur mit Einladung über basednotes.app/download; installierte Kopien aktualisieren sich selbst."
+          fi
           NOTES="Based Notes Beta $V – Testversion für Mac (Apple Silicon und Intel).
-          Installieren: Based-Notes-Beta.dmg öffnen, „Based Notes Beta“ nach Programme ziehen. Anleitung: docs/beta/README.md.
+          $GET Anleitung: docs/beta/README.md.
           Läuft neben Based Next; eigene Daten. Commit ${GITHUB_SHA}.
 
           $(cat dist/notes.md)"
-          ASSETS=(dist/Based-Notes-Beta.dmg)
+          # BSD-553: die DMG nur noch ohne Server-Secrets öffentlich anhängen (alter Weg).
+          ASSETS=()
+          [ "$SERVER" = "false" ] && ASSETS+=(dist/Based-Notes-Beta.dmg)
           [ -f dist/Based-Notes-Beta.app.tar.gz ] && ASSETS+=(dist/Based-Notes-Beta.app.tar.gz dist/Based-Notes-Beta.app.tar.gz.sig)
           gh release create "beta-v$V" "${ASSETS[@]}" --target "$GITHUB_SHA" --title "Based Notes Beta $V" \
             --notes "$NOTES" --prerelease --latest=false
@@ -233,8 +285,15 @@ jobs:
           # Fester Beta-Kanal für Download-Link und Updater.
           if ! gh release view beta-latest >/dev/null 2>&1; then
             gh release create beta-latest --target "$GITHUB_SHA" --title "Based Notes Beta (neueste Version)" --prerelease --latest=false \
-              --notes "Fester Link auf die neueste DMG (Based-Notes-Beta.dmg, alter Name Based-Beta.dmg) und latest.json für den Updater. Versionen: Releases beta-v<version>."
+              --notes "latest.json für den Updater. Die DMG gibt es nur mit Einladung (basednotes.app/download). Versionen: Releases beta-v<version>."
           fi
-          UP=(dist/Based-Notes-Beta.dmg dist/Based-Beta.dmg)
+          UP=()
+          [ "$SERVER" = "false" ] && UP+=(dist/Based-Notes-Beta.dmg dist/Based-Beta.dmg)
           [ -f dist/latest.json ] && UP+=(dist/latest.json)
-          gh release upload beta-latest "${UP[@]}" --clobber
+          if [ "${#UP[@]}" -gt 0 ]; then gh release upload beta-latest "${UP[@]}" --clobber; fi
+
+      - name: Server-Upload fehlgeschlagen
+        if: steps.deploy.outputs.server == 'failed'
+        run: |
+          echo "::error::Die DMG kam nicht auf den Server (Schritt „DMG auf den Server“). Updates sind veröffentlicht, Eingeladene laden noch die vorige DMG."
+          exit 1

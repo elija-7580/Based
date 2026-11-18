@@ -44,8 +44,22 @@
 <h1>Download the Based Notes beta</h1>
 <p class="note">Thanks for testing Based. This is an early version: keep a copy of anything you can't afford to lose, and tell us what breaks.</p>
 
-<p><a class="btn" href="https://github.com/elija-7580/Based/releases/download/beta-latest/Based-Beta.dmg">Download Based Notes Beta for Mac</a></p>
-<p class="meta">macOS 13 or later · free during the beta · updates itself</p>
+<div id="dl-invited" hidden>
+<p><a class="btn" id="dl-button" href="/api/download">Download Based Notes Beta for Mac</a></p>
+<p class="meta">macOS 13 or later · free during the beta · updates itself · this link is just for you, please don't share it</p>
+</div>
+<div id="dl-closed">
+<p><strong>The beta is invite-only.</strong> Use the personal link from your invitation email. Not invited yet? <a href="/#waitlist">Join the waitlist</a> and we'll send you a link when the next group starts.</p>
+</div>
+<script>
+(function () {
+  var t = new URLSearchParams(location.search).get("i");
+  if (!t || !/^[A-Za-z0-9_-]{20,64}$/.test(t)) return;
+  document.getElementById("dl-button").href = "/api/download?i=" + encodeURIComponent(t);
+  document.getElementById("dl-invited").hidden = false;
+  document.getElementById("dl-closed").hidden = true;
+})();
+</script>
 
 <h2>Install</h2>
 <ul>

@@ -75,8 +75,8 @@ AI is off by default and the beta ships without it. Based is a complete workspac
 
 ## Download
 
-**Beta testers:** [Based Notes Beta for Mac (DMG)](https://github.com/elija-7580/Based/releases/download/beta-latest/Based-Beta.dmg).
-Join the waitlist on [basednotes.app](https://basednotes.app) to get an invite. Tester guide: [`docs/beta/README.md`](docs/beta/README.md).
+**Beta testers:** the Mac beta is invite-only. Your invitation has a personal download link.
+Join the waitlist on [basednotes.app](https://basednotes.app) to get one. Tester guide: [`docs/beta/README.md`](docs/beta/README.md).
 
 **Development build:** [Based-Next.dmg](https://github.com/elija-7580/Based/releases/download/next-latest/Based-Next.dmg).
 Open it and drag *Based Next* into Applications. macOS 13 or later, Apple silicon and Intel. First launch and updates:
