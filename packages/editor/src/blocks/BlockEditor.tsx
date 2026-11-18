@@ -5,7 +5,7 @@
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
 import { isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, type CodeView, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
-import { htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme } from "./htmlPreview.js";
+import { HTML_PREVIEW_HEIGHT, htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/props.js";
@@ -419,6 +419,22 @@ export function BlockEditor(props: PageEditorProps) {
       void props.uploadFile?.(file, f.blockId).then((url) => cmd.setBlockProps(store, [f.blockId], uploadedProps(url, file), "Add image")).catch(() => undefined);
     };
     const onDrop = (e: DragEvent) => {
+      // BSD-535: eine HTML-Datei (z. B. ein exportiertes Artefakt) wird ein HTML-Block mit dem Ergebnis
+      const html = Array.from(e.dataTransfer?.files ?? []).find((f) => f.type === "text/html" || /\.html?$/i.test(f.name));
+      if (html && editable) {
+        const at = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-block-id]")?.dataset.blockId : undefined;
+        const anchor = at ?? ctrl.order()[ctrl.order().length - 1];
+        if (anchor) {
+          e.preventDefault();
+          void html.text().then((text) => {
+            // auf einem Codeblock abgelegt: dessen Code ersetzen; unter dem Inhalt: neuer Block am Ende
+            const f = cmd.placeHTMLFile(store, anchor, text, { replace: at !== undefined });
+            if (f) run(f);
+            else notify("This HTML file is too large (over 2 MB).");
+          });
+          return;
+        }
+      }
       const file = Array.from(e.dataTransfer?.files ?? []).find((f) => f.type.startsWith("image/"));
       if (!file || !editable || !props.uploadFile || (e.target instanceof Element && e.target.closest(".bx2-image"))) return;
       const at = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-block-id]")?.dataset.blockId : undefined;
@@ -427,7 +443,11 @@ export function BlockEditor(props: PageEditorProps) {
       e.preventDefault();
       insertImage(anchor, file);
     };
-    const onDragOver = (e: DragEvent) => { if (editable && props.uploadFile && e.dataTransfer?.types.includes("Files")) e.preventDefault(); };
+    const onDragOver = (e: DragEvent) => {
+      if (!editable || !e.dataTransfer?.types.includes("Files")) return;
+      // Bilder nur mit Hochladen; HTML-Dateien (BSD-535) immer – sonst öffnete der Browser die Datei selbst
+      if (props.uploadFile || Array.from(e.dataTransfer.items ?? []).some((i) => i.type === "text/html")) e.preventDefault();
+    };
 
     const onCopy = (e: ClipboardEvent) => {
       if (!ctrl.selected.length || !e.clipboardData) return;
@@ -2586,7 +2606,7 @@ const CODE_VIEW_BUTTONS: readonly { view: CodeView; label: string; icon: MenuIco
  * solange die Schreibmarke darin steht.
  */
 function CodeBlock({ block: b }: { block: Block }) {
-  const { store } = useCtx();
+  const { store, editable, ctrl } = useCtx();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
   const [full, setFull] = useState(false);
@@ -2610,7 +2630,10 @@ function CodeBlock({ block: b }: { block: Block }) {
       <TextField block={b} />
       <CodeTools block={b} view={hasResult ? view : undefined} onView={setView} onFull={hasResult ? () => setFull(true) : undefined} />
       {showResult && kind === "mermaid" ? <MermaidPreview code={code} /> : null}
-      {showResult && kind === "html" ? <HtmlPreview code={code} /> : null}
+      {showResult && kind === "html" ? (
+        <HtmlPreview code={code} size={{ width: b.props?.width, height: b.props?.height }}
+          {...(editable ? { onResize: (s: HtmlSize) => { cmd.setBlockProps(store, [b.id], { width: s.width, height: s.height }, "Resize HTML"); ctrl.select([b.id]); } } : {})} />
+      ) : null}
       {hasResult ? (
         <BasedDialog open={full} onClose={() => setFull(false)} title={kind === "html" ? "HTML" : "Diagram"} width={960} testID="code-full-view">
           {full ? (kind === "html" ? <HtmlPreview code={code} fill /> : <MermaidPreview code={code} />) : null}
@@ -2643,6 +2666,7 @@ function CodeTools({ block: b, view, onView, onFull }: { block: Block; view?: Co
           <BasedIconButton key={v.view} label={v.label} pressed={view === v.view} icon={<MenuIcon name={v.icon} />} testID={`code-view-${v.view}`} onClick={() => onView(v.view)} />
         )) : null}
         {onFull ? <BasedIconButton label="Open full view" icon={<MenuIcon name="expand" />} testID="code-full" onClick={onFull} /> : null}
+        {editable && codePreviewKind(b.props?.language) === "html" ? <HtmlFileButton block={b} /> : null}
         {editable ? (
           <BasedIconButton label="Wrap code" pressed={wrap} icon={<MenuIcon name="wrap" />}
             onClick={() => cmd.setBlockProps(store, [b.id], { wrap: !wrap }, "Wrap code")} />
@@ -2650,6 +2674,24 @@ function CodeTools({ block: b, view, onView, onFull }: { block: Block; view?: Co
         <BasedIconButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy" : "Copy code"} icon={<MenuIcon name={copied === "ok" ? "check" : "duplicate"} />} onClick={copy} />
       </span>
     </span>
+  );
+}
+
+/** BSD-535: HTML-Datei öffnen – ersetzt den Code des HTML-Blocks (ein Undo-Schritt). */
+function HtmlFileButton({ block: b }: { block: Block }) {
+  const { store, notify } = useCtx();
+  const input = useRef<HTMLInputElement>(null);
+  const open = async (f: File | undefined) => {
+    if (!f) return;
+    const html = await f.text();
+    if (!cmd.placeHTMLFile(store, b.id, html, { replace: true })) notify("This HTML file is too large (over 2 MB).");
+  };
+  return (
+    <>
+      <BasedIconButton label="Open HTML file…" icon={<MenuIcon name="file" />} testID="code-open-html" onClick={() => input.current?.click()} />
+      <input ref={input} type="file" accept=".html,.htm,text/html" hidden data-testid="code-open-html-input"
+        onChange={(e) => { void open(e.currentTarget.files?.[0]); e.currentTarget.value = ""; }} />
+    </>
   );
 }
 
@@ -2712,12 +2754,43 @@ function useSchemeTick(): string {
  * Ergebnis eines HTML-Codeblocks (htmlPreview.ts): Rahmen mit sandbox ohne same-origin, CSP, kein Netz. Ohne Rand und
  * Beschriftung, Schrift und Farbe der Seite, Höhe nach dem Inhalt; `fill` (Vollansicht) füllt stattdessen den Dialog.
  */
-function HtmlPreview({ code, fill = false }: { code: string; fill?: boolean }) {
+/** BSD-535: von Hand gezogene Größe des HTML-Ergebnisses (Pixel); fehlt = volle Breite, Höhe nach Inhalt. */
+interface HtmlSize { width?: number | undefined; height?: number | undefined }
+
+function HtmlPreview({ code, fill = false, size, onResize }: { code: string; fill?: boolean; size?: HtmlSize; onResize?: (s: HtmlSize) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const scheme = useSchemeTick();
   const [doc, setDoc] = useState<string>();
   const [height, setHeight] = useState<number>();
+  const [live, setLive] = useState<HtmlSize>();
+  // Breite am rechten Rand, Höhe am unteren Rand ziehen (wie Bild/Embed); ein Undo-Schritt beim Loslassen.
+  const startResize = (e: React.PointerEvent, axis: "x" | "y") => {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = host.current;
+    const box = el?.getBoundingClientRect();
+    const max = el?.parentElement?.getBoundingClientRect().width;
+    if (!el || !box || !max || !onResize) return;
+    const x0 = e.clientX, y0 = e.clientY;
+    const h0 = frame.current?.getBoundingClientRect().height ?? box.height;
+    let next: HtmlSize = { width: size?.width, height: size?.height };
+    const move = (ev: PointerEvent) => {
+      if (axis === "x") next = { ...next, width: Math.round(Math.max(160, Math.min(max, box.width + ev.clientX - x0))) };
+      else next = { ...next, height: Math.round(Math.max(HTML_PREVIEW_HEIGHT.min, Math.min(HTML_PREVIEW_HEIGHT.max * 2, h0 + ev.clientY - y0))) };
+      setLive(next);
+    };
+    const up = () => {
+      el.ownerDocument.removeEventListener("pointermove", move);
+      el.ownerDocument.removeEventListener("pointerup", up);
+      setLive(undefined);
+      if (next.width !== size?.width || next.height !== size?.height) onResize(next);
+    };
+    el.ownerDocument.addEventListener("pointermove", move);
+    el.ownerDocument.addEventListener("pointerup", up);
+  };
+  const shown = fill ? undefined : live ?? size;
+  const fixedHeight = shown?.height;
   const first = useRef(true);
   useEffect(() => {
     const el = host.current;
@@ -2738,10 +2811,18 @@ function HtmlPreview({ code, fill = false }: { code: string; fill?: boolean }) {
     return () => window.removeEventListener("message", onMessage);
   }, [fill]);
   return (
-    <div ref={host} className="bx2-html-preview" contentEditable={false} data-embed="" data-fill={fill ? "" : undefined} data-sized={height !== undefined ? "" : undefined} data-testid="html-preview">
+    <div ref={host} className="bx2-html-preview" contentEditable={false} data-embed="" data-fill={fill ? "" : undefined}
+      data-sized={height !== undefined || fixedHeight !== undefined ? "" : undefined} data-testid="html-preview"
+      style={shown?.width ? { width: shown.width } : undefined}>
       {doc !== undefined ? (
         <iframe ref={frame} className="bx-html-preview" sandbox="allow-scripts" referrerPolicy="no-referrer" title="HTML preview" srcDoc={doc}
-          style={{ colorScheme: scheme, ...(!fill && height !== undefined ? { height } : {}) }} />
+          style={{ colorScheme: scheme, ...(fill ? {} : fixedHeight !== undefined ? { height: fixedHeight } : height !== undefined ? { height } : {}) }} />
+      ) : null}
+      {onResize && !fill ? (
+        <>
+          <span className="bx2-html-handle bx2-html-handle-x" role="separator" aria-orientation="vertical" aria-label="Drag to change the width" data-testid="html-resize-x" onPointerDown={(e) => startResize(e, "x")} />
+          <span className="bx2-html-handle bx2-html-handle-y" role="separator" aria-orientation="horizontal" aria-label="Drag to change the height" data-testid="html-resize-y" onPointerDown={(e) => startResize(e, "y")} />
+        </>
       ) : null}
     </div>
   );
