@@ -1,61 +1,61 @@
-cancelled 527079387777774d6f3f16a187d9b266274713a7
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, /home/runner/work/Based/Based/apps/web/src/screens/WelcomeTour.tsx, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+failure a8671f10fcb4e4a3d28c9f1827d46a7553dca60e
+        at /home/runner/work/Based/Based/apps/web/e2e/welcome.spec.ts:166:26
 
-Running 273 tests using 2 workers, shard 2 of 2
+    Error Context: test-results/welcome-Einstieg-in-900-×--2b33f-r-Rollbalken-nichts-gekürzt-chromium/error-context.md
 
-  ✓    2 [chromium] › e2e/keyboard-everywhere.spec.ts:42:1 › Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter öffnet, Esc zurück in die Seite @smoke (1.1s)
-  ✓    3 [chromium] › e2e/keyboard-everywhere.spec.ts:92:1 › ⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächste Pfeiltaste den Fokus zurück (725ms)
-  ✓    1 [chromium] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (2.5s)
-  ✓    4 [chromium] › e2e/keyboard-everywhere.spec.ts:105:1 › Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück (722ms)
-  ✓    6 [chromium] › e2e/keyboard-everywhere.spec.ts:123:1 › Übersicht aller Kürzel: ⇧⌘/ öffnet, Suche filtert, Esc schließt; auch über ⌘K @smoke (1.1s)
-  ✓    5 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light) (2.0s)
-  ✓    8 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark) (1.9s)
-  ✓    9 [chromium] › e2e/keyboard-select.spec.ts:39:1 › Einfache Tabelle: Tab, ⇧Tab, Pfeile, Enter, Tab am Ende legt eine Zeile an (1.3s)
-  ✓    7 [chromium] › e2e/keyboard-everywhere.spec.ts:147:1 › ⌘ halten zeigt die Tasten der Stelle: überall, Seitenleiste, Text, Blöcke, Datenbank (4.5s)
-  ✓   11 [chromium] › e2e/keyboard-everywhere.spec.ts:172:1 › Editor: ⌘/ öffnet das Blockmenü, Pfeile und Enter wählen (1.1s)
-  ✓   10 [chromium] › e2e/keyboard-select.spec.ts:77:1 › Datenbank: Tab im Zellen-Editor, ⇧-Pfeile wählen Bereich, Kopieren, Einfügen, Leeren, Ziehen (2.2s)
-  ✓   12 [chromium] › e2e/keyboard-everywhere.spec.ts:189:1 › Mac-Menü: ein Befehl aus dem Register läuft über dieselbe Taste (based:command) (1.8s)
-  ✓   13 [chromium] › e2e/keyboard-select.spec.ts:133:1 › Blockauswahl: Rechteck aus dem Seitenrand außerhalb der Textspalte, ⇧-Klick erweitert (1.3s)
-  ✓   14 [chromium] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (1.1s)
-  ✓   15 [chromium] › e2e/keyboard-select.spec.ts:162:1 › ⌫ ohne Textfeld im Fokus geht nicht zur vorigen Seite zurück (928ms)
-  ✓   16 [chromium] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (1.7s)
-  ✓   18 [chromium] › e2e/marquee.spec.ts:57:1 › Aufziehen rechts neben kurzem Text und aus einer leeren Zeile wählt Blöcke; im Text bleibt es Text; Klick setzt den Cursor ans Ende (1.6s)
-  ✓   17 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Knöpfe (light) (4.0s)
-  ✓   19 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1280×820) (1.5s)
-  ✓   21 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 900×600) (1.3s)
-  ✓   22 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1728×1000) (1.2s)
-  ✓   23 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1280×820) (1.2s)
-  ✓   20 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Felder, Tabs, Pillen (light) (4.7s)
-  ✓   24 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 900×600) (1.8s)
-  ✓   26 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1728×1000) (1.1s)
-  ✓   25 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Knöpfe (dark) (3.9s)
-  ✓   27 [chromium] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (2.0s)
-  ✓   29 [chromium] › e2e/meeting.spec.ts:110:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (2.4s)
-  ✓   28 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Felder, Tabs, Pillen (dark) (4.6s)
-  ✓   31 [chromium] › e2e/kit-states.spec.ts:208:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (light) (2.8s)
-  ✓   32 [chromium] › e2e/kit-states.spec.ts:208:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (dark) (2.9s)
-  ✓   30 [chromium] › e2e/meeting.spec.ts:135:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen (7.6s)
-  ✓   34 [chromium] › e2e/meeting.spec.ts:225:1 › Feedback 14. 11.: auf Akku nur aufnehmen – Transkript wartet, kommt am Strom bzw. mit „Transcribe now“ (5.9s)
-  ✓   33 [chromium] › e2e/kit-states.spec.ts:261:3 › Zustands-Galerie: Media-Player und Willkommens-Karten nutzen nur Token-Farben (light) (7.3s)
-  ✓   35 [chromium] › e2e/meeting.spec.ts:266:1 › Feedback 17. 11.: ohne Transkription aufnehmen, später einrichten → „Transcribe recording“ holt das Transkript nach (2.8s)
-  ✓   37 [chromium] › e2e/meeting.spec.ts:290:1 › Feedback 17. 11.: Einstellungen nennen den fehlenden Schritt für die Transkription (1.1s)
-  ✓   36 [chromium] › e2e/kit-states.spec.ts:261:3 › Zustands-Galerie: Media-Player und Willkommens-Karten nutzen nur Token-Farben (dark) (6.7s)
-  ✓   38 [chromium] › e2e/meeting.spec.ts:310:1 › Elija 17.11.: Einstellungen – Modell wählen, laden mit Fortschritt, bereit, anderes Modell, entfernen (4.0s)
-  ✓   40 [chromium] › e2e/meeting.spec.ts:396:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (2.8s)
-  ✓   39 [chromium] › e2e/kit-states.spec.ts:491:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, light) (4.3s)
-  ✓   41 [chromium] › e2e/meeting.spec.ts:413:1 › ⌘N → Meeting notes: Block-Editor, Notizen per Klick und Tastatur, Pfeile bleiben in den Notizen (1.1s)
-  ✓   43 [chromium] › e2e/motion.spec.ts:17:1 › Einblenden nutzt die Motion-Tokens (Quick Find) (889ms)
-  ✓   44 [chromium] › e2e/motion.spec.ts:34:3 › Bewegung reduzieren › keine Animation und kein Übergang beim Öffnen und Schließen (1.8s)
-  ✓   45 [chromium] › e2e/native-free.spec.ts:26:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (1.1s)
-  ✓   42 [chromium] › e2e/kit-states.spec.ts:491:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (bold, light) (4.1s)
-  ✓   46 [chromium] › e2e/native-free.spec.ts:42:1 › Rechtsklick an vielen Stellen: überall unterdrückt, Escape und Klick daneben schließen (1.7s)
-  ✓   48 [chromium] › e2e/native-free.spec.ts:65:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (1.2s)
-  ✓   49 [chromium] › e2e/native-free.spec.ts:86:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (890ms)
-  ✓   50 [chromium] › e2e/native-free.spec.ts:93:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (1.5s)
-  ✓   47 [chromium] › e2e/kit-states.spec.ts:491:3 › Zustands-Galerie: erzwungene Zustände im Bildvergleich (default, dark) (5.6s)
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeInViewport() failed
+
+    Locator:  getByTestId('welcome-tour').getByRole('button', { name: /^(Continue|Later|Get started)$/ })
+    Expected: in viewport
+    Received: viewport ratio 0.9443359375
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeInViewport" getByTestId('welcome-tour').getByRole('button', { name: /^(Continue|Later|Get started)$/ }) with timeout 5000ms
+      - waiting for getByTestId('welcome-tour').getByRole('button', { name: /^(Continue|Later|Get started)$/ })
+        14 × locator resolved to <button type="button" data-size="md" data-elevation="none" data-variant="primary" data-astryx-pressable="" class="astryx-button x1k57tk5 x1vidyx5 x1t137rt x1jhp3zv xx47ajj x16bblx1 x1wfwxd8 x13aywxo x1n2onr6 x3nfvp2 x6s0dn4 xl56j7k x1txdalj xce4md1 xrrkdod xc342km xng3xce x1jxw6zd xjb2p0i xcr08ib x1kq96og x1e4wzip xuxw1ft xeuugli x193iq5w x1ypdohk x16khyan xrafxwg xuedmi6 x12w9bfk xlr8y92 x1ueg155 x11z29ks xli5ek3 xem8lmn xogcwkh x1t1ddl7 xziyay6 xz2mauf x1l7afqf x14e4jsf x6su2wr xif6eam x1ocadqd x1uk…>…</button>
+           - unexpected value "viewport ratio 0.9443359375"
+
+
+      164 |       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      165 |       const next = tour(page).getByRole("button", { name: /^(Continue|Later|Get started)$/ });
+    > 166 |       await expect(next).toBeInViewport({ ratio: 1 });
+          |                          ^
+      167 |       await expect(tour(page).getByRole("button", { name: "Skip" })).toBeInViewport({ ratio: 1 });
+      168 |       const clipped = await tour(page).locator(".welcome-idea strong, h1").evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).length);
+      169 |       expect(clipped).toBe(0);
+        at /home/runner/work/Based/Based/apps/web/e2e/welcome.spec.ts:166:26
+
+    Error Context: test-results/welcome-Einstieg-in-900-×--2b33f-r-Rollbalken-nichts-gekürzt-chromium-retry1/error-context.md
+
+  2) [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.boundingBox: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-editable-id]:focus')
+
+
+      544 |     // Zeilen bis kurz vor den unteren Rand
+      545 |     for (let i = 0; i < 40; i++) {
+    > 546 |       const box = await page.locator("[data-editable-id]:focus").boundingBox();
+          |                                                                  ^
+      547 |       if (box && box.y > h - 140) break;
+      548 |       await page.keyboard.type(`Line ${i + 1}`);
+      549 |       await page.keyboard.press("Enter");
+        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:546:66
+
+    Error Context: test-results/polish-Slash--und--Menü-üb-7f046-nicht-auch-unten-im-Fenster-chromium/error-context.md
+
+  1 failed
+    [chromium] › e2e/welcome.spec.ts:156:1 › Einstieg in 900 × 600: jeder Schritt ohne Scrollen bedienbar, kein waagrechter Rollbalken, nichts gekürzt 
+  1 flaky
+    [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
+  10 skipped
+  261 passed (8.0m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
