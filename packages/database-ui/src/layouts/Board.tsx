@@ -88,7 +88,7 @@ function Column({ group, gp, view, props, onMenu, onEditTitle }: {
     <section className={"dbui-board-col" + (drop ? " drop" : "")} aria-label={group.title} data-group-id={group.id}
       onDragOver={onDragOver} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDrop(null); }} onDrop={onDrop}>
       <header className="dbui-board-head">
-        {isOption ? <OptionPill name={group.title} color={group.color} status={gp.type === "status"} /> : <span className="dbui-group-title">{group.title}</span>}
+        {isOption ? <OptionPill name={group.title} color={group.color} status={gp.type === "status"} /> : <span className="dbui-group-title" title={group.title}>{group.title}</span>}
         <span className="dbui-count">{group.rows.length}</span>
         {!locked && <button type="button" className="dbui-icon-btn" aria-label={`Hide ${group.title}`} onClick={() => setGroupHidden(store, view.id, group.id, true)}><Icon name="eyeOff" size={14} /></button>}
         {!locked && <button type="button" className="dbui-icon-btn" aria-label={`New in ${group.title}`} onClick={() => addRow(group.id)}><Icon name="plus" size={14} /></button>}

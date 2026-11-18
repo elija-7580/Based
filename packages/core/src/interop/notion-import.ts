@@ -243,6 +243,9 @@ class MarkdownNotionImporter {
   private files!: ImportFiles;
   private readonly now: () => number;
   private readonly userID: string | null;
+  /** Relationsspalten, aufgelöst erst nach allen Quellen (das Ziel kann später importiert werden). */
+  private relations: { db: Database; prop: PropertySchema; cells: { rowID: string; links: RelationLink[] }[] }[] = [];
+  private rowDatabase = new Map<string, string>();
 
   constructor(private readonly opts: NotionImportOptions) {
     this.now = opts.now ?? swiftNow;
@@ -258,6 +261,7 @@ class MarkdownNotionImporter {
       this.files = src.files;
       this.ids = new Map();
       this.consumed = new Set();
+      this.suffixIndex = undefined;
       this.assignIDs(normalizePath(src.path));
       if (this.opts.isCancelled?.()) throw new ImportCancelled();
       key = keyBetween(key, undefined);
@@ -265,6 +269,7 @@ class MarkdownNotionImporter {
       const id = this.importItem(normalizePath(src.path), "w", key, rootKeys);
       if (id !== undefined) this.report.rootIDs.push(id);
     }
+    this.resolveRelations();
     return { records: this.records, rootKeys, report: this.report };
   }
 
@@ -496,7 +501,7 @@ class MarkdownNotionImporter {
     header.forEach((name, ci) => {
       if (ci === 0) return;
       const column = rows.map((r) => (ci < r.length ? r[ci]! : ""));
-      const prop: PropertySchema = { id: makeRecordID(), name: name === "" ? `Column ${ci}` : name, type: inferCSVType(name, column) as PropertySchema["type"] };
+      const prop: PropertySchema = { id: makeRecordID(), name: name === "" ? `Column ${ci}` : name, type: (isRelationColumn(column) ? "relation" : inferCSVType(name, column)) as PropertySchema["type"] };
       if (prop.type === "select" || prop.type === "multiSelect" || prop.type === "status") {
         const options: NonNullable<PropertySchema["options"]> = [];
         for (const v of column) {
@@ -534,12 +539,23 @@ class MarkdownNotionImporter {
         rowFiles.set(k, [...(rowFiles.get(k) ?? []), f]);
       }
     }
+    const near = this.resolver(dirname(p));
+    const resolve = (target: string) => near(target) ?? this.resolveBySuffix(target);
+    const relCells = new Map<string, { rowID: string; links: RelationLink[] }[]>();
+    for (const prop of props) if (prop.type === "relation") { const cells: { rowID: string; links: RelationLink[] }[] = []; relCells.set(prop.id, cells); this.relations.push({ db, prop, cells }); }
     const keys = keysBetween(rows.length, undefined, undefined);
     rows.forEach((r, ri) => {
       const k = keys[ri]!;
       const values: Record<string, PropertyValue> = {};
+      const pending: { propID: string; links: RelationLink[] }[] = [];
+      const track = (rowID: string) => { this.rowDatabase.set(rowID, db.id); for (const x of pending) relCells.get(x.propID)!.push({ rowID, links: x.links }); };
       props.forEach((prop, ci) => {
         if (ci === 0 || ci >= r.length) return;
+        if (prop.type === "relation") {
+          const links = parseRelationCell(r[ci]!);
+          if (links.length > 0) pending.push({ propID: prop.id, links: links.map((l) => ({ ...l, id: l.path === undefined ? undefined : resolve(l.path) })) });
+          return;
+        }
         const v = parseCSVValue(r[ci]!, prop);
         if (v !== undefined) values[prop.id] = v;
       });
@@ -548,13 +564,94 @@ class MarkdownNotionImporter {
       if (files && files.length > 0) {
         const f = files[0]!;
         rowFiles.set(markdownFileName(rowTitle), files.slice(1));
-        if (this.importPage(f, "d:" + db.id, k, values, db) !== undefined) return;
+        const pid = this.importPage(f, "d:" + db.id, k, values, db);
+        if (pid !== undefined) { track(pid); return; }
       }
-      this.put({ kind: "block", data: makeBlock({ id: makeRecordID(), type: "page", parent: "d:" + db.id, sk: k, text: rowTitle, values, createdBy: this.userID }, now) });
+      const rid = makeRecordID();
+      track(rid);
+      this.put({ kind: "block", data: makeBlock({ id: rid, type: "page", parent: "d:" + db.id, sk: k, text: rowTitle, values, createdBy: this.userID }, now) });
       this.report.rows += 1;
     });
     return blockID;
   }
+
+  /** Relationspfade sind relativ zur CSV, aber Ordnernamen weichen je nach Export ab (mit/ohne ID, gekürzt):
+   *  dann die einzige .md-Datei mit gleichem Dateinamen (und möglichst gleichem Elternordner). */
+  private suffixIndex: Map<string, string[]> | undefined;
+  private resolveBySuffix(target: string): string | undefined {
+    const decoded = removingPercentEncoding(target);
+    if (decoded === undefined) return undefined;
+    if (!this.suffixIndex) {
+      this.suffixIndex = new Map();
+      for (const k of this.ids.keys()) { const b = basename(k); this.suffixIndex.set(b, [...(this.suffixIndex.get(b) ?? []), k]); }
+    }
+    const hits = this.suffixIndex.get(basename(decoded)) ?? [];
+    if (hits.length === 1) return this.ids.get(hits[0]!);
+    const tail = decoded.split("/").slice(-2).join("/");
+    const exact = hits.filter((h) => h.endsWith("/" + tail) || h === tail);
+    return exact.length === 1 ? this.ids.get(exact[0]!) : undefined;
+  }
+
+  /** Relationsziel: die Datenbank mit den meisten verknüpften Zeilen (wie der HTML-Import). Ohne auflösbares Ziel
+   *  bleibt die Spalte Text – mit den Seitentiteln statt der rohen Export-Pfade. Werte landen direkt in den
+   *  schon geschriebenen Records (dieselben Objekte). */
+  private resolveRelations() {
+    if (this.relations.length === 0) return;
+    const blocks = new Map<string, Block>();
+    for (const r of this.records) if (r.kind === "block") blocks.set(r.data.id, r.data);
+    const set = (rowID: string, propID: string, v: PropertyValue) => { const b = blocks.get(rowID); if (b) b.values = { ...(b.values ?? {}), [propID]: v }; };
+    for (const { db, prop, cells } of this.relations) {
+      const votes = new Map<string, number>();
+      for (const c of cells) for (const l of c.links) {
+        const t = l.id === undefined ? undefined : this.rowDatabase.get(l.id);
+        if (t !== undefined) votes.set(t, (votes.get(t) ?? 0) + 1);
+      }
+      let target: [string, number] | undefined;
+      for (const [k, v] of votes) if (!target || v > target[1]) target = [k, v];
+      if (target) {
+        const t = target[0];
+        prop.relation = { databaseID: t };
+        let missing = 0;
+        for (const c of cells) {
+          const ids = c.links.map((l) => l.id).filter((id): id is string => id !== undefined && this.rowDatabase.get(id) === t);
+          missing += c.links.length - ids.length;
+          if (ids.length > 0) set(c.rowID, prop.id, ev("relation", [...new Set(ids)]));
+        }
+        if (missing > 0) this.warn(`${db.title} → ${prop.name}: ${missing} linked page${missing === 1 ? " wasn't" : "s weren't"} part of this export`);
+      } else {
+        prop.type = "text";
+        prop.description = "Relation in Notion (related pages weren't part of this export).";
+        for (const c of cells) set(c.rowID, prop.id, ev("text", c.links.map((l) => l.title).join(", ")));
+      }
+    }
+    this.relations = [];
+  }
+}
+
+/** Relationsspalte aus Notions „Markdown & CSV“-Export: jede Zelle „Titel (Pfad.md), …“ (Swift-Parität: `inferCSVType`
+ *  sagt dazu „text“; aufgelöst wird in `importDatabase` → `resolveRelations`). */
+function isRelationColumn(column: string[]): boolean {
+  const values = column.map(trimSpaces).filter((v) => v !== "");
+  return values.length > 0 && values.every((v) => { const l = parseRelationCell(v); return l.length > 0 && l.every((x) => x.path !== undefined); });
+}
+
+interface RelationLink { title: string; path?: string | undefined; id?: string | undefined }
+
+/** Zelle einer Relationsspalte aus Notions „Markdown & CSV“-Export: „Titel (Pfad.md), Titel 2 (Pfad2.md)“.
+ *  Pfade sind URL-kodiert (keine Leerzeichen), Titel dürfen Kommas und Klammern enthalten. */
+export function parseRelationCell(raw: string): { title: string; path?: string }[] {
+  const out: { title: string; path?: string }[] = [];
+  const re = /\s*(.*?)\s*\(([^\s()]+\.md)\)\s*(?:,|$)/gy;
+  let m: RegExpExecArray | null;
+  let last = 0;
+  while ((m = re.exec(raw)) !== null) {
+    if (m[0] === "") break;
+    out.push({ title: m[1]!, path: m[2]! });
+    last = re.lastIndex;
+  }
+  const rest = trimSpaces(raw.slice(last));
+  if (rest !== "") for (const t of rest.split(",").map(trimSpaces)) if (t !== "") out.push({ title: t });
+  return out;
 }
 
 /** Erstes Zeichen als Icon, wenn es ein Emoji in Emoji-Darstellung ist (Swift `leadingEmoji`). */
