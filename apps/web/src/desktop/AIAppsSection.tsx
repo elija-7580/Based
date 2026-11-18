@@ -13,6 +13,7 @@ import { relative } from "../shell/format.js";
 import { syncConfig } from "../shell/storage.js";
 import { AI_APP_CLIENTS, macSetup, serverSetup, serverTarget, tokenName, whereToPaste, type AIAppClient, type AIAppTarget } from "./aiApps.js";
 import { localServer, PLACES } from "./localServer.js";
+import { SemanticSearchSetup } from "./SemanticSearchSetup.js";
 
 interface ServerToken { id: string; name: string; createdAt: number; lastSeenAt?: number }
 
@@ -171,6 +172,7 @@ function AIAppsSection({ navigate }: SettingsSectionProps) {
         hint={`Connected apps search, read and write your pages and databases through MCP, as you can in Based.${rules ? " Writing follows the permission rules under Agents & AI." : ""}`}>
         <BasedButton label="Connect…" variant="primary" onClick={() => setOpen(true)} />
       </Row>
+      <SemanticSearchSetup onOpenSync={() => navigate({ name: "settings", page: "sync" })} />
       {rules ? <Row label="Permission rules"><BasedButton label="Open Agents & AI" variant="ghost" onClick={() => navigate({ name: "settings", page: "agents" })} /></Row> : null}
       {open ? <ConnectAIAppsDialog open onClose={() => setOpen(false)} onOpenSync={() => { setOpen(false); navigate({ name: "settings", page: "sync" }); }} /> : null}
     </Group>
