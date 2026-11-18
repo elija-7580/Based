@@ -26,7 +26,7 @@ jobs:
           path-to-signatures: signatures/v1/cla.json
           path-to-document: https://github.com/elija-7580/Based/blob/main/CLA.md
           branch: cla-signatures
-          allowlist: elija-7580,dependabot[bot],github-actions[bot],claude[bot]
+          allowlist: elija-7580,dependabot[bot],github-actions[bot],claude[bot],claude
           custom-notsigned-prcomment: >-
             Thanks for your contribution! Before we can merge it, please read the
             [Contributor License Agreement](https://github.com/elija-7580/Based/blob/main/CLA.md)
