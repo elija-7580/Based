@@ -8,8 +8,8 @@ one line per point (no wrapped lines), each at most 110 characters – a test ch
 
 - Based Beta is now called Based Notes Beta; your workspace, backups and settings stay as they are
 - Meeting notes: type /meet to record, take timestamped notes and get a transcript made on your Mac
-- Start from a template: Tasks, Notes, Journal or Wiki
-- Video and audio blocks with their own controls
+- Templates (Tasks, Notes, Journal, Wiki); video and audio blocks with their own controls
+- Settings: search field, three groups, and Font is now its own choice next to Style
 - Backups to a folder you choose, and a backup before every update
 - Smoother typing on long pages; spelling suggestions on right-click
 - Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
@@ -37,6 +37,11 @@ New since the first test build (0.2.2):
 - The local server (backups, command line) now also runs on Intel Macs.
 - Right-click a misspelled word for suggestions.
 - Settings only show what works in this beta; Share is hidden until sharing exists.
+- Settings are sorted into App, Workspace and System, with a search field above the list. It finds single settings
+  (try “dark” or “spell”) and forgives a typo; ↑/↓ and Enter jump to the setting.
+- **Font** (System or Based) is now its own setting in Settings → Appearance. **Style → Bold** only makes titles
+  larger and headings heavier and no longer changes the font. If you had Bold on, you keep its font.
+- After switching the font back, HTML blocks and Mermaid diagrams no longer keep the other font until a restart.
 
 Known issues:
 
