@@ -1,0 +1,1 @@
+success c3ba1fe4aed34bf869a643011925b4f47e2ecd0e nightly/2026-11-18-agent-tools-3
