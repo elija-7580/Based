@@ -74,12 +74,18 @@ acht Probeanfragen.
 - ~900 MB Arbeitsspeicher mit WebAssembly sind für einen kleinen Server zu viel → dort `onnxruntime-node`.
 - Die Schwellen für E5 (`E5_CALIBRATION`) stammen aus acht Anfragen. Sie gehören mit echten Daten nachgemessen.
 
+## Entschieden (Elija, 18.11.)
+
+- „To review“ für Heikles bleibt: Agenten merken Gesundheit, Geld und Ähnliches nur zur Freigabe.
+- Laufzeit: Elija überlässt die Wahl; Maßstab ist gute MCP-Anbindung bei wenig Daten und Speicher. Daraus folgt:
+  `onnxruntime-node` als Ziel überall (4× schneller, rund ein Viertel des Arbeitsspeichers). Auf based-server sofort
+  (als Abhängigkeit des Server-Images), in der Mac-App nach der Beta, weil die native Datei mitsigniert werden muss
+  und das vor dem 23.11. nicht am Mac geprüft werden kann. Bis dahin läuft die Mac-App mit WebAssembly.
+
 ## Offen (Elija)
 
 1. Modell in der Beta einschaltbar? Der Schalter in den Einstellungen fehlt (nur die Route `/local/brain/model`).
-2. „To review“ für Heikles: so lassen, oder soll der Agent alles direkt als Active merken dürfen?
-3. `onnxruntime-node` in die Mac-App (schneller, weniger Speicher, aber native Datei → signieren wie node-pty)?
-4. Wie verbindet ein Tester Claude Code/Desktop mit Based? Es gibt keine Stelle in der App, die das zeigt.
+2. Wie verbindet ein Tester Claude Code/Desktop mit Based? Es gibt keine Stelle in der App, die das zeigt.
 
 ## Später
 
