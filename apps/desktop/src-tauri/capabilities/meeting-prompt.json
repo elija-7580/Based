@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "meeting-prompt",
+  "description": "Feedback 18. 11.: kleines Fenster „Meeting detected“ – nur Kern (Antwort als Ereignis an das Hauptfenster), sonst nichts.",
+  "windows": [
+    "meeting-prompt"
+  ],
+  "permissions": [
+    "core:default"
+  ]
+}

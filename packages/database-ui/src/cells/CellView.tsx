@@ -45,11 +45,18 @@ function Check({ checked, onToggle, disabled }: { checked: boolean; onToggle?: (
   );
 }
 
+/** BSD-571: Zahl mit Tabellenziffern, Komma und Punkt als eigene Läufe – mit Font „Based“ (Schibsted Grotesk) sind
+ *  sie dort proportional (`.dbui-punct`), sonst würde tnum sie auf Ziffernbreite ziehen („1 ,234.56“). */
+function Figures({ text }: { text: string }) {
+  return <>{text.split(/([,.])/).map((part, i) => i % 2 ? <span key={i} className="dbui-punct">{part}</span> : part)}</>;
+}
+
 function ComputedValue({ v, prop, wrap }: { v: Value; prop: PropertySchema; wrap: boolean | undefined }) {
   const { engine } = useDB();
   if (v.t === "bool") return <Check checked={v.v} disabled />;
   if (v.t === "string" && v.rich) return <span className={wrap ? "dbui-wrap" : "dbui-clip"}><RichRuns runs={v.rich} /></span>;
-  if (v.t === "number" || v.t === "date") return <span className="dbui-data">{formatValue(engine, v, prop)}</span>;
+  if (v.t === "number") return <span className="dbui-data dbui-tnum"><Figures text={formatValue(engine, v, prop)} /></span>;
+  if (v.t === "date") return <span className="dbui-data">{formatValue(engine, v, prop)}</span>;
   return <span className={wrap ? "dbui-wrap" : "dbui-clip"}>{formatValue(engine, v, prop)}</span>;
 }
 
@@ -83,7 +90,7 @@ function CellViewInner({ row, prop, wrap, onToggleCheckbox, onButton, blankEmpty
     }
     case "number": {
       const c = valueCase(row.values?.[prop.id]);
-      return c?.[0] === "number" ? <span className="dbui-data dbui-num">{formatNumber(c[1] as number, prop.numberFormat)}</span> : null;
+      return c?.[0] === "number" ? <span className="dbui-data dbui-num"><Figures text={formatNumber(c[1] as number, prop.numberFormat)} /></span> : null;
     }
     case "uniqueID": {
       const c = valueCase(row.values?.[prop.id]);

@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 41 (Nachtlauf 2026-11-18, TS-Stack, Abschnitt direkt unten; Pass 40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12, TS-Stack, Abschnitt direkt unten; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,27 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Nachtlauf 2026-11-18 (Pass 42, TS-Stack, Beta-Sprint, Lauf ab 11:12 tagsüber)
+
+Geplanter Nachtlauf, erst 11:12 gestartet; Hauptlauf hat ihn bis 16:00 begrenzt (Elija und weitere Sitzungen arbeiteten parallel auf main). Merges nach main (Hauptlauf, je auf dem Merge geprüft: run-ts --fast bzw. typecheck/lint/Design-Wächter/betroffene Tests + Smoke): 9d781fdc, 99db4af0, 02a4c98a, d8595446. Schicht A 11:25–14:00 und 14:25–15:21, Schicht B 11:25–13:00 (Doppelarbeit, nicht gemergt), 13:05–13:40 (ohne Commit), 13:45–14:17, 14:25–15:20. Rot nur unter Last (sync large-load, server sync-efficiency, brain recall, quickfind-perf) – einzeln grün; BSD-559/572 sichern die bekannten davon ab.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-548 CI: WebKit-Shards hängen | 🟡 | Mac-Test: Vorlage ci/github-actions-ci.yml + ci/playwright-install.sh nach .github übernehmen, nächsten main-Lauf ohne Push durchlaufen lassen |
+| BSD-549 Dependabot-Warnung | ✅ | glib 0.18.5 nur unter Linux, nicht in der Mac-App; ci/deps-audit.mjs für den RC |
+| BSD-557 Download-Link: Range umgeht die Grenze | ✅ | Fortsetzen nur bis 6 h nach gezähltem Download; wirkt nach Deploy der Website |
+| BSD-558 Wiederherstellen kann Dateien löschen | ✅ | aus der Prüfung (Go/No-Go Datensicherheit); Test vorher rot |
+| BSD-559 / BSD-572 wackelige Zeitmessungen | ✅ | CPU-Zeit mit Budget, eigene Testlimits |
+| BSD-568 Rot auf main seit #34 | ✅ | durch ff770203 überholt |
+| BSD-573 Update-Fallback zeigt auf beta-latest | ✅ | nennt Einladungslink; nativer Dialog nicht gesehen |
+| BSD-571 Font „Based“: Lücke in Datenbank-Ansichten | ✅ | Rest von BSD-562; Zahlen fluchten weiter |
+| BSD-583 Beta-Daten überstehen Formatwechsel | 🟡 | Mac-Test; Lücke diffProperties (unbekannte Felder) behoben; SyncClient stoppt bei Protokoll > 3 |
+| BSD-581 Claude Code/Desktop verbinden | 🟡 | Mac-Test; Einstellungen → Connect AI apps, `based mcp` (stdio-Proxy), Server-Tokens widerrufbar |
+| BSD-550/551/552 Einstieg | 🟡 | von Elijas Sitzung auf main (e5e5d43f); Schicht-B-Fassung verworfen |
+| BSD-565/566 Hybrid-Import Teil-ZIPs, Canvas-Import | ❌ | Blockiert: warten auf PR 35 (gleiche Dateien) |
+| BSD-564, 567, 578, 579 | ❌ | Blockiert mit je einer Frage an Elija |
+| BSD-580 Agent Brain: Modell über lokalen Server | ❌ | Bereit, aus Zeitgründen nicht begonnen (AI-nah, zuletzt) |
 
 ## Nachtlauf 2026-11-18 (Pass 41, TS-Stack, Beta-Sprint)
 

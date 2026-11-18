@@ -150,6 +150,8 @@ const pageRecords = (page: Page, pageID: string) => page.evaluate(async (pid) =>
 // Notion-Import-Rundreise: eine importierte Seite (Spalten, Bild mit Caption, PDF, Datenbank, Unterseite, Callout …) im
 // Block-Editor öffnen, Schreibmarke setzen, wechseln, neu laden – die Records bleiben genau so, wie der Import sie schrieb.
 test("Notion-Import: Öffnen und Klicken im Block-Editor ändert keine Records", async ({ page }) => {
+  // BSD-559: Import, zwei Wartezeiten und Neuladen – allein ~13 s, in WebKit unter Last über 30 s (Standard-Limit)
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 820 });
   await page.goto("/");
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");

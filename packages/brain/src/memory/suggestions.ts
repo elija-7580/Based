@@ -6,11 +6,19 @@
 export const MEMORY_KINDS = ["Profile", "Preference", "Work", "People", "Notes"] as const;
 export type MemoryKind = (typeof MEMORY_KINDS)[number];
 
+/** BSD-541: „To review“ = von einem Agenten gemerkt, aber heikel – zählt erst, wenn der Nutzer es freigibt. */
+export const MEMORY_STATUSES = ["Active", "To review", "Superseded"] as const;
+export type MemoryStatus = (typeof MEMORY_STATUSES)[number];
+
 export interface MemoryRecord {
   id: string;
   title: string;
   kind: MemoryKind;
   body: string;
+  /** Fehlt die Spalte „Status“ (ältere Workspaces), gilt „Active“. */
+  status?: MemoryStatus;
+  /** Seiten, um die es geht (Zeile „About:“ im Rumpf). */
+  about?: string[];
 }
 
 export interface MemorySuggestion {

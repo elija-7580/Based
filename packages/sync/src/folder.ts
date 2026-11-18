@@ -88,6 +88,33 @@ export interface FolderRoundResult {
   waiting: number;
   /** Dateien, die nicht ins Muster passen (Konflikt-Kopien, Platzhalter). */
   ignored: string[];
+  /**
+   * Geräte, deren nächstes Segment aus einer neueren Version von Based stammt (höhere Formatnummer oder eine
+   * Record-Art, die diese Version nicht kennt). Es wartet wie ein unvollständiges – nichts wird übersprungen oder
+   * verworfen –, aber Warten hilft hier nicht: dieses Gerät braucht ein Update.
+   */
+  newer: string[];
+}
+
+export const FOLDER_FORMAT_VERSION = 1;
+
+/** Stammt die Datei aus einer neueren Version? (Kopfzeile mit höherer Nummer, oder eine unbekannte Record-Art.) */
+export function isNewerSegment(bytes: Uint8Array): boolean {
+  let text: string;
+  try { text = dec.decode(bytes); } catch { return false; }
+  const lines = text.split("\n");
+  try {
+    const head = JSON.parse(lines[0] ?? "") as { format?: unknown; v?: unknown };
+    if (head.format !== "based-folder-sync") return false;
+    if (typeof head.v === "number" && head.v > FOLDER_FORMAT_VERSION) return true;
+    for (const line of lines.slice(1)) {
+      if (!line) continue;
+      const v = JSON.parse(line) as { op?: unknown; record?: { kind?: unknown }; key?: unknown };
+      const kind = v.op === "put" ? v.record?.kind : v.op === "del" && typeof v.key === "string" ? v.key.split(":")[0] : undefined;
+      if (typeof kind === "string" && !KINDS.has(kind as RecordKind)) return true;
+    }
+  } catch { return false; }
+  return false;
 }
 
 const SEGMENT = /^(\d{12})\.jsonl$/;
@@ -134,7 +161,7 @@ export function parseSegment(bytes: Uint8Array, device: string, seq: number): Pa
   let head: { format?: unknown; v?: unknown; device?: unknown; seq?: unknown; count?: unknown };
   let end: { end?: unknown; count?: unknown };
   try { head = JSON.parse(lines[0]!) as typeof head; end = JSON.parse(lines[lines.length - 1]!) as typeof end; } catch { return undefined; }
-  if (head.format !== "based-folder-sync" || head.v !== 1 || head.device !== device || head.seq !== seq) return undefined;
+  if (head.format !== "based-folder-sync" || head.v !== FOLDER_FORMAT_VERSION || head.device !== device || head.seq !== seq) return undefined;
   const body = lines.slice(1, -1);
   if (end.end !== true || end.count !== body.length || head.count !== body.length) return undefined;
   const out: Parsed = { puts: [], dels: [], stamps: new Map() };
@@ -271,8 +298,15 @@ export class FolderSync {
 
   /** Segmente der anderen Geräte lesen und einmischen. */
   async pull(): Promise<Omit<FolderRoundResult, "pushed">> {
-    const result = { received: 0, waiting: 0, ignored: [] as string[] };
+    const result = { received: 0, waiting: 0, ignored: [] as string[], newer: [] as string[] };
     if (!this.enabled) return result;
+    const stuck = (device: string, bytes: Uint8Array | undefined, name: string) => {
+      result.waiting++;
+      if (bytes && isNewerSegment(bytes)) {
+        if (!result.newer.includes(device)) result.newer.push(device);
+        this.o.log?.(`folder sync: ${device}/${name} was written by a newer version of Based – waiting for an update on this device`);
+      } else this.o.log?.(`folder sync: ${device}/${name} is not complete yet`);
+    };
     const devices = (await this.o.target.list("devices").catch(() => [])).filter((d) => d !== this.o.device);
     for (const device of devices) {
       if (!DEVICE.test(device)) { result.ignored.push(`devices/${device}`); continue; }
@@ -293,7 +327,7 @@ export class FolderSync {
       if (upTo > seen && !seqs.includes(seen + 1)) {
         const bytes = await this.o.target.read(`devices/${device}/${snapshotName(upTo)}`).catch(() => undefined);
         const parsed = bytes ? parseSegment(bytes, device, upTo) : undefined;
-        if (!parsed) { result.waiting++; this.o.log?.(`folder sync: ${device}/${snapshotName(upTo)} is not complete yet`); continue; }
+        if (!parsed) { stuck(device, bytes, snapshotName(upTo)); continue; }
         this.applyFromFolder(parsed);
         result.received += parsed.puts.length + parsed.dels.length;
         seen = upTo;
@@ -304,7 +338,7 @@ export class FolderSync {
         if (seq !== seen + 1) { result.waiting++; break; } // Lücke: früheres Segment noch nicht da
         const bytes = await this.o.target.read(`devices/${device}/${segmentName(seq)}`).catch(() => undefined);
         const parsed = bytes ? parseSegment(bytes, device, seq) : undefined;
-        if (!parsed) { result.waiting++; this.o.log?.(`folder sync: ${device}/${segmentName(seq)} is not complete yet`); break; }
+        if (!parsed) { stuck(device, bytes, segmentName(seq)); break; }
         this.applyFromFolder(parsed);
         result.received += parsed.puts.length + parsed.dels.length;
         seen = seq;

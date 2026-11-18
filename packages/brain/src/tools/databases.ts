@@ -1,11 +1,12 @@
-// BSD-221: Datenbank-Werkzeuge für MCP (docs/mcp.md: list_databases, query_database, add_row, update_row) über den
-// Kern-Funktionen (QueryEngine, addRow, setValue, addOption). Werte als einfacher Text, Properties per Name.
+// BSD-221: Datenbank-Werkzeuge (docs/mcp.md: list_databases, query_database, add_row, update_row, Schema, Ansichten)
+// über den Kern-Funktionen (QueryEngine, addRow, setValue, addOption). Werte als einfacher Text, Properties per Name.
+// Jede Methode kann mehrere Kern-Transaktionen auslösen; das Werkzeug drumherum fasst sie zu einer (`store.atomic`).
 import {
   addOption, addProperty, addRow, addView, cellText, changePropertyType, createDatabase, deleteProperty, deleteView, ENUMS, isTrashed, parseCSVValue, values,
   plainText, QueryEngine, renameProperty, rowsOf, setDatabaseTitle, setRowTitle, setValue, updateView,
-  type Database, type DatabaseView, type PropertySchema, type PropertyValue, type WorkspaceStore,
+  type Database, type DatabaseView, type PropertySchema, type PropertyValue, type Value, type WorkspaceStore,
 } from "@based/core";
-import { PAGE_URI, ToolError } from "./pages.js";
+import { ToolError } from "./base.js";
 
 const TYPE_HINT: Record<string, string> = {
   select: "one option name", status: "one option name", multiSelect: "option names, comma-separated", checkbox: "Yes / No",
@@ -14,10 +15,32 @@ const TYPE_HINT: Record<string, string> = {
 };
 const WRITABLE = new Set(["text", "number", "select", "status", "multiSelect", "date", "checkbox", "url", "email", "phone", "title"]);
 
+const pad = (n: number) => String(n).padStart(2, "0");
+/** Swift-Datum (Sekunden seit 2001) als „YYYY-MM-DD“ bzw. „YYYY-MM-DD HH:mm“ – so, wie die Werkzeuge es auch annehmen. */
+function isoLocal(swift: number, time: boolean): string {
+  const d = new Date((swift + 978_307_200) * 1000);
+  const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return time ? `${day} ${pad(d.getHours())}:${pad(d.getMinutes())}` : day;
+}
+
+/**
+ * Ein Zellwert für Agenten: knapp und so, dass er sich wieder schreiben lässt (Daten als ISO, gesetzte Checkbox „yes“,
+ * nicht gesetzte leer – die stehen dann gar nicht in der Zeile).
+ */
+export function agentCell(store: WorkspaceStore, v: Value): string {
+  switch (v.t) {
+    case "bool": return v.v ? "yes" : "";
+    case "date": return isoLocal(v.v.start, v.v.includeTime) + (v.v.end !== undefined ? ` → ${isoLocal(v.v.end, v.v.includeTime)}` : "");
+    case "list": return v.v.map((x) => agentCell(store, x)).filter((t) => t.length > 0).join(", ");
+    default: return cellText(store, v).replace(/\n/g, " ");
+  }
+}
+
 export class Databases {
   constructor(readonly store: WorkspaceStore) {}
 
-  private db(id: string): Database {
+  /** Datenbank per ID oder per ID ihrer Seite bzw. ihres Blocks; nicht im Papierkorb. */
+  db(id: string): Database {
     const db = this.store.databases.get(id) ?? [...this.store.databases.values()].find((d) => d.blockID === id);
     if (!db) throw new ToolError(`No database with id ${id}. Use list_databases.`);
     const block = this.store.blocks.get(db.blockID);
@@ -51,8 +74,8 @@ export class Databases {
     const db = this.db(id);
     const engine = new QueryEngine(this.store);
     const props = db.properties;
-    let rows = rowsOf(this.store, db.id).filter((r) => r.props?.isTemplate !== true);
-    const cells = new Map(rows.map((r) => [r.id, props.map((p) => [p, cellText(this.store, engine.value(r, p, db))] as const)]));
+    let rows = rowsOf(this.store, db.id).filter((r) => r.trashedAt === undefined && r.props?.isTemplate !== true);
+    const cells = new Map(rows.map((r) => [r.id, props.map((p) => [p, agentCell(this.store, engine.value(r, p, db))] as const)]));
     const q = opts.search?.trim().toLowerCase();
     if (q) rows = rows.filter((r) => cells.get(r.id)!.some(([, t]) => t.toLowerCase().includes(q)));
     if (opts.sort) {
@@ -63,8 +86,8 @@ export class Databases {
     return rows.map((r) => {
       const all = cells.get(r.id)!;
       const title = all.find(([p]) => p.type === "title")?.[1] || "Untitled";
-      const rest = all.filter(([p, t]) => p.type !== "title" && t !== "").map(([p, t]) => `${p.name}: ${t}`).join("; ");
-      return `- [${title}](${PAGE_URI}${r.id})${rest ? ` — ${rest}` : ""}`;
+      const rest = all.filter(([p, t]) => p.type !== "title" && p.type !== "button" && t !== "").map(([p, t]) => `${p.name}: ${t}`).join("; ");
+      return `- ${title} (id: ${r.id})${rest ? ` — ${rest}` : ""}`;
     });
   }
 
@@ -100,21 +123,22 @@ export class Databases {
   }
 
   /** Neue Zeile; Werte per Property-Name als Text. Gibt die Zeilen-ID zurück. */
-  addRow(id: string, values: Record<string, string>): string {
+  addRow(id: string, values: Record<string, string>, givenTitle?: string): string {
     const db = this.db(id);
     this.precheck(db, values);
-    const title = Object.entries(values).find(([k]) => this.prop(db, k).type === "title")?.[1] ?? "";
+    const title = givenTitle ?? Object.entries(values).find(([k]) => this.prop(db, k).type === "title")?.[1] ?? "";
     const rowID = addRow(this.store, db.id, title ? { title } : {});
     if (!rowID) throw new ToolError("Couldn't add a row.");
     this.set(db, rowID, values);
     return rowID;
   }
 
-  updateRow(rowID: string, values: Record<string, string>): void {
+  updateRow(rowID: string, values: Record<string, string>, title?: string): void {
     const row = this.store.blocks.get(rowID);
     if (!row || !row.parent.startsWith("d:") || isTrashed(this.store, rowID)) throw new ToolError(`No database row with id ${rowID}.`);
     const db = this.db(row.parent.slice(2));
     this.precheck(db, values);
+    if (title !== undefined) setRowTitle(this.store, rowID, title);
     this.set(db, rowID, values);
   }
 

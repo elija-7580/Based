@@ -21,6 +21,7 @@ import { Backups, unreachableMessage } from "./backups.js";
 import { FolderSyncService } from "./folder-sync.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import { registerTranscribeRoutes, type WhisperConfig } from "./transcribe.js";
+import { BrainIndex, registerBrainRoutes, type BrainIndexOptions } from "./brain-index.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
 import { Scheduler } from "./scheduler.js";
@@ -69,6 +70,11 @@ export interface AppOptions extends SyncServiceOptions {
   agentEngine?: ((store: WorkspaceStore) => AgentRunnerOptions["engine"]) | undefined;
   /** BSD-231 Teil 3c: whisper.cpp für POST /local/transcribe (Meeting Notes); ohne: keine Route. */
   whisper?: WhisperConfig | undefined;
+  /**
+   * BSD-541: Suche nach Bedeutung für `recall` – Ordner der Modelldateien, Datei des Index; in Tests ein fertiger
+   * Embedder. Ohne Angaben gibt es die Routen, aber kein Modell (recall nutzt Wörter und Nachbarn).
+   */
+  brain?: Pick<BrainIndexOptions, "modelsDir" | "indexFile" | "embedder" | "runtime" | "fetch" | "threads" | "pauseMs"> | undefined;
 }
 
 export interface App {
@@ -77,6 +83,8 @@ export interface App {
   /** Nicht mehr referenzierte Dateien aufräumen (läuft mit der Tombstone-GC; für Tests einzeln aufrufbar). */
   collectAssets(nowMillis?: number): { removed: number; marked: number; partials: number };
   pages: Pages;
+  /** BSD-541: Vektor-Index für `recall` (läuft nur mit geladenem Modell). */
+  brain: BrainIndex;
   /** Freigaben, Links, Veröffentlichen (docs/sharing.md). */
   share: ShareService;
   /** BSD-243: fällige Zeitpläne → Run-Records, auch ohne offene App. */
@@ -270,6 +278,9 @@ export function createApp(opts: AppOptions): App {
   registerShareRoutes(router, { share, sync, assets, log, webURL: opts.webURL });
   if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
   if (opts.whisper) registerTranscribeRoutes(router, opts.whisper, log);
+  const brain = new BrainIndex({ store: sync.store, pages, log, ...(opts.brain ?? {}) });
+  registerBrainRoutes(router, brain);
+  void brain.start();
   if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs, opts.codingHost);
 
   // MARK: Backups (BSD-274)
@@ -346,7 +357,7 @@ export function createApp(opts: AppOptions): App {
       } catch {
         return json({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }, 400);
       }
-      const server = createMcpServer(pages);
+      const server = createMcpServer(pages, { assets });
       const transport = new StreamableHTTPServerTransport({ enableJsonResponse: true }) // ohne sessionIdGenerator: zustandslos;
       res.on("close", () => {
         void transport.close();
@@ -398,6 +409,7 @@ export function createApp(opts: AppOptions): App {
     assets,
     collectAssets,
     pages,
+    brain,
     share,
     scheduler,
     collab,
@@ -436,6 +448,7 @@ export function createApp(opts: AppOptions): App {
       sync.close(); // offene Long-Polls antworten sofort
       share.close();
       scheduler.stop();
+      brain.close();
       pages.dispose();
       await collab.close();
       await new Promise<void>((resolve) => {

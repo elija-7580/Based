@@ -1,7 +1,7 @@
 // BSD-159 / BSD-74: Werkzeuge gegen einen In-Memory-Store – lesen, schreiben, atomar (ein Undo-Schritt, alles oder
 // nichts), Formatierung bleibt beim Ersetzen.
 import { describe, expect, it } from "vitest";
-import { addOption, addProperty, createDatabase, createPage, keyOf, plainText, rowsOf, trashPages, type WorkspaceStore } from "@based/core";
+import { addOption, addProperty, createDatabase, createPage, keyOf, makeBlock, plainText, rowsOf, trashPages, type WorkspaceStore } from "@based/core";
 import { WorkspaceTools } from "../src/index.js";
 import { memoryStore } from "./helpers.js";
 
@@ -64,7 +64,7 @@ describe("WorkspaceTools – Seiten", () => {
     expect(ok("list_pages")).toBe(`- Lisbon trip (id: ${id})`);
     expect(ok("list_pages", { parent_id: id })).toBe(`- Day 1 (id: ${sub})`);
     expect(ok("search", { query: "sunscreen" })).toContain(`- Lisbon trip (id: ${id})`);
-    expect(ok("search", { query: "zzzz-nothing" })).toBe("No pages found.");
+    expect(ok("search", { query: "zzzz-nothing" })).toBe("No matches.");
   });
 
   it("jedes Schreib-Werkzeug ist genau ein Undo-Schritt", () => {
@@ -152,13 +152,13 @@ describe("WorkspaceTools – Seiten", () => {
     trashPages(store, [id]);
     const before = snapshot(store);
     const undoable = store.canUndo;
-    expect(call("append_markdown", { page_id: id, markdown: "y" })).toEqual({ text: `Page ${id} is in the Trash`, isError: true });
+    expect(call("append_markdown", { page_id: id, markdown: "y" })).toEqual({ text: `Page ${id} is in the Trash (restore_page brings it back)`, isError: true });
     expect(call("append_markdown", { page_id: "nope", markdown: "y" })).toEqual({ text: "No page with id nope", isError: true });
     expect(call("create_page", { title: "Child", parent_id: "nope" }).isError).toBe(true);
     expect(call("find_replace", { page_id: id }).isError).toBe(true);
     expect(call("update_page", { page_id: id }).isError).toBe(true);
     expect(call("launch_rocket", {})).toEqual({ text: "Unknown tool launch_rocket", isError: true });
-    expect(call("read_page", "not an object" as never).text).toBe("Missing argument page_id");
+    expect(call("read_page", "not an object" as never).text).toBe("Missing argument id.");
     expect(snapshot(store)).toBe(before);
     expect(store.canUndo).toBe(undoable);
     // lesen geht auch im Papierkorb, mit Hinweis
@@ -192,8 +192,17 @@ describe("WorkspaceTools – Seiten", () => {
   it("Schreib-Werkzeuge sind als solche markiert (für „Ask before edits“)", () => {
     const { tools } = setup();
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
-    expect(write).toEqual(["create_page", "draw_board", "append_markdown", "replace_page_content", "find_replace", "update_page", "add_row", "update_row"]);
-    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual(["search", "read_page", "list_pages", "read_board", "list_databases", "query_database"]);
+    expect(write).toEqual([
+      "create_page", "append_markdown", "replace_page_content", "find_replace", "update_page", "move_page", "duplicate_page", "trash_page", "restore_page", "set_favorite",
+      "update_workspace", "create_teamspace", "update_teamspace", "delete_teamspace", "edit_blocks", "draw_board", "add_row", "update_row", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
+      "ask_main_agent", "resolve_inbox", "create_project", "update_project_status", "undo_last",
+    ]);
+    expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual([
+      "based_guide", "search", "read_page", "list_pages", "list_trash", "backlinks", "get_workspace", "read_blocks", "read_board", "list_files", "list_databases", "database_schema", "query_database", "list_views",
+      "recall", "related", "about_me", "list_skills", "load_skill", "list_runs", "get_run", "inbox", "list_projects", "get_project",
+    ]);
+    // was etwas verwerfen kann, ist als solches markiert
+    expect(tools.specs.map((s) => s.name).filter((n) => tools.isDestructive(n))).toEqual(["replace_page_content", "trash_page", "delete_teamspace", "update_database", "delete_view"]);
     expect(tools.isWrite("unknown"), "Unbekanntes gilt als Schreiben").toBe(true);
     for (const s of tools.specs) expect(s.inputSchema).toMatchObject({ type: "object" });
   });
@@ -216,7 +225,7 @@ describe("WorkspaceTools – Datenbanken", () => {
   it("list_databases zeigt Schema und Optionen", () => {
     const { ok, db } = withDatabase();
     const text = ok("list_databases");
-    expect(text).toContain(`- Tasks (id: ${db}, 0 rows)`);
+    expect(text).toContain(`- Tasks (id: ${db}) — 0 rows — `);
     expect(text).toContain("Stage: select [Todo, Done]");
     expect(text).toContain("Points: number");
   });
@@ -250,14 +259,14 @@ describe("WorkspaceTools – Datenbanken", () => {
   it("ungültige Werte: Fehler mit Hinweis, es wird nichts geschrieben (auch keine halbe Zeile)", () => {
     const { store, call, db, ok, idIn } = withDatabase();
     const before = snapshot(store);
-    expect(call("add_row", { database_id: db, title: "X", properties: { Stage: "Maybe" } })).toEqual({ text: "Property “Stage” (select): can't read “Maybe”. Options: Todo, Done", isError: true });
-    expect(call("add_row", { database_id: db, title: "X", properties: { Nope: "1" } }).text).toContain("No property “Nope” in this database. Properties: ");
+    // eine Auswahl, die es noch nicht gibt, wird angelegt (wie beim Tippen in der Zelle) – ein Status nicht
+    expect(call("add_row", { database_id: db, title: "X", properties: { Nope: "1" } }).text).toContain("No property “Nope”. Properties: ");
     expect(call("add_row", { database_id: db, title: "X", properties: { Points: "many" } }).isError).toBe(true);
     expect(call("add_row", { database_id: "missing" }).isError).toBe(true);
     expect(snapshot(store)).toBe(before);
     const row = idIn(ok("add_row", { database_id: db, title: "Y", properties: { Points: "1" } }));
     const after = snapshot(store);
-    expect(call("update_row", { row_id: row, title: "Z", properties: { Points: "2", Stage: "Maybe" } }).isError).toBe(true);
+    expect(call("update_row", { row_id: row, title: "Z", properties: { Stage: "Later", Points: "many" } }).isError).toBe(true);
     expect(snapshot(store), "gültige Teile werden nicht vorab geschrieben").toBe(after);
     expect(call("update_row", { row_id: "nope", title: "Z" }).isError).toBe(true);
   });
@@ -267,6 +276,322 @@ describe("WorkspaceTools – Datenbanken", () => {
     for (let i = 0; i < 5; i++) ok("add_row", { database_id: db, title: "Row " + i });
     const text = ok("query_database", { database_id: db, limit: 2, offset: 1 });
     expect(text.split("\n").map((l) => l.replace(/ \(id: [^)]+\)/, ""))).toEqual(["- Row 1", "- Row 2", "… 2 more (offset: 3)"]);
+  });
+});
+
+// docs/agent-parity.md: eine Werkzeug-Schicht – was für alle Werkzeuge gilt, steht einmal in WorkspaceTools.
+describe("Agent-Parität: Regeln für alle Werkzeuge", () => {
+  it("Argumente werden vor dem Lauf geprüft; die Meldung sagt, was richtig wäre", () => {
+    const { store, call, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Doc" }));
+    const before = snapshot(store);
+    expect(call("append_markdown", { id, markdown: "x", colour: "red" }).text).toBe("Unknown argument colour. Arguments: id, markdown.");
+    expect(call("append_markdown", { id }).text).toBe("Missing argument markdown.");
+    expect(call("list_pages", { limit: "many" }).text).toBe("Argument limit must be a number.");
+    expect(call("list_pages", { limit: 0 }).text).toBe("Argument limit must be at least 1.");
+    expect(call("remember", { fact: "x", type: "Secret" }).text).toBe("Argument type must be one of: Profile, Preference, Work, People, Notes.");
+    expect(call("set_favorite", { id, favorite: "maybe" }).text).toBe("Argument favorite must be true or false.");
+    expect(snapshot(store)).toBe(before);
+    // Was Modelle gern falsch schreiben, wird angenommen: Zahl als Text, Wahrheitswert als Text, null = weggelassen
+    expect(call("list_pages", { limit: "5", parent: null }).isError).toBe(false);
+    expect(call("set_favorite", { id, favorite: "true" }).isError).toBe(false);
+    expect(store.workspace.favorites).toContain(id);
+  });
+
+  it("frühere Argumentnamen gehen weiter (page_id, parent_id, database_id, row_id, properties)", () => {
+    const { store, ok, idIn } = setup();
+    const a = idIn(ok("create_page", { title: "A" }));
+    const b = idIn(ok("create_page", { title: "B", parent_id: a }));
+    expect(store.blocks.get(b)?.parent).toBe("b:" + a);
+    expect(ok("read_page", { page_id: b })).toBe(ok("read_page", { id: b }));
+    expect(ok("list_pages", { parent_id: a })).toBe(ok("list_pages", { parent: a }));
+  });
+
+  it("ein Werkzeug, das intern mehrere Schritte macht, ist trotzdem EIN Undo-Schritt und ein Change", () => {
+    const { store, ok, idIn } = setup();
+    const made = ok("create_database", { title: "Tasks", properties: { Stage: "select", Points: "number", Due: "date" } });
+    const db = /Created database (\S+)/.exec(made)![1]!;
+    const changes: string[] = [];
+    const off = store.observe((c) => changes.push(c.name ?? ""));
+    // neue Auswahl-Option + Zeile + drei Werte: im Kern fünf Transaktionen
+    const row = idIn(ok("add_row", { id: db, values: { Name: "Ship", Stage: "Doing", Points: "3", Due: "2026-11-20" } }));
+    off();
+    expect(changes).toEqual(["Agent: add row"]);
+    expect(ok("query_database", { id: db })).toBe(`- Ship (id: ${row}) — Stage: Doing; Points: 3; Due: 2026-11-20`);
+    store.undo();
+    expect(rowsOf(store, db)).toEqual([]);
+    expect(store.databases.get(db)!.properties.find((p) => p.name === "Stage")!.options ?? [], "auch die neue Option ist wieder weg").toEqual([]);
+    // create_database selbst (Datenbank, Ansicht, drei Properties) war auch einer
+    store.undo();
+    expect(store.databases.has(db)).toBe(false);
+  });
+
+  it("alles oder nichts über mehrere Schritte: scheitert der dritte, sind die ersten beiden nicht geschrieben", () => {
+    const { store, ok, call } = setup();
+    const db = /Created database (\S+)/.exec(ok("create_database", { title: "T", properties: { Points: "number" } }))![1]!;
+    const before = snapshot(store);
+    const dbBefore = JSON.stringify(store.databases.get(db));
+    const r = call("add_row", { id: db, values: { Name: "X", Tag: "new" } });
+    expect(r.isError).toBe(true);
+    const u = call("update_database", { database_id: db, title: "Renamed", add_properties: { Stage: "select" }, delete_properties: ["Nope"] });
+    expect(u.isError).toBe(true);
+    expect(snapshot(store)).toBe(before);
+    expect(JSON.stringify(store.databases.get(db))).toBe(dbBefore);
+  });
+
+  it("wirft ein Werkzeug, nachdem Kern-Funktionen schon geschrieben haben, ist nichts davon im Store (auch kein Undo-Schritt)", () => {
+    const store = memoryStore();
+    const tools = new WorkspaceTools(store, {
+      extra: () => [{
+        group: "pages", write: true,
+        spec: { name: "half_done", description: "Writes two pages with core functions, then fails.", inputSchema: { type: "object", properties: {}, required: [], additionalProperties: false } },
+        run: () => {
+          createPage(store, { title: "One" });
+          createPage(store, { title: "Two" });
+          throw new Error("third step failed");
+        },
+      }],
+    });
+    const changes: number[] = [];
+    store.observe((c) => changes.push(c.keys.length));
+    expect(tools.callSync("half_done", {})).toEqual({ text: "Tool half_done failed: third step failed", isError: true });
+    expect(store.blocks.size).toBe(0);
+    expect(store.canUndo).toBe(false);
+    expect(changes, "kein Beobachter (Sync, Suche) hat den halben Stand gesehen").toEqual([]);
+  });
+
+  it("undo_last nimmt genau den letzten eigenen Aufruf zurück – auch wenn der Mensch danach weitergeschrieben hat", () => {
+    const { store, ok, call, idIn } = setup();
+    expect(call("undo_last").text).toBe("There is nothing of yours to undo here.");
+    const id = idIn(ok("create_page", { title: "Doc", markdown: "keep" }));
+    ok("append_markdown", { id, markdown: "agent line" });
+    const mine = createPage(store, { title: "Typed by the user" });
+    expect(ok("undo_last")).toBe("Undid append_markdown (1 record restored).");
+    expect(body(store, id).map((b) => plainText(b.text))).toEqual(["keep"]);
+    expect(store.blocks.has(mine), "die Seite des Nutzers bleibt").toBe(true);
+    // nur der letzte Aufruf, nicht der davor
+    expect(call("undo_last").isError).toBe(true);
+    expect(store.blocks.has(id)).toBe(true);
+    // hat der Mensch dieselbe Stelle inzwischen geändert, bleibt seine Fassung
+    ok("update_page", { id, title: "From the agent" });
+    store.transact("user", (tx) => tx.update(id, (x) => { x.text = "From the user"; }));
+    expect(call("undo_last")).toEqual({ text: "Your last change (update_page) was not undone: everything it touched has been edited since.", isError: true });
+    expect(plainText(store.blocks.get(id)!.text)).toBe("From the user");
+  });
+
+  it("undo_last gilt je Agent: keiner nimmt den Schritt eines anderen zurück", () => {
+    const store = memoryStore();
+    const tools = new WorkspaceTools(store);
+    const as = (name: string) => ({ kind: "agent" as const, name });
+    const a = /\(id: ([^)]+)\)/.exec(tools.callSync("create_page", { title: "By A" }, as("A")).text)![1]!;
+    expect(tools.callSync("undo_last", {}, as("B")).isError).toBe(true);
+    expect(store.blocks.has(a)).toBe(true);
+    expect(tools.callSync("undo_last", {}, as("A")).isError).toBe(false);
+    expect(store.blocks.has(a)).toBe(false);
+  });
+
+  it("Bereiche: ein Host bietet nur an, was er braucht; wartende Werkzeuge laufen über call()", async () => {
+    const store = memoryStore();
+    const few = new WorkspaceTools(store, { groups: ["pages"] });
+    expect(few.specs.map((s) => s.name)).not.toContain("query_database");
+    expect(few.callSync("query_database", { id: "x" })).toEqual({ text: "Unknown tool query_database", isError: true });
+    const all = new WorkspaceTools(store);
+    createPage(store, { title: "Zebra finch notes" });
+    expect(all.callSync("recall", { query: "zebra" }).text).toContain("call()");
+    const r = await all.call("recall", { query: "zebra finch" });
+    expect(r.isError, r.text).toBe(false);
+    expect(r.text).toContain("Zebra finch notes");
+    all.dispose();
+    few.dispose();
+  });
+
+  it("jedes Werkzeug hat Bereich, Beschreibung und ein geschlossenes Schema", () => {
+    const { tools } = setup();
+    expect(new Set(tools.all.map((d) => d.spec.name)).size).toBe(tools.all.length);
+    for (const d of tools.all) {
+      expect(d.spec.description.length, d.spec.name).toBeGreaterThan(20);
+      expect(d.spec.inputSchema, d.spec.name).toMatchObject({ type: "object", additionalProperties: false });
+      // jeder frühere Name zeigt auf ein Argument, das es gibt
+      const props = Object.keys((d.spec.inputSchema as { properties: object }).properties);
+      for (const now of Object.values(d.aliases ?? {})) expect(props, d.spec.name).toContain(now);
+    }
+  });
+});
+
+// Agent-Parität 4/7: was der Mensch im Seitenmenü, im Seitenkopf und in der Seitenleiste macht.
+describe("Shell für Agenten: Seitenoptionen, Icon und Cover, Bereiche, Reihenfolge", () => {
+  it("update_page: Titel, Phosphor-Icon, Cover, Schrift, Breite – ein Aufruf, ein Undo-Schritt", () => {
+    const { store, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Trip" }));
+    const before = snapshot(store);
+    ok("update_page", { id, title: "Lisbon", icon: "phosphor:airplane-tilt:blue", cover: "gradient:3", cover_height: 1.5, cover_position: 0.2, font: "serif", small_text: true, full_width: true });
+    expect(store.blocks.get(id)).toMatchObject({
+      text: "Lisbon",
+      props: { icon: "phosphor:airplane-tilt:blue", cover: { gradient: { _0: 3 } }, format: { font: "serif", smallText: true, fullWidth: true, coverHeight: 1.5, coverPosition: 0.2 } },
+    });
+    store.undo();
+    expect(snapshot(store)).toBe(before);
+    // einzeln: Farbe als Cover, Bild-Link als Icon, wieder entfernen
+    ok("update_page", { id, cover: "blue", icon: "https://example.com/logo.png" });
+    expect(store.blocks.get(id)!.props).toMatchObject({ cover: { color: { _0: "blue" } }, icon: { url: "https://example.com/logo.png" } });
+    ok("update_page", { id, cover: "none", icon: "", font: "default" });
+    expect(store.blocks.get(id)!.props).toBeUndefined();
+  });
+
+  it("update_page prüft erst alles: ein falscher Wert ändert nichts", () => {
+    const { store, ok, call, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Doc" }));
+    const before = snapshot(store);
+    expect(call("update_page", { id, title: "Changed", cover: "turquoise" }).text).toContain("cover takes gray, blue, pink, orange, default, gradient:0…11");
+    expect(call("update_page", { id, title: "Changed", icon: "rocket" }).text).toContain("icon takes an emoji");
+    expect(call("update_page", { id, icon: "phosphor:Not Valid" }).text).toContain("phosphor:<name>:<colour>");
+    expect(call("update_page", { id, cover: "based-asset:" + "0".repeat(64) }).text).toContain("Unknown file");
+    expect(call("update_page", { id, cover_height: 2 }).text).toBe("This page has no cover; set `cover` too.");
+    expect(call("update_page", { id, font: "comic" }).text).toBe("Argument font must be one of: default, serif, mono.");
+    expect(call("update_page", { id }).isError).toBe(true);
+    expect(snapshot(store)).toBe(before);
+  });
+
+  it("eine gesperrte Seite lehnt Inhalt ändern ab – auf jedem Weg; entsperren geht nur ausdrücklich", () => {
+    const { store, ok, call, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Contract", markdown: "Signed text" }));
+    ok("update_page", { id, locked: true });
+    const before = snapshot(store);
+    for (const [name, input] of [
+      ["append_markdown", { id, markdown: "more" }], ["replace_page_content", { id, markdown: "new" }], ["find_replace", { id, find: "Signed", replace: "Draft" }], ["edit_blocks", { id, script: "text: more" }],
+    ] as const) {
+      const r = call(name, input);
+      expect(r.isError, name).toBe(true);
+      expect(r.text, name).toContain("“Contract” is locked");
+    }
+    expect(snapshot(store)).toBe(before);
+    // lesen geht, Titel und Optionen auch
+    expect(call("read_blocks", { id }).isError).toBe(false);
+    ok("update_page", { id, locked: false });
+    expect(call("append_markdown", { id, markdown: "more" }).isError).toBe(false);
+  });
+
+  it("Teamspaces und Workspace: anlegen, umbenennen, Seiten hinein, löschen (Seiten wandern nach Private)", () => {
+    const { store, ok, call, idIn } = setup();
+    const a = idIn(ok("create_page", { title: "Private note" }));
+    const made = ok("create_teamspace", { name: "Company", icon: "🏢" });
+    const ts = /teamspace id: ([^)]+)\)/.exec(made)![1]!;
+    expect(call("create_teamspace", { name: "company" }).text).toContain("already exists");
+    const wiki = idIn(ok("create_page", { title: "Wiki", section: "Company" }));
+    expect(store.blocks.get(wiki)?.props?.teamspace).toBe(ts);
+    ok("move_page", { id: a, section: ts });
+    expect(ok("list_pages")).toBe(`- Wiki (id: ${wiki}) · in Company\n- Private note (id: ${a}) · in Company`);
+    expect(ok("list_pages", { section: "private" })).toBe("(none)");
+    ok("update_teamspace", { teamspace: "Company", name: "Acme" });
+    ok("update_workspace", { name: "Elija's notes", icon: "📓" });
+    expect(ok("get_workspace").split("\n").slice(0, 4)).toEqual(["Workspace “Elija's notes” 📓", "Sections:", "- Private — 0 pages", `- Acme 🏢 (teamspace id: ${ts}) — 2 pages`]);
+    expect(call("move_page", { id: a, section: "Nope" }).text).toBe("No teamspace “Nope”. Sections: private, Acme.");
+    expect(ok("delete_teamspace", { teamspace: "Acme" })).toBe("Deleted teamspace “Acme”; 2 pages moved to Private.");
+    expect(store.blocks.get(wiki)?.props?.teamspace).toBeUndefined();
+    expect(store.blocks.has(wiki)).toBe(true);
+    store.undo();
+    expect(store.blocks.get(wiki)?.props?.teamspace, "ein Undo holt den Teamspace mit seinen Seiten zurück").toBe(ts);
+  });
+
+  it("move_page: mehrere Seiten in einem Schritt, an eine genaue Stelle; create_page hinter eine Seite", () => {
+    const { store, ok, call, idIn } = setup();
+    const [a, b, c, d] = ["A", "B", "C", "D"].map((t) => idIn(ok("create_page", { title: t }))) as [string, string, string, string];
+    const order = (parent = "w") => store.children(parent).map((id) => plainText(store.blocks.get(id)!.text));
+    ok("move_page", { ids: [d, c], before: a });
+    expect(order()).toEqual(["D", "C", "A", "B"]);
+    expect(ok("move_page", { ids: [a, b], parent_id: d })).toBe("Moved 2 pages under “D”.");
+    expect(order("b:" + d)).toEqual(["A", "B"]);
+    ok("move_page", { id: b, before: a });
+    expect(order("b:" + d)).toEqual(["B", "A"]);
+    store.undo();
+    store.undo();
+    expect(order(), "jeder Aufruf war genau ein Schritt").toEqual(["D", "C", "A", "B"]);
+    const e = idIn(ok("create_page", { title: "E", after: d }));
+    expect(order()).toEqual(["D", "E", "C", "A", "B"]);
+    expect(store.blocks.get(e)?.parent).toBe("w");
+    expect(call("move_page", { id: d, after: d }).isError).toBe(true);
+    expect(call("move_page", { id: d, parent_id: a, section: "private" }).text).toBe("Give parent_id or section, not both.");
+    expect(call("move_page", {}).text).toBe("Give `id` or `ids`.");
+  });
+
+  it("create_page aus einer Startvorlage", () => {
+    const { store, ok, call } = setup();
+    const out = ok("create_page", { template: "tasks" });
+    expect(out).toMatch(/^Created “.+” from the template tasks \(id: /);
+    expect(store.databases.size).toBeGreaterThan(0);
+    expect(call("create_page", { template: "tasks", title: "x" }).text).toContain("A template comes as it is");
+    expect(call("create_page", { template: "recipes" }).text).toBe("Argument template must be one of: tasks, notes, journal, wiki.");
+  });
+});
+
+// Agent-Parität 2/7: einzelne Blöcke lesen und ändern (die Logik ist im Kern getestet: core/test/editor-agent.test.ts).
+describe("Seiten-Editor für Agenten: read_blocks, edit_blocks", () => {
+  const handleOf = (outline: string, needle: string) => outline.split("\n").find((l) => l.includes(needle))!.trim().split(" ")[0]!;
+
+  it("lesen mit Kennungen, an einer Stelle einfügen, nebeneinander stellen, färben – ein Aufruf, ein Undo-Schritt", () => {
+    const { store, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Trip", markdown: "Intro\n\n![map](https://example.com/map.png)\n\n- pack\n- book\n\nThird paragraph" }));
+    const outline = ok("read_blocks", { id });
+    expect(outline.split("\n").map((l) => l.replace(/^[0-9a-f]+ /, ""))).toEqual(['text "Intro"', 'image https://example.com/map.png {caption="map"}', 'bullet "pack"', 'bullet "book"', 'text "Third paragraph"']);
+    const h = (needle: string) => handleOf(outline, needle);
+    const before = snapshot(store);
+    const out = ok("edit_blocks", { id, script: `h2 s: Checklist {before=${h("pack")}}\nmove ${h("Third")} {right=${h("image")}}\nset ${h("pack")} {type=todo checked}\ncallout c: **Leave at 7** {bg=yellow icon=⏰ after=${h("book")}}` });
+    expect(out.split("\n")[0]).toBe("Edited “Trip”: 2 added, 1 changed, 1 moved, 0 removed.");
+    expect(out.split("\n")[1]).toMatch(/^Handles: s=[0-9a-f]{4,} c=[0-9a-f]{4,}$/);
+    expect(ok("read_blocks", { id }).split("\n").map((l) => l.replace(/^(\s*)[0-9a-f]+ /, "$1"))).toEqual([
+      'text "Intro"', "cols 2", "  col", '    image https://example.com/map.png {caption="map"}', "  col", '    text "Third paragraph"',
+      'h2 "Checklist"', 'todo [x] "pack"', 'bullet "book"', 'callout "**Leave at 7**" {bg=yellow icon=⏰}',
+    ]);
+    // read_page zeigt dasselbe als Markdown
+    expect(ok("read_page", { id })).toContain("- [x] pack");
+    store.undo();
+    expect(snapshot(store), "alle vier Zeilen sind ein Undo-Schritt").toBe(before);
+  });
+
+  it("falsche Zeilen stehen in der Antwort; ändert keine Zeile etwas, ist es ein Fehler", () => {
+    const { store, ok, call, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Doc", markdown: "one" }));
+    const mixed = ok("edit_blocks", { id, script: "text: two\ndel zzzz" });
+    expect(mixed).toBe("Edited “Doc”: 1 added, 0 changed, 0 moved, 0 removed.\nSkipped:\n- line 2: del zzzz — no block zzzz on this page (read_blocks shows the handles)");
+    const before = snapshot(store);
+    const none = call("edit_blocks", { id, script: "del zzzz\nsticker: x" });
+    expect(none.isError).toBe(true);
+    expect(none.text).toMatch(/^Nothing was changed\.\n- line 1: del zzzz — no block zzzz/);
+    expect(snapshot(store)).toBe(before);
+  });
+
+  it("neue Unterseite und Datenbank: die Antwort nennt ihre IDs für den nächsten Aufruf", () => {
+    const { store, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Project" }));
+    const out = ok("edit_blocks", { id, script: "page p: Notes\ndatabase d: Tasks {view=board}" });
+    const pageID = /p=\S+ \(page id: ([^)]+)\)/.exec(out)![1]!;
+    const dbID = /d=\S+ \(database id: ([^)]+)\)/.exec(out)![1]!;
+    expect(store.blocks.get(pageID)).toMatchObject({ type: "page", parent: "b:" + id });
+    expect(ok("add_row", { id: dbID, title: "First task" })).toContain("to “Tasks”");
+    expect(ok("append_markdown", { id: pageID, markdown: "hello" })).toContain("“Notes”");
+  });
+
+  it("Dateien aus dem Workspace in eine Seite legen; undo_last nimmt den Aufruf zurück", () => {
+    const store = memoryStore();
+    const hash = "d".repeat(64);
+    const tools = new WorkspaceTools(store, { fileInfo: (ref) => (ref.endsWith(hash) ? { name: "beach.jpg", mime: "image/jpeg", width: 1200, height: 800, size: 2048 } : undefined) });
+    const run = (name: string, input: Record<string, unknown>) => { const r = tools.callSync(name, input as never); expect(r.isError, r.text).toBe(false); return r.text; };
+    const id = /\(id: ([^)]+)\)/.exec(run("create_page", { title: "Album", markdown: "Summer" }))![1]!;
+    run("edit_blocks", { id, script: `file: based-asset:${hash} {width=480 caption="Day one"}` });
+    expect(run("read_blocks", { id })).toMatch(new RegExp(`image "beach.jpg" based-asset:${hash} \\{width=480 caption="Day one"\\}$`));
+    expect(run("undo_last", {})).toContain("Undid edit_blocks");
+    expect(run("read_blocks", { id }).split("\n")).toHaveLength(1);
+  });
+
+  it("ein Whiteboard hat seine eigenen Werkzeuge; Papierkorb und unbekannte Seite sind Fehler", () => {
+    const { store, ok, call, idIn } = setup();
+    const board = idIn(ok("draw_board", { script: "note a: x" }));
+    expect(call("read_blocks", { id: board }).text).toBe("That page is a whiteboard. Use read_board and draw_board.");
+    expect(call("edit_blocks", { id: board, script: "text: x" }).isError).toBe(true);
+    const id = idIn(ok("create_page", { title: "Gone" }));
+    trashPages(store, [id]);
+    expect(call("edit_blocks", { id, script: "text: x" }).text).toContain("is in the Trash");
+    expect(call("read_blocks", { id: "nope" }).text).toBe("No page with id nope");
   });
 });
 
@@ -295,8 +620,28 @@ describe("Whiteboard für Agenten", () => {
     expect(second).toContain("0 added, 1 changed, 2 removed");
     expect(second).toContain("no such page");
     expect(second).toContain("not understood");
-    expect(ok("read_board", { page_id: board })).toBe(`${a} note "renamed" @0,0`);
+    expect(ok("read_board", { page_id: board })).toBe(`${a} note "renamed" @0,0 168x150 {agent}`);
     expect(store.children("b:" + board)).toHaveLength(1);
+  });
+  it("Elija 18.11.: Dateien aus dem Workspace wählen und aufs Board legen; Farben, Zeichnen, Hintergrund", () => {
+    const store = memoryStore();
+    const hash = "d".repeat(64);
+    const page = createPage(store, { title: "Trip" });
+    store.transact("img", (tx) => tx.put({ kind: "block", data: makeBlock({ id: "img-1", type: "image", parent: "b:" + page, sk: "a0", props: { asset: { id: hash, name: "beach.jpg" } } }, store.now()) }));
+    // Der Host kennt die Bytes: Maße kommen dazu.
+    const tools = new WorkspaceTools(store, { fileInfo: (ref) => (ref.endsWith(hash) ? { mime: "image/jpeg", width: 1200, height: 800, size: 2048 } : undefined) });
+    const run = (name: string, input: Record<string, unknown>) => { const r = tools.callSync(name, input as never); expect(r.isError, r.text).toBe(false); return r.text; };
+    expect(run("list_files", {})).toBe(`based-asset:${hash} "beach.jpg" 1200x800 2 KB`);
+    expect(run("list_files", { query: "nope" })).toContain("No file matches");
+    const out = run("draw_board", { script: `image i: based-asset:${hash} {at=0,0}\nnote n: Look! {color=green}\nink s: M0 0 C 20 -20 40 20 60 0 {color=red at=0,300}\nbackground lines` });
+    expect(out).toContain("background lines");
+    const board = /\(id: ([^)]+)\)/.exec(out)![1]!;
+    const read = run("read_board", { page_id: board });
+    expect(read).toContain('image "beach.jpg"');
+    expect(read).toContain("@0,0 480x320");
+    expect(read).toMatch(/note "Look!" .*\{color=green agent\}/);
+    expect(read).toMatch(/ink @-?\d+,29\d \d+x\d+ \{color=red agent\}/);
+    expect(read.split("\n")[0]).toBe("background lines");
   });
   it("auf einer gewöhnlichen Seite lehnen beide ab", () => {
     const { store, call } = setup();

@@ -256,7 +256,9 @@ export function mainArgument(input: JSONValue | Record<string, unknown>): string
 export function targetPage(input: JSONValue | Record<string, unknown>): string | undefined {
   if (input === null || typeof input !== "object" || Array.isArray(input)) return undefined;
   const o = input as Record<string, unknown>;
-  for (const k of ["page_id", "row_id", "parent_id", "block_id"]) if (typeof o[k] === "string" && o[k] !== "") return o[k];
+  // `id`/`parent`: die Namen der einen Werkzeug-Schicht (docs/agent-parity.md); die älteren gehen weiter. Auch die ID
+  // einer Datenbank oder Ansicht zählt – `pagePathCandidates` findet die Seite, auf der sie liegt.
+  for (const k of ["page_id", "row_id", "parent_id", "block_id", "id", "parent", "database_id", "view_id", "board"]) if (typeof o[k] === "string" && o[k] !== "") return o[k];
   return undefined;
 }
 
@@ -265,7 +267,9 @@ export function targetPage(input: JSONValue | Record<string, unknown>): string |
  * Bereich davor („Private/…“ oder der Teamspace-Name). Für einen Block die Seite, die ihn enthält. `[]` = unbekannt.
  */
 export function pagePathCandidates(store: WorkspaceStore, id: string): string[] {
-  let page = store.blocks.get(id);
+  // Datenbank oder Ansicht → der Block, an dem die Datenbank hängt
+  const dbBlock = store.databases.get(id)?.blockID ?? store.views.get(id)?.blockID;
+  let page = store.blocks.get(dbBlock ?? id);
   while (page && !isPageLike(page) && page.parent.startsWith("b:")) page = store.blocks.get(page.parent.slice(2));
   if (!page) return [];
   const chain = [...pageAncestors(store, page.id), page.id];

@@ -10,7 +10,7 @@ import {
   insertPage, isPageLike, keyOf, makeBlock, makeRecordID, MarkdownImporter, sortKeys, stampToString,
   type Block, type RecordKeyString, type Tx, type WireRecord, type WorkspaceStore,
 } from "@based/core";
-import { putMarkdownBlocks } from "../tools.js";
+import { putMarkdownBlocks } from "../tools/base.js";
 import { fromMs, INBOX_PAGE_ID, PROJECT_TYPE, putRecord, RUN_TYPE, SCHEDULE_TYPE, getRecord, updateRecord, MAIN_AGENT_ID, type ProjectData, type RunData, type ScheduleData } from "./records.js";
 import type { PlannedAction, ValidPlan } from "./plan.js";
 import { nextFire, parseSchedule } from "./schedule.js";

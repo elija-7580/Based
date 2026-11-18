@@ -32,6 +32,8 @@ export interface MeetingTestHooks {
 /** BSD-281: dazu die Seite der laufenden Aufnahme (Pille oben in der Seitenleiste). */
 export interface WebMeetingHost extends MeetingHost {
   recordingPage(): string | undefined;
+  /** Feedback 18. 11. (Meeting erkannt → „Start transcribing“): Aufnahme im ersten Meeting-Block der Seite starten. */
+  startOnPage(pageID: string): Promise<boolean>;
 }
 
 export function createMeetingHost(client: StoreClient): WebMeetingHost {
@@ -217,6 +219,20 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
       lastStore = target;
       await recorder.start(target, meetingID, opts);
       if (!recorder.getState().recording) release();
+    },
+    async startOnPage(pageID) {
+      if (recorder.getState().recording) return false;
+      let r: PageReplica | undefined;
+      try {
+        r = await client.openPage(pageID);
+        const store = r.store;
+        const meetingID = store.descendants(pageID).find((id) => store.blocks.get(id)?.type === "meeting");
+        if (!meetingID) return false;
+        await this.start(store, meetingID, { systemAudio: false });
+        return recorder.getState().recording;
+      } finally {
+        r?.close();
+      }
     },
     pause: () => recorder.pause(),
     resume: () => recorder.resume(),

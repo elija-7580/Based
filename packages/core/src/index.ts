@@ -147,7 +147,7 @@ export { wikilinkBefore } from "./editor/wikilink.js";
 export type { EmojiEntry } from "./editor/emoji.js";
 export { ICON_COLORS, iconAsText, parsePhosphorIcon, phosphorIcon } from "./editor/icon-ref.js";
 export type { IconColor, PhosphorIconRef } from "./editor/icon-ref.js";
-export { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
+export { COVER_COLOR_IDS, COVER_GRADIENT_COUNT, COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
 export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";
 export { CODE_LANGUAGES, CODE_VIEWS, codeLanguageID, codePreviewKind, codeView, syntaxTokens, type CodeView } from "./editor/syntax.js";
@@ -204,7 +204,12 @@ export {
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
 export { boardFileView, fileExtension, PREVIEW_BYTES, PREVIEW_LINES, textPreview, type BoardFileView, type PreviewLine, type TextPreview } from "./whiteboard/files.js";
-export { BOARD_SCRIPT_MAX, boardHandles, boardOutline, planBoardScript, type BoardPlan } from "./whiteboard/agent.js";
+export { BOARD_FILL_COLORS, BOARD_HIGHLIGHT_COLORS, BOARD_HIGHLIGHT_WIDTHS, BOARD_PEN_WIDTHS, BOARD_STROKE_COLORS, BOARD_WIDTH_NAMES, type BoardFillColor, type BoardHighlightColor, type BoardStrokeColor } from "./whiteboard/style.js";
+export { PATH_POINTS_MAX, PathError, pathToStrokes, type PathPoint } from "./whiteboard/path.js";
+export { boardFileParts, FILE_CARD_SIZE, IMAGE_MAX_SIDE, IMAGE_UNKNOWN_SIZE, PDF_PAGE_WIDTH, PREVIEW_SIZES, sniffImageSize, sniffMime, sniffPdfPages, type BoardFileInfo, type BoardFilePart } from "./whiteboard/placefile.js";
+export { continueList, hasMarkdown, markdownPlain, parseInline, parseMarkdown, toggleTask, type MdBlock, type MdRun } from "./whiteboard/markdown.js";
+export { fileRefOf, workspaceFiles, type WorkspaceFile } from "./whiteboard/workspace-files.js";
+export { BOARD_SCRIPT_HELP, BOARD_SCRIPT_MAX, boardHandles, boardOutline, inkPointsOfObject, OUTLINE_INK_MAX, planBoardScript, type BoardPlan, type BoardScriptOptions } from "./whiteboard/agent.js";
 // BSD-265 (Whiteboard 3): Tinte – ausdünnen, Treffer, Lasso
 export { distanceToInk, inkBounds, inkObjectGeometry, inkPointsOf, pointInPolygon, recognizeShape, shareInside, simplifyInk } from "./whiteboard/stroke.js";
 // BSD-264 (Whiteboard 2): Kamera, Geometrie, Raumindex und Board-Objekte als Records
@@ -236,6 +241,7 @@ export {
   type BlockDoc, type BlockNode, type ReplayIDs,
 } from "./editor/recording.js";
 // BSD-382 (ADR 0016, E1): Befehle des neuen Block-Editors (Namensraum, damit nichts mit Seiten-/Store-Funktionen kollidiert).
+export { BLOCK_COLOR_NAMES, BLOCK_SCRIPT_HELP, BLOCK_SCRIPT_MAX, blockHandles, blockOutline, putMarkdownBlocks, runBlockScript, shortHandles, type BlockOutlineOptions, type BlockScriptOptions, type BlockScriptResult } from "./editor/agent.js";
 export * as blockCommands from "./editor/commands/index.js";
 export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
 export { createFuzzyIndex, normalizeSearch, type FuzzyFields, type FuzzyIndex } from "./fuzzy.js";

@@ -105,6 +105,18 @@ export const MIGRATIONS: readonly Migration[] = [
   },
 ];
 
+/**
+ * Fehler beim Öffnen, bei denen die App NICHT auf einen leeren Workspace im Speicher ausweichen darf: die Datei ist
+ * da und heil, nur diese Version kann sie nicht lesen (neueres Format) oder nicht umstellen. Gibt den Satz für den
+ * Nutzer zurück, sonst `undefined` (dann ist ein Ausweichen vertretbar, z. B. wenn der Browser keinen Speicher gibt).
+ */
+export function openBlockedMessage(e: unknown): string | undefined {
+  if (!(e instanceof PersistenceError)) return undefined;
+  if (e.code === "newerFormat") return "This workspace was saved by a newer version of Based. Update Based to open it. Your data is safe and unchanged.";
+  if (e.code === "migration") return `Based couldn't update this workspace to the current format, so it left the file unchanged (${e.message}). Your data is safe. Please report this problem.`;
+  return undefined;
+}
+
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]!.version;
 
 /**

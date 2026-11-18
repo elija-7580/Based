@@ -184,6 +184,8 @@ export interface UndoOutcome {
 
 type Snapshot = WireRecord | undefined;
 interface UndoEntry {
+  /** Laufende Nummer des Schritts (für `undoStep`). */
+  seq: number;
   name: string;
   before: Map<RecordKeyString, Snapshot>;
   after: Map<RecordKeyString, Snapshot>;
@@ -208,6 +210,22 @@ export class Tx {
   lww = false;
 
   constructor(private readonly store: WorkspaceStore) {}
+
+  /**
+   * Eine innere Transaktion (siehe `WorkspaceStore.atomic`) in diese aufnehmen: Der Stand „vorher“ bleibt der dieser
+   * Transaktion, wo sie den Record schon angefasst hat – sonst der der inneren.
+   */
+  absorb(child: Tx) {
+    for (const key of child.order) {
+      if (!this.before.has(key)) {
+        this.before.set(key, child.before.get(key));
+        this.order.push(key);
+      }
+    }
+    for (const [k, s] of child.tombstoneStamps) this.tombstoneStamps.set(k, s);
+    for (const k of child.forced) this.forced.add(k);
+    if (child.preserveTimestamps) this.preserveTimestamps = true;
+  }
 
   private touch(key: RecordKeyString) {
     if (!this.before.has(key)) {
@@ -382,6 +400,7 @@ export interface StoreOptions {
   lazy?: boolean;
 }
 
+// ref 877d0d31defd
 export class WorkspaceStore {
   readonly blocks = new BlockMap();
   /**
@@ -442,6 +461,7 @@ export class WorkspaceStore {
   onWriteFailureChanged: (() => void) | undefined;
   private observers = new Set<(change: StoreChange) => void>();
   private undoStack: UndoEntry[] = [];
+  private undoSeq = 0;
   private redoStack: UndoEntry[] = [];
   private childIndex = new Map<string, string[]>();
 
@@ -887,6 +907,23 @@ export class WorkspaceStore {
    * Worker neu stempeln, und das Echo überschriebe neuere Eingaben in der Replik.
    */
   transact<T>(name: string, body: (tx: Tx) => T, opts: { coalesce?: string; undoable?: boolean; keepStamps?: boolean; derived?: boolean } = {}): T {
+    // Innerhalb von `atomic`: Teil der äußeren Transaktion. Wirft der Rumpf, wird nur dieser Teil zurückgedreht
+    // (der Aufrufer kann den Fehler fangen und weitermachen); sonst geht er in der äußeren auf.
+    if (this.joined && !opts.keepStamps && !opts.derived) {
+      const parent = this.joined;
+      const child = new Tx(this);
+      this.joined = child;
+      try {
+        const result = body(child);
+        parent.absorb(child);
+        return result;
+      } catch (e) {
+        this.rollback(child);
+        throw e;
+      } finally {
+        this.joined = parent;
+      }
+    }
     const tx = new Tx(this);
     tx.lww = opts.keepStamps === true;
     try {
@@ -902,6 +939,26 @@ export class WorkspaceStore {
       this.rollback(tx);
       throw e;
     }
+  }
+
+  private joined: Tx | undefined;
+
+  /**
+   * Alles, was `body` schreibt – auch über mehrere `transact`-Aufrufe und Kern-Funktionen hinweg – wird EINE
+   * Transaktion: ein Undo-Schritt, ein Commit, alles oder nichts (wirft `body`, ist nichts geschrieben). So ist jeder
+   * Werkzeug-Aufruf eines Agenten genau ein Schritt (docs/agent-parity.md, Regel 3). Verschachtelt: geht in der
+   * äußeren auf. Nur synchron.
+   */
+  atomic<T>(name: string, body: () => T): T {
+    if (this.joined) return body();
+    return this.transact(name, (tx) => {
+      this.joined = tx;
+      try {
+        return body();
+      } finally {
+        this.joined = undefined;
+      }
+    });
   }
 
   /**
@@ -1007,7 +1064,7 @@ export class WorkspaceStore {
         for (const [k, v] of after) top.after.set(k, v);
         top.time = now;
       } else {
-        this.undoStack.push({ name, before, after, coalesceKey: coalesce, time: now });
+        this.undoStack.push({ seq: (this.undoSeq += 1), name, before, after, coalesceKey: coalesce, time: now });
         if (this.undoStack.length > this.maxUndo) this.undoStack.splice(0, this.undoStack.length - this.maxUndo);
       }
       this.redoStack = [];
@@ -1060,6 +1117,38 @@ export class WorkspaceStore {
     const outcome: UndoOutcome = { name: null, applied: 0, skipped: 0, droppedSteps: 0 };
     const stack = undo ? this.undoStack : this.redoStack;
     for (let entry = stack.pop(); entry; entry = stack.pop()) {
+      if (this.applyEntry(entry, undo, outcome)) return outcome;
+    }
+    return outcome;
+  }
+
+  /**
+   * Der oberste Undo-Schritt als Kennung – direkt nach einer Transaktion gelesen ist es deren Schritt. Damit kann
+   * genau dieser Schritt später zurückgenommen werden (`undoStep`), auch wenn danach andere dazukamen.
+   */
+  get lastUndoStep(): number | undefined {
+    return this.undoStack[this.undoStack.length - 1]?.seq;
+  }
+
+  /**
+   * Genau einen Schritt zurücknehmen, egal wo er im Stapel liegt (Agent nimmt seinen letzten Aufruf zurück; der Mensch
+   * klickt „Undo“ an einer Agenten-Aktion). Wie `undo`: zurückgedreht wird nur, was noch so ist, wie der Schritt es
+   * hinterlassen hat – was seither jemand geändert hat, bleibt (`skipped`). `name: null`: den Schritt gibt es nicht mehr.
+   */
+  undoStep(seq: number): UndoOutcome {
+    const outcome: UndoOutcome = { name: null, applied: 0, skipped: 0, droppedSteps: 0 };
+    const i = this.undoStack.findIndex((e) => e.seq === seq);
+    if (i < 0) return outcome;
+    const [entry] = this.undoStack.splice(i, 1);
+    // Liegt er nicht oben, gehört er nicht in die Redo-Reihe des Nutzers (⌘⇧Z würde sonst etwas Fremdes zurückholen).
+    const top = i === this.undoStack.length;
+    this.applyEntry(entry!, true, outcome, top);
+    return outcome;
+  }
+
+  /** Einen Schritt anwenden; `false`: nichts mehr davon ist so, wie der Schritt es hinterlassen hat. */
+  private applyEntry(entry: UndoEntry, undo: boolean, outcome: UndoOutcome, keep = true): boolean {
+    {
       const restore = undo ? entry.before : entry.after;
       const expect = undo ? entry.after : entry.before;
       const keys: RecordKeyString[] = [];
@@ -1076,7 +1165,7 @@ export class WorkspaceStore {
       outcome.skipped += skipped;
       if (keys.length === 0) {
         outcome.droppedSteps += 1;
-        continue;
+        return false;
       }
       const tx = new Tx(this);
       for (const key of keys) {
@@ -1087,16 +1176,16 @@ export class WorkspaceStore {
       this.commit(tx, entry.name, undefined, undo ? "undo" : "redo", false);
       outcome.applied = keys.length;
       const moved: UndoEntry = {
+        seq: entry.seq,
         name: entry.name,
         coalesceKey: undefined,
         time: entry.time,
         before: new Map([...entry.before].filter(([k]) => keys.includes(k))),
         after: new Map([...entry.after].filter(([k]) => keys.includes(k))),
       };
-      (undo ? this.redoStack : this.undoStack).push(moved);
-      return outcome;
+      if (keep) (undo ? this.redoStack : this.undoStack).push(moved);
+      return true;
     }
-    return outcome;
   }
 
   /** Gleicher Inhalt, ohne Stempel, Änderungszeit, Bearbeiter und Auf/Zu-Zustand von Toggles. */

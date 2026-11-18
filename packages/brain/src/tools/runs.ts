@@ -1,9 +1,9 @@
 // BSD-221 Teil 3a: Läufe (BSD-160-Records) und die Inbox für MCP – damit `based runs`, `based run <id>` und
 // `based inbox` gegen den TS-Server funktionieren. Nur lesen; das Format folgt dem, was die CLI erwartet
 // (`runSnapshot`: erste Zeile „- [Status] …“, Abschnitte „Result:“, „Sub-runs:“; „Sandbox: …“ falls vorhanden).
-import { AgentStore, getRecord, listRecords, PROJECT_TYPE, RUN_TYPE, toMs, type ProjectData, type ProjectStatus, type RunData, type RunStatus } from "@based/brain";
+import { AgentStore, getRecord, listRecords, PROJECT_TYPE, RUN_TYPE, toMs, type ProjectData, type ProjectStatus, type RunData, type RunStatus } from "../agents/index.js";
 import { titleOf, type WorkspaceStore } from "@based/core";
-import { PAGE_URI, ToolError } from "./pages.js";
+import { PAGE_URI, ToolError } from "./base.js";
 
 export const RUN_STATUS_LABEL: Record<RunStatus, string> = { queued: "Queued", running: "Running", needsYou: "Needs you", done: "Done", failed: "Failed", cancelled: "Cancelled" };
 

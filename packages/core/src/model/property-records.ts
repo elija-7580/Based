@@ -136,7 +136,8 @@ export function diffProperties(databaseID: string, current: Iterable<PropertyRec
   next.forEach((schema, n) => {
     const id = ids[n]!, was = old.get(id);
     if (was && was.sk === sks[n] && sameJSON(was.schema, schema)) return;
-    upserts.push({ id, databaseID, sk: sks[n]!, schema: structuredClone(schema), stamp: { ...stamp } });
+    // BSD-583: Felder, die dieser Build nicht kennt (ein späteres `scope`/`level`), bleiben beim Ändern erhalten
+    upserts.push({ ...(was ? structuredClone(was) : {}), id, databaseID, sk: sks[n]!, schema: structuredClone(schema), stamp: { ...stamp } });
   });
   const present = new Set(ids);
   return { upserts, removed: [...old.keys()].filter((id) => !present.has(id)).sort() };

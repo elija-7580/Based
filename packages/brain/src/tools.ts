@@ -1,69 +1,75 @@
-// BSD-159 / BSD-74: Werkzeuge über den Workspace (Seiten suchen/lesen/anlegen/ändern, Datenbanken abfragen, Zeilen
-// anlegen/ändern) als Registry, ausgeführt auf dem WorkspaceStore (im Web: im Store-Worker). Namen und Verhalten wie
-// in docs/mcp.md (Swift `AgentTools`, TS-Server `pages.ts`).
+// Agent-Parität (docs/agent-parity.md): DIE Werkzeug-Schicht über dem Workspace. Jedes Werkzeug ist hier genau einmal
+// gebaut (Dateien unter tools/), ausgeführt auf dem WorkspaceStore. Der MCP-Server (apps/server/src/mcp.ts) meldet
+// sie nur an und reicht durch; Baseds eigene Agenten (worker/chat.ts, agent-engine.ts) benutzen dieselbe Instanz-Art.
 //
-// BSD-74: Jedes Schreib-Werkzeug ist genau eine `store.transact` – ein Undo-Schritt, alles oder nichts (wirft der
-// Rumpf, dreht der Store alles zurück; kein Zwischenstand im Sync). `find_replace` ersetzt lauf-weise im RichText
-// (`replaceInRichText`), Fett/Kursiv/Links/Erwähnungen bleiben.
+// Regeln, die hier für alle gelten (nicht je Werkzeug):
+// - Argumente werden vor dem Lauf gegen das Schema geprüft; die Meldung sagt, was richtig wäre.
+// - Jedes synchrone Schreib-Werkzeug ist EINE Transaktion (`store.atomic`): ein Undo-Schritt, alles oder nichts –
+//   auch wenn es intern mehrere Kern-Funktionen aufruft. Wirft der Rumpf, ist nichts geschrieben.
+// - Geschrieben wird als Agent (BSD-522: Herkunft „ai“/„mixed“, Autor je Block).
+// - `undo_last` nimmt den letzten eigenen Schreib-Aufruf zurück (genau diesen Schritt, auch wenn danach der Mensch
+//   weitergeschrieben hat; was seither geändert wurde, bleibt).
 import {
-  attachSearchIndex, addRow, pageLocation, boardHandles, boardObjectFromBlock, boardObjectsOf, boardObjectToBlock, boardOutline, cellText, insertBoardPage, insertPage, isBoardPage, planBoardScript, isPageLike, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
-  parseCSVValue, plainText, QueryEngine, replaceInRichText, rowsOf, sortKeys, titleOf, titleProperty, toRichText,
-  type Author, type Block, type BlockProps, type Database, type JSONValue, type MarkdownBlock, type PropertySchema, type PropertyValue, type Tx, type WorkspaceStore,
+  attachSearchIndex, isPageLike, isTrashed, MarkdownExporter, MarkdownImporter, pageFormat, titleOf,
+  type Author, type Block, type BoardFileInfo, type JSONValue, type SearchFilters, type SearchIndex, type WorkspaceStore,
 } from "@based/core";
 import type { ToolHost, ToolResult } from "./engine.js";
 import type { ToolSpec } from "./messages.js";
+import { AgentBrain } from "./agentbrain/store.js";
+import { Recall, type RecallDeps } from "./recall/recall.js";
+import { RelationGraph } from "./recall/graph.js";
+import { checkArgs, obj, PAGE_URI, ToolError, type Args, type ToolDef, type ToolGroup } from "./tools/base.js";
+import type { ToolCtx } from "./tools/context.js";
+import { Databases } from "./tools/databases.js";
+import { pageTools } from "./tools/pages.js";
+import { blockTools } from "./tools/blocks.js";
+import { boardTools } from "./tools/boards.js";
+import { databaseTools } from "./tools/database-tools.js";
+import { brainTools } from "./tools/brain-tools.js";
+import { agentTools } from "./tools/agent-tools.js";
+import { guideTools } from "./tools/guide.js";
+import { workspaceTools } from "./tools/workspace.js";
 
-export const PAGE_URI = "based://page/";
+export { PAGE_URI, ToolError, putMarkdownBlocks, checkArgs, type Args, type ToolDef, type ToolGroup, type ToolRunContext } from "./tools/base.js";
+export type { ToolCtx } from "./tools/context.js";
+export { Databases, type ViewArgs } from "./tools/databases.js";
+export { GUIDE } from "./tools/guide.js";
+export * from "./tools/runs.js";
 
-/** Fehler, den ein Werkzeug dem Modell als Antwort (isError) zurückgibt. */
-export class ToolError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ToolError";
-  }
-}
-
-type Args = { [key: string]: JSONValue };
-
-interface ToolDef {
-  spec: ToolSpec;
-  write: boolean;
-  run: (args: Args) => string;
-}
-
-const obj = (properties: Record<string, JSONValue>, required: string[] = []): JSONValue => ({ type: "object", properties, required, additionalProperties: false });
-const S = { type: "string" } as const;
-const pageID = { type: "string", description: "Page id (UUID)" } as const;
-const limitSchema = { type: "integer", minimum: 1, maximum: 500, description: "Max items (default 50)" } as const;
-const offsetSchema = { type: "integer", minimum: 0, description: "Skip this many items" } as const;
-
-/** Markdown-Blöcke in einer Transaktion schreiben; `firstID` = ID des ersten Blocks (Idempotenz im Ausführer). */
-export function putMarkdownBlocks(store: WorkspaceStore, tx: Tx, items: MarkdownBlock[], parent: string, keys: string[], firstID?: string) {
-  items.forEach((item, i) => {
-    const props: BlockProps = { ...item.props };
-    if (item.type === "table" && props.tableColumns === undefined) props.tableColumns = 2;
-    const id = i === 0 && firstID ? firstID : makeRecordID();
-    tx.put({ kind: "block", data: makeBlock({ id, type: item.type, parent, sk: keys[i]!, text: toRichText(item.text), props, createdBy: store.userID }, store.now()) });
-    if (item.children.length > 0) putMarkdownBlocks(store, tx, item.children, "b:" + id, sortKeys(store, "b:" + id, { kind: "end" }, item.children.length));
-  });
-}
-
-/** Liste mit `limit`/`offset`, Rest als „… N more (offset: K)“. */
-function paged(lines: string[], limit: number, offset: number): string {
-  const slice = lines.slice(offset, offset + limit);
-  const rest = lines.length - offset - slice.length;
-  const out = slice.length > 0 ? slice.join("\n") : "(none)";
-  return rest > 0 ? `${out}\n… ${rest} more (offset: ${offset + slice.length})` : out;
-}
+export const TOOL_GROUPS: readonly ToolGroup[] = ["pages", "blocks", "boards", "files", "databases", "brain", "agents"];
 
 export interface WorkspaceToolsOptions {
-  /** Eigene Suche (z. B. der Index, den der Store-Host ohnehin pflegt). Ohne: eigener Volltextindex. */
-  search?: (query: string, limit: number) => { pageID: string; snippet?: string | undefined }[];
+  /** Eigene Suche (z. B. der Index, den der Store-Host ohnehin pflegt). Ohne: `index` bzw. ein eigener Volltextindex. */
+  search?: (query: string, limit: number, filters?: SearchFilters) => { pageID: string; snippet?: string | undefined }[];
+  /** Der Suchindex des Hosts (auch für `recall`). Ohne: eigener Index, beim ersten Gebrauch gebaut. */
+  index?: () => SearchIndex;
+  /** Relationen-Graph und Agent Brain des Hosts (ohne: eigene, beim ersten Gebrauch). */
+  graph?: () => RelationGraph;
+  brain?: () => AgentBrain;
+  /** Vektor-Index und Modell für die Suche nach Bedeutung, wenn eingeschaltet und geladen. */
+  vectors?: RecallDeps["vectors"];
   /**
    * BSD-522: Als wer die Werkzeuge schreiben (Herkunft: Seite „ai“/„mixed“, Autor je Block). Ohne: wer gerade am Store
    * eingetragen ist (z. B. der MCP-Client), sonst „Based agent“ – diese Werkzeuge benutzen immer Agenten.
    */
   actor?: Author;
+  /**
+   * Was der Host aus den Bytes einer Datei weiß (Art, Größe, Bildmaße, PDF-Seiten) – ergänzt, was die Records kennen,
+   * damit ein Agent Dateien aufs Board legen kann. Ohne: nur das Wissen der Records.
+   */
+  fileInfo?: (ref: string) => Partial<BoardFileInfo> | undefined;
+  /**
+   * Was der Host vor einem Aufruf erledigen muss und wofür er warten muss (z. B. PDFs im Dateispeicher vermessen,
+   * bevor `draw_board` sie anordnet). Läuft nur über `call()`; die Werkzeuge selbst bleiben synchron und eine Transaktion.
+   */
+  before?: (name: string, input: JSONValue) => Promise<void> | void;
+  /** Nur diese Bereiche anbieten (ohne: alle). */
+  groups?: readonly ToolGroup[];
+  /**
+   * Werkzeuge, die nur dieser Host bauen kann (Netz, Dateisystem, Dateispeicher), z. B. `upload_file` am Server. Sie
+   * stehen in derselben Liste und laufen durch dieselbe Prüfung.
+   */
+  extra?: (ctx: ToolCtx) => ToolDef[];
 }
 
 const DEFAULT_ACTOR: Author = { kind: "agent", name: "Based agent" };
@@ -71,458 +77,193 @@ const DEFAULT_ACTOR: Author = { kind: "agent", name: "Based agent" };
 export class WorkspaceTools implements ToolHost {
   private readonly defs = new Map<string, ToolDef>();
   private ownIndex: ReturnType<typeof attachSearchIndex> | undefined;
+  private ownGraph: ReturnType<typeof RelationGraph.attach> | undefined;
+  private ownBrain: AgentBrain | undefined;
+  /**
+   * Undo-Schritt des letzten Schreib-Aufrufs je Agent (für `undo_last`) mit dem Namen des Werkzeugs. Je Agent, weil
+   * sich am Server mehrere MCP-Clients diese Instanz teilen: keiner nimmt den Schritt eines anderen zurück.
+   */
+  private readonly lastWrite = new Map<string, { step: number; tool: string }>();
+  readonly ctx: ToolCtx;
 
   constructor(readonly store: WorkspaceStore, private readonly opts: WorkspaceToolsOptions = {}) {
-    for (const d of this.build()) this.defs.set(d.spec.name, d);
+    this.ctx = this.context();
+    const groups = opts.groups ? new Set(opts.groups) : undefined;
+    const all = [...guideTools(), ...pageTools(this.ctx), ...workspaceTools(this.ctx), ...blockTools(this.ctx), ...boardTools(this.ctx), ...databaseTools(this.ctx), ...brainTools(this.ctx), ...agentTools(this.ctx), ...(opts.extra?.(this.ctx) ?? []), this.undoTool()];
+    for (const d of all) {
+      if (groups && !groups.has(d.group)) continue;
+      if (this.defs.has(d.spec.name)) throw new Error(`Tool ${d.spec.name} is defined twice`);
+      this.defs.set(d.spec.name, d);
+    }
   }
 
   dispose() {
     this.ownIndex?.dispose();
     this.ownIndex = undefined;
+    this.ownGraph?.dispose();
+    this.ownGraph = undefined;
   }
 
   get specs(): ToolSpec[] {
     return [...this.defs.values()].map((d) => d.spec);
   }
 
+  /** Die Definition eines Werkzeugs (Bereich, schreibend, zerstörend) – für Hosts, die es anmelden. */
+  def(name: string): ToolDef | undefined {
+    return this.defs.get(name);
+  }
+
+  get all(): ToolDef[] {
+    return [...this.defs.values()];
+  }
+
   isWrite(name: string): boolean {
     return this.defs.get(name)?.write ?? true;
   }
 
-  call(name: string, input: JSONValue): Promise<ToolResult> {
-    return Promise.resolve(this.callSync(name, input));
+  isDestructive(name: string): boolean {
+    return this.defs.get(name)?.destructive === true;
+  }
+
+  /** Jedes Werkzeug; `actor`: als wer geschrieben wird (sonst wie in den Optionen). */
+  async call(name: string, input: JSONValue, _signal?: AbortSignal, actor?: Author): Promise<ToolResult> {
+    if (this.opts.before && this.defs.has(name)) {
+      try {
+        await this.opts.before(name, input);
+      } catch (e) {
+        return this.failed(name, e);
+      }
+    }
+    const started = this.start(name, input, actor);
+    if ("text" in started) return started;
+    try {
+      const text = await started.pending;
+      return { text, isError: false };
+    } catch (e) {
+      return this.failed(name, e);
+    }
   }
 
   /** Synchron (der Store ist es auch); Fehler eines Werkzeugs werden zur Antwort, nie zu einem halben Schreiben. */
-  callSync(name: string, input: JSONValue): ToolResult {
+  callSync(name: string, input: JSONValue, actor?: Author): ToolResult {
+    const started = this.start(name, input, actor);
+    if ("text" in started) return started;
+    // Nur wenige Werkzeuge warten (Suche nach Bedeutung, Dateien); die gehen über `call`.
+    void started.pending.catch(() => undefined);
+    return { text: `Tool ${name} needs to wait for its result; this host can only run it with call().`, isError: true };
+  }
+
+  private failed(name: string, e: unknown): ToolResult {
+    if (e instanceof ToolError) return { text: e.message, isError: true };
+    return { text: `Tool ${name} failed: ${e instanceof Error ? e.message : String(e)}`, isError: true };
+  }
+
+  /** Prüfen und laufen lassen: fertige Antwort, oder das Promise eines wartenden Werkzeugs. */
+  private start(name: string, input: JSONValue, given: Author | undefined): ToolResult | { pending: Promise<string> } {
     const def = this.defs.get(name);
     if (!def) return { text: `Unknown tool ${name}`, isError: true };
-    const args: Args = input !== null && typeof input === "object" && !Array.isArray(input) ? input : {};
     try {
-      if (def.write && this.store.isReadOnly) throw new ToolError("The workspace is read-only right now (saving failed). Nothing was changed.");
+      const args = checkArgs(def, input);
+      const actor = given ?? this.opts.actor ?? this.store.actor ?? DEFAULT_ACTOR;
+      if (!def.write) {
+        const out = def.run(args, { actor });
+        return typeof out === "string" ? { text: out, isError: false } : { pending: out };
+      }
+      if (this.store.isReadOnly) throw new ToolError("The workspace is read-only right now (saving failed). Nothing was changed.");
+      // Wartende Schreib-Werkzeuge (Netz, Dateien) schreiben über `ctx.callSync` – jeder dieser Schritte ist eine Transaktion.
+      if (def.wait) return { pending: Promise.resolve().then(() => def.run(args, { actor })) };
       const revision = this.store.revision;
-      const text = def.write ? this.store.withActor(this.opts.actor ?? this.store.actor ?? DEFAULT_ACTOR, () => def.run(args)) : def.run(args);
+      const before = this.store.lastUndoStep;
+      const text = this.store.withActor(actor, () => this.store.atomic(`Agent: ${name.replace(/_/g, " ")}`, () => {
+        const out = def.run(args, { actor });
+        if (typeof out !== "string") throw new Error(`Tool ${name} writes and waits: mark it with wait`);
+        return out;
+      }));
       // Ein Schreiben, das der Store abgewiesen hat (schreibgeschützt), darf nicht als Erfolg gemeldet werden.
-      if (def.write && this.store.isReadOnly && this.store.revision === revision) throw new ToolError("Saving failed; nothing was changed.");
+      if (this.store.isReadOnly && this.store.revision === revision) throw new ToolError("Saving failed; nothing was changed.");
+      const step = this.store.lastUndoStep;
+      if (name !== "undo_last" && step !== undefined && step !== before) this.lastWrite.set(actor.name, { step, tool: name });
       return { text, isError: false };
     } catch (e) {
-      if (e instanceof ToolError) return { text: e.message, isError: true };
-      return { text: `Tool ${name} failed: ${e instanceof Error ? e.message : String(e)}`, isError: true };
+      return this.failed(name, e);
     }
   }
 
-  // MARK: Helfer
-
-  private importer() {
-    return new MarkdownImporter({
-      // Links auf based://page/<id> oder eine bekannte Seiten-ID werden Erwähnungen.
-      resolveLink: (target) => {
-        const id = target.startsWith(PAGE_URI) ? target.slice(PAGE_URI.length) : target;
-        return isPageLike(this.store.blocks.get(id)) ? id : undefined;
+  private undoTool(): ToolDef {
+    return {
+      group: "pages", write: true,
+      spec: {
+        name: "undo_last",
+        description: "Take back your last change in this workspace (the last writing tool call you made here) – exactly that step, even if the user edited something else since. What someone changed afterwards in the same places stays as it is.",
+        inputSchema: obj({}),
       },
-    });
-  }
-
-  private exporter() {
-    return new MarkdownExporter(this.store, { pageLink: (id) => ({ title: titleOf(this.store, id), url: PAGE_URI + id }) });
-  }
-
-  private page(id: string, allowTrashed = false): Block {
-    const b = this.store.blocks.get(id);
-    if (!b || !isPageLike(b)) throw new ToolError(`No page with id ${id}`);
-    if (!allowTrashed && isTrashed(this.store, id)) throw new ToolError(`Page ${id} is in the Trash`);
-    return b;
-  }
-
-  private database(id: string): Database {
-    const db = this.store.databases.get(id);
-    if (!db) throw new ToolError(`No database with id ${id} (list_databases shows the ids)`);
-    return db;
-  }
-
-  private line = (id: string) => `- ${titleOf(this.store, id) || "Untitled"} (id: ${id})`;
-
-  private search(query: string, limit: number): { pageID: string; snippet?: string | undefined }[] {
-    if (this.opts.search) return this.opts.search(query, limit);
-    this.ownIndex ??= attachSearchIndex(this.store);
-    // wie Quick Find: verteilte Begriffe, Tippfehler, Zeilen über Relationen
-    return this.ownIndex.index.run(query, { limit: limit * 2, extended: true }) ?? [];
-  }
-
-  /** Inhaltsblöcke einer Seite in Dokumentreihenfolge, ohne Unterseiten und deren Inhalt. */
-  private contentBlocks(pageID: string): Block[] {
-    const out: Block[] = [];
-    const visit = (parent: string) => {
-      for (const id of this.store.children(parent)) {
-        const b = this.store.blocks.get(id);
-        if (!b || isPageLike(b)) continue;
-        out.push(b);
-        visit("b:" + id);
-      }
+      run: (_a, { actor }) => {
+        const last = this.lastWrite.get(actor.name);
+        if (!last) throw new ToolError("There is nothing of yours to undo here.");
+        const r = this.store.undoStep(last.step);
+        this.lastWrite.delete(actor.name);
+        if (r.name === null) throw new ToolError(`Your last change (${last.tool}) can't be undone any more.`);
+        if (r.applied === 0) throw new ToolError(`Your last change (${last.tool}) was not undone: everything it touched has been edited since.`);
+        return `Undid ${last.tool} (${r.applied} record${r.applied === 1 ? "" : "s"} restored${r.skipped ? `, ${r.skipped} left as edited since` : ""}).`;
+      },
     };
-    visit("b:" + pageID);
-    return out;
   }
 
-  /** `{Name: "Wert"}` → Werte nach Property-ID; unbekannte Namen und nicht lesbare Werte sind Fehler (nichts wird geschrieben). */
-  private rowValues(db: Database, properties: JSONValue | undefined): { title?: string; set: Record<string, PropertyValue>; clear: string[] } {
-    const out: { title?: string; set: Record<string, PropertyValue>; clear: string[] } = { set: {}, clear: [] };
-    if (properties === undefined || properties === null) return out;
-    if (typeof properties !== "object" || Array.isArray(properties)) throw new ToolError("properties must be an object {\"Property name\": \"value\"}");
-    const titleProp = titleProperty(db);
-    for (const [name, raw] of Object.entries(properties)) {
-      const p: PropertySchema | undefined = db.properties.find((x) => x.name === name) ?? db.properties.find((x) => x.name.toLowerCase() === name.toLowerCase());
-      if (!p) throw new ToolError(`No property “${name}” in this database. Properties: ${db.properties.map((x) => x.name).join(", ")}`);
-      let s = raw === null ? "" : typeof raw === "string" ? raw : typeof raw === "number" || typeof raw === "boolean" ? String(raw) : undefined;
-      if (s === undefined) throw new ToolError(`Property “${name}”: give the value as a plain string`);
-      if (p.id === titleProp.id || p.type === "title") { out.title = s; continue; }
-      if (["formula", "rollup", "createdTime", "lastEditedTime", "createdBy", "lastEditedBy", "uniqueID", "relation", "person", "files", "button"].includes(p.type)) {
-        throw new ToolError(`Property “${name}” (${p.type}) can't be set with a plain string`);
-      }
-      if (p.type === "checkbox") s = /^(true|yes|x|✓|1|checked)$/i.test(s.trim()) ? "Yes" : s.trim() === "" ? "" : "No";
-      if (s.trim() === "" && p.type !== "checkbox") { out.clear.push(p.id); continue; }
-      const v = parseCSVValue(s, p);
-      if (v === undefined) {
-        const hint = p.type === "select" || p.type === "status" || p.type === "multiSelect" ? ` Options: ${(p.options ?? []).map((o) => o.name).join(", ")}` : "";
-        throw new ToolError(`Property “${name}” (${p.type}): can't read “${s}”.${hint}`);
-      }
-      out.set[p.id] = v;
-    }
-    return out;
+  // MARK: Gemeinsame Helfer für die Werkzeug-Dateien
+
+  private index(): SearchIndex {
+    return this.opts.index?.() ?? (this.ownIndex ??= attachSearchIndex(this.store)).index;
   }
 
-  private rowLine(engine: QueryEngine, db: Database, row: Block): string {
-    const titleProp = titleProperty(db);
-    const cells: string[] = [];
-    for (const p of db.properties) {
-      if (p.id === titleProp.id || p.type === "title" || p.type === "button") continue;
-      const v = engine.value(row, p, db);
-      // Nicht gesetzte Checkboxen sind kein Inhalt.
-      if (v.t === "bool" && !v.v) continue;
-      const t = (v.t === "bool" ? "yes" : cellText(this.store, v)).replace(/\n/g, " ");
-      if (t !== "") cells.push(`${p.name}: ${t}`);
-    }
-    return `- ${plainText(row.text) || "Untitled"} (id: ${row.id})${cells.length ? " — " + cells.join("; ") : ""}`;
-  }
-
-  // MARK: Die Werkzeuge
-
-  private build(): ToolDef[] {
+  private context(): ToolCtx {
     const store = this.store;
-    const str = (a: Args, k: string): string | undefined => (typeof a[k] === "string" ? (a[k] as string) : undefined);
-    const need = (a: Args, k: string): string => {
-      const v = str(a, k);
-      if (v === undefined || v === "") throw new ToolError(`Missing argument ${k}`);
-      return v;
+    const page = (id: string, allowTrashed = false): Block => {
+      const b = store.blocks.get(id);
+      if (!b || !isPageLike(b)) throw new ToolError(`No page with id ${id}`);
+      if (!allowTrashed && isTrashed(store, id)) throw new ToolError(`Page ${id} is in the Trash (restore_page brings it back)`);
+      return b;
     };
-    const num = (a: Args, k: string, fallback: number): number => (typeof a[k] === "number" ? Math.max(0, Math.floor(a[k] as number)) : fallback);
-
-    return [
-      {
-        write: false,
-        spec: { name: "search", description: "Find pages and database rows by title, text, or row values (including related rows, people, options). Words may be spread over a page and may contain typos. Returns ids, where each page lives, and snippets.", inputSchema: obj({ query: S, limit: limitSchema }, ["query"]) },
-        run: (a) => {
-          const limit = Math.max(1, num(a, "limit", 20));
-          const seen = new Set<string>();
-          const lines: string[] = [];
-          for (const h of this.search(need(a, "query"), limit)) {
-            if (seen.has(h.pageID) || !isPageLike(store.blocks.get(h.pageID)) || isTrashed(store, h.pageID)) continue;
-            seen.add(h.pageID);
-            const where = pageLocation(store, h.pageID);
-            lines.push(this.line(h.pageID) + (where ? ` · in ${where}` : "") + (h.snippet ? `\n  ${h.snippet.replace(/\n/g, " ")}` : ""));
-            if (lines.length >= limit) break;
-          }
-          return lines.length > 0 ? lines.join("\n") : "No pages found.";
+    const writable = (id: string): Block => {
+      const b = page(id);
+      if (pageFormat(store, id).locked) throw new ToolError(`“${titleOf(store, id) || "Untitled"}” is locked, so its content can't be changed. The user locked it on purpose; unlock it (update_page with locked: false) only if they ask.`);
+      return b;
+    };
+    const graph = () => this.opts.graph?.() ?? (this.ownGraph ??= RelationGraph.attach(store)).graph;
+    const brain = () => this.opts.brain?.() ?? (this.ownBrain ??= new AgentBrain(store));
+    return {
+      store,
+      databases: new Databases(store),
+      page,
+      writable,
+      title: (id) => titleOf(store, id) || "Untitled",
+      line: (id) => `- ${titleOf(store, id) || "Untitled"} (id: ${id})`,
+      importer: () => new MarkdownImporter({
+        // Links auf based://page/<id> oder eine bekannte Seiten-ID werden Erwähnungen.
+        resolveLink: (target) => {
+          const id = target.startsWith(PAGE_URI) ? target.slice(PAGE_URI.length) : target;
+          return isPageLike(store.blocks.get(id)) ? id : undefined;
         },
+      }),
+      exporter: () => new MarkdownExporter(store, { pageLink: (id) => ({ title: titleOf(store, id), url: PAGE_URI + id }) }),
+      search: (query, limit, filters) => {
+        if (this.opts.search) return this.opts.search(query, limit, filters);
+        // wie Quick Find: verteilte Begriffe, Tippfehler, Zeilen über Relationen
+        return this.index().run(query, { ...(filters && Object.keys(filters).length ? { filters } : {}), limit: limit * 2, extended: true }) ?? [];
       },
-      {
-        write: false,
-        spec: { name: "read_page", description: "A page as Markdown, with its properties when it is a database row.", inputSchema: obj({ page_id: pageID }, ["page_id"]) },
-        run: (a) => {
-          const id = need(a, "page_id");
-          this.page(id, true);
-          const md = this.exporter().export(id);
-          return isTrashed(store, id) ? `(in the Trash)\n\n${md}` : md;
-        },
+      fileInfo: (ref, known) => {
+        const host = this.opts.fileInfo?.(ref);
+        if (!known && !host) return undefined;
+        const out: BoardFileInfo = { ref, name: known?.name || host?.name || `file-${ref.slice(-64, -56)}`, mime: host?.mime || known?.mime || "", size: host?.size || known?.size || 0 };
+        const w = host?.width ?? known?.width, h = host?.height ?? known?.height;
+        if (w && h) { out.width = w; out.height = h; }
+        const pages = host?.pages ?? known?.pages;
+        if (pages?.length) out.pages = pages;
+        return out;
       },
-      {
-        write: false,
-        spec: { name: "list_pages", description: "Top-level pages, or the sub-pages of a page.", inputSchema: obj({ parent_id: pageID, limit: limitSchema, offset: offsetSchema }) },
-        run: (a) => {
-          const parent = str(a, "parent_id");
-          if (parent !== undefined) this.page(parent);
-          const ids = store.children(parent === undefined ? "w" : "b:" + parent).filter((id) => {
-            const b = store.blocks.get(id);
-            return isPageLike(b) && b?.trashedAt === undefined;
-          });
-          return paged(ids.map(this.line), Math.max(1, num(a, "limit", 50)), num(a, "offset", 0));
-        },
-      },
-      {
-        write: true,
-        spec: {
-          name: "create_page",
-          description: "New page from Markdown under a parent page (or at the top level). A leading “# Title” line becomes the title when title is omitted.",
-          inputSchema: obj({ title: S, markdown: S, parent_id: pageID }),
-        },
-        run: (a) => {
-          const parent = str(a, "parent_id");
-          if (parent !== undefined) this.page(parent);
-          let title = str(a, "title");
-          let body = str(a, "markdown") ?? "";
-          if (title === undefined) {
-            const split = MarkdownImporter.splitTitle(body);
-            title = split.title;
-            body = split.body;
-          }
-          const blocks = this.importer().parse(body);
-          const id = store.transact("Agent: new page", (tx) => {
-            const pid = insertPage(store, tx, { ...(parent ? { parent } : {}), ...(title ? { title } : {}) });
-            if (blocks.length > 0) putMarkdownBlocks(store, tx, blocks, "b:" + pid, sortKeys(store, "b:" + pid, { kind: "end" }, blocks.length));
-            return pid;
-          });
-          return `Created page “${title ?? "Untitled"}” (id: ${id})`;
-        },
-      },
-      // BSD-93: Whiteboards als Text – wenige Token, keine Koordinaten; die Anordnung rechnet Based (whiteboard/agent.ts).
-      {
-        write: false,
-        spec: { name: "read_board", description: "A whiteboard as compact text: one line per object (short handle, kind, text, position), connectors as “a -> b: label”. Use the handles in draw_board.", inputSchema: obj({ page_id: pageID }, ["page_id"]) },
-        run: (a) => {
-          const id = need(a, "page_id");
-          this.page(id, true);
-          if (!isBoardPage(store.blocks.get(id))) throw new Error("That page is not a whiteboard. Use read_page.");
-          return boardOutline(boardObjectsOf(store, id), (pid) => titleOf(store, pid) || undefined);
-        },
-      },
-      {
-        write: true,
-        spec: {
-          name: "draw_board",
-          description: [
-            "Add to or change a whiteboard with a short script; Based lays the objects out (columns follow the arrows) and puts new content beside what is there. Omit page_id to create a new board (title, parent_id optional). One statement per line:",
-            "note a: text | box a: text | oval a: text | diamond a: text | text a: text | page a: <page id> (live page card)",
-            "a -> b: optional label (a, b: names from this script or handles from read_board)",
-            "frame f: Title { a b c } | set <handle>: new text | del <handle>",
-          ].join("\n"),
-          inputSchema: obj({ page_id: pageID, script: S, title: S, parent_id: pageID }, ["script"]),
-        },
-        run: (a) => {
-          const given = str(a, "page_id");
-          const parent = str(a, "parent_id");
-          if (given !== undefined) { this.page(given); if (!isBoardPage(store.blocks.get(given))) throw new Error("That page is not a whiteboard."); }
-          else if (parent !== undefined) this.page(parent);
-          const existing = given ? boardObjectsOf(store, given) : [];
-          const plan = planBoardScript(need(a, "script"), existing, () => makeRecordID());
-          // Seitenkarten: nur vorhandene Seiten, mit ihrem Titel als Text (für Suche und Vorschau).
-          plan.add = plan.add.filter((o) => {
-            if (o.kind !== "page") return true;
-            const b = o.ref ? store.blocks.get(o.ref) : undefined;
-            if (!isPageLike(b) || b?.trashedAt !== undefined) { plan.errors.push(`page ${o.ref ?? ""} — no such page`); return false; }
-            o.text = titleOf(store, o.ref!) || "Untitled";
-            return true;
-          });
-          const kept = new Set(plan.add.map((o) => o.id));
-          plan.add = plan.add.filter((o) => o.kind !== "connector" || ((kept.has(o.from.id) || existing.some((e) => e.id === o.from.id)) && (kept.has(o.to.id) || existing.some((e) => e.id === o.to.id))));
-          const page = store.transact("Agent: draw on board", (tx) => {
-            const pid = given ?? insertBoardPage(store, tx, { ...(parent ? { parent } : {}), title: str(a, "title") ?? "Untitled board" });
-            const now = store.now();
-            const all = new Map([...existing, ...plan.add].map((o) => [o.id, o]));
-            for (const o of plan.add) tx.put({ kind: "block", data: boardObjectToBlock(o, pid, now, undefined, all) });
-            for (const [id, fields] of plan.patch) {
-              const block = store.blocks.get(id);
-              const cur = block ? boardObjectFromBlock(block) : undefined;
-              if (block && cur) tx.put({ kind: "block", data: boardObjectToBlock({ ...cur, ...fields } as typeof cur, pid, now, block) });
-            }
-            for (const id of plan.remove) if (store.blocks.get(id)) tx.remove(keyOf("block", id));
-            return pid;
-          });
-          const handles = boardHandles(boardObjectsOf(store, page));
-          const names = [...plan.names].filter(([, id]) => handles.has(id)).map(([n, id]) => `${n}=${handles.get(id)!}`).join(" ");
-          return [
-            `${given ? "Updated" : "Created"} board (id: ${page}): ${plan.add.length} added, ${plan.patch.size} changed, ${plan.remove.length} removed.`,
-            ...(names ? [`Handles: ${names}`] : []),
-            ...(plan.errors.length ? ["Skipped:", ...plan.errors.map((e) => `- ${e}`)] : []),
-          ].join("\n");
-        },
-      },
-      {
-        write: true,
-        spec: { name: "append_markdown", description: "Append Markdown blocks to the end of a page.", inputSchema: obj({ page_id: pageID, markdown: S }, ["page_id", "markdown"]) },
-        run: (a) => {
-          const id = need(a, "page_id");
-          this.page(id);
-          const blocks = this.importer().parse(need(a, "markdown"));
-          if (blocks.length === 0) return "Nothing to append.";
-          store.transact("Agent: append", (tx) => putMarkdownBlocks(store, tx, blocks, "b:" + id, sortKeys(store, "b:" + id, { kind: "end" }, blocks.length)));
-          return `Appended ${blocks.length} block${blocks.length === 1 ? "" : "s"} to “${titleOf(store, id)}”`;
-        },
-      },
-      {
-        write: true,
-        spec: {
-          name: "replace_page_content",
-          description: "Replace the whole body of a page with Markdown (sub-pages and databases stay). Only when the user wants a rewrite.",
-          inputSchema: obj({ page_id: pageID, markdown: S }, ["page_id", "markdown"]),
-        },
-        run: (a) => {
-          const id = need(a, "page_id");
-          this.page(id);
-          const blocks = this.importer().parse(str(a, "markdown") ?? "");
-          const content = store.children("b:" + id).filter((k) => {
-            const b = store.blocks.get(k);
-            return b !== undefined && !isPageLike(b) && b.type !== "databaseInline";
-          });
-          let removed = 0;
-          // BSD-74: Löschen und Einfügen in EINER Transaktion (Swift `setBody` waren zwei: zwei Undo-Schritte, kurz leere Seite im Sync).
-          store.transact("Agent: replace content", (tx) => {
-            for (const k of content) {
-              for (const d of [...store.descendants(k).reverse(), k]) {
-                if (isPageLike(store.blocks.get(d))) throw new ToolError("This page has sub-pages nested inside its blocks; replacing would delete them. Use find_replace or append_markdown instead.");
-                tx.remove(keyOf("block", d));
-                removed += 1;
-              }
-            }
-            if (blocks.length > 0) putMarkdownBlocks(store, tx, blocks, "b:" + id, sortKeys(store, "b:" + id, { kind: "end" }, blocks.length));
-          });
-          return `Replaced the content of “${titleOf(store, id)}” (${removed} blocks removed, ${blocks.length} added)`;
-        },
-      },
-      {
-        write: true,
-        spec: {
-          name: "find_replace",
-          description: "Replace a passage inside a page's text blocks. Formatting (bold, links, mentions) around the passage is kept. Fails without changes when the text is not found.",
-          inputSchema: obj({ page_id: pageID, find: S, replace: S, all: { type: "boolean", description: "Replace every occurrence (default: only the first)" } }, ["page_id", "find", "replace"]),
-        },
-        run: (a) => {
-          const id = need(a, "page_id");
-          this.page(id);
-          const find = need(a, "find");
-          const replace = str(a, "replace") ?? "";
-          const all = a.all === true;
-          const changes: { id: string; text: Block["text"] }[] = [];
-          let count = 0;
-          for (const b of this.contentBlocks(id)) {
-            if (b.text === undefined) continue;
-            const r = replaceInRichText(b.text, find, replace, { all });
-            if (r.count === 0) continue;
-            changes.push({ id: b.id, text: r.text });
-            count += r.count;
-            if (!all) break;
-          }
-          if (count === 0) throw new ToolError(`“${find}” was not found in “${titleOf(store, id)}”. Nothing was changed.`);
-          store.transact("Agent: find and replace", (tx) => {
-            for (const c of changes) {
-              tx.update(c.id, (x) => {
-                if (c.text === undefined || c.text === "" || (Array.isArray(c.text) && c.text.length === 0)) delete x.text;
-                else x.text = c.text;
-              });
-            }
-          });
-          return `Replaced ${count} occurrence${count === 1 ? "" : "s"} in “${titleOf(store, id)}”`;
-        },
-      },
-      {
-        write: true,
-        spec: { name: "update_page", description: "Change a page's title or emoji icon (empty icon removes it).", inputSchema: obj({ page_id: pageID, title: S, icon: S }, ["page_id"]) },
-        run: (a) => {
-          const id = need(a, "page_id");
-          const b = this.page(id);
-          const title = str(a, "title"), icon = str(a, "icon");
-          if (title === undefined && icon === undefined) throw new ToolError("Give a title or an icon");
-          const dbID = b.type === "databasePage" ? b.props?.databaseID : undefined;
-          const db = dbID ? store.databases.get(dbID) : undefined;
-          store.transact("Agent: update page", (tx) => {
-            if (title !== undefined && db) tx.put({ kind: "database", data: { ...structuredClone(db), title } });
-            tx.update(id, (x) => {
-              if (title !== undefined && !db) {
-                if (title === "") delete x.text;
-                else x.text = title;
-              }
-              if (icon !== undefined) {
-                if (icon === "") {
-                  if (x.props) delete x.props.icon;
-                } else x.props = { ...(x.props ?? {}), icon };
-              }
-              if (x.props && Object.keys(x.props).length === 0) delete x.props;
-            });
-          });
-          return `Updated “${titleOf(store, id)}”`;
-        },
-      },
-      {
-        write: false,
-        spec: { name: "list_databases", description: "Databases with ids and their properties (name: type, options for selects).", inputSchema: obj({ limit: limitSchema, offset: offsetSchema }) },
-        run: (a) => {
-          const lines: string[] = [];
-          for (const db of store.databases.values()) {
-            if (db.blockID && (!store.blocks.has(db.blockID) || isTrashed(store, db.blockID))) continue;
-            const props = db.properties.map((p) => {
-              const options = p.type === "select" || p.type === "status" || p.type === "multiSelect" ? ` [${(p.options ?? []).map((o) => o.name).join(", ")}]` : "";
-              return `${p.name}: ${p.type}${options}`;
-            });
-            lines.push(`- ${plainText(db.title) || "Untitled"} (id: ${db.id}, ${rowsOf(store, db.id).length} rows)\n  ${props.join("; ")}`);
-          }
-          return paged(lines, Math.max(1, num(a, "limit", 50)), num(a, "offset", 0));
-        },
-      },
-      {
-        write: false,
-        spec: { name: "query_database", description: "Rows of a database with their property values as text.", inputSchema: obj({ database_id: S, limit: limitSchema, offset: offsetSchema }, ["database_id"]) },
-        run: (a) => {
-          const db = this.database(need(a, "database_id"));
-          const engine = new QueryEngine(store);
-          const rows = rowsOf(store, db.id).filter((r) => r.trashedAt === undefined && r.props?.isTemplate !== true);
-          return paged(rows.map((r) => this.rowLine(engine, db, r)), Math.max(1, num(a, "limit", 50)), num(a, "offset", 0));
-        },
-      },
-      {
-        write: true,
-        spec: {
-          name: "add_row",
-          description: "Add a row to a database. Set properties by name with plain strings (dates as YYYY-MM-DD, checkboxes as true/false, multi-selects comma-separated).",
-          inputSchema: obj({ database_id: S, title: S, properties: { type: "object", additionalProperties: { type: "string" } } }, ["database_id"]),
-        },
-        run: (a) => {
-          const db = this.database(need(a, "database_id"));
-          // Erst alles prüfen und umwandeln, dann in einer Transaktion schreiben (`addRow` ist eine).
-          const v = this.rowValues(db, a.properties);
-          const title = str(a, "title") ?? v.title;
-          const id = addRow(store, db.id, { ...(title ? { title } : {}), values: v.set });
-          if (!id) throw new ToolError("The row could not be added");
-          return `Added row “${title ?? "Untitled"}” (id: ${id}) to “${plainText(db.title) || "Untitled"}”`;
-        },
-      },
-      {
-        write: true,
-        spec: {
-          name: "update_row",
-          description: "Change a database row: title and/or properties by name with plain strings (an empty string clears a property).",
-          inputSchema: obj({ row_id: S, title: S, properties: { type: "object", additionalProperties: { type: "string" } } }, ["row_id"]),
-        },
-        run: (a) => {
-          const id = need(a, "row_id");
-          const row = store.blocks.get(id);
-          if (!row || !row.parent.startsWith("d:")) throw new ToolError(`No database row with id ${id}`);
-          const db = this.database(row.parent.slice(2));
-          const v = this.rowValues(db, a.properties);
-          const title = str(a, "title") ?? v.title;
-          if (title === undefined && Object.keys(v.set).length === 0 && v.clear.length === 0) throw new ToolError("Give a title or properties to change");
-          store.transact("Agent: update row", (tx) => tx.update(id, (x) => {
-            if (title !== undefined) {
-              if (title === "") delete x.text;
-              else x.text = title;
-            }
-            const values = { ...(x.values ?? {}) };
-            for (const [k, val] of Object.entries(v.set)) values[k] = val;
-            for (const k of v.clear) delete values[k];
-            if (Object.keys(values).length > 0) x.values = values;
-            else delete x.values;
-          }));
-          return `Updated row “${titleOf(store, id) || "Untitled"}”`;
-        },
-      },
-    ];
+      graph,
+      brain,
+      recall: () => new Recall(store, brain(), { search: () => this.index(), graph, vectors: () => this.opts.vectors?.() }),
+      callSync: (name: string, input: Args, actor?: Author) => this.callSync(name, input, actor),
+    };
   }
 }

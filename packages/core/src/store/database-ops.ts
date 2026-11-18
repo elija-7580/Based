@@ -791,6 +791,7 @@ export function forgetOption(view: DatabaseView, optionID: string, propertyID: s
 
 // MARK: Relationen-Integrität (BSD-31)
 
+// ref 32a660374663
 /**
  * BSD-248 (Swift `unlinkRemovedRows`): bevor `ids` endgültig verschwinden, verlieren Relationswerte anderswo die
  * entfernten Zeilen, und Relationen in eine entfernte Datenbank werden one-way (ihr Spiegel ist weg).

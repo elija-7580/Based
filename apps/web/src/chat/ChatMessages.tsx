@@ -63,6 +63,11 @@ const TOOL_LABELS: Record<string, string> = {
   search: "Search", read_page: "Read page", list_pages: "List pages", create_page: "Create page", append_markdown: "Append to page",
   replace_page_content: "Rewrite page", find_replace: "Edit text", update_page: "Update page", list_databases: "List databases",
   query_database: "Query database", add_row: "Add row", update_row: "Update row",
+  // Agent-Parität: dieselben Werkzeuge wie über MCP
+  read_blocks: "Read blocks", edit_blocks: "Edit blocks", move_page: "Move page", duplicate_page: "Duplicate page", trash_page: "Move to Trash", restore_page: "Restore page",
+  list_trash: "List Trash", backlinks: "Backlinks", set_favorite: "Favorite", undo_last: "Undo", based_guide: "Read guide", read_board: "Read board", draw_board: "Draw on board",
+  list_files: "List files", database_schema: "Read schema", create_database: "Create database", update_database: "Update database", list_views: "List views",
+  create_view: "Create view", update_view: "Update view", delete_view: "Delete view",
 };
 
 function toolItem(p: ChatPart): ChatToolCallItem {

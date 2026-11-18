@@ -12,10 +12,10 @@ const nav = (page: Page) => page.getByRole("navigation", { name: "Settings pages
 /** Zeile der Navigation (Astryx setzt aria-current und den „Not yet“-Hinweis an das Listenelement, nicht an den Button). */
 const navRow = (page: Page, name: string) => nav(page).getByRole("listitem").filter({ has: page.getByRole("button", { name, exact: true }) });
 
-test("Navigation: 19 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen", { tag: "@smoke" }, async ({ page }) => {
+test("Navigation: 20 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen", { tag: "@smoke" }, async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
-  await expect(nav(page).getByRole("button")).toHaveCount(19);
+  await expect(nav(page).getByRole("button")).toHaveCount(20);
   for (const group of ["App", "Workspace", "System"]) await expect(nav(page).getByText(group, { exact: true })).toBeVisible();
 
   await nav(page).getByRole("button", { name: "Sync & server" }).click();

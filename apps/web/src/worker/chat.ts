@@ -40,7 +40,12 @@ export class ChatHost {
 
   constructor(private readonly store: WorkspaceStore, searchIndex: () => SearchIndex) {
     this.chats = new ChatStore(store);
-    this.tools = new WorkspaceTools(store, { search: (query, limit) => searchIndex().search(query, {}, "bestMatch", limit * 2) });
+    // Dieselbe Werkzeug-Schicht wie der MCP-Server (docs/agent-parity.md, Regel 1). Ohne „brain“ und „agents“: Erinnerungen,
+    // Skills, Läufe und Freigaben führt der Chat der App über eigene Hosts (agentbrain/tools.ts, worker/agents.ts).
+    this.tools = new WorkspaceTools(store, {
+      groups: ["pages", "blocks", "boards", "files", "databases"],
+      search: (query, limit, filters) => searchIndex().search(query, filters ?? {}, "bestMatch", limit * 2),
+    });
     for (const c of this.chats.list()) this.ids.add(c.id);
   }
 

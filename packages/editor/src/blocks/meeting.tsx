@@ -19,7 +19,7 @@ type Tab = "summary" | "notes" | "transcript";
 const TABS: { id: Tab; label: string }[] = [{ id: "summary", label: "Summary" }, { id: "notes", label: "Notes" }, { id: "transcript", label: "Transcript" }];
 
 const IDLE: MeetingHostState = {
-  meetingID: undefined, recording: false, paused: false, elapsed: 0, roles: [], processing: [], summarizing: [], error: undefined, warning: undefined, playback: undefined,
+  meetingID: undefined, recording: false, paused: false, elapsed: 0, roles: [], processing: [], summarizing: [], error: undefined, warning: undefined, playback: undefined, transcription: "off",
 };
 const noSubscribe = () => () => undefined;
 const idle = () => IDLE;
@@ -101,6 +101,7 @@ export function MeetingBlock(props: MeetingBlockProps) {
       <div className="bx-meet-head">
         <span className="bx-meet-icon" data-live={recordingHere && !hs.paused ? "true" : undefined} aria-hidden>●</span>
         <TitleField store={store} id={id} title={plainText(block.text)} editable={editable} />
+        <LiveStatus hs={hs} host={host} recording={recordingHere} processing={processing} pending={info.transcribePending === true && !processing && !recordingHere} />
       </div>
 
       <div className="bx-meet-controls">
@@ -115,7 +116,6 @@ export function MeetingBlock(props: MeetingBlockProps) {
               crumb("meeting stop");
               void host?.stop();
             }} />
-            <span className="bx-meet-clock" aria-label="Recording time" data-testid="meeting-clock">{timecode(hs.elapsed)}</span>
             <span className="bx-meet-muted">{hs.paused ? "Paused" : hs.roles.includes("system") ? "Microphone + shared audio" : "Microphone"}</span>
           </>
         ) : (
@@ -150,7 +150,6 @@ export function MeetingBlock(props: MeetingBlockProps) {
       {recordingHere && hs.warning ? <div className="bx-meet-banner" role="status">{hs.warning}</div> : null}
       <div className="bx-meet-status">
         {meta.length ? <span>{meta.join(" · ")}</span> : null}
-        {processing ? <span>Saving and transcribing…</span> : null}
         {info.transcribePending && !processing && !recordingHere ? (
           <span className="bx-meet-pending" data-testid="meeting-transcribe-pending">
             Recording saved · transcript {host?.pendingReason?.() ?? "comes later"}
@@ -186,10 +185,52 @@ export function MeetingBlock(props: MeetingBlockProps) {
           <SummaryTab store={store} id={id} info={info} summaryID={summaryID} count={summaryBlocks} host={host} summarizing={summarizing} editable={editable}
             disabled={!hasTracks || !host} onPlay={play} hasContent={segments.length > 0 || notesHaveText} renderSection={props.renderSection} />
         ) : (
-          <TranscriptTab store={store} id={id} info={info} editable={editable} recording={recordingHere} processing={processing} host={host} disabled={!hasTracks || !host} onPlay={play} playingFrom={playback?.from} />
+          <TranscriptTab store={store} id={id} info={info} editable={editable} recording={recordingHere} mode={hs.transcription} processing={processing} host={host} disabled={!hasTracks || !host} onPlay={play} playingFrom={playback?.from} />
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Feedback 18. 11.: Im Block war nicht zu sehen, ob gerade transkribiert wird. Die Anzeige oben rechts sagt es immer
+ * ausdrücklich – mit pulsierendem Punkt nur, solange wirklich etwas läuft – und nennt, wann das Transkript kommt,
+ * wenn es nicht live entsteht (Whisper auf dem Server transkribiert erst nach dem Stop).
+ */
+export function liveStatus(o: { recording: boolean; paused: boolean; processing: boolean; pending: boolean; transcription: MeetingHostState["transcription"]; pendingReason?: string | undefined }):
+  { state: "live" | "recording" | "paused" | "processing" | "pending"; label: string; detail?: string } | undefined {
+  if (o.recording) {
+    if (o.paused) return { state: "paused", label: "Paused", detail: "Not recording" };
+    switch (o.transcription) {
+      case "live": return { state: "live", label: "Transcribing" };
+      case "after": return { state: "recording", label: "Recording", detail: "Transcript when you stop" };
+      case "deferred": return { state: "recording", label: "Recording", detail: `Transcript ${whenLater(o.pendingReason)}` };
+      case "off": return { state: "recording", label: "Recording", detail: "No transcription set up" };
+      default: return { state: "recording", label: "Recording" };
+    }
+  }
+  if (o.processing) return { state: "processing", label: "Transcribing…" };
+  if (o.pending) return { state: "pending", label: "Not transcribed yet" };
+  return undefined;
+}
+
+/** „when this device is plugged in“ bleibt, der allgemeine Grund („comes later“) wird zu „later“. */
+const whenLater = (reason: string | undefined) => (!reason || reason === "comes later" ? "later" : reason);
+
+function LiveStatus(props: { hs: MeetingHostState; host: MeetingHost | undefined; recording: boolean; processing: boolean; pending: boolean }) {
+  const { hs, host } = props;
+  const s = liveStatus({
+    recording: props.recording, paused: hs.paused, processing: props.processing, pending: props.pending, transcription: hs.transcription,
+    pendingReason: hs.transcription === "deferred" ? host?.pendingReason?.() : undefined,
+  });
+  if (!s) return null;
+  return (
+    <span className="bx2-meet-live" role="status" aria-live="polite" data-testid="meeting-live-status" data-state={s.state}>
+      <span className="bx2-meet-live-dot" aria-hidden />
+      <span className="bx2-meet-live-label">{s.label}</span>
+      {props.recording ? <span className="bx-meet-clock" aria-label="Recording time" data-testid="meeting-clock">{timecode(hs.elapsed)}</span> : null}
+      {s.detail ? <span className="bx2-meet-live-detail">{s.detail}</span> : null}
+    </span>
   );
 }
 
@@ -389,14 +430,18 @@ function SummaryTab(props: {
 // MARK: Transkript
 
 function TranscriptTab(props: {
-  store: WorkspaceStore; id: string; info: MeetingInfo; editable: boolean; recording: boolean; processing: boolean; host: MeetingHost | undefined; disabled: boolean; onPlay: (s: number) => void; playingFrom: number | undefined;
+  store: WorkspaceStore; id: string; info: MeetingInfo; editable: boolean; recording: boolean; mode: MeetingHostState["transcription"]; processing: boolean; host: MeetingHost | undefined; disabled: boolean; onPlay: (s: number) => void; playingFrom: number | undefined;
 }) {
   const { store, info } = props;
   const segments = meetingTranscript(store, props.id);
   if (segments.length === 0) {
     const text = !props.host?.hasTranscriber()
       ? "Transcription isn't set up on this device yet. Set it up in Settings → Meeting notes. The recording and your timestamped notes are saved with the meeting."
-      : props.recording ? "Listening… text appears after the first sentence." : "No transcript yet. Start transcribing to get one.";
+      : props.recording
+        ? props.mode === "after" ? "Recording. The transcript is made when you stop."
+          : props.mode === "deferred" ? `Recording. The transcript is made ${whenLater(props.host.pendingReason?.())}.`
+            : "Listening… text appears after the first sentence."
+        : props.processing ? "Transcribing the recording…" : "No transcript yet. Start transcribing to get one.";
     // Feedback 17. 11.: Aufnahme von vorher (ohne Transkription gemacht) nachträglich transkribieren.
     const host = props.host;
     const later = host?.transcribeNow && host.hasTranscriber() && props.editable && !props.recording && !props.processing && !props.disabled && (info.tracks?.length ?? 0) > 0 && !info.transcribePending;
