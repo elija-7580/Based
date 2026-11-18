@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Hilfsprozess für calendar-day.test.ts: läuft mit der Zeitzone aus TZ. Ohne Argument: „2026-11-18“ lesen und als JSON
 // ausgeben (schreibendes Gerät); mit JSON-Argument: so zeigen, wie es dieses Gerät zeigt.
 import { longDate, parseDate } from "../../src/query/value.js";

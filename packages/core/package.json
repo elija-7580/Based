@@ -18,6 +18,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/rbush": "^4.0.0"
+    "@types/rbush": "^4.0.0",
+    "tsx": "^4.23.15"
   }
 }
