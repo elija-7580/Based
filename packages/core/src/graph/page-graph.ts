@@ -6,6 +6,7 @@ import { pageIDFromLink } from "../interop/html.js";
 import { titleOf } from "../query/engine.js";
 import type { Block } from "../model/records.js";
 import { PRIVATE_SECTION } from "../store/outline.js";
+import { LINK_HINTS } from "../store/links.js";
 import type { WorkspaceStore } from "../store/store.js";
 
 export type GraphNodeKind = "page" | "database" | "row";
@@ -86,7 +87,8 @@ export function buildPageGraph(store: WorkspaceStore): PageGraph {
   };
 
   const isNode = new Set<string>();
-  for (const b of store.blocks.values()) {
+  // BSD-515 (ADR 0017 B2): Knoten sind Seiten und Zeilen – Gerüst, ohne den Workspace in den Speicher zu holen.
+  for (const b of store.skeletonBlocks()) {
     if ((b.type === "page" || b.type === "databasePage") && !stateOf(b).trashed) isNode.add(b.id);
   }
 
@@ -143,8 +145,11 @@ export function buildPageGraph(store: WorkspaceStore): PageGraph {
     }
   }
 
-  // Erwähnungen und Seitenlinks im Inhalt: von der Seite, die den Block enthält, zur genannten Seite.
-  for (const b of store.blocks.values()) {
+  // Erwähnungen und Seitenlinks im Inhalt: von der Seite, die den Block enthält, zur genannten Seite. BSD-515: nur
+  // Blöcke, deren JSON überhaupt verweisen kann (LINK_HINTS) – mit Laden nach Bedarf als Suche in der Datei.
+  const linking: Block[] = [];
+  store.scanBlocks(LINK_HINTS, (b) => linking.push(b));
+  for (const b of linking) {
     const targets: string[] = [];
     if (Array.isArray(b.text)) {
       for (const r of b.text) {

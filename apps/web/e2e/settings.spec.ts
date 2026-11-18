@@ -258,6 +258,14 @@ for (const theme of ["light", "dark"] as const) {
       expect(after.partial).toBe(true);
       expect(after.totalBlocks).toBe(before);
       expect(after.fullLoads).toEqual([]);
+      // BSD-515 Teil 1: Library und Graph kommen aus dem Gerüst – auch sie laden nicht alles nach
+      await page.goto("/#library");
+      await expect(page.getByRole("heading", { name: "Library" })).toBeVisible();
+      await expect(page.getByText(/^Loading/)).toHaveCount(0, { timeout: 15_000 });
+      await page.goto("/#graph");
+      await expect(page.getByTestId("graph-stats")).toBeVisible({ timeout: 15_000 });
+      expect((await info()).fullLoads, "Library und Graph laden nicht alles").toEqual([]);
+      await page.goto("/#prefs-sync");
       await expect(page.getByRole("switch", { name: "Fast start (beta)" })).toBeChecked();
       // und wieder aus: nach dem Neustart wie früher
       await page.getByRole("switch", { name: "Fast start (beta)" }).click();
