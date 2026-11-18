@@ -26,6 +26,10 @@ export interface ObsidianImportOptions {
   userID?: string | null | undefined;
   isCancelled?: (() => boolean) | undefined;
   progress?: ((fraction: number) => void) | undefined;
+  /** Bezeichnung im Bericht, wenn der Baum aus einer anderen App übersetzt wurde („Roam Research graph“). */
+  label?: string | undefined;
+  /** Seitentitel je Datei (Pfad relativ zum Vault), wo der Dateiname den Titel nicht tragen kann. */
+  titles?: Map<string, string> | undefined;
 }
 
 const IMAGE = new Set(["png", "jpg", "jpeg", "gif", "webp", "avif", "bmp", "svg", "heic"]);
@@ -113,6 +117,31 @@ function outsideCode(line: string, f: (s: string) => string): string {
   return parts.map((p, i) => (i % 2 === 1 ? p : f(p))).join("");
 }
 
+/**
+ * Eingebettete Dateien stehen nach `rewriteLinks` auf eigenen Zeilen (ein Bild ist ein eigener Block). In einem
+ * Listenpunkt oder eingerückten Text zerriss das die Liste: leerer Punkt, Bild auf oberster Ebene. Hier bekommen die
+ * Zeilen ihre Einrückung zurück – ein Punkt, der nur aus der Datei besteht, wird die Datei an seiner Stelle; Text mit
+ * Datei behält den Punkt, die Datei folgt als Kind.
+ */
+function placeEmbeds(line: string): string[] {
+  if (!line.includes("\n")) return [line];
+  const parts = line.split("\n");
+  const first = parts[0]!;
+  const m = /^(\s*)((?:[-*+]|\d+[.)])\s+(?:\[[^\]]\]\s+)?)?(.*)$/.exec(first)!;
+  const indent = m[1]!, marker = m[2] ?? "", head = m[3]!;
+  if (indent === "" && marker === "") return parts;
+  const rest = parts.slice(1).map((l) => l.trim()).filter((l) => l !== "");
+  const out: string[] = [];
+  if (head.trim() !== "") {
+    out.push(indent + marker + head);
+    const child = indent + (marker === "" ? "" : "    ");
+    for (const r of rest) out.push(child + r);
+  } else {
+    for (const r of rest) out.push(indent + r);
+  }
+  return out;
+}
+
 export class ObsidianImporter {
   private records: WireRecord[] = [];
   private report = emptyReport();
@@ -153,13 +182,29 @@ export class ObsidianImporter {
   }
 
   private title(p: string): string {
+    const given = this.opts.titles?.get(this.rel(p));
+    if (given !== undefined) return given;
     if (isBundleDir(dirname(p))) return bundleTitle(p);
     return this.logseq ? logseqTitle(this.rel(p)) : basename(stripExtension(p));
   }
 
   private skipped(p: string): boolean {
     const rel = this.rel(p);
-    return hidden(rel) || (this.logseq && logseqSkip(rel));
+    return hidden(rel) || (this.logseq && logseqSkip(rel)) || this.isDrawing(p);
+  }
+
+  /** Excalidraw-Zeichnung des Obsidian-Plugins („….excalidraw.md“ bzw. Frontmatter `excalidraw-plugin`): der Inhalt
+   *  ist gepacktes JSON – als Seite wäre das Zeichensalat. Wird mit Hinweis übersprungen. */
+  private drawings = new Map<string, boolean>();
+  private isDrawing(p: string): boolean {
+    if (extname(p).toLowerCase() !== "md") return false;
+    let d = this.drawings.get(p);
+    if (d === undefined) {
+      d = /\.excalidraw\.md$/i.test(p) || /^---\n[\s\S]*?\bexcalidraw-plugin:/.test((this.files.readText(p) ?? "").slice(0, 600).replaceAll("\r\n", "\n"));
+      this.drawings.set(p, d);
+      if (d) this.warn(`Skipped ${this.rel(p)} (Excalidraw drawings aren't supported yet)`);
+    }
+    return d;
   }
 
   private rel(p: string): string {
@@ -248,7 +293,8 @@ export class ObsidianImporter {
       }
       if (inComment && line.trim() === "") continue;
       line = line.replace(/\s+\^[A-Za-z0-9-]+\s*$/, "");
-      out.push(outsideCode(line, (s) => highlightToMark(this.rewriteLinks(s, from), this.bear)));
+      const rewritten = outsideCode(line, (s) => highlightToMark(this.rewriteLinks(s, from), this.bear));
+      out.push(...placeEmbeds(rewritten));
     }
     return out.join("\n");
   }
@@ -398,7 +444,7 @@ export class ObsidianImporter {
     const title = rootTitle ?? (this.vault === "" ? "Obsidian vault" : basename(this.vault));
     const id = this.folder(this.vault, "w", key, title);
     this.report.rootIDs.push(id);
-    this.report.warnings.unshift(`Obsidian vault “${title}”: ${this.ids.size} notes`);
+    if (this.opts.label === undefined) this.report.warnings.unshift(`${this.logseq ? "Logseq graph" : this.bear ? "Bear export" : "Obsidian vault"} “${title}”: ${this.ids.size} notes`);
     this.opts.progress?.(1);
     return { records: this.records, rootKeys: [key], report: this.report };
   }

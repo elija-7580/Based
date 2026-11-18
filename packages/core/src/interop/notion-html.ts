@@ -28,7 +28,7 @@ const TITLE_PROPERTY_ID = "title";
 /** „Project Plan 1a2b…(32 hex)“ → „Project Plan“ (Swift `NotionImporter.cleanTitle`). */
 export function cleanTitle(name: string): string {
   let base = name;
-  for (const ext of [".md", ".csv"]) if (base.toLowerCase().endsWith(ext)) base = base.slice(0, -ext.length);
+  for (const ext of [".md", ".csv", ".markdown", ".txt"]) if (base.toLowerCase().endsWith(ext)) { base = base.slice(0, -ext.length); break; }
   if (base.endsWith("_all")) base = base.slice(0, -4);
   return trimSpaces(base.replace(/\s+[0-9a-f]{32}$/i, ""));
 }

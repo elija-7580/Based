@@ -189,7 +189,7 @@ function ImportSection({ client, navigate }: SettingsSectionProps) {
   const [open, setOpen] = useState<"import" | "export" | undefined>();
   return (
     <Group>
-      <Row label="Import" hint="A Notion export (HTML or Markdown & CSV), Markdown or CSV files, or a Based archive">
+      <Row label="Import" hint="From Notion, Obsidian, Evernote and other apps, Markdown or CSV files, or a Based archive">
         <BasedButton label="Import…" onClick={() => setOpen("import")} />
       </Row>
       <Row label="Export" hint="Everything as Markdown, HTML or a lossless Based archive">
