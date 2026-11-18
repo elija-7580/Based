@@ -2,7 +2,7 @@
 // BSD-153: Dedicated Worker mit dem Store. SQLite-WASM auf OPFS (opfs-sahpool); geht das nicht (kein OPFS, privates
 // Fenster, Datei schon in einem anderen Tab offen), läuft der Workspace im Speicher und der Status sagt es.
 import { openBlockedMessage, openWorkspace, SqliteHistoryStorage, SqliteYDocStorage } from "@based/sync";
-import { openWasmDatabase } from "@based/sync/wasm";
+import { openWasmDatabase, preloadWasm } from "@based/sync/wasm";
 import { IDBAssetStore } from "./assets.js";
 import { StoreHost } from "./host.js";
 import { openOpfsAssets } from "./opfsAssets.js";
@@ -10,6 +10,9 @@ import { openOpfsModels } from "./opfsModels.js";
 import type { Event, RequestMessage } from "./protocol.js";
 
 declare const self: DedicatedWorkerGlobalScope;
+
+// SQLite-WASM lädt und übersetzt schon, während der Tab die Startwerte für `init` zusammensucht.
+preloadWasm();
 
 const host = new StoreHost({
   post: (e: Event) => self.postMessage(e),

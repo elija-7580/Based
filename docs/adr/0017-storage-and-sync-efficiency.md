@@ -158,6 +158,7 @@ auf seinem echten Workspace nach main.
 | Teil | Stand | Gemessen |
 | --- | --- | --- |
 | A1 Vorbereitete Anweisungen im WASM-Treiber, Laden in Stücken | auf main (17.11.) | 100 000 Records schreiben: Chromium 6,2 s → 4,3 s, WebKit 6,0 s → 4,0 s (1,5×, nicht die erwarteten 3×); Start unverändert 2,1 s / 2,4–3,0 s |
+| A1b Laden in Stücken: SQLite setzt je 2 048 Zeilen einen JSON-Text zusammen (ein Weg aus WASM und ein `JSON.parse` je Stück statt je Zeile); Prüfung je Zeile unverändert, aber direkt gegen das Schema der Art; SQLite-WASM lädt schon beim Start des Workers | auf main (18.11.) | 237 000 Records, voll geladen: `openWorkspace` WebKit 3,25 s → 1,6 s, Chromium 3,1 s → 1,35 s; Start bis Seitenleiste 4,4 s → 2,6 s bzw. 4,0 s → 2,1 s. Unlesbare Zeilen und ihre Meldungen wie vorher (`scan-records.test.ts`, beide Treiber) |
 | A3 Pull nach Größe, gzip für Push und Antworten | auf main (17.11.) | 12 000 Records: 24 Pull-Anfragen → höchstens 4; Seiten und Push auf rund ein Fünftel. Nur gegen einen Server mit diesem Stand; ein älterer bekommt unveränderte Anfragen |
 | A4 Dauerhafter Web-Speicher, Zeile „Browser storage“ | auf main (17.11.) | – |
 | A7 Zeitmessung `@perf` mit 100 000 Records | auf main (17.11., BSD-495: `scale-perf`) | Schwellen: Start 5 s (WebKit 7 s), Schreiben 9 s; Unit: erster Sync 6 s, Start 4 s, Heap 150 MB |

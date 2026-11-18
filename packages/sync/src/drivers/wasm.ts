@@ -53,6 +53,17 @@ async function installPool(sqlite3: Sqlite3, waitMs: number): Promise<Pool> {
   }
 }
 
+/**
+ * SQLite-WASM schon holen und übersetzen, bevor die erste Datei geöffnet wird (store.worker.ts ruft das beim Laden
+ * des Workers): das läuft dann neben dem Warten auf `init` statt danach. Öffnet nichts und fasst OPFS nicht an.
+ */
+export function preloadWasm(): void {
+  if (module) return;
+  const m = (module = sqlite3InitModule());
+  // Scheitert das Laden, versucht es der erste `openWasmDatabase` neu (und meldet den Fehler dort).
+  m.catch(() => { if (module === m) module = undefined; });
+}
+
 export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatabase> {
   const sqlite3 = await (module ??= sqlite3InitModule());
   let db: Database;
