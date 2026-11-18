@@ -1,10 +1,10 @@
 // Seiten: suchen, lesen, auflisten, anlegen, schreiben (Markdown), umbenennen, verschieben, duplizieren, Papierkorb,
 // Favoriten, Backlinks. Jedes Schreib-Werkzeug ist eine Transaktion (ein Undo-Schritt, alles oder nichts).
 import {
-  backlinksTo, duplicatePages, insertPage, isPageLike, isTrashed, keyOf, MarkdownImporter, movePages, pageLocation, PRIVATE, replaceInRichText, restorePages, setFavorite, sortKeys,
+  backlinksTo, duplicatePages, putMarkdownBlocks, insertPage, isPageLike, isTrashed, keyOf, MarkdownImporter, movePages, pageLocation, PRIVATE, replaceInRichText, restorePages, setFavorite, sortKeys,
   trashedPages, trashPages, type Block,
 } from "@based/core";
-import { bool, limitSchema, needStr, obj, offsetSchema, optNum, optStr, pageID, paged, putMarkdownBlocks, S, str, ToolError, type ToolDef } from "./base.js";
+import { bool, limitSchema, needStr, obj, offsetSchema, optNum, optStr, pageID, paged, S, str, ToolError, type ToolDef } from "./base.js";
 import type { ToolCtx } from "./context.js";
 
 const ID = { page_id: "id" };

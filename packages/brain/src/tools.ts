@@ -22,6 +22,7 @@ import { checkArgs, obj, PAGE_URI, ToolError, type Args, type ToolDef, type Tool
 import type { ToolCtx } from "./tools/context.js";
 import { Databases } from "./tools/databases.js";
 import { pageTools } from "./tools/pages.js";
+import { blockTools } from "./tools/blocks.js";
 import { boardTools } from "./tools/boards.js";
 import { databaseTools } from "./tools/database-tools.js";
 import { brainTools } from "./tools/brain-tools.js";
@@ -87,7 +88,7 @@ export class WorkspaceTools implements ToolHost {
   constructor(readonly store: WorkspaceStore, private readonly opts: WorkspaceToolsOptions = {}) {
     this.ctx = this.context();
     const groups = opts.groups ? new Set(opts.groups) : undefined;
-    const all = [...guideTools(), ...pageTools(this.ctx), ...boardTools(this.ctx), ...databaseTools(this.ctx), ...brainTools(this.ctx), ...agentTools(this.ctx), ...(opts.extra?.(this.ctx) ?? []), this.undoTool()];
+    const all = [...guideTools(), ...pageTools(this.ctx), ...blockTools(this.ctx), ...boardTools(this.ctx), ...databaseTools(this.ctx), ...brainTools(this.ctx), ...agentTools(this.ctx), ...(opts.extra?.(this.ctx) ?? []), this.undoTool()];
     for (const d of all) {
       if (groups && !groups.has(d.group)) continue;
       if (this.defs.has(d.spec.name)) throw new Error(`Tool ${d.spec.name} is defined twice`);

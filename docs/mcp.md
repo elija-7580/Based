@@ -3,11 +3,14 @@
 Based speaks the Model Context Protocol, so Claude Desktop, ChatGPT, Cursor, Claude Code, Codex and any other MCP
 client can do in the workspace what the user does in the app — and learn how Based works before they act.
 
-- **Implementation**: `legacy/Swift/BasedBrain/Sources/BasedBrain/MCP/MCPServer.swift` (JSON-RPC 2.0, transport-agnostic),
-  tools in `Agent/AgentTools.swift`, guide in `MCP/BasedGuide.swift`.
-- **TypeScript server** (`apps/server`, BSD-158): official MCP SDK, stdio and `POST /mcp`; so far the page tools
-  (`search`, `read_page`, `list_pages`, `create_page`, `append_markdown`, `replace_page_content`, `update_page`,
-  `trash_page`, `restore_page`, `list_trash`, `based_guide`) and the page/guide resources. See `docs/server.md`.
+- **One tool layer** (docs/agent-parity.md): every tool is built once, in `packages/brain/src/tools/` (`WorkspaceTools`).
+  The server (`apps/server/src/mcp.ts`, official MCP SDK) only registers them with name, description and JSON schema
+  and passes calls through; Based's own agents (chat in the app, runs on the server) use the same layer. Only
+  `upload_file` is built by the server (network, files) and plugged into the same layer. Pure logic lives in
+  `packages/core` (`editor/agent.ts`, `whiteboard/agent.ts`). The Swift server in `legacy/` is frozen.
+- **Rules that hold for every tool**: arguments are checked against the schema before anything runs, and the answer
+  says what would be right; every writing call is one transaction (one undo step, all or nothing, one sync change);
+  what an agent writes carries its origin (BSD-522); `undo_last` takes back the caller's last writing call.
 - **Transports**: `based-server --stdio --db …` (one JSON message per line; what desktop clients spawn) and
   Streamable HTTP `POST /mcp` on the server (JSON responses, `Authorization: Bearer <token>`).
   Coding sessions started by Based get `POST /mcp/session/<id>` (session-scoped; adds the `approval` tool).
@@ -27,34 +30,67 @@ token) and ask "Which projects are running and what needs me?".
 
 | Tool | What it does |
 |---|---|
-| `based_guide` | How Based works, by topic (overview, markdown, databases, agents, safety) |
-| `search` | Titles and full text of pages and rows; ids, links, snippets. With a semantic index (app: on-device; server: `--embeddings`) also by meaning (keyword + vector, Reciprocal Rank Fusion) |
+| `based_guide` | How Based works, by topic (overview, markdown, brain, safety) |
+| `search` | Titles, full text and row values; typos allowed; `within` a page or database, `title_only` |
 | `read_page` | A page as Markdown, with its properties when it is a database row |
-| `list_pages` | Top-level pages or the sub-pages of a page |
-| `create_page` | New page from Markdown under a parent (or at the root) |
+| `list_pages` | Top-level pages or the sub-pages of `parent` |
+| `create_page` | New page from Markdown under `parent` (or at the root) |
 | `append_markdown` | Append Markdown blocks to a page |
 | `replace_page_content` | Replace the whole body (only when the user wants a rewrite) |
-| `find_replace` | Replace a passage inside a page's blocks |
+| `find_replace` | Replace a passage inside a page's blocks; an error when the text is not found |
 | `update_page` | Title, emoji icon, remove cover |
 | `move_page` | Move under another page or to the root |
 | `duplicate_page` | Copy a page with its content |
-| `trash_page` / `restore_page` / `list_trash` | Trash (restorable) |
+| `trash_page` / `restore_page` / `list_trash` | Trash (restorable); works for database rows too |
 | `backlinks` | Pages that link to or mention a page |
 | `set_favorite` | Add to / remove from Favorites |
-| `add_html` | Live HTML block (sandboxed web view) |
-| `add_mermaid` | Mermaid diagram block |
-| `add_button` | Notion-style button (add a row / open a page) |
+| `undo_last` | Take back your last writing call (exactly that step; what was edited since stays) |
+
+### Blocks (page editor)
+
+What a person does with the handle, the block menu and the slash menu, as text.
+
+- `read_blocks { id, limit?, offset? }` – one line per block: short handle, kind, text, `{style}`; indentation shows
+  nesting (list items, toggles, columns). A normal page stays under 2 000 characters.
+
+```
+1a2b h2 "Plan"
+3c4d text "First paragraph with **bold**."
+5e6f cols 2
+  7a8b col {ratio=0.6}
+    9c0d image "beach.jpg" based-asset:… {width=400 caption="Day one"}
+  1e2f col
+    3a4b todo [x] "pack"
+```
+
+- `edit_blocks { id, script }` – one statement per line, the whole script is one transaction and one undo step. A
+  wrong line is skipped with its reason, the others are applied.
+
+```
+<kind>: text            <kind> name: text         md: <Markdown, any number of blocks>
+set h: new text         set h {attrs}             move h [h…] {after=|before=|in=|left=|right=|page=<id>}
+indent h…   outdent h…  dup h…   del h…           check h…   uncheck h…   uncols h
+cell h 2,1: text        row h add | del 3         col h add | del 2
+```
+
+Kinds: text h1 h2 h3 h4 bullet number todo toggle quote callout code divider equation image video audio file pdf
+bookmark embed toc table cols page database board meeting. Place with `{after=h}`, `{before=h}`, `{in=h}`,
+`{left=h}`, `{right=h}` (a column beside `h`); without a place a new block follows the previous one. Attributes:
+`{color=blue}` / `{bg=blue}`, `{type=h2}` (turn into; also `page`, `equation`), `{toggle}`, `{open=false}`, `{checked}`,
+`{icon=💡}`, `{lang=js wrap}`, `{show=code|both|result}` (HTML and Mermaid), `{width=400 align=center caption="…"}`,
+`{ratio=0.6}` on a column (`h.1` = first column), `{header=false}` on tables. Media take a file ref (`list_files`,
+`upload_file`) or an https URL. The answer lists the handles of named blocks, and the page or database id of new
+sub-pages and databases.
 
 ### Databases
 
 | Tool | What it does |
 |---|---|
-| `list_databases` | Databases with ids and property schemas |
-| `query_database` | Rows with property values as text |
-| `add_row` / `update_row` | Set properties by name with plain strings |
-| `create_database` / `update_database` | Create; rename, add / rename / retype / delete properties |
+| `list_databases` / `database_schema` | Databases with ids, row counts and property schemas; one schema with allowed values |
+| `query_database` | Rows with property values as text (dates as YYYY-MM-DD); `search`, `sort`, paged |
+| `add_row` / `update_row` | Title and properties by name with plain strings; a new select option is created |
+| `create_database` / `update_database` | Create; rename, add / rename / retype / delete properties, add options |
 | `list_views` / `create_view` / `update_view` / `delete_view` | Views with filters, sorts, grouping |
-| `create_chart` | Chart view (bar, line, pie …) |
 
 ### Agent brain (BSD-541)
 
@@ -89,39 +125,21 @@ Not ported from the Swift server: `read_skill_file`, `list_connections`, the res
 
 | Tool | What it does |
 |---|---|
-| `list_projects` | Projects with status, goal, folder, counts; filter `status`, paged |
-| `get_project` | Goal, status, overview page (Status / Next steps / Latest updates), pages, chats, recent runs |
+| `list_projects` / `get_project` | Projects with status, goal and run count (filter `status`); one project by id or name with recent runs |
 | `create_project` | New project with overview page; refuses a duplicate name |
-| `update_project_status` | Dated entry in "Latest updates", optional status change |
-| `list_runs` | Runs (chat, session, schedule, sub-agent, main) by status / kind / project / parent, paged |
-| `get_run` | One run: fields, result, protocol, sub-runs |
-| `inbox` | What waits for the user, with answer options; `all` includes answered items; paged |
-| `resolve_inbox` | Answer an item: an option id for permission requests, free text for questions. First answer wins. Refused on session-scoped endpoints (a coding agent can't approve itself); in-app agents always need an explicit allow rule |
-| `ask_main_agent` | Hand a task to the main agent; returns the sub-agent run id at once (server and the app's local `/mcp`, never on session endpoints) |
+| `update_project_status` | Dated entry on the project page, optional status change |
+| `list_runs` / `get_run` | Runs newest first (filter `status`); one run with usage, result and sub-runs |
+| `inbox` | Runs that wait for the user |
+| `resolve_inbox` | Allow or deny the tool call a run asked for; only with the rule `allow based.resolve_inbox` |
+| `ask_main_agent` | Hand a task to the main agent; it appears on Home and its run shows up in `list_runs` |
 
-### Captures (BSD-63)
-
-Quick notes, voice-note transcripts and links land in the Brain database **Captures** (Source, Status New / Transcribed / Filed / Discarded, Captured, Link, Audio, Filed to, Note). The shipped agent **Sort captures** (`daily 23:00`) files them with these tools.
-
-| Tool | What it does |
-|---|---|
-| `capture` | Keep a thought or link for the user (`text`, `url`, `source`); lands in Captures |
-| `list_captures` | Captures waiting to be sorted, oldest first (`all` includes filed / discarded); paged |
-| `file_capture` | File one capture: `project` (Latest updates), `new_page` (inside a project), `page` (append to a project page), `task` (the user's Tasks / To-dos / Aufgaben database), `memory`, `ask` (Inbox question with a suggestion), `discard`. Only project pages, the task database and Memories are edited; anything else becomes a question |
-
-### Host tools (server with coding agents)
-
-| Tool | What it does |
-|---|---|
-| `spawn_agent` / `wait_for_agents` | Start coding sub-agents and wait for them |
-| `agent_sessions` / `read_agent_session` / `message_agent` / `stop_agent` | List, read, message and stop coding sessions |
-| `approval` | Claude Code permission prompt (only on `/mcp/session/<id>`) |
-
-External tools of connected MCP servers appear as `<connection>__<tool>`.
+The app's own chat gets the groups pages, blocks, boards, files and databases from the same layer; memories, skills,
+runs and approvals it handles through its own hosts (`WorkspaceToolsOptions.groups`).
 
 ## Permission rules
 
-Every writing tool (all tools without `readOnlyHint`) checks the main agent's permission rules first (Settings →
+Every writing tool (`write` in its definition; MCP shows it as `readOnlyHint: false`, and `destructiveHint` for the
+ones that can discard something) checks the main agent's permission rules first (Settings →
 Agents & AI, BSD-98), the same way the chat does: tool name `based.<tool>`, the main argument, and the page paths for
 `path:` rules. `deny` refuses with the reason; `ask` refuses as well, because an MCP client can't ask the user — the
 answer says so. Without rules nothing changes. Reading tools are never affected. (TypeScript server: BSD-221 Teil 3e.)
@@ -139,8 +157,13 @@ Every enabled skill is a prompt (name, description, optional argument `input`).
 
 ## Not yet
 
-- Comments and mentions as tools.
-- `ask_main_agent` in the app's local MCP host (only the server offers it).
+What a person can do in the app and an agent can't yet is listed in `docs/agent-parity-matrix.md`.
+
+- Only in the frozen Swift server, not in the TypeScript one: `add_button`, `create_chart`, `read_skill_file`,
+  `list_connections`, captures (`capture`, `list_captures`, `file_capture`) and the host tools for coding sessions
+  (`spawn_agent`, `wait_for_agents`, `agent_sessions`, `read_agent_session`, `message_agent`, `stop_agent`, `approval`).
+  HTML and Mermaid blocks are written as code blocks (`code: … {lang=html show=result}`).
+- Comments (come with multi-user).
 - Server-sent notifications (`listChanged`, resource subscriptions).
 
 ## Whiteboards (BSD-508)

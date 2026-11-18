@@ -1,6 +1,6 @@
 // Agent-Parität (docs/agent-parity.md, Regel 1): die eine Werkzeug-Schicht. Hier liegt, was jede Werkzeug-Datei
 // braucht: die Definition eines Werkzeugs, Schema-Helfer, die Prüfung der Argumente und kleine Text-Helfer.
-import { makeBlock, makeRecordID, sortKeys, toRichText, type Author, type BlockProps, type JSONValue, type MarkdownBlock, type Tx, type WorkspaceStore } from "@based/core";
+import type { Author, JSONValue } from "@based/core";
 import type { ToolSpec } from "../messages.js";
 
 export const PAGE_URI = "based://page/";
@@ -168,16 +168,5 @@ export const needStr = (a: Args, k: string): string => {
 };
 export const optNum = (a: Args, k: string, fallback: number): number => (typeof a[k] === "number" ? Math.max(0, Math.floor(a[k] as number)) : fallback);
 
-/** Markdown-Blöcke in einer Transaktion schreiben; `firstID` = ID des ersten Blocks (Idempotenz im Ausführer). */
-export function putMarkdownBlocks(store: WorkspaceStore, tx: Tx, items: MarkdownBlock[], parent: string, keys: string[], firstID?: string): string[] {
-  const ids: string[] = [];
-  items.forEach((item, i) => {
-    const props: BlockProps = { ...item.props };
-    if (item.type === "table" && props.tableColumns === undefined) props.tableColumns = 2;
-    const id = i === 0 && firstID ? firstID : makeRecordID();
-    ids.push(id);
-    tx.put({ kind: "block", data: makeBlock({ id, type: item.type, parent, sk: keys[i]!, text: toRichText(item.text), props, createdBy: store.userID }, store.now()) });
-    if (item.children.length > 0) putMarkdownBlocks(store, tx, item.children, "b:" + id, sortKeys(store, "b:" + id, { kind: "end" }, item.children.length));
-  });
-  return ids;
-}
+// Markdown-Blöcke in einer Transaktion schreiben: die Logik liegt im Kern (editor/agent.ts), hier nur der alte Importweg.
+export { putMarkdownBlocks } from "@based/core";

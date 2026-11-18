@@ -194,11 +194,11 @@ describe("WorkspaceTools – Seiten", () => {
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
     expect(write).toEqual([
       "create_page", "append_markdown", "replace_page_content", "find_replace", "update_page", "move_page", "duplicate_page", "trash_page", "restore_page", "set_favorite",
-      "draw_board", "add_row", "update_row", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
+      "edit_blocks", "draw_board", "add_row", "update_row", "create_database", "update_database", "create_view", "update_view", "delete_view", "remember",
       "ask_main_agent", "resolve_inbox", "create_project", "update_project_status", "undo_last",
     ]);
     expect(tools.specs.map((s) => s.name).filter((n) => !tools.isWrite(n))).toEqual([
-      "based_guide", "search", "read_page", "list_pages", "list_trash", "backlinks", "read_board", "list_files", "list_databases", "database_schema", "query_database", "list_views",
+      "based_guide", "search", "read_page", "list_pages", "list_trash", "backlinks", "read_blocks", "read_board", "list_files", "list_databases", "database_schema", "query_database", "list_views",
       "recall", "related", "about_me", "list_skills", "load_skill", "list_runs", "get_run", "inbox", "list_projects", "get_project",
     ]);
     // was etwas verwerfen kann, ist als solches markiert
@@ -415,6 +415,77 @@ describe("Agent-Parität: Regeln für alle Werkzeuge", () => {
       const props = Object.keys((d.spec.inputSchema as { properties: object }).properties);
       for (const now of Object.values(d.aliases ?? {})) expect(props, d.spec.name).toContain(now);
     }
+  });
+});
+
+// Agent-Parität 2/7: einzelne Blöcke lesen und ändern (die Logik ist im Kern getestet: core/test/editor-agent.test.ts).
+describe("Seiten-Editor für Agenten: read_blocks, edit_blocks", () => {
+  const handleOf = (outline: string, needle: string) => outline.split("\n").find((l) => l.includes(needle))!.trim().split(" ")[0]!;
+
+  it("lesen mit Kennungen, an einer Stelle einfügen, nebeneinander stellen, färben – ein Aufruf, ein Undo-Schritt", () => {
+    const { store, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Trip", markdown: "Intro\n\n![map](https://example.com/map.png)\n\n- pack\n- book\n\nThird paragraph" }));
+    const outline = ok("read_blocks", { id });
+    expect(outline.split("\n").map((l) => l.replace(/^[0-9a-f]+ /, ""))).toEqual(['text "Intro"', 'image https://example.com/map.png {caption="map"}', 'bullet "pack"', 'bullet "book"', 'text "Third paragraph"']);
+    const h = (needle: string) => handleOf(outline, needle);
+    const before = snapshot(store);
+    const out = ok("edit_blocks", { id, script: `h2 s: Checklist {before=${h("pack")}}\nmove ${h("Third")} {right=${h("image")}}\nset ${h("pack")} {type=todo checked}\ncallout c: **Leave at 7** {bg=yellow icon=⏰ after=${h("book")}}` });
+    expect(out.split("\n")[0]).toBe("Edited “Trip”: 2 added, 1 changed, 1 moved, 0 removed.");
+    expect(out.split("\n")[1]).toMatch(/^Handles: s=[0-9a-f]{4,} c=[0-9a-f]{4,}$/);
+    expect(ok("read_blocks", { id }).split("\n").map((l) => l.replace(/^(\s*)[0-9a-f]+ /, "$1"))).toEqual([
+      'text "Intro"', "cols 2", "  col", '    image https://example.com/map.png {caption="map"}', "  col", '    text "Third paragraph"',
+      'h2 "Checklist"', 'todo [x] "pack"', 'bullet "book"', 'callout "**Leave at 7**" {bg=yellow icon=⏰}',
+    ]);
+    // read_page zeigt dasselbe als Markdown
+    expect(ok("read_page", { id })).toContain("- [x] pack");
+    store.undo();
+    expect(snapshot(store), "alle vier Zeilen sind ein Undo-Schritt").toBe(before);
+  });
+
+  it("falsche Zeilen stehen in der Antwort; ändert keine Zeile etwas, ist es ein Fehler", () => {
+    const { store, ok, call, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Doc", markdown: "one" }));
+    const mixed = ok("edit_blocks", { id, script: "text: two\ndel zzzz" });
+    expect(mixed).toBe("Edited “Doc”: 1 added, 0 changed, 0 moved, 0 removed.\nSkipped:\n- line 2: del zzzz — no block zzzz on this page (read_blocks shows the handles)");
+    const before = snapshot(store);
+    const none = call("edit_blocks", { id, script: "del zzzz\nsticker: x" });
+    expect(none.isError).toBe(true);
+    expect(none.text).toMatch(/^Nothing was changed\.\n- line 1: del zzzz — no block zzzz/);
+    expect(snapshot(store)).toBe(before);
+  });
+
+  it("neue Unterseite und Datenbank: die Antwort nennt ihre IDs für den nächsten Aufruf", () => {
+    const { store, ok, idIn } = setup();
+    const id = idIn(ok("create_page", { title: "Project" }));
+    const out = ok("edit_blocks", { id, script: "page p: Notes\ndatabase d: Tasks {view=board}" });
+    const pageID = /p=\S+ \(page id: ([^)]+)\)/.exec(out)![1]!;
+    const dbID = /d=\S+ \(database id: ([^)]+)\)/.exec(out)![1]!;
+    expect(store.blocks.get(pageID)).toMatchObject({ type: "page", parent: "b:" + id });
+    expect(ok("add_row", { id: dbID, title: "First task" })).toContain("to “Tasks”");
+    expect(ok("append_markdown", { id: pageID, markdown: "hello" })).toContain("“Notes”");
+  });
+
+  it("Dateien aus dem Workspace in eine Seite legen; undo_last nimmt den Aufruf zurück", () => {
+    const store = memoryStore();
+    const hash = "d".repeat(64);
+    const tools = new WorkspaceTools(store, { fileInfo: (ref) => (ref.endsWith(hash) ? { name: "beach.jpg", mime: "image/jpeg", width: 1200, height: 800, size: 2048 } : undefined) });
+    const run = (name: string, input: Record<string, unknown>) => { const r = tools.callSync(name, input as never); expect(r.isError, r.text).toBe(false); return r.text; };
+    const id = /\(id: ([^)]+)\)/.exec(run("create_page", { title: "Album", markdown: "Summer" }))![1]!;
+    run("edit_blocks", { id, script: `file: based-asset:${hash} {width=480 caption="Day one"}` });
+    expect(run("read_blocks", { id })).toMatch(new RegExp(`image "beach.jpg" based-asset:${hash} \\{width=480 caption="Day one"\\}$`));
+    expect(run("undo_last", {})).toContain("Undid edit_blocks");
+    expect(run("read_blocks", { id }).split("\n")).toHaveLength(1);
+  });
+
+  it("ein Whiteboard hat seine eigenen Werkzeuge; Papierkorb und unbekannte Seite sind Fehler", () => {
+    const { store, ok, call, idIn } = setup();
+    const board = idIn(ok("draw_board", { script: "note a: x" }));
+    expect(call("read_blocks", { id: board }).text).toBe("That page is a whiteboard. Use read_board and draw_board.");
+    expect(call("edit_blocks", { id: board, script: "text: x" }).isError).toBe(true);
+    const id = idIn(ok("create_page", { title: "Gone" }));
+    trashPages(store, [id]);
+    expect(call("edit_blocks", { id, script: "text: x" }).text).toContain("is in the Trash");
+    expect(call("read_blocks", { id: "nope" }).text).toBe("No page with id nope");
   });
 });
 

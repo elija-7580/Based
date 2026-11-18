@@ -23,6 +23,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - When the user tells you something durable about themselves, their projects or people, save it with \`remember\` (one fact per call, link the pages it is about).
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
+- To change single blocks (insert at a place, move, columns, colours, turn into, images, tables): \`read_blocks\` gives every block a short handle, \`edit_blocks\` takes a short script.
 - Every writing call is one step; \`undo_last\` takes your last one back.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
 - Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user (\`resolve_inbox\` answers an approval, only if the user allowed it); \`ask_main_agent\` hands Based's main agent a task; projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
@@ -45,8 +46,7 @@ export function mcpRuleRefusal(store: WorkspaceStore, tool: string, args: unknow
   const rules = main.permissions?.rules ?? "";
   if (!rules.trim()) return undefined;
   const input = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
-  // MCP-Werkzeuge nennen die Seite meist `id`
-  const target = targetPage(input) ?? (typeof input.id === "string" && store.blocks.has(input.id) ? input.id : undefined);
+  const target = targetPage(input);
   const v = Permissions.from(rules, main.permissions.mode).ruleVerdict({ tool: "based." + tool, argument: mainArgument(input), ...(target ? { paths: pagePathCandidates(store, target) } : {}) });
   if (v?.effect === "deny") return `Not allowed by the permission rules in Based (${v.reason}).`;
   if (v?.effect === "ask") return `This needs the user's approval in Based (${v.reason}). MCP clients can't ask for it – do it from Based, or change the rule in Settings → Agents & AI.`;

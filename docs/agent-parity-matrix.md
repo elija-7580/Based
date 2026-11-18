@@ -1,8 +1,11 @@
-# Agent-Parität: Bestandsaufnahme (Schritt 1)
+# Agent-Parität: Matrix
 
-Stand 18.11.2026, gelesen auf `main` (f07b0bf) plus `feat/board-markdown` (f27f9b9, dort liegt der Auftrag
-`docs/agent-parity.md`). Keine Code-Änderung. Diese Matrix wird in Schritt 4 je Eintrag fortgeschrieben
-(Lücke → „erledigt“ mit Commit). Schritt 2 ist entschieden, siehe „Entscheidungen“.
+Bestandsaufnahme vom 18.11.2026, gelesen auf `main` (f07b0bf) plus `feat/board-markdown` (f27f9b9, dort liegt der
+Auftrag `docs/agent-parity.md`). Wird je Eintrag fortgeschrieben (Lücke → „erledigt“).
+
+**Stand 18.11., Abend:** Eintrag 1/7 (eine Werkzeug-Schicht) und 2/7 (Seiten-Editor) sind gebaut – Abschnitte G und
+E unten. Die vier Punkte „Was vor der Matrix zu wissen ist“ beschreiben den Stand davor; 1, 2 und 4 sind damit
+erledigt, 3 ebenfalls (`read_blocks`, `edit_blocks`). Schritt 2 ist entschieden, siehe „Entscheidungen“.
 
 Aufwand: **S** = dünne Hülle um Logik, die es in `packages/core` schon gibt · **M** = neues Werkzeug mit eigener
 Logik oder Leseformat · **L** = braucht neue Kernlogik, einen Host-Weg (Dateien, Netz, Gerät) oder eine offene
@@ -97,50 +100,50 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
-| Grundlage | G1 Eine Werkzeug-Schicht | – | zwei Schichten (siehe oben) | Regel 1 verletzt, 12 Doppelte, eigene Agenten können weniger | Server-Werkzeuge nach `WorkspaceTools` ziehen, `mcp.ts` reicht nur durch; ein Argumentname (`id` oder `page_id`) | L |
-| Grundlage | G2 Einordnung der Schreib-Werkzeuge | – | `readOnlyHint`/`destructiveHint` von Hand | drei falsch eingeordnet (Punkt 4) | Einordnung an der Werkzeug-Definition (`write`, `destructive`), Test prüft die Liste | S |
-| Grundlage | G3 `docs/mcp.md` stimmt | – | beschreibt Swift-Stand mit | 14 Werkzeuge stehen drin, die es im TS-Server nicht gibt | Doku auf TS-Stand; Fehlendes als Zeilen dieser Matrix | S |
-| Grundlage | G4 Undo je Aufruf | ⌘Z | – | nicht einheitlich geprüft, ob jeder Schreib-Aufruf genau eine `store.transact` ist (`update_database` schreibt in mehreren Schritten) | bei G1 mitziehen, Test je Werkzeug | M |
+| Grundlage | G1 Eine Werkzeug-Schicht | – | zwei Schichten (siehe oben) | erledigt | erledigt 18.11.: alle Werkzeuge in `packages/brain/src/tools/`, `mcp.ts` meldet nur an; ein Argumentname `id` (alte Namen gehen weiter) | – |
+| Grundlage | G2 Einordnung der Schreib-Werkzeuge | – | `readOnlyHint`/`destructiveHint` von Hand | erledigt | erledigt 18.11.: `write`/`destructive` an der Definition, Test prüft die Listen | – |
+| Grundlage | G3 `docs/mcp.md` stimmt | – | beschreibt Swift-Stand mit | erledigt | erledigt 18.11. | – |
+| Grundlage | G4 Undo je Aufruf | ⌘Z | – | erledigt | erledigt 18.11.: `store.atomic` um jeden Schreib-Aufruf, dazu `undo_last` | – |
 
 ### E · Seiten-Editor
 
 | Bereich | Aktion | Wo in der Oberfläche | Werkzeug heute | Lücke | Vorschlag | Aufwand |
 | --- | --- | --- | --- | --- | --- | --- |
-| Editor | E1 Seite lesen | Seite | `read_page` (Markdown) | keine Blockkennungen, keine Farben, Spalten und Synced Blocks fallen flach | `read_blocks` | M |
+| Editor | E1 Seite lesen | Seite | `read_page` (Markdown) | erledigt | erledigt 18.11.: `read_blocks` | – |
 | Editor | E2 Text ans Ende schreiben | Tippen | `append_markdown` | – | bleibt | – |
-| Editor | E3 Block an einer Stelle einfügen | Enter, Slash, „+“ | – | nur ans Ende | `edit_blocks`: `add … after/before/into` | M |
-| Editor | E4 Text eines Blocks ändern | Tippen | `find_replace` (Textstelle) | kein gezieltes Ersetzen eines Blocks | `edit_blocks`: `set a: Text` | S |
+| Editor | E3 Block an einer Stelle einfügen | Enter, Slash, „+“ | – | erledigt | erledigt 18.11.: `edit_blocks`, `{after= before= in=}` | – |
+| Editor | E4 Text eines Blocks ändern | Tippen | `find_replace` (Textstelle) | erledigt | erledigt 18.11.: `set h: Text` | – |
 | Editor | E5 Fett, kursiv, Code, Link, Textfarbe | Format-Popup, ⌘B … | Markdown beim Schreiben | Textfarbe und Hintergrund im Text nicht ausdrückbar | Markdown bleibt; Farbe als `==`-artige Schreibweise erst bei Bedarf | M |
-| Editor | E6 Block löschen | ⌫, Blockmenü „Delete“ | `replace_page_content` (alles) | kein einzelner Block | `edit_blocks`: `del` | S |
-| Editor | E7 Block duplizieren | ⌘D, Blockmenü | – | fehlt | `edit_blocks`: `dup` | S |
-| Editor | E8 Block verschieben (in der Seite) | Griff ziehen, ⌘⇧↑/↓ | – | fehlt | `edit_blocks`: `move` | S |
-| Editor | E9 Einrücken, ausrücken, verschachteln | Tab, ⇧Tab, Ziehen | Markdown-Einrückung beim Schreiben | nachträglich nicht | `edit_blocks`: `indent`/`outdent`/`move … into` | S |
-| Editor | E10 Spalten 2–5, Breiten | Slash, Ziehen an den Rand | – | fehlt | `edit_blocks`: `cols a \| b {ratio=…}`, `uncols` | M |
-| Editor | E11 Turn into (inkl. Toggle-Überschrift, Section, Gleichung) | Blockmenü, ⌘⌥0–8 | – | fehlt | `edit_blocks`: `set a {type=…}` | S |
-| Editor | E12 Turn into page | Blockmenü, ⌘⌥9 | – | fehlt | `set a {type=page}` | S |
-| Editor | E13 Block in andere Seite verschieben | Blockmenü „Move to“, ⌘⇧P | – | fehlt | `move a to <page id>` | S |
-| Editor | E14 Blockfarbe | Blockmenü „Color“ | Callout-Farbe über `> [!NOTE]` | sonst fehlt | `set a {color=… bg=…}` mit den Namen aus core | S |
-| Editor | E15 To-do abhaken, Toggle auf/zu | Klick, ⌘Enter | `find_replace` trifft `[ ]` nicht | fehlt | `check a` / `uncheck a`; `open`/`close` | S |
-| Editor | E16 Callout-Icon | Emoji-Picker | Markdown-Callout (festes Icon) | freies Icon fehlt | `set a {icon=…}` | S |
-| Editor | E17 Code: Sprache, Umbruch | Leiste am Block | Sprache über Code-Zaun | `wrap` fehlt | `set a {lang=… wrap=true}` | S |
-| Editor | E18 Bild einfügen (Upload, Link), Breite, Ausrichtung, Unterschrift | Slash, Ablegen, Bildleiste | Bild per Link im Markdown; `upload_file` legt nur aufs Board | hochgeladene Datei kommt nicht in eine Seite; Breite, Ausrichtung, Unterschrift fehlen | `edit_blocks`: `image after a: <ref> {width= align= caption=}`; `upload_file { page }` | M |
-| Editor | E19 Video, Audio, Datei, PDF einfügen | Slash, Ablegen | – | fehlt | `file after a: <ref>` (Art aus der Datei) | S |
-| Editor | E20 Web-Bookmark, Embed | Slash, URL einfügen | – | fehlt; Vorschau holt Netz | `bookmark after a: <url>`; Vorschau nur über die Schutzregeln aus `board-files.ts` | M |
-| Editor | E21 Einfache Tabelle: Zellen, Zeile/Spalte | Tabelle | Markdown-Tabelle beim Anlegen | nachträglich nicht | `edit_blocks`: `cell a 2,3: Text`, `row`/`col` add/del | M |
-| Editor | E22 Gleichung (Block, inline) | Slash | `$$…$$`, `$…$` im Markdown | – | bleibt; in `based_guide` nennen | S |
-| Editor | E23 Mermaid, HTML-Block (Code/Ergebnis zeigen) | Slash, Blockleiste | Code-Zaun `mermaid`/`html`; `add_html`/`add_mermaid` nur Swift | Anzeige „result only“ nicht setzbar | `set a {show=result\|code\|both}` | S |
-| Editor | E24 Unterseite, Inline-Datenbank, Whiteboard im Inhalt | Slash „Page“, „Database“, „Whiteboard“ | `create_page {parent}`, `create_database {inline}`, `draw_board {parent}` | Stelle in der Seite nicht wählbar (immer ans Ende) | Argument `after` (Blockkennung) an allen dreien | S |
+| Editor | E6 Block löschen | ⌫, Blockmenü „Delete“ | `replace_page_content` (alles) | erledigt | erledigt 18.11.: `del` | – |
+| Editor | E7 Block duplizieren | ⌘D, Blockmenü | – | erledigt | erledigt 18.11.: `dup` | – |
+| Editor | E8 Block verschieben (in der Seite) | Griff ziehen, ⌘⇧↑/↓ | – | erledigt | erledigt 18.11.: `move` | – |
+| Editor | E9 Einrücken, ausrücken, verschachteln | Tab, ⇧Tab, Ziehen | Markdown-Einrückung beim Schreiben | erledigt | erledigt 18.11.: `indent`, `outdent`, `move … {in=}` | – |
+| Editor | E10 Spalten 2–5, Breiten | Slash, Ziehen an den Rand | – | erledigt | erledigt 18.11.: `{left= right=}`, `cols`, `{ratio=}`, `uncols` | – |
+| Editor | E11 Turn into (inkl. Toggle-Überschrift, Section, Gleichung) | Blockmenü, ⌘⌥0–8 | – | erledigt | erledigt 18.11.: `set h {type=…}` | – |
+| Editor | E12 Turn into page | Blockmenü, ⌘⌥9 | – | erledigt | erledigt 18.11.: `set h {type=page}` | – |
+| Editor | E13 Block in andere Seite verschieben | Blockmenü „Move to“, ⌘⇧P | – | erledigt | erledigt 18.11.: `move h {page=<id>}` | – |
+| Editor | E14 Blockfarbe | Blockmenü „Color“ | Callout-Farbe über `> [!NOTE]` | erledigt | erledigt 18.11.: `{color=}` / `{bg=}` | – |
+| Editor | E15 To-do abhaken, Toggle auf/zu | Klick, ⌘Enter | `find_replace` trifft `[ ]` nicht | erledigt | erledigt 18.11.: `check`, `uncheck`, `{open=}` | – |
+| Editor | E16 Callout-Icon | Emoji-Picker | Markdown-Callout (festes Icon) | erledigt | erledigt 18.11.: `{icon=}` | – |
+| Editor | E17 Code: Sprache, Umbruch | Leiste am Block | Sprache über Code-Zaun | erledigt | erledigt 18.11.: `{lang= wrap}` | – |
+| Editor | E18 Bild einfügen (Upload, Link), Breite, Ausrichtung, Unterschrift | Slash, Ablegen, Bildleiste | Bild per Link im Markdown; `upload_file` legt nur aufs Board | hochgeladene Datei kommt nicht in eine Seite; Breite, Ausrichtung, Unterschrift fehlen | teils 18.11.: einfügen, Breite, Ausrichtung, Unterschrift über `edit_blocks`; offen: `upload_file { page }` legt direkt in eine Seite | M |
+| Editor | E19 Video, Audio, Datei, PDF einfügen | Slash, Ablegen | – | erledigt | erledigt 18.11.: `file: <ref>` (Art aus der Datei), `video`, `audio`, `pdf` | – |
+| Editor | E20 Web-Bookmark, Embed | Slash, URL einfügen | – | fehlt; Vorschau holt Netz | teils 18.11.: `bookmark:` und `embed:` legen an; offen: Vorschau holen (Netz, Schutzregeln) | M |
+| Editor | E21 Einfache Tabelle: Zellen, Zeile/Spalte | Tabelle | Markdown-Tabelle beim Anlegen | erledigt | erledigt 18.11.: `table`, `cell`, `row`, `col` | – |
+| Editor | E22 Gleichung (Block, inline) | Slash | `$$…$$`, `$…$` im Markdown | erledigt | erledigt 18.11.: `equation:` und Markdown | – |
+| Editor | E23 Mermaid, HTML-Block (Code/Ergebnis zeigen) | Slash, Blockleiste | Code-Zaun `mermaid`/`html`; `add_html`/`add_mermaid` nur Swift | erledigt | erledigt 18.11.: `code: … {lang=html show=result}` | – |
+| Editor | E24 Unterseite, Inline-Datenbank, Whiteboard im Inhalt | Slash „Page“, „Database“, „Whiteboard“ | `create_page {parent}`, `create_database {inline}`, `draw_board {parent}` | erledigt | erledigt 18.11.: `page`, `database`, `board` an jeder Stelle über `edit_blocks` | – |
 | Editor | E25 Linked view of database | Slash | – | fehlt | `add linked after a: <database id>` | M |
 | Editor | E26 Synced Block (Copy and sync, Unsync) | Blockmenü | – | fehlt | `sync a to <page id>` / `unsync a` | M |
 | Editor | E27 Button-Block mit Schritten | Slash „Button“, „Edit“ | `add_button` nur Swift | fehlt | `button after a: Label {steps…}` oder eigenes Werkzeug | M |
-| Editor | E28 Inhaltsverzeichnis, Trenner | Slash | Trenner `---` | TOC fehlt | `add toc after a` | S |
+| Editor | E28 Inhaltsverzeichnis, Trenner | Slash | Trenner `---` | erledigt | erledigt 18.11.: `toc`, `divider` | – |
 | Editor | E29 Erwähnung (Seite, Datum, Erinnerung) | `@`, `[[` | Seite über `[Titel](based://page/<id>)` | Datum und „Remind me“ fehlen | `@date(2026-11-20 14:00 remind=1d)` im Markdown | M |
 | Editor | E30 Unverlinkte Erwähnung verlinken | Backlinks „Link“ | – | fehlt | `link_mention` oder Teil von `edit_blocks` | S |
-| Editor | E31 Link auf einen Block kopieren | Blockmenü | – | Kennung fehlt | `read_blocks` gibt `based://page/<id>#<block>` | S |
+| Editor | E31 Link auf einen Block kopieren | Blockmenü | – | Kennung fehlt | teils 18.11.: Kennung da; offen: Link `based://page/<id>#<block>` in der Antwort | S |
 | Editor | E32 Als Markdown kopieren | ⌘C, Blockmenü | `read_page` | – | erledigt | – |
-| Editor | E33 Meeting-Block anlegen | Slash „Meeting notes“, ⌘N | – | fehlt | siehe M1 | – |
+| Editor | E33 Meeting-Block anlegen | Slash „Meeting notes“, ⌘N | – | erledigt | erledigt 18.11.: `meeting: Titel` | – |
 | Editor | E34 Ask AI im Text | Leertaste, Slash, Formatleiste | – | bewusst nicht | Der Agent ist selbst das Modell; er schreibt über `edit_blocks`. | – |
-| Editor | E35 Undo/Redo | ⌘Z; „Undo“ an der Agenten-Aktion im Chat | – | fehlt (Entscheidung 4) | `undo_last` für den eigenen letzten Aufruf; im Chat ein „Undo“ je Agenten-Aktion für den Menschen | M |
+| Editor | E35 Undo/Redo | ⌘Z; „Undo“ an der Agenten-Aktion im Chat | – | fehlt (Entscheidung 4) | teils 18.11.: `undo_last` (je Client, genau der letzte Aufruf); offen: „Undo“ an der Agenten-Aktion im Chat (Eintrag 7/7) | M |
 | Editor | E36 Blockauswahl, Schreibmarke, Suchen in der Seite, Gliederung ein/aus | Esc, ⌘F, Seitenmenü | – | bewusst nicht | Rein visuell; `search` und `read_blocks` decken das Finden ab. | – |
 | Editor | E37 Echtzeit-Präsenz | Cursor anderer | – | bewusst nicht | Kein Dateninhalt. | – |
 
@@ -268,8 +271,8 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 
 | Bereich | Zeilen | erledigt | Lücke | bewusst nicht | offen |
 | --- | --- | --- | --- | --- | --- |
-| Grundlage | 4 | 0 | 4 | 0 | 0 |
-| Editor | 37 | 2 | 31 | 3 | 1 (E33 → M1) |
+| Grundlage | 4 | 4 | 0 | 0 | 0 |
+| Editor | 37 | 24 | 10 (E5, E18, E20, E25–E27, E29–E31, E35; vier davon teils) | 3 | 0 |
 | Datenbanken | 23 | 3 | 18 | 2 | 0 |
 | Shell | 23 | 6 | 13 | 4 | 0 |
 | Verlauf, Export, Import | 7 | 0 | 6 | 1 | 0 |

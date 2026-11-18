@@ -41,7 +41,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_view", "database_schema", "delete_view", "draw_board", "duplicate_page", "find_replace", "get_project", "get_run", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "undo_last", "update_database", "update_page", "update_project_status", "update_row", "update_view", "upload_file"].sort(),
+      ["about_me", "add_row", "append_markdown", "ask_main_agent", "backlinks", "based_guide", "create_database", "create_page", "create_project", "create_view", "database_schema", "delete_view", "draw_board", "duplicate_page", "edit_blocks", "find_replace", "get_project", "get_run", "inbox", "list_databases", "list_files", "list_pages", "list_projects", "list_runs", "list_skills", "list_trash", "list_views", "load_skill", "move_page", "query_database", "read_blocks", "read_board", "read_page", "recall", "related", "remember", "replace_page_content", "resolve_inbox", "restore_page", "search", "set_favorite", "trash_page", "undo_last", "update_database", "update_page", "update_project_status", "update_row", "update_view", "upload_file"].sort(),
     );
   });
 
@@ -234,6 +234,40 @@ describe("MCP über Streamable HTTP", () => {
     cleanup.push(() => app.close());
     const r = await fetch(`${app.url}/mcp`, { headers: { Authorization: `Bearer ${TOKEN}` } });
     expect(r.status).toBe(405);
+  });
+});
+
+describe("Agent-Parität 2/7: Seiten-Editor über MCP", () => {
+  it("Abnahme: „verschieb den dritten Absatz in eine zweite Spalte neben das Bild und mach aus der Liste Aufgaben“ – in drei Aufrufen", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    const id = idIn(textOf(await call("create_page", { title: "Trip", markdown: "First paragraph\n\n![map](https://example.com/map.png)\n\nThird paragraph\n\n- pack\n- book" })));
+    let calls = 0;
+    const agent = async (name: string, args: Record<string, unknown>) => { calls += 1; const r = await call(name, args); expect(r.isError, textOf(r)).toBeFalsy(); return textOf(r); };
+    // 1. lesen
+    const outline = await agent("read_blocks", { id });
+    expect(outline.length, "eine normale Seite unter 2 000 Zeichen").toBeLessThan(2000);
+    const h = (needle: string) => outline.split("\n").find((l) => l.includes(needle))!.trim().split(" ")[0]!;
+    // 2. ändern
+    const done = await agent("edit_blocks", { id, script: `move ${h("Third")} {right=${h("image")}}\nset ${h("pack")} {type=todo}\nset ${h("book")} {type=todo checked}` });
+    expect(done).toBe("Edited “Trip”: 0 added, 2 changed, 1 moved, 0 removed.");
+    // 3. prüfen
+    const after = await agent("read_blocks", { id });
+    expect(calls).toBe(3);
+    expect(after.split("\n").map((l) => l.replace(/^(\s*)[0-9a-f]+ /, "$1"))).toEqual([
+      'text "First paragraph"', "cols 2", "  col", '    image https://example.com/map.png {caption="map"}', "  col", '    text "Third paragraph"', 'todo [ ] "pack"', 'todo [x] "book"',
+    ]);
+    // im Store: eine Spaltenliste mit zwei Spalten, das Bild links, der Absatz rechts – und alles vom Agenten
+    const list = store.children("b:" + id).map((b) => store.blocks.get(b)!).find((b) => b.type === "columnList")!;
+    const cols = store.children("b:" + list.id).map((c) => store.children("b:" + c).map((k) => store.blocks.get(k)!.type));
+    expect(cols).toEqual([["image"], ["text"]]);
+    expect(store.blocks.get(id)?.origin).toBe("ai");
+    // Berechtigungsregeln gelten für das neue Schreib-Werkzeug von selbst
+    store.transact("rules", (tx) => putRecord(store, tx, AGENT_TYPE, MAIN_AGENT_ID, "Main", { ...defaultMainAgent(), permissions: { ...defaultMainAgent().permissions, rules: "deny based.edit_blocks" } }));
+    const refused = await call("edit_blocks", { id, script: "text: nope" });
+    expect(refused.isError).toBe(true);
+    expect(textOf(refused)).toContain("Not allowed by the permission rules");
+    expect((await call("read_blocks", { id })).isError).toBeFalsy();
   });
 });
 

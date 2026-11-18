@@ -1,5 +1,5 @@
 // BSD-245: Plan-Modus und Pfad-Regeln (Claude-Code-Stil) – reine Auswertung, Engine-Verhalten, Plan ausführen.
-import { createPage, createTeamspace, MemoryPersistence, WorkspaceStore } from "@based/core";
+import { createDatabase, createPage, createTeamspace, MemoryPersistence, WorkspaceStore } from "@based/core";
 import { describe, expect, it } from "vitest";
 import {
   executeTool, ModelEngine, pagePathCandidates, parseLayer, parseMode, pathGlobMatch, Permissions, PLAN_MODE_PROMPT, PLANNED_RESULT, plannedSteps,
@@ -52,6 +52,17 @@ describe("Pfad-Muster", () => {
     expect(pagePathCandidates(store, "gibt-es-nicht")).toEqual([]);
     expect(targetPage({ parent_id: privat, title: "x" })).toBe(privat);
     expect(targetPage({ page_id: tagebuch })).toBe(tagebuch);
+    // Agent-Parität: die Namen der einen Werkzeug-Schicht (`id`, `parent`) zählen genauso – sonst griffen Pfad-Regeln
+    // bei den neuen Namen nicht.
+    expect(targetPage({ id: tagebuch, markdown: "x" })).toBe(tagebuch);
+    expect(targetPage({ parent: privat, title: "x" })).toBe(privat);
+    // eine Datenbank oder Ansicht liegt auf einer Seite: Pfad-Regeln gelten auch für add_row, update_view …
+    const db = createDatabase(store, { parent: "b:" + tagebuch, title: "Einträge", inline: true, sampleRows: 0 });
+    expect(pagePathCandidates(store, targetPage({ id: db.databaseID, values: {} })!)).toEqual(["Privat/Tagebuch", "Private/Privat/Tagebuch"]);
+    expect(pagePathCandidates(store, targetPage({ view_id: db.viewID })!)).toEqual(["Privat/Tagebuch", "Private/Privat/Tagebuch"]);
+    const perms = Permissions.from("deny based.*(path:Privat/**)", "free");
+    expect(perms.ruleVerdict({ tool: "based.edit_blocks", argument: tagebuch, paths: pagePathCandidates(store, targetPage({ id: tagebuch, script: "del x" })!) })?.effect).toBe("deny");
+    expect(perms.ruleVerdict({ tool: "based.add_row", argument: db.databaseID, paths: pagePathCandidates(store, targetPage({ id: db.databaseID })!) })?.effect).toBe("deny");
   });
 
   it("Modus „plan“ lesen und schreiben (Text und Claude-Code-JSON)", () => {
