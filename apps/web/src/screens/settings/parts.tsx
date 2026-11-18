@@ -42,3 +42,8 @@ export function Lines({ children, gap = 2, testID }: { children: ReactNode; gap?
 export function Note({ children, mono = false, testID }: { children: ReactNode; mono?: boolean; testID?: string }) {
   return <Text type={mono ? "code" : "supporting"} color="secondary" display="block" {...(mono ? { "data-selectable": "" } : {})} {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
 }
+
+/** BSD-581: Text zum Abschreiben (Befehl, JSON) – Mono, Zeilen und Einrückung bleiben, bricht in der Breite um, markierbar. */
+export function Snippet({ children, testID }: { children: ReactNode; testID?: string }) {
+  return <Text type="code" display="block" className="settings-snippet" data-selectable="" {...(testID ? { "data-testid": testID } : {})}>{children}</Text>;
+}

@@ -18,6 +18,14 @@ client can do in the workspace what the user does in the app — and learn how B
 - **Answers are compact**: pages come back as Markdown, lists as one line per item; long lists are paged with
   `limit` / `offset` and end with `… N more (offset: K)`.
 
+**Connect an app (BSD-581):** Settings → System → „Connect AI apps“ shows one dialog with two targets, the same MCP
+on both. *This Mac*: the client starts `based mcp` (stdio; the CLI finds the Mac app's local server and its token
+itself, so no token lands in the client's config) – Claude Code `claude mcp add --scope user based -- <path>/based mcp`,
+Claude Desktop / Cursor `{"mcpServers": {"based": {"command": "<path>/based", "args": ["mcp"]}}}`. *Server* (Based
+Cloud or your own based-server): each client gets its own revokable token (`bdo_…`, same list as paired devices),
+shown once in the copied setup – Claude Code and Cursor over Streamable HTTP with an `Authorization` header, Claude
+Desktop via `based mcp` with `BASED_URL` / `BASED_TOKEN` in `env`. Not yet: read-only tokens (BSD-538), OAuth.
+
 Test: in Claude Desktop add the server (`based-server --stdio --db ~/Library/…/based.sqlite`, or the HTTP URL with
 token) and ask "Which projects are running and what needs me?".
 
