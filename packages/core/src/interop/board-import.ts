@@ -150,7 +150,7 @@ export interface ExcalidrawScene {
 
 /** Szene aus einer .excalidraw-Datei (JSON) oder einer Plugin-Notiz (```json bzw. ```compressed-json). */
 export function readExcalidraw(text: string): ExcalidrawScene {
-  const t = text.replace(/^﻿/, "").replaceAll("\r\n", "\n");
+  const t = text.replace(/^\uFEFF/, "").replaceAll("\r\n", "\n");
   const files = new Map<string, string>();
   for (const m of t.matchAll(/^([0-9a-f]{20,64}):\s*\[\[([^\]\n|]+)(?:\|[^\]\n]*)?\]\]\s*$/gim)) files.set(m[1]!.toLowerCase(), m[2]!.trim());
   let json: string | undefined;
