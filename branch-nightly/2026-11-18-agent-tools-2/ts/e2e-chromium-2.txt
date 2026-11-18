@@ -1,0 +1,17 @@
+failure 2bca76d33a462b25bf9d1246281e0aaf96224e51
+(kein Testlog – Lauf vor den Tests beendet; Ende des Playwright-Setups:)
+Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [152 B]
+Hit:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease
+Hit:2 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble InRelease
+Hit:3 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:4 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:5 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-security InRelease
+Reading package lists...
+E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem. 
+Failed to install browser dependencies
+Error: Installation process exited with code: 100
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright install-deps chromium
+::warning title=Playwright-Setup::Systempakete (apt): Exit 1 (Versuch 2/2)
+::error title=Playwright-Setup (BSD-548)::Systempakete (apt) für [chromium] nach 2 Versuchen gescheitert (Exit 1). Kein Testergebnis – Runner-Image/apt/Netz prüfen, nicht die Tests.
