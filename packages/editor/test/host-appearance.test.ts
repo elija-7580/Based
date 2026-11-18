@@ -11,6 +11,7 @@ describe("appearanceKey", () => {
   it("ändert sich mit dem Stil, nicht nur mit hell/dunkel", () => {
     const base = appearanceKey(doc({ "data-theme": "light" }));
     expect(appearanceKey(doc({ "data-theme": "light", "data-style": "bold" }))).not.toBe(base);
+    expect(appearanceKey(doc({ "data-theme": "light", "data-typeface": "based" }))).not.toBe(base);
     expect(appearanceKey(doc({ "data-theme": "dark" }))).not.toBe(base);
     expect(appearanceKey(doc({ "data-theme": "light", "data-density": "compact" }))).not.toBe(base);
   });

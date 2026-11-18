@@ -81,4 +81,4 @@ function LocalServerSection({ client }: SettingsSectionProps) {
   );
 }
 
-registerSettingsSection({ id: "local-server", page: "sync", title: "Local server & command line", order: 20, component: LocalServerSection });
+registerSettingsSection({ id: "local-server", page: "sync", title: "Local server & command line", order: 20, component: LocalServerSection, keywords: ["Backups", "Backup folder", "iCloud Drive", "Tailscale", "Pair a device", "Command line tool", "Local server"] });

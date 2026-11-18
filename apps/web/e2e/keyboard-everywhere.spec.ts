@@ -104,11 +104,11 @@ test("⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächs
 
 test("Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück", async ({ page }) => {
   await ready(page, "#settings");
-  await page.getByRole("button", { name: "My account" }).focus();
+  await page.getByRole("button", { name: "Appearance", exact: true }).focus();
   await page.keyboard.press("ArrowDown");
-  expect(await focused(page)).toBe("My settings");
+  expect(await focused(page)).toBe("Pages");
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: "My settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Pages" })).toBeVisible();
   const navRight = await page.evaluate(() => document.activeElement!.getBoundingClientRect().right);
   await page.keyboard.press("ArrowRight");
   const inContent = await page.evaluate(() => document.activeElement!.getBoundingClientRect().left);
@@ -200,7 +200,7 @@ test("Mac-Menü: ein Befehl aus dem Register läuft über dieselbe Taste (based:
   await send("toggleSidebar");
   await expect(page.getByTestId("sidebar-show")).toHaveCount(0);
   await send("settings");
-  await expect(page.getByRole("heading", { name: "My settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Appearance" })).toBeVisible();
   await send("back");
-  await expect(page.getByRole("heading", { name: "My settings" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1, name: "Appearance" })).toHaveCount(0);
 });

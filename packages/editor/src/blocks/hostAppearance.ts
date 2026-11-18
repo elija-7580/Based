@@ -4,7 +4,7 @@
 // Serif → Default) blieb darin die alte Schrift stehen, bis man hell/dunkel umschaltete oder neu lud.
 
 /** Attribute am Wurzelelement, die Tokens ändern (appearance.ts → applyAppearance). */
-export const APPEARANCE_ATTRS = ["data-theme", "data-style", "data-density", "data-marker", "data-calm"] as const;
+export const APPEARANCE_ATTRS = ["data-theme", "data-typeface", "data-style", "data-density", "data-marker", "data-calm"] as const;
 /** Attribute der Seite, die Schrift und Schriftgröße des Inhalts ändern (PageView). */
 export const PAGE_FORMAT_ATTRS = ["data-font", "data-small-text"] as const;
 

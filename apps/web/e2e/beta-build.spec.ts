@@ -9,7 +9,7 @@ import { overflows, overlaps } from "./layout-checks.js";
 //   BASED_CHANNEL=beta BASED_E2E_PORT=4179 CI=1 pnpm --filter @based/web exec playwright test e2e/beta-build.spec.ts
 // (eigener Port, damit kein Dev-Server wiederverwendet wird). Sonst übersprungen (run-ts, CI). Prüft, was Tester auf
 // beta sehen: erster Start (Willkommen mit Vorlagen, ohne AI), Home = Willkommensseite (BSD-461), Seitenkopf ohne Share
-// (BSD-460), Einstellungen ohne „Not yet“- und AI-Seiten, My settings ohne Agenten-Begriffe (BSD-459), Slash-Menü
+// (BSD-460), Einstellungen ohne „Not yet“- und AI-Seiten, Appearance ohne Agenten-Begriffe (BSD-459), drei Gruppen und Suche, Slash-Menü
 // mit Meeting notes (Elija 17.11.), ohne Ask AI; Meeting-Block ohne Reiter „Summary“; jeweils ohne Überlauf und sich überdeckenden Text, Fotos 1280 × 820 hell/dunkel.
 
 const BETA = process.env.BASED_CHANNEL === "beta";
@@ -89,19 +89,32 @@ for (const theme of ["light", "dark"] as const) {
       await clean(page, "Meeting-Block");
       await shoot(page, "meeting");
 
-      // Einstellungen: keine „Not yet“-Seiten, keine AI-Seiten; My settings ohne Agenten-Begriffe
-      await page.goto("/#prefs-my-settings");
+      // Einstellungen: keine „Not yet“-Seiten, keine AI-Seiten; Appearance ohne Agenten-Begriffe
+      await page.goto("/#prefs-appearance");
       const nav = page.getByRole("navigation", { name: "Settings pages" });
       await expect(nav).toBeVisible();
       await expect(nav.getByText("Not yet")).toHaveCount(0);
-      for (const hidden of ["My connections", "People", "Teamspaces", "Security", "Agents & AI", "Connections", "My notifications"]) await expect(nav.getByRole("button", { name: hidden, exact: true })).toHaveCount(0);
+      for (const hidden of ["Connected accounts", "People", "Teamspaces", "Security", "Agents & AI", "Connections", "Notifications"]) await expect(nav.getByRole("button", { name: hidden, exact: true })).toHaveCount(0);
       const settings = page.getByTestId("settings-page");
       await expect(settings).not.toContainText(/agent|marker|calm mode/i);
-      // Meeting notes in den Einstellungen: im Browser ohne Server steht, was fehlt
-      await expect(page.getByTestId("settings-section-meetings")).toContainText("Transcription");
-      await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
-      await clean(page, "My settings");
+      // Drei Gruppen, Suchfeld; die Suche findet auf beta nichts, was es dort nicht gibt
+      for (const group of ["App", "Workspace", "System"]) await expect(nav.getByText(group, { exact: true })).toBeVisible();
+      await clean(page, "Appearance");
       await shoot(page, "settings");
+      const search = page.getByRole("searchbox", { name: "Search settings" });
+      for (const q of ["marker", "calm", "agents", "people", "api keys"]) {
+        await search.fill(q);
+        await expect(page.getByTestId("settings-no-results"), q).toBeVisible();
+      }
+      await search.fill("spell");
+      await page.keyboard.press("Enter");
+      await expect(settings).toHaveAttribute("data-page", "editor");
+      await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
+      await expect(settings).not.toContainText(/agent|marker|calm mode/i);
+      // Meeting notes in den Einstellungen: im Browser ohne Server steht, was fehlt
+      await nav.getByRole("button", { name: "Meeting notes", exact: true }).click();
+      await expect(page.getByTestId("settings-section-meetings")).toContainText("Transcription");
+      await expect(settings).not.toContainText(/agent|marker|calm mode/i);
       // BSD-485/514: About heißt „Based Notes Beta“, ohne Agenten
       await nav.getByRole("button", { name: "About", exact: true }).click();
       await expect(settings).toContainText("Based Notes Beta — the notes app that keeps your data yours.");

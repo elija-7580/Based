@@ -1,16 +1,20 @@
 // BSD-178: Darstellungs-Einstellungen (Settings → Appearance) als Attribute am Wurzelelement, dauerhaft im
-// Browser gespeichert. Die Werte selbst kommen aus tokens.css (data-theme, data-style, data-density, data-marker,
-// data-calm, data-material).
+// Browser gespeichert. Die Werte selbst kommen aus tokens.css (data-theme, data-typeface, data-style, data-density,
+// data-marker, data-calm, data-material).
 
 /** „system“ folgt dem Betriebssystem (wie Appearance.system in der Swift-App). */
 export type Theme = "light" | "dark" | "system";
 export type EffectiveTheme = "light" | "dark";
+/** Schrift der App: die des Systems oder die mitgelieferten (Schibsted Grotesk, Literata). */
+export type AppFont = "system" | "based";
+/** Charakter: Bold macht Titel größer und Überschriften kräftiger – die Schrift wählt `font`. */
 export type Style = "default" | "bold";
 export type Density = "comfortable" | "compact";
 export type Marker = "butter" | "mint" | "sky" | "rose";
 
 export interface Appearance {
   theme: Theme;
+  font: AppFont;
   style: Style;
   marker: Marker;
   density: Density;
@@ -19,7 +23,7 @@ export interface Appearance {
   agentDetails: boolean;
 }
 
-export const DEFAULT_APPEARANCE: Appearance = { theme: "light", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false };
+export const DEFAULT_APPEARANCE: Appearance = { theme: "light", font: "system", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false };
 
 const KEY = "based.appearance";
 
@@ -30,6 +34,8 @@ export function loadAppearance(storage: Pick<Storage, "getItem"> | undefined = s
     const v = JSON.parse(raw) as Partial<Appearance>;
     return {
       theme: v.theme === "dark" || v.theme === "system" ? v.theme : "light",
+      // Vor dem 18.11. brachte Stil Bold seine Schrift mit: wer Bold gespeichert hat, behält sie.
+      font: v.font === "based" || (v.font === undefined && v.style === "bold") ? "based" : "system",
       style: v.style === "bold" ? "bold" : "default",
       marker: v.marker === "mint" || v.marker === "sky" || v.marker === "rose" ? v.marker : "butter",
       density: v.density === "compact" ? "compact" : "comfortable",
@@ -117,6 +123,7 @@ export function applyAppearance(a: Appearance, root: HTMLElement = document.docu
     if (value === undefined) delete root.dataset[name];
     else root.dataset[name] = value;
   };
+  set("typeface", a.font === "based" ? "based" : undefined);
   set("style", a.style === "bold" ? "bold" : undefined);
   set("density", a.density === "compact" ? "compact" : undefined);
   set("marker", a.marker === "butter" ? undefined : a.marker);

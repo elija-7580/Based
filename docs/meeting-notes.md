@@ -20,7 +20,7 @@ context attachments.
   instructions per meeting. Without an engine, you get the transcript only.
 - **Uploads**: add a recording made elsewhere (phone, Zoom export); it is transcribed the same way.
 - **Notice**: a banner reminds you to tell the others you're transcribing (can be turned off per meeting).
-- **Voice profiles** (opt-in, Settings → My settings → Meeting notes): once you name a speaker, Based recognises
+- **Voice profiles** (opt-in, Settings → Meeting notes): once you name a speaker, Based recognises
   that voice in later meetings. Voice prints are biometric data, so they stay in this device's local database —
   never synced, exported or uploaded. Turning the setting off deletes them; *Forget* removes one person.
 
@@ -75,7 +75,7 @@ engine), view: `packages/editor/src/schema/meeting.tsx`, browser capture/playbac
   - **Models** (opt-in download from the pinned source, size and SHA-256 checked, streamed to disk, resumable):
     Fast = whisper-base (148 MB), Balanced = whisper-small (488 MB, preselected), Best = whisper-large-v3-turbo
     (1.6 GB). The chosen one is remembered next to the models (`transcription.json`).
-  - **Turn on**: welcome screen → *Turn on meeting notes*, or Settings → My settings → Meeting notes →
+  - **Turn on**: welcome screen → *Turn on meeting notes*, or Settings → Meeting notes →
     *Transcription* → *Turn on*. One click starts the local server and downloads the Balanced model; the settings
     row lets you pick another model, shows progress, cancel and remove (`apps/web/src/meeting/useTranscription.ts`).
   - A recording made before set-up gets *Transcribe recording* in its Transcript tab.

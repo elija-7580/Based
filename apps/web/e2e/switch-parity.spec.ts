@@ -87,8 +87,8 @@ test("Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U s
   await expect(page.getByLabel("Page title")).toHaveValue("Projects");
 });
 
-test("Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus", async ({ page }) => {
-  await page.goto("/#prefs-my-settings");
+test("Einstellungen → Pages: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus", async ({ page }) => {
+  await page.goto("/#prefs-editor");
   await page.getByRole("radio", { name: "Serif" }).click();
   await page.getByRole("switch", { name: "Full width" }).click();
   await page.getByRole("switch", { name: "Spell-check" }).click();
@@ -179,6 +179,6 @@ test("Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansich
     await editor(page).locator('.bx2-block[data-type="image"] img').first().dblclick();
     await expect(page.getByTestId("image-viewer")).toBeVisible();
   });
-  await shot("settings-writing", "#prefs-my-settings", async () => { await page.getByText("Spell-check").scrollIntoViewIfNeeded(); });
+  await shot("settings-writing", "#prefs-editor", async () => { await page.getByText("Spell-check").scrollIntoViewIfNeeded(); });
   await shot("settings-updates", "#prefs-updates");
 });

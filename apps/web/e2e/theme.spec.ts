@@ -102,8 +102,8 @@ test("Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil", async ({ 
   await expect(html).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => css(page, card, "--size-element-md")).toBe("28px");
 
-  // Stil Bold: Astryx-Überschriften nehmen die Bold-Schrift aus tokens.css
-  await page.getByRole("radio", { name: "Bold" }).click();
+  // Font Based: Astryx-Überschriften nehmen die mitgelieferte Schrift aus tokens.css
+  await page.getByRole("radio", { name: "Based" }).click();
   await expect.poll(() => css(page, "[data-testid=settings-page] h1", "font-family")).toContain("Schibsted Grotesk");
 
   // bleibt nach dem Neuladen, ohne helles Aufblitzen im Zustand
@@ -138,7 +138,7 @@ test("Theme „System“ folgt dem Betriebssystem", async ({ page }) => {
   await ready(page);
   const html = page.locator("html");
   await expect(html).toHaveAttribute("data-theme", "light");
-  await page.getByRole("radio", { name: "System" }).click();
+  await page.getByRole("radiogroup", { name: "Theme" }).getByRole("radio", { name: "System" }).click();
   await expect(html).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => css(page, ".astryx-card", "background-color")).toBe(token("surface-raised", "dark"));
   await page.emulateMedia({ colorScheme: "light" });

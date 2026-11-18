@@ -230,7 +230,7 @@ test("Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler", as
     { name: "Trash", hash: "#trash", scope: main, limit: 8 },
     { name: "Chat", hash: "#chat", scope: main, limit: 8 },
     // Navigation der Einstellungen einmal, danach nur der Inhalt jeder Unterseite.
-    { name: "Settings", hash: "#prefs-my-settings", scope: main, limit: 25 },
+    { name: "Settings", hash: "#prefs-appearance", scope: main, limit: 25 },
     ...["workspace", "language", "import", "sync", "updates", "diagnostics", "agents", "about", "account"].map((p) => ({ name: "Settings " + p, hash: "#prefs-" + p, scope: "[data-testid=settings-page]", limit: 8 })),
   ];
   const dead: string[] = [];
