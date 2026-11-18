@@ -207,7 +207,15 @@ export interface MeetingRecorderState {
   summarizing: readonly string[];
   error: string | undefined;
   warning: string | undefined;
+  /**
+   * Feedback 18. 11. (im Block nicht sichtbar, ob transkribiert wird): wie die laufende Aufnahme zum Transkript kommt.
+   * `live` – Text erscheint schon während der Aufnahme; `after` – nach dem Stop; `deferred` – später (z. B. am Strom);
+   * `off` – keine Transkription eingerichtet (nur Aufnahme). Ohne laufende Aufnahme `off`.
+   */
+  transcription: TranscriptionMode;
 }
+
+export type TranscriptionMode = "live" | "after" | "deferred" | "off";
 
 /** AssetRef der gespeicherten Spur. */
 export type SavedAudio = MeetingTrack["asset"];
@@ -233,7 +241,7 @@ export interface MeetingRecorderOptions {
   micBlockedHint?: string;
 }
 
-const IDLE: MeetingRecorderState = { meetingID: undefined, recording: false, paused: false, elapsed: 0, roles: [], processing: [], summarizing: [], error: undefined, warning: undefined };
+const IDLE: MeetingRecorderState = { meetingID: undefined, recording: false, paused: false, elapsed: 0, roles: [], processing: [], summarizing: [], error: undefined, warning: undefined, transcription: "off" };
 
 interface Session {
   store: WorkspaceStore;
@@ -322,7 +330,9 @@ export class MeetingRecorder {
     setMeetingStatus(store, meetingID, "recording");
     const tick = this.o.tickMs ?? 250;
     if (tick > 0) s.timer = setInterval(() => this.set({ elapsed: this.elapsed() }), tick);
-    this.set({ meetingID, recording: true, paused: false, elapsed: base, roles, warning: capture.warning });
+    const t = this.o.transcriber?.();
+    const transcription: TranscriptionMode = t === undefined ? "off" : deferred ? "deferred" : t.live ? "live" : "after";
+    this.set({ meetingID, recording: true, paused: false, elapsed: base, roles, warning: capture.warning, transcription });
     for (const c of pending) this.transcribeLive(s, c);
   }
 
@@ -356,7 +366,7 @@ export class MeetingRecorder {
       this.errors.set(s.meetingID, e instanceof Error ? e.message : String(e));
     }
     await s.live;
-    this.set({ recording: false, paused: false, elapsed, meetingID: undefined, roles: [], processing: [...this.state.processing, s.meetingID] });
+    this.set({ recording: false, paused: false, elapsed, meetingID: undefined, roles: [], transcription: "off", processing: [...this.state.processing, s.meetingID] });
     try {
       for (const t of tracks) {
         if (t.duration <= 0) continue;

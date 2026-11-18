@@ -1,0 +1,14 @@
+/* Feedback 18. 11.: Fenster „Meeting detected“ (Mac-App). Das Fenster ist durchsichtig; die Fläche ist ein Hinweis
+   (Fläche und Schatten wie das Menü), der Rand rundum lässt Platz für den Schatten. */
+html.meeting-prompt-window, html.meeting-prompt-window body { background: transparent; overflow: hidden; }
+html.meeting-prompt-window #root { padding: var(--space-3); }
+.meeting-prompt {
+  display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4);
+  background: var(--surface-card); color: var(--ink); border-radius: var(--radius-xl); box-shadow: var(--shadow-menu);
+  font-family: var(--font-ui); font-size: var(--type-ui-size); user-select: none; -webkit-user-select: none; cursor: default;
+}
+.meeting-prompt-head { display: flex; align-items: center; gap: var(--space-2); }
+.meeting-prompt-dot { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--danger); flex: none; }
+.meeting-prompt-title { font-weight: var(--type-ui-weight); }
+.meeting-prompt-detail { margin: 0; color: var(--muted); font-size: var(--type-description-size); line-height: var(--type-description-leading); }
+.meeting-prompt-actions { display: flex; justify-content: flex-end; gap: var(--space-2); padding-top: var(--space-1); }

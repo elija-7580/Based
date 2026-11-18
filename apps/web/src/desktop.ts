@@ -176,6 +176,20 @@ async function showCliInstall() {
   await showMessage("Open Settings → Sync & server → “Local server & command line” and choose Install… there. It needs Node.js 22 or newer on this Mac; Based doesn't download anything.", { title: "Install Command Line Tool" });
 }
 
+/** Feedback 18. 11. (Meeting erkannt): Hauptfenster zeigen und nach vorn holen – auch wenn es ausgeblendet war. */
+export async function bringToFront(): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+    const win = getCurrentWebviewWindow();
+    await win.unminimize().catch(() => undefined);
+    await win.show();
+    await win.setFocus();
+  } catch {
+    // nicht erlaubt oder kein Fenster: die Aufnahme startet trotzdem
+  }
+}
+
 /** BSD-202: Fenster-Adresse für eine Seite: eigenes Fenster ohne gespeicherte Tabs (`?window=page`). */
 export function pageWindowURL(href: string, hash: string): string {
   const url = new URL(href);

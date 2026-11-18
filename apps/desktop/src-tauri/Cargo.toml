@@ -14,7 +14,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+# macos-private-api: durchsichtiges Fenster für „Meeting detected“ (Feedback 18. 11.; runde Ecken, eigener Schatten).
+tauri = { version = "2", features = ["macos-private-api"] }
 tauri-plugin-updater = "2"
 # Zwischenablage für das Based-Kontextmenü (Einfügen ohne die System-Blase von WKWebView).
 tauri-plugin-clipboard-manager = "2"
