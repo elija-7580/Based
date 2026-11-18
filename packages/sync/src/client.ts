@@ -36,6 +36,9 @@ export class SyncHTTPError extends Error {
   }
 }
 
+/** Status, wenn Server oder ein anderes Gerät eine neuere Version brauchen. */
+export const UPDATE_TO_SYNC = "Sync paused: update Based to keep syncing. This workspace is now used by a newer version; your changes stay on this device until then.";
+
 export type SyncLog = (level: "info" | "warning" | "error", message: string) => void;
 
 export interface SyncClientOptions {
@@ -268,7 +271,12 @@ export class SyncClient {
     } catch (e) {
       this.lastError = e instanceof Error ? e.message : String(e);
       this.opts.log?.("error", `Sync error: ${this.lastError}`);
-      this.opts.onStatus?.(e instanceof StoreReadOnlyError ? "Sync paused: Based can't save changes on this device" : `Sync error: ${this.lastError}`);
+      // 426: der Server spricht ein neueres Sync-Protokoll. Nichts geht verloren (Cursor bleiben stehen, eigene
+      // Änderungen warten auf dem Gerät) – der Nutzer muss nur wissen, was zu tun ist.
+      if (e instanceof SyncHTTPError && e.status === 426) {
+        this.lastError = UPDATE_TO_SYNC;
+        this.opts.onStatus?.(UPDATE_TO_SYNC);
+      } else this.opts.onStatus?.(e instanceof StoreReadOnlyError ? "Sync paused: Based can't save changes on this device" : `Sync error: ${this.lastError}`);
     }
   }
 

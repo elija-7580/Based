@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 // BSD-153: Dedicated Worker mit dem Store. SQLite-WASM auf OPFS (opfs-sahpool); geht das nicht (kein OPFS, privates
 // Fenster, Datei schon in einem anderen Tab offen), läuft der Workspace im Speicher und der Status sagt es.
-import { openWorkspace, SqliteHistoryStorage, SqliteYDocStorage } from "@based/sync";
+import { openBlockedMessage, openWorkspace, SqliteHistoryStorage, SqliteYDocStorage } from "@based/sync";
 import { openWasmDatabase } from "@based/sync/wasm";
 import { IDBAssetStore } from "./assets.js";
 import { StoreHost } from "./host.js";
@@ -28,6 +28,11 @@ const host = new StoreHost({
         const opened = { ...openWorkspace(db, { device, ...mode, lazy: lazy === true }), persistent: true, ...(await openHistory(storageWarnings)), ...(await openAssets(storageWarnings)), ...(await openYDocs(storageWarnings)) };
         return storageWarnings.length ? { ...opened, storageWarnings } : opened;
       } catch (e) {
+        // Eine Datei aus einer neueren Version (oder eine, deren Umstellung scheiterte) wird nicht durch einen leeren
+        // Workspace im Speicher ersetzt – das sähe aus wie Datenverlust und legte eine Willkommensseite an. Die Datei
+        // bleibt unberührt; die App sagt, was zu tun ist („Based couldn't open your workspace“).
+        const blocked = openBlockedMessage(e);
+        if (blocked) throw new Error(blocked);
         const note = `Not saved on this device: ${e instanceof Error ? e.message : String(e)}`;
         const db = await openWasmDatabase();
         return { ...openWorkspace(db, { device, ...mode }), persistent: false, note };

@@ -91,7 +91,7 @@ describe("Ordner-Sync (BSD-296, Spike)", () => {
     const f = folder();
     const a = device("macA", f, false), b = device("macB", f);
     createPage(a.store, { title: "Local only" });
-    expect(await a.sync.round()).toEqual({ pushed: 0, received: 0, waiting: 0, ignored: [] });
+    expect(await a.sync.round()).toEqual({ pushed: 0, received: 0, waiting: 0, ignored: [], newer: [] });
     expect(f.files.size).toBe(0);
     createPage(b.store, { title: "B" });
     await b.sync.push();
