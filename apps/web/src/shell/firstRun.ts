@@ -12,6 +12,8 @@ const KEY = "based.welcome";
 export interface WelcomePending {
   /** die Willkommensseite, unter die „leer starten“ die kurzen Anleitungsseiten legt */
   page: string;
+  /** BSD-551: der geführte Einstieg ist durch (oder übersprungen) – jetzt kommt die Wahl. */
+  toured?: boolean;
 }
 
 type Listener = () => void;
@@ -31,7 +33,8 @@ function load(): WelcomePending | undefined {
     const raw = storage()?.getItem(KEY);
     if (!raw) return undefined;
     const v = JSON.parse(raw) as unknown;
-    return v && typeof v === "object" && typeof (v as WelcomePending).page === "string" ? { page: (v as WelcomePending).page } : undefined;
+    if (!v || typeof v !== "object" || typeof (v as WelcomePending).page !== "string") return undefined;
+    return (v as WelcomePending).toured === true ? { page: (v as WelcomePending).page, toured: true } : { page: (v as WelcomePending).page };
   } catch {
     return undefined;
   }
@@ -84,6 +87,11 @@ export const firstRun = {
       // nur für diese Sitzung
     }
     listeners.forEach((f) => f());
+  },
+  /** BSD-551: Einstieg fertig oder übersprungen → als Nächstes die Wahl (bleibt auch nach dem Neuladen). */
+  toured(): void {
+    const cur = this.get();
+    if (cur && !cur.toured) this.set({ ...cur, toured: true });
   },
   /** Wahl getroffen (oder übersprungen): nicht wieder zeigen. */
   done(): void {

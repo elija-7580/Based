@@ -21,3 +21,9 @@
 }
 @starting-style { .based-toast { opacity: 0; translate: -50% var(--space-2); } }
 @media (prefers-reduced-motion: reduce) { .based-toast { transition: none; } }
+
+/* Schrittanzeige (steps.tsx): Punkte, aktueller Schritt als kurze Pille; keine Bewegung */
+.based-steps { display: inline-flex; align-items: center; gap: var(--space-1); user-select: none; }
+.based-steps-dot { display: block; inline-size: var(--space-2); block-size: var(--space-2); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--ink) 16%, transparent); }
+.based-steps-dot[data-state="done"] { background: var(--muted); }
+.based-steps-dot[data-state="current"] { inline-size: var(--space-5); background: var(--ink); }

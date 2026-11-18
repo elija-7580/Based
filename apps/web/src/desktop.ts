@@ -14,6 +14,8 @@ import type { ClipboardAccess, SpellingAccess } from "@based/ui/native";
 
 /** BSD-319: Menü Hilfe → „Report a Problem…“ kommt als dieses Fenster-Ereignis an (App.tsx startet den Bericht). */
 export const REPORT_PROBLEM_EVENT = "based:report-problem";
+/** BSD-551: Menü Hilfe → „Show Welcome Tour“ kommt als dieses Fenster-Ereignis an (App.tsx zeigt den Einstieg). */
+export const WELCOME_TOUR_EVENT = "based:welcome-tour";
 
 /** Läuft die Seite in der Tauri-Hülle? (Tauri 2 setzt `__TAURI_INTERNALS__` vor dem ersten Skript.) */
 export function isTauri(g: object = globalThis): boolean {
@@ -169,6 +171,7 @@ export async function startDesktop(tabs?: { close: () => void; count: () => numb
   if (main) for (const ev of ["tauri://close-requested", "tauri://destroyed"]) await win.listen(ev, () => markSessionEnd());
   // BSD-319: Hilfe → „Report a Problem…“ (⇧⌘B) – im Fenster vorn.
   await win.listen("desktop://report-problem", () => void window.dispatchEvent(new CustomEvent(REPORT_PROBLEM_EVENT)));
+  await win.listen("desktop://welcome-tour", () => void window.dispatchEvent(new CustomEvent(WELCOME_TOUR_EVENT)));
   // Mac-Menü: Befehle aus dem Tastatur-Register (File, Edit, View, Go, Help) – im Fenster vorn.
   await win.listen<string>("desktop://command", (e) => void window.dispatchEvent(new CustomEvent("based:command", { detail: e.payload })));
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).

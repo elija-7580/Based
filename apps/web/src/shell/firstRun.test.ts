@@ -1,5 +1,5 @@
 // BSD-275: wann der Willkommensbildschirm aussteht.
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { firstRun, welcomeAllowed } from "./firstRun.js";
 
 afterEach(() => {
@@ -33,5 +33,20 @@ describe("firstRun", () => {
     expect(welcomeAllowed({ webdriver: true })).toBe(false);
     expect(welcomeAllowed({ webdriver: true, force: true })).toBe(true);
     expect(welcomeAllowed({ webdriver: false, force: false })).toBe(false);
+  });
+
+  it("BSD-551: erst der Einstieg, dann die Wahl – auch nach dem Neuladen", () => {
+    const mem = new Map<string, string>();
+    vi.stubGlobal("localStorage", { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) });
+    firstRun.noteInit({ created: true, homePageID: "W1" }, true);
+    expect(firstRun.get()).toEqual({ page: "W1" });
+    firstRun.toured();
+    expect(firstRun.get()).toEqual({ page: "W1", toured: true });
+    firstRun._reset(); // wie Neuladen: aus dem Speicher
+    expect(firstRun.get()).toEqual({ page: "W1", toured: true });
+    firstRun.done();
+    firstRun.toured(); // ohne ausstehendes Willkommen: nichts
+    expect(firstRun.get()).toBeUndefined();
+    vi.unstubAllGlobals();
   });
 });

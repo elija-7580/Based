@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
 mod menu;
-use menu::{CHECK_UPDATES, CLOSE_TAB, CLOSE_WINDOW, INSTALL_CLI, REPORT_PROBLEM};
+use menu::{CHECK_UPDATES, CLOSE_TAB, CLOSE_WINDOW, INSTALL_CLI, REPORT_PROBLEM, WELCOME_TOUR};
 
 /// BSD-310: Label des zuletzt aktiven Fensters. Beim Klick ins Menü meldet macOS `is_focused` nicht immer
 /// verlässlich – ohne das landete ⌘W aus einem Seitenfenster im Hauptfenster (dort: zurück zur Startseite).
@@ -249,6 +249,8 @@ pub fn run() {
                 let _ = app.emit_to("main", "desktop://install-cli", ());
             } else if event.id() == REPORT_PROBLEM {
                 let _ = app.emit_to(window.label(), "desktop://report-problem", ());
+            } else if event.id() == WELCOME_TOUR {
+                let _ = app.emit_to(window.label(), "desktop://welcome-tour", ());
             } else if event.id() == CLOSE_TAB {
                 let _ = app.emit_to(window.label(), "desktop://close-tab", ());
             } else if event.id() == CLOSE_WINDOW {

@@ -173,6 +173,8 @@ export const NAV_COMMANDS: readonly NavCommand[] = [
   { id: "report", label: "Report a problem", keywords: ["bug", "feedback", "diagnostics", "issue"] },
   // Übersicht aller Tastenkürzel (⇧⌘/)
   { id: "shortcuts", label: "Keyboard shortcuts", keywords: ["keys", "hotkeys", "cheat sheet", "help"] },
+  // BSD-551: den geführten Einstieg noch einmal zeigen (wie Hilfe → „Show Welcome Tour“ im Mac-Menü)
+  { id: "welcomeTour", label: "Welcome tour", keywords: ["help", "intro", "onboarding", "getting started"] },
 ];
 
 /** Befehle, die nur mit eingeschalteter AI erscheinen (Dashboard = Zeitbogen der Agenten). */

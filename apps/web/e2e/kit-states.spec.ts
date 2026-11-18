@@ -268,7 +268,9 @@ for (const theme of ["light", "dark"] as const) {
       }, theme);
       const page = ctx.pages()[0] ?? (await ctx.newPage());
       await page.goto("/");
-      await expect(page.getByTestId("welcome")).toBeVisible();
+      // BSD-551: zuerst der geführte Einstieg
+      const tour = page.getByTestId("welcome-tour");
+      await expect(tour).toBeVisible();
       const allowed = await tokenColors(page);
       const found: string[] = [];
       const look = async (name: string, loc: Locator, states: State[]) => {
@@ -280,7 +282,13 @@ for (const theme of ["light", "dark"] as const) {
           for (const [k, c] of Object.entries(colors)) if (!transparent(c) && !isToken(c, allowed)) found.push(`${name} ${st} ${k}: ${c}`);
         }
       };
+      await look("Einstieg: Schrittanzeige", tour.getByTestId("welcome-tour-steps"), ["rest"]);
+      await look("Einstieg: Hinweis", tour.locator(".welcome-idea").first(), ["rest"]);
+      await look("Einstieg: Continue", tour.getByRole("button", { name: "Continue" }), ["rest", "hover", "pressed", "focus"]);
+      await look("Einstieg: Skip", tour.getByRole("button", { name: "Skip" }), ["rest", "hover", "pressed", "focus"]);
+      await tour.getByRole("button", { name: "Skip" }).click();
       const welcome = page.getByTestId("welcome");
+      await expect(welcome).toBeVisible();
       await look("Willkommen: Karte", welcome.getByRole("button", { name: /Start empty/ }), ["rest", "hover", "pressed", "focus"]);
       await look("Willkommen: Vorlage", welcome.getByRole("button", { name: "Journal", exact: true }), ["rest", "hover", "pressed", "focus"]);
 

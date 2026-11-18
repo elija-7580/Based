@@ -18,6 +18,8 @@ pub const INSTALL_CLI: &str = "install-cli";
 pub const CLOSE_WINDOW: &str = "close-window";
 /// BSD-319: Hilfe → „Report a Problem…“ (⇧⌘B) – das Fenster vorn friert seinen Zustand ein (`desktop://report-problem`).
 pub const REPORT_PROBLEM: &str = "report-problem";
+/// BSD-551: Hilfe → „Show Welcome Tour“ – das Fenster vorn zeigt den geführten Einstieg noch einmal (`desktop://welcome-tour`).
+pub const WELCOME_TOUR: &str = "welcome-tour";
 /// Vorsatz der Menü-Kennungen für Befehle aus dem Register.
 pub const COMMAND_PREFIX: &str = "cmd:";
 
@@ -125,6 +127,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         "Help",
         true,
         &[
+            &MenuItem::with_id(app, WELCOME_TOUR, "Show Welcome Tour", true, None::<&str>)?,
             &command(app, "shortcuts", "Keyboard Shortcuts", "CmdOrCtrl+Shift+/")?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, REPORT_PROBLEM, "Report a Problem…", true, Some("CmdOrCtrl+Shift+B"))?,

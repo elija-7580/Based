@@ -4,7 +4,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedKeys, BasedMediaPlayer, BasedMenu, BasedPicker, BasedPopover, BasedSheet, BasedSwitcher, BasedTabs, BasedToast, BasedToken } from "@based/ui/astryx";
+import { BasedButton, BasedChip, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedKeys, BasedMediaPlayer, BasedMenu, BasedPicker, BasedPopover, BasedSheet, BasedSteps, BasedSwitcher, BasedTabs, BasedToast, BasedToken } from "@based/ui/astryx";
 import { useState } from "react";
 import { Icon } from "../../icons.js";
 
@@ -82,7 +82,7 @@ export function AstryxKit() {
 
       {/* Element-System v11 (docs/design/elements.md, Abschnitt 4): Umschalter, Filter, Seitenblatt, Hinweis */}
       <VStack gap={2}>
-        <Heading level={2}>Switcher, picker, sheet, toast</Heading>
+        <Heading level={2}>Switcher, picker, steps, sheet, toast</Heading>
         <Card>
           <VStack gap={3}>
             <HStack gap={2} wrap="wrap" vAlign="center">
@@ -91,6 +91,12 @@ export function AstryxKit() {
               <BasedPicker label="Type" testID="kit-picker" value={type} onChange={setType} defaultValue="all"
                 options={[{ id: "all", label: "All types" }, { id: "pages", label: "Pages" }, { id: "databases", label: "Databases" }]} />
               <BasedField label="Search" labelHidden type="search" placeholder="Search" value="" onChange={() => undefined} />
+            </HStack>
+            {/* BSD-551: Schrittanzeige im geführten Einstieg */}
+            <HStack gap={4} wrap="wrap" vAlign="center" data-testid="kit-steps">
+              <BasedSteps count={5} current={0} />
+              <BasedSteps count={5} current={2} />
+              <BasedSteps count={5} current={4} />
             </HStack>
             <HStack gap={2} wrap="wrap" vAlign="center">
               <BasedButton label="Open sheet" onClick={() => setSheet(true)} />

@@ -43,12 +43,24 @@ for (const theme of ["light", "dark"] as const) {
     try {
       await page.goto("/");
       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      // BSD-551: erst der geführte Einstieg (ohne AI-Hinweise), jeder Schritt ohne Überlauf, dann die Wahl
+      const tour = page.getByTestId("welcome-tour");
+      await expect(tour).toBeVisible();
+      await expect(tour.getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
+      for (;;) {
+        const step = await tour.getAttribute("data-step");
+        await expect(tour.getByText(/Turn on agents|AI stays off/)).toHaveCount(0);
+        await clean(page, `Einstieg ${step}`);
+        await shoot(page, `tour-${step}`);
+        const next = tour.getByRole("button", { name: /^(Continue|Later|Get started)$/ });
+        const label = await next.textContent();
+        await next.click();
+        if (label?.includes("Get started")) break;
+      }
       const welcome = page.getByTestId("welcome");
       await expect(welcome).toBeVisible();
       await expect(welcome.getByRole("group", { name: "Or start from a template" }).getByRole("button")).toHaveText(["Tasks", "Notes", "Journal", "Wiki"]);
       await expect(welcome.getByText("AI stays off")).toHaveCount(0);
-      // das Logo-Intro läuft einmal und steht dann still (erst danach das Bildschirmfoto)
-      await expect(welcome.getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
       await clean(page, "Willkommen");
       await shoot(page, "welcome");
 
@@ -149,6 +161,7 @@ test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async
   try {
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome-tour").getByRole("button", { name: "Skip" }).click(); // BSD-551
     await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
     await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
     await page.keyboard.type("Secret beta page text");
@@ -178,6 +191,7 @@ test("Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home", asyn
   try {
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome-tour").getByRole("button", { name: "Skip" }).click(); // BSD-551
     await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
     await expect(page.getByLabel("Page title")).toBeVisible();
     // BSD-507: Meetings sind seit BSD-231 in der Beta – #meetings bleibt und zeigt die Meetings-Liste

@@ -16,7 +16,7 @@ import { ShortcutHud } from "./components/ShortcutHud.js";
 import { ShortcutSheet } from "./components/ShortcutSheet.js";
 import { installArrowNav } from "./shell/arrowNav.js";
 import { COMMAND_EVENT, installCommands } from "./shell/commands.js";
-import { isTauri, REPORT_PROBLEM_EVENT } from "./desktop.js";
+import { isTauri, REPORT_PROBLEM_EVENT, WELCOME_TOUR_EVENT } from "./desktop.js";
 import { startReport } from "./shell/reportUI.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { Notice } from "./components/Notice.js";
@@ -38,7 +38,8 @@ import { FIND_EVENT, matchShortcut, menuOwnsShortcut, parentPage } from "./shell
 import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
-import { commandVisible } from "./shell/beta.js";
+import { commandVisible, featureVisible } from "./shell/beta.js";
+import { tourSteps } from "./shell/welcomeTour.js";
 import { markFreshPage } from "./shell/freshPage.js";
 import { hiddenRoute } from "./shell/hiddenRoute.js";
 import { fallbackHomePage, homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
@@ -55,6 +56,7 @@ const Trash = lazy(() => import("./screens/Trash.js").then((m) => ({ default: m.
 const TasksScreen = lazy(() => import("./tasks/TasksScreen.js").then((m) => ({ default: m.TasksScreen })));
 // BSD-275: Willkommensbildschirm nur beim ersten Start
 const Welcome = lazy(() => import("./screens/Welcome.js").then((m) => ({ default: m.Welcome })));
+const WelcomeTour = lazy(() => import("./screens/WelcomeTour.js").then((m) => ({ default: m.WelcomeTour })));
 const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
 /** Bold-Schriften nur laden, wenn der Stil sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
@@ -81,6 +83,15 @@ export function App({ client, history }: { client: StoreClient; history: History
   const pick = useSyncExternalStore(pagePick.subscribe, pagePick.get);
   const [recent, setRecent] = useState<RecentEntry[]>(recentPages.get);
   const welcome = useSyncExternalStore(firstRun.subscribe, firstRun.get);
+  // BSD-551: Hilfe → „Show Welcome Tour“ (Mac-Menü) bzw. ⌘K „Welcome tour“ zeigt den Einstieg noch einmal; jede
+  // Navigation schließt ihn.
+  const [tour, setTour] = useState(false);
+  useEffect(() => setTour(false), [route]);
+  useEffect(() => {
+    const open = () => setTour(true);
+    window.addEventListener(WELCOME_TOUR_EVENT, open);
+    return () => window.removeEventListener(WELCOME_TOUR_EVENT, open);
+  }, []);
 
   useEffect(() => {
     applyAppearance(appearance);
@@ -317,6 +328,8 @@ export function App({ client, history }: { client: StoreClient; history: History
         <p className="t-desc">{state.error}</p>
       </div></div>
     );
+  } else if (tour) {
+    screen = <WelcomeTour mode="again" onFinish={() => setTour(false)} />;
   } else if (route.name === "page") {
     screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} focusBlock={route.block} />;
   } else if (route.name === "trash") {
@@ -348,7 +361,11 @@ export function App({ client, history }: { client: StoreClient; history: History
   } else if (route.name === "settings") {
     screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} />;
   } else if (welcome && state.ready && state.outline?.nodes[welcome.page] && !state.outline.trash.some((x) => x.id === welcome.page)) {
-    screen = <Welcome client={client} pending={welcome} onOpenPage={openPage} onNavigate={navigate} onImport={() => setImporting("pick")} />;
+    // BSD-551: erst der geführte Einstieg, dann die Wahl als dessen letzter Schritt
+    const before = tourSteps({ meetings: featureVisible("meetings") }).length;
+    screen = welcome.toured
+      ? <Welcome client={client} pending={welcome} onOpenPage={openPage} onNavigate={navigate} onImport={() => setImporting("pick")} steps={{ count: before + 1, current: before }} />
+      : <WelcomeTour mode="first" onFinish={() => firstRun.toured()} />;
   } else {
     screen = <Home client={client} showDetails={appearance.agentDetails} state={state} onOpenPage={openPage} onNavigate={navigate} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} />;
   }
@@ -383,6 +400,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           else if (id === "dashboard") navigate({ name: "home" });
           else if (id === "report") void startReport();
           else if (id === "shortcuts") setSheet(true);
+          else if (id === "welcomeTour") setTour(true);
           else if (id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
         }} /> : null}
     </div>

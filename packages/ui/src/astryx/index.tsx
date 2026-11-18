@@ -23,6 +23,7 @@ export { BasedSwitcher, type BasedSwitcherItem, type BasedSwitcherProps } from "
 export { BasedPicker, type BasedPickerProps } from "./picker.js";
 export { BasedSheet, type BasedSheetProps } from "./sheet.js";
 export { BasedToast, TOAST_MS, type BasedToastProps } from "./toast.js";
+export { BasedSteps, stepsLabel, type BasedStepsProps } from "./steps.js";
 import "./elements.css";
 export { BasedToken, tokenColor, type BasedTokenColor, type BasedTokenProps } from "./token.js";
 
