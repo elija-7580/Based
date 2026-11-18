@@ -294,8 +294,15 @@
 }
 /* Während der Rechteck-Auswahl keine Textmarkierung (auch nicht im Seitenrand) */
 .bx2-is-selecting, .bx2-is-selecting * { user-select: none !important; -webkit-user-select: none !important; }
-.bx2-flash { animation: bx2-flash var(--duration-pulse) var(--ease-out); }
-@keyframes bx2-flash { 0%, 40% { background: var(--selected); } 100% { background: transparent; } }
+/* Sprungziel kurz hervorheben: eine Fläche über dem Block, die ausblendet (fade-in rückwärts; BSD-529: keine eigenen
+   @keyframes). */
+.bx2-flash { position: relative; }
+.bx2-flash::after {
+  content: ""; position: absolute; inset: 0; border-radius: var(--radius-sm); background: var(--selected); pointer-events: none;
+  mix-blend-mode: multiply; animation: fade-in var(--duration-pulse) var(--ease-out) reverse forwards;
+}
+[data-theme="dark"] .bx2-flash::after { mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce) { .bx2-flash::after { animation: none; opacity: 0; } }
 
 .bx2-tail { min-height: 120px; cursor: text; }
 /* BSD-344: lange Seiten bekommen Luft unter der letzten Zeile (wie Notion), kurze rollen nicht */

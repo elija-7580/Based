@@ -379,11 +379,12 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
     <div className="gx" data-testid="graph">
       <section className="gx-stage" aria-label="Page graph">
         <div className="gx-title">
-          {onSwitch ? <LibraryTabs value="graph" onNavigate={onSwitch} /> : null}
+          {/* BSD-530: Zeile 1 Titel + Anzahl (meta), Zeile 2 Umschalter */}
           <h1 className="t-heading">Graph</h1>
-          <span className="t-desc" role="status" data-testid="graph-stats">
+          <span className="t-meta" role="status" data-testid="graph-stats" data-head-count="">
             {result === undefined ? (failed ? `Couldn't build the graph: ${failed}` : "Building…") : `${count(nodes, "page")} · ${count(edges, "link")}${cut ? ` of ${result.totalNodes.toLocaleString("en-US")}` : ""}`}
           </span>
+          {onSwitch ? <span className="gx-switch"><LibraryTabs value="graph" onNavigate={onSwitch} /></span> : null}
         </div>
         <div className="gx-zoom" role="group" aria-label="Zoom">
           <IconButton label="Zoom in" icon={<Icon name="plus" size={16} />} onClick={() => zoomBy(1.4)} />

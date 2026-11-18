@@ -79,7 +79,7 @@
 .arc-card.ring:hover { box-shadow: var(--shadow-float); }
 .arc-card.ring[data-status="needsYou"] { box-shadow: 0 0 0 1.5px var(--ink); }
 .arc-card:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.pulse { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--marker-strong); flex: none; animation: home-pulse var(--duration-pulse) var(--ease-out) infinite; }
+.pulse { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--marker-strong); flex: none; animation: pulse var(--duration-pulse) var(--ease-out) infinite; }
 .pulse.needs { background: var(--ink); animation: none; }
 .meter { height: 3px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; }
 .meter > i { display: block; height: 100%; background: var(--marker-strong); border-radius: inherit; }
@@ -111,14 +111,14 @@
 .task-cardx {
   position: relative; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) + var(--marker-width));
   border-radius: var(--radius-xl); background: var(--surface-raised); box-shadow: var(--shadow-float); max-height: 300px; overflow: auto;
-  animation: home-card-in var(--duration-fast) var(--ease-out);
+  animation: rise-in var(--duration-fast) var(--ease-out);
 }
 .task-cardx::before { content: ""; position: absolute; left: 0; top: var(--space-3); bottom: var(--space-3); width: var(--marker-width); border-radius: var(--radius-pill); background: transparent; }
 .task-cardx[data-working]::before { background: var(--marker-strong); }
 .task-cardx[data-phase="question"], .task-cardx[data-phase="proposal"] { box-shadow: 0 0 0 1.5px var(--ink), var(--shadow-float); }
 .task-cardx .head { display: flex; align-items: center; gap: var(--space-2); font-size: var(--type-meta-size); font-weight: 600; color: var(--muted); }
 .task-cardx .head .grow { flex: 1; }
-.task-cardx .phase { display: flex; flex-direction: column; gap: var(--space-2); animation: home-fade var(--duration-fast) var(--ease-out); }
+.task-cardx .phase { display: flex; flex-direction: column; gap: var(--space-2); animation: fade-in var(--duration-fast) var(--ease-out); }
 .task-cardx .input { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
 .task-cardx[data-phase="done"] .input, .task-cardx[data-phase="undone"] .input { color: var(--muted); }
 .task-tiles { display: flex; flex-wrap: wrap; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
@@ -178,9 +178,6 @@
 .timeline-legend i[data-kind="needsYou"] { background: var(--ink); }
 .timeline-legend i[data-kind="planned"] { border: 1.5px dashed var(--muted); }
 
-@keyframes home-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-@keyframes home-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes home-fade { from { opacity: 0; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   .pulse, .task-cardx, .task-cardx .phase { animation: none; }

@@ -74,3 +74,11 @@ describe("nur Tokens", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+// BSD-529 (docs/design/elements.md, Abschnitt 5): Es gibt genau drei Animationen – fade-in, rise-in, pulse.
+describe("Einblendungen", () => {
+  it("nur die drei @keyframes fade-in, rise-in, pulse", () => {
+    const names = lines((f) => f.endsWith(".css")).flatMap(([f, , l]) => [...code(l).matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => `${f}: ${m[1]}`));
+    expect(names.map((n) => n.split(": ")[1]).sort()).toEqual(["fade-in", "pulse", "rise-in"]);
+  });
+});

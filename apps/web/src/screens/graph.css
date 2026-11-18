@@ -5,8 +5,9 @@
 .gx-canvas canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .gx-canvas canvas:active { cursor: grabbing; }
 .gx-canvas canvas.pointing { cursor: pointer; }
-.gx-title { position: absolute; left: var(--space-5); top: var(--space-4); display: flex; gap: var(--space-3); align-items: baseline; z-index: 1; pointer-events: none; }
-.gx-title .t-desc { color: var(--muted); }
+.gx-title { position: absolute; left: var(--space-5); top: var(--space-4); display: flex; flex-wrap: wrap; column-gap: var(--space-3); row-gap: var(--space-2); align-items: baseline; z-index: 1; pointer-events: none; max-width: calc(100% - var(--space-8)); }
+.gx-title .gx-switch { flex-basis: 100%; display: flex; pointer-events: auto; }
+.gx-title .t-meta { color: var(--muted); font-variant-numeric: tabular-nums; }
 .gx-zoom {
   position: absolute; right: var(--space-4); bottom: var(--space-4); z-index: 1; display: flex; gap: var(--space-1); align-items: center;
   background: var(--bg); border-radius: var(--radius-pill); box-shadow: var(--shadow-float); padding: var(--space-1);
@@ -47,6 +48,5 @@
 .gx-side, .gx-side h2, .gx-title h1 { color: var(--ink); }
 .gx-result { color: var(--ink); }
 /* BSD-281: Reiter Pages/Graph oben links (der Titelbereich lässt sonst Klicks zur Fläche durch) */
-.gx-title > :first-child:not(h1) { pointer-events: auto; align-self: center; }
 /* BSD-238 Teil 3: Fläche per Tastatur bedienbar – sichtbarer Fokusrahmen */
 .gx-canvas canvas:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
