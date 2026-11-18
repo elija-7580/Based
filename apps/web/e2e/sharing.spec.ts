@@ -81,7 +81,7 @@ test("Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404",
   await newPage(a, "Launch Plan", "Ship the public beta in March.");
   // Seite muss auf dem Server sein, bevor man sie teilen kann
   await expect.poll(async () => {
-    const r = await fetch(`${serverURL}/sync/v2/pull?after=0&limit=5000`, { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const r = await fetch(`${serverURL}/sync/v2/pull?after=0&limit=5000`, { headers: { Authorization: `Bearer ${TOKEN}`, "X-Based-Protocol": "3" } });
     return JSON.stringify(await r.json()).includes("Ship the public beta");
   }, { timeout: 20_000 }).toBe(true);
 
@@ -137,7 +137,7 @@ test("dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinwei
   await connect(d, { dark: true });
   await newPage(d, "Field Guide", "Read-only for the world.");
   await expect.poll(async () => {
-    const r = await fetch(`${serverURL}/sync/v2/pull?after=0&limit=5000`, { headers: { Authorization: `Bearer ${TOKEN}` } });
+    const r = await fetch(`${serverURL}/sync/v2/pull?after=0&limit=5000`, { headers: { Authorization: `Bearer ${TOKEN}`, "X-Based-Protocol": "3" } });
     return JSON.stringify(await r.json()).includes("Read-only for the world");
   }, { timeout: 20_000 }).toBe(true);
   await d.getByRole("button", { name: "Share", exact: true }).click();

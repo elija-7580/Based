@@ -114,7 +114,7 @@ export { chartDateBucket, chartNumber, chartPoints } from "./query/chart.js";
 export type { ChartPoint } from "./query/chart.js";
 export {
   ADDABLE_PROPERTY_TYPES, CALCULATION_LABELS, FILTER_OP_LABELS, NUMBER_FORMAT_LABELS, NUMBER_FORMATS, PROPERTY_TYPE_LABELS,
-  READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue,
+  READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue, percentShown,
 } from "./query/display.js";
 export { changeAffects, databaseDependencies, watchDatabase } from "./query/dependencies.js";
 export { DEFAULT_GEOCODER, geocodeURL, lookupAddress, parseGeocode, tileURL, validateTiles, visibleTiles } from "./query/geocode.js";
@@ -245,3 +245,5 @@ export { BLOCK_COLOR_NAMES, BLOCK_SCRIPT_HELP, BLOCK_SCRIPT_MAX, blockHandles, b
 export * as blockCommands from "./editor/commands/index.js";
 export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
 export { createFuzzyIndex, normalizeSearch, type FuzzyFields, type FuzzyIndex } from "./fuzzy.js";
+
+export { calendarDayStart, localDay, normalizeDate, resolveDate, stampDay, withCalendarDays } from "./model/calendar-day.js";

@@ -3,13 +3,16 @@
 // Workspace-Record „My Workspace“ mit Stempel = Startzeit, node „server“ an; Last-Writer-Wins). Der TS-Server legt
 // keinen an; übernimmt er aber eine Datei, die der Swift-Server angelegt hat, steht dessen Record schon darin.
 import { afterEach, describe, expect, it } from "vitest";
-import { canonicalStringify, createTeamspace, setFavorite, WORKSPACE_ID, type WireRecord, type WorkspaceStore } from "@based/core";
+import { canonicalStringify, createTeamspace, setFavorite, WORKSPACE_ID, WorkspaceStore, type WireRecord } from "@based/core";
 import { openWorkspace, SqlitePersistence, SyncClient, type SqlDatabase } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { startApp, TOKEN } from "./helpers.js";
 
 type Device = { store: WorkspaceStore; persistence: SqlitePersistence };
 const device = (db: SqlDatabase = openNodeDatabase()): Device => openWorkspace(db);
+/** BSD-569: Gerät an einem Server mit vorhandener Datei im alten Format – die App fragt den Server und bleibt dann
+ *  im alten Format (main.tsx `propertyRecordsMode`); hier dasselbe von Hand. */
+const legacyDevice = (): Device => openWorkspace(openNodeDatabase(), { propertyRecords: WorkspaceStore.propertyRecordsByDefault });
 
 let apps: { close(): Promise<void> }[] = [];
 afterEach(async () => {
@@ -18,8 +21,8 @@ afterEach(async () => {
 });
 
 /** Gerät mit benanntem Workspace, einer Favoriten-Seite, einem Teamspace und einer Home-Seite. */
-function namedDevice(): Device {
-  const d = device();
+function namedDevice(make: () => Device = device): Device {
+  const d = make();
   d.store.transact("New page", (tx) =>
     tx.put({ kind: "block", data: { id: "p1", type: "page", parent: "w", sk: "a0", text: "Roadmap", createdAt: 0, updatedAt: 0, stamp: { millis: 0, counter: 0, node: "" } } }),
   );
@@ -87,7 +90,7 @@ describe("BSD-179: frischer Server und der Workspace-Record", () => {
   it("Datei vom Swift-Server (unberührter Standard-Workspace mit Server-Stempel): der ältere Record des Geräts gewinnt trotzdem", async () => {
     // So sieht die Datei aus, nachdem der Swift-based-server sie angelegt hat: Workspace-Record „My Workspace“,
     // Stempel = Startzeit, node „server“, im Change-Log als lokale Änderung.
-    const a = namedDevice();
+    const a = namedDevice(legacyDevice);
     const before = content(a.store);
     const file = openNodeDatabase();
     const later = a.store.workspace.stamp.millis + 60_000;
@@ -106,7 +109,7 @@ describe("BSD-179: frischer Server und der Workspace-Record", () => {
     expect(content(app.sync.store)).toBe(before);
 
     // Ein Gerät, das den Server-Standard schon hatte, bekommt den echten Workspace (neuerer Stempel).
-    const b = device();
+    const b = legacyDevice();
     b.store.applyRemote([serverDefault]);
     await client(b).syncOnce();
     expect(content(b.store)).toBe(before);
@@ -116,7 +119,7 @@ describe("BSD-179: frischer Server und der Workspace-Record", () => {
   });
 
   it("ein vom Nutzer geänderter Workspace auf dem Server gewinnt weiter per Last-Writer-Wins", async () => {
-    const a = namedDevice();
+    const a = namedDevice(legacyDevice);
     const file = openNodeDatabase();
     const later = a.store.workspace.stamp.millis + 60_000;
     // Neuerer Stand eines anderen Geräts (nicht der Server-Standard): bleibt.

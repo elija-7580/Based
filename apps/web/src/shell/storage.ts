@@ -42,6 +42,8 @@ export const deviceNode = {
  */
 export const propertyRecordsSetting = {
   get: (): boolean => read<unknown>("based.propertyRecords", false) === true,
+  /** BSD-569: ausdrücklich `false` hält eine neue Datei im alten Format (Tests der Umstellung); ohne Eintrag entscheidet die Datei. */
+  pinnedOld: (): boolean => read<unknown>("based.propertyRecords", undefined) === false,
   set: (on: boolean) => write("based.propertyRecords", on),
 };
 

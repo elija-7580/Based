@@ -11,6 +11,7 @@ import { startApp, TOKEN } from "./helpers.js";
 // Diese Datei prüft das alte Format (Properties im Datenbank-Record, Protokoll 2) – auch wenn die Suite sonst mit
 // BASED_PROPERTY_RECORDS=1 läuft (BSD-30).
 WorkspaceStore.propertyRecordsByDefault = false;
+WorkspaceStore.propertyRecordsForNewFiles = false; // BSD-569
 
 const corpus = readFileSync(fileURLToPath(new URL("../../../fixtures/records/corpus.jsonl", import.meta.url)), "utf8")
   .split("\n")

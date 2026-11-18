@@ -26,6 +26,15 @@ abgehakt ist: in 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel, in a
 (`apps/web/e2e/polish.spec.ts` oder beim Bereich). Was nicht zum Eintrag gehört, wird ein eigener Backlog-Eintrag
 „Feinschliff · …“ (Typ „UX/Polish“). Ins Ergebnisfeld gehört die Zeile „Checkliste: geprüft …, behoben …, offen …“.
 
+## Datenformat (BSD-569)
+
+Testerdaten müssen von der Beta bis zur Release-Version halten. Vor jeder Änderung an Records, Datei oder Protokoll
+`docs/data-format.md` lesen: nur additiv (optionale Felder, offene Aufzählungen), keine Bedeutung ändern; jede
+Dateiänderung als Migration mit Test; `packages/sync/test/fixtures/beta/` nie ändern oder löschen. **Kein Update
+schreibt einen Workspace als Ganzes um:** neue Formen werden neben den alten gelesen und nur bei ohnehin geänderten
+Records geschrieben; was von Zeitzone, Nutzer oder Einstellung des Geräts abhängt, steht im Record (z. B. `day`). Import-Kennungen
+(`derivedID`, Notion-ID → Record-ID) bleiben, wie sie sind.
+
 ## Prüfen (gestuft, BSD-322)
 
 - **Pro Änderung:** `ci/typecheck/run-ts.sh --fast` – typecheck, lint, Unit-Tests in beiden Datenformaten

@@ -19,7 +19,9 @@ const host = new StoreHost({
   openModels: () => openOpfsModels(),
   async open({ device, opfs, propertyRecords, lazy }) {
     // BSD-30: nur einschalten, nie ausschalten – eine umgestellte Datei bleibt es (openWorkspace)
-    const mode = propertyRecords ? { propertyRecords: true } : {};
+    // BSD-569: ohne Angabe entscheidet die Datei (neu und leer → neues Format); `false` hält ein neues Gerät an
+    // einem noch nicht umgestellten Server im alten Format.
+    const mode = propertyRecords === undefined ? {} : { propertyRecords };
     if (opfs) {
       try {
         // Übernahme von einem geschlossenen Tab (tabs.ts): dessen Worker gibt die Datei erst kurz nach dem Lock frei.

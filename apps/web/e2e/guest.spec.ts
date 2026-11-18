@@ -14,7 +14,7 @@ const webPort = Number(process.env.BASED_E2E_PORT ?? 4173);
 let serverURL = "";
 const TOKEN = "e2e-guest-token-0123456789";
 const serverDir = fileURLToPath(new URL("../../server", import.meta.url));
-const owner = { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" };
+const owner = { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json", "X-Based-Protocol": "3" }; // BSD-569: neue Server-Dateien sprechen Protokoll 3
 
 let server: ChildProcess;
 let dataDir: string;

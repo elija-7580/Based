@@ -68,3 +68,32 @@ describe("openWorkspace mit Gerät", () => {
     expect(db.all("SELECT COUNT(*) AS n FROM changes")[0]).toEqual(before);
   });
 });
+
+// BSD-569: Eine neue, leere Datei beginnt im endgültigen Format (Properties als eigene Records, Schema v4); eine
+// vorhandene Datei im alten Format bleibt, bis sie ausdrücklich umgestellt wird.
+describe("BSD-569: Format neuer Dateien", () => {
+  it("neu und leer → Property-Records; `false` hält das alte Format; vorhandene alte Datei bleibt alt", async () => {
+    const { WorkspaceStore, createDatabase } = await import("@based/core");
+    const { hasPropertyRecords } = await import("../src/migrations.js");
+    const { openNodeDatabase } = await import("../src/drivers/node.js");
+    const { openWorkspace } = await import("../src/index.js");
+    const before = WorkspaceStore.propertyRecordsForNewFiles;
+    WorkspaceStore.propertyRecordsForNewFiles = true;
+    try {
+      const fresh = openNodeDatabase();
+      const a = openWorkspace(fresh, { node: "A" });
+      expect(a.store.propertyRecords).toBe(true);
+      expect(hasPropertyRecords(fresh)).toBe(true);
+
+      const pinned = openNodeDatabase();
+      const b = openWorkspace(pinned, { node: "B", propertyRecords: false });
+      expect(b.store.propertyRecords).toBe(false);
+      createDatabase(b.store, { parent: "w", title: "Old", sampleRows: 0 });
+      // dieselbe Datei später ohne Angabe: sie hat Inhalt, also bleibt sie (außer die Suite läuft ganz im neuen Format)
+      const again = openWorkspace(pinned, { node: "B" });
+      expect(again.store.propertyRecords).toBe(WorkspaceStore.propertyRecordsByDefault);
+    } finally {
+      WorkspaceStore.propertyRecordsForNewFiles = before;
+    }
+  });
+});

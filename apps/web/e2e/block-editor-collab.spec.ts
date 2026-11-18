@@ -54,7 +54,7 @@ async function connect(page: Page, serverURL: string) {
 }
 
 const pulled = async (serverURL: string, text: string) => {
-  const r = await fetch(`${serverURL}/sync/v2/pull?after=0&limit=500`, { headers: { Authorization: `Bearer ${TOKEN}` } });
+  const r = await fetch(`${serverURL}/sync/v2/pull?after=0&limit=500`, { headers: { Authorization: `Bearer ${TOKEN}`, "X-Based-Protocol": "3" } });
   return JSON.stringify(await r.json()).includes(text);
 };
 

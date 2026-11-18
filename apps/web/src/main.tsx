@@ -1,3 +1,4 @@
+import { authorID } from "@based/core";
 import { askUser } from "./shell/prompts.js";
 // BSD-153: Start der Web-Shell. Der Store läuft in einem Dedicated Worker (SQLite-WASM auf OPFS); die UI spricht mit
 // ihm über StoreClient. Mehrere Browser-Tabs: nur ein Tab startet den Worker, die anderen reden über ihn
@@ -139,14 +140,28 @@ function showGuestRevoked() {
   );
 }
 
-/** BSD-30: Spricht der Server Protokoll 3 (Properties als eigene Records)? Ohne Antwort: nein. */
-async function serverUsesPropertyRecords(url: string): Promise<boolean> {
+/** BSD-30: Spricht der Server Protokoll 3 (Properties als eigene Records)? Ohne Antwort: unbekannt. */
+async function serverUsesPropertyRecords(url: string): Promise<boolean | undefined> {
   try {
     const r = await fetch(`${url.replace(/\/+$/, "")}/health`);
-    return r.ok && ((await r.json()) as { protocol?: unknown }).protocol === 3;
+    if (!r.ok) return undefined;
+    return ((await r.json()) as { protocol?: unknown }).protocol === 3;
   } catch {
-    return false;
+    return undefined;
   }
+}
+
+/**
+ * BSD-569: Format für diesen Start. Eine neue, leere Datei beginnt im neuen Format (entscheidet der Worker, wenn hier
+ * nichts steht). Antwortet der eingestellte Server noch im alten, bleibt auch ein neues Gerät dabei – sonst könnte es
+ * nicht mit ihm syncen. Eine schon umgestellte Datei bleibt in jedem Fall umgestellt.
+ */
+async function propertyRecordsMode(syncURL: string | undefined, wanted: boolean): Promise<{ propertyRecords?: boolean }> {
+  if (wanted) return { propertyRecords: true };
+  if (propertyRecordsSetting.pinnedOld()) return { propertyRecords: false };
+  if (syncURL === undefined) return {};
+  const server = await serverUsesPropertyRecords(syncURL);
+  return server === false ? { propertyRecords: false } : {};
 }
 
 function start(guest: GuestBoot | undefined) {
@@ -167,8 +182,9 @@ function start(guest: GuestBoot | undefined) {
       const sync = await syncConfig.load();
       // BSD-235: ein Gast läuft nur im Speicher (der OPFS-Pool gehört dem Store-Tab des Besitzers) und synct mit dem Link.
       // BSD-30: ein Gast richtet sich nach dem Server (sein Store lebt nur im Speicher und muss dessen Protokoll sprechen)
-      if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync && (await serverUsesPropertyRecords(sync.url)) ? { propertyRecords: true } : {}) };
-      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(propertyRecordsSetting.get() ? { propertyRecords: true } : {}), ...(lazyStoreSetting.get() ? { lazy: true } : {}) };
+      // BSD-579: ein Gast schreibt nie als „me“ (das ist der Besitzer), sondern als Gast mit seinem Namen bzw. Link
+      if (guest) return { userID: authorID({ kind: "guest", name: guest.me?.name || guest.id }), ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync ? { propertyRecords: (await serverUsesPropertyRecords(sync.url)) === true } : {}) };
+      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(await propertyRecordsMode(sync?.url, propertyRecordsSetting.get())), ...(lazyStoreSetting.get() ? { lazy: true } : {}) };
     },
   });
   const client = new StoreClient(link);

@@ -60,7 +60,8 @@ describe("Start", () => {
     try {
       await expect.poll(() => out, { timeout: 15_000 }).toContain("based-server listening");
       const r = await fetch(`http://127.0.0.1:${port}/sync/v2/info`, { headers: { Authorization: "Bearer main-test-token-123456" } });
-      expect(await r.json()).toMatchObject({ protocol: 2, seq: 0, oldestSeq: 0 });
+      // BSD-569: eine neue Datei beginnt im neuen Format (Protokoll 3)
+      expect(await r.json()).toMatchObject({ protocol: 3, seq: 0, oldestSeq: 0 });
       expect((await fetch(`http://127.0.0.1:${port}/sync/v2/info`)).status).toBe(401);
       // Logs ohne Token und ohne Inhalte.
       expect(out).not.toContain("main-test-token");

@@ -2,6 +2,7 @@
 // Transaktionen mit Undo/Redo (prüft Remote-Änderungen, BSD-27), Last-Writer-Wins-Merge mit gestempelten
 // Tombstones (ADR 0002, BSD-24) und einer austauschbaren Persistenz. Verifiziert über fixtures/merge und
 // fixtures/undo-remote. Kein UI, keine Plattform-APIs.
+import { withCalendarDays } from "../model/calendar-day.js";
 import { canonicalStringify, cloneRecord } from "../json.js";
 import { compareStamps, StampClock, ZERO_STAMP, type Stamp } from "../hlc.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
@@ -431,6 +432,9 @@ export class WorkspaceStore {
    * sie ein – so läuft die ganze Testsuite auch im neuen Format (ci/typecheck/run-ts.sh).
    */
   static propertyRecordsByDefault = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.BASED_PROPERTY_RECORDS === "1";
+  /** BSD-569: Eine neue, leere Datei beginnt mit Property-Records (`openWorkspace`). Nur Tests, die das alte
+   *  Speicherformat festhalten, schalten das aus. */
+  static propertyRecordsForNewFiles = true;
   /** BSD-30: Property-Records (nur mit `propertyRecords`). */
   readonly properties = new Map<string, PropertyRecord>();
   readonly propertyRecords: boolean;
@@ -1029,6 +1033,12 @@ export class WorkspaceStore {
       const unchanged = prev !== undefined && (prev.data === cur.data || same(cur, prev));
       if (unchanged && !tx.forced.has(key)) continue;
       if (restamp) {
+        // BSD-578: Datum ohne Uhrzeit bekommt seinen Kalendertag (nur eigene Änderungen; was von anderen Geräten
+        // kommt, trägt den Tag seines Schreibers schon)
+        if (cur.kind === "block" && !unchanged) {
+          const dated = withCalendarDays(cur.data, prev?.kind === "block" ? prev.data : undefined);
+          if (dated !== cur.data) cur = { kind: "block", data: dated };
+        }
         cur = this.stamped(cur, now, tx.preserveTimestamps || unchanged);
         this.restore(key, cur);
       }
