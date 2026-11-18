@@ -231,6 +231,13 @@ die rufen `withActor` nach, wenn AI wieder an ist.
 - **Für das Format (Stufe C):** Der Umschlag trägt je Record den Bereich und dessen Stufe; in privaten Bereichen
   reicht der Server Records und Y-Änderungen nur verschlüsselt weiter, in offenen liest er sie.
 
+## Nachtrag 18. 11. 2026: keine Umstellung in einem Schritt
+
+Elija, 18. 11.: Ein Update darf nie alle Dateien umschreiben müssen. Das ersetzt unten „Eine Formatumstellung statt
+mehrerer“ und oben „Protokoll v4, alles in einer Umstellung“: kompakte Records, `scope` und der E2E-Umschlag kommen
+als zweite Form, die neben der alten gelesen wird (`docs/data-format.md`, Grundsatz). Spalten und Indizes bleiben
+abgeleitet. Ein Probelauf auf dem echten Workspace bleibt Pflicht, eine Massen-Migration gibt es nicht.
+
 ## Was aus „Aufwand egal, langfristig am besten“ folgt
 
 - **Stufe B ganz, nicht halb:** SQLite ist die eine Quelle; der Store im Worker ist ein Zwischenspeicher mit fester

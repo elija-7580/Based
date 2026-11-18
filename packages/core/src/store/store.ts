@@ -2,6 +2,7 @@
 // Transaktionen mit Undo/Redo (prüft Remote-Änderungen, BSD-27), Last-Writer-Wins-Merge mit gestempelten
 // Tombstones (ADR 0002, BSD-24) und einer austauschbaren Persistenz. Verifiziert über fixtures/merge und
 // fixtures/undo-remote. Kein UI, keine Plattform-APIs.
+import { withCalendarDays } from "../model/calendar-day.js";
 import { canonicalStringify, cloneRecord } from "../json.js";
 import { compareStamps, StampClock, ZERO_STAMP, type Stamp } from "../hlc.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
@@ -975,6 +976,12 @@ export class WorkspaceStore {
       const unchanged = prev !== undefined && (prev.data === cur.data || same(cur, prev));
       if (unchanged && !tx.forced.has(key)) continue;
       if (restamp) {
+        // BSD-570: Datum ohne Uhrzeit bekommt seinen Kalendertag (nur eigene Änderungen; was von anderen Geräten
+        // kommt, trägt den Tag seines Schreibers schon)
+        if (cur.kind === "block" && !unchanged) {
+          const dated = withCalendarDays(cur.data, prev?.kind === "block" ? prev.data : undefined);
+          if (dated !== cur.data) cur = { kind: "block", data: dated };
+        }
         cur = this.stamped(cur, now, tx.preserveTimestamps || unchanged);
         this.restore(key, cur);
       }

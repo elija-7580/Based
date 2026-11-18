@@ -239,3 +239,5 @@ export {
 export * as blockCommands from "./editor/commands/index.js";
 export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
 export { createFuzzyIndex, normalizeSearch, type FuzzyFields, type FuzzyIndex } from "./fuzzy.js";
+
+export { calendarDayStart, localDay, normalizeDate, resolveDate, stampDay, withCalendarDays } from "./model/calendar-day.js";

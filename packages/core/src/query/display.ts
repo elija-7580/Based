@@ -1,5 +1,6 @@
 // BSD-155: Anzeige-Helfer für Datenbank-Ansichten, portiert aus BasedCore (CellFormatter.number,
 // QueryEngine.calculation, CalculationType.options, Cells.format) und den Beschriftungen der Swift-App.
+import { resolveDate } from "../model/calendar-day.js";
 import type { Block, Database, PropertySchema } from "../model/records.js";
 import { cellText, QueryEngine } from "./engine.js";
 import { formatMoment, longDate, plainNumber, type DateValue, type Value } from "./value.js";
@@ -31,6 +32,7 @@ export function formatNumber(n: number, format?: string): string {
 
 /** Datum einer Zelle: eigenes Format der Property (Moment-Syntax) oder Notions lange Form. */
 export function formatDateCell(d: DateValue, p: PropertySchema | undefined): string {
+  d = resolveDate(d);
   const fmt = p?.dateFormat;
   if (!fmt) return longDate(d);
   let s = formatMoment(d.start, fmt);

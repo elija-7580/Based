@@ -64,6 +64,19 @@ describe("Fixture-Dateien sind gültig", () => {
   });
 });
 
+/**
+ * BSD-570: Der TS-Kern schreibt bei jedem Datum ohne Uhrzeit zusätzlich den Kalendertag (`day`, `endDay`) – die
+ * Swift-Fixtures kennen das Feld nicht. Für den Vergleich fällt es überall weg (eine Abweichung für alle Fälle,
+ * statt je Fall einer); dass es geschrieben wird, prüft calendar-day.test.ts.
+ */
+function withoutCalendarDays(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(withoutCalendarDays);
+  if (v === null || typeof v !== "object" || Object.getPrototypeOf(v) !== Object.prototype) return v;
+  const o = v as Record<string, unknown>;
+  const dated = typeof o.includeTime === "boolean" && typeof o.start === "number";
+  return Object.fromEntries(Object.entries(o).filter(([k]) => !(dated && (k === "day" || k === "endDay"))).map(([k, x]) => [k, withoutCalendarDays(x)]));
+}
+
 for (const f of files) {
   const port = PORTS[f.module];
   const t = tally(f.module, f.cases.length, Boolean(port));
@@ -80,7 +93,7 @@ for (const f of files) {
         expect(dev.output(c.output), `${dev.reason}: Abweichung ist gegenstandslos`).not.toEqual(c.output);
         t.deviations = (t.deviations ?? 0) + 1;
       }
-      expect(await port(c.input, f.meta)).toEqual(dev ? dev.output(c.output) : c.output);
+      expect(withoutCalendarDays(await port(c.input, f.meta))).toEqual(dev ? dev.output(c.output) : c.output);
       t.passed += 1;
     });
   });

@@ -89,7 +89,6 @@ describe("BSD-569: Format neuer Dateien", () => {
       const b = openWorkspace(pinned, { node: "B", propertyRecords: false });
       expect(b.store.propertyRecords).toBe(false);
       createDatabase(b.store, { parent: "w", title: "Old", sampleRows: 0 });
-      b.persistence.flush?.();
       // dieselbe Datei später ohne Angabe: sie hat Inhalt, also bleibt sie (außer die Suite läuft ganz im neuen Format)
       const again = openWorkspace(pinned, { node: "B" });
       expect(again.store.propertyRecords).toBe(WorkspaceStore.propertyRecordsByDefault);

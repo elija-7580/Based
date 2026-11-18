@@ -209,7 +209,7 @@ export class StoreHost {
     this.currentRequest = msg.type === "command" ? `command ${msg.command.op}` : msg.type;
     try {
       switch (msg.type) {
-        case "init": reply(await this.init(msg.device, msg.sync, msg.opfs, msg.propertyRecords, msg.lazy)); break;
+        case "init": reply(await this.init(msg.device, msg.sync, msg.opfs, msg.propertyRecords, msg.lazy, msg.userID)); break;
         case "command": reply(this.command(msg.command)); break;
         case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30, msg.filters, msg.sort); break;
         // ADR 0017 Stufe B: Der Suchindex braucht heute den ganzen Inhalt im Speicher. Mit Laden nach Bedarf wird er
@@ -308,7 +308,7 @@ export class StoreHost {
 
   // MARK: Start
 
-  async init(device: string | undefined, sync: SyncConfig | undefined, opfs: string | undefined, propertyRecords?: boolean, lazy?: boolean): Promise<InitResult> {
+  async init(device: string | undefined, sync: SyncConfig | undefined, opfs: string | undefined, propertyRecords?: boolean, lazy?: boolean, userID?: string): Promise<InitResult> {
     if (this.ws) return { node: this.store.clock.node, persistent: this.ws.persistent, created: false };
     this.device = device;
     const deviceStore: DeviceNodeStore = {
@@ -320,6 +320,8 @@ export class StoreHost {
     };
     this.ws = await this.opts.open({ device: deviceStore, ...(opfs === undefined ? {} : { opfs }), ...(propertyRecords === undefined ? {} : { propertyRecords }), ...(lazy ? { lazy: true } : {}) });
     const store = this.ws.store;
+    // BSD-570: „me“ heißt „der Besitzer des Workspaces“ (docs/data-format.md) – ein Gast schreibt unter seiner Kennung
+    if (userID) store.userID = userID;
     // ADR 0017 Stufe B: festhalten, wer doch den ganzen Workspace in den Speicher holt (Diagnose, Zeitmess-Test).
     store.onFullLoad = (why) => {
       const at = (new Error().stack ?? "").split("\n").slice(3, 9).map((l) => l.trim().replace(/^at /, "").replace(/\s*\(.*$/, "")).join(" < ");

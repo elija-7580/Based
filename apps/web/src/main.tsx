@@ -1,3 +1,4 @@
+import { authorID } from "@based/core";
 import { askUser } from "./shell/prompts.js";
 // BSD-153: Start der Web-Shell. Der Store läuft in einem Dedicated Worker (SQLite-WASM auf OPFS); die UI spricht mit
 // ihm über StoreClient. Mehrere Browser-Tabs: nur ein Tab startet den Worker, die anderen reden über ihn
@@ -157,7 +158,8 @@ function start(guest: GuestBoot | undefined) {
       const sync = await syncConfig.load();
       // BSD-235: ein Gast läuft nur im Speicher (der OPFS-Pool gehört dem Store-Tab des Besitzers) und synct mit dem Link.
       // BSD-30: ein Gast richtet sich nach dem Server (sein Store lebt nur im Speicher und muss dessen Protokoll sprechen)
-      if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync ? { propertyRecords: (await serverUsesPropertyRecords(sync.url)) === true } : {}) };
+      // BSD-570: ein Gast schreibt nie als „me“ (das ist der Besitzer), sondern als Gast mit seinem Namen bzw. Link
+      if (guest) return { userID: authorID({ kind: "guest", name: guest.me?.name || guest.id }), ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync ? { propertyRecords: (await serverUsesPropertyRecords(sync.url)) === true } : {}) };
       return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(await propertyRecordsMode(sync?.url, propertyRecordsSetting.get())), ...(lazyStoreSetting.get() ? { lazy: true } : {}) };
     },
   });

@@ -272,11 +272,11 @@ describe("Schreib-Operationen", () => {
     resizeRowSpan(store, "r", { dateID: "when" }, "end", D(2026, 2, 5));
     expect(local(val(store, "r", "when")!.end!)).toBe("2026-02-05 00:00");
     resizeRowSpan(store, "r", { dateID: "when" }, "start", D(2026, 2, 9)); // hinter das Ende: wird eintägig
-    expect(val(store, "r", "when")).toEqual({ start: at(2026, 2, 5), includeTime: false });
+    expect(val(store, "r", "when")).toEqual({ start: at(2026, 2, 5), includeTime: false, day: "2026-02-05" }); // BSD-570: mit Kalendertag
     resizeRowSpan(store, "r", { dateID: "when" }, "end", D(2026, 2, 1)); // vor den Beginn: bleibt eintägig
     expect(val(store, "r", "when")!.end).toBeUndefined();
     setRowSpan(store, "n", { dateID: "when" }, D(2026, 3, 10), D(2026, 3, 8));
-    expect(val(store, "n", "when")).toEqual({ start: at(2026, 3, 8), end: at(2026, 3, 10), includeTime: false });
+    expect(val(store, "n", "when")).toEqual({ start: at(2026, 3, 8), end: at(2026, 3, 10), includeTime: false, day: "2026-03-08", endDay: "2026-03-10" });
     resizeRowSpan(store, "s", { dateID: "when", endID: "until" }, "end", D(2026, 5, 10));
     expect(local(val(store, "s", "until")!.start)).toBe("2026-05-10 00:00");
     expect(local(val(store, "s", "when")!.start)).toBe("2026-05-01 00:00");
@@ -285,11 +285,11 @@ describe("Schreib-Operationen", () => {
   it("addRowOnDay legt eine Zeile mit ganztägigem Datum an; canWriteSpan nur für echte Datums-Properties", () => {
     const { store, engine, db, view } = fixture();
     const id = addRowOnDay(store, "db", { dateID: "when" }, D(2026, 11, 9), { values: { title: pv("text", "x") } })!;
-    expect(val(store, id, "when")).toEqual({ start: at(2026, 11, 9), includeTime: false });
+    expect(val(store, id, "when")).toEqual({ start: at(2026, 11, 9), includeTime: false, day: "2026-11-09" });
     const span = rowSpan(engine, db, store.blocks.get(id)!, calendarDateProperty(db, view)!)!;
     expect(span.start).toBe(D(2026, 11, 9));
     const two = addRowOnDay(store, "db", { dateID: "when", endID: "until" }, D(2026, 11, 9), { endDay: D(2026, 11, 11) })!;
-    expect(val(store, two, "until")).toEqual({ start: at(2026, 11, 11), includeTime: false });
+    expect(val(store, two, "until")).toEqual({ start: at(2026, 11, 11), includeTime: false, day: "2026-11-11" });
     store.undo();
     expect(store.blocks.has(two)).toBe(false);
     expect(addRowOnDay(store, "db", { dateID: "f" }, 0)).toBeUndefined();

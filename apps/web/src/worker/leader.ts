@@ -44,6 +44,7 @@ export interface InitParams {
   propertyRecords?: boolean;
   /** ADR 0017 Stufe B: nur das Gerüst laden, Inhalt nach Bedarf. */
   lazy?: boolean;
+  userID?: string;
 }
 
 export interface StoreLinkOptions {
@@ -108,6 +109,7 @@ export class Relay {
       if (params.opfs) req.opfs = params.opfs;
       if (params.propertyRecords !== undefined) req.propertyRecords = params.propertyRecords;
       if (params.lazy) req.lazy = true;
+      if (params.userID) req.userID = params.userID;
       this.forward(RELAY, { ...req, id: 0 } as RequestMessage);
     }
     return this.init;

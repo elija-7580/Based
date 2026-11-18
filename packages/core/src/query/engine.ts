@@ -1,6 +1,7 @@
 // Abfragen auf Datenbanken: Werte (inkl. Formeln, Relationen, Rollups), Filter, Sortierung, Gruppen,
 // Spalten-Berechnungen. Portiert aus BasedCore Query/QueryEngine.swift. Verifiziert über
 // fixtures/queries/queries.utc.json und values.utc.json (BSD-173).
+import { resolveDate } from "../model/calendar-day.js";
 import type { Block, Database, DatabaseView, PropertySchema, PropertyValue, RichText } from "../model/records.js";
 import type { WorkspaceStore } from "../store/store.js";
 import { Formula, FormulaError, type FormulaEnvironment } from "./formula.js";
@@ -292,7 +293,7 @@ export class QueryEngine {
       case "number": return num(x as number);
       case "select": case "status": { const o = optionById(p, x as string); return o ? str(o.name) : EMPTY; }
       case "multiSelect": return list((x as string[]).flatMap((id) => { const o = optionById(p, id); return o ? [str(o.name)] : []; }));
-      case "date": return date(x as DateValue);
+      case "date": return date(resolveDate(x as DateValue)); // BSD-570: derselbe Kalendertag in jeder Zeitzone
       case "person": return list((x as string[]).map((id) => ({ t: "person", v: id }) as Value));
       case "files": return list((x as { name: string }[]).map((f) => str(f.name)));
       case "checkbox": return bool(x as boolean);

@@ -1,6 +1,7 @@
 // BSD-217: übersetzt einen `NotionSnapshot` (rohe API-Objekte) in Based-Blöcke, -Datenbanken und -Ansichten (Port von
 // Swift `NotionAPIMapper`). IDs sind Notions eigene: ein zweiter Import derselben Seite aktualisiert sie an Ort und
 // Stelle. Reine Funktion über den Snapshot; Golden Fixtures: fixtures/import/notion-api.utc.json.
+import { stampDay } from "../../model/calendar-day.js";
 import type { JSONValue } from "../../json.js";
 import { canonicalStringify, SWIFT_REFERENCE_DATE_UNIX_MS } from "../../json.js";
 import type { Block, BlockProps, Database, DatabaseView, PropertySchema, PropertyValue, RichText } from "../../model/records.js";
@@ -1185,7 +1186,8 @@ class Mapper {
     const e = endRaw !== undefined ? this.parseDate(endRaw) : undefined;
     const d: DateValue = { start: s.date, includeTime: s.time };
     if (e) d.end = e.date;
-    return d;
+    // BSD-570: ohne Uhrzeit ein Kalendertag – der Tag steht mit im Wert
+    return d.includeTime ? d : stampDay(d);
   }
 
   private titleText(page: JSONValue): RichText {
