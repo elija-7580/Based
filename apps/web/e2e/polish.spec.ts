@@ -733,3 +733,54 @@ test("Import-Dialog: Quellen als Liste, Knöpfe in allen Größen sichtbar (BSD-
     }
   }
 });
+
+// BSD-599: 900 × 600 mit Seitenleiste und offenem Chat lässt Home ~236 px. Vorher lief der Bogen (Mindestbreite
+// 320 px) über Begrüßung und Composer, Text überdeckte Text, der Zeitraum-Umschalter ragte hinaus. Jetzt entfällt der
+// Bogen in so schmaler Spalte; in der Startgröße mit Chat bleibt er.
+test("Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599)", async ({ page }) => {
+  for (const theme of ["light", "dark"] as const) {
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.goto("/");
+    await page.evaluate((t) => { localStorage.clear(); localStorage.setItem("based.appearance", JSON.stringify({ theme: t, marker: "mint" })); }, theme);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    await page.keyboard.press("ControlOrMeta+j");
+    await expect(page.getByTestId("chat-panel")).toBeVisible();
+    for (const [w, h] of [[1280, 820], [900, 600]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      const home = page.getByTestId("home");
+      const box = async (sel: string) => (await home.locator(sel).first().boundingBox())!;
+      await expect.poll(async () => (await box(".home-greet")).width, { message: `Begrüßung ${w}` }).toBeGreaterThan(0);
+      const panel = (await home.boundingBox())!;
+      // nichts ragt seitlich aus der Spalte (Umschalter, Knöpfe im Kopf, Begrüßung, Composer)
+      for (const sel of [".home-head .based-switcher", ".home-head .btn", ".home-greet", ".home-dock"]) {
+        for (const b of await home.locator(sel).all()) {
+          const r = (await b.boundingBox())!;
+          expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
+        }
+      }
+      expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
+      const greet = await box(".home-greet"), dock = await box(".home-dock");
+      const arc = page.getByTestId("time-arc");
+      if (w === 1280) {
+        // in der Startgröße bleibt der Bogen, zwischen Begrüßung und Composer
+        await expect(arc).toBeVisible();
+        const a = (await arc.boundingBox())!;
+        expect(a.y, `Bogen unter der Begrüßung (${theme})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
+        expect(a.x + a.width, `Bogen in der Spalte (${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
+        await page.screenshot({ path: `../../docs/design/screens/web-home-chat-open-${theme}.png` });
+      } else {
+        await expect(arc).toBeHidden();
+      }
+      expect(dock.y, `Composer unter der Begrüßung (${w}, ${theme})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
+      // der Leertext des Bogens überdeckt nichts mehr
+      const empty = page.getByTestId("home-empty");
+      if (await empty.isVisible()) {
+        const e = (await empty.boundingBox())!;
+        expect(e.y, `Leertext unter der Begrüßung (${w})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
+        expect(e.y + e.height, `Leertext über dem Composer (${w})`).toBeLessThanOrEqual(dock.y + 0.5);
+      }
+    }
+  }
+});

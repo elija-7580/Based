@@ -3,7 +3,7 @@
    Fortschritt); „Needs you“ = dunkler 1,5-px-Rahmen + dunkler Punkt, nie Farbe; geplant = gestrichelt; erledigt =
    grau; Zeiten, Kosten, IDs in Mono. Bewegung 120/180 ms, ease-out, nur Deckkraft und Position. */
 
-.home { padding: var(--space-5) var(--space-6) var(--space-4); min-height: 100%; display: flex; flex-direction: column; container: home / inline-size; }
+.home { padding: var(--space-5) min(var(--space-6), 5%) var(--space-4); min-height: 100%; display: flex; flex-direction: column; container: home / inline-size; }
 .home-inner { width: 100%; max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-3); flex: 1; }
 
 /* Kopf */
@@ -14,6 +14,14 @@
 @container home (max-width: 48rem) {
   .home-head { flex-wrap: nowrap; gap: var(--space-2); }
   .home-head :is(.home-btn-label, .home-status-label) { display: none; }
+}
+/* BSD-599: Sehr schmal (900 × 600 mit Seitenleiste und offenem Chat: Home ~236 px breit). Der Bogen braucht
+   mindestens 320 px und lief darunter über Begrüßung und Composer – dann entfällt er; was läuft und was wartet, nennt
+   der Satz der Begrüßung, alles Weitere „All tasks“ im Kopf. Der Kopf darf umbrechen; der Rand schrumpft mit der
+   Breite der Spalte (höchstens space-6), damit der Zeitraum-Umschalter ganz hineinpasst. */
+@container home (max-width: 24rem) {
+  .home-head { flex-wrap: wrap; }
+  .home-arc { display: none; }
 }
 .home-mono { font-family: var(--font-mono); font-size: var(--type-data-size); line-height: var(--type-data-leading); color: var(--muted); white-space: nowrap; }
 .home-status { display: inline-flex; align-items: center; gap: var(--space-2); }
@@ -103,6 +111,8 @@
 
 /* Composer + Auftragskarte */
 .home-dock { position: relative; width: 100%; max-width: 600px; margin: var(--space-2) auto 0; display: flex; flex-direction: column; gap: var(--space-2); }
+/* BSD-599: Der Platzhalter bleibt einzeilig – umgebrochen lugte seine zweite Zeile unter der Leiste hervor. */
+.home-dock .composer-input::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-dock .composer .popover { top: auto; bottom: calc(100% + var(--space-2)); }
 .home-dock-hint { text-align: center; }
 .home-cardslot { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--space-2)); display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; z-index: 2; }

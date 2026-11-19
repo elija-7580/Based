@@ -210,7 +210,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
           </p>
         </section>
 
-        <div ref={stageRef}>
+        <div ref={stageRef} className="home-arc">
           {model ? (
             <TimeArc model={model} frame={frame} nowMs={now} showDetails={showDetails} titleOf={titleOf} maxHeight={arcMax}
               onOpenRun={(id) => onNavigate({ name: "agent", id })} onOpenPage={onOpenPage} onOpenProject={(id) => onNavigate({ name: "project", id })}
