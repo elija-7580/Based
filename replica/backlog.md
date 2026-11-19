@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12, TS-Stack, Abschnitt direkt unten; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 43 (Nachtlauf 2026-11-19, TS-Stack, Abschnitt direkt unten; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,23 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 43 (Nachtlauf 2026-11-19)
+
+Zwei Schichten (A Kern & Server, B Oberfläche), beide bis 04:41 fertig; main c3ba1fe → a593e22e (B) → c65f617b (A), jeweils Fast-Forward, `run-ts.sh --fast` grün auf jedem Stand, CI ts-fast auf den Branches grün.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-594 Speicher: geschlossene Editoren | ✅ | Fix + editor-leak.spec lagen schon auf main (7a383688); nachgeprüft |
+| BSD-602 ZIP-Import „2 Seiten statt 1“ | ✅ | kein Fehler: Ordner im ZIP ist seit BSD-563 eine Seite; Spec + Unit-Prüfung angepasst |
+| BSD-595 Chat-/Agenten-Code beim Erststart | ✅ | eigene Chunks; Start-JS 1 063 → 918 KiB gzip, Worker 319 → 281 KiB; Budget gesenkt |
+| BSD-596 Leerlauf-Wächter / Sitzungs-Marke | 🟡 | Mac-Test; 0 Timer in 5 s Leerlauf (vorher ~100) |
+| BSD-604 Spalte „ID“ bei 100 000 Zeilen | 🟡 | Teil 1: 2,1 s → 1,0 s, Undo 23–30 s → 1,5 s; Teil 2 blockiert (Frage Worker vs. Häppchen) |
+| BSD-605 Datenbank 100 000 Zeilen Heap | 🟡 | Teil 1: Messschritt + Befund; Umbau nach dem 23.11. |
+| BSD-599 Home hinter Chat bei 900 × 600 | ✅ | polish.spec |
+| BSD-600 Werkzeug-Karte im Chat | ✅ | chat.spec |
+| BSD-606 Beta-Fixtures v0.2.3–v0.2.8 + Archive | ✅ | neu gefunden und erledigt; alle öffnen/importieren ohne Unterschied |
+| BSD-601 ask_user | ❌ | zurückgestellt: Feature außerhalb der Beta, überschneidet sich mit BSD-539 |
 
 ## Nachmittag 2026-11-18 (Chat mit Elija, Rest aus Pass 42)
 
