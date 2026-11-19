@@ -1,61 +1,17 @@
-success 5cebdf8c31520cc66ac640ee3c6e955d06b59a1d
-  ✓  259 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.7s)
-  ✓  260 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (13.0s)
-  ✓  261 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (14.2s)
-  ✓  262 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.8s)
-  ✓  263 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (4.8s)
-  -  265 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  266 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  264 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (4.8s)
-  ✓  268 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.3s)
-  ✓  267 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (6.0s)
-  ✓  269 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.0s)
-  ✓  270 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.1s)
-  ✓  271 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.8s)
-  ✓  273 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.8s)
-  ✓  274 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.9s)
-  ✓  275 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.5s)
-  ✓  272 [webkit] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (9.9s)
-  ✓  276 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (3.2s)
-  ✓  277 [webkit] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (4.4s)
-  ✓  278 [webkit] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (3.1s)
-  ✓  279 [webkit] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.2s)
-  ✓  280 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.3s)
-  ✓  282 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.2s)
-  ✓  283 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.1s)
-  ✓  281 [webkit] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.3s)
-  -  285 [webkit] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
-  ✓  284 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.9s)
-  ✓  286 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (7.3s)
-  ✓  287 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (5.8s)
-  ✓  288 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.3s)
-  ✓  289 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.2s)
-  ✓  290 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (6.2s)
-  ✓  291 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (6.0s)
-  ✓  292 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.4s)
-  ✓  293 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.4s)
-  -  294 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
-
-
-  1) [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: true
-    Received: false
-
-      204 |   await page.goto(`/#page-${other}`);
-      205 |   await expect(editor(page)).toBeVisible();
-    > 206 |   expect(await page.evaluate(([r, d, s, rr]) => (globalThis as unknown as { __basedReport: H }).__basedReport.load(r as string, d, s, rr as string), [other, b.state.doc, { type: "text", anchor: 1, head: 1, block: b.state.doc.blocks[1]!.id }, id] as const)).toBe(true);
-          |                                                                                                                                                                                                                                                                  ^
-      207 |   await expect(editor(page).locator("[data-editable-id]")).toHaveText(["One", "Two"]);
-      208 |   await expect(editor(page).locator("[data-editable-id]").nth(1)).toBeFocused();
-      209 |   await page.keyboard.type("!");
-        at /home/runner/work/Based/Based/apps/web/e2e/report.spec.ts:206:258
-
-    Error Context: test-results/report-Wiedergabe-Haken-im-a0a86-nwenden-Schreibmarke-setzen-webkit/error-context.md
-
-  1 flaky
-    [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen 
-  56 skipped
-  236 passed (11.1m)
+failure cff2e00775cd3f05b9641968326bdfd9c3302dc4
+(kein Testlog – Lauf vor den Tests beendet; Ende des Playwright-Setups:)
+Err:5 http://security.ubuntu.com/ubuntu noble-updates/main amd64 libgstreamer-gl1.0-0 amd64 1.24.2-1ubuntu0.6
+  503  Service Unavailable [IP: 52.15.107.13 80]
+W: Download is performed unsandboxed as root as file '/home/runner/.cache/apt-archives/partial/libgstreamer-plugins-base1.0-0_1.24.2-1ubuntu0.6_amd64.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
+E: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/g/gst-plugins-base1.0/libgstreamer-plugins-base1.0-0_1.24.2-1ubuntu0.6_amd64.deb  503  Service Unavailable [IP: 52.15.107.13 80]
+E: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/g/gst-plugins-base1.0/gstreamer1.0-plugins-base_1.24.2-1ubuntu0.6_amd64.deb  503  Service Unavailable [IP: 52.15.107.13 80]
+E: Failed to fetch https://security.ubuntu.com/ubuntu/pool/main/m/mesa/libegl-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb  503  Service Unavailable [IP: 52.15.107.13 80]
+E: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/g/gst-plugins-base1.0/libgstreamer-gl1.0-0_1.24.2-1ubuntu0.6_amd64.deb  503  Service Unavailable [IP: 52.15.107.13 80]
+E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
+Failed to install browser dependencies
+Error: Installation process exited with code: 100
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright install-deps webkit
+::warning title=Playwright-Setup::Systempakete (apt): Exit 1 (Versuch 2/2)
+::error title=Playwright-Setup (BSD-548)::Systempakete (apt) für [webkit] nach 2 Versuchen gescheitert (Exit 1). Kein Testergebnis – Runner-Image/apt/Netz prüfen, nicht die Tests.
