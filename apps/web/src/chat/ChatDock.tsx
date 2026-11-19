@@ -4,6 +4,7 @@ import type { ChatInfo } from "@based/brain";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { History, Route } from "../shell/router.js";
 import type { StoreClient } from "../worker/client.js";
+import { useChatFloats } from "./dockLayout.js";
 import { chatController, onOpenChatPanel, openChatPanel, restoreLastChat, setChatPanelOpen } from "./runtime.js";
 // BSD-280: die Chat-Ansicht (Markdown, Code) erst laden, wenn der Chat aufgeht – nicht im Start-Bundle.
 const ChatView = lazy(() => import("./ChatView.js").then((m) => ({ default: m.ChatView })));
@@ -47,6 +48,8 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
   const [open, setOpen] = useState(() => readNumber(OPEN_KEY, 0) === 1);
   const [width, setWidth] = useState(() => Math.min(MAX, Math.max(MIN, readNumber(WIDTH_KEY, 420))));
   const onPage = route.name === "chat";
+  // BSD-607: bliebe der Hauptspalte zu wenig Platz, schwebt das Panel über dem Inhalt (dockLayout.ts).
+  const floats = useChatFloats(width);
 
   const setOpenSaved = useCallback((v: boolean) => {
     setOpen(v);
@@ -70,6 +73,22 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onPage, history, setOpenSaved]);
 
+  // BSD-607: Schwebendes Panel schließt wie die schwebende Seitenleiste (Sidebar.tsx) mit Escape und bei Klick
+  // daneben; der AI-Knopf der Kopfzeile schaltet selbst.
+  const floating = floats && open && !onPage;
+  useEffect(() => {
+    if (!floating) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Element | null;
+      if (t?.closest(".chat-dock, [data-testid=topbar-ai], [role=menu], [role=dialog], [role=listbox]")) return;
+      setOpenSaved(false);
+    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector("[role=menu], [role=dialog]")) setOpenSaved(false); };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onEsc);
+    return () => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("keydown", onEsc); };
+  }, [floating, setOpenSaved]);
+
   // Breite ziehen (Zeiger) oder mit den Pfeiltasten am Griff ändern.
   const drag = useRef<{ x: number; w: number } | undefined>(undefined);
   const resize = (w: number) => {
@@ -80,7 +99,7 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
 
   if (onPage || !open) return null;
   return (
-    <aside className="chat-dock" style={{ width }} data-testid="chat-dock">
+    <aside className="chat-dock" style={{ width }} data-testid="chat-dock" data-floating={floats || undefined}>
       <div
         className="chat-resize"
         role="separator"

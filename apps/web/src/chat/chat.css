@@ -72,6 +72,12 @@
 .ai-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .ai-command { font-family: var(--font-mono); overflow-wrap: anywhere; user-select: all; }
 
+/* BSD-607: Bliebe der Hauptspalte neben dem Panel zu wenig Platz (dockLayout.ts), schwebt es über dem Inhalt – Ebene
+   und Schatten wie die schwebende Seitenleiste (.sidebar.peek in styles.css); die Hauptspalte behält ihre Breite. */
+.chat-dock[data-floating] { position: fixed; top: 0; right: 0; bottom: 0; z-index: 20; padding: var(--space-3); }
+.chat-dock[data-floating] .chat-panel { box-shadow: var(--shadow-float); }
+.chat-dock[data-floating] .chat-resize { display: none; }
+
 @media (max-width: 760px) {
   .chat-dock { position: fixed; inset: 0; width: auto !important; padding: var(--space-2); z-index: 20; background: var(--canvas); }
   .chat-resize { display: none; }

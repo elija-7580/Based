@@ -281,3 +281,67 @@ for (const theme of ["light", "dark"] as const) {
     await expect(panel(page).getByRole("button", { name: /^Undo/ })).toHaveCount(0);
   });
 }
+
+// BSD-607 (Entscheidung Elija 19.11.: „wie die seitenleiste links“): Bliebe der Hauptspalte neben dem offenen Panel
+// weniger als 480 px (900 × 600 mit Seitenleiste: ~236 px), schwebt das Panel über dem Inhalt wie die eingeklappte
+// Seitenleiste; Escape, Klick daneben und der Schließen-Knopf schließen es. In 1280 und 1728 schiebt es wie bisher.
+// Fotos: docs/design/screens/web-chat-float-*.png.
+for (const theme of ["light", "dark"] as const) {
+  test(`Chat-Panel schwebt bei schmaler Hauptspalte (${theme})`, async ({ page, browserName }) => {
+    await page.evaluate((t) => { localStorage.setItem("based.appearance", JSON.stringify({ theme: t, marker: "mint" })); }, theme);
+    await page.setViewportSize({ width: 900, height: 600 });
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByRole("button", { name: "New page" }).first().click();
+    const main = page.locator("main.main");
+    const dock = page.getByTestId("chat-dock");
+    const before = (await main.boundingBox())!;
+    await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+    await page.keyboard.press(`${mod}+j`);
+    await useScript(page, LISBON);
+    await input(page).click();
+    await expect(input(page)).toBeFocused();
+    await expect(dock).toHaveAttribute("data-floating");
+    const m = (await main.boundingBox())!;
+    const d = (await dock.boundingBox())!;
+    expect(m.width, "Hauptspalte behält ihre Breite").toBeGreaterThanOrEqual(480);
+    expect(Math.abs(m.width - before.width), "nichts gestaucht").toBeLessThanOrEqual(1);
+    expect(d.x, "Panel liegt über der Hauptspalte").toBeLessThan(m.x + m.width);
+    expect(await dock.locator(".chat-panel").evaluate((el) => getComputedStyle(el).boxShadow), "Schatten wie die schwebende Seitenleiste")
+      .toBe(await page.locator("html").evaluate(() => { const p = document.createElement("i"); p.style.boxShadow = "var(--shadow-float)"; document.body.append(p); const v = getComputedStyle(p).boxShadow; p.remove(); return v; }));
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), "kein waagrechter Rollbalken").toBe(true);
+    if (browserName === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-chat-float-${theme}-900.png` });
+    // Escape schließt (wie die schwebende Seitenleiste) …
+    await page.keyboard.press("Escape");
+    await expect(dock).toHaveCount(0);
+    // … ebenso ein Klick daneben …
+    await page.keyboard.press(`${mod}+j`);
+    await expect(dock).toHaveAttribute("data-floating");
+    await page.mouse.click(m.x + 40, m.y + m.height / 2);
+    await expect(dock).toHaveCount(0);
+    // … und der Knopf.
+    await page.keyboard.press(`${mod}+j`);
+    await panel(page).getByRole("button", { name: "Close chat" }).click();
+    await expect(dock).toHaveCount(0);
+    // Ohne Seitenleiste reicht der Platz (900 − 420 = 480): das Panel schiebt.
+    await page.keyboard.press(`${mod}+\\`);
+    await page.keyboard.press(`${mod}+j`);
+    await expect(dock).toBeVisible();
+    await expect(dock).not.toHaveAttribute("data-floating");
+    await page.keyboard.press(`${mod}+\\`);
+    await expect(dock).toHaveAttribute("data-floating");
+    // Breitere Fenster: schiebt wie bisher, die Hauptspalte endet vor dem Panel.
+    for (const [w, h] of [[1280, 820], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await expect(dock).not.toHaveAttribute("data-floating");
+      const mm = (await main.boundingBox())!;
+      const dd = (await dock.boundingBox())!;
+      expect(mm.x + mm.width, `schiebt (${w})`).toBeLessThanOrEqual(dd.x + 0.5);
+      expect(mm.width, `Hauptspalte (${w})`).toBeGreaterThanOrEqual(480);
+      if (browserName === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-chat-float-${theme}-${w}.png` });
+    }
+    // Ein Klick in die Seite schließt das geschobene Panel nicht.
+    await page.mouse.click(300, 400);
+    await expect(dock).toBeVisible();
+  });
+}

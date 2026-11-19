@@ -736,7 +736,8 @@ test("Import-Dialog: Quellen als Liste, Knöpfe in allen Größen sichtbar (BSD-
 
 // BSD-599: 900 × 600 mit Seitenleiste und offenem Chat lässt Home ~236 px. Vorher lief der Bogen (Mindestbreite
 // 320 px) über Begrüßung und Composer, Text überdeckte Text, der Zeitraum-Umschalter ragte hinaus. Jetzt entfällt der
-// Bogen in so schmaler Spalte; in der Startgröße mit Chat bleibt er.
+// Bogen in so schmaler Spalte; in der Startgröße mit Chat bleibt er. Seit BSD-607 schwebt das Panel in 900 × 600
+// über Home, statt die Spalte zu stauchen.
 test("Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599)", async ({ page }) => {
   for (const theme of ["light", "dark"] as const) {
     await page.setViewportSize({ width: 1280, height: 820 });
@@ -771,7 +772,11 @@ test("Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900
         expect(a.x + a.width, `Bogen in der Spalte (${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
         await page.screenshot({ path: `../../docs/design/screens/web-home-chat-open-${theme}.png` });
       } else {
-        await expect(arc).toBeHidden();
+        // BSD-607: in 900 × 600 schwebt das Panel über Home (wie die Seitenleiste unter 860 px), Home behält die
+        // volle Spalte – der Bogen bleibt dann auch hier.
+        await expect(page.getByTestId("chat-dock")).toHaveAttribute("data-floating");
+        expect(panel.width, `Home-Spalte bei schwebendem Chat (${theme})`).toBeGreaterThanOrEqual(480 - 2 * 12);
+        await expect(arc).toBeVisible();
       }
       expect(dock.y, `Composer unter der Begrüßung (${w}, ${theme})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
       // der Leertext des Bogens überdeckt nichts mehr
