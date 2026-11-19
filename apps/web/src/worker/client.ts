@@ -85,6 +85,8 @@ export class StoreClient {
   onDevice: ((node: string) => void) | undefined;
   /** BSD-418: Anfrage brauchte über 1 s (Operationsname ohne Inhalte, monotone Zeiten) – Hänger-Analyse. */
   onSlowRequest: ((op: string, t0: number, t1: number) => void) | undefined;
+  /** BSD-596: jede Nachricht des Workers (Antwort oder Ereignis) – Anlass für die Hänger-Messung. */
+  onWorkerMessage: (() => void) | undefined;
 
   constructor(private readonly endpoint: Endpoint<Event, RequestMessage>) {
     endpoint.addEventListener("message", this.onMessage);
@@ -197,6 +199,7 @@ export class StoreClient {
 
   private onMessage = (e: { data: Event }) => {
     const ev = e.data;
+    this.onWorkerMessage?.();
     switch (ev.type) {
       case "reply": {
         const p = this.pending.get(ev.id);

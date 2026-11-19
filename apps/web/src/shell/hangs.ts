@@ -1,7 +1,9 @@
 // BSD-418: Hänger-Erkennung der Web-Hülle (Gegenstück zu legacy/App/Shared/Diagnostics/HangWatchdog.swift). Dünn:
 // misst und meldet an HangMonitor (packages/core/src/hangs.ts).
 // - Hauptthread: setTimeout-Kette im Takt von 50 ms, monoton (performance.now), nur bei sichtbarer Seite (verborgen und
-//   Ruhezustand zählen nicht, BSD-331). Kein rAF-Dauerlauf.
+//   Ruhezustand zählen nicht, BSD-331). Kein rAF-Dauerlauf. BSD-596: die Kette läuft nur, solange etwas passieren kann
+//   – nach Eingabe, Fokus oder einer Nachricht des Store-Workers (`armHangWatch`) für 2 s, dann hält sie an. Im
+//   Leerlauf weckt sie den Hauptthread nicht. Ein langer Frame ohne laufende Kette (Chromium) zählt trotzdem.
 // - Ursache: Long Animation Frames (Chromium/WebView2: Skript, Funktion, Auslöser), sonst Long Tasks; WebKit nennt keine.
 // - Langsame Eingaben: Event Timing (wo es das gibt), nur Ereignisname und Ziel (data-testid/Rolle) – nie Text.
 // - Laufender Hänger: ein Watchdog-Worker pingt; > 2 s ohne Antwort → Marker in IndexedDB; der nächste Start zeigt ihn.
@@ -17,6 +19,8 @@ import { readMarkers, removeMarker } from "./hangMarkers.js";
 import { matchShortcut } from "./shortcuts.js";
 
 const TICK_MS = 50;
+/** BSD-596: so lange nach dem letzten Anlass (Eingabe, Fokus, Store-Nachricht) misst die Kette weiter. */
+export const ACTIVE_MS = 2000;
 const TAB_KEY = "based.diagnostics.tab";
 
 const ls = (): Storage | undefined => { try { return globalThis.localStorage; } catch { return undefined; } };
@@ -189,6 +193,12 @@ const overhead: Overhead = { ticks: 0, busyMs: 0, since: 0 };
 
 let installed = false;
 let worker: Worker | undefined;
+let wake: () => void = () => {};
+/**
+ * BSD-596: Anlass zum Messen (Eingabe, Store-Nachricht, Arbeit, die gleich beginnt): die Kette läuft für ACTIVE_MS.
+ * Billig (ein Vergleich), darf bei jedem Ereignis aufgerufen werden.
+ */
+export function armHangWatch() { wake(); }
 const toWorker = (m: WatchdogMessage) => { try { worker?.postMessage(m); } catch { /* Worker weg */ } };
 
 /** Einmal beim Start (main.tsx), nach installDiagnostics. */
@@ -202,10 +212,28 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
   previousSessions = readStore().sessions.filter((s) => s.id !== sessionID);
   emit();
 
-  // Hauptthread: Zeitgeber-Kette, nur bei sichtbarer Seite
+  // Hauptthread: Zeitgeber-Kette, nur bei sichtbarer Seite und nur nach einem Anlass (BSD-596)
   let timer: ReturnType<typeof setTimeout> | undefined;
   let last = 0;
   let throttledRun = 0;
+  let activeUntil = 0;
+  // Seit wann (bzw. bis wann) die Kette lief – ein langer Frame außerhalb davon zählt über den Beobachter (Chromium).
+  let chainStarted = Number.POSITIVE_INFINITY;
+  let chainStopped = Number.NEGATIVE_INFINITY;
+  const startChain = () => {
+    last = perfNow();
+    chainStarted = last;
+    timer = setTimeout(tick, TICK_MS);
+  };
+  const stopChain = () => {
+    if (timer !== undefined) { clearTimeout(timer); timer = undefined; }
+    chainStopped = perfNow();
+  };
+  const covered = (start: number) => start >= chainStarted && (timer !== undefined || start <= chainStopped);
+  wake = () => {
+    activeUntil = perfNow() + ACTIVE_MS;
+    if (timer === undefined && visible() && focused()) startChain();
+  };
   const tick = () => {
     const t = perfNow();
     const late = t - last - TICK_MS;
@@ -217,17 +245,18 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
     throttledRun = onGrid ? throttledRun + 1 : 0;
     if (late >= hangMonitor.thresholds.main && focused() && throttledRun < 2) onRecorded(hangMonitor.record({ ms: late, source: "main", start: t - late }));
     overhead.ticks += 1;
-    timer = setTimeout(tick, TICK_MS);
+    if (t < activeUntil) timer = setTimeout(tick, TICK_MS);
+    else { timer = undefined; chainStopped = t; }
     overhead.busyMs += perfNow() - t;
   };
   const visible = () => win.document.visibilityState === "visible";
   const focused = () => { try { return win.document.hasFocus(); } catch { return true; } };
   const watch = () => {
-    if (timer !== undefined) { clearTimeout(timer); timer = undefined; }
+    stopChain();
     throttledRun = 0;
     if (visible() && focused()) {
-      last = perfNow();
-      timer = setTimeout(tick, TICK_MS);
+      // Sichtbar und vorn: ein Anlass (das Fenster kommt nach vorn, gleich wird gezeichnet)
+      wake();
       toWorker({ type: "resume" });
     } else {
       toWorker({ type: "pause" });
@@ -243,6 +272,10 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
           if (e.duration < 200) continue;
           const culprit = loafCulprit(e.scripts);
           hangMonitor.noteFrame({ start: e.startTime, duration: e.duration, ...(culprit ? { culprit } : {}) });
+          // BSD-596: lief die Kette nicht (Leerlauf ohne Anlass), misst der Frame den Hänger selbst
+          if (!covered(e.startTime) && visible()) {
+            onRecorded(hangMonitor.record({ ms: e.duration, source: "main", start: e.startTime, at: globalThis.performance.timeOrigin + e.startTime }));
+          }
         }
       }).observe({ type: "long-animation-frame", buffered: true });
     } else if (supported === "longtask") {
@@ -271,6 +304,9 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
       }).observe({ type: "event", durationThreshold: 104, buffered: false } as PerformanceObserverInit);
     }
   } catch { /* Event Timing nicht verfügbar */ }
+
+  // BSD-596: Anlässe zum Messen – jede Eingabe (Erfassungsphase, passiv; nur ein Vergleich je Ereignis)
+  for (const type of ["keydown", "pointerdown", "pointermove", "wheel", "input", "touchstart"]) win.addEventListener(type, armHangWatch, { capture: true, passive: true });
 
   // Breadcrumbs: Route/Ansicht, Tastenkürzel, Klickziel, Escape; Slash-Befehle über noteBreadcrumb (Kern)
   setBreadcrumbSink(breadcrumb);
@@ -330,6 +366,7 @@ function exposeTestHooks() {
   if (!import.meta.env.DEV && !automated) return;
   const hooks: HangTestHooks = {
     hang: (ms, delay = 20) => {
+      armHangWatch(); // wie Arbeit, die gleich beginnt
       setTimeout(function busyLoop() {
         breadcrumb(`test hang ${ms}`);
         const end = perfNow() + ms;
