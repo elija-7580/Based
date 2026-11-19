@@ -1,61 +1,61 @@
-cancelled 8e5f92dbdc8cc807d296ce70a777b1099ccdabe1
-  ✓  210 [webkit] › e2e/shell.spec.ts:117:1 › Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Position (2.3s)
-  ✓  211 [webkit] › e2e/shell-parity.spec.ts:211:1 › Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet (6.3s)
-  ✓  212 [webkit] › e2e/shell.spec.ts:196:1 › Neuladen behält Daten (OPFS) @smoke (6.0s)
-  ✓  213 [webkit] › e2e/shortcut-toggle.spec.ts:30:1 › ⌘F zweimal: Suchleiste zu, Schreibmarke zurück (2.2s)
-  ✓  215 [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘K zweimal: Quick Find zu, Schreibmarke zurück (2.4s)
-  ✓  214 [webkit] › e2e/shell.spec.ts:224:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (4.6s)
-  ✓  217 [webkit] › e2e/shortcuts.spec.ts:13:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite (1.7s)
-  ✓  216 [webkit] › e2e/shortcut-toggle.spec.ts:41:31 › ⌘P zweimal: Quick Find zu, Schreibmarke zurück (3.0s)
-  ✓  218 [webkit] › e2e/shortcuts.spec.ts:35:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) (1.8s)
-  ✓  219 [webkit] › e2e/shortcut-toggle.spec.ts:52:1 › ⌘N zweimal: Neu-Palette zu, Schreibmarke zurück (2.0s)
-  ✓  220 [webkit] › e2e/shortcuts.spec.ts:64:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs (1.9s)
-  ✓  221 [webkit] › e2e/shortcut-toggle.spec.ts:62:1 › ⌘, zweimal: Einstellungen auf und zurück zur Seite (2.5s)
-  ✓  223 [webkit] › e2e/shortcut-toggle.spec.ts:73:1 › Quick Find: Seite öffnen lässt den Fokus nicht in die Seitenleiste springen (1.7s)
-  ✓  222 [webkit] › e2e/shortcuts.spec.ts:87:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen (2.8s)
-  ✓  224 [webkit] › e2e/shortcut-toggle.spec.ts:93:1 › ⌘N: „New page“ lässt den Fokus nicht in die Seitenleiste springen (2.1s)
-  ✓  225 [webkit] › e2e/shortcuts.spec.ts:116:1 › Neue Seite: Schreibmarke steht im Titel, Enter geht in den Text; Öffnen einer Seite fokussiert nichts (3.7s)
-  ✓  226 [webkit] › e2e/shortcut-toggle.spec.ts:110:1 › Quick Find: nach Weitertippen ist der erste Eintrag ausgewählt, Enter öffnet ihn (2.1s)
-  ✓  228 [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown (3.9s)
-  ✓  227 [webkit] › e2e/sidebar-inline-db.spec.ts:9:1 › Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich als ganze Seite (4.8s)
-  ✓  229 [webkit] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links (4.1s)
-  ✓  230 [webkit] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (3.9s)
-  ✓  231 [webkit] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar (2.8s)
-  ✓  232 [webkit] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (3.3s)
-  ✓  233 [webkit] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (5.3s)
-  ✓  234 [webkit] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (5.0s)
-  ✓  236 [webkit] › e2e/sidebar-scroll.spec.ts:10:1 › Aufklappen oberhalb der aktiven Seite: Liste bleibt stehen, Zeile bleibt unter der Maus (3.7s)
-  ✓  235 [webkit] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (4.8s)
-  -  238 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light)
-  -  239 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark)
-  ✓  237 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (2.6s)
-  ✓  241 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (2.6s)
-  ✓  240 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (5.1s)
-  ✓  243 [webkit] › e2e/startup-perf.spec.ts:132:1 › Tippen zeichnet nur das eigene Textfeld neu (3.4s)
-  ✓  242 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (4.9s)
-  ✓  245 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (3.7s)
-  ✓  244 [webkit] › e2e/storage.spec.ts:51:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (7.1s)
-  ✓  246 [webkit] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (4.3s)
-  ✓  247 [webkit] › e2e/storage.spec.ts:72:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (2.8s)
-  -  249 [webkit] › e2e/storage.spec.ts:88:1 › Screenshots web-storage-warning-*
-  ✓  248 [webkit] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (2.5s)
-(node:22773) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  251 [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (2.7s)
-  ✓  252 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Pages: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (6.6s)
-  ✓  253 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (6.2s)
-  -  254 [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓  250 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (17.5s)
-  ✓  256 [webkit] › e2e/sync-assets.spec.ts:167:1 › komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Server nimmt gzip an und antwortet gepackt (1.9s)
-(node:23697) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  255 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (5.8s)
-  ✓  257 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (3.3s)
-  ✓  258 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (11.4s)
-  ✓  260 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (2.8s)
-  ✓  259 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (13.7s)
-  ✓  261 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (4.2s)
-  ✓  262 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (4.3s)
-  -  264 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  265 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  263 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.0s)
+failure c65f617b8fd8b9323f6a85608ae3691e86b29f69
+      52 |   const kinds = new Set(b.recording.events.map((e) => e.kind));
+    > 53 |   for (const k of expectedKinds) expect(kinds.has(k), k).toBe(true);
+         |                                                          ^
+      54 |   expect(JSON.stringify(b.state.blocks)).toContain(list);
+      55 |   expect(b.layout.items.some((i) => i.kind === "block")).toBe(true);
+      56 |   expect(b.screenshot).toBe("screenshot.png");
+        at /home/runner/work/Based/Based/apps/web/e2e/report.spec.ts:53:58
+
+    Error Context: test-results/report-⇧⌘B-Block-Editor-Bü-2a90b-nd-Layout-–-ohne-Nutzertext-webkit-retry1/error-context.md
+
+  2) [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 320
+    Received: 360
+
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
+
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 320
+    Received: 360
+
+      49 |   await page.mouse.wheel(0, 120);
+      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
+         |                                                         ^
+      52 | });
+      53 |
+        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
+
+    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit-retry1/error-context.md
+
+  3) [webkit] › e2e/kit-states.spec.ts:261:3 › Zustands-Galerie: Media-Player und Willkommens-Karten nutzen nur Token-Farben (light) 
+
+    Test timeout of 30000ms exceeded.
+
+    Error Context: test-results/kit-states-Zustands-Galeri-bed3c-zen-nur-Token-Farben-light--webkit/error-context.md
+
+  2 failed
+    [webkit] › e2e/report.spec.ts:30:70 › ⇧⌘B (Block-Editor): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext 
+    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+  1 flaky
+    [webkit] › e2e/kit-states.spec.ts:261:3 › Zustands-Galerie: Media-Player und Willkommens-Karten nutzen nur Token-Farben (light) 
+  56 skipped
+  234 passed (16.8m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
