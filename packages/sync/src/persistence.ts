@@ -10,6 +10,7 @@ import {
   keyOf,
   parseStamp,
   safeParseRecord,
+  safeParseRecordOfKind,
   WorkspaceStore,
   type Block,
   type LazyPersistence,
@@ -59,6 +60,8 @@ export const SKELETON_SQL =
   `CASE WHEN json_valid(${JSON_TEXT}) AND (json_extract(${JSON_TEXT}, '$.type') IN (${SKELETON_TYPES.map((t) => `'${t}'`).join(", ")})` +
   ` OR json_extract(${JSON_TEXT}, '$.trashedAt') IS NOT NULL) THEN 1 END`;
 const CLOCK_MAX_KEY = "clock.max";
+/** Zeilen je Stück beim Durchlauf über die ganze Tabelle (`scanRecords`): begrenzt den Speicher, ein Text je Stück. */
+const SCAN_BATCH = 2048;
 export const LAZY_INDEXES = ["records_parent", "records_skeleton"] as const;
 
 /** Stempel als JSON wie Swift `JSONEncoder` (Reihenfolge egal, Swift liest es zurück). */
@@ -104,6 +107,83 @@ export class SqlitePersistence implements Persistence {
       return parsed.ok ? parsed.record : fail(parsed.error.message);
     } catch (e) {
       return fail(String(e));
+    }
+  }
+
+  /** Wie `decode`, für eine Zeile, deren JSON schon gelesen ist (`scanRecords`). Dieselbe Prüfung, dieselben Meldungen. */
+  private decodeParsed(kind: RecordKind, id: string, data: unknown): WireRecord | undefined {
+    const fail = (error: string) => {
+      const key = keyOf(kind, id);
+      if (!this.undecodableKeys.has(key)) {
+        this.undecodableKeys.add(key);
+        this.undecodable.push({ key, error });
+      }
+      return undefined;
+    };
+    if (!KINDS.has(kind)) return fail(`unknown record kind ${kind}`);
+    const parsed = safeParseRecordOfKind(kind, data);
+    return parsed.ok ? parsed.record : fail(parsed.error.message);
+  }
+
+  /**
+   * Alle Zeilen aus `records` (optional nur eine Art), in der Reihenfolge der Datei. Ein Durchlauf über die ganze
+   * Tabelle kostete im Browser vor allem den Weg je Zeile aus SQLite-WASM heraus (18.11., 113 000 Records, WebKit:
+   * 0,8–1,0 s von 1,8 s; dazu je Zeile ein eigenes `TextDecoder.decode` und `JSON.parse`). Darum setzt SQLite je
+   * `SCAN_BATCH` Zeilen einen JSON-Text zusammen, der in einem Stück herauskommt und einmal gelesen wird.
+   *
+   * Gleich bleibt, was geprüft wird: Jede Zeile läuft durch dieselbe Schema-Prüfung. Eine Zeile, deren Daten kein
+   * gültiges JSON sind (`json_valid`), steht im Stück nur mit ihrer Zeilennummer und wird einzeln über `decode`
+   * gelesen – mit derselben Fehlermeldung wie bisher. Lässt sich ein Stück nicht lesen (z. B. ein NUL-Zeichen in den
+   * Daten), wird genau dieses Stück Zeile für Zeile gelesen. Die Datei wird nie verändert.
+   */
+  private scanRecords(only: RecordKind | undefined, each: (r: WireRecord) => void, skip?: (id: string) => boolean): void {
+    const filter = only ? ` AND kind = '${only}'` : "";
+    const range = `FROM records WHERE rowid > ?${filter} ORDER BY rowid LIMIT ${SCAN_BATCH}`;
+    const batchSQL =
+      `SELECT max(r) AS last, '[' || group_concat(j) || ']' AS batch FROM (SELECT rowid AS r, '{"r":' || rowid || ',"k":' || json_quote(kind)` +
+      ` || ',"i":' || json_quote(id) || CASE WHEN json_valid(${JSON_TEXT}) THEN ',"d":' || ${JSON_TEXT} ELSE ',"x":1' END || '}' AS j ${range})`;
+    const single = (rowid: number) => {
+      const row = first(this.db, "SELECT kind, id, data FROM records WHERE rowid = ?", [rowid]);
+      if (!row || skip?.(asText(row.id) ?? "")) return;
+      const r = this.decode(row);
+      if (r) each(r);
+    };
+    /** Rückweg für ein Stück: wie bisher Zeile für Zeile. */
+    const plain = (after: number): number => {
+      let last = after;
+      for (const row of this.db.all(`SELECT rowid AS r, kind, id, data ${range}`, [after])) {
+        last = asInt(row.r);
+        if (skip?.(asText(row.id) ?? "")) continue;
+        const r = this.decode(row);
+        if (r) each(r);
+      }
+      return last;
+    };
+    for (let after = 0; ; ) {
+      let rows: { r: number; k: string; i: string; d?: unknown; x?: 1 }[] | undefined;
+      let last = after;
+      try {
+        const head = first(this.db, batchSQL, [after]);
+        if (head?.last == null) return;
+        last = asInt(head.last);
+        rows = JSON.parse(asText(head.batch) ?? "") as typeof rows;
+      } catch {
+        rows = undefined;
+      }
+      if (!rows) {
+        const end = plain(after);
+        if (end === after) return;
+        after = end;
+        continue;
+      }
+      for (const row of rows) {
+        if (row.x) single(row.r);
+        else if (!skip?.(row.i)) {
+          const r = this.decodeParsed(row.k as RecordKind, row.i, row.d);
+          if (r) each(r);
+        }
+      }
+      after = last;
     }
   }
 
@@ -164,18 +244,7 @@ export class SqlitePersistence implements Persistence {
     loadRemaining: (skip) =>
       this.guard("load", () => {
         const out: Block[] = [];
-        const take = (row: SqlRow) => {
-          if (skip(asText(row.id) ?? "")) return;
-          const r = this.decode(row, "block");
-          if (r?.kind === "block") out.push(r.data);
-        };
-        const sql = "SELECT id, data FROM records WHERE kind = 'block'";
-        if (this.db.each) {
-          let chunk: SqlRow[] = [];
-          const flush = () => { for (const row of chunk) take(row); chunk = []; };
-          this.db.each(sql, [], (row) => { if (chunk.push(row) >= 4096) flush(); });
-          flush();
-        } else for (const row of this.db.all(sql)) take(row);
+        this.scanRecords("block", (r) => { if (r.kind === "block") out.push(r.data); }, skip);
         return out;
       }),
     scanBlocks: (containing, each, opts) =>
@@ -247,24 +316,8 @@ export class SqlitePersistence implements Persistence {
       const out: WireRecord[] = [];
       this.undecodable = [];
       this.undecodableKeys.clear();
-      // ADR 0017 A1: Zeile für Zeile (wo der Treiber es kann) – sonst liegen alle Zeilen als BLOB, als Text und als
-      // Objekt gleichzeitig im Speicher.
-      // In Stücken von 4096 Zeilen: der Speicher bleibt begrenzt, und SQLite (WASM) und JSON/Zod wechseln sich nicht je
-      // Zeile ab. Die Ladezeit ändert das nicht messbar (17.11., 100 000 Records, WebKit 2,4–3,0 s in allen Varianten).
-      const each = (fn: (row: SqlRow) => void) => {
-        if (!this.db.each) {
-          for (const row of this.db.all("SELECT kind, id, data FROM records")) fn(row);
-          return;
-        }
-        let chunk: SqlRow[] = [];
-        const flush = () => { for (const row of chunk) fn(row); chunk = []; };
-        this.db.each("SELECT kind, id, data FROM records", [], (row) => { if (chunk.push(row) >= 4096) flush(); });
-        flush();
-      };
-      each((row) => {
-        const r = this.decode(row);
-        if (r) out.push(r);
-      });
+      // ADR 0017 A1: in Stücken – sonst liegen alle Zeilen als BLOB, als Text und als Objekt gleichzeitig im Speicher.
+      this.scanRecords(undefined, (r) => out.push(r));
       return out;
     });
   }

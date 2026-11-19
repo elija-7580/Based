@@ -975,3 +975,40 @@ test("Spalten: Klick unter den letzten Block der kürzeren Spalte schreibt dort 
   await page.mouse.click(box.x + box.width / 2, box.y + box.height - 4);
   await expect(right.locator("[data-editable-id]")).toHaveCount(3);
 });
+
+// 18.11.: Die Blöcke zeichnen nicht mehr bei jeder Taste alle neu (stabiler Editor-Kontext). Was ein Block von seinen
+// Nachbarn und Kindern zeigt, braucht darum ein eigenes Abo – vorher fiel es durch das Neuzeichnen der Hülle mit ab.
+test("Nummerierte Liste zählt neu, wenn ein Nachbar den Typ wechselt; ein neues Kind erscheint unter seinem Block", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("a");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("b");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("c");
+  const numbers = () => editor(page).locator(".bx2-number").evaluateAll((els) => els.map((e) => e.textContent));
+  const toList = async (text: string) => {
+    await fields(page).filter({ hasText: new RegExp(`^${text}$`) }).click();
+    await page.keyboard.press("Home");
+    await page.keyboard.type("1. ");
+  };
+  await toList("b");
+  await expect.poll(numbers).toEqual(["1."]);
+  // „a“ darüber wird Listenpunkt: „b“ selbst ändert sich nicht, zählt aber weiter
+  await toList("a");
+  await expect.poll(numbers).toEqual(["1.", "2."]);
+  await toList("c");
+  await expect.poll(numbers).toEqual(["1.", "2.", "3."]);
+  expect(await texts(page)).toEqual(["a", "b", "c"]);
+  // „a“ wieder Text: die Liste beginnt bei „b“ neu
+  await fields(page).filter({ hasText: /^a$/ }).click();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("Backspace");
+  await expect.poll(numbers).toEqual(["1.", "2."]);
+  // „c“ unter „b“ einrücken: „b“ bekommt Kinder, ohne dass sich sein Record ändert
+  await fields(page).filter({ hasText: /^c$/ }).click();
+  await page.keyboard.press("Tab");
+  await expect(editor(page).locator('.bx2-block[data-type="numberedList"] .bx2-children [data-editable-id]')).toHaveText("c");
+  await page.keyboard.press("Shift+Tab");
+  await expect(editor(page).locator(".bx2-children")).toHaveCount(0);
+});
