@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { overflows, overlaps } from "./layout-checks.js";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-305 Teil 5 (Beta-Umfang): Durchgang im echten Beta-Build. Läuft nur, wenn der Build mit BASED_CHANNEL=beta
 // entsteht – Playwright baut den Server mit der Umgebung des Aufrufs:
@@ -224,6 +225,47 @@ test("Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home", asyn
       await expect(page.getByLabel("Page title"), hash).toHaveValue("Welcome to Based");
       await expect(page.getByTestId("library"), hash).toHaveCount(0);
     }
+  } finally {
+    await close();
+  }
+});
+
+// BSD-595: Auf beta ist AI ausgeblendet – Chat, Agenten-Werkzeuge und Anbieter dürfen gar nicht erst geladen werden
+// (weder im Start-Chunk noch im Store-Worker noch nachgeladen), auch nicht beim Öffnen einer Seite und einer Datenbank.
+test("Beta-Build: Start, Seite und Datenbank laden keinen Chat- oder Agenten-Code", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(120_000);
+  const { page, close } = await fresh(playwright, browserName, baseURL!, "light");
+  const scripts = new Map<string, Promise<string>>();
+  page.context().on("response", (r) => {
+    if (/\.m?js(\?|$)/.test(r.url()) && !scripts.has(r.url())) scripts.set(r.url(), r.text().catch(() => ""));
+  });
+  try {
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: "Skip" }).click();
+    await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
+    await expect(page.getByLabel("Page title")).toBeVisible();
+    await page.getByTestId("page-content").getByText("Your data", { exact: true }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Your data");
+    // ans Ende der Seite (letzter Block ist ein Listenpunkt: zweimal Enter = neuer Textblock), dort /database
+    await expectEditable(page);
+    await focusEditorEnd(page);
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("/database");
+    await page.getByRole("option", { name: "Database", exact: true }).click();
+    await expect(page.locator(".shell-database").first()).toBeVisible();
+    await page.waitForTimeout(500);
+    // der Store-Worker ist dabei (sonst prüfte der Test ihn nicht)
+    expect([...scripts.keys()].some((u) => /store\.worker-/.test(u))).toBe(true);
+    const offenders: string[] = [];
+    for (const [url, body] of scripts) {
+      const text = await body;
+      for (const marker of ["anthropic-version", "api.anthropic.com", "edit_blocks", "draw_board", "save_skill"]) {
+        if (text.includes(marker)) offenders.push(`${url.split("/").pop()}: ${marker}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   } finally {
     await close();
   }

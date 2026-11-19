@@ -3,7 +3,7 @@
 // Hauptthread (tasks/runtime.ts), weil Engine und API-Schlüssel dort leben. Jede Liste, die sich ändert (lokal, anderer
 // Tab, Sync), geht als `agents`-Ereignis an alle Clients.
 import { parseKey, type StoreChange, type WorkspaceStore } from "@based/core";
-import { WorkspaceTools } from "@based/brain";
+import type { WorkspaceTools } from "@based/brain/tools";
 import {
   addConnection, AGENT_RECORD_TYPES, AgentStore, CONNECTION_TYPE, listConnections, removeConnection, updateConnection,
   type ConnectionPatch, type NewConnection, type AgentData, type AgentSnapshot, type NewRun, type PlannerExample, type ProjectStatus, type RunPatch, type TaskEvent } from "@based/brain";
@@ -50,7 +50,7 @@ export class AgentHost {
   readonly agents: AgentStore;
   private dirty = false;
 
-  constructor(private readonly store: WorkspaceStore, private readonly tools: () => WorkspaceTools = () => new WorkspaceTools(store, { groups: ["pages"] })) {
+  constructor(private readonly store: WorkspaceStore, private readonly tools: () => Promise<WorkspaceTools> = () => import("@based/brain/tools").then((m) => new m.WorkspaceTools(store, { groups: ["pages"] }))) {
     this.agents = new AgentStore(store);
   }
 
@@ -76,7 +76,7 @@ export class AgentHost {
       case "createRun": return s.createRun(a.data);
       case "updateRun": return s.updateRun(a.id, a.patch);
       case "claimRun": return s.claimRun(a.id, a.owner);
-      case "resolveRequest": return this.checked(() => this.tools().resolveRequest(a.id, a.ok));
+      case "resolveRequest": return this.tools().then((t) => this.checked(() => t.resolveRequest(a.id, a.ok)));
       case "main": return s.main();
       case "saveMain": return this.checked(() => s.saveMain((d) => {
         const { rules, mode, ...rest } = a.patch;

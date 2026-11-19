@@ -22,7 +22,8 @@ Chromium. Die Werte jedes Abends stehen in `perf-history.csv`. Alle Zahlen stamm
 
 | Kennzahl | Ziel | Stand | Wächter |
 | --- | --- | --- | --- |
-| Erststart-JS (index-*.js, gzip) | so klein wie möglich; Grenze 1 200 kB | 1 038 kB (roh 3 197 kB) | `apps/web/scripts/bundle-budget.mjs` |
+| Erststart-JS (index-*.js, gzip) | so klein wie möglich; Grenze 965 KiB (BSD-595) | 1 038 kB (roh 3 197 kB); 19.11. nach BSD-595: 918 KiB (Chat, Agenten, Anbieter als eigene Chunks) | `apps/web/scripts/bundle-budget.mjs` |
+| Store-Worker (store.worker-*.js, gzip) | Grenze 295 KiB (BSD-595) | 19.11.: 319 → 281 KiB (Agenten-Werkzeuge als eigener Chunk) | `bundle-budget.mjs` |
 | Erststart-JS gesamt mit Workern (gzip) | – | 1 301 kB, 3 Dateien | `ci/perf/measure.mjs` |
 | Erststart-CSS (gzip) | Grenze 95 kB | 77 kB | `bundle-budget.mjs` |
 | Web-Bundle gesamt (dist) | so klein wie möglich | 26,7 MB, davon 11,0 MB `ort-wasm-simd-threaded.wasm` | – |

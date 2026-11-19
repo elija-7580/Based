@@ -4,13 +4,18 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "sideEffects": false,
   "description": "BSD-159: KI-Fundament \u2013 ein ChatEvent-Strom f\u00fcr alle Engines (ADR 0005), Anbieter, Werkzeuge, Transkripte. Reines TS, kein DOM.",
   "exports": {
     ".": "./src/index.ts",
     "./home": "./src/home/index.ts",
     "./mcp": "./src/mcp/index.ts",
     "./acp-node": "./src/acp/stdio.ts",
-    "./mcp-node": "./src/mcp/stdio-node.ts"
+    "./mcp-node": "./src/mcp/stdio-node.ts",
+    "./meeting": "./src/meeting.ts",
+    "./engine": "./src/engine.ts",
+    "./localmodels": "./src/localmodels/index.ts",
+    "./tools": "./src/tools.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",

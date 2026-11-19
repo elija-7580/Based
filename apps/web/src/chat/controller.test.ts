@@ -11,7 +11,7 @@ function setup(turns: ScriptStep[][]) {
   const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence() });
   const search = attachSearchIndex(store);
   const host = new ChatHost(store, () => search.index);
-  const call = <T>(a: Parameters<ChatHost["handle"]>[0]) => Promise.resolve(structuredClone(host.handle(a)) as T);
+  const call = <T>(a: Parameters<ChatHost["handle"]>[0]) => Promise.resolve(host.handle(a)).then((r) => structuredClone(r) as T);
   const backend: ChatBackend = {
     chatList: () => call({ op: "list" }),
     chatCreate: (title) => call(title ? { op: "create", title } : { op: "create" }),

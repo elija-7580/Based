@@ -6,7 +6,7 @@ import { BOARD_BACKGROUNDS, boardBackground, setBoardBackground, importPendingSo
 import { BoardView, EmojiPicker, IconView, isDrawableIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
 import { flushSync } from "react-dom";
-import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
+import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/panel.js";
 import { BlockView } from "../components/BlockView.js";
 import { assets } from "../assetBridge.js";
 import { EmbeddedPage } from "../components/Embedded.js";

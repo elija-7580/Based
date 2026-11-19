@@ -15,7 +15,7 @@ import { InPeek, RowPeek } from "./database/RowPeek.js";
 import { asNewTabs, wantsNewTab } from "./shell/newTabIntent.js";
 import { routeToHash } from "./shell/router.js";
 import { assets } from "./assetBridge.js";
-import { chatController } from "./chat/runtime.js";
+import { chatCanWrite, chatWrite } from "./chat/load.js";
 import { BrainClient } from "./brain/client.js";
 import { editorClient } from "./editorSlot.js";
 import { ASSET_URL_PREFIX } from "@based/editor";
@@ -59,7 +59,7 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
   const aiOn = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const ai = useMemo(() => {
     const client = editorClient();
-    return client && aiOn ? { write: (system: string, prompt: string, signal: AbortSignal) => chatController(client).write(system, prompt, signal), available: () => chatController(client).canWrite() } : undefined;
+    return client && aiOn ? { write: (system: string, prompt: string, signal: AbortSignal) => chatWrite(client, system, prompt, signal), available: () => chatCanWrite(client) } : undefined;
   }, [aiOn]);
   // BSD-216: andere Datenbanken als Dashboard-Quelle (wie „Linked view of database“ im Editor)
   const databases = useMemo(() => {

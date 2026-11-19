@@ -22,7 +22,7 @@ function setup() {
   const chat = new ChatHost(store, () => search.index);
   const brainHost = new BrainHost(store);
   store.observe((ch) => brainHost.noteChange(ch));
-  const call = <T>(a: Parameters<ChatHost["handle"]>[0]) => Promise.resolve(structuredClone(chat.handle(a)) as T);
+  const call = <T>(a: Parameters<ChatHost["handle"]>[0]) => Promise.resolve(chat.handle(a)).then((r) => structuredClone(r) as T);
   const backend: ChatBackend = {
     chatList: () => call({ op: "list" }),
     chatCreate: (title) => call(title ? { op: "create", title } : { op: "create" }),

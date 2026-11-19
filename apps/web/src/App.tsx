@@ -4,7 +4,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
-import { ChatDock, ChatPage } from "./chat/ChatDock.js";
 import { ImportDialog } from "./components/ImportExport.js";
 import { hybridImport } from "./worker/notionHybridClient.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
@@ -26,10 +25,8 @@ import { PromptHost } from "./components/PromptHost.js";
 import { registerContextItems } from "@based/ui/native";
 import { shortcutLabel } from "@based/ui";
 import { TabBar } from "./components/TabBar.js";
-import { Home } from "./screens/Home.js";
 import { PageView } from "./screens/PageView.js";
-import { tasksRuntime } from "./tasks/runtime.js";
-import "./tasks/AgentSettingsSection.js";
+import { loadChatRuntime } from "./chat/load.js";
 import { installHistoryGestures } from "./shell/historyGestures.js";
 import { installKeyHints } from "./shell/keyHints.js";
 import { Icon, type IconName } from "./icons.js";
@@ -47,6 +44,10 @@ import { fallbackHomePage, homeTarget, meetingDetectPref, newPageFormat, recentP
 import type { StoreClient } from "./worker/client.js";
 
 // BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
+// BSD-595: Chat, Agenten-Home und Hauptagent sind eigene Chunks – geladen erst, wenn AI an ist (auf der Beta nie).
+const ChatDock = lazy(() => import("./chat/ChatDock.js").then((m) => ({ default: m.ChatDock })));
+const ChatPage = lazy(() => import("./chat/ChatDock.js").then((m) => ({ default: m.ChatPage })));
+const Home = lazy(() => import("./screens/Home.js").then((m) => ({ default: m.Home })));
 const AgentDetailScreen = lazy(() => import("./home/AgentDetail.js").then((m) => ({ default: m.AgentDetailScreen })));
 const ProjectDetailScreen = lazy(() => import("./home/ProjectDetail.js").then((m) => ({ default: m.ProjectDetailScreen })));
 const Meetings = lazy(() => import("./screens/Meetings.js").then((m) => ({ default: m.Meetings })));
@@ -99,9 +100,16 @@ export function App({ client, history }: { client: StoreClient; history: History
   // Hauptagent: offene Aufträge fortsetzen, Unteragenten und Zeitpläne (solange die App offen ist und AI an ist)
   useEffect(() => {
     if (!state.ready || !ai) return;
-    const rt = tasksRuntime(client);
-    rt.start();
-    return () => rt.stop();
+    // BSD-595: Chat-Code vorab laden, damit „Ask AI“ und Autofill sofort wissen, ob ein Modell eingerichtet ist.
+    void loadChatRuntime();
+    let stop: (() => void) | undefined, gone = false;
+    void import("./tasks/runtime.js").then(({ tasksRuntime }) => {
+      if (gone) return;
+      const rt = tasksRuntime(client);
+      rt.start();
+      stop = () => rt.stop();
+    });
+    return () => { gone = true; stop?.(); };
   }, [state.ready, client, ai]);
   useEffect(() => {
     if (route.name === "page") recentPages.touch(route.id);
@@ -390,7 +398,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           <span className="swipe-forward"><Icon name="forward" size={18} /></span>
         </div>
       </main>
-      {ai ? <ChatDock client={client} history={history} route={route} /> : null}
+      {ai ? <Suspense fallback={null}><ChatDock client={client} history={history} route={route} /></Suspense> : null}
       <Notice notice={state.notice} onDismiss={client.dismissNotice} />
       <PromptHost />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}

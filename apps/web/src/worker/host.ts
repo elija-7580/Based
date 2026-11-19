@@ -189,7 +189,7 @@ export class StoreHost {
   }
 
   private get agents(): AgentHost {
-    return (this.agentHost ??= new AgentHost(this.store, () => this.chat.tools));
+    return (this.agentHost ??= new AgentHost(this.store, () => this.chat.tools()));
   }
 
   private memoryYDocs: YDocStorage | undefined;
@@ -251,8 +251,8 @@ export class StoreHost {
             (e: unknown) => this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) }),
           );
           break;
-        case "chat": reply(this.chat.handle(msg.action)); break;
-        case "agents": reply(this.agents.handle(msg.action)); break;
+        case "chat": reply(await this.chat.handle(msg.action)); break;
+        case "agents": reply(await this.agents.handle(msg.action)); break;
         case "brain": reply(await this.brain.handle(msg.action)); break;
         case "ydocLoad": reply(this.ydocs.get(msg.rootID) ?? null); break;
         case "pendingLocal": reply(this.pendingLocal(msg.rootID)); break;
