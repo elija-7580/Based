@@ -1,0 +1,75 @@
+packages/design-tokens test: [2m      Tests [22m [1m[32m23 passed[39m[22m[90m (23)[39m
+packages/ui test: [2m      Tests [22m [1m[32m46 passed[39m[22m[90m (46)[39m
+packages/core test:   archive    10/10 grün
+packages/core test:   clipboard  13/13 grün
+packages/core test:   conversion 117/117 grün
+packages/core test:   dbops      24/24 grün
+packages/core test:   export     14/14 grün (davon 1 bewusst abweichend, test/fixtures/deviations.ts)
+packages/core test:   formulas   143/143 grün
+packages/core test:   history    14/14 grün
+packages/core test:   hlc        74/74 grün
+packages/core test:   import     22/22 grün (davon 5 bewusst abweichend, test/fixtures/deviations.ts)
+packages/core test:   merge      13/13 grün
+packages/core test:   notion-api 6/6 grün
+packages/core test:   queries    88/88 grün
+packages/core test:   records    66/66 grün
+packages/core test:   reimport   8/8 grün
+packages/core test:   search     239/239 grün
+packages/core test:   sortkeys   343/343 grün
+packages/core test:   undo-remote 7/7 grün
+packages/core test:   values     46/46 grün
+packages/core test: [2m      Tests [22m [1m[32m2239 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (2240)[39m
+packages/database-ui test: [2m      Tests [22m [1m[32m72 passed[39m[22m[90m (72)[39m
+packages/editor test: [2m      Tests [22m [1m[32m120 passed[39m[22m[90m (120)[39m
+packages/brain test: [22m[39magents-linediff: 12/13 grün (1 bewusst abweichend)
+packages/brain test: agents-citations: 38/40 grün (2 bewusst abweichend)
+packages/brain test: agents-context: 27/28 grün (1 bewusst abweichend)
+packages/brain test: agents-queue: 9/9 grün
+packages/brain test: agents-skills: 67/67 grün
+packages/brain test: [22m[39magents-permissions: 200/200 grün (8 bewusst abweichend)
+packages/brain test: [22m[39magents-permissions (parse): 5/5 grün (1 bewusst abweichend)
+packages/brain test: [22m[39magents-budget: 34/34 grün (9 bewusst abweichend)
+packages/brain test: [22m[39mbrain-routing: 25/25 grün
+packages/sync test: [2m      Tests [22m [1m[32m125 passed[39m[22m[2m | [22m[33m4 skipped[39m[90m (129)[39m
+packages/brain test: [2m      Tests [22m [1m[32m903 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (904)[39m
+apps/web test: [2m      Tests [22m [1m[32m354 passed[39m[22m[90m (354)[39m
+apps/server test: [2m      Tests [22m [1m[32m202 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (203)[39m
+apps/cli test: [2m      Tests [22m [1m[32m25 passed[39m[22m[90m (25)[39m
+packages/design-tokens test: [2m      Tests [22m [1m[32m23 passed[39m[22m[90m (23)[39m
+packages/ui test: [2m      Tests [22m [1m[32m46 passed[39m[22m[90m (46)[39m
+packages/core test:   archive    10/10 grün
+packages/core test:   clipboard  13/13 grün
+packages/core test:   conversion 117/117 grün
+packages/core test:   dbops      24/24 grün
+packages/core test:   export     14/14 grün (davon 1 bewusst abweichend, test/fixtures/deviations.ts)
+packages/core test:   formulas   143/143 grün
+packages/core test:   history    14/14 grün
+packages/core test:   hlc        74/74 grün
+packages/core test:   import     22/22 grün (davon 5 bewusst abweichend, test/fixtures/deviations.ts)
+packages/core test:   merge      13/13 grün
+packages/core test:   notion-api 6/6 grün
+packages/core test:   queries    88/88 grün
+packages/core test:   records    66/66 grün
+packages/core test:   reimport   8/8 grün
+packages/core test:   search     239/239 grün
+packages/core test:   sortkeys   343/343 grün
+packages/core test:   undo-remote 7/7 grün
+packages/core test:   values     46/46 grün
+packages/core test: [2m      Tests [22m [1m[32m2239 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (2240)[39m
+packages/database-ui test: [2m      Tests [22m [1m[32m72 passed[39m[22m[90m (72)[39m
+packages/brain test: [22m[39magents-linediff: 12/13 grün (1 bewusst abweichend)
+packages/brain test: agents-citations: 38/40 grün (2 bewusst abweichend)
+packages/brain test: agents-context: 27/28 grün (1 bewusst abweichend)
+packages/brain test: agents-queue: 9/9 grün
+packages/brain test: agents-skills: 67/67 grün
+packages/editor test: [2m      Tests [22m [1m[32m120 passed[39m[22m[90m (120)[39m
+packages/brain test: [22m[39magents-permissions: 200/200 grün (8 bewusst abweichend)
+packages/brain test: [22m[39magents-permissions (parse): 5/5 grün (1 bewusst abweichend)
+packages/brain test: [22m[39magents-budget: 34/34 grün (9 bewusst abweichend)
+packages/sync test: [2m      Tests [22m [1m[32m125 passed[39m[22m[2m | [22m[33m4 skipped[39m[90m (129)[39m
+packages/brain test: [22m[39mbrain-routing: 25/25 grün
+packages/brain test: [2m      Tests [22m [1m[32m903 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (904)[39m
+apps/web test: [2m      Tests [22m [1m[32m354 passed[39m[22m[90m (354)[39m
+apps/server test: [2m      Tests [22m [1m[32m202 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (203)[39m
+apps/cli test: [2m      Tests [22m [1m[32m25 passed[39m[22m[90m (25)[39m
+--- smoke
