@@ -9,7 +9,7 @@ This beta is an early version: please keep a copy of anything you can't afford t
    30 days and up to 5 downloads. Please don't share it; if it stops working, write to hello@basednotes.app.
 2. Open it and drag **Based Notes Beta** into Applications.
 3. Open Based Notes Beta from Applications.
-   - Until the app is signed by Apple, macOS asks before the first start: right-click the app → **Open** → **Open**.
+   - The app and the disk image are signed and notarized by Apple, so macOS opens them without a warning.
 
 Based Notes Beta needs macOS 13 or later and runs on Apple Silicon and Intel Macs. It installs next to other Based versions
 and keeps its own data.
@@ -39,7 +39,9 @@ The tour also offers **Turn on meeting notes**. It starts Based's local server o
 speech model once (488 MB, from huggingface.co). You can do this later in **Settings → Meeting notes**,
 where you can also pick a smaller or a more accurate model.
 
-Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Settings → Import & export**.
+Other imports are in **Settings → Import & export**: Markdown, HTML, CSV, Word, OPML, Obsidian (canvases and
+Excalidraw drawings become boards), Logseq, Bear, Evernote, Joplin, Roam Research, Google Keep, Simplenote,
+Standard Notes, and your ChatGPT or Claude data export. The import dialog says how to get the export out of each app.
 
 ## What to try
 
@@ -50,10 +52,13 @@ Other imports (Markdown, HTML, CSV, Obsidian, Evernote, Word, OPML) are in **Set
 - Meeting notes: type `/meet`, press **Start**, take notes while it records. After **Stop** you get a transcript; click
   a line or a note to hear that moment. macOS asks once for the microphone. Recording and transcript stay on your Mac.
 - Export a page or your whole workspace (Markdown, HTML, PDF), and import it again
+- Connect Claude Code, Claude Desktop or Cursor to your workspace: **Settings → System → Connect AI apps**. They can
+  read and edit your pages on your Mac. Deleting for good stays with you: they can move pages to the Trash, but
+  emptying it or deleting forever is something you do in Based.
 
 ## What is not in this beta
 
-- AI and agents. They exist in Based, but the beta ships without them.
+- AI and agents inside Based. They exist, but the beta ships without them. (AI apps you connect yourself work, see above.)
 - AI summaries of meetings, and telling speakers apart in the transcript.
 - The graph view and real-time editing on several devices. They come back when they are stable.
 - iPhone, iPad, Windows and the web app. The beta is Mac only.
