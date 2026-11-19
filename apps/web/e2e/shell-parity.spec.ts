@@ -191,9 +191,16 @@ test("Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Spe
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });
-  await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 1 page, 1 attached file\./);
+  // BSD-602: seit BSD-563 wird der Ordner „Notes“ im ZIP eine eigene Seite, „Hike“ liegt darunter.
+  await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 2 pages, 1 attached file\./);
   await dialog.getByRole("button", { name: "Done" }).click();
-  await page.getByRole("treeitem", { name: "Hike" }).click();
+  const folder = page.getByRole("treeitem", { name: "Notes" });
+  await expect(folder).toBeVisible();
+  const expand = folder.getByRole("button", { name: "Expand" });
+  if (await expand.count()) await expand.click();
+  const hike = page.getByRole("treeitem", { name: "Hike" });
+  await expect(hike).toHaveAttribute("aria-level", "2");
+  await hike.click();
   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
   const img = blockEditor(page).locator("img").first();
   await expect(img).toBeVisible({ timeout: 15_000 });

@@ -120,6 +120,13 @@ describe("Import mit Anhängen", () => {
       expect(images.filter((b) => b.props?.url === "https://example.com/x.png").length).toBe(1);
       expect(r.summary.assets).toBe(1);
       expect(r.summary.warnings.join("\n")).toMatch(/Missing file “.*images\/lost\.png”/);
+      // BSD-602: im ZIP wird der Ordner „Notes“ eine Seite (BSD-563, docs/import-sources.md), „Hike“ liegt darunter.
+      if (files[0]!.path === "notes.zip") {
+        expect(r.summary.pages).toBe(2);
+        const folder = r.blocks.find((b) => b.type === "page" && b.text === "Notes");
+        const hike = r.blocks.find((b) => b.type === "page" && b.text === "Hike");
+        expect(hike?.parent).toBe("b:" + folder?.id);
+      }
     }
   });
 
