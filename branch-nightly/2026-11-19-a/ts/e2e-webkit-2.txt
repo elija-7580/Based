@@ -1,61 +1,61 @@
-success a1fdf86b86fb8b65301d904f5f4c6d700375acdd
-  ✓  239 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (4.9s)
-  ✓  241 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (2.9s)
-  ✓  242 [webkit] › e2e/startup-perf.spec.ts:132:1 › Tippen zeichnet nur das eigene Textfeld neu (3.7s)
-  ✓  243 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (5.3s)
-  ✓  245 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (3.6s)
-  ✓  244 [webkit] › e2e/storage.spec.ts:51:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (6.9s)
-  ✓  247 [webkit] › e2e/storage.spec.ts:72:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (2.7s)
-  ✓  246 [webkit] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (4.3s)
-  -  248 [webkit] › e2e/storage.spec.ts:88:1 › Screenshots web-storage-warning-*
-(node:22787) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+cancelled 3632498f7dba69d7c4ce58d4713dcb1ec9dd0643
+  ✓  144 [webkit] › e2e/select-all.spec.ts:21:1 › ⌘A neben dem Text wählt alle Blöcke der Seite – keinen Titel, keine Metazeile, nichts von der Oberfläche @smoke (2.8s)
+  ✓  143 [webkit] › e2e/report.spec.ts:143:1 › Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht (5.0s)
+  ✓  145 [webkit] › e2e/select-all.spec.ts:34:1 › im Titel: erstes ⌘A markiert den Titel, das zweite die Blöcke (3.5s)
+  ✓  146 [webkit] › e2e/report.spec.ts:178:1 › Entwickler-Ansicht zeigt die letzten Ereignisse live (4.4s)
+  ✓  147 [webkit] › e2e/select-all.spec.ts:45:1 › im Text bleibt es wie bisher: erst der Block, dann alle Blöcke (2.8s)
+  ✘  148 [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen (3.2s)
+  ✓  149 [webkit] › e2e/select-all.spec.ts:54:1 › ohne Seite (Home, Einstellungen) markiert ⌘A nichts; Felder behalten ihr ⌘A (3.4s)
+  ✓  150 [webkit] › e2e/select-all.spec.ts:71:1 › Kopfzeile, Metazeile und Backlinks lassen sich nicht markieren (Ziehen, Doppelklick) (3.1s)
+  ✓  151 [webkit] › e2e/report.spec.ts:192:1 › Wiedergabe-Haken im Block-Editor: Zwischenstand laden, Records anwenden, Schreibmarke setzen (retry #1) (3.5s)
+  ✓  153 [webkit] › e2e/report.spec.ts:213:1 › Aufzeichnung kostet beim Tippen messbar nichts (3.0s)
+  ✓  154 [webkit] › e2e/settings-billing.spec.ts:5:1 › Billing: Spenden-Knöpfe öffnen GitHub Sponsors, Plan sagt gratis während der Beta (1.9s)
+  ✓  155 [webkit] › e2e/settings-billing.spec.ts:21:1 › Billing: Suche in den Einstellungen findet „Donate“ (1.2s)
+  -  156 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1280 × 820 (light)
+  -  157 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1280 × 820 (dark)
+  -  158 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 900 × 600 (light)
+  -  159 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 900 × 600 (dark)
+  -  160 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1728 × 1000 (light)
+  -  161 [webkit] › e2e/settings-billing.spec.ts:30:5 › Foto: Billing 1728 × 1000 (dark)
+  ✓  152 [webkit] › e2e/semantic-search.spec.ts:18:1 › BSD-580: Search by meaning – ohne Server Hinweis, dann aus, Download, Index, bereit, entfernen (7.9s)
+  ✓  163 [webkit] › e2e/settings-rows.spec.ts:10:3 › Einstellungszeilen: Knopf bleibt rechts neben langem Hinweis (1280 × 820) (5.2s)
+  ✓  162 [webkit] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (7.0s)
+  ✓  165 [webkit] › e2e/settings-region.spec.ts:41:1 › Workspace-Name in Einstellungen → General (2.4s)
+  ✓  164 [webkit] › e2e/settings-rows.spec.ts:10:3 › Einstellungszeilen: Knopf bleibt rechts neben langem Hinweis (1728 × 1000) (5.2s)
+  -  167 [webkit] › e2e/settings-rows.spec.ts:37:3 › Foto: Einstellungszeilen in Sync & server (light)
+  -  168 [webkit] › e2e/settings-rows.spec.ts:37:3 › Foto: Einstellungszeilen in Sync & server (dark)
+  ✓  166 [webkit] › e2e/settings-region.spec.ts:53:1 › Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205) (3.0s)
+  ✓  170 [webkit] › e2e/settings.spec.ts:15:1 › Navigation: 20 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (2.8s)
+  ✓  169 [webkit] › e2e/settings-search.spec.ts:19:1 › Font schaltet die Schrift der App, Style nur Größe und Gewicht – und beides wieder zurück (4.4s)
+  ✓  172 [webkit] › e2e/settings-search.spec.ts:44:1 › alter Stand „Bold“ ohne Schrift-Wahl behält seine Schrift; alter Link #prefs-my-settings öffnet Appearance (1.2s)
+  ✓  171 [webkit] › e2e/settings.spec.ts:33:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (2.4s)
+  ✓  173 [webkit] › e2e/settings-search.spec.ts:52:1 › Suche: findet einzelne Einstellungen, verzeiht Tippfehler, Tastatur öffnet den Treffer und rollt zum Abschnitt (2.1s)
+  ✓  174 [webkit] › e2e/settings.spec.ts:64:1 › Seiten mit echten Einstellungen zeigen keine Liste offener Punkte (Updates: kein „Update channel“) (1.9s)
+  ✓  175 [webkit] › e2e/settings-search.spec.ts:98:1 › ⌘K findet keine Einstellungen (2.0s)
+  ✓  177 [webkit] › e2e/settings-search.spec.ts:108:1 › eine Seite mit nur einem gleichnamigen Abschnitt nennt ihren Namen einmal (1.4s)
+  -  178 [webkit] › e2e/settings-search.spec.ts:116:3 › Bildschirmfotos: Suche in den Einstellungen (light)
+  ✓  176 [webkit] › e2e/settings.spec.ts:76:1 › Sync-Formular prüft die Adresse, bevor es verbindet (3.2s)
+  -  179 [webkit] › e2e/settings-search.spec.ts:116:3 › Bildschirmfotos: Suche in den Einstellungen (dark)
+(node:18228) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  249 [webkit] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (2.3s)
-  ✓  251 [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (2.8s)
-  ✓  252 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Pages: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (5.1s)
-  ✓  253 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (6.2s)
-  -  254 [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓  250 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (17.3s)
-  ✓  256 [webkit] › e2e/sync-assets.spec.ts:167:1 › komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Server nimmt gzip an und antwortet gepackt (2.1s)
-(node:23730) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  255 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (5.3s)
-  ✓  257 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.1s)
-  ✓  258 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (12.6s)
-  ✓  260 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (2.5s)
-  ✓  259 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (13.4s)
-  ✓  261 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (4.2s)
-  ✓  262 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (4.2s)
-  -  264 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  265 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  263 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.2s)
-  ✓  267 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (3.2s)
-  ✓  266 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (5.5s)
-  ✓  268 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.7s)
-  ✓  270 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.2s)
-  ✓  269 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.9s)
-  ✓  271 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.6s)
-  ✓  273 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.5s)
-  ✓  274 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (3.5s)
-  ✓  272 [webkit] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (9.6s)
-  ✓  275 [webkit] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (2.9s)
-  ✓  277 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.3s)
-  ✓  276 [webkit] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (4.3s)
-  ✓  278 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.6s)
-  ✓  280 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.2s)
-  ✓  279 [webkit] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.3s)
-  ✓  282 [webkit] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.5s)
-  -  283 [webkit] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
-  ✓  281 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (3.8s)
-  ✓  284 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (5.1s)
-  ✓  285 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (5.1s)
-  ✓  286 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.4s)
-  ✓  287 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.2s)
-  ✓  288 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (5.6s)
-  ✓  289 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (5.3s)
-  ✓  290 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.3s)
-  ✓  291 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.4s)
-  -  292 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
-
-  56 skipped
-  236 passed (10.2m)
+  ✓  180 [webkit] › e2e/settings.spec.ts:94:1 › General: Zahlen aus dem Workspace, Papierkorb leeren mit Rückfrage (3.4s)
+  ✓  182 [webkit] › e2e/settings.spec.ts:120:1 › Account und Diagnostics zeigen echten Gerätezustand (2.4s)
+  ✓  183 [webkit] › e2e/settings.spec.ts:129:1 › Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token (1.5s)
+  ✓  184 [webkit] › e2e/settings.spec.ts:156:1 › Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen (921ms)
+  -  185 [webkit] › e2e/settings.spec.ts:176:3 › Screenshot Einstellungen (light)
+  -  186 [webkit] › e2e/settings.spec.ts:176:3 › Screenshot Einstellungen (dark)
+  -  187 [webkit] › e2e/settings.spec.ts:190:1 › Sync & server zeigt, ob der Browser-Speicher geschützt ist
+  -  188 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1280×820 light – Zeile vollständig, nichts gekürzt
+  -  189 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 900×600 light – Zeile vollständig, nichts gekürzt
+  -  190 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1728×1000 light – Zeile vollständig, nichts gekürzt
+  -  191 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1280×820 dark – Zeile vollständig, nichts gekürzt
+  -  192 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 900×600 dark – Zeile vollständig, nichts gekürzt
+  -  193 [webkit] › e2e/settings.spec.ts:204:5 › Browser storage: 1728×1000 dark – Zeile vollständig, nichts gekürzt
+  -  194 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1280×820 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
+  -  195 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 900×600 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
+  ✓  181 [webkit] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 (9.1s)
+  -  196 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1728×1000 light – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
+  -  198 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1280×820 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
+  -  199 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 900×600 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
+  -  200 [webkit] › e2e/settings.spec.ts:235:5 › Fast start: 1728×1000 dark – Schalter sichtbar, nichts gekürzt; nach Neustart lädt Based nach Bedarf
+  ✓  201 [webkit] › e2e/shell-layout.spec.ts:12:1 › Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen (2.7s)
