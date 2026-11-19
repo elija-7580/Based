@@ -42,6 +42,17 @@ Chromium. Die Werte jedes Abends stehen in `perf-history.csv`. Alle Zahlen stamm
 | WebView + Node zusammen nach Start (Mac) | < 150 MB | Mac-Test nötig | – |
 | Energie im Leerlauf (Aktivitätsanzeige) | „0,0“ | Mac-Test nötig | – |
 
+## Datenbanken (Beta-Weg 4, 18.11.2026 abends, von Hand über Playwright + CDP)
+
+| Kennzahl | Ziel | Stand |
+| --- | --- | --- |
+| 5 000 Zeilen: öffnen, 10 Spaltenarten, 9 Ansichten anlegen | keine Fehler, keine Aufgabe > 200 ms | 0 Fehler; je Ansicht 113–175 ms; längste Aufgabe 173 ms (Spalte „ID“) |
+| 5 000 Zeilen: 50× Ansicht wechseln, DOM-Knoten/Listener nach GC | ±0 | ±0 Knoten, ±0 Listener, Heap +0,4 MB |
+| 100 000 Zeilen: Tabelle öffnen | < 2 s, keine Aufgabe > 200 ms | 1,7 s; Aufgaben 412 und 472 ms |
+| 100 000 Zeilen: Spalte „ID“ hinzufügen | keine Aufgabe > 200 ms | **2 227 ms** am Stück im Hauptthread (Backlog) |
+| 100 000 Zeilen: JS-Heap des Hauptthreads | nur das Sichtbare | 64 MB nach dem Öffnen, 131 MB nach 3 Spalten + 6 Ansichten, 72 MB nach Neuladen (leer: 11 MB) – wächst linear (Backlog) |
+| 100 000 Zeilen: Neuladen mit offener Tabelle | < 2 s | 5,9 s |
+
 ## Datenbanken (BSD-605, gemessen 19.11.2026, Beta-Build, main c3ba1fe + BSD-604 Teil 1)
 
 `node ci/perf/measure.mjs --only database` (Datenbank per `seedDatabase`, 100 000 Zeilen, Tabelle offen):
