@@ -87,6 +87,12 @@ export interface WorkspaceToolsOptions {
    * stehen in derselben Liste und laufen durch dieselbe Prüfung.
    */
   extra?: (ctx: ToolCtx) => ToolDef[];
+  /**
+   * BSD-608: Der Host hat keine Inbox, die ein Mensch sieht (Based Notes Beta zeigt sie nicht). Werkzeuge mit
+   * Rückfrage (`delete_forever`, `empty_trash`, Teilen, …) legen dann keine Anfrage an, die niemand beantworten kann,
+   * sondern lehnen mit diesem Satz ab. Bekommt die Frage („Delete forever: “X““). Ohne: Anfrage in der Inbox.
+   */
+  declineRequests?: (question: string) => string;
 }
 
 const DEFAULT_ACTOR: Author = { kind: "agent", name: "Based agent" };
@@ -258,6 +264,7 @@ export class WorkspaceTools implements ToolHost {
       if (this.store.isReadOnly) throw new ToolError("The workspace is read-only right now (saving failed). Nothing was changed.");
       // Rückfrage statt Ausführung: nur `callApproved` (Knopf in Based) führt so ein Werkzeug wirklich aus.
       const question = def.ask && !approved ? def.ask(args) : undefined;
+      if (question !== undefined && this.opts.declineRequests) throw new ToolError(this.opts.declineRequests(question));
       if (question !== undefined) return { text: createToolRequest(this.store, { name, input: args as JSONValue, actor, title: question }), isError: false };
       // Wartende Schreib-Werkzeuge (Netz, Dateien) schreiben über `ctx.callSync` – jeder dieser Schritte ist eine Transaktion.
       if (def.wait) return { pending: Promise.resolve().then(() => def.run(args, { actor })) };

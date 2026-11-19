@@ -19,7 +19,7 @@ import { desktopChannel } from "@based/core";
 import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./sandbox.js";
 import { createLogger, parseLogLevel, type Logger } from "./log.js";
 import { createMcpServer, mcpToolList } from "./mcp.js";
-import { Pages } from "./pages.js";
+import { Pages, betaDeclinesRequests } from "./pages.js";
 import { loginShellPath, mergePath, newLocalToken, portInUseMessage, removeLocalDiscovery, replaceStaleLocal, writeLocalDiscovery } from "./local.js";
 import { tailnetAddresses, urlFor } from "./tailnet.js";
 import { SyncService } from "./sync.js";
@@ -272,6 +272,8 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     const persistent = opts.db !== ":memory:";
     const assets = persistent || opts.assetsDir ? new AssetStore(opts.assetsDir ?? opts.db.replace(/(\.sqlite)?$/, ".assets"), opts.maxAssetMB !== undefined ? { maxBytes: Math.round(opts.maxAssetMB * 1048576) } : {}) : undefined;
     const pages = new Pages(sync.store);
+    // BSD-608: Based Notes Beta zeigt keine Inbox – Rückfragen gleich ablehnen.
+    if (desktopChannel(process.env.BASED_CHANNEL) === "beta") pages.declineRequests = betaDeclinesRequests;
     // BSD-541: liegt das Embedding-Modell schon neben der Datenbank, sucht `recall` auch über stdio nach Bedeutung.
     const brain = new BrainIndex({ store: sync.store, pages, log, modelsDir: defaultModelsDir(opts.db), indexFile: defaultVectorsFile(opts.db) });
     void brain.start();
@@ -293,7 +295,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   const bound: { port?: number } = {};
   const token = opts.token;
   const selfMcp = (): AcpMcpServer[] => (bound.port ? [{ name: "based", url: `http://${selfHost(opts.host)}:${bound.port}/mcp`, headers: { Authorization: `Bearer ${token}` } }] : []);
-  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, ...(opts.propertyRecords ? { propertyRecords: true } : {}), allowedOrigin: allowedOrigin(opts.publicURL) ?? (opts.local ? localAppOrigin(process.env.BASED_APP_ORIGIN) : undefined),
+  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, ...(desktopChannel(process.env.BASED_CHANNEL) === "beta" ? { declineRequests: betaDeclinesRequests } : {}), ...(opts.propertyRecords ? { propertyRecords: true } : {}), allowedOrigin: allowedOrigin(opts.publicURL) ?? (opts.local ? localAppOrigin(process.env.BASED_APP_ORIGIN) : undefined),
     log,
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).
