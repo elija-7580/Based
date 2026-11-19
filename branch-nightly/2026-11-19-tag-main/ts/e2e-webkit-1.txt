@@ -1,0 +1,17 @@
+failure cff2e00775cd3f05b9641968326bdfd9c3302dc4
+(kein Testlog – Lauf vor den Tests beendet; Ende des Playwright-Setups:)
+Ign:2 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 libegl-mesa0 amd64 25.2.8-0ubuntu0.24.04.4
+Ign:2 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-updates/main amd64 libegl-mesa0 amd64 25.2.8-0ubuntu0.24.04.4
+Ign:2 https://archive.ubuntu.com/ubuntu noble-updates/main amd64 libegl-mesa0 amd64 25.2.8-0ubuntu0.24.04.4
+Err:2 https://security.ubuntu.com/ubuntu noble-updates/main amd64 libegl-mesa0 amd64 25.2.8-0ubuntu0.24.04.4
+  503  Service Unavailable [IP: 52.15.159.198 80]
+W: Download is performed unsandboxed as root as file '/home/runner/.cache/apt-archives/partial/libegl-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
+E: Failed to fetch https://security.ubuntu.com/ubuntu/pool/main/m/mesa/libegl-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb  503  Service Unavailable [IP: 52.15.159.198 80]
+E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
+Failed to install browser dependencies
+Error: Installation process exited with code: 100
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright install-deps webkit
+::warning title=Playwright-Setup::Systempakete (apt): Exit 1 (Versuch 2/2)
+::error title=Playwright-Setup (BSD-548)::Systempakete (apt) für [webkit] nach 2 Versuchen gescheitert (Exit 1). Kein Testergebnis – Runner-Image/apt/Netz prüfen, nicht die Tests.
