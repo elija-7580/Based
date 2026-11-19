@@ -38,7 +38,8 @@ Records geschrieben; was von Zeitzone, Nutzer oder Einstellung des Geräts abhä
 ## Prüfen (gestuft, BSD-322)
 
 - **Pro Änderung:** `ci/typecheck/run-ts.sh --fast` – typecheck, lint, Unit-Tests in beiden Datenformaten
-  (inkl. Fixture-Runner) und Playwright-Smoke (`@smoke`, Chromium, ~1 min). Bei sichtbarer Oberfläche zusätzlich
+  (inkl. Fixture-Runner), Playwright-Smoke (`@smoke`, Chromium, ~1 min) und der Beta-Build-Durchgang
+  (`e2e/beta-*` mit `BASED_CHANNEL=beta`, Chromium, ~1,5 min; BSD-612). Bei sichtbarer Oberfläche zusätzlich
   die betroffenen Specs in beiden Browsern: `ci/typecheck/run-ts.sh --e2e-area <muster>` (Dateiname oder Titel).
   Mehrere Arbeitsordner: `BASED_E2E_PORT=<port>`, Playwright mit `--trace off`.
 - **Vor dem Merge nach main:** der CI-Job `ts-fast` muss grün sein (Branch `ci-logs`, `ts-fast/status.txt`; für

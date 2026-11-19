@@ -2,7 +2,8 @@
 # BSD-147: Prüfungen für den TypeScript-Stack (ADR 0011). Läuft unter Linux ohne Mac.
 #   usage: ci/typecheck/run-ts.sh [--fast | --e2e | --e2e-area <muster>]
 #   (ohne Option)       typecheck, lint, Unit-Tests in beiden Datenformaten (inkl. Fixture-Runner)
-#   --fast              wie der CI-Job ts-fast (BSD-322): dazu Playwright-Smoke (@smoke, nur Chromium) – der Merge-Check
+#   --fast              wie der CI-Job ts-fast (BSD-322): dazu Playwright-Smoke (@smoke, nur Chromium) und der
+#                       Beta-Build-Durchgang (e2e/beta-*, BASED_CHANNEL=beta, BSD-612) – der Merge-Check
 #   --e2e-area <muster> dazu nur die Playwright-Specs, deren Dateiname auf <muster> passt (sonst: Titel per --grep),
 #                       beide Browser, z. B. --e2e-area editor  oder  --e2e-area "database-(views|create)"
 #   --e2e               dazu der volle Playwright-Lauf (WebKit + Chromium, inkl. @perf mit den lokalen Schwellen)
@@ -32,7 +33,10 @@ BASED_PROPERTY_RECORDS=1 pnpm -r test
 BASED_LAZY_STORE=1 pnpm --filter @based/core --filter @based/sync --filter @based/web --filter @based/server test
 pw() { CI=1 pnpm --filter @based/web exec playwright test --trace off "$@"; }
 case "$mode" in
-  --fast) pw --project=chromium --grep @smoke ;;
+  --fast)
+    pw --project=chromium --grep @smoke
+    # BSD-612: Durchgang im Beta-Build (e2e/beta-*), eigener Build auf eigenem Port (Smoke-Port + 6)
+    BASED_CHANNEL=beta BASED_E2E_PORT=$(( ${BASED_E2E_PORT:-4173} + 6 )) pw --project=chromium e2e/beta- ;;
   --e2e-area)
     if ls apps/web/e2e | grep -qE "$area"; then pw "$area"; else pw --grep "$area"; fi ;;
   --e2e) CI=1 pnpm --filter @based/web e2e ;;

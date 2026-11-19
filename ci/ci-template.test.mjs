@@ -117,3 +117,26 @@ test("Vorlage: Job-Limit von e2e und perf liegt über Browser-Setup plus Testsch
     assert.ok(jobLimit > n(install) + n(tests), `${job}: ${jobLimit} ≤ ${n(install)} + ${n(tests)}`);
   }
 });
+
+// BSD-612: Der Durchgang im Beta-Build überspringt sich ohne BASED_CHANNEL=beta – er muss im Merge-Check eigens laufen,
+// lokal (run-ts.sh --fast) und in der CI (ts-fast), mit eigenem Port, damit kein Build ohne Beta-Kanal wiederverwendet wird.
+test("Vorlage und run-ts: ts-fast läuft den Beta-Build-Durchgang mit BASED_CHANNEL=beta", () => {
+  const block = yml.split(/\n {2}(?=[a-z0-9-]+:\n)/).find((b) => b.startsWith("ts-fast:"));
+  assert.ok(block, "Job ts-fast fehlt");
+  const beta = steps(block).find((s) => /playwright test/.test(s) && s.includes("e2e/beta-"));
+  assert.ok(beta, "ts-fast ohne Schritt für e2e/beta-*");
+  assert.match(beta, /BASED_CHANNEL=beta/);
+  assert.match(beta, /BASED_E2E_PORT=\d+/);
+  assert.match(beta, /timeout-minutes: \d+/);
+  // Job-Limit deckt Unit-Tests, Smoke und Beta-Durchgang am Stück (Browser-Setup und Rest liegen darunter).
+  const n = (s) => Number(/timeout-minutes: (\d+)/.exec(s)[1]);
+  const jobLimit = Number(/timeout-minutes: (\d+)/.exec(block)[1]);
+  const unit = steps(block).find((s) => s.includes("pnpm -r test"));
+  const smoke = steps(block).find((s) => s.includes("@smoke"));
+  assert.ok(jobLimit > n(unit) + n(smoke) + n(beta), `ts-fast: Job-Limit ${jobLimit} ≤ ${n(unit)} + ${n(smoke)} + ${n(beta)}`);
+  const runTs = readFileSync(join(here, "typecheck", "run-ts.sh"), "utf8");
+  const fast = /--fast\)([\s\S]*?);;/.exec(runTs.split('case "$mode" in').pop());
+  assert.ok(fast, "run-ts.sh ohne --fast-Zweig");
+  assert.match(fast[1], /@smoke/);
+  assert.match(fast[1], /BASED_CHANNEL=beta[^\n]*e2e\/beta-/);
+});
