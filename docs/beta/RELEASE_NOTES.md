@@ -26,7 +26,8 @@ New since the first test build (0.2.2):
 - Start from a template on the welcome screen: Tasks, Notes, Journal or Wiki. **⌘N** offers them later, too.
 - **Home** opens “Welcome to Based” (or your first page) instead of an empty page called Home.
 - Video and audio blocks with their own play, pause, seek and mute controls (space, ←/→, M, F).
-- Typing on long pages is smoother.
+- Typing on long pages is smoother: a key press redraws only its own block, not the whole page.
+- Large workspaces open about twice as fast.
 - Export workspace as Markdown now includes the text inside database rows (one .md per row, like Notion), and
   imports back with databases in their place.
 - Backups can go to a folder you choose, for example an external drive. If it isn't connected, Based says so and
