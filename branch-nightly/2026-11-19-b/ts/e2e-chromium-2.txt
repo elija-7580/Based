@@ -1,4 +1,4 @@
-failure ad7605151d43dec5c2ce99c37ef7d76cb30426b7
+failure a593e22ed42e6321b70484fc7b8d9fc067f6882a
 
     Error: expect(locator).toHaveText(expected) failed
 
@@ -10,7 +10,7 @@ failure ad7605151d43dec5c2ce99c37ef7d76cb30426b7
     Call log:
       - Expect "toHaveText" getByRole('dialog', { name: 'Import' }).getByTestId('import-summary') with timeout 5000ms
       - waiting for getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
-        12 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
+        11 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
            - unexpected value "Imported 2 pages, 1 attached file."
 
 
@@ -55,7 +55,7 @@ failure ad7605151d43dec5c2ce99c37ef7d76cb30426b7
   1 failed
     [chromium] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher 
   13 skipped
-  278 passed (6.0m)
+  279 passed (6.0m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
