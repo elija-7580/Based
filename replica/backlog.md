@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 43 (Nachtlauf 2026-11-19, TS-Stack, Abschnitt direkt unten; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 44 (Sonderlauf am Tag 2026-11-19, TS-Stack, Abschnitt direkt unten; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,18 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 44 (Sonderlauf am Tag 2026-11-19)
+
+Die geplante Nachtschicht lief um 11:14 ein zweites Mal; Elija: „mach trotzdem die Schicht“. Zwei Schichten (A Prüfen, B Oberfläche), beide bis 13:10 fertig; main 5cebdf8c → cff2e007 (Fast-Forward über nightly/2026-11-19-tag-main), `run-ts.sh --fast` grün auf jedem Stand, dazu beta-requests.spec und beta-build.spec mit BASED_CHANNEL=beta in Chromium und WebKit (12/12).
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-609 Rückfragen von KI-Apps in der Beta zeigen | 🟡 | Mac-Test; Liste unter Einstellungen → Connect AI apps, Erlauben/Ablehnen; MCP-Antwort nennt den Ort; kein Chat-/Agenten-Code beim Start |
+| BSD-610 Beta-Fixtures v0.2.9/v0.2.10, Datum, zweiter Start | ✅ | neue Fixtures und Archive, alte unverändert |
+| BSD-611 Notion „Markdown & CSV“ zweimal importiert → doppelt | ❌ | gefunden; Bereit, nach dem RC (berührt Import-Kennungen); features.csv richtiggestellt |
+| BSD-612 Beta-Build-Durchgang läuft nicht automatisch in der CI | ❌ | Blockiert, Frage an Elija (ts-fast oder Beta-Release-Workflow) |
+| BSD-607 Chat-Panel bei 900 × 600 | ❌ | Inbox → Blockiert, Designfrage |
 
 ## Pass 43 (Nachtlauf 2026-11-19)
 
