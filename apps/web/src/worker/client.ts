@@ -590,7 +590,9 @@ export class PageReplica {
       const sent = c.notified?.length ? c.keys.filter((k) => !c.notified!.includes(k)) : c.keys;
       for (const key of sent) {
         const r = this.store.record(key);
-        if (r) upserts.push(structuredClone(r));
+        // BSD-604: ohne structuredClone – Records im Store werden nie an Ort und Stelle geändert, und postMessage
+        // kopiert ohnehin (bei 100 000 Zeilen kostete die doppelte Kopie ~150 ms am Stück)
+        if (r) upserts.push(r);
         else deletions.push(key);
         this.inflight.set(key, (this.inflight.get(key) ?? 0) + 1);
       }

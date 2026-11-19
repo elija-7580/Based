@@ -3,7 +3,7 @@
 // Testbericht (console.info) und im Backlog. Swift-Vergleich: 1,7 s Einfügen / 0,5 s Abfrage / 10 µs aus dem Cache.
 import { describe, expect, it } from "vitest";
 import { cpuTime, expectWithinBudget } from "./perf-budget.js";
-import { MemoryPersistence, QueryEngine, WorkspaceStore, addRow, pv, setValue, subtree, type WireRecord } from "../src/index.js";
+import { MemoryPersistence, QueryEngine, WorkspaceStore, addProperty, addRow, pv, setValue, subtree, type WireRecord } from "../src/index.js";
 
 const N = Number(process.env.BIG_N ?? 100_000);
 const stamp = { millis: 1, counter: 0, node: "x" };
@@ -87,6 +87,32 @@ describe("Große Datenbank (BSD-215)", () => {
     expect(store.children("d:db").length).toBe(N + 1000);
     console.info(`BSD-215 Einfügen: Sync ${N} Zeilen ${sync.toFixed(0)} ms, 1000 × addRow ${add.toFixed(0)} ms (${(add / 1000).toFixed(2)} ms je Zeile)`);
     expectWithinBudget("Einfügen", { sync: 5000, add: 10_000 }, () => ({ sync, add }), 1);
+  }, 60_000);
+
+  // BSD-604: „Add property → ID“ nummeriert jede Zeile in einer Transaktion. Beim Commit kostete der Vergleich jedes
+  // geänderten Records als kanonischer Text ~600 ms, die doppelte Kopie in Tx.update ~100 ms (Chromium, Hauptthread:
+  // 2,1 s → 1,0 s). Das Undo filterte mit keys.includes quadratisch. Node, CPU-Zeit: vorher 3,6 s / Undo 30 s, nachher
+  // 1,4 s / 1,2 s; Grenzen mit Luft.
+  it(`BSD-604: Spalte „ID“ bei ${N.toLocaleString("de")} Zeilen – lückenlos, in Anlegereihenfolge, ein Undo-Schritt`, () => {
+    const run = () => {
+      const recs = new MemoryPersistence(records(N)).loadAll();
+      // Schreiben auf die Platte gehört nicht zur Messung (Hauptthread: die Replik schreibt nichts, der Worker speichert)
+      const persistence = Object.assign(new MemoryPersistence(), { loadAll: () => recs, lazy: undefined, write: () => undefined });
+      const store = new WorkspaceStore({ persistence, node: "n" });
+      const [pid, ms] = time(() => addProperty(store, "db", "ID", "uniqueID")!);
+      return { store, pid, ms };
+    };
+    const { store, pid, ms } = run();
+    const nums = store.children("d:db").map((id) => (store.blocks.get(id)!.values?.[pid] as { uniqueID: { _0: number } }).uniqueID._0);
+    expect(nums.length).toBe(N);
+    expect(nums.every((n, i) => n === i + 1)).toBe(true); // createdAt = i
+    expect(store.databases.get("db")!.nextUniqueID).toBe(N + 1);
+    const [undone, undoMs] = time(() => store.undo());
+    expect(undone.name).toBe("Add property");
+    expect(store.databases.get("db")!.properties.some((p) => p.id === pid)).toBe(false);
+    expect(store.children("d:db").some((id) => store.blocks.get(id)!.values?.[pid] !== undefined)).toBe(false);
+    console.info(`BSD-604 Spalte ID bei ${N} Zeilen: ${ms.toFixed(0)} ms, Undo ${undoMs.toFixed(0)} ms`);
+    expectWithinBudget("Spalte ID", { add: 2500, undo: 3000 }, () => ({ add: ms, undo: undoMs }), 1);
   }, 60_000);
 
   it("BSD-435: subtree ohne Spread-Aufruf – 300 000 Zeilen sprengen den Stack nicht (Chromium: „Maximum call stack size exceeded“ beim Öffnen)", () => {
