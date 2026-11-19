@@ -30,6 +30,51 @@ export function canonicalStringify(value: unknown): string {
   return "{" + entries.map(([k, v]) => JSON.stringify(k) + ":" + canonicalStringify(v)).join(",") + "}";
 }
 
+const isPlain = (v: object) => {
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+};
+const isScalar = (v: unknown) => v === null || typeof v === "string" || typeof v === "boolean" || (typeof v === "number" && Number.isFinite(v));
+
+/**
+ * BSD-604: `canonicalStringify(a) === canonicalStringify(b)`, ohne die Texte zu bauen. Der Store vergleicht so jeden
+ * geänderten Record beim Commit; bei 100 000 Zeilen (Spalte „ID“ anlegen) kostete das Serialisieren ~600 ms am Stück.
+ * Gleiche Regeln: Schlüsselreihenfolge egal, `undefined`-Felder entfallen, `undefined` im Array zählt als `null`,
+ * `-0` gleich `0`. Was kein JSON-Wert, kein Array und kein einfaches Objekt ist (Date, Map, NaN, `undefined` ganz
+ * oben …), geht weiter über `canonicalStringify` – das Ergebnis bleibt gleich (wo der Text-Vergleich wirft, darf
+ * dieser schon vorher `false` sagen).
+ */
+export function canonicalEqual(a: unknown, b: unknown): boolean {
+  if (isScalar(a) && isScalar(b)) return a === b;
+  const ao = typeof a === "object" && a !== null, bo = typeof b === "object" && b !== null;
+  if (!ao || !bo) {
+    // genau einer ein einfacher Wert, der andere Array/Objekt: verschieden (beide Seiten bleiben darstellbar)
+    if ((isScalar(a) && bo && (Array.isArray(b) || isPlain(b))) || (isScalar(b) && ao && (Array.isArray(a) || isPlain(a)))) return false;
+    return canonicalStringify(a) === canonicalStringify(b);
+  }
+  const aa = Array.isArray(a), ba = Array.isArray(b);
+  if (aa && ba) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (!canonicalEqual(a[i] === undefined ? null : a[i], b[i] === undefined ? null : b[i])) return false;
+    return true;
+  }
+  if (!aa && !ba && isPlain(a) && isPlain(b)) {
+    const x = a as Record<string, unknown>, y = b as Record<string, unknown>;
+    let n = 0;
+    for (const k of Object.keys(x)) {
+      const v = x[k];
+      if (v === undefined) continue;
+      n += 1;
+      const w = y[k];
+      if (w === undefined || !Object.prototype.hasOwnProperty.call(y, k) || !canonicalEqual(v, w)) return false;
+    }
+    for (const k of Object.keys(y)) if (y[k] !== undefined) n -= 1;
+    return n === 0;
+  }
+  if ((aa && isPlain(b)) || (ba && isPlain(a))) return false;
+  return canonicalStringify(a) === canonicalStringify(b);
+}
+
 /** Swift `Date` (Standard-Codable) = Sekunden seit 2001-01-01T00:00:00Z. */
 export const SWIFT_REFERENCE_DATE_UNIX_MS = 978_307_200_000;
 export const dateFromSwift = (seconds: number): Date => new Date(SWIFT_REFERENCE_DATE_UNIX_MS + seconds * 1000);

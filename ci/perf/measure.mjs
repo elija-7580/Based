@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Review 2026-11-18: wiederholbare Messung des Web-Clients (Chromium, Playwright + CDP). Gibt JSON aus.
 // Aufruf (nach `BASED_CHANNEL=beta pnpm --filter @based/web exec vite build`):
-//   node ci/perf/measure.mjs [--out datei.json] [--pages 20000]
+//   node ci/perf/measure.mjs [--out datei.json] [--pages 20000] [--rows 100000] [--only base|large|database]
 // Misst: Bundle (roh/gzip, Erststart-Chunk getrennt), Kaltstart, geladene Chunks, Heap nach GC, DOM-Knoten, Listener,
 // Leerlauf (Timer/rAF-Aufrufe und CPU-Zeit in 10 s), Leck-Schleifen (50× Seite, 50× ⌘K), Editor-Tippen (Long Tasks),
-// Start mit großem Workspace. Zahlen aus dem Linux-Container; Mac-Werte siehe docs/quality/performance-budget.md.
+// Start mit großem Workspace, Datenbank mit 100 000 Zeilen (--rows, BSD-605). Zahlen aus dem Linux-Container; Mac-Werte siehe docs/quality/performance-budget.md.
 /* global __perf, document */
 import { spawn } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -18,6 +18,9 @@ const web = new URL("../../apps/web/", import.meta.url).pathname;
 const { chromium } = createRequire(web + "package.json")("@playwright/test");
 const arg = (n, d) => { const i = process.argv.indexOf("--" + n); return i > 0 ? process.argv[i + 1] : d; };
 const PORT = Number(arg("port", 4191)), PAGES = Number(arg("pages", 20000));
+// --only database: nur der Schritt „Datenbank“ (BSD-605); sonst alles
+const ONLY = arg("only");
+const want = (name) => !ONLY || ONLY === name;
 const out = { date: new Date().toISOString(), bundle: {}, errors: [] };
 const kb = (n) => Math.round(n / 102.4) / 10;
 
@@ -83,7 +86,7 @@ async function session(fn) {
 const step = async (name, fn) => { try { out[name] = await fn(); } catch (e) { out[name] = { failed: String(e.message).split("\n")[0].slice(0, 300) }; } console.error(name, JSON.stringify(out[name])); };
 
 // ---- 1 · Kaltstart, leerer Workspace, Leerlauf, Leck-Schleifen, Editor
-await session(async ({ page, cdp, metrics, ready, reqs }) => {
+if (want("base")) await session(async ({ page, cdp, metrics, ready, reqs }) => {
   await step("start", async () => {
     const t0 = Date.now();
     await page.goto("/");
@@ -162,7 +165,7 @@ await session(async ({ page, cdp, metrics, ready, reqs }) => {
 });
 
 // ---- 2 · großer Workspace
-await session(async ({ page, metrics, ready }) => {
+if (want("large")) await session(async ({ page, metrics, ready }) => {
   await step("large", async () => {
     await page.goto("/"); await ready();
     const empty = await metrics();
@@ -177,6 +180,37 @@ await session(async ({ page, metrics, ready }) => {
     const lt = await page.evaluate(() => __perf.longTasks.slice());
     const m = await metrics();
     return { pages: PAGES, seedWriteMs: writeMs, sidebarMs: Math.min(...runs), runs, longestTaskMs: Math.max(0, ...lt), heapEmptyMb: empty.heapMb, heapMb: m.heapMb, heapPerKPagesMb: Math.round(((m.heapMb - empty.heapMb) / (PAGES / 1000)) * 100) / 100, nodes: m.nodes, listeners: m.listeners };
+  });
+});
+
+// ---- 3 · Datenbank mit 100 000 Zeilen (BSD-605): Heap des Hauptthreads nach GC, längste Aufgabe beim Öffnen, Neuladen
+// bis zur ersten Zeile. Ziel aus BSD-605: Heap < 30 MB, keine Aufgabe > 200 ms, Neuladen < 2 s.
+const ROWS = Number(arg("rows", 100000));
+if (want("database")) await session(async ({ page, metrics, ready }) => {
+  await step("database", async () => {
+    await page.goto("/"); await ready();
+    await page.keyboard.press("Escape");
+    const empty = await metrics();
+    const id = await page.evaluate(async (n) => { const b = globalThis.__based; const r = await b.client.command({ op: "seedDatabase", count: n }); await b.client.settled(); return r; }, ROWS);
+    const firstRow = async () => {
+      await page.waitForFunction((n) => document.querySelector('.shell-database.full [aria-label="Pages in view"]')?.textContent === n, ROWS.toLocaleString("en-US"), { timeout: 120000 });
+      await page.waitForSelector(".shell-database.full .dbui-vrow[data-row-id]", { timeout: 120000 });
+    };
+    await page.evaluate(() => { __perf.longTasks.length = 0; });
+    const t0 = Date.now();
+    await page.goto("/#page-" + id);
+    await firstRow();
+    const openMs = Date.now() - t0;
+    await page.waitForTimeout(1500);
+    const openTasks = await page.evaluate(() => __perf.longTasks.slice());
+    const open = await metrics();
+    const t1 = Date.now();
+    await page.reload(); await ready(); await firstRow();
+    const reloadMs = Date.now() - t1;
+    await page.waitForTimeout(1500);
+    const reloadTasks = await page.evaluate(() => __perf.longTasks.slice());
+    const reloaded = await metrics();
+    return { rows: ROWS, heapEmptyMb: empty.heapMb, heapOpenMb: open.heapMb, heapAfterReloadMb: reloaded.heapMb, nodes: open.nodes, openMs, openLongestTaskMs: Math.max(0, ...openTasks), openLongTasks: openTasks.length, reloadMs, reloadLongestTaskMs: Math.max(0, ...reloadTasks) };
   });
 });
 

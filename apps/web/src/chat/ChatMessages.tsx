@@ -99,7 +99,10 @@ function ToolCard({ part, approval, onAnswer, undo }: { part: ChatPart; approval
   return (
     <div className="chat-tool" data-testid="tool-card" data-tool={part.toolName} data-status={part.status}>
       <div className="chat-tool-row">
-        <ChatToolCalls calls={[toolItem(part)]} />
+        {/* BSD-600: gekürzter Titel ist per Tooltip ganz lesbar */}
+        <div className="chat-tool-calls" title={part.detail ? `${TOOL_LABELS[part.toolName] ?? part.toolName} ${part.detail}` : undefined}>
+          <ChatToolCalls calls={[toolItem(part)]} />
+        </div>
         {undo && token && (!result || result.pending) ? (
           <BasedButton variant="ghost" label="Undo" ariaLabel={`Undo ${(TOOL_LABELS[part.toolName] ?? part.toolName).toLowerCase()}${part.detail ? ` “${part.detail}”` : ""}`} busy={result?.pending === true} onClick={() => undo.run(part.id, token)} />
         ) : null}

@@ -243,6 +243,15 @@ for (const theme of ["light", "dark"] as const) {
       await page.screenshot({ path: `../../docs/design/screens/web-chat-undo-${theme}-${w}.png` });
     }
     await page.setViewportSize({ width: 1280, height: 820 });
+    // BSD-600: Bei langem Titel bleibt der Name der Aktion ganz, nur der Titel kürzt – und ist per Tooltip lesbar.
+    for (const i of [0, 1]) {
+      const name = cards.nth(i).locator(".astryx-chat-tool-calls span:has(> .astryx-icon) + span");
+      await expect(name).toHaveText("Create page");
+      expect(await name.evaluate((el) => el.scrollWidth <= el.clientWidth), `Name ganz (Karte ${i})`).toBe(true);
+    }
+    const long = cards.nth(1).locator(".astryx-chat-tool-calls span:has(> .astryx-icon) + span + span");
+    expect(await long.evaluate((el) => el.scrollWidth > el.clientWidth), "langer Titel kürzt").toBe(true);
+    await expect(cards.nth(1).locator(".chat-tool-calls")).toHaveAttribute("data-tip", /Porto trip with a very long title .* of the card$/);
     // Den ERSTEN Schritt zurücknehmen, obwohl danach ein zweiter kam: nur die erste Seite verschwindet.
     await undo.click();
     await expect(cards.nth(0).getByTestId("tool-undone")).toHaveText("Undone.");

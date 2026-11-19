@@ -3,7 +3,7 @@
 // Tombstones (ADR 0002, BSD-24) und einer austauschbaren Persistenz. Verifiziert über fixtures/merge und
 // fixtures/undo-remote. Kein UI, keine Plattform-APIs.
 import { withCalendarDays } from "../model/calendar-day.js";
-import { canonicalStringify, cloneRecord } from "../json.js";
+import { canonicalEqual, cloneRecord } from "../json.js";
 import { compareStamps, StampClock, ZERO_STAMP, type Stamp } from "../hlc.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { diffProperties } from "../model/property-records.js";
@@ -193,7 +193,7 @@ interface UndoEntry {
   time: number;
 }
 
-const same = (a: unknown, b: unknown) => canonicalStringify(a) === canonicalStringify(b);
+const same = canonicalEqual;
 const stampOf = (r: WireRecord): Stamp => (r.data.stamp as Stamp | undefined) ?? ZERO_STAMP;
 
 /** Änderungen innerhalb einer Transaktion. */
@@ -307,7 +307,10 @@ export class Tx {
     if (!b) return;
     const copy = cloneRecord(b);
     f(copy);
-    this.put({ kind: "block", data: copy });
+    // BSD-604: `copy` gehört schon der Transaktion – nicht ein zweites Mal kopieren (wie putRaw, ohne cloneRecord)
+    const r: WireRecord = { kind: "block", data: copy };
+    this.touch(recordKey(r));
+    this.store._set(r);
   }
   restamp(key: RecordKeyString) {
     if (!this.store.record(key)) return;
@@ -1153,10 +1156,10 @@ export class WorkspaceStore {
       const expect = undo ? entry.after : entry.before;
       const keys: RecordKeyString[] = [];
       let skipped = 0;
-      const sorted = [...restore.keys()].sort((a, b) => {
-        const x = parseKey(a).id, y = parseKey(b).id;
-        return x < y ? -1 : x > y ? 1 : 0;
-      });
+      // BSD-604: ID je Schlüssel einmal bestimmen, nicht in jedem Vergleich (100 000 Records: ~1,7 Mio. Vergleiche)
+      const sorted = [...restore.keys()].map((k) => [k, parseKey(k).id] as const)
+        .sort(([, x], [, y]) => (x < y ? -1 : x > y ? 1 : 0))
+        .map(([k]) => k);
       for (const key of sorted) {
         if (WorkspaceStore.sameContent(this.record(key), expect.get(key))) keys.push(key);
         else skipped += 1;
@@ -1175,13 +1178,15 @@ export class WorkspaceStore {
       }
       this.commit(tx, entry.name, undefined, undo ? "undo" : "redo", false);
       outcome.applied = keys.length;
+      const applied = new Set(keys);
       const moved: UndoEntry = {
         seq: entry.seq,
         name: entry.name,
         coalesceKey: undefined,
         time: entry.time,
-        before: new Map([...entry.before].filter(([k]) => keys.includes(k))),
-        after: new Map([...entry.after].filter(([k]) => keys.includes(k))),
+        // BSD-604: Set statt keys.includes – quadratisch kostete das Undo der Spalte „ID“ bei 100 000 Zeilen 23 s
+        before: new Map([...entry.before].filter(([k]) => applied.has(k))),
+        after: new Map([...entry.after].filter(([k]) => applied.has(k))),
       };
       if (keep) (undo ? this.redoStack : this.undoStack).push(moved);
       return true;
@@ -1193,13 +1198,15 @@ export class WorkspaceStore {
     if (!a || !b) return a === b;
     if (a.kind !== b.kind) return false;
     const strip = (r: WireRecord) => {
-      const d = structuredClone(r.data) as Record<string, unknown>;
+      // flache Kopien reichen: verglichen wird nur, nichts geändert (BSD-604: structuredClone kostete bei vielen Echos)
+      const d = { ...r.data } as Record<string, unknown>;
       delete d.stamp;
       delete d.updatedAt;
       if (r.kind === "block") {
         delete d.updatedBy;
-        const props = d.props as Record<string, unknown> | undefined;
+        const props = d.props ? { ...(d.props as Record<string, unknown>) } : undefined;
         if (props) {
+          d.props = props;
           delete props.isOpen;
           if (Object.keys(props).length === 0) delete d.props;
         }
