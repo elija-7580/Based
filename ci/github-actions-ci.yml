@@ -4,7 +4,7 @@
 #
 # BSD-322 „CI schnell und verlässlich“ – Jobs:
 #   ts-fast   Merge-Check (Ziel < 10 min): typecheck, lint, Unit-Tests (beide Datenformate), Playwright-Smoke (@smoke,
-#             Chromium). Wer mergen will, wartet nur hierauf. Lokal: ci/typecheck/run-ts.sh --fast
+#             Chromium), Beta-Build-Durchgang (e2e/beta-*, BASED_CHANNEL=beta, Chromium; BSD-612). Wer mergen will, wartet nur hierauf. Lokal: ci/typecheck/run-ts.sh --fast
 #   e2e       voller Playwright-Lauf ohne @perf als Matrix: Chromium und WebKit, je zwei Shards, fail-fast aus.
 #   perf      Zeitmessungen (@perf) in eigenem Job, blockiert nicht (continue-on-error); Ergebnis als Warnung im Log.
 #   report    sammelt alles und schreibt ts/status.txt (grün | rot | abgebrochen) – auch bei Abbruch oder Zeitlimit.
@@ -39,9 +39,10 @@ env:
 
 jobs:
   ts-fast:
-    name: Merge-Check (typecheck, lint, unit, Smoke)
+    name: Merge-Check (typecheck, lint, unit, Smoke, Beta)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # BSD-612: +5 für den Beta-Build-Durchgang (eigener vite build + Specs)
+    timeout-minutes: 32
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -70,11 +71,19 @@ jobs:
           set -o pipefail
           bash ci/playwright-install.sh chromium
           CI=1 pnpm --filter @based/web exec playwright test --project=chromium --grep @smoke 2>&1 | tee smoke.log
+      # BSD-612: Durchgang im echten Beta-Build (erster Start, Einstellungen, Problem melden, Rückfragen von KI-Apps).
+      # Ohne BASED_CHANNEL=beta überspringen sich diese Specs – hier eigener Build auf eigenem Port.
+      - name: Beta-Build-Durchgang (BASED_CHANNEL=beta, Chromium)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 8
+        run: |
+          set -o pipefail
+          BASED_CHANNEL=beta BASED_E2E_PORT=4179 CI=1 pnpm --filter @based/web exec playwright test --project=chromium e2e/beta- 2>&1 | tee beta.log
       - name: Log sichern
         if: always()
         run: |
           mkdir -p /tmp/out
-          { grep -E "error|FAIL|Tests |grün|portiert|Zeitmessung" ts.log | head -n 200; echo "--- smoke"; tail -n 40 smoke.log 2>/dev/null; } > /tmp/out/ts.txt || true
+          { grep -E "error|FAIL|Tests |grün|portiert|Zeitmessung" ts.log | head -n 200; echo "--- smoke"; tail -n 40 smoke.log 2>/dev/null; echo "--- beta"; tail -n 40 beta.log 2>/dev/null; } > /tmp/out/ts.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
