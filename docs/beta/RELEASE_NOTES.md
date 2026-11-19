@@ -8,10 +8,10 @@ one line per point (no wrapped lines), each at most 110 characters – a test ch
 
 - Based Beta is now called Based Notes Beta; your workspace, backups and settings stay as they are
 - Meeting notes: type /meet to record, take timestamped notes and get a transcript made on your Mac
-- Templates (Tasks, Notes, Journal, Wiki); video and audio blocks with their own controls
-- Settings: search field, three groups, and Font is now its own choice next to Style
+- More imports: Joplin, Roam, Google Keep, Simplenote, ChatGPT and Claude exports, Obsidian canvases
+- Connect Claude Code, Claude Desktop or Cursor: Settings → System → Connect AI apps
+- Templates, video and audio blocks, a short tour on first start, and a search field in Settings
 - Backups to a folder you choose, and a backup before every update
-- Smoother typing on long pages; spelling suggestions on right-click
 - Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
 - Like Based? It runs on donations, $3 a month helps: github.com/sponsors/elija-7580
 
@@ -42,6 +42,20 @@ New since the first test build (0.2.2):
 - **Font** (System or Based) is now its own setting in Settings → Appearance. **Style → Bold** only makes titles
   larger and headings heavier and no longer changes the font. If you had Bold on, you keep its font.
 - After switching the font back, HTML blocks and Mermaid diagrams no longer keep the other font until a restart.
+- First start: a short tour in a few steps (**Help → Show Welcome Tour** brings it back), and a guide page
+  **Everything in Based** that lists what this beta can do. Based now follows your Mac's light or dark appearance.
+- More imports in Settings → Import & export: Joplin, Roam Research, Google Keep, Simplenote, Standard Notes, and
+  ChatGPT or Claude data exports (one database row per conversation). Obsidian canvases and Excalidraw drawings
+  become boards. The import dialog lists every source with how to export from it.
+- Notion: a workspace exported in several parts (`…-Part-1.zip`, `…-Part-2.zip`) can be picked together; relation
+  columns in a Notion CSV export come in as relations; percent columns show 25 % instead of 0.25 %.
+- A date without a time keeps its day, whatever time zone your Mac is in.
+- Connect AI apps (Settings → System): copy a ready setup for Claude Code, Claude Desktop or Cursor; they work on
+  your pages through Based's local server on your Mac. They can't delete for good or empty the Trash – that stays
+  with you in Based.
+- Meeting notes: when a call starts (Zoom, Teams, Meet, FaceTime, Slack …), a small window offers to start notes.
+  You can turn this off in Settings → Meeting notes. The meeting block always shows whether it is transcribing.
+- Restoring a backup brings back the files of that backup and names any that are missing.
 
 Known issues:
 
@@ -57,7 +71,7 @@ In this beta:
 - Import from Notion (direct or export .zip), Markdown, HTML, CSV, Obsidian, Logseq, Evernote, Bear, Word, OPML;
   export to Markdown, HTML, PDF and Word
 - Report a problem (⇧⌘B) and opt-in crash reports, without page content
-- Not in this beta: AI and agents, meeting notes, graph, real-time editing across devices, iPhone and web
+- Not in this beta: AI and agents inside Based, graph, real-time editing across devices, iPhone and web
 
 ## 0.2.2 – first test build
 
