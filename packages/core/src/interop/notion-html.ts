@@ -115,6 +115,8 @@ interface Ctx {
   based?: boolean;
   /** BSD-260 Teil 11: Klassen-Regeln aus `<style>` (Google Docs: `.c3{font-weight:700}`), nur allgemeines HTML. */
   classCSS?: Map<string, Map<string, string>>;
+  /** `<style>` der Datei (allgemeines HTML): kommt mit in HTML-Blöcke aus dem Rückfall, sonst fehlt ihr Layout. */
+  styleText?: string;
 }
 
 /**
@@ -217,6 +219,13 @@ const AUDIO_EXT = new Set(["mp3", "m4a", "wav", "ogg", "aac", "flac"]);
 const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "gif", "webp", "heic", "svg", "bmp", "tiff"]);
 
 const isHTMLFile = (p: string) => ["html", "htm"].includes(extname(p).toLowerCase());
+/** Obergrenze für eine HTML-Datei als HTML-Block (wie `placeHTMLFile`, HTML_FILE_MAX_CHARS). */
+const HTML_BLOCK_MAX_CHARS = 2_000_000;
+/** Seite aus Notions oder Based' HTML-Export (keine Anlage)? Nur der Anfang zählt. */
+const isPageHTML = (head: string) => NotionHTMLImporter.isNotionHTML(head) || /<meta[^>]+name=["']generator["'][^>]+content=["']Based["']/i.test(head);
+/** Ausführbares Skript (nicht JSON/LD): Inhalt entsteht erst im Browser, nativ umgewandelt ginge er verloren. */
+const hasRunnableScript = (text: string) =>
+  [...text.matchAll(/<script\b([^>]*)>/gi)].some((m) => !/type\s*=\s*["']?(application\/(ld\+)?json|text\/template)/i.test(m[1] ?? ""));
 
 export interface NotionHTMLOptions {
   /** Fortschritt 0…1 (nach gelesenen Seiten). */
@@ -297,8 +306,10 @@ export class NotionHTMLImporter {
     } else {
       this.importPage(at, undefined);
     }
-    // Seiten, auf die niemand verlinkt: unter die Seite, der ihr Ordner gehört, sonst oben.
-    for (const f of files) {
+    // Seiten, auf die niemand verlinkt: unter die Seite, der ihr Ordner gehört, sonst oben. Dateien ohne Notion-ID
+    // zuletzt – meist Anlagen (hochgeladene .html), die ihre Seite erst beim Lesen als HTML-Block übernimmt.
+    const withID = (f: string) => notionIDInName(basename(f)) !== undefined;
+    for (const f of [...files.filter(withID), ...files.filter((f) => !withID(f))]) {
       if (this.consumed.has(f) || basename(f).toLowerCase() === "index.html") continue;
       const owner = dirname(f) + ".html";
       const dbBlock = this.dbBlockByFolder.get(dirname(f));
@@ -398,7 +409,7 @@ export class NotionHTMLImporter {
     if (basedExport) ctx.based = true;
     if (!ctx.notion) {
       const css = doc.all((n) => n.tag === "style").map((n) => n.innerHTML).join("\n");
-      if (css) ctx.classCSS = classRules(css);
+      if (css) { ctx.classCSS = classRules(css); ctx.styleText = css; }
     }
     const header = article.first((n) => n.tag === "header");
     const bodyNode = article.first((n) => n.has("page-body"));
@@ -445,6 +456,8 @@ export class NotionHTMLImporter {
     }
     if (bodyNode) {
       this.convert(bodyNode.children, "b:" + id, ctx);
+    } else if (!ctx.notion && !basedExport && this.htmlDocumentBlock(k, id)) {
+      // Interaktive HTML-Datei (Dashboard, Artefakt): als Ganzes ein HTML-Block, Stil und Skripte bleiben.
     } else if (!ctx.notion) {
       // Jede andere HTML-Datei: ihren Inhalt behalten.
       this.convert(withoutTitleLine(article.children.filter((c) => c.tag !== "header"), plain(title)), "b:" + id, ctx);
@@ -452,6 +465,36 @@ export class NotionHTMLImporter {
     this.importRemainingChildren(k, id);
     this.builder.markComplete("b:" + id);
     return id;
+  }
+
+  /** Ganze HTML-Datei mit Skripten als einziger HTML-Block der Seite; `false`, wenn sie nativ gelesen werden soll. */
+  private htmlDocumentBlock(file: string, pageID: string): boolean {
+    const size = this.files.size(file);
+    if (size === undefined || size > HTML_BLOCK_MAX_CHARS) return false;
+    const text = this.files.readText(file);
+    if (text === undefined || !hasRunnableScript(text)) return false;
+    this.append("code", "b:" + pageID, derivedID(pageID, "html-document"), textRuns(text), { language: "html", codeView: "preview" });
+    return true;
+  }
+
+  /**
+   * Hochgeladene HTML-Datei (Notion: Datei- oder Embed-Block mit `.html`) – keine Seite des Exports, sondern eine
+   * Anlage. Gibt ihren Text zurück und vermerkt sie als verbraucht, damit sie nicht zusätzlich als Unterseite erscheint
+   * (dort fehlten ihr `<head>`-Stil und Skripte: das Dashboard stand ohne Layout und ohne erzeugte Inhalte da).
+   */
+  private htmlAttachment(href: string, ctx: Ctx): string | undefined {
+    if (href.includes("://") || href.startsWith("data:")) return undefined;
+    const path = href.split(/[?#]/)[0] ?? href;
+    if (!isHTMLFile(path)) return undefined;
+    const u = joinPath(ctx.dir, removingPercentEncoding(path) ?? path);
+    if (u === ctx.file || !this.files.isFile(u)) return undefined;
+    if (notionIDInName(basename(u)) !== undefined) return undefined;
+    const size = this.files.size(u);
+    if (size === undefined || size > HTML_BLOCK_MAX_CHARS) return undefined;
+    const text = this.files.readText(u);
+    if (text === undefined || isPageHTML(text.slice(0, 4000))) return undefined;
+    this.consumed.add(u);
+    return text;
   }
 
   /** Unterseiten im Ordner der Seite, die der Inhalt nicht verlinkt hat (am Ende angehängt). */
@@ -684,9 +727,10 @@ export class NotionHTMLImporter {
 
   /** Markup ohne Gegenstück: HTML-Code-Block mit Vorschau. */
   private fallback(n: HTMLNode, parent: string, ctx: Ctx): string | undefined {
-    const html = n.outerHTML;
-    if (html === "") return undefined;
+    const outer = n.outerHTML;
+    if (outer === "") return undefined;
     this.fallbackCount += 1;
+    const html = !ctx.notion && ctx.styleText ? `<style>${ctx.styleText}</style>\n${outer}` : outer;
     return this.append("code", parent, this.blockID(n, ctx), textRuns(html), { language: "html", url: "preview" });
   }
 
@@ -805,6 +849,8 @@ export class NotionHTMLImporter {
     }
     const f = n.first((x) => x.tag === "iframe");
     if (f) {
+      const html = this.htmlAttachment(f.attr("src") ?? "", ctx);
+      if (html !== undefined) return this.htmlBlock(html, cap, id, parent);
       const p: BlockProps = { url: f.attr("src") };
       if (cap) p.caption = toRichText(cap);
       return this.append("embed", parent, id, [], p);
@@ -902,6 +948,10 @@ export class NotionHTMLImporter {
 
   private mediaBlock(forced: string | undefined, href: string | undefined, caption: Run[] | undefined, id: string, parent: string, ctx: Ctx, label?: string): string | undefined {
     if (href === undefined) return undefined;
+    if (forced === undefined) {
+      const html = this.htmlAttachment(href, ctx);
+      if (html !== undefined) return this.htmlBlock(html, caption, id, parent);
+    }
     const m = this.media(href, ctx);
     if (!m) return undefined;
     const ext = linkExtension(href);
@@ -921,6 +971,13 @@ export class NotionHTMLImporter {
     if (caption) p.caption = toRichText(caption);
     if (type === "file" && m.asset === undefined && label !== undefined && label !== "" && caption === undefined && label !== href) p.caption = label;
     return this.append(type, parent, id, [], p);
+  }
+
+  /** HTML-Datei als HTML-Block wie bei Notion: nur das Ergebnis, Code ausgeblendet (wie `placeHTMLFile`). */
+  private htmlBlock(html: string, caption: Run[] | undefined, id: string, parent: string): string {
+    const p: BlockProps = { language: "html", codeView: "preview" };
+    if (caption) p.caption = toRichText(caption);
+    return this.append("code", parent, id, textRuns(html), p);
   }
 
   // MARK: Seitenlinks
