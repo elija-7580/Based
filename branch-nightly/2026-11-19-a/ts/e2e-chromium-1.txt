@@ -1,0 +1,61 @@
+success 426ea994e482bfb8099e1c6f47ff8de12afed72c
+  ✓  275 [chromium] › e2e/html-block-file.spec.ts:79:1 › HTML-Datei öffnen ersetzt den Code; HTML-Datei auf die Seite ziehen legt einen HTML-Block an (2.1s)
+  ✓  277 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1280×820) (1.2s)
+  ✓  276 [chromium] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (2.9s)
+  ✓  279 [chromium] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (1.3s)
+  ✓  278 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 900×600) (1.9s)
+  -  280 [chromium] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  281 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1728×1000) (1.4s)
+  ✓  282 [chromium] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.7s)
+  ✓  283 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1280×820) (1.3s)
+  ✓  285 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 900×600) (1.3s)
+  ✓  284 [chromium] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.3s)
+  ✓  286 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1728×1000) (1.4s)
+  ✓  287 [chromium] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.6s)
+  ✓  288 [chromium] › e2e/html-block-file.spec.ts:116:1 › HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos (2.7s)
+  ✓  289 [chromium] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.0s)
+  ✓  290 [chromium] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (1.9s)
+  ✓  291 [chromium] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (2.1s)
+  ✓  292 [chromium] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (1.9s)
+  ✓  293 [chromium] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (1.9s)
+  ✓  294 [chromium] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.3s)
+  ✓  295 [chromium] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (1.9s)
+  ✓  296 [chromium] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.9s)
+  ✓  297 [chromium] › e2e/interop.spec.ts:328:1 › Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563) (2.0s)
+  ✓  298 [chromium] › e2e/interop.spec.ts:352:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (1.9s)
+  ✓  299 [chromium] › e2e/interop.spec.ts:371:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.3s)
+  ✓  300 [chromium] › e2e/interop.spec.ts:390:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.4s)
+  ✓  301 [chromium] › e2e/interop.spec.ts:416:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.6s)
+
+
+  1) [chromium] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByTestId('settings-section-diagnostics-problems')
+    Expected substring: "Based hung for more than 2 s during route settings and was then closed or reloaded."
+    Received string:    "ProblemsLast sessionBased hung for more than 3 s during route settings and was then closed or reloaded.Ended in a hangWarningsLast: Based didn't close normally last time (last sign of life 2026-11-19 02:33 UTC, last activity: route settings, memory 21 MB).1"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" getByTestId('settings-section-diagnostics-problems') with timeout 5000ms
+      - waiting for getByTestId('settings-section-diagnostics-problems')
+        14 × locator resolved to <div data-gap="2" tabindex="-1" data-direction="vertical" data-testid="settings-section-diagnostics-problems" class="astryx-stack x78zum5 xdt5ytf xak3so x1x7z4sm settings-section">…</div>
+           - unexpected value "ProblemsLast sessionBased hung for more than 3 s during route settings and was then closed or reloaded.Ended in a hangWarningsLast: Based didn't close normally last time (last sign of life 2026-11-19 02:33 UTC, last activity: route settings, memory 21 MB).1"
+
+
+      148 |   }
+      149 |   await expect(problems.getByTestId("diagnostics-last-session")).toHaveText("Ended in a hang", { timeout: 15_000 });
+    > 150 |   await expect(problems).toContainText("Based hung for more than 2 s during route settings and was then closed or reloaded.");
+          |                          ^
+      151 |   const prev = next.getByTestId("settings-section-diagnostics-hangs").getByTestId("hang-session").first();
+      152 |   await prev.getByRole("button", { name: "Show hangs" }).click();
+      153 |   await expect(prev.getByTestId("hang-item").first()).toContainText("still blocked when the session ended");
+        at /home/runner/work/Based/Based/apps/web/e2e/hangs.spec.ts:150:26
+
+    Error Context: test-results/hangs-Fenster-mitten-im-Hä-84cf4-hste-Start-zeigt-wo-es-hing-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/hangs.spec.ts:131:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing 
+  17 skipped
+  282 passed (7.5m)
