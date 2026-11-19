@@ -1,61 +1,61 @@
-failure a593e22ed42e6321b70484fc7b8d9fc067f6882a
+success c65f617b8fd8b9323f6a85608ae3691e86b29f69
+  ✓  260 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (3.4s)
+  ✓  263 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (1.4s)
+  ✓  264 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (1.4s)
+  ✓  262 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (7.5s)
+  ✓  265 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (1.8s)
+  ✓  267 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (773ms)
+  ✓  266 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (2.1s)
+  ✓  268 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (814ms)
+  ✓  270 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (932ms)
+  ✓  269 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (2.3s)
+  ✓  271 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.3s)
+  ✓  273 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.2s)
+  ✓  272 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (2.1s)
+  ✓  274 [chromium] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (1.7s)
+  ✓  275 [chromium] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (2.1s)
+  ✓  277 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (1.9s)
+  ✓  276 [chromium] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (3.1s)
+  ✓  279 [chromium] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (899ms)
+  ✓  278 [chromium] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (1.5s)
+  ✓  280 [chromium] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (790ms)
+  ✓  281 [chromium] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (808ms)
+  ✓  282 [chromium] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (827ms)
+  ✓  283 [chromium] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (1.4s)
+  -  285 [chromium] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
+  ✓  284 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (1.4s)
+  ✓  286 [chromium] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (2.8s)
+  ✓  287 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (3.1s)
+  ✓  288 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (679ms)
+  ✓  289 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (4.9s)
+  ✓  290 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (1.8s)
+  ✓  291 [chromium] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (3.7s)
+  ✓  292 [chromium] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (818ms)
+  ✓  293 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (1.0s)
+  -  294 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
 
-    Error: expect(locator).toHaveText(expected) failed
 
-    Locator: getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
-    Expected pattern: /Imported 1 page, 1 attached file\./
-    Received string:  "Imported 2 pages, 1 attached file."
-    Timeout: 5000ms
+  1) [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
 
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.boundingBox: Test timeout of 30000ms exceeded.
     Call log:
-      - Expect "toHaveText" getByRole('dialog', { name: 'Import' }).getByTestId('import-summary') with timeout 5000ms
-      - waiting for getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
-        11 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
-           - unexpected value "Imported 2 pages, 1 attached file."
+      - waiting for locator('[data-editable-id]:focus')
 
 
-      192 |   const dialog = page.getByRole("dialog", { name: "Import" });
-      193 |   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });
-    > 194 |   await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 1 page, 1 attached file\./);
-          |                                                      ^
-      195 |   await dialog.getByRole("button", { name: "Done" }).click();
-      196 |   await page.getByRole("treeitem", { name: "Hike" }).click();
-      197 |   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
-        at /home/runner/work/Based/Based/apps/web/e2e/shell-parity.spec.ts:194:54
+      544 |     // Zeilen bis kurz vor den unteren Rand
+      545 |     for (let i = 0; i < 40; i++) {
+    > 546 |       const box = await page.locator("[data-editable-id]:focus").boundingBox();
+          |                                                                  ^
+      547 |       if (box && box.y > h - 140) break;
+      548 |       await page.keyboard.type(`Line ${i + 1}`);
+      549 |       await page.keyboard.press("Enter");
+        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:546:66
 
-    Error Context: test-results/shell-parity-Import-eines--d7962-Bild-aus-dem-Asset-Speicher-chromium/error-context.md
+    Error Context: test-results/polish-Slash--und--Menü-üb-7f046-nicht-auch-unten-im-Fenster-chromium/error-context.md
 
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toHaveText(expected) failed
-
-    Locator: getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
-    Expected pattern: /Imported 1 page, 1 attached file\./
-    Received string:  "Imported 2 pages, 1 attached file."
-    Timeout: 5000ms
-
-    Call log:
-      - Expect "toHaveText" getByRole('dialog', { name: 'Import' }).getByTestId('import-summary') with timeout 5000ms
-      - waiting for getByRole('dialog', { name: 'Import' }).getByTestId('import-summary')
-        12 × locator resolved to <p role="status" data-testid="import-summary">Imported 2 pages, 1 attached file.</p>
-           - unexpected value "Imported 2 pages, 1 attached file."
-
-
-      192 |   const dialog = page.getByRole("dialog", { name: "Import" });
-      193 |   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });
-    > 194 |   await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 1 page, 1 attached file\./);
-          |                                                      ^
-      195 |   await dialog.getByRole("button", { name: "Done" }).click();
-      196 |   await page.getByRole("treeitem", { name: "Hike" }).click();
-      197 |   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
-        at /home/runner/work/Based/Based/apps/web/e2e/shell-parity.spec.ts:194:54
-
-    Error Context: test-results/shell-parity-Import-eines--d7962-Bild-aus-dem-Asset-Speicher-chromium-retry1/error-context.md
-
-  1 failed
-    [chromium] › e2e/shell-parity.spec.ts:186:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher 
+  1 flaky
+    [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
   13 skipped
-  279 passed (7.9m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
+  279 passed (6.0m)
