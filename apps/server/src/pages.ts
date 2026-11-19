@@ -25,10 +25,10 @@ export class Pages {
    */
   vectors: RecallDeps["vectors"];
   /**
-   * BSD-608: Rückfragen ablehnen statt in die Inbox legen (Based Notes Beta zeigt keine Inbox). Vor dem ersten
-   * `tools()` setzen; der Server setzt es bei BASED_CHANNEL=beta (`betaDeclinesRequests`).
+   * BSD-609 (ersetzt die Ablehnung aus BSD-608): wo der Mensch Rückfragen beantwortet, für den Satz an die KI-App.
+   * Vor dem ersten `tools()` setzen; der Server setzt es bei BASED_CHANNEL=beta (`BETA_REQUEST_PLACE`).
    */
-  declineRequests: ((question: string) => string) | undefined;
+  requestPlace: string | undefined;
   /** Link-Vorschauen für Bookmarks, die Agenten anlegen (Tests setzen einen eigenen Holer). */
   previews = new LinkPreviews();
 
@@ -75,7 +75,7 @@ export class Pages {
       const assets = opts.assets;
       t = new WorkspaceTools(this.store, {
         index: () => this.index, graph: () => this.graph, brain: () => this.brain, vectors: () => this.vectors?.(),
-        ...(this.declineRequests ? { declineRequests: this.declineRequests } : {}),
+        ...(this.requestPlace ? { requestPlace: this.requestPlace } : {}),
         ...(assets ? { fileInfo: (ref: string) => assetFileInfo(assets, ref), extra: (ctx: ToolCtx) => [...fileTools(assets, opts.localFiles === true)(ctx), ...exportTools(assets, opts.localFiles === true)(ctx), ...importTools(assets, opts.localFiles === true)(ctx), ...(this.shareTools?.(ctx) ?? [])], before: (name: string, input: JSONValue) => prepareForTool(assets, this.store, this.previews)(name, input), linkPreview: (url: string) => this.previews.get(url) } : {}),
       });
       this.toolSets.set(key, t);
@@ -135,10 +135,7 @@ export class Pages {
 }
 
 /**
- * BSD-608 (Beta-Release-Agent, 19.11.2026): Antwort auf ein Werkzeug mit Rückfrage, wenn der Server zu Based Notes Beta
- * gehört. Die Beta hat keine Inbox; eine Anfrage dort bliebe für immer offen. Der Satz sagt dem KI-Client, was der
- * Mensch stattdessen in Based tut.
+ * BSD-609 (Entscheidung Elija 19.11.: „zeigen“): Based Notes Beta hat keine Inbox, zeigt offene Rückfragen von KI-Apps
+ * aber unter Einstellungen → Connect AI apps. BSD-608 hatte sie auf beta abgelehnt; jetzt warten sie dort.
  */
-export function betaDeclinesRequests(question: string): string {
-  return `Not done: ${question}. Based Notes Beta doesn't take requests from AI apps for this. Ask the user to do it in Based (for pages in the Trash: Trash → Delete forever). Nothing was changed.`;
-}
+export const BETA_REQUEST_PLACE = "Based (Settings → Connect AI apps)";

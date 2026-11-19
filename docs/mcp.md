@@ -80,7 +80,7 @@ Allow in Based. `resolve_inbox` refuses these, with or without an allow rule: an
 | `move_page` | One page or several (`ids`): under a page, to a section (Private or a teamspace), or right `before` / `after` another page |
 | `duplicate_page` | Copy a page with its content |
 | `trash_page` / `restore_page` / `list_trash` | Trash (restorable); works for database rows too |
-| `delete_forever` / `empty_trash` | Delete for good – always asks the user in the inbox first (see above). Based Notes Beta has no inbox: there these tools (and every other tool that would ask) refuse with a sentence that tells the user to do it in Based (BSD-608) |
+| `delete_forever` / `empty_trash` | Delete for good – always asks the user in the inbox first (see above). Based Notes Beta has no inbox: there the request waits under Settings → Connect AI apps (“Requests from AI apps”, Allow/Decline), and the answer tells the app so (BSD-609; until then BSD-608 refused these tools on beta) |
 | `page_history` / `read_version` / `restore_version` | Saved versions of a page (only inside the Based app; the server keeps no history) |
 | `list_meetings` / `read_meeting` / `update_meeting` | Meetings: list; notes, summary and paged transcript with speakers; title, summary, speaker names, context pages |
 | `export_page` / `export_workspace` | Files: Markdown, HTML, Word, JSON, OPML; whole workspace as Markdown or HTML ZIP or lossless archive. Returns a file ref, over stdio also saves to `path` |

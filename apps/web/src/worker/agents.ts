@@ -5,7 +5,7 @@
 import { parseKey, type StoreChange, type WorkspaceStore } from "@based/core";
 import type { WorkspaceTools } from "@based/brain/tools";
 import {
-  addConnection, AGENT_RECORD_TYPES, AgentStore, CONNECTION_TYPE, listConnections, removeConnection, updateConnection,
+  addConnection, AGENT_RECORD_TYPES, AgentStore, answerToolRequest, CONNECTION_TYPE, listConnections, removeConnection, updateConnection,
   type ConnectionPatch, type NewConnection, type AgentData, type AgentSnapshot, type NewRun, type PlannerExample, type ProjectStatus, type RunPatch, type TaskEvent } from "@based/brain";
 
 export type AgentAction =
@@ -30,6 +30,11 @@ export type AgentAction =
   | { op: "claimRun"; id: string; owner: string }
   /** Rückfrage eines Werkzeugs beantworten (Allow/Deny in der Inbox); nur der Mensch in Based löst das aus. */
   | { op: "resolveRequest"; id: string; ok: boolean }
+  /**
+   * BSD-609: dasselbe ohne Agenten-Werkzeuge (Based Notes Beta lädt sie nicht, BSD-595): Ablehnen schließt die
+   * Anfrage, Erlauben vermerkt die Zustimmung und der Server, der sie angelegt hat, führt sie aus.
+   */
+  | { op: "answerRequest"; id: string; ok: boolean }
   | { op: "main" }
   | { op: "saveMain"; patch: Partial<AgentData> & { rules?: string; mode?: AgentData["permissions"]["mode"] }; clear?: (keyof AgentData)[] }
   | { op: "projects" }
@@ -77,6 +82,7 @@ export class AgentHost {
       case "updateRun": return s.updateRun(a.id, a.patch);
       case "claimRun": return s.claimRun(a.id, a.owner);
       case "resolveRequest": return this.tools().then((t) => this.checked(() => t.resolveRequest(a.id, a.ok)));
+      case "answerRequest": return this.checked(() => answerToolRequest(this.store, a.id, a.ok));
       case "main": return s.main();
       case "saveMain": return this.checked(() => s.saveMain((d) => {
         const { rules, mode, ...rest } = a.patch;

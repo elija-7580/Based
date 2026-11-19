@@ -22,6 +22,7 @@ import "../brain/BrainSettings.js";
 import "../chat/ConnectionsSection.js";
 import "../desktop/LocalServerSection.js";
 import "../desktop/AIAppsSection.js";
+import "../desktop/AIRequestsSection.js";
 // BSD-595: bis 19.11.2026 in App.tsx (zog den Hauptagenten in den Start-Chunk)
 import "../tasks/AgentSettingsSection.js";
 import "./settings/settings.css";

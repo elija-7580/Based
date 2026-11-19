@@ -6,8 +6,8 @@
 // Von außen (resolve_inbox) lässt sich so eine Rückfrage nicht beantworten, auch nicht mit einer allow-Regel.
 import type { Author, JSONValue, WorkspaceStore } from "@based/core";
 import { AgentStore } from "../agents/store.js";
-import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, RUN_TYPE } from "../agents/records.js";
-import type { AgentData, RunData } from "../agents/records.js";
+import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, RUN_TYPE, toMs } from "../agents/records.js";
+import type { AgentData, Rec, RunData } from "../agents/records.js";
 import { ToolError } from "./base.js";
 
 export const REQUEST_KIND = "request" as const;
@@ -21,7 +21,7 @@ export function agentsWorkFreely(store: WorkspaceStore): boolean {
 }
 
 /** Rückfrage anlegen. Gibt die Antwort an den Agenten zurück. */
-export function createToolRequest(store: WorkspaceStore, o: { name: string; input: JSONValue; actor: Author; title: string }): string {
+export function createToolRequest(store: WorkspaceStore, o: { name: string; input: JSONValue; actor: Author; title: string; place?: string }): string {
   const agents = new AgentStore(store);
   const same = agents.runs().find((r) => r.data.kind === REQUEST_KIND && r.data.status === "needsYou" && r.data.approval?.name === o.name && JSON.stringify(r.data.approval.arguments) === JSON.stringify(o.input));
   if (same) return `Already asked (request ${same.id}); the user hasn't answered yet. Nothing was changed.`;
@@ -30,7 +30,8 @@ export function createToolRequest(store: WorkspaceStore, o: { name: string; inpu
     approval: { callID: "request", name: o.name, arguments: o.input },
     requestedBy: { kind: o.actor.kind, name: o.actor.name, ...(o.actor.model ? { model: o.actor.model } : {}) },
   } as unknown as Parameters<AgentStore["createRun"]>[0]);
-  return `Asked the user in Based's inbox (request ${run.id}): “${o.title}”. Nothing was changed yet; it runs when the user allows it there. Check with get_run.`;
+  // BSD-609: der Satz sagt der KI-App, dass die Anfrage in Based wartet und wo (Beta: Settings → Connect AI apps).
+  return `Asked the user in ${o.place ?? "Based's inbox"} (request ${run.id}): “${o.title}”. The request waits there until they answer. Nothing was changed yet; it runs when the user allows it. Check with get_run.`;
 }
 
 export const isToolRequest = (d: RunData | undefined): boolean => d?.kind === (REQUEST_KIND as string);
@@ -76,4 +77,51 @@ export function runApprovedRequests(store: WorkspaceStore, run: Run, has: (name:
     n++;
   }
   return n;
+}
+
+/** BSD-609: Eine offene Rückfrage, wie die Liste in Based Notes Beta sie zeigt (Frage, App, was passiert). */
+export interface OpenToolRequest {
+  id: string;
+  /** „Delete forever: “Old notes”“ */
+  question: string;
+  /** Name der KI-App (MCP-Client), z. B. „claude-code“; ohne Namen „An AI app“. */
+  app: string;
+  /** Ein Satz: was beim Erlauben passiert. */
+  effect: string;
+  /** Zeitpunkt der Frage (ms seit 1970). */
+  askedAt: number;
+}
+
+const EFFECTS: Readonly<Record<string, string>> = {
+  delete_forever: "Allowing deletes it for good. It can't be restored from the Trash.",
+  empty_trash: "Allowing deletes every page in the Trash for good. They can't be restored.",
+  share_page: "Allowing gives people outside this workspace access to the page.",
+};
+
+/** Was beim Erlauben passiert (ein Satz für Menschen). */
+export function requestEffect(name: string): string {
+  return EFFECTS[name] ?? "Allowing lets the app make this change in your workspace.";
+}
+
+/** Offene Rückfragen (Status „needsYou“), neueste zuerst. Reine Funktion über die Runs aus dem AgentStore. */
+export function openToolRequests(runs: readonly Rec<RunData>[]): OpenToolRequest[] {
+  return runs
+    .filter((r) => isToolRequest(r.data) && r.data.status === "needsYou" && r.data.approval)
+    .map((r) => {
+      const by = r.data.requestedBy as { name?: unknown } | undefined;
+      // Ohne Namen (über HTTP nennt der Client ihn nicht bei jedem Aufruf) heißt der Urheber „MCP client“ (BSD-522).
+      const named = typeof by?.name === "string" ? by.name.trim() : "";
+      const app = named && named !== "MCP client" ? named : "An AI app";
+      return { id: r.id, question: r.data.title, app, effect: requestEffect(r.data.approval!.name), askedAt: toMs(r.data.startedAt) };
+    })
+    .sort((a, b) => b.askedAt - a.askedAt);
+}
+
+/**
+ * BSD-609: Antwort aus einer Oberfläche ohne Agenten-Werkzeuge (Based Notes Beta lädt sie nicht, BSD-595). Ablehnen
+ * schließt die Anfrage; Erlauben vermerkt die Zustimmung am Lauf, und der Server, der die Anfrage angelegt hat, führt
+ * sie aus (`runApprovedRequests`). Hier läuft nie ein Werkzeug.
+ */
+export function answerToolRequest(store: WorkspaceStore, runID: string, ok: boolean): string {
+  return resolveToolRequest(store, runID, ok, () => { throw new ToolError("This host doesn't run requests."); }, () => false);
 }

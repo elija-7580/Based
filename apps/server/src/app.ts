@@ -31,8 +31,8 @@ import { BadRequest, ProtocolMismatch, PROTOCOL_HEADER, WaitLimit, decodePush, D
 
 export interface AppOptions extends SyncServiceOptions {
   token: string;
-  /** BSD-608: Werkzeuge mit Rückfrage ablehnen statt in die Inbox legen (Based Notes Beta, BASED_CHANNEL=beta). */
-  declineRequests?: ((question: string) => string) | undefined;
+  /** BSD-609: wo Rückfragen in Based warten (Based Notes Beta: Einstellungen → Connect AI apps), für die Antwort an die KI-App. */
+  requestPlace?: string | undefined;
   /** SQLite-Datei (Standard: im Speicher, nur für Tests). */
   db?: string | SqlDatabase;
   allowedOrigin?: string | undefined;
@@ -127,7 +127,7 @@ export function createApp(opts: AppOptions): App {
   const db = typeof opts.db === "string" || opts.db === undefined ? openNodeDatabase(opts.db ?? ":memory:") : opts.db;
   const sync = new SyncService(db, opts);
   const pages = new Pages(sync.store);
-  if (opts.declineRequests) pages.declineRequests = opts.declineRequests;
+  if (opts.requestPlace) pages.requestPlace = opts.requestPlace;
   const share = new ShareService(sync.store, sync.persistence, opts.nowMillis);
   share.onScopeChange = () => sync.wake();
   const scheduler = new Scheduler(sync.store, { log, ...(opts.nowMillis ? { now: opts.nowMillis } : {}), ...(opts.scheduleEvery ? { intervalMs: opts.scheduleEvery } : {}),

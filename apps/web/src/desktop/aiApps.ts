@@ -8,6 +8,8 @@
 //   Koppeln eines Geräts, BSD-315), einmal gezeigt im kopierten Befehl.
 // Reine Funktionen (getestet); die Ansicht steht in AIAppsSection.tsx.
 
+import { relative } from "../shell/format.js";
+
 export type AIAppTarget = "mac" | "server";
 export type AIAppClient = "claude-code" | "claude-desktop" | "cursor";
 
@@ -67,4 +69,13 @@ export function serverTarget(sync: { url: string; token: string } | undefined, l
   if (!sync || !sync.url || !sync.token) return undefined;
   if (localURL && sync.url.replace(/\/+$/, "") === localURL.replace(/\/+$/, "")) return undefined;
   return { url: sync.url.replace(/\/+$/, ""), token: sync.token };
+}
+
+/** BSD-609: Zeit einer Rückfrage in der Liste „Requests from AI apps“: „just now“, „5 min ago“, „yesterday“, „on 3 Nov“. */
+export function askedWhen(at: number, now = new Date()): string {
+  const r = relative(new Date(at), now);
+  if (r === "just now") return r;
+  if (/^\d+ (min|h)$/.test(r)) return `${r} ago`;
+  if (r === "Yesterday") return "yesterday";
+  return `on ${r}`;
 }

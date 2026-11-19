@@ -53,8 +53,9 @@ Standard Notes, and your ChatGPT or Claude data export. The import dialog says h
   a line or a note to hear that moment. macOS asks once for the microphone. Recording and transcript stay on your Mac.
 - Export a page or your whole workspace (Markdown, HTML, PDF), and import it again
 - Connect Claude Code, Claude Desktop or Cursor to your workspace: **Settings → System → Connect AI apps**. They can
-  read and edit your pages on your Mac. Deleting for good stays with you: they can move pages to the Trash, but
-  emptying it or deleting forever is something you do in Based.
+  read and edit your pages on your Mac. Deleting for good stays with you: when an app wants to empty the Trash or
+  delete a page forever, it asks first. The question waits on the same settings page under **Requests from AI apps**,
+  where you allow or decline it.
 
 ## What is not in this beta
 

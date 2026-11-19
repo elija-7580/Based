@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // BSD-581: Schnipsel für „Connect AI apps“ – This Mac ohne Token (stdio über `based mcp`), Server mit eigenem Token.
 import { describe, expect, it } from "vitest";
-import { macSetup, serverSetup, serverTarget, tokenName, whereToPaste } from "./aiApps.js";
+import { askedWhen, macSetup, serverSetup, serverTarget, tokenName, whereToPaste } from "./aiApps.js";
 
 describe("Connect AI apps (BSD-581)", () => {
   it("This Mac: der Client startet `based mcp`, kein Token im Schnipsel", () => {
@@ -35,5 +35,16 @@ describe("Connect AI apps (BSD-581)", () => {
     expect(whereToPaste("claude-desktop")).toContain("claude_desktop_config.json");
     expect(whereToPaste("cursor")).toContain("mcp.json");
     expect(whereToPaste("claude-code")).toContain("Terminal");
+  });
+});
+
+describe("Requests from AI apps (BSD-609)", () => {
+  it("Zeit der Rückfrage als halber Satz", () => {
+    const now = new Date(2026, 10, 19, 12, 0);
+    expect(askedWhen(now.getTime() - 10_000, now)).toBe("just now");
+    expect(askedWhen(now.getTime() - 5 * 60_000, now)).toBe("5 min ago");
+    expect(askedWhen(now.getTime() - 2 * 3_600_000, now)).toBe("2 h ago");
+    expect(askedWhen(new Date(2026, 10, 18, 9, 0).getTime(), now)).toBe("yesterday");
+    expect(askedWhen(new Date(2026, 10, 3, 9, 0).getTime(), now)).toBe("on 3 Nov");
   });
 });
