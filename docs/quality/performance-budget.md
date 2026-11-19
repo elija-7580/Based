@@ -19,25 +19,25 @@ Aufgabe beim Öffnen, Neuladen; einzeln mit `--only database`). `BASED_PERF_CHRO
 Chromium. Die Werte jedes Abends stehen in `perf-history.csv`. Alle Zahlen stammen aus dem Linux-Container
 (Chromium headless); Mac-Werte (WKWebView, Energie, DMG) brauchen einen Mac-Test.
 
-## Zielwerte und Stand (18.11.2026, Beta-Build, main efed361e)
+## Zielwerte und Stand (19.11.2026 abends, Beta-Build, main fad6141b; Vortag in Klammern)
 
 | Kennzahl | Ziel | Stand | Wächter |
 | --- | --- | --- | --- |
-| Erststart-JS (index-*.js, gzip) | so klein wie möglich; Grenze 965 KiB (BSD-595) | 1 038 kB (roh 3 197 kB); 19.11. nach BSD-595: 918 KiB (Chat, Agenten, Anbieter als eigene Chunks) | `apps/web/scripts/bundle-budget.mjs` |
+| Erststart-JS (index-*.js, gzip) | so klein wie möglich; Grenze 965 KiB (BSD-595) | 918,8 kB (1 065,7) nach BSD-595; nach Review 19.11. (Karten-Küstenlinien als eigener Chunk): 893,3 kB, roh 2 751 kB | `apps/web/scripts/bundle-budget.mjs` |
 | Store-Worker (store.worker-*.js, gzip) | Grenze 295 KiB (BSD-595) | 19.11.: 319 → 281 KiB (Agenten-Werkzeuge als eigener Chunk) | `bundle-budget.mjs` |
-| Erststart-JS gesamt mit Workern (gzip) | – | 1 301 kB, 3 Dateien | `ci/perf/measure.mjs` |
+| Erststart-JS gesamt mit Workern (gzip) | – | 1 178 kB nach Review (1 387), 3 Dateien | `ci/perf/measure.mjs` |
 | Erststart-CSS (gzip) | Grenze 95 kB | 77 kB | `bundle-budget.mjs` |
-| Web-Bundle gesamt (dist) | so klein wie möglich | 26,7 MB, davon 11,0 MB `ort-wasm-simd-threaded.wasm` | – |
-| Kaltstart bis Seitenleiste, leerer Workspace | < 1 s | 0,85–1,0 s | `measure.mjs` |
-| Start mit 20 000 Seiten bis Seitenleiste | < 2 s | 1,4–1,6 s, längste Aufgabe 58–74 ms | `e2e/startup-perf.spec.ts`, `scale-perf.spec.ts` |
-| JS-Heap nach Start, leer | – | 11,1 MB | `measure.mjs` |
-| JS-Heap mit 20 000 Seiten | kein lineares Wachstum mit der Gesamtgröße | 18,0 MB (0,35 MB je 1 000 Seiten) | `measure.mjs` |
+| Web-Bundle gesamt (dist) | so klein wie möglich | 27,0 MB, davon 11,0 MB `ort-wasm-simd-threaded.wasm` | – |
+| Kaltstart bis Seitenleiste, leerer Workspace | < 1 s | 0,69 s (0,78) | `measure.mjs` |
+| Start mit 20 000 Seiten bis Seitenleiste | < 2 s | 1,0 s (1,56), längste Aufgabe < 50 ms | `e2e/startup-perf.spec.ts`, `scale-perf.spec.ts` |
+| JS-Heap nach Start, leer | – | 9,6 MB (11,2) | `measure.mjs` |
+| JS-Heap mit 20 000 Seiten | kein lineares Wachstum mit der Gesamtgröße | 15,9 MB (0,32 MB je 1 000 Seiten) | `measure.mjs` |
 | 50× Seite wechseln (300 Blöcke): DOM-Knoten nach GC | ±0 | ±0 (vor dem Fix vom 18.11.: +259 907 Knoten, +41 MB) | `e2e/editor-leak.spec.ts` |
 | 50× ⌘K: Heap nach GC | kein Wachstum | −3,6 MB, +349 Knoten (beobachten) | `measure.mjs` |
-| Leerlauf: Timer-Aufrufe in 10 s | 0 | 200 (Hänger-Wächter, 50-ms-Takt) + 1 (Sitzungs-Marke alle 10 s) | offen, siehe Backlog |
-| Leerlauf: CPU des Hauptthreads | 0 % | 0,3 % (nach Editor-Weg 1,0 %) | `measure.mjs` |
+| Leerlauf: Timer-Aufrufe in 10 s | 0 | 1 (vorher 200; BSD-596: Hänger-Wächter und Sitzungs-Marke ohne Dauer-Zeitgeber), 0 Intervalle | `measure.mjs` |
+| Leerlauf: CPU des Hauptthreads | 0 % | 0,1 % (nach Editor-Weg 0,9 %) | `measure.mjs` |
 | Leerlauf: requestAnimationFrame, laufende Animationen | 0 | 0 | `measure.mjs` |
-| Tippen auf 300-Block-Seite | keine Long Tasks | 0 Long Tasks, 12–14 ms CPU je Zeichen | `measure.mjs`, `e2e/startup-perf.spec.ts` |
+| Tippen auf 300-Block-Seite | keine Long Tasks | 0 Long Tasks, 6,1 ms CPU je Zeichen (10,4) | `measure.mjs`, `e2e/startup-perf.spec.ts` |
 | Fehler in der Konsole auf dem Messweg | 0 | 0 | `measure.mjs` |
 | WebView + Node zusammen nach Start (Mac) | < 150 MB | Mac-Test nötig | – |
 | Energie im Leerlauf (Aktivitätsanzeige) | „0,0“ | Mac-Test nötig | – |
@@ -77,5 +77,9 @@ trifft also die Ursache; das ist ein Umbau von Replik und Datenbank-Ansicht und 
 ## Auf beta ausgeblendet, aber im Erststart-Chunk
 
 Beim Start lädt der Beta-Build nur `index`, `store.worker`, `hangWatchdog.worker` und `sqlite3.wasm` – kein Chunk für
-Graph, Coding, Chat, xterm, Mermaid, PDF oder onnxruntime. Der Erststart-Chunk selbst enthält aber AI-/Chat-Code
-(`App.tsx` importiert `chat/ChatDock`, `tasks/AgentSettingsSection` statisch). Das ist ein Effizienz-Fund (Backlog).
+Graph, Coding, Chat, xterm, Mermaid, PDF oder onnxruntime. Chat und Agenten-Einstellungen sind seit BSD-595 eigene
+Chunks. Im Erststart-Chunk stecken laut Sourcemap (19.11., roh) aber noch Echtzeit-Text (yjs, Hocuspocus, lib0 ≈ 110 kB)
+und Agenten-Kerncode (`core/editor/agent.ts`, `core/whiteboard/agent.ts` ≈ 43 kB) – beides auf beta ausgeblendet –
+sowie Importer (≈ 165 kB) und Whiteboard (≈ 75 kB), die erst beim Import bzw. beim ersten Board gebraucht werden
+(Backlog, nach dem 23.11.). Die Küstenlinien der Karte (67 kB roh, 25 kB gzip) lädt seit dem Review vom 19.11. erst
+die erste Karte; `e2e/beta-build.spec.ts` prüft das.
