@@ -3,7 +3,8 @@
 // (<name>.json: Seiten, Blöcke, Datenbanken, Zeilen, Ansichten, Papierkorb, Dateiverweise). Der aktuelle Stand muss
 // jede Datei öffnen (Migrationen laufen auf einer Kopie) und denselben Inhalt lesen. Der Test bleibt dauerhaft.
 //
-// Neue Beta-Version → Fixture dazulegen (mit dem Stand des Release-Commits):
+// Neue Beta-Version → Fixture dazulegen (mit dem Code des Release-Commits, z. B. in einem git worktree des Tags, in den
+// diese Testdatei kopiert wird; schreibt auch das Based-Archiv <label>.based.zip):
 //   BASED_WRITE_BETA_FIXTURE=beta-<sha> BASED_BETA_COMMIT=<sha> pnpm --filter @based/sync exec vitest run test/beta-fixtures.test.ts
 // Dateien nie ändern oder löschen.
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -48,6 +49,16 @@ export function buildBetaWorld(store: WorkspaceStore) {
   addRow(store, db.databaseID, { title: "First row", values: { [status]: { select: { _0: optOpen } }, [points]: { number: { _0: 3 } }, [note]: { text: { _0: "note one" } } } });
   addRow(store, db.databaseID, { title: "Second row", values: { [status]: { select: { _0: optDone } }, [points]: { number: { _0: 5 } }, [done]: { checkbox: { _0: true } } } });
   addView(store, db.blockID, "board", "Board");
+  // ab beta-v0.2.9 (BSD-578): Datum ohne Uhrzeit trägt seinen Kalendertag (`day`), Datum mit Uhrzeit nicht.
+  // Ältere Fixtures haben diese Datenbank nicht – jedes Fixture prüft gegen das, was es selbst beim Schreiben las.
+  {
+    const at = (y: number, m: number, d: number, h = 0) => (new Date(y, m - 1, d, h).getTime() - 978_307_200_000) / 1000;
+    const dates = createDatabase(store, { parent: "b:" + home, title: "Dates", inline: true, sampleRows: 0 });
+    const when = addProperty(store, dates.databaseID, "When", "date")!;
+    addRow(store, dates.databaseID, { title: "Day only", values: { [when]: { date: { _0: { start: at(2026, 11, 23), includeTime: false } } } } as never });
+    addRow(store, dates.databaseID, { title: "Range", values: { [when]: { date: { _0: { start: at(2026, 11, 23), end: at(2026, 11, 27), includeTime: false } } } } as never });
+    addRow(store, dates.databaseID, { title: "With time", values: { [when]: { date: { _0: { start: at(2026, 11, 23, 9), includeTime: true } } } } as never });
+  }
   const gone = createPage(store, { title: "In the trash" });
   trashPages(store, [gone]);
 }
@@ -72,7 +83,7 @@ export function describeWorld(store: WorkspaceStore) {
       return { title: plain(r.text), values };
     }).sort((a, b) => a.title.localeCompare(b.title)),
     views: [...store.views.values()].filter((v) => v.databaseID === d.id).map((v) => v.type).sort(),
-  }));
+  })).sort((a, b) => a.title.localeCompare(b.title));
   return {
     workspace: store.workspace.name,
     blocks: blocks.filter((b) => !b.parent?.startsWith("d:")).map((b) => `${pathOf(b.id)}${b.trashedAt ? " (trash)" : ""}${b.checked ? " [x]" : ""}`).sort(),
@@ -96,6 +107,20 @@ describe("BSD-456: Beta-Fixtures erzeugen", () => {
       sql.exec("PRAGMA wal_checkpoint(TRUNCATE)");
       sql.exec("PRAGMA journal_mode = DELETE");
       writeFileSync(join(DIR, `${name}.json`), JSON.stringify({ label: writeLabel, commit: process.env.BASED_BETA_COMMIT ?? "", schemaVersion: schemaVersion(sql), propertyRecords: records, expect: describeWorld(store) }, null, 2) + "\n");
+    }
+    // Based-Archiv dieses Builds (Sicherung vor dem Update, Export) aus einer neuen Datei mit den Vorgaben des Builds
+    const zip = join(DIR, `${writeLabel}.based.zip`);
+    if (existsSync(zip)) throw new Error(`${zip} exists – fixtures are never overwritten`);
+    const tmp = mkdtempSync(join(tmpdir(), "based-beta-write-"));
+    try {
+      const sql = openNodeDatabase(join(tmp, "based.sqlite"));
+      const { store } = openWorkspace(sql, { node: "BETAFIXTURE" });
+      buildBetaWorld(store);
+      const pkg = writeArchivePackage(store, (ref) => (ref.id === HASH ? new Uint8Array([137, 80, 78, 71]) : undefined));
+      writeFileSync(zip, pkg.zip);
+      writeFileSync(join(DIR, `${writeLabel}.based.json`), JSON.stringify({ label: writeLabel, commit: process.env.BASED_BETA_COMMIT ?? "", archive: true, schemaVersion: schemaVersion(sql), propertyRecords: store.propertyRecords, expect: describeWorld(store) }, null, 2) + "\n");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
     }
   });
 });
@@ -133,6 +158,18 @@ describe("BSD-456: alte Beta-Daten öffnen (Migrations-Test)", () => {
         expect(loaded.assets.map((a) => [a.ref.id, a.data])).toEqual([[HASH, bytes]]);
         applyImportedRecords(fresh, loaded.read.records);
         expect(describeWorld(fresh)).toEqual({ ...meta.expect, workspace: fresh.workspace.name });
+        // Nachtlauf 19.11. (Go/No-Go „Update behält die Daten“): nach dem ersten Start mit dem neuen Stand eine Änderung,
+        // dann der zweite Start – die umgestellte Datei liest dieselbe Welt plus die Änderung
+        createPage(store, { title: "After the update" });
+        sql.close();
+        const again = openNodeDatabase(copy);
+        try {
+          const reopened = openWorkspace(again, { node: "NEWDEVICE" }).store;
+          expect(reopened.propertyRecords).toBe(store.propertyRecords);
+          expect(describeWorld(reopened)).toEqual({ ...meta.expect, blocks: [...meta.expect.blocks, "page:After the update"].sort() });
+        } finally {
+          again.close();
+        }
       } finally {
         rmSync(tmp, { recursive: true, force: true });
       }
@@ -144,7 +181,8 @@ describe("BSD-456: alte Beta-Daten öffnen (Migrations-Test)", () => {
 // docs/data-format.md: „Eine neuere App liest jedes ältere Archiv.“ Erzeugt mit dem Code des jeweiligen Builds
 // (packages/core + packages/sync per git archive, Welt aus buildBetaWorld, Datei mit 4 Bytes). Dateien nie ändern.
 // 9614eb09 = Stand von beta-v0.2.2, 73d82082 = beta-v0.2.3/0.2.4, b4fd1095 = 0.2.5/0.2.6, d6d1a875 = 0.2.7,
-// 363e5d88 = 0.2.8 (die SQLite-Fixtures daneben stammen aus denselben Builds).
+// 363e5d88 = 0.2.8, 9d9afc9a = 0.2.9, 1ff6eff1 = 0.2.10 (die SQLite-Fixtures daneben stammen aus denselben Builds;
+// ab 0.2.9 mit Datums-Spalte und das Archiv aus einer neuen Datei, also mit Property-Records).
 describe("Nachtlauf 19.11.: Archive alter Beta-Builds wieder einspielen", () => {
   const archives = existsSync(DIR) ? readdirSync(DIR).filter((f) => f.endsWith(".based.zip")).sort() : [];
 
