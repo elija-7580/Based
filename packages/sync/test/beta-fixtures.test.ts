@@ -139,3 +139,39 @@ describe("BSD-456: alte Beta-Daten öffnen (Migrations-Test)", () => {
     });
   }
 });
+
+// Nachtlauf 19.11.: Based-Archive, die ein alter Beta-Build geschrieben hat (Sicherung vor dem Update, Export).
+// docs/data-format.md: „Eine neuere App liest jedes ältere Archiv.“ Erzeugt mit dem Code des jeweiligen Builds
+// (packages/core + packages/sync per git archive, Welt aus buildBetaWorld, Datei mit 4 Bytes). Dateien nie ändern.
+// 9614eb09 = Stand von beta-v0.2.2, 73d82082 = beta-v0.2.3/0.2.4, b4fd1095 = 0.2.5/0.2.6, d6d1a875 = 0.2.7,
+// 363e5d88 = 0.2.8 (die SQLite-Fixtures daneben stammen aus denselben Builds).
+describe("Nachtlauf 19.11.: Archive alter Beta-Builds wieder einspielen", () => {
+  const archives = existsSync(DIR) ? readdirSync(DIR).filter((f) => f.endsWith(".based.zip")).sort() : [];
+
+  it("das Archiv des ersten Beta-Builds liegt vor", () => {
+    expect(archives).toContain("beta-9614eb09.based.zip");
+  });
+
+  for (const f of archives) {
+    it(`${f}: Import in einen leeren Workspace liest denselben Inhalt`, () => {
+      const meta = JSON.parse(readFileSync(join(DIR, f.replace(/\.zip$/, ".json")), "utf8")) as { expect: ReturnType<typeof describeWorld> };
+      const loaded = loadArchive(readFileSync(join(DIR, f)));
+      expect(loaded.assetFailures).toEqual([]);
+      expect(loaded.read.skipped).toBe(0);
+      expect(loaded.assets.map((a) => [a.ref.id, [...a.data]])).toEqual([[HASH, [137, 80, 78, 71]]]);
+      const fresh = new WorkspaceStore({ node: "RESTORE" });
+      applyImportedRecords(fresh, loaded.read.records);
+      expect(describeWorld(fresh)).toEqual({ ...meta.expect, workspace: fresh.workspace.name });
+      // und in eine Datei des aktuellen Stands (beide Datenformate), wieder geöffnet
+      const tmp = mkdtempSync(join(tmpdir(), "based-beta-archive-"));
+      try {
+        const sql = openNodeDatabase(join(tmp, "based.sqlite"));
+        const { store } = openWorkspace(sql, { node: "NEWDEVICE" });
+        applyImportedRecords(store, loaded.read.records);
+        expect(describeWorld(store)).toEqual({ ...meta.expect, workspace: store.workspace.name });
+      } finally {
+        rmSync(tmp, { recursive: true, force: true });
+      }
+    });
+  }
+});
