@@ -104,3 +104,11 @@ describe("AI-Schalter in der Seitenleiste und in ⌘K", () => {
     expect(matchCommands("meet", { ai: false }).map((c) => c.id)).toEqual(["meetings", "meeting"]);
   });
 });
+
+describe("BSD-551: ⌘K-Befehl „Show the tour“", () => {
+  it("findet sich über „tour“, aber nicht bei der Suche „welcome“ (dort gehört die Seite „Welcome to Based“ nach oben)", () => {
+    expect(matchCommands("tour").map((c) => c.id)).toContain("welcomeTour");
+    expect(matchCommands("onboarding").map((c) => c.id)).toContain("welcomeTour");
+    expect(matchCommands("welcome").map((c) => c.id)).not.toContain("welcomeTour");
+  });
+});

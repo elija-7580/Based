@@ -16,8 +16,10 @@ services:
       BETA_DIR: /beta
       PORT: "8790"
       TZ: Europe/Vienna
+      WAITLIST_RELOAD: "1"
     volumes:
-      - ../../apps/website/server/waitlist.mjs:/app/waitlist.mjs:ro
+      # the folder, not the file: a file mount keeps the old version after git replaces it (WAITLIST_RELOAD)
+      - ../../apps/website/server:/app:ro
       - waitlist-data:/data
       # BSD-553: the beta DMG, uploaded by the Desktop Beta workflow via rsync (ci/setup-beta-deploy.sh)
       - ${BETA_HOST_DIR:-/srv/based-beta}:/beta:ro

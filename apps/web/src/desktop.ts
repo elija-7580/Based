@@ -5,7 +5,7 @@
 // - Updates: beim Start still prüfen, über „Check for Updates…“ im App-Menü auch mit Antwort, wenn alles aktuell ist.
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
-import { checkReleasesFallback, isMissingUpdateManifest, releaseLine } from "./shell/updateFallback.js";
+import { checkReleasesFallback, fallbackText, isMissingUpdateManifest, releaseLine } from "./shell/updateFallback.js";
 import { CHANNEL, productName } from "./shell/beta.js";
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
@@ -113,11 +113,7 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
       const app = await appIdentity();
       const line = releaseLine(CHANNEL);
       const found = await checkReleasesFallback(app.version, fetch, line.tagPrefix);
-      const text = found.kind === "newer"
-        ? `${app.name} ${found.version} is available (you have ${app.version}). Automatic install isn’t set up yet — download the new DMG from ${line.downloadPage}`
-        : found.kind === "current"
-          ? upToDateText(app)
-          : `You have ${app.name} ${app.version}. Automatic updates aren’t set up yet. The newest DMG is always at ${line.downloadPage}`;
+      const text = found.kind === "current" ? upToDateText(app) : fallbackText(app, found, line);
       await showMessage(text, { title: found.kind === "newer" ? "Update available" : "Updates" });
       return;
     }
@@ -180,6 +176,20 @@ async function showCliInstall() {
   await showMessage("Open Settings → Sync & server → “Local server & command line” and choose Install… there. It needs Node.js 22 or newer on this Mac; Based doesn't download anything.", { title: "Install Command Line Tool" });
 }
 
+/** Feedback 18. 11. (Meeting erkannt): Hauptfenster zeigen und nach vorn holen – auch wenn es ausgeblendet war. */
+export async function bringToFront(): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+    const win = getCurrentWebviewWindow();
+    await win.unminimize().catch(() => undefined);
+    await win.show();
+    await win.setFocus();
+  } catch {
+    // nicht erlaubt oder kein Fenster: die Aufnahme startet trotzdem
+  }
+}
+
 /** BSD-202: Fenster-Adresse für eine Seite: eigenes Fenster ohne gespeicherte Tabs (`?window=page`). */
 export function pageWindowURL(href: string, hash: string): string {
   const url = new URL(href);
@@ -225,6 +235,21 @@ export async function openMailto(href: string): Promise<void> {
   const a = document.createElement("a");
   a.href = href;
   a.click();
+}
+
+/**
+ * Eine erlaubte Web-Adresse (shell/support.ts) im Browser öffnen. Mac-App: über das Opener-Plugin, weil die Webview
+ * `target="_blank"` nicht nach außen gibt; Browser: neuer Tab.
+ */
+export async function openExternal(href: string): Promise<void> {
+  const { isAllowedExternal } = await import("./shell/support.js");
+  if (!isAllowedExternal(href)) throw new Error("Address not allowed");
+  if (isTauri()) {
+    const { openUrl } = await import("@tauri-apps/plugin-opener");
+    await openUrl(href);
+    return;
+  }
+  window.open(href, "_blank", "noopener,noreferrer");
 }
 
 /** BSD-358: HTML der Zwischenablage aus der Hülle (nur macOS); ohne: undefined. */

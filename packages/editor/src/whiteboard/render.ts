@@ -3,10 +3,11 @@
 // hier steht kein Farbwert. Maße in Welt-px (bei 100 % = CSS-px), Linienstärken in Bildschirm-px.
 import { getStroke } from "perfect-freehand";
 import {
-  connectorPoints, GRID_STEP, gridStepFor, HANDLES, handlePoint, inkPointsOf, isConnector, worldRectToScreen,
+  connectorPoints, GRID_STEP, hasMarkdown, gridStepFor, HANDLES, handlePoint, inkPointsOf, isConnector, worldRectToScreen,
   type BoardRect as Rect, type BoardSize as Size, type InkPoint, type TextPreview, type WBConnector, type WBObject, type WBShape,
 } from "@based/core";
 import { minimapTransform, type BoardScene, type LiveInk } from "./controller.js";
+import { BOARD_MONO_FALLBACK, drawMarkdown, setBoardFonts, textFieldOf } from "./markdown.js";
 
 /** Farben und Schrift der Fläche, aus den Tokens gelesen. */
 export interface BoardTheme {
@@ -23,6 +24,8 @@ export interface BoardTheme {
   selectFill: string;
   peer: string;
   font: string;
+  /** Schrift für `Code` in Markdown (Token --font-mono). */
+  mono?: string;
   notes: Record<string, string>;
   /** Stiftfarben und Textmarker-Tönungen nach Namen (PEN_COLORS, HIGHLIGHT_COLORS). */
   pens: Record<string, string>;
@@ -70,10 +73,11 @@ const NOTE_TOKENS: Record<string, string> = {
 export function readBoardTheme(el: Element): BoardTheme {
   const cs = getComputedStyle(el);
   const v = (name: string) => cs.getPropertyValue(name).trim();
+  setBoardFonts(cs.fontFamily || "system-ui, sans-serif", v("--font-mono") || BOARD_MONO_FALLBACK);
   return {
     bg: v("--bg"), dot: v("--selection-bg"), ink: v("--ink"), muted: v("--muted"), card: v("--surface-card"), raised: v("--surface-raised"), line: v("--line"),
     border: v("--control-border"), select: v("--focus-ring"), selectFill: v("--selected"), peer: v("--synced"),
-    font: cs.fontFamily || "system-ui, sans-serif",
+    font: cs.fontFamily || "system-ui, sans-serif", mono: v("--font-mono") || BOARD_MONO_FALLBACK,
     notes: tokensOf(v, NOTE_TOKENS), pens: tokensOf(v, PEN_TOKENS), highlights: tokensOf(v, HIGHLIGHT_TOKENS), fills: tokensOf(v, FILL_TOKENS), dark: isDark(v("--bg")), marker: v("--marker-strong"), noteInk: v("--board-note-ink"),
   };
 }
@@ -175,6 +179,18 @@ function drawText(ctx: Ctx, theme: BoardTheme, text: string, box: Rect, opts: { 
     ctx.fillText(l, x, y);
     y += lh;
   }
+}
+
+/**
+ * Text von Zettel, Form und Text-Objekt: als Markdown gesetzt (Elija 18.11.), schlichter Text bleibt auf dem
+ * schnellen Weg. Feld und Schrift kommen aus `textFieldOf` – dieselbe Stelle rechnet Treffer auf Aufgaben.
+ */
+function drawBodyText(ctx: Ctx, theme: BoardTheme, o: WBShape, color: string) {
+  const f = textFieldOf(o);
+  if (!f || !o.text) return;
+  if (!hasMarkdown(o.text)) { drawText(ctx, theme, o.text, f.box, { size: f.size, weight: f.weight, color, lineHeight: f.lineHeight, ...(f.align ? { align: f.align } : {}), ...(f.middle ? { middle: true } : {}) }); return; }
+  drawMarkdown(ctx, o.text, f.box, { size: f.size, weight: f.weight, lineHeight: f.lineHeight, font: theme.font, mono: theme.mono ?? BOARD_MONO_FALLBACK, ...(f.align ? { align: f.align } : {}), ...(f.middle ? { middle: true } : {}) },
+    { ink: color, muted: theme.muted, link: theme.pens.blue || theme.ink, mark: theme.highlights.sky || theme.selectFill, line: theme.border, on: theme.bg, dark: theme.dark });
 }
 
 // MARK: Tinte
@@ -358,7 +374,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       ctx.lineWidth = hair;
       ctx.strokeStyle = theme.line;
       ctx.stroke();
-      if (o.text && legible(15)) drawText(ctx, theme, o.text, { x: o.x + 14, y: o.y + 14, w: o.w - 28, h: o.h - 28 }, { size: 15, weight: 500, color: theme.ink, lineHeight: 1.4 });
+      if (o.text && legible(15)) drawBodyText(ctx, theme, o, theme.ink);
       break;
     }
     case "shape": {
@@ -373,7 +389,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       ctx.lineWidth = Math.max(hair, 1.5);
       ctx.strokeStyle = (o.style?.color && theme.pens[String(o.style.color)]) || theme.border;
       ctx.stroke();
-      if (o.text && legible(14)) drawText(ctx, theme, o.text, { x: o.x + 12, y: o.y + 8, w: o.w - 24, h: o.h - 16 }, { size: 14, weight: 500, color: (o.style?.color && theme.pens[String(o.style.color)]) || theme.ink, lineHeight: 1.4, align: "center", middle: true });
+      if (o.text && legible(14)) drawBodyText(ctx, theme, o, (o.style?.color && theme.pens[String(o.style.color)]) || theme.ink);
       break;
     }
     case "frame": {
@@ -384,7 +400,7 @@ function drawShape(ctx: Ctx, theme: BoardTheme, o: WBShape, zoom: number, editin
       break;
     }
     case "text":
-      if (o.text && legible(17)) drawText(ctx, theme, o.text, { x: o.x, y: o.y, w: o.w, h: Math.max(o.h, 26) }, { size: 17, weight: 400, color: (o.style?.color && theme.pens[String(o.style.color)]) || theme.ink, lineHeight: 1.5 });
+      if (o.text && legible(17)) drawBodyText(ctx, theme, o, (o.style?.color && theme.pens[String(o.style.color)]) || theme.ink);
       break;
     case "ink": {
       const bytes = o.ink;

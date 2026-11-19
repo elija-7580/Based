@@ -85,6 +85,8 @@ export class StoreClient {
   onDevice: ((node: string) => void) | undefined;
   /** BSD-418: Anfrage brauchte über 1 s (Operationsname ohne Inhalte, monotone Zeiten) – Hänger-Analyse. */
   onSlowRequest: ((op: string, t0: number, t1: number) => void) | undefined;
+  /** BSD-596: jede Nachricht des Workers (Antwort oder Ereignis) – Anlass für die Hänger-Messung. */
+  onWorkerMessage: (() => void) | undefined;
 
   constructor(private readonly endpoint: Endpoint<Event, RequestMessage>) {
     endpoint.addEventListener("message", this.onMessage);
@@ -197,6 +199,7 @@ export class StoreClient {
 
   private onMessage = (e: { data: Event }) => {
     const ev = e.data;
+    this.onWorkerMessage?.();
     switch (ev.type) {
       case "reply": {
         const p = this.pending.get(ev.id);
@@ -407,6 +410,11 @@ export class StoreClient {
     return this.request<ToolResult>({ type: "chat", action: { op: "tool", name, input } });
   }
 
+  /** „Undo“ an einer Agenten-Aktion: genau diesen Schritt zurücknehmen. */
+  chatUndoTool(token: string): Promise<ToolResult> {
+    return this.request<ToolResult>({ type: "chat", action: { op: "undoTool", token } });
+  }
+
   /** BSD-245: Pfade einer Seite für Pfad-Regeln (worker/chat.ts). */
   chatPagePaths(id: string): Promise<string[]> {
     return this.request<string[]>({ type: "chat", action: { op: "pagePaths", id } });
@@ -585,7 +593,9 @@ export class PageReplica {
       const sent = c.notified?.length ? c.keys.filter((k) => !c.notified!.includes(k)) : c.keys;
       for (const key of sent) {
         const r = this.store.record(key);
-        if (r) upserts.push(structuredClone(r));
+        // BSD-604: ohne structuredClone – Records im Store werden nie an Ort und Stelle geändert, und postMessage
+        // kopiert ohnehin (bei 100 000 Zeilen kostete die doppelte Kopie ~150 ms am Stück)
+        if (r) upserts.push(r);
         else deletions.push(key);
         this.inflight.set(key, (this.inflight.get(key) ?? 0) + 1);
       }

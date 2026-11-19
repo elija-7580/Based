@@ -118,7 +118,11 @@ export class FolderSyncService {
       const blobs = serverBlobs(this.o.assets);
       for (const h of this.o.referencedAssets?.() ?? new Set<string>()) if (!(await blobs.has(h))) await this.assets.get(h);
       if (r.pushed || r.received) this.o.log.info("folder sync round", { pushed: r.pushed, received: r.received, waiting: r.waiting });
-      this.lastError = undefined;
+      // Ein anderes Gerät schreibt schon ein neueres Format: nichts geht verloren (die Segmente warten), aber der
+      // Nutzer muss es erfahren – die Einstellungen zeigen `lastError` als „Problem: …“.
+      this.lastError = r.newer.length
+        ? `${r.newer.length === 1 ? "Another device" : `${r.newer.length} other devices`} in this folder ${r.newer.length === 1 ? "uses" : "use"} a newer version of Based. Update Based on this Mac to keep syncing; nothing is lost until then.`
+        : undefined;
       this.lastRound = Date.now();
     } catch (e) {
       this.lastError = e instanceof Error ? e.message : String(e);

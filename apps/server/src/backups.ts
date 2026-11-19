@@ -109,20 +109,26 @@ export class Backups {
     return planRestore(this.store, (await readSnapshot(this.target, name)).records).pages;
   }
 
-  /** Wiederherstellen (ersetzen). Vorher wird der aktuelle Stand gesichert – so ist es selbst rückgängig zu machen. */
-  async restore(name: string): Promise<{ before: string | undefined; pages: { added: number; changed: number; removed: number } }> {
+  /**
+   * Wiederherstellen (ersetzen). Vorher wird der aktuelle Stand gesichert – so ist es selbst rückgängig zu machen.
+   * `missing`: Dateien, die der Stand nennt, die aber weder hier noch im Backup lesbar sind.
+   */
+  async restore(name: string): Promise<{ before: string | undefined; pages: { added: number; changed: number; removed: number }; missing: string[] }> {
     const read = await readSnapshot(this.target, name);
-    const before = await this.snapshot(true);
-    const plan = planRestore(this.store, read.records);
-    // fehlende Dateien aus dem Backup zurück in den Asset-Speicher
+    // BSD-558: fehlende Dateien ZUERST aus dem Backup zurück in den Asset-Speicher. Der Stand davor räumt auf und
+    // kann dabei genau diesen Stand samt der Dateien löschen, auf die nur er zeigt (z. B. ein inzwischen gelöschtes Bild).
+    const missing: string[] = [];
     for (const id of snapshotAssetIDs(read.records)) {
       if (!/^[0-9a-f]{64}$/.test(id) || this.assets.locate(id)) continue;
       const data = await this.target.read(`assets/${id}`).catch(() => undefined);
-      if (data) await this.assets.write(id, 0, data.length, Buffer.from(data)).catch(() => undefined);
+      const ok = data !== undefined && await this.assets.write(id, 0, data.length, Buffer.from(data)).then((s) => s.complete, () => false);
+      if (!ok) missing.push(id);
     }
+    const before = await this.snapshot(true);
+    const plan = planRestore(this.store, read.records);
     applyRestore(this.store, plan);
     this.digest = undefined;
-    this.log.info("backup restored", { added: plan.pages.added, removed: plan.pages.removed });
-    return { before: before?.name, pages: plan.pages };
+    this.log.info("backup restored", { added: plan.pages.added, removed: plan.pages.removed, missing: missing.length });
+    return { before: before?.name, pages: plan.pages, missing };
   }
 }

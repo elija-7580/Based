@@ -428,6 +428,11 @@ export class ShareService {
     if (role !== null && !before) this.relogForScope(pageID);
   }
 
+  /** Anzeigename eines eingeladenen Nutzers. */
+  userName(id: string): string | undefined {
+    return this.state.users.find((u) => u.id === id)?.name;
+  }
+
   /** Alle Freigaben einer Seite, auch die von Seiten darüber geerbten. */
   access(pageID: string): { grants: ShareGrant[]; links: SharingLink[] } {
     const ids = new Set(this.chainOfParent("b:" + pageID));

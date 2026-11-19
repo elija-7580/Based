@@ -127,6 +127,29 @@ test("Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nac
   await expect(blockEditor(page)).toContainText("Spec body, changed in Notion");
 });
 
+// BSD-565: Notion liefert große Exporte in Teilen; einzeln geladen werden alle zusammen gewählt.
+test("Hybrid-Import: einzeln geladene Teil-ZIPs zusammen wählen", async ({ page }) => {
+  test.setTimeout(120_000);
+  const world = smallWorld();
+  await fakeNotion(page, { world, children: 0 });
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await ready(page);
+  const dialog = await openNotionImport(page);
+  await dialog.getByLabel("Integration token").fill("ntn_test_token");
+  const { writeZip } = await import("../../../packages/core/src/interop/zip.js");
+  const files = world.files().map((f) => ({ path: "Export/" + f.path, data: f.data }));
+  const half = Math.ceil(files.length / 2);
+  const part = (n: number, list: typeof files) => ({ name: `Export-elija-Part-${n}.zip`, mimeType: "application/zip", buffer: Buffer.from(writeZip(list, world.exportedAt)) });
+  await dialog.getByTestId("hybrid-zip").setInputFiles([part(2, files.slice(half)), part(1, files.slice(0, half))]);
+  await expect(dialog.locator(".hybrid-zip-name")).toHaveText("Export-elija-Part-1.zip + 1 more");
+  await dialog.getByRole("button", { name: "Import with export" }).click();
+  await expect(page.getByTestId("hybrid-summary")).toContainText("Imported 6 pages, 4 rows, 2 databases.", { timeout: 60_000 });
+  await expect(page.getByTestId("hybrid-report")).not.toContainText("in Notion but not in the export");
+  // Inhalt kam aus den Teilen, nicht über die API.
+  expect(world.get("children")).toBe(0);
+});
+
 test("Hybrid-Import: Markdown-Export wird erklärt statt halb importiert", async ({ page }) => {
   const world = smallWorld();
   await fakeNotion(page, { world, children: 0 });

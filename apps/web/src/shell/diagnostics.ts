@@ -73,7 +73,10 @@ export const previousSession = () => previous;
 export const previousSessionText = () => previousSessionNotice(previous);
 export const stallCount = () => stalls;
 /** BSD-418: ein Hänger ab 2 s (Freeze) – zählt in Sitzungs-Marke und Absturzbericht. */
-export function noteFreeze() { stalls += 1; }
+export function noteFreeze() { stalls += 1; wakeBeat(); }
+/** BSD-596: Abstand der Schreibzugriffe der Sitzungs-Marke (höchstens; nur nach einem Anlass). */
+export const BEAT_MS = 10_000;
+let wakeBeat: () => void = () => {};
 const reportSections: (() => string[])[] = [];
 /** BSD-418: weiterer Abschnitt im kopierbaren Bericht (z. B. Hänger). */
 export function addReportSection(fn: () => string[]) { reportSections.push(fn); }
@@ -94,11 +97,27 @@ export function installDiagnostics(win: Window & typeof globalThis = globalThis 
     diagnosticsLog.add("error", `unhandled rejection: ${r instanceof Error ? `${r.name}: ${r.message}` : String(r)}`);
   });
 
+  let lastWrite = 0;
+  let pendingBeat: number | undefined;
   const beat = () => {
+    if (pendingBeat !== undefined) { win.clearTimeout(pendingBeat); pendingBeat = undefined; }
+    lastWrite = Date.now();
     const heap = heapMB();
     heartbeat(store, Date.now(), { stalls, log: diagnosticsLog.all.slice(-50), activity: phase, ...(heap !== undefined ? { heapMB: heap } : {}) });
   };
-  win.setInterval(beat, 10_000);
+  // BSD-596: kein Dauer-Intervall mehr. Geschrieben wird nur nach einem Anlass: eine neue Log-Zeile oder ein Freeze
+  // höchstens alle 10 s (ein Zeitgeber), eine Eingabe sofort, wenn die letzte Marke älter als 10 s ist (ohne
+  // Zeitgeber); beim Verbergen sofort. Im Leerlauf ruht die Marke – „last sign of life“ ist dann die letzte Eingabe,
+  // und verborgen/geschlossen schreiben visibilitychange/pagehide ohnehin.
+  const beatSoon = () => {
+    if (pendingBeat !== undefined || win.document.visibilityState === "hidden") return;
+    pendingBeat = win.setTimeout(() => { pendingBeat = undefined; beat(); }, BEAT_MS);
+  };
+  wakeBeat = beatSoon;
+  const alive = () => { if (Date.now() - lastWrite >= BEAT_MS && pendingBeat === undefined) beat(); };
+  diagnosticsLog.subscribe(beatSoon);
+  for (const type of ["keydown", "pointerdown", "wheel"]) win.addEventListener(type, alive, { capture: true, passive: true });
+  win.document.addEventListener("visibilitychange", () => { if (win.document.visibilityState === "hidden") beat(); else alive(); });
   // BSD-418: neue Ansicht sofort in die Sitzungs-Marke – endet die Sitzung hart (auch mitten in einem Hänger, den
   // WebKit aus dem Worker nicht festhalten kann), nennt der nächste Start die richtige letzte Aktivität.
   let lastBeat = 0;

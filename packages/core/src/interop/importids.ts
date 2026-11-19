@@ -1,6 +1,7 @@
 // Stabile IDs für importierte Inhalte und der Inhalts-Fingerabdruck des Reimport-Schutzes.
 // Port von Swift BasedCore Interop/ImportBuilder.swift (`ImportIDs`, `Block.contentFingerprint`, BSD-32) und
 // Store/VersionHistory.swift (`encode`, `hash`). Beide Hashes rechnen mit 64-Bit-Arithmetik wie Swift (`&*`, `&+`).
+import { stripCalendarDays } from "../model/calendar-day.js";
 import { canonicalStringify } from "../json.js";
 import type { Block } from "../model/records.js";
 import { ENUMS } from "../model/schema.js";
@@ -135,9 +136,10 @@ export function contentFingerprint(b: Block): string {
   if (BLOCK_TYPES.has(b.type)) c.type = b.type;
   c.parent = "w";
   c.sk = "";
-  if (!isEmptyText(b.text)) c.text = b.text;
+  // BSD-578: der Kalendertag eines Datums (`day`) ist ein Zusatzfeld – der Fingerabdruck bleibt, wie er vor ihm war
+  if (!isEmptyText(b.text)) c.text = stripCalendarDays(b.text);
   if (b.props && Object.keys(b.props).some((k) => (b.props as Record<string, unknown>)[k] !== undefined)) c.props = b.props;
-  if (b.values && Object.keys(b.values).length > 0) c.values = b.values;
+  if (b.values && Object.keys(b.values).length > 0) c.values = stripCalendarDays(b.values);
   c.createdAt = -978_307_200;
   c.updatedAt = -978_307_200;
   c.stamp = { counter: 0, millis: 0, node: "" };

@@ -20,15 +20,22 @@ tool keep their names (`Based Beta Backups`, iCloud folder `Based Beta`, `based-
 
 ## First start
 
-You don't need an account. On the welcome screen you can:
+You don't need an account. Based opens with a short tour in a few steps: how Based works, where your data lives
+and how it is backed up, meeting notes, and what this beta has and doesn't have yet. Press **Return** or **→** to go
+on, or **Skip** to jump to the end. You can see the tour again any time with **Help → Show Welcome Tour**.
+
+Based follows your Mac's appearance (light or dark). You can change that in **Settings → Appearance**.
+
+At the end of the tour you choose how to start:
 
 - **Import from Notion** – connect Notion directly, or pick a Notion export (.zip). Big workspaces take a few minutes;
   you can keep working while it runs.
 - **Start empty** – Based adds a few short guide pages under “Welcome to Based”. **Home** opens that page.
+  The last one, **Everything in Based**, lists everything this beta can do and what isn't in it yet.
 - **Start from a template** – Tasks, Notes, Journal or Wiki, with a few example entries. **⌘N** offers the same
   templates later.
 
-The welcome screen also offers **Turn on meeting notes**. It starts Based's local server on your Mac and downloads a
+The tour also offers **Turn on meeting notes**. It starts Based's local server on your Mac and downloads a
 speech model once (488 MB, from huggingface.co). You can do this later in **Settings → Meeting notes**,
 where you can also pick a smaller or a more accurate model.
 
@@ -88,5 +95,4 @@ The most useful feedback: what you expected, what happened instead, and whether 
 
 Based has no investors and sells no ads. During the beta every feature is free for everyone, and donations pay for
 the servers. If you like what you're testing, [sponsor Based on GitHub](https://github.com/sponsors/elija-7580): $3 a month is enough, or give once.
-It's a donation, so you get nothing extra for it. The goal is 1,000 monthly sponsors; at 1,000, Based Cloud goes live
-for everyone.
+It's a donation, so you get nothing extra for it. Paid plans start once Based is out of beta and has 1,000 users. Until then, nothing costs money.

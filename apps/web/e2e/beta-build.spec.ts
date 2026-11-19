@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { overflows, overlaps } from "./layout-checks.js";
+import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-305 Teil 5 (Beta-Umfang): Durchgang im echten Beta-Build. Läuft nur, wenn der Build mit BASED_CHANNEL=beta
 // entsteht – Playwright baut den Server mit der Umgebung des Aufrufs:
@@ -45,10 +46,19 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
       const welcome = page.getByTestId("welcome");
       await expect(welcome).toBeVisible();
+      // BSD-551: Einstieg in Schritten, ohne ein Wort über AI; im Browser ohne den Meeting-Schritt (nur Mac-App)
+      const step = welcome.getByTestId("tour-step");
+      await expect(welcome.getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
+      for (const s of ["welcome", "data", "beta"]) {
+        await expect(step).toHaveAttribute("data-step", s);
+        await expect(step).not.toContainText(/\bAI\b|agent/i);
+        await clean(page, `Einstieg ${s}`);
+        await shoot(page, `welcome-tour-${s}`);
+        await welcome.getByRole("button", { name: "Continue" }).click();
+      }
+      await expect(step).toHaveAttribute("data-step", "start");
       await expect(welcome.getByRole("group", { name: "Or start from a template" }).getByRole("button")).toHaveText(["Tasks", "Notes", "Journal", "Wiki"]);
       await expect(welcome.getByText("AI stays off")).toHaveCount(0);
-      // das Logo-Intro läuft einmal und steht dann still (erst danach das Bildschirmfoto)
-      await expect(welcome.getByTestId("logo-intro")).toHaveAttribute("data-state", "done");
       await clean(page, "Willkommen");
       await shoot(page, "welcome");
 
@@ -65,6 +75,14 @@ for (const theme of ["light", "dark"] as const) {
       await page.getByTestId("page-content").getByText("Your data", { exact: true }).click();
       await expect(page.getByLabel("Page title")).toHaveValue("Your data");
       await expect(page.getByTestId("block-editor")).not.toContainText(/\bAI\b|agent/i);
+      // BSD-552: „Everything in Based“ nennt keine ausgeblendete Funktion und endet mit „Not in this beta yet“
+      await page.getByRole("button", { name: "Home" }).click();
+      await page.getByTestId("page-content").getByText("Everything in Based", { exact: true }).click();
+      await expect(page.getByLabel("Page title")).toHaveValue("Everything in Based");
+      await expect(page.getByTestId("block-editor")).not.toContainText(/\bAI\b|agent|graph view|real-time/i);
+      await expect(page.getByTestId("block-editor")).toContainText("Not in this beta yet");
+      await clean(page, "Everything in Based");
+      await shoot(page, "everything");
       await page.getByRole("button", { name: "Home" }).click();
       await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
 
@@ -162,6 +180,7 @@ test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async
   try {
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: "Skip" }).click();
     await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
     await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
     await page.keyboard.type("Secret beta page text");
@@ -191,6 +210,7 @@ test("Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home", asyn
   try {
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: "Skip" }).click();
     await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
     await expect(page.getByLabel("Page title")).toBeVisible();
     // BSD-507: Meetings sind seit BSD-231 in der Beta – #meetings bleibt und zeigt die Meetings-Liste
@@ -205,6 +225,47 @@ test("Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home", asyn
       await expect(page.getByLabel("Page title"), hash).toHaveValue("Welcome to Based");
       await expect(page.getByTestId("library"), hash).toHaveCount(0);
     }
+  } finally {
+    await close();
+  }
+});
+
+// BSD-595: Auf beta ist AI ausgeblendet – Chat, Agenten-Werkzeuge und Anbieter dürfen gar nicht erst geladen werden
+// (weder im Start-Chunk noch im Store-Worker noch nachgeladen), auch nicht beim Öffnen einer Seite und einer Datenbank.
+test("Beta-Build: Start, Seite und Datenbank laden keinen Chat- oder Agenten-Code", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(120_000);
+  const { page, close } = await fresh(playwright, browserName, baseURL!, "light");
+  const scripts = new Map<string, Promise<string>>();
+  page.context().on("response", (r) => {
+    if (/\.m?js(\?|$)/.test(r.url()) && !scripts.has(r.url())) scripts.set(r.url(), r.text().catch(() => ""));
+  });
+  try {
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: "Skip" }).click();
+    await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
+    await expect(page.getByLabel("Page title")).toBeVisible();
+    await page.getByTestId("page-content").getByText("Your data", { exact: true }).click();
+    await expect(page.getByLabel("Page title")).toHaveValue("Your data");
+    // ans Ende der Seite (letzter Block ist ein Listenpunkt: zweimal Enter = neuer Textblock), dort /database
+    await expectEditable(page);
+    await focusEditorEnd(page);
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("/database");
+    await page.getByRole("option", { name: "Database", exact: true }).click();
+    await expect(page.locator(".shell-database").first()).toBeVisible();
+    await page.waitForTimeout(500);
+    // der Store-Worker ist dabei (sonst prüfte der Test ihn nicht)
+    expect([...scripts.keys()].some((u) => /store\.worker-/.test(u))).toBe(true);
+    const offenders: string[] = [];
+    for (const [url, body] of scripts) {
+      const text = await body;
+      for (const marker of ["anthropic-version", "api.anthropic.com", "edit_blocks", "draw_board", "save_skill"]) {
+        if (text.includes(marker)) offenders.push(`${url.split("/").pop()}: ${marker}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   } finally {
     await close();
   }

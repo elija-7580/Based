@@ -595,7 +595,7 @@ export interface AgentDetail {
   timeline: Timeline;
 }
 
-const KIND_LABEL: Record<RunData["kind"], string> = { main: "Main agent", subagent: "Agent", schedule: "Scheduled run", chat: "Chat" };
+const KIND_LABEL: Record<RunData["kind"], string> = { main: "Main agent", subagent: "Agent", schedule: "Scheduled run", chat: "Chat", request: "Request" };
 const STATUS_LABEL = STATUS_TEXT;
 
 export function agentDetail(runID: string, snapshot: AgentSnapshot, nowMs: number, titleOf: (pageID: string) => string | undefined = () => undefined): AgentDetail | undefined {

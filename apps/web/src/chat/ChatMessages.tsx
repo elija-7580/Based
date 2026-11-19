@@ -9,6 +9,7 @@ import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { Markdown } from "@astryxdesign/core/Markdown";
 import { formatCost, formatTokens, PAGE_URI, type ChatPart, type ChatTurnBuilder, type TranscriptItem, type TurnUsage } from "@based/brain";
 import { createContext, memo, useContext, type ComponentType, type ReactNode } from "react";
+import { BasedButton } from "@based/ui/astryx";
 import { AgentBar } from "../components/AgentMark.js";
 import type { PendingApproval } from "./controller.js";
 
@@ -63,6 +64,16 @@ const TOOL_LABELS: Record<string, string> = {
   search: "Search", read_page: "Read page", list_pages: "List pages", create_page: "Create page", append_markdown: "Append to page",
   replace_page_content: "Rewrite page", find_replace: "Edit text", update_page: "Update page", list_databases: "List databases",
   query_database: "Query database", add_row: "Add row", update_row: "Update row",
+  // Agent-Parität: dieselben Werkzeuge wie über MCP
+  read_blocks: "Read blocks", edit_blocks: "Edit blocks", move_page: "Move page", duplicate_page: "Duplicate page", trash_page: "Move to Trash", restore_page: "Restore page",
+  list_trash: "List Trash", backlinks: "Backlinks", set_favorite: "Favorite", undo_last: "Undo", based_guide: "Read guide", read_board: "Read board", draw_board: "Draw on board",
+  list_files: "List files", database_schema: "Read schema", create_database: "Create database", update_database: "Update database", list_views: "List views",
+  create_view: "Create view", update_view: "Update view", delete_view: "Delete view",
+  add_rows: "Add rows", update_rows: "Update rows", delete_forever: "Ask to delete forever", empty_trash: "Ask to empty Trash",
+  list_meetings: "List meetings", read_meeting: "Read meeting", update_meeting: "Update meeting",
+  more_tools: "Look up tools", run_tool: "Run tool",
+  page_history: "Version history", read_version: "Read version", restore_version: "Restore version",
+  get_workspace: "Read workspace", update_workspace: "Update workspace", create_teamspace: "Create teamspace", update_teamspace: "Update teamspace", delete_teamspace: "Delete teamspace",
 };
 
 function toolItem(p: ChatPart): ChatToolCallItem {
@@ -74,10 +85,30 @@ function toolItem(p: ChatPart): ChatToolCallItem {
   return item;
 }
 
-function ToolCard({ part, approval, onAnswer }: { part: ChatPart; approval: PendingApproval | undefined; onAnswer: (id: string, ok: boolean) => void }) {
+/** „Undo“ an Agenten-Aktionen: was schon zurückgenommen wurde (oder warum nicht) und der Auslöser. */
+export interface ToolUndo {
+  results: Readonly<Record<string, { text: string; ok: boolean; pending?: boolean }>>;
+  /** Nur Kennungen dieser Sitzung zeigen den Knopf (ältere Schritte hat der Store nicht mehr). */
+  session: string | undefined;
+  run: (callID: string, token: string) => void;
+}
+
+function ToolCard({ part, approval, onAnswer, undo }: { part: ChatPart; approval: PendingApproval | undefined; onAnswer: (id: string, ok: boolean) => void; undo: ToolUndo | undefined }) {
+  const token = part.status === "done" && undo?.session && part.undo?.startsWith(undo.session + ":") ? part.undo : undefined;
+  const result = undo?.results[part.id];
   return (
     <div className="chat-tool" data-testid="tool-card" data-tool={part.toolName} data-status={part.status}>
-      <ChatToolCalls calls={[toolItem(part)]} />
+      <div className="chat-tool-row">
+        {/* BSD-600: gekürzter Titel ist per Tooltip ganz lesbar */}
+        <div className="chat-tool-calls" title={part.detail ? `${TOOL_LABELS[part.toolName] ?? part.toolName} ${part.detail}` : undefined}>
+          <ChatToolCalls calls={[toolItem(part)]} />
+        </div>
+        {undo && token && (!result || result.pending) ? (
+          <BasedButton variant="ghost" label="Undo" ariaLabel={`Undo ${(TOOL_LABELS[part.toolName] ?? part.toolName).toLowerCase()}${part.detail ? ` “${part.detail}”` : ""}`} busy={result?.pending === true} onClick={() => undo.run(part.id, token)} />
+        ) : null}
+        {result && !result.pending && result.ok ? <span className="t-desc chat-tool-undone" role="status" data-testid="tool-undone">{result.text}</span> : null}
+      </div>
+      {result && !result.pending && !result.ok ? <p className="t-desc chat-tool-note" role="status" data-testid="tool-undo-failed">{result.text}</p> : null}
       {approval ? (
         <div className="chat-approval" role="group" aria-label="Approval needed">
           <span className="t-desc">Based wants to {(TOOL_LABELS[part.toolName] ?? part.toolName).toLowerCase()}{part.detail ? ` “${part.detail}”` : ""}.</span>
@@ -98,7 +129,7 @@ function Thinking({ part }: { part: ChatPart }) {
   );
 }
 
-function AssistantTurn({ turn, last, approvals, onAnswer, onRetry, ordinal }: { turn: ChatTurnBuilder; last: boolean; approvals: readonly PendingApproval[]; onAnswer: (id: string, ok: boolean) => void; onRetry: () => void; ordinal: number }) {
+function AssistantTurn({ turn, last, approvals, onAnswer, onRetry, ordinal, undo }: { turn: ChatTurnBuilder; last: boolean; approvals: readonly PendingApproval[]; undo: ToolUndo | undefined; onAnswer: (id: string, ok: boolean) => void; onRetry: () => void; ordinal: number }) {
   const { turnExtras } = useContext(AnswerHooksContext);
   const usage = usageLine(turn.usage);
   const meta = [turn.model, usage].filter(Boolean).join(" · ");
@@ -109,7 +140,7 @@ function AssistantTurn({ turn, last, approvals, onAnswer, onRetry, ordinal }: { 
         <div className="chat-answer-body">
           {turn.parts.map((p) => {
             if (p.kind === "thinking") return <Thinking key={p.id} part={p} />;
-            if (p.kind === "tool") return <ToolCard key={p.id} part={p} approval={approvals.find((a) => a.call.id === p.id)} onAnswer={onAnswer} />;
+            if (p.kind === "tool") return <ToolCard key={p.id} part={p} approval={approvals.find((a) => a.call.id === p.id)} onAnswer={onAnswer} undo={undo} />;
             return p.text ? <div key={p.id} className="chat-text" data-testid="answer-text"><AnswerMarkdown text={p.text} streaming={p.status === "running"} /></div> : null;
           })}
           {!turn.done && turn.parts.length === 0 ? <span className="t-meta chat-pending" role="status">Based is thinking…</span> : null}
@@ -126,7 +157,9 @@ function AssistantTurn({ turn, last, approvals, onAnswer, onRetry, ordinal }: { 
   );
 }
 
-export function ChatMessages({ items, running, approvals, onAnswer, onRetry, empty }: {
+export function ChatMessages({ items, running, approvals, onAnswer, onRetry, empty, undo }: {
+  /** „Undo“ an Agenten-Aktionen; ohne: kein Knopf (z. B. Coding-Sitzungen, die nicht in den Workspace schreiben). */
+  undo?: ToolUndo | undefined;
   items: readonly TranscriptItem[];
   running: boolean;
   approvals: readonly PendingApproval[];
@@ -150,7 +183,7 @@ export function ChatMessages({ items, running, approvals, onAnswer, onRetry, emp
             <ChatMessageBubble variant="ghost"><span className="chat-user-text" data-testid="user-message">{item.text}</span></ChatMessageBubble>
           </ChatMessage>
         ) : (
-          <AssistantTurn key={item.id} turn={item.turn} last={i === lastAssistant && i === items.length - 1} approvals={approvals} onAnswer={onAnswer} onRetry={onRetry} ordinal={ordinals[i]!} />
+          <AssistantTurn key={item.id} turn={item.turn} last={i === lastAssistant && i === items.length - 1} approvals={approvals} onAnswer={onAnswer} onRetry={onRetry} ordinal={ordinals[i]!} undo={undo} />
         ),
       )}
     </ChatMessageList>

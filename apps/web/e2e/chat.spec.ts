@@ -199,3 +199,85 @@ test("Screenshots web-chat-*", async ({ page, browserName }) => {
     await page.getByTestId("chat-page").getByRole("button", { name: "Open as side panel" }).click();
   }
 });
+
+// Agent-Parität E35 (Entscheidung 18.11.): an jeder Agenten-Aktion im Chat ein „Undo“, das genau diesen Schritt
+// zurücknimmt – auch wenn danach weitergearbeitet wurde. Fotos: docs/design/screens/web-chat-undo-*.png.
+const TWO_PAGES: Step[] = [
+  { tool: "create_page", input: { title: "Lisbon trip", markdown: "- Sunscreen" } },
+  { tool: "create_page", input: { title: "Porto trip with a very long title that has to shorten in the tool row instead of pushing the Undo button out of the card", markdown: "- Port" } },
+  { tool: "search", input: { query: "trip" } },
+  { text: "Both pages are in your sidebar." },
+];
+
+for (const theme of ["light", "dark"] as const) {
+  test(`Undo an einer Agenten-Aktion nimmt genau diesen Schritt zurück (${theme})`, async ({ page, browserName }) => {
+    await page.evaluate((t) => { localStorage.setItem("based.appearance", JSON.stringify({ theme: t, marker: "mint" })); }, theme);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    await page.keyboard.press(`${mod}+j`);
+    await useScript(page, TWO_PAGES);
+    await input(page).fill("Two trip pages please");
+    await input(page).press("Enter");
+    const cards = panel(page).getByTestId("tool-card");
+    for (const i of [0, 1]) {
+      await expect(cards.nth(i)).toHaveAttribute("data-status", "waiting");
+      await cards.nth(i).getByRole("button", { name: "Allow" }).click();
+      await expect(cards.nth(i)).toHaveAttribute("data-status", "done");
+    }
+    await expect(panel(page).getByTestId("assistant-message")).toHaveAttribute("data-done", "");
+    await expect(page.getByRole("treeitem", { name: "Lisbon trip" })).toBeVisible();
+    // Lesende Werkzeuge haben kein Undo; schreibende je eines, 32 px hoch, ganz in der Karte.
+    await expect(cards.nth(2).getByRole("button", { name: /^Undo/ })).toHaveCount(0);
+    const undo = cards.nth(0).getByRole("button", { name: /^Undo create page/ });
+    await expect(undo).toBeVisible();
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      for (const i of [0, 1]) {
+        const b = (await cards.nth(i).getByRole("button", { name: /^Undo/ }).boundingBox())!;
+        const c = (await cards.nth(i).boundingBox())!;
+        expect(b.height, `Höhe md (${w})`).toBeGreaterThanOrEqual(28);
+        expect(b.x + b.width, `Knopf bleibt in der Karte (${w})`).toBeLessThanOrEqual(c.x + c.width + 0.5);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `kein waagrechter Rollbalken (${w})`).toBe(true);
+      await page.screenshot({ path: `../../docs/design/screens/web-chat-undo-${theme}-${w}.png` });
+    }
+    await page.setViewportSize({ width: 1280, height: 820 });
+    // BSD-600: Bei langem Titel bleibt der Name der Aktion ganz, nur der Titel kürzt – und ist per Tooltip lesbar.
+    for (const i of [0, 1]) {
+      const name = cards.nth(i).locator(".astryx-chat-tool-calls span:has(> .astryx-icon) + span");
+      await expect(name).toHaveText("Create page");
+      expect(await name.evaluate((el) => el.scrollWidth <= el.clientWidth), `Name ganz (Karte ${i})`).toBe(true);
+    }
+    const long = cards.nth(1).locator(".astryx-chat-tool-calls span:has(> .astryx-icon) + span + span");
+    expect(await long.evaluate((el) => el.scrollWidth > el.clientWidth), "langer Titel kürzt").toBe(true);
+    await expect(cards.nth(1).locator(".chat-tool-calls")).toHaveAttribute("data-tip", /Porto trip with a very long title .* of the card$/);
+    // Den ERSTEN Schritt zurücknehmen, obwohl danach ein zweiter kam: nur die erste Seite verschwindet.
+    await undo.click();
+    await expect(cards.nth(0).getByTestId("tool-undone")).toHaveText("Undone.");
+    await expect(cards.nth(0).getByRole("button", { name: /^Undo/ })).toHaveCount(0);
+    // „Undone.“ steht dort, wo der Knopf stand: gleiche Höhe und Mitte wie der Knopf der Nachbarkarte, nichts springt.
+    const done = (await cards.nth(0).getByTestId("tool-undone").boundingBox())!;
+    const other = (await cards.nth(1).getByRole("button", { name: /^Undo/ }).boundingBox())!;
+    const top = async (i: number) => (await cards.nth(i).boundingBox())!.y;
+    expect(Math.abs((done.y - (await top(0))) - (other.y - (await top(1))))).toBeLessThanOrEqual(1);
+    expect(Math.abs(done.height - other.height)).toBeLessThanOrEqual(1);
+    expect(Math.abs((await cards.nth(0).boundingBox())!.height - (await cards.nth(1).boundingBox())!.height), "Karte bleibt gleich hoch").toBeLessThanOrEqual(1);
+    await expect(page.getByRole("treeitem", { name: "Lisbon trip" })).toHaveCount(0);
+    await expect(page.getByRole("treeitem", { name: /^Porto trip/ })).toBeVisible();
+    await page.screenshot({ path: `../../docs/design/screens/web-chat-undo-done-${theme}.png` });
+    // Per Tastatur: Fokus sichtbar, Enter löst aus.
+    const second = cards.nth(1).getByRole("button", { name: /^Undo/ });
+    await second.focus();
+    await page.keyboard.press("Enter");
+    await expect(cards.nth(1).getByTestId("tool-undone")).toHaveText("Undone.");
+    await expect(page.getByRole("treeitem", { name: /^Porto trip/ })).toHaveCount(0);
+    // Nach dem Neuladen gibt es die Schritte nicht mehr: kein Knopf, der nichts täte. (WebKit behält ohne
+    // dauerhaften Kontext nichts über das Neuladen, siehe oben – dort endet der Test hier.)
+    if (browserName === "webkit") return;
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(panel(page).getByTestId("tool-card").first()).toHaveAttribute("data-status", "done");
+    await expect(panel(page).getByRole("button", { name: /^Undo/ })).toHaveCount(0);
+  });
+}

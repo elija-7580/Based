@@ -20,6 +20,8 @@ export interface AgentRunBackend {
   runs(): Promise<Rec<RunData>[]>;
   claimRun(id: string, owner: string): Promise<boolean>;
   updateRun(id: string, patch: RunPatch): Promise<Rec<RunData> | undefined>;
+  /** Rückfrage eines Werkzeugs beantworten (Lauf der Art „request“): der Host führt den gespeicherten Aufruf aus. */
+  resolveRequest?(id: string, ok: boolean): Promise<unknown>;
   createRun(data: NewRun): Promise<Rec<RunData>>;
   main(): Promise<AgentData>;
   projects(): Promise<Rec<ProjectData>[]>;
@@ -120,6 +122,11 @@ export class AgentRunner {
     const b = this.o.backend;
     const run = (await b.runs()).find((r) => r.id === runID);
     if (!run || run.data.status !== "needsYou" || run.data.approval?.callID !== callID) return;
+    // Rückfrage eines Werkzeugs (endgültig löschen …): kein Lauf zum Fortsetzen, der Host führt den Aufruf aus.
+    if ((run.data.kind as string) === "request") {
+      await b.resolveRequest?.(runID, ok);
+      return;
+    }
     // Wartet der Lauf noch lebendig in einem anderen Tab, entscheidet der (sonst liefen zwei Engines).
     const lease = run.data.lease;
     if (lease && lease.owner !== this.owner && toMs(lease.until) >= this.now()) return;
@@ -160,7 +167,8 @@ export class AgentRunner {
       }
     }
     this.syncStored(runs);
-    const queued = runs.filter((r) => r.data.status === "queued").sort((a, b) => a.data.startedAt - b.data.startedAt);
+    // Rückfragen von Werkzeugen sind keine Läufe mit Engine: die führt der Host aus, der das Werkzeug hat.
+    const queued = runs.filter((r) => r.data.status === "queued" && (r.data.kind as string) !== "request").sort((a, b) => a.data.startedAt - b.data.startedAt);
     const free = (this.o.concurrency ?? 2) - this.running.size;
     for (const r of queued.slice(0, Math.max(0, free))) void this.start(r.id);
   }

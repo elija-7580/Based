@@ -36,6 +36,23 @@ export class SyncHTTPError extends Error {
   }
 }
 
+/**
+ * BSD-583: `info` nennt ein neueres Protokoll, als dieser Build spricht. Vor dem ersten Push anhalten (wie bei 426):
+ * nichts gesendet oder geholt, Cursor bleiben stehen, lokale Änderungen warten.
+ */
+export class SyncProtocolError extends Error {
+  constructor(readonly serverProtocol: number) {
+    super(`server speaks sync protocol ${serverProtocol}, this version of Based up to ${MAX_SYNC_PROTOCOL}`);
+    this.name = "SyncProtocolError";
+  }
+}
+
+/** Höchstes Sync-Protokoll, das dieser Build spricht (2 = Properties im Datenbank-Record, 3 = Property-Records). */
+export const MAX_SYNC_PROTOCOL = 3;
+
+/** Status, wenn Server oder ein anderes Gerät eine neuere Version brauchen. */
+export const UPDATE_TO_SYNC = "Sync paused: update Based to keep syncing. This workspace is now used by a newer version; your changes stay on this device until then.";
+
 export type SyncLog = (level: "info" | "warning" | "error", message: string) => void;
 
 export interface SyncClientOptions {
@@ -114,6 +131,8 @@ export function decodeDeletions(list: unknown, log?: SyncLog): { keys: RecordKey
 
 /** Antwort von /sync/v2/info, soweit der Client sie nutzt. */
 export interface ServerInfo {
+  /** Protokoll, das der Server mit diesem Client spricht (fehlt bei sehr alten Servern = 2). */
+  protocol?: number;
   oldestSeq?: number;
   /** ADR 0017 A2: Zusatzfähigkeiten des Servers (fehlt bei älteren Servern). */
   sync?: { maxPage?: number; pageBytes?: boolean; gzip?: boolean };
@@ -268,7 +287,12 @@ export class SyncClient {
     } catch (e) {
       this.lastError = e instanceof Error ? e.message : String(e);
       this.opts.log?.("error", `Sync error: ${this.lastError}`);
-      this.opts.onStatus?.(e instanceof StoreReadOnlyError ? "Sync paused: Based can't save changes on this device" : `Sync error: ${this.lastError}`);
+      // 426: der Server spricht ein neueres Sync-Protokoll. Nichts geht verloren (Cursor bleiben stehen, eigene
+      // Änderungen warten auf dem Gerät) – der Nutzer muss nur wissen, was zu tun ist.
+      if ((e instanceof SyncHTTPError && e.status === 426) || e instanceof SyncProtocolError) {
+        this.lastError = UPDATE_TO_SYNC;
+        this.opts.onStatus?.(UPDATE_TO_SYNC);
+      } else this.opts.onStatus?.(e instanceof StoreReadOnlyError ? "Sync paused: Based can't save changes on this device" : `Sync error: ${this.lastError}`);
     }
   }
 
@@ -286,6 +310,12 @@ export class SyncClient {
     // ADR 0017 A2: einmal je Runde fragen, was der Server kann (größere Seiten, Grenze nach Bytes, gzip). Scheitert
     // die Anfrage oder nennt der Server nichts, bleibt alles wie bisher (Seiten zu `pageSize`, unkomprimiert).
     const info = await this.serverInfo();
+    // BSD-583: Ein Server mit neuerem Protokoll (z. B. v4 nach der Beta) – vor dem ersten Push anhalten, statt
+    // Records zu schicken, die er anders liest. Ein späterer Server, der diesen Client noch bedient, nennt in `info`
+    // das Protokoll aus dessen Header (docs/sync-protocol.md).
+    if (typeof info?.protocol === "number" && Number.isInteger(info.protocol) && info.protocol > MAX_SYNC_PROTOCOL) {
+      throw new SyncProtocolError(info.protocol);
+    }
     const caps = syncCapabilities(info, this.pageSize, this.opts.pageBytes ?? PULL_PAGE_BYTES);
 
     // Push: jede lokale Änderung nach `pushed`.

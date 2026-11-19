@@ -71,6 +71,7 @@ const PLACEHOLDER: Record<string, string> = {
 
 // MARK: Editor
 
+// ref 72035782249b
 export function BlockEditor(props: PageEditorProps) {
   const { store, pageID } = props;
   const editable = props.editable ?? true;

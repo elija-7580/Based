@@ -21,6 +21,9 @@ import { registerBuiltinSettings } from "./settings/sections.js";
 import "../brain/BrainSettings.js";
 import "../chat/ConnectionsSection.js";
 import "../desktop/LocalServerSection.js";
+import "../desktop/AIAppsSection.js";
+// BSD-595: bis 19.11.2026 in App.tsx (zog den Hauptagenten in den Start-Chunk)
+import "../tasks/AgentSettingsSection.js";
 import "./settings/settings.css";
 
 registerBuiltinSettings();

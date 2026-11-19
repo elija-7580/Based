@@ -4,12 +4,27 @@
 export const RELEASES_API = "https://api.github.com/repos/elija-7580/Based/releases?per_page=30";
 export const DOWNLOAD_PAGE = "https://github.com/elija-7580/Based/releases/tag/next-latest";
 
-/** Release-Linie eines Kanals: Based Next (`next-<version>`) oder Based Beta (`beta-v<version>`), je mit festem Link. */
-export interface ReleaseLine { tagPrefix: string; downloadPage: string }
+/** BSD-573: Die Beta-DMG gibt es seit BSD-553 nur mit persönlichem Einladungslink, nicht mehr auf GitHub. */
+export const BETA_DOWNLOAD_PAGE = "https://basednotes.app/download";
+export const BETA_CONTACT = "hello@basednotes.app";
+
+/**
+ * Release-Linie eines Kanals: Based Next (`next-<version>`) oder Based Beta (`beta-v<version>`), je mit festem Link.
+ * `getIt`: wie man an die neue DMG kommt (Satzteil ohne Punkt) – bei der Beta der eigene Einladungslink.
+ */
+export interface ReleaseLine { tagPrefix: string; downloadPage: string; getIt: string }
 export function releaseLine(channel: "dev" | "beta"): ReleaseLine {
   return channel === "beta"
-    ? { tagPrefix: "beta-v", downloadPage: "https://github.com/elija-7580/Based/releases/tag/beta-latest" }
-    : { tagPrefix: "next-", downloadPage: DOWNLOAD_PAGE };
+    ? { tagPrefix: "beta-v", downloadPage: BETA_DOWNLOAD_PAGE,
+      getIt: `open the personal download link from your invitation email again (${BETA_DOWNLOAD_PAGE}) or write to ${BETA_CONTACT}` }
+    : { tagPrefix: "next-", downloadPage: DOWNLOAD_PAGE, getIt: `download the new DMG from ${DOWNLOAD_PAGE}` };
+}
+
+/** Text des Update-Dialogs, wenn es kein signiertes Update-Paket gibt („current“ hat einen eigenen Text). */
+export function fallbackText(app: { name: string; version: string }, found: { kind: "newer"; version: string } | { kind: "unknown" }, line: ReleaseLine): string {
+  return found.kind === "newer"
+    ? `${app.name} ${found.version} is available (you have ${app.version}). Automatic install isn’t set up yet — ${line.getIt}.`
+    : `You have ${app.name} ${app.version}. Automatic updates aren’t set up yet. To get the newest version, ${line.getIt}.`;
 }
 
 interface ReleaseLike { tag_name?: unknown; draft?: unknown }

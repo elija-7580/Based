@@ -61,6 +61,10 @@ export interface CoverAsset { id: string; name: string; size?: number; mime?: st
 /** Wie Swift `PageCover` (Codable-Enum mit `_0`). */
 export type PageCoverValue = { gradient: { _0: number } } | { color: { _0: string } } | { asset: { _0: CoverAsset } } | { url: { _0: string } };
 
+/** Farben, die die Oberfläche fürs Cover anbietet (Tokens dazu: apps/web PageCover), und die Zahl der Verläufe. */
+export const COVER_COLOR_IDS = ["gray", "blue", "pink", "orange", "default"] as const;
+export const COVER_GRADIENT_COUNT = 12;
+
 /** Cover setzen oder entfernen (dann auch die Position). Ein Undo-Schritt. */
 export function setPageCover(store: WorkspaceStore, id: string, cover: PageCoverValue | undefined): void {
   if (!store.blocks.has(id)) return;

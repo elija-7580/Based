@@ -3,7 +3,7 @@
 // fflate (MIT). Robust gegen feindliche Archive: Grenzen für Anzahl, Einzel- und Gesamtgröße und Kompressionsrate,
 // Pfade ohne „..“, verschlüsselte oder unbekannte Einträge werden übersprungen und gemeldet, Abbruch zwischen Einträgen.
 import { inflateSync, zipSync, type Zippable } from "fflate";
-import { ImportFiles, bytesSource, extname, joinPath, stripExtension, subSource, type ByteSource } from "./files.js";
+import { ImportFiles, basename, bytesSource, dirname, extname, joinPath, stripExtension, subSource, type ByteSource } from "./files.js";
 
 export type ZipErrorKind = "notAZip" | "corrupt" | "unsupported" | "checksum" | "limit" | "cancelled";
 
@@ -311,7 +311,7 @@ function extractInto(bytes: ByteSource, files: ImportFiles, prefix: string, dept
         done += entry.uncompressedSize;
         if (depth === 0) opts.progress?.(done / totalBytes);
         try {
-          count += 1 + extractInto(subSource(bytes, start, entry.compressedSize), files, stripExtension(dest), depth + 1, limits, state, skipped, { ...opts, progress: () => {} });
+          count += 1 + extractInto(subSource(bytes, start, entry.compressedSize), files, nestedPrefix(dest), depth + 1, limits, state, skipped, { ...opts, progress: () => {} });
         } catch (e) {
           if (!(e instanceof ZipError) || (e.kind !== "corrupt" && e.kind !== "notAZip")) throw e;
           skipped.push(`${rel} — damaged (unreadable)`);
@@ -335,7 +335,7 @@ function extractInto(bytes: ByteSource, files: ImportFiles, prefix: string, dept
     count += 1;
     if (nested && isZip(data)) {
       // Wie Swift: die innere .zip zählt mit und wird durch ihren Ordner ersetzt.
-      count += extractInto(bytesSource(data), files, stripExtension(dest), depth + 1, limits, state, skipped, { ...opts, progress: () => {} });
+      count += extractInto(bytesSource(data), files, nestedPrefix(dest), depth + 1, limits, state, skipped, { ...opts, progress: () => {} });
       continue;
     }
     if (data.length <= ZIP_EAGER_BYTES) files.add(dest, data);
@@ -355,6 +355,17 @@ function extractInto(bytes: ByteSource, files: ImportFiles, prefix: string, dept
     }
   }
   return count;
+}
+
+/**
+ * Wohin eine innere .zip ausgepackt wird: in einen Ordner mit ihrem Namen – außer bei Notions Teil-Archiven
+ * („Export-…-Part-1.zip“, „…-Part-2.zip“). Die teilen EINEN Export nach Größe auf; eine Seite kann in Teil 1 liegen
+ * und ihr Unterordner in Teil 2. Sie kommen deshalb in denselben Ordner (wie „alle Teile entpacken und zusammenführen“),
+ * sonst verlieren Unterseiten und Datenbankzeilen ihren Platz.
+ */
+export const isExportPart = (path: string) => /-Part-\d+$/i.test(stripExtension(basename(path)));
+function nestedPrefix(dest: string): string {
+  return isExportPart(dest) ? dirname(dest) : stripExtension(dest);
 }
 
 // MARK: Schreiben

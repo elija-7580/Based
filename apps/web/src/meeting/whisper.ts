@@ -1,7 +1,7 @@
 // BSD-231 Teil 3c: Transkription über den eigenen based-server (whisper.cpp, POST /local/transcribe). Nur wenn der
 // verbundene Server sie anbietet (GET /local/transcribe → ready); kein fremder Dienst. Der Browser dekodiert die
 // Aufnahme (webm/opus) und rechnet sie dabei schon auf 16 kHz um (OfflineAudioContext); den Rest macht @based/brain.
-import { localModels } from "@based/brain";
+import * as localModels from "@based/brain/localmodels"; // BSD-595: Unterpfad, nicht der ganze Einstieg
 
 export interface ServerAccess { url: string; token: string }
 

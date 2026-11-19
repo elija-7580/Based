@@ -11,6 +11,10 @@
 #   fixtures  BSD-168: Swift (legacy/) nur noch als Golden-Fixture-Quelle, nur wenn legacy/ oder fixtures/ sich ändern.
 # Logs auf ci-logs: main → ts/, ts-fast/, core/; andere Branches → branch-<name>/… (überschreiben main nicht).
 # Jeder Schritt hat ein eigenes Zeitlimit unter dem des Jobs, damit „Publish log“ auch nach einer Zeitüberschreitung läuft.
+# BSD-548: Browser kommen über ci/playwright-install.sh (apt nur bei Bedarf, Zeitlimit und Wiederholung je Teil, klare
+#          ::error-Meldung statt eines offenen Jobs). Auf main bricht ein neuer Push den laufenden vollen Lauf nicht mehr
+#          ab (vorher endeten die meisten main-Läufe als „abgebrochen“, WebKit-Shard 1 – der längste – fast immer);
+#          ein wartender Lauf wird weiter durch den neuesten ersetzt. Andere Branches brechen wie bisher ab.
 # Releases: Based Next baut .github/workflows/desktop.yml; die Swift-Releases (release.yml) sind abgeschaltet.
 name: CI
 
@@ -23,7 +27,7 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: write
@@ -46,6 +50,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        timeout-minutes: 8
       - name: Playwright-Version
         id: pw
         run: echo "version=$(pnpm --filter @based/web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
@@ -63,7 +68,7 @@ jobs:
         timeout-minutes: 10
         run: |
           set -o pipefail
-          pnpm --filter @based/web exec playwright install --with-deps chromium
+          bash ci/playwright-install.sh chromium
           CI=1 pnpm --filter @based/web exec playwright test --project=chromium --grep @smoke 2>&1 | tee smoke.log
       - name: Log sichern
         if: always()
@@ -86,7 +91,8 @@ jobs:
     name: Playwright ${{ matrix.browser }} ${{ matrix.shard }}/2
     # BSD-440: ubuntu-latest ist seit 15.11. Ubuntu 26.04 (ICU 78); Playwright 1.65 bringt WebKit für 24.04 mit (braucht libicudata.so.74)
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    # BSD-548: Browser holen (≤ 16) + Tests (≤ 25) + Rest – das Job-Limit liegt darüber, damit „Log sichern“ noch läuft
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +106,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        timeout-minutes: 8
       - name: Playwright-Version
         id: pw
         run: echo "version=$(pnpm --filter @based/web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
@@ -107,7 +114,24 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
-      - run: pnpm --filter @based/web exec playwright install --with-deps ${{ matrix.browser }}
+      # BSD-548: Systempakete (.deb) zwischen Läufen behalten – der Ubuntu-Mirror der Runner ist zeitweise sehr langsam
+      - name: apt-Pakete aus dem Cache
+        id: aptcache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}-
+      - name: Browser holen (BSD-548)
+        id: pwsetup
+        timeout-minutes: 16
+        run: bash ci/playwright-install.sh ${{ matrix.browser }}
+      - name: apt-Pakete in den Cache
+        if: ${{ always() && steps.pwsetup.outputs.apt-new == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Playwright (ohne @perf)
         timeout-minutes: 25
         run: |
@@ -117,7 +141,7 @@ jobs:
         if: always()
         run: |
           mkdir -p out
-          { echo "${{ job.status }} ${{ github.sha }}"; tail -n 60 e2e.log 2>/dev/null || echo "(kein Log – Lauf vorher abgebrochen)"; } > out/e2e-${{ matrix.browser }}-${{ matrix.shard }}.txt
+          { echo "${{ job.status }} ${{ github.sha }}"; tail -n 60 e2e.log 2>/dev/null || { echo "(kein Testlog – Lauf vor den Tests beendet; Ende des Playwright-Setups:)"; tail -n 15 pw-install.log 2>/dev/null; }; } > out/e2e-${{ matrix.browser }}-${{ matrix.shard }}.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -129,7 +153,7 @@ jobs:
     name: Zeitmessungen (@perf, nicht blockierend)
     # BSD-440: ubuntu-latest ist seit 15.11. Ubuntu 26.04 (ICU 78); Playwright 1.65 bringt WebKit für 24.04 mit (braucht libicudata.so.74)
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -139,6 +163,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        timeout-minutes: 8
       - name: Playwright-Version
         id: pw
         run: echo "version=$(pnpm --filter @based/web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
@@ -146,7 +171,24 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit
-      - run: pnpm --filter @based/web exec playwright install --with-deps chromium webkit
+      # BSD-548: Systempakete (.deb) zwischen Läufen behalten – der Ubuntu-Mirror der Runner ist zeitweise sehr langsam
+      - name: apt-Pakete aus dem Cache
+        id: aptcache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit-
+      - name: Browser holen (BSD-548)
+        id: pwsetup
+        timeout-minutes: 16
+        run: bash ci/playwright-install.sh chromium webkit
+      - name: apt-Pakete in den Cache
+        if: ${{ always() && steps.pwsetup.outputs.apt-new == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Playwright @perf
         timeout-minutes: 20
         run: |

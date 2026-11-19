@@ -38,6 +38,10 @@ Prüft, ob 80/443 frei sind, installiert bei Bedarf Docker und git, startet Cadd
 cd Based && git pull && docker compose -f deploy/website/docker-compose.yml restart caddy
 ```
 
+Von selbst: der Cron holt `main` alle 10 Minuten. Der Warteliste-Dienst merkt eine geänderte `waitlist.mjs`
+(`WAITLIST_RELOAD=1`) und startet sich innerhalb von etwa zwei Minuten mit dem neuen Code neu; laufende Downloads
+dürfen bis zu 10 Minuten zu Ende laufen. Ein Neustart von Hand ist dafür nicht mehr nötig.
+
 Die Seiten neu bauen (nach einer Änderung im Canvas oder an den Texten): `pnpm --filter @based/website build`
 (mit Google Chrome auf dem Rechner werden die Seiten vorgerendert) und `apps/website/public` committen.
 

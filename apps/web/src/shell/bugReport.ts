@@ -45,10 +45,13 @@ const blockSel = (t: BlockEditorProbeTarget): SelectionInfo => {
   return path ? { ...sel, path } : sel;
 };
 
-const blockCheckpointOf = (t: BlockEditorProbeTarget) => {
-  const refs = pageBlocks(t.store, t.rootID); // Verweise auf unveränderliche Records – der Baum erst beim Bündeln
-  return { kind: "checkpoint" as const, root: t.rootID, doc: () => blockDoc(refs, t.rootID) as unknown, sel: blockSel(t) };
-};
+// Review 18.11.: `doc` darf den Editor (`t`) nicht einschließen – sonst hält jeder Zwischenstand im Ringpuffer den
+// geschlossenen Editor samt DOM fest (300-Block-Seite: ~4 800 Knoten, ~0,75 MB je Öffnen, bis zu 2 min/500 Ereignisse).
+// Darum eine eigene Funktion, deren Scope nur Records, Wurzel-ID und Auswahl kennt (e2e/editor-leak.spec.ts).
+const checkpointOf = (refs: ReturnType<typeof pageBlocks>, root: string, sel: SelectionInfo) =>
+  ({ kind: "checkpoint" as const, root, doc: () => blockDoc(refs, root) as unknown, sel });
+// Verweise auf unveränderliche Records – der Baum erst beim Bündeln
+const blockCheckpointOf = (t: BlockEditorProbeTarget) => checkpointOf(pageBlocks(t.store, t.rootID), t.rootID, blockSel(t));
 
 // MARK: Aufzeichnung
 

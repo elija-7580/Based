@@ -20,6 +20,8 @@ export interface ChatPart {
   /** Gestreamte Eingabe, solange der Call noch nicht vollständig ist. */
   inputJSON?: string;
   output?: string;
+  /** Kennung zum Zurücknehmen dieses Schreibschritts (siehe `ToolResult.undo`). */
+  undo?: string;
   status: ChatPartStatus;
   /** Aus Deltas gebaut; wird ersetzt, wenn der fertige Block kommt. */
   provisional: boolean;
@@ -164,6 +166,7 @@ export class ChatTurnBuilder {
         if (!p) break;
         p.output = e.output;
         p.status = e.isError ? "failed" : "done";
+        if (e.undo) p.undo = e.undo;
         break;
       }
       case "usage":

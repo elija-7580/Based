@@ -28,6 +28,9 @@ test("Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbe
 
 async function run(page: Page) {
   await page.setViewportSize({ width: 1400, height: 900 });
+  // BSD-569: neue Dateien beginnen schon umgestellt – für diesen Test eine im alten Format anlegen (nur wenn noch
+  // nichts eingestellt ist, damit „Convert“ nach dem Neuladen gilt)
+  await page.addInitScript(() => { if (localStorage.getItem("based.propertyRecords") === null) localStorage.setItem("based.propertyRecords", "false"); });
   await page.goto("/");
   await ready(page);
   await page.getByRole("button", { name: "Home" }).click();
@@ -76,3 +79,32 @@ async function run(page: Page) {
   await expect(page.getByTestId("property-records-status")).toHaveText("Synced one by one");
   await expect(page.getByRole("button", { name: "Convert…" })).toHaveCount(0);
 }
+
+// BSD-569: Wer neu anfängt, beginnt im endgültigen Format – ohne Umstellung, und es bleibt nach dem Neuladen so.
+test("neuer Workspace: Spalten sind von Anfang an eigene Records, Datenbank übersteht Neuladen", async ({ playwright, browserName, baseURL }) => {
+  const dir = mkdtempSync(join(tmpdir(), "based-props-new-"));
+  const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
+  try {
+    const page = ctx.pages()[0] ?? (await ctx.newPage());
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await page.goto("/");
+    await ready(page);
+    expect(await status(page)).toBe(true);
+    await page.getByRole("button", { name: "Home" }).click();
+    await page.getByRole("button", { name: "New database" }).click();
+    const db = page.locator(".shell-database.full");
+    await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+    await db.getByRole("button", { name: "Add property" }).click();
+    await page.getByTestId("type-date").click();
+    await page.keyboard.press("Escape");
+    const before = await headers(page);
+    expect(before.length).toBeGreaterThanOrEqual(2);
+    await page.reload();
+    await ready(page);
+    expect(await status(page)).toBe(true);
+    await expect.poll(() => headers(page)).toEqual(before);
+  } finally {
+    await ctx.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

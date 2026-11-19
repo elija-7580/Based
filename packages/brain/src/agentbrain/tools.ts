@@ -145,6 +145,11 @@ export function combineToolHosts(...hosts: readonly ToolHost[]): ToolHost {
       for (const h of hosts) for (const s of h.specs) if (!seen.has(s.name)) { seen.add(s.name); out.push(s); }
       return out;
     },
+    // Kurze Liste eines Hosts bleibt kurz; Hosts ohne eigene Auswahl zeigen alles (z. B. MCP-Connections).
+    get listed() {
+      if (!hosts.some((h) => h.listed)) return undefined;
+      return [...new Set(hosts.flatMap((h) => h.listed ?? h.specs.map((s) => s.name)))];
+    },
     isWrite: (name) => owner(name)?.isWrite(name) ?? true,
     call: (name, input, signal) => {
       const h = owner(name);

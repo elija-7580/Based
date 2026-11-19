@@ -1,0 +1,86 @@
+{
+  "label": "beta-b4fd1095",
+  "commit": "b4fd1095",
+  "schemaVersion": 3,
+  "propertyRecords": false,
+  "expect": {
+    "workspace": "My Workspace",
+    "blocks": [
+      "page:Beta notes",
+      "page:Beta notes / bulletedList:Bullet",
+      "page:Beta notes / code:const x = 1;",
+      "page:Beta notes / databaseInline:",
+      "page:Beta notes / heading1:Heading",
+      "page:Beta notes / page:Child page",
+      "page:Beta notes / page:Child page / image:",
+      "page:Beta notes / page:Child page / page:Grandchild",
+      "page:Beta notes / text:Plain paragraph with ünïcödé and emoji 🙂",
+      "page:Beta notes / todo:A task",
+      "page:Beta notes / toggle:Toggle",
+      "page:Beta notes / toggle:Toggle / text:Inside the toggle",
+      "page:In the trash (trash)"
+    ],
+    "databases": [
+      {
+        "title": "Tasks",
+        "properties": [
+          "Checked:checkbox",
+          "Name:title",
+          "Note:text",
+          "Points:number",
+          "Stage:select[Open,Done]",
+          "Tags:multiSelect"
+        ],
+        "rows": [
+          {
+            "title": "First row",
+            "values": {
+              "Stage": {
+                "select": {
+                  "_0": "47be8e5e-0578-4afb-8afe-7d7b59397aa1"
+                }
+              },
+              "Points": {
+                "number": {
+                  "_0": 3
+                }
+              },
+              "Note": {
+                "text": {
+                  "_0": "note one"
+                }
+              }
+            }
+          },
+          {
+            "title": "Second row",
+            "values": {
+              "Stage": {
+                "select": {
+                  "_0": "f2cdabe2-ea47-48dd-8e57-5297c7298cfb"
+                }
+              },
+              "Points": {
+                "number": {
+                  "_0": 5
+                }
+              },
+              "Checked": {
+                "checkbox": {
+                  "_0": true
+                }
+              }
+            }
+          }
+        ],
+        "views": [
+          "board",
+          "table"
+        ]
+      }
+    ],
+    "assets": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:photo.png"
+    ]
+  }
+}

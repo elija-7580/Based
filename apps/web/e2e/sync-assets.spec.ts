@@ -171,10 +171,10 @@ test("komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Se
     const record = { kind: "block", data: { id, type: "page", parent: "w", sk: "a0", text: "compressed push ".repeat(200), createdAt: 0, updatedAt: 0, stamp: { millis: Date.now(), counter: 0, node: "e2e" } } };
     const text = JSON.stringify({ records: [record], deletions: [] });
     const packed = new Uint8Array(await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer());
-    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Encoding": "gzip" };
+    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Encoding": "gzip", "X-Based-Protocol": "3" };
     const push = await fetch(`${url}/sync/v2/push`, { method: "POST", headers, body: packed });
     const info = (await (await fetch(`${url}/sync/v2/info`, { headers: { Authorization: `Bearer ${token}` } })).json()) as { sync?: unknown };
-    const pull = (await (await fetch(`${url}/sync/v2/pull?after=0&limit=5000&bytes=2097152`, { headers: { Authorization: `Bearer ${token}` } })).json()) as { records: { data: { id: string } }[] };
+    const pull = (await (await fetch(`${url}/sync/v2/pull?after=0&limit=5000&bytes=2097152`, { headers: { Authorization: `Bearer ${token}`, "X-Based-Protocol": "3" } })).json()) as { records: { data: { id: string } }[] };
     return { status: push.status, plain: text.length, sent: packed.length, sync: info.sync, found: pull.records.some((r) => r.data.id === id) };
   }, { url: serverURL, token: TOKEN });
   expect(result.status).toBe(200);

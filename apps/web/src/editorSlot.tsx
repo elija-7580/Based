@@ -16,7 +16,7 @@ import { createMeetingHost, type WebMeetingHost } from "./meeting/host.js";
 import { featureVisible, hiddenBlockTypes } from "./shell/beta.js";
 
 const HIDDEN_BLOCKS = hiddenBlockTypes();
-import { chatController } from "./chat/runtime.js";
+import { chatCanWrite, chatWrite } from "./chat/load.js";
 import { editorAI } from "./editorAI.js";
 import { linkPreviewFetcher } from "./linkPreview.js";
 import { ShellPageDirectory } from "./shell/pageDirectory.js";
@@ -101,7 +101,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   // BSD-225: „Ask AI“ über die Chat-Engine (Modell aus Einstellungen → Agents & AI; in Tests die Skript-Engine).
   // AI-Schalter (shell/ai.ts): ohne AI kein „Ask AI“ (Slash, Leertaste, Formatleiste).
   const aiOn = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
-  const ai = useMemo(() => (client && aiOn ? editorAI((system, prompt, signal) => chatController(client).write(system, prompt, signal), () => chatController(client).canWrite()) : undefined), [client, aiOn]);
+  const ai = useMemo(() => (client && aiOn ? editorAI((system, prompt, signal) => chatWrite(client, system, prompt, signal), () => chatCanWrite(client)) : undefined), [client, aiOn]);
   const copyPages = useMemo(() => (client ? (ids: string[]) => client.command({ op: "duplicate", ids }) : undefined), [client]);
   const hideBacklinks = store.blocks.get(pageID)?.props?.format?.hideBacklinks === true;
   const fetchLinkPreview = useMemo(() => linkPreviewFetcher(), []);

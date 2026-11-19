@@ -74,9 +74,9 @@ describe("Store-Worker-Schnittstelle", () => {
     const home = r.homePageID!;
     const ids = await client.command<string[]>({ op: "addWelcomeGuides", parent: home });
     await settle();
-    expect(ids).toHaveLength(4);
+    expect(ids).toHaveLength(5);
     expect(client.getState().outline?.children[home]).toEqual(ids);
-    expect(ids.map((id) => client.title(id))).toEqual(["Basics", "Databases", "Keyboard", "Your data"]);
+    expect(ids.map((id) => client.title(id))).toEqual(["Basics", "Databases", "Keyboard", "Your data", "Everything in Based"]);
     const page = await client.openPage(ids[3]!);
     expect(page.store.children("b:" + ids[3]).map((id) => page.store.blocks.get(id)?.text).join(" ")).toContain("without an account");
     page.close();
@@ -85,7 +85,7 @@ describe("Store-Worker-Schnittstelle", () => {
     // ohne gültige Elternseite: nichts
     expect(await client.command<string[]>({ op: "addWelcomeGuides", parent: "NOPE" })).toEqual([]);
     await settle();
-    expect(client.getState().outline?.children[home]).toHaveLength(4);
+    expect(client.getState().outline?.children[home]).toHaveLength(5);
   });
 
   it("BSD-436: Startvorlage legt eine Datenbank bzw. Seite oben unter Private an", async () => {

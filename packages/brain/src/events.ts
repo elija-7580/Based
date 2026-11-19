@@ -26,7 +26,7 @@ export const chatEvent = z.union([
   ev("toolUse", { id: z.string(), name: z.string(), input: jsonValue }),
   /** Das Werkzeug wartet auf die Freigabe des Nutzers (Permission „Ask …“). */
   ev("permissionRequest", { id: z.string(), name: z.string() }),
-  ev("toolResult", { id: z.string(), output: z.string(), isError: z.boolean() }),
+  ev("toolResult", { id: z.string(), output: z.string(), isError: z.boolean(), undo: z.string().optional() }),
   /** Verbrauch eines Modellaufrufs; `costUSD` ist geschätzt, wenn der Anbieter nichts meldet (`estimated`). */
   ev("usage", { inputTokens: z.number(), outputTokens: z.number(), costUSD: z.number().optional(), estimated: z.boolean().optional(), model: z.string().optional() }),
   /** Hinweis, der nicht Teil der Antwort ist („continuing a cut-off answer…“). */

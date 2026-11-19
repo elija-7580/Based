@@ -15,15 +15,16 @@ import { ExportDialog, ImportDialog } from "../../components/ImportExport.js";
 import { PagePickerDialog } from "../../components/MoveDialog.js";
 import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
-import { appIdentity, checkForUpdates, isTauri, type AppIdentity } from "../../desktop.js";
+import { appIdentity, checkForUpdates, isTauri, openExternal, type AppIdentity } from "../../desktop.js";
+import { GIVE_ONCE_URL, PAID_PLANS_AT_USERS, SPONSOR_URL } from "../../shell/support.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { HangsSection } from "./hangs.js";
-import { autoUpdatePref, deviceNode, fallbackHomePage, lazyStoreSetting, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, fallbackHomePage, lazyStoreSetting, meetingDetectPref, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { browserKeep, keepRow } from "../../shell/storagePersist.js";
 import { weekStartForLocale } from "@based/core";
-import { Group, Row, Value } from "./parts.js";
+import { Group, Note, Row, Value } from "./parts.js";
 import { clockSkewText } from "./clockSkew.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
 import { featureVisible, productBlurb, productName, workspaceNameHint } from "../../shell/beta.js";
@@ -189,7 +190,7 @@ function ImportSection({ client, navigate }: SettingsSectionProps) {
   const [open, setOpen] = useState<"import" | "export" | undefined>();
   return (
     <Group>
-      <Row label="Import" hint="A Notion export (HTML or Markdown & CSV), Markdown or CSV files, or a Based archive">
+      <Row label="Import" hint="From Notion, Obsidian, Evernote and other apps, Markdown or CSV files, or a Based archive">
         <BasedButton label="Import…" onClick={() => setOpen("import")} />
       </Row>
       <Row label="Export" hint="Everything as Markdown, HTML or a lossless Based archive">
@@ -286,8 +287,14 @@ function LanguageSection(_: SettingsSectionProps) {
 /** Feedback 14. 11.: Meeting-Aufnahmen sofort oder erst am Strom transkribieren (Akku sparen; pro Gerät). */
 function MeetingsSection(_: SettingsSectionProps) {
   const when = useSyncExternalStore(meetingTranscribePref.subscribe, meetingTranscribePref.get);
+  const detect = useSyncExternalStore(meetingDetectPref.subscribe, meetingDetectPref.get);
   return (
     <Group>
+      {/* Feedback 18. 11.: nur die Mac-App sieht, welche App das Mikrofon nutzt */}
+      {isTauri() ? (
+        <Switch label="Ask when a meeting starts" description="When Zoom, Teams, Meet or another call app turns on your microphone, a small window offers to transcribe it"
+          value={detect} onChange={(on) => meetingDetectPref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
+      ) : null}
       <Row label="Transcribe recordings" hint={when === "plugged-in"
         ? "On battery, Based only records. The transcript is made once this device is plugged in — or right away with “Transcribe now” in the meeting."
         : "The transcript is made right after you stop recording."}>
@@ -314,10 +321,30 @@ function DeviceSection({ state }: SettingsSectionProps) {
   );
 }
 
+// Elija 18.11.: Spenden wie auf basednotes.app (GitHub Sponsors); bezahlte Pläne erst nach der Beta ab 1.000 Nutzern.
 function BillingSection() {
   return (
     <Group>
-      <Row label="Current plan"><Value>Open source · free</Value></Row>
+      <Row label="Current plan" hint="Every feature is free for everyone during the beta. No card, no trial.">
+        <Value>Free · beta</Value>
+      </Row>
+      <Row label="After the beta" hint={`Paid plans start once Based is out of beta and has ${PAID_PLANS_AT_USERS.toLocaleString("en-US")} users. Until then, nothing here costs money.`} />
+    </Group>
+  );
+}
+
+function SupportSection() {
+  const [failed, setFailed] = useState(false);
+  const open = (href: string) => { setFailed(false); void openExternal(href).catch(() => setFailed(true)); };
+  return (
+    <Group>
+      <Row label="Sponsor Based" hint="Based has no investors and sells no ads. Donations pay for the servers, and $3 a month is enough. You get nothing extra for it, just a notes app that stays yours.">
+        <HStack gap={2}>
+          <BasedButton label="Give once" variant="ghost" onClick={() => open(GIVE_ONCE_URL)} />
+          <BasedButton label="Sponsor on GitHub" variant="secondary" onClick={() => open(SPONSOR_URL)} />
+        </HStack>
+      </Row>
+      {failed ? <Note testID="sponsor-failed">Couldn’t open the browser. The page is github.com/sponsors/elija-7580</Note> : null}
     </Group>
   );
 }
@@ -470,7 +497,9 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection, keywords: ["Import from Notion", "Markdown", "Export", "ZIP"] });
   registerSettingsSection({ id: "sync-server", page: "sync", title: "Based server", order: 10, component: SyncSection,
     keywords: ["Server address", "Token", "Sync status", "Storage", "Database columns", ...(featureVisible("realtimeText") ? ["Real-time text"] : []), ...(featureVisible("fastStart") ? ["Fast start"] : [])] });
-  registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection, keywords: ["Current plan", "Price", "Free"] });
+  registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection, keywords: ["Current plan", "Price", "Pricing", "Free", "After the beta", "Paid plans"] });
+  registerSettingsSection({ id: "support", page: "billing", title: "Support Based", order: 20, component: SupportSection,
+    keywords: ["Sponsor Based", "Donate", "Donation", "Give once", "GitHub Sponsors", "Support"] });
   registerSettingsSection({ id: "device", page: "account", title: "This device", order: 10, component: DeviceSection, keywords: ["Device ID", "Storage"] });
   registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection, provides: ["Automatic update checks on or off"], keywords: ["Check for updates", "Check automatically", "Version"] });
   // BSD-319: Diagnostics in Gruppen (diagnostics.tsx)

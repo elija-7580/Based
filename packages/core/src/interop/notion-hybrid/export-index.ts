@@ -4,7 +4,7 @@
 // Clean-Room: nur das Dateiformat des Exports, wie ihn Notion ausliefert (HTML mit Unterseiten).
 import { basename, bytesSource, dirname, extname, ImportFiles, joinPath, stripExtension, subSource, type ByteSource } from "../files.js";
 import { notionIDInName } from "../importids.js";
-import { DEFAULT_ZIP_LIMITS, ImportCancelled, isDirectoryEntry, isEncryptedEntry, isZip, readZipEntries, sanitizedZipPath, ZipError, zipEntryData, zipEntryStart, type ZipLimits } from "../zip.js";
+import { DEFAULT_ZIP_LIMITS, ImportCancelled, isDirectoryEntry, isExportPart, isEncryptedEntry, isZip, readZipEntries, sanitizedZipPath, ZipError, zipEntryData, zipEntryStart, type ZipLimits } from "../zip.js";
 
 export type HybridErrorKind = "markdownExport" | "notAnExport" | "noState" | "needsZip";
 
@@ -21,6 +21,9 @@ export interface OpenExportOptions {
   isCancelled?: (() => boolean) | undefined;
 }
 
+/** Notions Teil-Archive („…-Part-N.zip“) sind EIN Export: in denselben Ordner, sonst fehlen einer Seite die Dateien
+ *  und Unterseiten, die im nächsten Teil liegen. Andere innere ZIPs bekommen ihren eigenen Ordner. */
+const partPrefix = (dest: string) => (isExportPart(dest) ? dirname(dest) : stripExtension(dest));
 const isHTML = (p: string) => ["html", "htm"].includes(extname(p).toLowerCase());
 
 export class NotionExportIndex {
@@ -86,8 +89,10 @@ export class NotionExportIndex {
  * Öffnet einen Notion-Export. Verschachtelte Teile („Export-…-Part-1.zip“) werden wie Ordner behandelt. Wirft
  * `HybridImportError`, wenn das Archiv kein HTML-Export ist (Markdown & CSV trägt keine Seiten-IDs im Inhalt und rät
  * Spaltentypen – dafür bleibt der gewöhnliche ZIP-Import).
+ * BSD-565: Mehrere Archive (die einzeln geladenen Teile eines großen Exports) bilden einen Export: alle landen in
+ * derselben Wurzel, wie Teil-Archive in einem äußeren ZIP. Eine Seiten-ID zählt einmal (die erste Datei gewinnt).
  */
-export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExportOptions = {}): NotionExportIndex {
+export function openNotionExport(input: Uint8Array | ByteSource | readonly (Uint8Array | ByteSource)[], opts: OpenExportOptions = {}): NotionExportIndex {
   // Nichts wird vorab entpackt, deshalb darf das Verzeichnis groß sein (ein Workspace mit 20.000 Seiten und ihren
   // Bildern hat schnell über 100.000 Einträge). Die Grenzen je Datei gelten weiter.
   const limits = { ...DEFAULT_ZIP_LIMITS, maxEntries: 1_000_000, ...opts.limits };
@@ -112,10 +117,10 @@ export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExpor
         try {
           if (entry.method === 0 && entry.compressedSize >= 4) {
             const start = zipEntryStart(src, entry);
-            if (isZip(src.read(start, 4))) { visit(subSource(src, start, entry.compressedSize), stripExtension(dest), depth + 1); continue; }
+            if (isZip(src.read(start, 4))) { visit(subSource(src, start, entry.compressedSize), partPrefix(dest), depth + 1); continue; }
           } else {
             const data = zipEntryData(src, entry);
-            if (isZip(data)) { visit(bytesSource(data), stripExtension(dest), depth + 1); continue; }
+            if (isZip(data)) { visit(bytesSource(data), partPrefix(dest), depth + 1); continue; }
           }
         } catch (e) {
           if (!(e instanceof ZipError) || e.kind === "limit" || e.kind === "cancelled") throw e;
@@ -126,7 +131,8 @@ export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExpor
       index._add(dest, src, entry);
     }
   };
-  visit(input instanceof Uint8Array ? bytesSource(input) : input, "", 0);
+  const inputs = Array.isArray(input) ? input : [input as Uint8Array | ByteSource];
+  for (const one of inputs) visit(one instanceof Uint8Array ? bytesSource(one) : one, "", 0);
   if (index.htmlCount === 0) {
     if (index.markdownCount > 0) {
       throw new HybridImportError("markdownExport", "This is a “Markdown & CSV” export. The fast import needs the HTML export: in Notion choose Export → HTML, include subpages and create folders for subpages.");

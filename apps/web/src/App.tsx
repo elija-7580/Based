@@ -4,7 +4,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
-import { ChatDock, ChatPage } from "./chat/ChatDock.js";
 import { ImportDialog } from "./components/ImportExport.js";
 import { hybridImport } from "./worker/notionHybridClient.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
@@ -16,7 +15,9 @@ import { ShortcutHud } from "./components/ShortcutHud.js";
 import { ShortcutSheet } from "./components/ShortcutSheet.js";
 import { installArrowNav } from "./shell/arrowNav.js";
 import { COMMAND_EVENT, installCommands } from "./shell/commands.js";
-import { isTauri, REPORT_PROBLEM_EVENT } from "./desktop.js";
+import { bringToFront, isPageWindow, isTauri, REPORT_PROBLEM_EVENT } from "./desktop.js";
+import { meetingHost } from "./editorSlot.js";
+import { startMeetingDetection } from "./meeting/detect.js";
 import { startReport } from "./shell/reportUI.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { Notice } from "./components/Notice.js";
@@ -24,10 +25,8 @@ import { PromptHost } from "./components/PromptHost.js";
 import { registerContextItems } from "@based/ui/native";
 import { shortcutLabel } from "@based/ui";
 import { TabBar } from "./components/TabBar.js";
-import { Home } from "./screens/Home.js";
 import { PageView } from "./screens/PageView.js";
-import { tasksRuntime } from "./tasks/runtime.js";
-import "./tasks/AgentSettingsSection.js";
+import { loadChatRuntime } from "./chat/load.js";
 import { installHistoryGestures } from "./shell/historyGestures.js";
 import { installKeyHints } from "./shell/keyHints.js";
 import { Icon, type IconName } from "./icons.js";
@@ -36,15 +35,19 @@ import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion, toggleSidebarFocus } from "./shell/regions.js";
 import { FIND_EVENT, matchShortcut, menuOwnsShortcut, parentPage } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
-import { firstRun } from "./shell/firstRun.js";
+import { firstRun, welcomeTour } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
 import { markFreshPage } from "./shell/freshPage.js";
 import { hiddenRoute } from "./shell/hiddenRoute.js";
-import { fallbackHomePage, homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
+import { fallbackHomePage, homeTarget, meetingDetectPref, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
 // BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
+// BSD-595: Chat, Agenten-Home und Hauptagent sind eigene Chunks – geladen erst, wenn AI an ist (auf der Beta nie).
+const ChatDock = lazy(() => import("./chat/ChatDock.js").then((m) => ({ default: m.ChatDock })));
+const ChatPage = lazy(() => import("./chat/ChatDock.js").then((m) => ({ default: m.ChatPage })));
+const Home = lazy(() => import("./screens/Home.js").then((m) => ({ default: m.Home })));
 const AgentDetailScreen = lazy(() => import("./home/AgentDetail.js").then((m) => ({ default: m.AgentDetailScreen })));
 const ProjectDetailScreen = lazy(() => import("./home/ProjectDetail.js").then((m) => ({ default: m.ProjectDetailScreen })));
 const Meetings = lazy(() => import("./screens/Meetings.js").then((m) => ({ default: m.Meetings })));
@@ -55,6 +58,7 @@ const Trash = lazy(() => import("./screens/Trash.js").then((m) => ({ default: m.
 const TasksScreen = lazy(() => import("./tasks/TasksScreen.js").then((m) => ({ default: m.TasksScreen })));
 // BSD-275: Willkommensbildschirm nur beim ersten Start
 const Welcome = lazy(() => import("./screens/Welcome.js").then((m) => ({ default: m.Welcome })));
+const WelcomeTourScreen = lazy(() => import("./screens/WelcomeTour.js").then((m) => ({ default: m.WelcomeTourScreen })));
 const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
 /** Mitgelieferte Schriften nur laden, wenn Font = Based sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
@@ -81,6 +85,8 @@ export function App({ client, history }: { client: StoreClient; history: History
   const pick = useSyncExternalStore(pagePick.subscribe, pagePick.get);
   const [recent, setRecent] = useState<RecentEntry[]>(recentPages.get);
   const welcome = useSyncExternalStore(firstRun.subscribe, firstRun.get);
+  // BSD-551: Einstieg erneut (Hilfe → Show Welcome Tour, ⌘K); schließt, sobald man woandershin geht.
+  const tourOpen = useSyncExternalStore(welcomeTour.subscribe, welcomeTour.get);
 
   useEffect(() => {
     applyAppearance(appearance);
@@ -94,12 +100,20 @@ export function App({ client, history }: { client: StoreClient; history: History
   // Hauptagent: offene Aufträge fortsetzen, Unteragenten und Zeitpläne (solange die App offen ist und AI an ist)
   useEffect(() => {
     if (!state.ready || !ai) return;
-    const rt = tasksRuntime(client);
-    rt.start();
-    return () => rt.stop();
+    // BSD-595: Chat-Code vorab laden, damit „Ask AI“ und Autofill sofort wissen, ob ein Modell eingerichtet ist.
+    void loadChatRuntime();
+    let stop: (() => void) | undefined, gone = false;
+    void import("./tasks/runtime.js").then(({ tasksRuntime }) => {
+      if (gone) return;
+      const rt = tasksRuntime(client);
+      rt.start();
+      stop = () => rt.stop();
+    });
+    return () => { gone = true; stop?.(); };
   }, [state.ready, client, ai]);
   useEffect(() => {
     if (route.name === "page") recentPages.touch(route.id);
+    welcomeTour.close();
   }, [route]);
 
   // ⌘-Klick / Mittelklick: in einem neuen Tab im Hintergrund (shell/newTabIntent.ts)
@@ -149,7 +163,8 @@ export function App({ client, history }: { client: StoreClient; history: History
   useEffect(() => installArrowNav(window), []);
   useEffect(() => {
     const commands = installCommands(window);
-    const onCommand = (e: Event) => { commands.run(String((e as CustomEvent).detail)); };
+    // BSD-551: Hilfe → „Show Welcome Tour“ (menu.rs, ohne Taste) kommt über denselben Weg.
+    const onCommand = (e: Event) => { const id = String((e as CustomEvent).detail); if (id === "welcomeTour") welcomeTour.show(); else commands.run(id); };
     window.addEventListener(COMMAND_EVENT, onCommand);
     return () => { window.removeEventListener(COMMAND_EVENT, onCommand); commands.dispose(); };
   }, []);
@@ -189,6 +204,23 @@ export function App({ client, history }: { client: StoreClient; history: History
   const newMeeting = useCallback(async () => {
     const id = await client.command<string | undefined>({ op: "createMeetingPage" });
     if (id) openPage(id);
+  }, [client, openPage]);
+
+  // Feedback 18. 11.: Mac-App – startet eine Meeting-App (Zoom, Teams, Meet …) das Mikrofon, fragt ein kleines Fenster
+  // oben rechts, ob Based transkribieren soll. „Start transcribing“: neues Meeting, Fenster nach vorn, Aufnahme läuft.
+  useEffect(() => {
+    if (!isTauri() || isPageWindow() || !meetingHost()) return;
+    return startMeetingDetection({
+      enabled: () => meetingDetectPref.get(),
+      recording: () => meetingHost()?.getState().recording === true,
+      onStart: () => void (async () => {
+        await bringToFront();
+        const id = await client.command<string | undefined>({ op: "createMeetingPage" });
+        if (!id) return;
+        openPage(id);
+        await meetingHost()?.startOnPage(id);
+      })(),
+    });
   }, [client, openPage]);
 
   const outlineRef = useRef(state.outline);
@@ -317,6 +349,8 @@ export function App({ client, history }: { client: StoreClient; history: History
         <p className="t-desc">{state.error}</p>
       </div></div>
     );
+  } else if (tourOpen) {
+    screen = <WelcomeTourScreen onClose={welcomeTour.close} onNavigate={navigate} />;
   } else if (route.name === "page") {
     screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} focusBlock={route.block} />;
   } else if (route.name === "trash") {
@@ -364,7 +398,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           <span className="swipe-forward"><Icon name="forward" size={18} /></span>
         </div>
       </main>
-      {ai ? <ChatDock client={client} history={history} route={route} /> : null}
+      {ai ? <Suspense fallback={null}><ChatDock client={client} history={history} route={route} /></Suspense> : null}
       <Notice notice={state.notice} onDismiss={client.dismissNotice} />
       <PromptHost />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
@@ -383,6 +417,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           else if (id === "dashboard") navigate({ name: "home" });
           else if (id === "report") void startReport();
           else if (id === "shortcuts") setSheet(true);
+          else if (id === "welcomeTour") welcomeTour.show();
           else if (id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
         }} /> : null}
     </div>

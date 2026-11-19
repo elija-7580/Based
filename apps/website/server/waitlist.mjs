@@ -19,8 +19,9 @@
 import { createServer } from "node:http";
 import { DatabaseSync } from "node:sqlite";
 import { createReadStream, mkdirSync, readFileSync, statSync } from "node:fs";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const DB_PATH = process.env.WAITLIST_DB || "./data/waitlist.sqlite";
 // PORT=0: a free port from the system (tests); empty or missing: 8790
@@ -35,6 +36,9 @@ const SITE = (process.env.INVITE_BASE || "https://basednotes.app").replace(/\/$/
 const INVITE_DAYS = 30;
 const INVITE_MAX = 5;
 const INVITE_KEEP_DAYS = 30; // purge removes invites this long after they expired
+// BSD-557: a resumed download (Range) is free only this long after the last counted one; later it counts as a new
+// download. Without the window a used link could be fetched endlessly with "Range: bytes=1-".
+const RESUME_HOURS = 6;
 
 mkdirSync(dirname(DB_PATH), { recursive: true });
 const db = new DatabaseSync(DB_PATH);
@@ -68,6 +72,11 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS invites_email ON invites (email);
 `);
+// BSD-557: when the link last started a counted download (resumes are only free shortly after). Added later:
+// databases from before get the column here.
+if (!db.prepare("PRAGMA table_info(invites)").all().some((c) => c.name === "last_download_at")) {
+  db.exec("ALTER TABLE invites ADD COLUMN last_download_at TEXT");
+}
 
 // The text shown next to the form when someone signs up; stored with each entry as proof of consent.
 const CONSENT = "basednotes.app 2026-11: We only use your email to tell you when the beta opens. Unsubscribe any time.";
@@ -205,7 +214,7 @@ const addIdea = db.prepare("INSERT INTO ideas (text, area, created_at) VALUES (?
 const TOKEN = /^[A-Za-z0-9_-]{20,64}$/;
 const findInvite = db.prepare("SELECT * FROM invites WHERE token = ?");
 // Counted in one statement, so two parallel requests can't both take the last download.
-const countDownload = db.prepare("UPDATE invites SET downloads = downloads + 1 WHERE token = ? AND revoked_at IS NULL AND expires_at > ? AND downloads < max_downloads");
+const countDownload = db.prepare("UPDATE invites SET downloads = downloads + 1, last_download_at = ? WHERE token = ? AND revoked_at IS NULL AND expires_at > ? AND downloads < max_downloads");
 
 // Browsers open this link directly, so refusals are a short page, not JSON.
 function refuse(res, status, text) {
@@ -228,12 +237,14 @@ function download(req, res, url, ip) {
   let size;
   try { size = statSync(file).size; } catch { return refuse(res, 503, "The beta build is not available right now. Please try again in a few minutes."); }
 
-  // A resumed download (Range from a later byte) continues one that was already counted and is not counted again.
+  // A resumed download (Range from a later byte) continues one that was already counted and is not counted again –
+  // but only within RESUME_HOURS of that download (BSD-557); a later Range request is a new download.
   const range = /^bytes=(\d+)-$/.exec(String(req.headers.range || ""));
   const start = range ? Number(range[1]) : 0;
-  const resume = start > 0 && start < size && row.downloads > 0;
+  const recent = row.last_download_at && Date.now() - Date.parse(row.last_download_at) < RESUME_HOURS * 3600000;
+  const resume = start > 0 && start < size && row.downloads > 0 && Boolean(recent);
   if (!resume && st === "used up") return refuse(res, 403, `This link has been used ${row.max_downloads} times. Write to us if you need it again.`);
-  if (!resume && req.method === "GET" && countDownload.run(token, now()).changes !== 1) {
+  if (!resume && req.method === "GET" && countDownload.run(now(), token, now()).changes !== 1) {
     return refuse(res, 403, "This download link can't be used any more.");
   }
 
@@ -290,3 +301,25 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, () => console.log(`waitlist service on :${server.address().port}, db ${DB_PATH}`));
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { server.close(); db.close(); process.exit(0); });
+
+// Reload on update (WAITLIST_RELOAD=1, set in deploy/website): the server pulls main every 10 minutes but doesn't
+// restart this service. When this file has changed and stayed the same for one more check, the service stops cleanly
+// and Docker starts it again with the new code (restart: unless-stopped). Running downloads get up to 10 minutes to
+// finish; an interrupted one can be resumed (BSD-557).
+if (process.env.WAITLIST_RELOAD === "1") {
+  const self = fileURLToPath(import.meta.url);
+  const every = Number(process.env.WAITLIST_RELOAD_MS) || 60_000;
+  const hash = () => { try { return createHash("sha256").update(readFileSync(self)).digest("hex"); } catch { return undefined; } };
+  const running = hash();
+  let seen;
+  const timer = setInterval(() => {
+    const h = hash();
+    if (h === undefined || h === running) { seen = undefined; return; }
+    if (h !== seen) { seen = h; return; } // still being written (git checkout): wait for one more check
+    clearInterval(timer);
+    console.log("waitlist.mjs changed - restarting with the new code");
+    server.close(() => { db.close(); process.exit(0); });
+    server.closeIdleConnections();
+    setTimeout(() => { db.close(); process.exit(0); }, 10 * 60_000).unref();
+  }, every);
+}

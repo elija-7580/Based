@@ -8,7 +8,8 @@
 // - Frontmatter (YAML) bleibt erhalten: als „Properties“-Codeblock (yaml) oben auf der Seite – Seiten außerhalb von
 //   Datenbanken haben in Based keine Properties.
 // - %%Kommentare%% und ^Block-IDs fallen weg; Callouts (> [!note]) liest der Markdown-Parser.
-// - .obsidian/, .trash/, Punkt-Dateien und .canvas werden übersprungen (Canvas mit Hinweis).
+// - .obsidian/, .trash/ und Punkt-Dateien werden übersprungen.
+// - BSD-566: Obsidian Canvas (.canvas) und Excalidraw-Zeichnungen (….excalidraw.md, .excalidraw) werden Boards.
 import type { BlockProps, WireRecord } from "../model/records.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { AssetRejected, emptyReport, importAssetFrom, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportReport } from "./builder.js";
@@ -18,6 +19,9 @@ import { MarkdownImporter, type MarkdownBlock } from "./markdown.js";
 import { PLAIN, toRichText } from "./runs.js";
 import { ImportCancelled } from "./zip.js";
 import { bundleTitle, highlightToMark, isBearExport, isBundleDir, isNoteFile } from "./bear.js";
+import { canvasToBoard, excalidrawToBoard, isExcalidrawMarkdown, readExcalidraw, type BoardImportContext } from "./board-import.js";
+import { boardObjectToBlock, BOARD_FORMAT } from "../whiteboard/records.js";
+import type { WBObject } from "../whiteboard/model.js";
 import { isLogseqGraph, logseqBlockIDs, logseqSkip, logseqTitle, logseqToMarkdown } from "./logseq.js";
 
 export interface ObsidianImportOptions {
@@ -26,6 +30,10 @@ export interface ObsidianImportOptions {
   userID?: string | null | undefined;
   isCancelled?: (() => boolean) | undefined;
   progress?: ((fraction: number) => void) | undefined;
+  /** Bezeichnung im Bericht, wenn der Baum aus einer anderen App übersetzt wurde („Roam Research graph“). */
+  label?: string | undefined;
+  /** Seitentitel je Datei (Pfad relativ zum Vault), wo der Dateiname den Titel nicht tragen kann. */
+  titles?: Map<string, string> | undefined;
 }
 
 const IMAGE = new Set(["png", "jpg", "jpeg", "gif", "webp", "avif", "bmp", "svg", "heic"]);
@@ -113,6 +121,31 @@ function outsideCode(line: string, f: (s: string) => string): string {
   return parts.map((p, i) => (i % 2 === 1 ? p : f(p))).join("");
 }
 
+/**
+ * Eingebettete Dateien stehen nach `rewriteLinks` auf eigenen Zeilen (ein Bild ist ein eigener Block). In einem
+ * Listenpunkt oder eingerückten Text zerriss das die Liste: leerer Punkt, Bild auf oberster Ebene. Hier bekommen die
+ * Zeilen ihre Einrückung zurück – ein Punkt, der nur aus der Datei besteht, wird die Datei an seiner Stelle; Text mit
+ * Datei behält den Punkt, die Datei folgt als Kind.
+ */
+function placeEmbeds(line: string): string[] {
+  if (!line.includes("\n")) return [line];
+  const parts = line.split("\n");
+  const first = parts[0]!;
+  const m = /^(\s*)((?:[-*+]|\d+[.)])\s+(?:\[[^\]]\]\s+)?)?(.*)$/.exec(first)!;
+  const indent = m[1]!, marker = m[2] ?? "", head = m[3]!;
+  if (indent === "" && marker === "") return parts;
+  const rest = parts.slice(1).map((l) => l.trim()).filter((l) => l !== "");
+  const out: string[] = [];
+  if (head.trim() !== "") {
+    out.push(indent + marker + head);
+    const child = indent + (marker === "" ? "" : "    ");
+    for (const r of rest) out.push(child + r);
+  } else {
+    for (const r of rest) out.push(indent + r);
+  }
+  return out;
+}
+
 export class ObsidianImporter {
   private records: WireRecord[] = [];
   private report = emptyReport();
@@ -153,13 +186,35 @@ export class ObsidianImporter {
   }
 
   private title(p: string): string {
+    const given = this.opts.titles?.get(this.rel(p));
+    if (given !== undefined) return given;
     if (isBundleDir(dirname(p))) return bundleTitle(p);
+    if (this.isBoardFile(p)) return basename(stripExtension(p)).replace(/\.excalidraw$/i, "");
     return this.logseq ? logseqTitle(this.rel(p)) : basename(stripExtension(p));
   }
 
   private skipped(p: string): boolean {
     const rel = this.rel(p);
     return hidden(rel) || (this.logseq && logseqSkip(rel));
+  }
+
+  /** Excalidraw-Zeichnung des Obsidian-Plugins („….excalidraw.md“ bzw. Frontmatter `excalidraw-plugin`): der Inhalt
+   *  ist gepacktes JSON – als Seite wäre das Zeichensalat. Wird ein Board (BSD-566). */
+  private drawings = new Map<string, boolean>();
+  private isDrawing(p: string): boolean {
+    if (extname(p).toLowerCase() !== "md") return false;
+    let d = this.drawings.get(p);
+    if (d === undefined) {
+      d = isExcalidrawMarkdown(p, (this.files.readText(p) ?? "").slice(0, 600));
+      this.drawings.set(p, d);
+    }
+    return d;
+  }
+
+  /** Wird die Datei ein Board? (Canvas, Excalidraw-Datei oder -Notiz; BSD-566) */
+  private isBoardFile(p: string): boolean {
+    const ext = extname(p).toLowerCase();
+    return ext === "canvas" || ext === "excalidraw" || this.isDrawing(p);
   }
 
   private rel(p: string): string {
@@ -170,7 +225,12 @@ export class ObsidianImporter {
     const all = this.files.walk(this.vault).filter((p) => !this.skipped(p));
     for (const p of all) {
       const ext = extname(p).toLowerCase();
-      if (ext === "md" || isNoteFile(p)) {
+      if (ext === "canvas" || ext === "excalidraw") {
+        // Boards: verlinkt werden sie mit Endung ([[Board.canvas]]).
+        this.ids.set(p, makeRecordID());
+        const n = basename(p).toLowerCase();
+        this.byName.set(n, [...(this.byName.get(n) ?? []), p]);
+      } else if (ext === "md" || isNoteFile(p)) {
         const id = makeRecordID();
         this.ids.set(p, id);
         this.byPath.set(stripExtension(this.rel(isBundleDir(dirname(p)) ? dirname(p) : p)).toLowerCase(), p);
@@ -248,7 +308,8 @@ export class ObsidianImporter {
       }
       if (inComment && line.trim() === "") continue;
       line = line.replace(/\s+\^[A-Za-z0-9-]+\s*$/, "");
-      out.push(outsideCode(line, (s) => highlightToMark(this.rewriteLinks(s, from), this.bear)));
+      const rewritten = outsideCode(line, (s) => highlightToMark(this.rewriteLinks(s, from), this.bear));
+      out.push(...placeEmbeds(rewritten));
     }
     return out.join("\n");
   }
@@ -330,6 +391,7 @@ export class ObsidianImporter {
   /** Notiz als Seite; `extra` = Kinder nach dem Inhalt (Ordner-Inhalt bei Folder Notes). */
   private note(p: string, parent: string, sk: string, id: string = this.ids.get(p) ?? makeRecordID(), children?: () => void): string {
     if (this.opts.isCancelled?.()) throw new ImportCancelled();
+    if (this.isBoardFile(p)) { this.board(p, parent, sk, id); children?.(); return id; }
     const raw = this.text(p);
     const { yaml, body: afterYaml } = splitFrontmatter(raw);
     const title = this.title(p);
@@ -352,6 +414,44 @@ export class ObsidianImporter {
     return id;
   }
 
+  /** BSD-566: Canvas bzw. Excalidraw-Zeichnung als Board-Seite; Karten für Notizen verweisen auf deren Seiten. */
+  private board(p: string, parent: string, sk: string, id: string) {
+    const title = this.title(p);
+    const label = this.rel(p);
+    const ctx: BoardImportContext = {
+      newID: () => makeRecordID(),
+      warn: (m) => this.warn(m),
+      page: (target) => {
+        const direct = normalizePath(joinPath(this.vault, target));
+        const note = this.ids.has(direct) ? direct : this.resolveNote(target, p);
+        const pid = note ? this.ids.get(note) : undefined;
+        return note && pid ? { id: pid, title: this.title(note) } : undefined;
+      },
+      file: (target) => {
+        const f = this.resolveFile(target, p);
+        const a = f ? this.asset(f).asset : undefined;
+        return f && a ? { ref: "based-asset:" + a.id, name: a.name, mime: a.mime ?? mimeFor(extname(f)) ?? "application/octet-stream", size: a.size ?? this.files.size(f) ?? 0 } : undefined;
+      },
+    };
+    let objs: WBObject[] = [];
+    try {
+      const text = this.files.readText(p) ?? "";
+      objs = extname(p).toLowerCase() === "canvas" ? canvasToBoard(text, ctx, label) : excalidrawToBoard(readExcalidraw(text), ctx, label);
+    } catch {
+      this.warn(`Couldn't read the drawing in ${label} – imported as an empty board`);
+    }
+    const now = this.now();
+    this.put({ kind: "block", data: makeBlock({ id, type: "page", parent, sk, text: title, props: { board: { v: BOARD_FORMAT } } as BlockProps, createdBy: this.userID }, now) });
+    this.report.pages += 1;
+    const byID = new Map(objs.map((o) => [o.id, o]));
+    for (const o of objs) {
+      const b = boardObjectToBlock(o, id, now, undefined, byID);
+      this.put({ kind: "block", data: makeBlock({ id: b.id, type: b.type, parent: b.parent, sk: b.sk, ...(b.text !== undefined ? { text: b.text } : {}), ...(b.props ? { props: b.props } : {}), createdBy: this.userID }, now) });
+    }
+    this.done += 1;
+    this.opts.progress?.(Math.min(1, this.done / this.total));
+  }
+
   /** Ordner als Seite: Unterordner und Notizen (Ordner zuerst, dann Notizen, je nach Name). */
   private folder(dir: string, parent: string, sk: string, title: string): string {
     const entries = this.files.list(dir).filter((p) => !this.skipped(p) && !(dir === this.vault && basename(p) === ".obsidian"));
@@ -360,11 +460,10 @@ export class ObsidianImporter {
       const dirs = entries.filter((p) => this.files.isDirectory(p) && !this.files.isFile(p) && !isBundleDir(p)).sort((a, b) => comparePaths(basename(a), basename(b)));
       // BSD-260 Teil 9: ein TextBundle ist eine Notiz (ihr Text), kein Ordner
       const bundles = entries.filter((p) => isBundleDir(p) && this.files.isDirectory(p)).map((d) => this.files.list(d).find((f) => isNoteFile(f) && dirname(f) === d)).filter((f): f is string => f !== undefined);
-      const notes = [...entries.filter((p) => this.files.isFile(p) && extname(p).toLowerCase() === "md" && p !== folderNote), ...bundles].sort((a, b) => comparePaths(this.title(a), this.title(b)));
-      for (const c of entries) if (this.files.isFile(c) && extname(c).toLowerCase() === "canvas") this.warn(`Skipped ${this.rel(c)} (Obsidian Canvas isn't supported yet)`);
+      const notes = [...entries.filter((p) => this.files.isFile(p) && (extname(p).toLowerCase() === "md" || this.isBoardFile(p)) && p !== folderNote), ...bundles].sort((a, b) => comparePaths(this.title(a), this.title(b)));
       let k = startAfter;
       for (const d of dirs) {
-        if (!this.files.walk(d).some((f) => !this.skipped(f) && isNoteFile(f))) continue; // reine Anhang-Ordner
+        if (!this.files.walk(d).some((f) => !this.skipped(f) && (isNoteFile(f) || this.isBoardFile(f)))) continue; // reine Anhang-Ordner
         k = keyBetween(k, undefined);
         // Logseq: die Ordner pages/ und journals/ als „Pages“ und „Journals“
         const name = basename(d);
@@ -398,7 +497,7 @@ export class ObsidianImporter {
     const title = rootTitle ?? (this.vault === "" ? "Obsidian vault" : basename(this.vault));
     const id = this.folder(this.vault, "w", key, title);
     this.report.rootIDs.push(id);
-    this.report.warnings.unshift(`Obsidian vault “${title}”: ${this.ids.size} notes`);
+    if (this.opts.label === undefined) this.report.warnings.unshift(`${this.logseq ? "Logseq graph" : this.bear ? "Bear export" : "Obsidian vault"} “${title}”: ${this.ids.size} notes`);
     this.opts.progress?.(1);
     return { records: this.records, rootKeys: [key], report: this.report };
   }

@@ -1,6 +1,7 @@
 // Berechnete Werte (Formeln, Filter, Sortierung), portiert aus BasedCore Query/Value.swift und den
 // Datums-/Zahlen-Helfern (NumberFormatting, DateDisplay, DateParsing in Store/DatabaseOps.swift).
 // Datum wie in Swift: Sekunden seit 2001-01-01; Kalenderrechnung in der lokalen Zeitzone (wie Calendar.current).
+import { resolveDate, stampDay } from "../model/calendar-day.js";
 import { SWIFT_REFERENCE_DATE_UNIX_MS } from "../json.js";
 
 export interface DateValue {
@@ -8,6 +9,10 @@ export interface DateValue {
   end?: number;
   includeTime: boolean;
   remind?: boolean;
+  /** BSD-578: Kalendertag eines Datums ohne Uhrzeit („2026-11-18“) – gilt in jeder Zeitzone (model/calendar-day.ts). */
+  day?: string;
+  /** Kalendertag des Endes eines Bereichs ohne Uhrzeit. */
+  endDay?: string;
 }
 
 export type Value =
@@ -296,6 +301,7 @@ export function formatICU(swiftSeconds: number, pattern: string): string {
 
 /** Notions Standardanzeige „May 4, 2025 3:15 PM“ (Swift `DateDisplay.long`). */
 export function longDate(dv: DateValue): string {
+  dv = resolveDate(dv);
   let s = formatICU(dv.start, dv.includeTime ? "MMMM d, yyyy h:mm a" : "MMMM d, yyyy");
   if (dv.end !== undefined) {
     const sameDay = isSameDay(dv.start, dv.end);
@@ -404,7 +410,8 @@ const PARSERS: Parser[] = [
 
 /** ISO-Daten, Notion-Exportdaten („May 4, 2024 3:15 PM“) und Bereiche („A → B“). */
 export function parseDate(raw: string): DateValue | undefined {
-  const s = raw.trim();
+  // Notion hängt bei Zeiten mit fester Zeitzone „(GMT+1)“, „(UTC)“ oder „(EST)“ an – die Angabe zählt nicht zum Datum.
+  const s = raw.trim().replace(/\s*\((?:GMT|UTC)?(?:[+-]\d{1,2}(?::\d{2})?)?\)$|\s*\([A-Z]{2,5}\)$/, "");
   if (!s) return undefined;
   for (const sep of [" → ", " -> "]) {
     if (!s.includes(sep)) continue;
@@ -415,13 +422,14 @@ export function parseDate(raw: string): DateValue | undefined {
         const b = parseDate(parts[1]!);
         const out: DateValue = { start: a.start, includeTime: a.includeTime };
         if (b) out.end = b.start;
-        return out;
+        return out.includeTime ? out : stampDay(out);
       }
     }
   }
   for (const p of PARSERS) {
     const r = p(s);
-    if (r) return { start: r.start, includeTime: r.time };
+    // BSD-578: ohne Uhrzeit ist es ein Kalendertag – der Tag steht mit im Wert
+    if (r) return r.time ? { start: r.start, includeTime: true } : stampDay({ start: r.start, includeTime: false });
   }
   return undefined;
 }

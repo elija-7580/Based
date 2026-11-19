@@ -272,3 +272,15 @@ describe("Prüfer und Probelauf", () => {
     expect(sameJSON({ a: null }, { a: 0 })).toBe(false);
   });
 });
+
+describe("BSD-583: Felder späterer Builds an Property-Records", () => {
+  it("bleiben beim Ändern (Umbenennen) erhalten; neue Properties bekommen keine", () => {
+    const { properties: records } = split(db([prop("a"), prop("b")]));
+    const future = records.map((r) => ({ ...r, scope: "private", level: 2 }) as PropertyRecord);
+    const d = diffProperties("db1", future, [{ id: "title", name: "Name", type: "title" }, prop("a", "Renamed"), prop("b"), prop("c")], stamp(300));
+    const byID = new Map(d.upserts.map((u) => [u.id, u as PropertyRecord & { scope?: string; level?: number }]));
+    expect(byID.get(propertyRecordID("db1", "a"))).toMatchObject({ scope: "private", level: 2, schema: { name: "Renamed" }, stamp: stamp(300) });
+    expect(byID.get(propertyRecordID("db1", "c"))?.scope).toBeUndefined();
+    expect(byID.has(propertyRecordID("db1", "b"))).toBe(false);
+  });
+});

@@ -15,6 +15,11 @@ body {
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
+/* BSD-562: Schibsted Grotesk (Font „Based“) tauscht mit Tabellenziffern auch Komma und Punkt gegen Varianten in
+   Ziffernbreite – im Fließtext stand dann eine Lücke vor jedem Satzzeichen („Theme , font“). Dort also normale
+   Ziffern; Zeit und Anzahl (`t-meta`) und Stellen mit eigener Regel behalten die Tabellenziffern. */
+[data-typeface="based"] body { font-variant-numeric: normal; }
+[data-typeface="based"] .t-meta { font-variant-numeric: tabular-nums; }
 /* Element-Grundregeln im untersten Layer (`reset`, derselbe wie Astryx' reset.css): Based-Klassen (ohne Layer)
    gewinnen weiterhin, aber Astryx-Komponenten behalten ihre eigene Schrift-, Text- und Fokusfarbe. */
 @layer reset {
@@ -722,6 +727,14 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .import-source:hover { background: var(--selected); }
 .import-source .grow { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; }
 .import-source-arrow { color: var(--muted); }
+/* BSD-567: Quellen als Liste – je App eine Zeile mit dem Weg zum Export. Rollt selbst, damit die Knöpfe sichtbar bleiben. */
+.import-sources {
+  margin: 0; display: flex; flex-direction: column; max-height: 32vh; overflow-y: auto;
+  background: var(--surface-raised); border-radius: var(--radius-xl); padding: var(--space-1) var(--space-3);
+}
+.import-sources-row { display: flex; flex-direction: column; gap: 0; padding: var(--space-2) 0; }
+.import-sources dt { font-size: var(--type-ui-size); font-weight: var(--type-label-weight); color: var(--ink); }
+.import-sources dd { margin: 0; }
 .notion-import { display: flex; flex-direction: column; gap: var(--space-3); }
 .dialog:has(.notion-import) { width: min(600px, 92vw); max-height: 86vh; }
 .notion-import > p { margin: 0; }

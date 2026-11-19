@@ -349,6 +349,59 @@ test("download (BSD-553): token checked, DMG served, counted, max. 5, revoke and
   assert.equal(invitesCsv(dir).length, 2);
 });
 
+test("download (BSD-557): a Range request is a free resume only shortly after a counted download", async () => {
+  const dir = betaDir();
+  const token = tokenOf(cli(dir, "invite", "r@example.org"));
+  const setRow = (downloads, hoursAgo) => {
+    const db = new DatabaseSync(join(dir, "w.sqlite"));
+    db.exec("PRAGMA busy_timeout = 5000");
+    db.prepare("UPDATE invites SET downloads = ?, last_download_at = ? WHERE token = ?").run(downloads, new Date(Date.now() - hoursAgo * 3600000).toISOString(), token);
+    db.close();
+  };
+  const row = () => invitesCsv(dir).find((r) => r.includes(token));
+  await withServer(async (_post, _dir, get) => {
+    const range = { headers: { range: "bytes=1-" } };
+    assert.equal((await get("/api/download?i=" + token)).status, 200);
+    assert.match(row(), /"active","1","5"/);
+    let res = await get("/api/download?i=" + token, range);
+    assert.equal(res.status, 206, "resume right after the download");
+    await res.arrayBuffer();
+    assert.match(row(), /"active","1","5"/, "not counted");
+
+    // hours later the same Range request is a new download: counted, whole file
+    setRow(1, 7);
+    res = await get("/api/download?i=" + token, range);
+    assert.equal(res.status, 200);
+    assert.ok(Buffer.from(await res.arrayBuffer()).equals(DMG));
+    assert.match(row(), /"active","2","5"/);
+
+    // used up: no endless downloads via Range …
+    setRow(5, 7);
+    res = await get("/api/download?i=" + token, range);
+    assert.equal(res.status, 403);
+    assert.match(await res.text(), /used 5 times/);
+    // … but the last download may still be resumed right after it
+    setRow(5, 0.1);
+    res = await get("/api/download?i=" + token, range);
+    assert.equal(res.status, 206);
+    assert.ok(Buffer.from(await res.arrayBuffer()).equals(DMG.subarray(1)));
+    assert.match(row(), /"used up","5","5"/);
+  }, {}, dir);
+});
+
+test("download (BSD-557): a database from before gets last_download_at, invites stay", () => {
+  const dir = betaDir();
+  const db = new DatabaseSync(join(dir, "w.sqlite"));
+  db.exec(`CREATE TABLE invites (token TEXT PRIMARY KEY, email TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL,
+    downloads INTEGER NOT NULL DEFAULT 0, max_downloads INTEGER NOT NULL DEFAULT 5, revoked_at TEXT)`);
+  db.prepare("INSERT INTO invites VALUES (?, ?, ?, ?, 2, 5, NULL)").run("o".repeat(43), "old@example.org", new Date().toISOString(), new Date(Date.now() + 86400000).toISOString());
+  db.close();
+  assert.match(invitesCsv(dir)[0], /"old@example\.org","active","2","5"/);
+  const after = new DatabaseSync(join(dir, "w.sqlite"));
+  assert.ok(after.prepare("PRAGMA table_info(invites)").all().some((c) => c.name === "last_download_at"));
+  after.close();
+});
+
 test("download (BSD-553): no build on the server yet → 503, nothing counted", async () => {
   const dir = mkdtempSync(join(tmpdir(), "based-dl-"));
   const token = tokenOf(cli(dir, "invite", "t@example.org"));
@@ -378,5 +431,43 @@ test("beta workflow (BSD-553): DMG via rsync to the server, public only without 
     const c = readFileSync(join(repo, "deploy", "website", f), "utf8");
     assert.match(c, /BETA_DIR: \/beta/, f);
     assert.match(c, /based-beta\}?:\/beta:ro/, f);
+  }
+});
+
+test("waitlist: with WAITLIST_RELOAD=1 the service stops cleanly once its file has changed (Docker restarts it)", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "based-wl-reload-"));
+  const copy = join(dir, "waitlist.mjs");
+  writeFileSync(copy, readFileSync(join(ROOT, "server", "waitlist.mjs")));
+  const child = spawn(process.execPath, ["--no-warnings", copy], {
+    env: { ...process.env, PORT: "0", WAITLIST_DB: join(dir, "w.sqlite"), WAITLIST_RELOAD: "1", WAITLIST_RELOAD_MS: "100" },
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  let out = "";
+  child.stdout.on("data", (d) => { out += d; });
+  const exited = new Promise((resolve) => child.once("exit", (code) => resolve(code)));
+  try {
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error("no start")), 10_000);
+      child.stdout.on("data", () => { if (/waitlist service on/.test(out)) { clearTimeout(t); resolve(); } });
+    });
+    // Unchanged: keeps running.
+    await new Promise((r) => setTimeout(r, 400));
+    assert.equal(child.exitCode, null);
+    writeFileSync(copy, readFileSync(copy, "utf8") + "\n// new version\n");
+    const code = await Promise.race([exited, new Promise((r) => setTimeout(() => r("timeout"), 5000))]);
+    assert.equal(code, 0);
+    assert.match(out, /changed - restarting/);
+  } finally {
+    if (child.exitCode === null) child.kill();
+  }
+});
+
+test("deploy: the service sees new code (folder mounted, reload switched on)", () => {
+  for (const f of ["../../deploy/website/docker-compose.yml", "../../deploy/website/edge/docker-compose.yml"]) {
+    const yml = readFileSync(join(ROOT, f), "utf8");
+    assert.match(yml, /apps\/website\/server:\/app:ro/, f);
+    assert.doesNotMatch(yml, /waitlist\.mjs:\/app\/waitlist\.mjs/, f);
+    assert.match(yml, /WAITLIST_RELOAD: "1"/, f);
+    assert.match(yml, /restart: unless-stopped/, f);
   }
 });

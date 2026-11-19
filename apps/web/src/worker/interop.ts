@@ -2,17 +2,14 @@
 // vorher im Import-Worker (importer.ts); hier landen nur noch Records.
 import {
   archiveAssetRefs,
-  commitPreparedImport,
   exportAssetRefs,
   exportPageHTML,
   exportDocx,
   exportOPML,
   exportPageJSON,
   exportWorkspaceHTML,
-  importArchiveRecords,
   planWorkspaceExport,
   printPageHTML,
-  preparedImportFromWire,
   topLevelPages,
   writeArchive,
   writeArchivePackage,
@@ -22,28 +19,7 @@ import {
   type WorkspaceStore,
 } from "@based/core";
 import { loadAssets, type AssetStore } from "./assets.js";
-import type { ImportPayload } from "./importer.js";
-
-export interface ImportSummary {
-  pages: number;
-  databases: number;
-  rows: number;
-  /** Bilder und Anhänge im Asset-Speicher. */
-  assets: number;
-  /** Records aus Based-Archiven (geschrieben). */
-  archiveRecords: number;
-  /** Archiv-Records, die hier schon neuer waren (bleiben). */
-  keptNewer: number;
-  /** BSD-423: Archiv-Records, die hier gelöscht oder im Papierkorb waren und zurückkamen. */
-  restored?: number;
-  /** Reimport-Schutz: in Based geänderte bzw. hinzugefügte Blöcke, die bleiben. */
-  keptLocalChanges: number;
-  keptLocalAdditions: number;
-  /** Übersprungenes, Fehler, Hinweise. */
-  warnings: string[];
-  /** Neue oberste Seiten (zum Öffnen). */
-  rootIDs: string[];
-}
+export { commitImportPayload, type ImportSummary } from "@based/core";
 
 export type ExportFormat = "markdown" | "html";
 export type WorkspaceExportFormat = ExportFormat | "archive" | "pre-update";
@@ -84,31 +60,6 @@ export interface ExportFile {
   data: Uint8Array;
   /** Kurzer Bericht (fehlende Dateien u. Ä.). */
   summary: string;
-}
-
-/** Vorbereiteten Import schreiben: Notion/Markdown über `commitPreparedImport` (Reimport-Schutz), Archive mit
- * Herkunft „import“ (Stempel bleiben). */
-export function commitImportPayload(store: WorkspaceStore, payload: ImportPayload, parent = "w"): ImportSummary {
-  const s: ImportSummary = { pages: 0, databases: 0, rows: 0, assets: payload.assets ?? 0, archiveRecords: 0, keptNewer: 0, keptLocalChanges: 0, keptLocalAdditions: 0, warnings: [...payload.notes], rootIDs: [] };
-  for (const a of payload.archives) {
-    const r = importArchiveRecords(store, a.read);
-    s.archiveRecords += r.imported;
-    s.keptNewer += r.keptNewer;
-    if (r.restored) s.restored = (s.restored ?? 0) + r.restored;
-    if (r.keptNewer > 0) s.warnings.push(`${a.name}: kept ${r.keptNewer} newer record${r.keptNewer === 1 ? "" : "s"} from this workspace`);
-  }
-  if (payload.notion) {
-    const r = commitPreparedImport(store, preparedImportFromWire(payload.notion), { parent });
-    s.pages += r.pages;
-    s.databases += r.databases;
-    s.rows += r.rows;
-    s.keptLocalChanges += r.keptLocalChanges;
-    s.keptLocalAdditions += r.keptLocalAdditions;
-    s.warnings.push(...r.warnings);
-    s.rootIDs.push(...r.rootIDs.filter((id) => store.blocks.has(id)));
-  }
-  if (store.isReadOnly) throw new Error(store.writeFailure?.message || "The workspace is read-only.");
-  return s;
 }
 
 const enc = new TextEncoder();

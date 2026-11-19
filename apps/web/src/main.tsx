@@ -1,3 +1,4 @@
+import { authorID } from "@based/core";
 import { askUser } from "./shell/prompts.js";
 // BSD-153: Start der Web-Shell. Der Store läuft in einem Dedicated Worker (SQLite-WASM auf OPFS); die UI spricht mit
 // ihm über StoreClient. Mehrere Browser-Tabs: nur ein Tab startet den Worker, die anderen reden über ihn
@@ -13,6 +14,7 @@ import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareF
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
+import { ANY_APP, isPromptWindow } from "./meeting/detect.js";
 import { installBrowserKeep } from "./shell/storagePersist.js";
 import { installSelectAll } from "./shell/selectAll.js";
 import { installWheelLatch } from "./shell/wheelLatch.js";
@@ -39,7 +41,7 @@ import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
 import { bootMark, diagnosticsLog, installDiagnostics, noteActivity } from "./shell/diagnostics.js";
-import { installHangMonitor, noteStoreRequest } from "./shell/hangs.js";
+import { armHangWatch, installHangMonitor, noteStoreRequest } from "./shell/hangs.js";
 import { installUnloadGuard } from "./shell/unloadGuard.js";
 import { exposeReplayHooks, installBugRecorder } from "./shell/bugReport.js";
 
@@ -53,13 +55,17 @@ registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 }
 // BSD-374: Scroll-Gesten bleiben am Bereich, in dem sie begonnen haben (innere Felder fangen sie nicht ab).
 installWheelLatch();
-// BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
-installDiagnostics();
-// BSD-418: Hänger ab 250 ms mit Ursache, Breadcrumbs und Watchdog-Worker (ersetzt den 2-s-Detektor).
-installHangMonitor();
-// BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.
-installBugRecorder();
-exposeReplayHooks();
+// Das Meeting-Fenster (Feedback 18. 11.) bekommt keine eigene Diagnose: es würde die Sitzungs-Marke des Hauptfensters
+// überschreiben, und sein Schließen sähe wie ein Absturz aus.
+if (!isPromptWindow()) {
+  // BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
+  installDiagnostics();
+  // BSD-418: Hänger ab 250 ms mit Ursache, Breadcrumbs und Watchdog-Worker (ersetzt den 2-s-Detektor).
+  installHangMonitor();
+  // BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.
+  installBugRecorder();
+  exposeReplayHooks();
+}
 // Zeit bis hierher = Laden und Auswerten aller Skripte (die Importe oben laufen vor dieser Zeile).
 bootMark("scripts loaded");
 
@@ -71,7 +77,10 @@ applyAppearance(appearanceStore.get());
 interface GuestBoot { id: string; config: GuestConfig; me: GuestMe | undefined; start: string | undefined }
 
 const share = parseShareFragment(location.hash);
-if (share) {
+if (isPromptWindow()) {
+  // Feedback 18. 11.: kleines Fenster „Meeting detected“ – nur dieses, ohne Speicher-Worker und ohne Tabs.
+  void showMeetingPrompt();
+} else if (share) {
   void rememberGuest(secretVault(), share).then(
     (id) => location.replace(`${location.pathname}?guest=${id}`),
     () => location.replace(location.pathname),
@@ -101,6 +110,22 @@ if (share) {
   }
 }
 
+async function showMeetingPrompt() {
+  const root = document.getElementById("root");
+  if (!root) throw new Error("#root fehlt");
+  document.documentElement.classList.add("meeting-prompt-window");
+  const { MeetingPrompt } = await import("./meeting/MeetingPrompt.js");
+  const app = new URLSearchParams(location.search).get("app") ?? ANY_APP;
+  const appearance = appearanceStore.get();
+  createRoot(root).render(
+    <StrictMode>
+      <Theme theme={astryxThemes[appearance.density]} mode={effectiveTheme(appearance)}>
+        <MeetingPrompt app={app} />
+      </Theme>
+    </StrictMode>,
+  );
+}
+
 function showGuestRevoked() {
   const root = document.getElementById("root");
   if (!root) throw new Error("#root fehlt");
@@ -115,14 +140,28 @@ function showGuestRevoked() {
   );
 }
 
-/** BSD-30: Spricht der Server Protokoll 3 (Properties als eigene Records)? Ohne Antwort: nein. */
-async function serverUsesPropertyRecords(url: string): Promise<boolean> {
+/** BSD-30: Spricht der Server Protokoll 3 (Properties als eigene Records)? Ohne Antwort: unbekannt. */
+async function serverUsesPropertyRecords(url: string): Promise<boolean | undefined> {
   try {
     const r = await fetch(`${url.replace(/\/+$/, "")}/health`);
-    return r.ok && ((await r.json()) as { protocol?: unknown }).protocol === 3;
+    if (!r.ok) return undefined;
+    return ((await r.json()) as { protocol?: unknown }).protocol === 3;
   } catch {
-    return false;
+    return undefined;
   }
+}
+
+/**
+ * BSD-569: Format für diesen Start. Eine neue, leere Datei beginnt im neuen Format (entscheidet der Worker, wenn hier
+ * nichts steht). Antwortet der eingestellte Server noch im alten, bleibt auch ein neues Gerät dabei – sonst könnte es
+ * nicht mit ihm syncen. Eine schon umgestellte Datei bleibt in jedem Fall umgestellt.
+ */
+async function propertyRecordsMode(syncURL: string | undefined, wanted: boolean): Promise<{ propertyRecords?: boolean }> {
+  if (wanted) return { propertyRecords: true };
+  if (propertyRecordsSetting.pinnedOld()) return { propertyRecords: false };
+  if (syncURL === undefined) return {};
+  const server = await serverUsesPropertyRecords(syncURL);
+  return server === false ? { propertyRecords: false } : {};
 }
 
 function start(guest: GuestBoot | undefined) {
@@ -143,12 +182,14 @@ function start(guest: GuestBoot | undefined) {
       const sync = await syncConfig.load();
       // BSD-235: ein Gast läuft nur im Speicher (der OPFS-Pool gehört dem Store-Tab des Besitzers) und synct mit dem Link.
       // BSD-30: ein Gast richtet sich nach dem Server (sein Store lebt nur im Speicher und muss dessen Protokoll sprechen)
-      if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync && (await serverUsesPropertyRecords(sync.url)) ? { propertyRecords: true } : {}) };
-      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(propertyRecordsSetting.get() ? { propertyRecords: true } : {}), ...(lazyStoreSetting.get() ? { lazy: true } : {}) };
+      // BSD-579: ein Gast schreibt nie als „me“ (das ist der Besitzer), sondern als Gast mit seinem Namen bzw. Link
+      if (guest) return { userID: authorID({ kind: "guest", name: guest.me?.name || guest.id }), ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync ? { propertyRecords: (await serverUsesPropertyRecords(sync.url)) === true } : {}) };
+      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(await propertyRecordsMode(sync?.url, propertyRecordsSetting.get())), ...(lazyStoreSetting.get() ? { lazy: true } : {}) };
     },
   });
   const client = new StoreClient(link);
   client.onSlowRequest = noteStoreRequest;
+  client.onWorkerMessage = armHangWatch;
   // BSD-235 Teil 3: Widerruf wirkt auch, während der Gast die Seite offen hat (Neuladen zeigt dann den Hinweis).
   const revocation = guest ? watchGuestRevocation(guest.config, () => { diagnosticsLog.add("warning", "guest link revoked while open"); location.reload(); }) : undefined;
   // BSD-227: Wechsel des Sync-/Speicherzustands ins Diagnose-Log (Zustand und Fehlertext, geschwärzt).

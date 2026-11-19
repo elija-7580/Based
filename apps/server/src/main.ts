@@ -4,6 +4,7 @@
 // Konfiguration auch über BASED_TOKEN, BASED_DB, BASED_PORT, BASED_HOST, BASED_NODE, BASED_PUBLIC_URL,
 // BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV, BASED_CHANNEL (beta: Discovery-Datei
 // der Based Beta, BSD-455). Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
+import { AssetStore } from "./assets.js";
 import { readFileSync } from "node:fs";
 import { CodingSessions, DEFAULT_AGENTS, type AcpMcpServer, type AgentDefinition } from "@based/brain";
 import { spawnAgent } from "@based/brain/acp-node";
@@ -17,13 +18,14 @@ import type { WorkspaceStore } from "@based/core";
 import { desktopChannel } from "@based/core";
 import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./sandbox.js";
 import { createLogger, parseLogLevel, type Logger } from "./log.js";
-import { createMcpServer } from "./mcp.js";
+import { createMcpServer, mcpToolList } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { loginShellPath, mergePath, newLocalToken, portInUseMessage, removeLocalDiscovery, replaceStaleLocal, writeLocalDiscovery } from "./local.js";
 import { tailnetAddresses, urlFor } from "./tailnet.js";
 import { SyncService } from "./sync.js";
 import { whisperFromEnv } from "./transcribe.js";
 import { defaultModelsDir } from "./models.js";
+import { BrainIndex, defaultVectorsFile } from "./brain-index.js";
 
 export interface Options {
   db: string;
@@ -265,7 +267,15 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   if (opts.stdio) {
     // stdio ist lokal (der Client startet den Prozess): kein Token nötig. stdout gehört dem Protokoll.
     const sync = new SyncService(openNodeDatabase(opts.db), { node: opts.node });
-    const server = createMcpServer(new Pages(sync.store));
+    // Dateien wie beim HTTP-Server neben der Datenbank (oder --assets): Agenten wählen Dateien aus und laden welche
+    // hoch; lokale Pfade sind erlaubt, weil der Client auf diesem Rechner läuft.
+    const persistent = opts.db !== ":memory:";
+    const assets = persistent || opts.assetsDir ? new AssetStore(opts.assetsDir ?? opts.db.replace(/(\.sqlite)?$/, ".assets"), opts.maxAssetMB !== undefined ? { maxBytes: Math.round(opts.maxAssetMB * 1048576) } : {}) : undefined;
+    const pages = new Pages(sync.store);
+    // BSD-541: liegt das Embedding-Modell schon neben der Datenbank, sucht `recall` auch über stdio nach Bedeutung.
+    const brain = new BrainIndex({ store: sync.store, pages, log, modelsDir: defaultModelsDir(opts.db), indexFile: defaultVectorsFile(opts.db) });
+    void brain.start();
+    const server = createMcpServer(pages, { assets, localFiles: true, toolList: mcpToolList(process.env.BASED_MCP_TOOLS) });
     await server.connect(new StdioServerTransport());
     log.info("mcp on stdio", { db: opts.db });
     return;
@@ -289,6 +299,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).
     ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL || undefined, lowModel: process.env.BASED_AGENT_LOW_MODEL || undefined }) } : {}),
     ...(whisperFromEnv(process.env, { local: opts.local }) ? { whisper: { ...whisperFromEnv(process.env, { local: opts.local })!, ...(defaultModelsDir(opts.db) ? { modelsDir: defaultModelsDir(opts.db)! } : {}) } } : {}),
+    brain: { modelsDir: defaultModelsDir(opts.db), indexFile: defaultVectorsFile(opts.db), ...(process.env.BASED_EMBED_THREADS ? { threads: Number(process.env.BASED_EMBED_THREADS) || 1 } : {}) },
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.backupDir ? { backupDir: opts.backupDir, backupCreate: opts.backupCreate } : {}),
     // BSD-334: Gerätekennung im Ordner – ohne Angabe der Knotenname (nur erlaubte Zeichen)

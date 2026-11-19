@@ -582,3 +582,205 @@ test("Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenst
     }
   }
 });
+
+// BSD-562: Mit Font „Based“ (Schibsted Grotesk) machten die globalen Tabellenziffern auch Komma und Punkt so breit wie
+// eine Ziffer – im Fließtext stand eine Lücke vor jedem Satzzeichen. Im Fließtext ist das Komma deutlich schmaler als
+// in `t-meta` (Tabellenziffern, Komma so breit wie eine Ziffer).
+test("Font „Based“: Komma und Punkt im Fließtext ohne Lücke, Zeiten behalten Tabellenziffern", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light", font: "based" })));
+  await page.goto("/#prefs-appearance");
+  await expect(page.getByTestId("settings-page")).toBeVisible();
+  const widths = await page.evaluate(async () => {
+    await document.fonts.load("450 13px 'Schibsted Grotesk'");
+    await document.fonts.ready;
+    const measure = (cls: string) => {
+      const el = document.createElement("span");
+      el.className = cls;
+      el.textContent = "0,.";
+      document.querySelector("[data-testid=settings-page]")!.appendChild(el);
+      const w = (i: number) => { const r = document.createRange(); r.setStart(el.firstChild!, i); r.setEnd(el.firstChild!, i + 1); return r.getBoundingClientRect().width; };
+      const out = { zero: w(0), comma: w(1), period: w(2), font: getComputedStyle(el).fontFamily };
+      el.remove();
+      return out;
+    };
+    return { desc: measure("t-desc"), meta: measure("t-meta") };
+  });
+  expect(widths.desc.font).toContain("Schibsted Grotesk");
+  expect(widths.meta.comma, JSON.stringify(widths)).toBeGreaterThanOrEqual(widths.meta.zero);
+  expect(widths.desc.comma, JSON.stringify(widths)).toBeLessThan(widths.meta.comma * 0.7);
+  expect(widths.desc.period, JSON.stringify(widths)).toBeLessThan(widths.meta.period * 0.7);
+  // Zeit und Anzahl: Tabellenziffern bleiben
+  expect(await page.evaluate(() => { const el = document.createElement("span"); el.className = "t-meta"; document.body.appendChild(el); const v = getComputedStyle(el).fontVariantNumeric; el.remove(); return v; })).toBe("tabular-nums");
+});
+
+// BSD-571: Rest von BSD-562 – packages/database-ui setzte an `.dbui-root` und `.dbui-data` die Tabellenziffern erneut,
+// mit Font „Based“ (Schibsted Grotesk) stand dort weiter eine Lücke vor Komma und Punkt („Nov 18 , 2026“). Titel und
+// Datum sind proportional, Zahlenspalten behalten Tabellenziffern (ohne breites Komma) und fluchten rechts. Fotos mit BASED_SCREENSHOTS=1.
+test("Font „Based“: keine Lücke vor Komma und Punkt in der Datenbank-Tabelle, Zahlen fluchten", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.addInitScript(() => { if (!localStorage.getItem("based.appearance")) localStorage.setItem("based.appearance", JSON.stringify({ theme: "light", font: "based" })); });
+  await fresh(page);
+  await expect(page.locator("html")).toHaveAttribute("data-typeface", "based");
+  const blockID = await page.evaluate(async () => {
+    interface Store {
+      blocks: Map<string, { props?: { databaseID?: string } }>;
+      databases: Map<string, Record<string, unknown>>;
+      children(parent: string): string[];
+      transact(name: string, f: (tx: { put(r: unknown): void; remove(k: string): void }) => void): void;
+    }
+    const b = (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string>; openPage(id: string): Promise<{ store: Store }> } } }).__based;
+    const id = await b.client.command({ op: "createDatabase", title: "Punctuation" });
+    const { store } = await b.client.openPage(id);
+    const dbID = store.blocks.get(id)!.props!.databaseID!;
+    const db = store.databases.get(dbID)!;
+    const now = (Date.now() - 978_307_200_000) / 1000;
+    const day = (d: number) => ({ date: { _0: { start: (new Date(2026, 10, d).getTime() - 978_307_200_000) / 1000, includeTime: false } } });
+    const num = (n: number) => ({ number: { _0: n } });
+    store.transact("Seed", (tx) => {
+      for (const r of [...store.children("d:" + dbID)]) tx.remove("block:" + r);
+      tx.put({ kind: "database", data: { ...db, properties: [{ id: "title", name: "Name", type: "title" }, { id: "when", name: "Date", type: "date", dateFormat: "MMM D, YYYY" }, { id: "n", name: "Amount", type: "number", numberFormat: "numberWithCommas" }] } });
+      [["Plan, review and ship.", 18, 1234.56], ["Write notes, then rest.", 19, 12.34], ["Call Ada, Bob and Eve.", 20, 98765.25]].forEach(([t, d, n], i) =>
+        tx.put({ kind: "block", data: { id: crypto.randomUUID(), type: "page", parent: "d:" + dbID, sk: "c0" + i, text: t, values: { when: day(d as number), n: num(n as number) }, createdAt: now, updatedAt: now } }));
+    });
+    return id;
+  });
+  await page.evaluate((id) => (globalThis as unknown as { __based: { history: { navigate(r: unknown): void } } }).__based.history.navigate({ name: "page", id }), blockID);
+  const dateCell = page.locator(".dbui-table .dbui-data", { hasText: "Nov 18, 2026" }).first();
+  await expect(dateCell).toBeVisible();
+  const titleCell = page.locator(".dbui-table .dbui-cell.title", { hasText: "Plan, review and ship." }).first();
+  await expect(titleCell).toBeVisible();
+  await expect.poll(() => dateCell.evaluate((el) => document.fonts.check(`${getComputedStyle(el).fontWeight} ${getComputedStyle(el).fontSize} "Schibsted Grotesk"`))).toBe(true);
+  // Breite eines Zeichens im Verhältnis zur Schriftgröße: Komma/Punkt proportional ≈ 0,27 em, tabellarisch ≈ 0,63 em
+  const em = (loc: typeof dateCell, ch: string) => loc.evaluate((root, c) => {
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
+      const i = n.data.indexOf(c);
+      if (i < 0) continue;
+      const r = document.createRange();
+      r.setStart(n, i);
+      r.setEnd(n, i + 1);
+      return r.getBoundingClientRect().width / parseFloat(getComputedStyle(n.parentElement!).fontSize);
+    }
+    return -1;
+  }, ch);
+  await expect.poll(() => em(dateCell, ",")).toBeGreaterThan(0);
+  expect(await em(dateCell, ",")).toBeLessThan(0.4);
+  expect(await em(titleCell, ",")).toBeGreaterThan(0);
+  expect(await em(titleCell, ",")).toBeLessThan(0.4);
+  expect(await em(titleCell, ".")).toBeLessThan(0.4);
+  expect(await dateCell.evaluate((el) => getComputedStyle(el).fontVariantNumeric)).toBe("normal");
+  // Zahlenspalte: Tabellenziffern, rechte Kanten und Dezimalpunkte stehen untereinander
+  const nums = page.locator(".dbui-table .dbui-num");
+  await expect(nums).toHaveCount(3);
+  for (const v of await nums.evaluateAll((els) => els.map((el) => getComputedStyle(el).fontVariantNumeric))) expect(v).toBe("tabular-nums");
+  const edges = await nums.evaluateAll((els) => els.map((el) => {
+    const point = [...el.querySelectorAll(".dbui-punct")].find((p) => p.textContent === ".")!;
+    return { right: el.getBoundingClientRect().right, point: point.getBoundingClientRect().left };
+  }));
+  for (const e of edges) {
+    expect(Math.abs(e.right - edges[0]!.right), JSON.stringify(edges)).toBeLessThanOrEqual(1);
+    expect(Math.abs(e.point - edges[0]!.point), JSON.stringify(edges)).toBeLessThanOrEqual(1);
+  }
+  // Komma und Punkt in der Zahl sind schmal (nur die Ziffern tabellarisch), der Wert liest sich unverändert
+  await expect(nums.first()).toHaveText("1,234.56");
+  expect(await em(nums.first(), ",")).toBeLessThan(0.4);
+  expect(await em(nums.first(), ".")).toBeLessThan(0.4);
+  // Formel-/Rollup-Zahlen (`dbui-tnum`) bleiben ebenfalls tabellarisch
+  expect(await page.locator(".dbui-root").first().evaluate((root) => { const s = document.createElement("span"); s.className = "dbui-data dbui-tnum"; root.appendChild(s); const v = getComputedStyle(s).fontVariantNumeric; s.remove(); return v; })).toBe("tabular-nums");
+
+  if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t, font: "based" })), theme);
+      await page.reload();
+      await expect(page.locator(".dbui-table .dbui-data", { hasText: "Nov 18, 2026" }).first()).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      await page.mouse.move(5, 815);
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `../../docs/design/screens/web-db-font-based-punctuation-${theme}.png` });
+    }
+  }
+});
+
+// BSD-567: der Import-Dialog zeigt die Quellen als Liste (je App eine Zeile mit dem Weg zum Export). Die Liste rollt
+// selbst – auch in 900 × 600 bleiben die Knöpfe sichtbar. Bildschirmfotos mit BASED_SCREENSHOTS=1.
+test("Import-Dialog: Quellen als Liste, Knöpfe in allen Größen sichtbar (BSD-567)", async ({ page, browserName }) => {
+  await fresh(page);
+  await page.addInitScript(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "system", style: "default", marker: "butter", density: "comfortable", calm: false, agentDetails: false })));
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const list = dialog.getByTestId("import-sources");
+  await expect(list.locator("dt")).toHaveCount(14);
+  await expect(list.locator("dt").first()).toHaveText("Notion");
+  await expect(list.locator(".import-sources-row").filter({ hasText: "Obsidian" })).toContainText("Canvases and Excalidraw drawings become boards");
+  for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }, { width: 1728, height: 1000 }]) {
+    await page.setViewportSize(size);
+    for (const name of ["Choose files…", "Choose folder…", "Close"]) await expect(dialog.getByRole("button", { name })).toBeInViewport({ ratio: 1 });
+    await expect(dialog.getByRole("button", { name: /Connect Notion directly/ })).toBeInViewport();
+    // Zeilen sind Text, nichts davon ist kleiner als 13 px.
+    const small = await list.evaluate((el) => [...el.querySelectorAll("dt, dd")].filter((n) => parseFloat(getComputedStyle(n).fontSize) < 13).length);
+    expect(small).toBe(0);
+    if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+      for (const theme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme: theme });
+        await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+        await page.waitForTimeout(250);
+        await page.screenshot({ path: `../../docs/design/screens/web-import-sources-${size.width}x${size.height}-${theme}.png` });
+      }
+    }
+  }
+});
+
+// BSD-599: 900 × 600 mit Seitenleiste und offenem Chat lässt Home ~236 px. Vorher lief der Bogen (Mindestbreite
+// 320 px) über Begrüßung und Composer, Text überdeckte Text, der Zeitraum-Umschalter ragte hinaus. Jetzt entfällt der
+// Bogen in so schmaler Spalte; in der Startgröße mit Chat bleibt er.
+test("Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599)", async ({ page }) => {
+  for (const theme of ["light", "dark"] as const) {
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.goto("/");
+    await page.evaluate((t) => { localStorage.clear(); localStorage.setItem("based.appearance", JSON.stringify({ theme: t, marker: "mint" })); }, theme);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    await page.keyboard.press("ControlOrMeta+j");
+    await expect(page.getByTestId("chat-panel")).toBeVisible();
+    for (const [w, h] of [[1280, 820], [900, 600]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      const home = page.getByTestId("home");
+      const box = async (sel: string) => (await home.locator(sel).first().boundingBox())!;
+      await expect.poll(async () => (await box(".home-greet")).width, { message: `Begrüßung ${w}` }).toBeGreaterThan(0);
+      const panel = (await home.boundingBox())!;
+      // nichts ragt seitlich aus der Spalte (Umschalter, Knöpfe im Kopf, Begrüßung, Composer)
+      for (const sel of [".home-head .based-switcher", ".home-head .btn", ".home-greet", ".home-dock"]) {
+        for (const b of await home.locator(sel).all()) {
+          const r = (await b.boundingBox())!;
+          expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
+        }
+      }
+      expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
+      const greet = await box(".home-greet"), dock = await box(".home-dock");
+      const arc = page.getByTestId("time-arc");
+      if (w === 1280) {
+        // in der Startgröße bleibt der Bogen, zwischen Begrüßung und Composer
+        await expect(arc).toBeVisible();
+        const a = (await arc.boundingBox())!;
+        expect(a.y, `Bogen unter der Begrüßung (${theme})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
+        expect(a.x + a.width, `Bogen in der Spalte (${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
+        await page.screenshot({ path: `../../docs/design/screens/web-home-chat-open-${theme}.png` });
+      } else {
+        await expect(arc).toBeHidden();
+      }
+      expect(dock.y, `Composer unter der Begrüßung (${w}, ${theme})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
+      // der Leertext des Bogens überdeckt nichts mehr
+      const empty = page.getByTestId("home-empty");
+      if (await empty.isVisible()) {
+        const e = (await empty.boundingBox())!;
+        expect(e.y, `Leertext unter der Begrüßung (${w})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
+        expect(e.y + e.height, `Leertext über dem Composer (${w})`).toBeLessThanOrEqual(dock.y + 0.5);
+      }
+    }
+  }
+});

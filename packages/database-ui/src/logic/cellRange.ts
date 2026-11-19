@@ -1,6 +1,6 @@
 // Zellbereich in der Tabelle (wie Notion): ⇧-Pfeile oder Ziehen mit der Maus wählen ein Rechteck aus Zellen;
 // ⌘C kopiert es als TSV, ⌘V fügt TSV ein, Entf leert es. Hier nur die reine Logik (ohne DOM).
-import { cellText, parseCSVValue, pv, values, type Database, type PropertySchema, type PropertyValue, type QueryEngine, type WorkspaceStore, type Block } from "@based/core";
+import { cellText, formatNumber, parseCSVValue, pv, values, type Database, type PropertySchema, type PropertyValue, type QueryEngine, type WorkspaceStore, type Block } from "@based/core";
 import { parseTextInput } from "./values.js";
 
 export interface CellPos { rowID: string; col: number }
@@ -22,6 +22,8 @@ export function cellString(store: WorkspaceStore, engine: QueryEngine, db: Datab
   const v = engine.value(row, p, db);
   if (v.t === "bool") return v.v ? "Yes" : "No";
   if (v.t === "date") return values.longDate(v.v);
+  // BSD-564: Prozent so kopieren, wie es dasteht („25%“) – beim Einfügen in eine Prozent-Spalte wird daraus wieder 0.25
+  if (v.t === "number" && p.type === "number" && p.numberFormat === "percent") return formatNumber(v.v, "percent");
   return cellText(store, v);
 }
 
@@ -64,7 +66,7 @@ export const pasteable = (p: PropertySchema) => PASTE_TYPES.has(p.type);
  */
 export function pasteValue(p: PropertySchema, raw: string): PropertyValue | null | undefined {
   if (!pasteable(p)) return undefined;
-  if (TEXT_TYPES.has(p.type)) return parseTextInput(p.type, raw);
+  if (TEXT_TYPES.has(p.type)) return parseTextInput(p.type, raw, p.numberFormat);
   const s = raw.trim();
   if (p.type === "checkbox") return pv("checkbox", /^(yes|true|1|✓|☑|x|checked)$/i.test(s));
   if (s === "") return null;

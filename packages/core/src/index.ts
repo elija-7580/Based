@@ -53,8 +53,15 @@ export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/o
 export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFingerprint, IMPORT_FINGERPRINT_KEY, notionIDInName, notionUUID, versionHash } from "./interop/importids.js";
 export { ImportFiles, basename, bytesSource, dirname, extname, joinPath, normalizePath, stripExtension, subSource } from "./interop/files.js";
 export type { ByteSource, LazyFile } from "./interop/files.js";
+export {
+  commitImportPayload, DRAIN_WINDOW_BYTES, DRAIN_WINDOW_FILES, drainDeferred, prepareFiles, StreamingAssetSink,
+  type ImportFile, type ImportPayload, type ImportSummary, type PreparedArchive, type PrepareOptions, type StreamedAsset,
+} from "./interop/prepare-files.js";
 export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZIP_EAGER_BYTES, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData, zipEntryStart } from "./interop/zip.js";
 export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
+export { extractTar, isTar } from "./interop/tar.js";
+export { convertForeignExport } from "./interop/foreign/index.js";
+export type { ForeignExport } from "./interop/foreign/index.js";
 export { AssetRejected, DEFAULT_MAX_ASSET_BYTES, ImportBuilder, LimitedAssetSink, MemoryAssetSink, formatBytes, importAssetFrom, looksLikeLocalFile, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
 export type { AssetRef, AssetSink, ImportBuilderOptions, LazyAsset, ImportBuilderWire, ImportReport, NewBlock } from "./interop/builder.js";
 // BSD-260 Teil 12: Vorschau von Text-, Code- und CSV-Dateien in Seiten.
@@ -64,7 +71,7 @@ export { classRules, cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter,
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
 export { codeSpan, decodeCSV, decodeInlineMarkdown, escapeTagLike, linkTarget, encodeCSV, guardCSVFormula, unguardCSVFormula, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
-export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, uniqueIDPrefix, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
+export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, parseRelationCell, uniqueIDPrefix, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { findObsidianVault, ObsidianImporter, parseWikiTarget, splitFrontmatter, yamlList, type ObsidianImportOptions } from "./interop/obsidian-import.js";
 export { isLogseqGraph, logseqBlockIDs, logseqTitle, logseqToMarkdown } from "./interop/logseq.js";
@@ -106,7 +113,7 @@ export {
   setGroupHidden, setPropertyVisible, setRelationLimitOne, setRelationTarget, setRollup, setRowTitle, setSorts, setValue, setValues, setViewType,
   uniquePropertyName, updateChart, updateOption, updateProperty, updateView, valueCase, valueForGroup, viewsForBlock, visiblePropertyIDs,
   wouldCreateRollupCycle, DASHBOARD_COLUMNS, DASHBOARD_MAX_WIDGETS_PER_ROW, WIDGET_TYPES,
-  databasesNeedingIDCheck, repairUniqueIDs, uniqueIDRepair, valuesMatchingSchema,
+  databasesNeedingIDCheck, repairUniqueIDs, uniqueIDRepair, valuesMatchingSchema, deleteTemplate, setDefaultTemplate, templatesOf,
 } from "./store/database-ops.js";
 export type { AddRowOptions, CreatedDatabase, InsertPosition as RowInsertPosition } from "./store/database-ops.js";
 export { addStarterTemplate, STARTER_TEMPLATES, type StarterTemplate, type StarterTemplateID } from "./store/starter-templates.js";
@@ -114,7 +121,7 @@ export { chartDateBucket, chartNumber, chartPoints } from "./query/chart.js";
 export type { ChartPoint } from "./query/chart.js";
 export {
   ADDABLE_PROPERTY_TYPES, CALCULATION_LABELS, FILTER_OP_LABELS, NUMBER_FORMAT_LABELS, NUMBER_FORMATS, PROPERTY_TYPE_LABELS,
-  READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue,
+  READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue, percentShown,
 } from "./query/display.js";
 export { changeAffects, databaseDependencies, watchDatabase } from "./query/dependencies.js";
 export { DEFAULT_GEOCODER, geocodeURL, lookupAddress, parseGeocode, tileURL, validateTiles, visibleTiles } from "./query/geocode.js";
@@ -147,7 +154,7 @@ export { wikilinkBefore } from "./editor/wikilink.js";
 export type { EmojiEntry } from "./editor/emoji.js";
 export { ICON_COLORS, iconAsText, parsePhosphorIcon, phosphorIcon } from "./editor/icon-ref.js";
 export type { IconColor, PhosphorIconRef } from "./editor/icon-ref.js";
-export { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
+export { COVER_COLOR_IDS, COVER_GRADIENT_COUNT, COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
 export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";
 export { CODE_LANGUAGES, CODE_VIEWS, codeLanguageID, codePreviewKind, codeView, syntaxTokens, type CodeView } from "./editor/syntax.js";
@@ -204,7 +211,12 @@ export {
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
 export { boardFileView, fileExtension, PREVIEW_BYTES, PREVIEW_LINES, textPreview, type BoardFileView, type PreviewLine, type TextPreview } from "./whiteboard/files.js";
-export { BOARD_SCRIPT_MAX, boardHandles, boardOutline, planBoardScript, type BoardPlan } from "./whiteboard/agent.js";
+export { BOARD_FILL_COLORS, BOARD_HIGHLIGHT_COLORS, BOARD_HIGHLIGHT_WIDTHS, BOARD_PEN_WIDTHS, BOARD_STROKE_COLORS, BOARD_WIDTH_NAMES, type BoardFillColor, type BoardHighlightColor, type BoardStrokeColor } from "./whiteboard/style.js";
+export { PATH_POINTS_MAX, PathError, pathToStrokes, type PathPoint } from "./whiteboard/path.js";
+export { boardFileParts, FILE_CARD_SIZE, IMAGE_MAX_SIDE, IMAGE_UNKNOWN_SIZE, PDF_PAGE_WIDTH, PREVIEW_SIZES, sniffImageSize, sniffMime, sniffPdfPages, type BoardFileInfo, type BoardFilePart } from "./whiteboard/placefile.js";
+export { continueList, hasMarkdown, markdownPlain, parseInline, parseMarkdown, toggleTask, type MdBlock, type MdRun } from "./whiteboard/markdown.js";
+export { fileRefOf, workspaceFiles, type WorkspaceFile } from "./whiteboard/workspace-files.js";
+export { BOARD_SCRIPT_HELP, BOARD_SCRIPT_MAX, boardHandles, boardOutline, inkPointsOfObject, OUTLINE_INK_MAX, planBoardScript, type BoardPlan, type BoardScriptOptions } from "./whiteboard/agent.js";
 // BSD-265 (Whiteboard 3): Tinte – ausdünnen, Treffer, Lasso
 export { distanceToInk, inkBounds, inkObjectGeometry, inkPointsOf, pointInPolygon, recognizeShape, shareInside, simplifyInk } from "./whiteboard/stroke.js";
 // BSD-264 (Whiteboard 2): Kamera, Geometrie, Raumindex und Board-Objekte als Records
@@ -236,6 +248,9 @@ export {
   type BlockDoc, type BlockNode, type ReplayIDs,
 } from "./editor/recording.js";
 // BSD-382 (ADR 0016, E1): Befehle des neuen Block-Editors (Namensraum, damit nichts mit Seiten-/Store-Funktionen kollidiert).
+export { BLOCK_COLOR_NAMES, BLOCK_SCRIPT_HELP, BLOCK_SCRIPT_MAX, blockHandles, blockOutline, markdownWithDateMentions, putMarkdownBlocks, runBlockScript, shortHandles, withDateMentions, type BlockOutlineOptions, type BlockScriptOptions, type BlockScriptResult } from "./editor/agent.js";
 export * as blockCommands from "./editor/commands/index.js";
 export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
 export { createFuzzyIndex, normalizeSearch, type FuzzyFields, type FuzzyIndex } from "./fuzzy.js";
+
+export { calendarDayStart, localDay, normalizeDate, resolveDate, stampDay, withCalendarDays } from "./model/calendar-day.js";

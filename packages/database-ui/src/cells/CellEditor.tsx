@@ -76,7 +76,7 @@ function TextEditor({ row, prop, anchor, onClose, onCommitNext, onTab, initialTe
   const commit = () => {
     if (done.current) return true;
     if (text === editText(row, prop)) { done.current = true; return true; }
-    const v = parseTextInput(prop.type, text);
+    const v = parseTextInput(prop.type, text, prop.numberFormat);
     if (v === undefined) { setInvalid(true); return false; }
     done.current = true;
     if (prop.type === "title") store.setText(row.id, text);

@@ -69,7 +69,7 @@ describe("Quick Find (BSD-280)", () => {
     };
     const t = expectWithinBudget("Quick Find", { build: 1000, keystroke: 200, body: 60, miss: 60, typo: 250, edit: 60 }, run);
     console.info("Quick Find (ms CPU):", Object.fromEntries(Object.entries(t).map(([k, v]) => [k, Math.round(v)])), "je Taste:", perKey.join(" "));
-  });
+  }, 90_000); // BSD-572: 5 000 Seiten + bis zu drei Durchgänge; unter Last über 20 s (Vitest-Standard)
 
   it("Wortanfang-Stufe bleibt gleich: Wortgrenze, Bindestrich, Ziffern, Zeichen außerhalb der BMP", () => {
     const idx = SearchIndex.fromRecords([
@@ -123,5 +123,5 @@ describe("Quick Find (BSD-280)", () => {
     };
     const t = expectWithinBudget("Quick Find (Notion-Import)", { build: 1000, keystroke: 200, body: 60, miss: 60 }, run);
     console.info("Quick Find Notion-Import (ms CPU):", Object.fromEntries(Object.entries(t).map(([k, v]) => [k, Math.round(v)])), "je Taste:", perKey.join(" "), "Records:", records.length);
-  });
+  }, 90_000); // BSD-572: Import + bis zu drei Durchgänge; allein ~8 s, unter Last über 20 s (Vitest-Standard)
 });

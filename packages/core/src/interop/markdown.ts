@@ -69,16 +69,18 @@ export class MarkdownImporter {
     const close = line.indexOf("]");
     if (!line.startsWith("[!") || close < 0) return undefined;
     const kind = line.slice(2, close).toLowerCase();
-    const text = trimSpaces(line.slice(close + 1));
+    // Obsidian: „[!note]-“ / „[!note]+“ (ein-/ausgeklappt) – das Zeichen gehört nicht zum Titel.
+    const text = trimSpaces(line.slice(close + 1).replace(/^[+-](?=\s|$)/, ""));
     switch (kind) {
-      case "note": case "info": return { emoji: "ℹ️", color: "blueBackground", text };
-      case "tip": case "hint": case "success": return { emoji: "💡", color: "greenBackground", text };
-      case "important": case "abstract": case "summary": return { emoji: "📌", color: "purpleBackground", text };
+      case "note": case "info": case "todo": return { emoji: "ℹ️", color: "blueBackground", text };
+      case "tip": case "hint": case "success": case "check": case "done": return { emoji: "💡", color: "greenBackground", text };
+      case "important": case "abstract": case "summary": case "tldr": return { emoji: "📌", color: "purpleBackground", text };
       case "warning": case "caution": case "attention": return { emoji: "⚠️", color: "yellowBackground", text };
-      case "danger": case "error": case "bug": case "failure": return { emoji: "🚨", color: "redBackground", text };
+      case "danger": case "error": case "bug": case "failure": case "fail": case "missing": return { emoji: "🚨", color: "redBackground", text };
       case "question": case "faq": case "help": return { emoji: "❓", color: "grayBackground", text };
       case "example": case "quote": case "cite": return { emoji: "📝", color: "grayBackground", text };
-      default: return undefined;
+      // Eigene Arten (Obsidian erlaubt beliebige, z. B. „[!seealso]“): als neutraler Hinweis statt als Zitat mit „[!…]“.
+      default: return /^[a-z][a-z0-9_-]*$/.test(kind) ? { emoji: "💡", color: "grayBackground", text } : undefined;
     }
   }
 
@@ -230,18 +232,41 @@ export class MarkdownImporter {
       // Zitat (aufeinanderfolgende Zeilen)
       if (trimmed.startsWith(">")) {
         const parts: string[] = [];
+        // Inhalt ohne „> “, Einrückung bleibt (Listen und Code im Hinweis).
+        const rawParts: string[] = [];
         let j = i;
         while (j < n) {
           const t = trimSpaces(lines[j]!);
           if (!t.startsWith(">")) break;
           parts.push(trimSpaces(t.slice(1)));
+          rawParts.push(t.slice(1).replace(/^ /, ""));
           j++;
         }
         // GitHub-/Obsidian-Hinweise: „> [!NOTE] Text“ → Callout mit Icon und Farbe.
         const alert = parts[0] !== undefined ? MarkdownImporter.alert(parts[0]) : undefined;
         if (alert) {
-          const body = [alert.text, ...parts.slice(1)].filter((s) => s !== "").join("\n");
-          out.push(block("callout", this.inline(body), { icon: alert.emoji, color: alert.color as BlockProps["color"] }));
+          const p = { icon: alert.emoji, color: alert.color as BlockProps["color"] };
+          const rest = parts.slice(1);
+          // Mehr als Fließtext im Hinweis (Liste, Überschrift, Code, Tabelle, Absätze, verschachtelt): als Kinder lesen
+          // statt alles in eine Textzeile zu drücken.
+          const structured = rest.some((l) => l === "" || /^(#{1,6} |```|~~~|\||>|!\[|\$\$)/.test(l) || MarkdownImporter.listItem(l, this.lenient) !== undefined);
+          if (structured) {
+            const kids = rawParts.slice(1);
+            let title = alert.text;
+            if (title === "") {
+              // ohne Titel: der erste Absatz wird der Text des Hinweises
+              const k = kids.findIndex((l) => !isBlank(l));
+              const firstLine = k >= 0 ? trimSpaces(kids[k]!) : "";
+              if (k >= 0 && !/^(#{1,6} |```|~~~|\||>|!\[|\$\$)/.test(firstLine) && MarkdownImporter.listItem(firstLine, this.lenient) === undefined) {
+                title = firstLine;
+                kids.splice(0, k + 1);
+              }
+            }
+            out.push(block("callout", this.inline(title), p, this.parseLines(kids)));
+          } else {
+            const body = [alert.text, ...rest].filter((s) => s !== "").join("\n");
+            out.push(block("callout", this.inline(body), p));
+          }
           i = j;
           continue;
         }
@@ -254,7 +279,7 @@ export class MarkdownImporter {
       if (trimmed.startsWith("![") && mid >= 0 && trimmed.endsWith(")")) {
         const alt = trimmed.slice(2, mid);
         // Optionaler Titel hinter der Quelle: ![alt](bild.png "Titel")
-        const src = trimmed.slice(mid + 2, -1).replace(/\s+"[^"]*"$/, "");
+        const src = trimmed.slice(mid + 2, -1).replace(/\s+"[^"]*"$/, "").replace(/^<(.*)>$/, "$1");
         const r = this.resolveAsset(removingPercentEncoding(src) ?? src);
         const p: BlockProps = {};
         if (r.asset === undefined) p.url = r.url ?? src;
@@ -264,6 +289,9 @@ export class MarkdownImporter {
         i++;
         continue;
       }
+      // <iframe src="…"> allein in der Zeile (Obsidian, eingebettete Videos) → Einbettung
+      const frame = /^<iframe\b[^>]*\ssrc=["']([^"']+)["'][^>]*>(\s*<\/iframe>)?$/i.exec(trimmed);
+      if (frame && /^https?:\/\//i.test(frame[1]!)) { out.push(block("embed", [], { url: frame[1]! })); i++; continue; }
       // Listen
       const item = MarkdownImporter.listItem(trimmed, this.lenient);
       if (item) {
@@ -279,7 +307,7 @@ export class MarkdownImporter {
       // Absatz (einzelne Links merken für die Platzierung von Unterseiten)
       const b = block("text", this.inline(trimmed));
       const m = trimmed.indexOf("](");
-      if (trimmed.startsWith("[") && trimmed.endsWith(")") && m >= 0 && !trimmed.slice(1, m).includes("]")) b.linkTarget = trimmed.slice(m + 2, -1);
+      if (trimmed.startsWith("[") && trimmed.endsWith(")") && m >= 0 && !trimmed.slice(1, m).includes("]")) b.linkTarget = trimmed.slice(m + 2, -1).replace(/^<(.*)>$/, "$1");
       const [kids, next] = childLines(i, indent);
       if (kids.length > 0) b.children = this.parseLines(kids);
       out.push(b);
@@ -302,8 +330,13 @@ export class MarkdownImporter {
       ? ["- [ ] ", "* [ ] ", "+ [ ] ", "- [x] ", "- [X] ", "* [x] ", "* [X] ", "+ [x] ", "+ [X] "]
       : ["- [ ] ", "* [ ] ", "- [x] ", "- [X] ", "* [x] "];
     for (const p of todo) {
-      if (t.startsWith(p)) return ["todo", p.includes("x") || p.includes("X"), t.slice(p.length)];
+      // Notion schreibt „- [ ]  Text“ (zwei Leerzeichen): ohne führenden Leerraum übernehmen.
+      if (t.startsWith(p)) return ["todo", p.includes("x") || p.includes("X"), t.slice(p.length).replace(/^[ \t]+/, "")];
     }
+    // Eigene Aufgaben-Zustände (Obsidian Tasks: „- [/]“ begonnen, „- [-]“ abgebrochen, „- [>]“ verschoben …): Aufgabe,
+    // offen – vorher blieb „[/] Text“ als Aufzählungspunkt stehen.
+    const custom = /^[-*+] \[([^\s\][])\] (.*)$/.exec(t);
+    if (custom) return ["todo", custom[1] === "x" || custom[1] === "X", custom[2]!.replace(/^[ \t]+/, "")];
     if (t === "- [ ]") return ["todo", false, ""];
     for (const p of ["- ", "* ", "+ ", "• "]) if (t.startsWith(p)) return ["bulletedList", false, t.slice(p.length)];
     if (t === "-" || t === "*") return ["bulletedList", false, ""];
@@ -487,7 +520,9 @@ class InlineParser {
       }
       if (c === "$" && i + 1 < chars.length && chars[i + 1] !== " ") {
         const close = this.find("$", i + 1);
-        if (close !== undefined && close > i + 1) {
+        // Wie Pandoc/Obsidian: vor dem schließenden $ kein Leerraum, danach keine Ziffer – sonst sind es Geldbeträge
+        // („costs $5 and $10“), keine Formel.
+        if (close !== undefined && close > i + 1 && !/\s/.test(chars[close - 1]!) && !/\d/.test(chars[close + 1] ?? "")) {
           flush();
           const expr = chars.slice(i + 1, close).join("");
           runs.push({ t: expr, m: PLAIN, eq: expr });
@@ -520,7 +555,7 @@ class InlineParser {
         if (mid !== undefined && close !== undefined) {
           flush();
           const label = chars.slice(i + 1, mid).join("");
-          const target = trimSpaces(chars.slice(mid + 2, close).join(""));
+          const target = trimSpaces(chars.slice(mid + 2, close).join("")).replace(/^<(.*)>$/, "$1");
           const page = this.resolve(target);
           if (page !== undefined) runs.push({ t: label, m: PLAIN, mention: { page: { _0: page } } });
           else runs.push(...new InlineParser(graphemes(label), this.resolve).parse(undefined, { ...marks, link: target }));
@@ -588,7 +623,7 @@ export function decodeCSV(text: string): string[][] {
   let field = "";
   let inQuotes = false;
   const chars = graphemes(text);
-  let i = chars[0] === "﻿" ? 1 : 0;
+  let i = chars[0] === "\uFEFF" ? 1 : 0;
   for (; i < chars.length; i++) {
     const c = chars[i]!;
     if (inQuotes) {

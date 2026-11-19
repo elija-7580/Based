@@ -34,7 +34,7 @@ function fakeMcp() {
 function setup() {
   const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence() });
   const host = new AgentHost(store);
-  const backend: ConnectionsBackend = { agents: <T>(a: AgentAction) => Promise.resolve(structuredClone(host.handle(a)) as T) } as ConnectionsBackend;
+  const backend: ConnectionsBackend = { agents: <T>(a: AgentAction) => Promise.resolve(host.handle(a)).then((r) => structuredClone(r) as T) } as ConnectionsBackend;
   const secrets = new SecretStore(memoryKV());
   const mcp = fakeMcp();
   const rt = new McpRuntime(backend, () => secrets, mcp.fetch);

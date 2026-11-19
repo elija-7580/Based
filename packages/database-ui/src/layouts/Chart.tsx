@@ -134,7 +134,8 @@ export function ChartLayout({ view, result, height }: { view: DatabaseView; resu
   const [ref, w] = useWidth();
   const c = view.chart ?? DEFAULT_CHART;
   const yProp = c.yPropertyID ? propertyOf(db, c.yPropertyID) : undefined;
-  const fmt = (n: number) => (yProp ? formatNumber(Math.round(n * 100) / 100, yProp.numberFormat) : formatNumber(Math.round(n * 100) / 100));
+  // Prozent wird in der Anzeige gerundet (der Wert ist ein Anteil – vorab auf zwei Stellen runden schnitte ihn ab)
+  const fmt = (n: number) => (yProp ? formatNumber(yProp.numberFormat === "percent" ? n : Math.round(n * 100) / 100, yProp.numberFormat) : formatNumber(Math.round(n * 100) / 100));
   const pts = useMemo(() => (c.kind === "number" ? [] : themedPoints(chartPoints(engine, result.rows, db, c), c.colorTheme)), [engine, result, db, c]);
   const h = height ?? HEIGHTS[c.height ?? "medium"] ?? 300;
   let body: React.ReactNode;

@@ -169,15 +169,37 @@ test("Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt", async 
   expect((await testHang(page, 400)).ms).toBeGreaterThanOrEqual(250);
 });
 
-test("Leerlauf: der Takt kostet kaum Zeit (unter 1 % des Hauptthreads)", async ({ page }) => {
+// BSD-596: Im Leerlauf (sichtbar, vorn, keine Eingabe) läuft kein Zeitgeber mehr: die Hänger-Kette hält 2 s nach dem
+// letzten Anlass an, die Sitzungs-Marke schreibt nur nach einem Anlass. Gezählt wird jeder setTimeout/setInterval-Aufruf
+// des Fensters; danach weckt eine Eingabe die Messung wieder auf (ein Hänger beim Tippen wird weiter erkannt).
+test("Leerlauf: kein Zeitgeber, kein Takt – nach einer Eingabe misst die Kette wieder", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = globalThis as unknown as { __timers: { timeouts: number; intervals: number } } & typeof globalThis;
+    w.__timers = { timeouts: 0, intervals: 0 };
+    const st = w.setTimeout, si = w.setInterval;
+    w.setTimeout = ((...a: Parameters<typeof setTimeout>) => { w.__timers.timeouts++; return st(...a); }) as typeof setTimeout;
+    w.setInterval = ((...a: Parameters<typeof setInterval>) => { w.__timers.intervals++; return si(...a); }) as typeof setInterval;
+  });
   await ready(page, "prefs-diagnostics");
-  const before = await page.evaluate(() => (globalThis as unknown as Hooks).__basedTest.hangs.overhead());
+  // Start und erstes Zeichnen abklingen lassen (Kette läuft nach dem letzten Anlass noch 2 s)
+  await page.waitForTimeout(4000);
+  const count = () => page.evaluate(() => ({ ...(globalThis as unknown as { __timers: { timeouts: number; intervals: number } }).__timers, ticks: (globalThis as unknown as Hooks).__basedTest.hangs.overhead().ticks }));
+  const before = await count();
   await page.waitForTimeout(5000);
-  const after = await page.evaluate(() => (globalThis as unknown as Hooks).__basedTest.hangs.overhead());
-  const ticks = after.ticks - before.ticks, busy = after.busyMs - before.busyMs, elapsed = after.elapsedMs - before.elapsedMs;
-  console.log(`hang monitor idle: ${ticks} ticks in ${elapsed} ms, ${busy.toFixed(2)} ms busy (${((busy / elapsed) * 100).toFixed(3)} %)`);
-  expect(ticks).toBeGreaterThan(40);
-  expect(busy / elapsed).toBeLessThan(0.01);
+  const after = await count();
+  console.log(`idle 5 s: ${after.timeouts - before.timeouts} setTimeout, ${after.intervals - before.intervals} setInterval, ${after.ticks - before.ticks} ticks`);
+  expect(after.ticks - before.ticks).toBe(0);
+  expect(after.timeouts - before.timeouts).toBe(0);
+  expect(after.intervals - before.intervals).toBe(0);
+  // Eingabe weckt die Messung: ein Hänger direkt danach wird erkannt (WebKit ohne lange Frames: nur über die Kette)
+  await page.keyboard.press("Shift");
+  await page.evaluate(() => {
+    setTimeout(() => {
+      const end = performance.now() + 400;
+      while (performance.now() < end) { /* absichtlich blockieren */ }
+    }, 20);
+  });
+  await expect.poll(async () => (await hangs(page)).some((h) => h.source === "main" && h.ms >= 250), { timeout: 5000 }).toBe(true);
 });
 
 test("Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen", async ({ page, browserName }) => {

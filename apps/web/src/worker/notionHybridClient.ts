@@ -9,7 +9,7 @@ import type { StreamedAsset } from "./importer.js";
 import type { StoreClient } from "./client.js";
 
 export type HybridWorkerRequest =
-  | { type: "start"; token: string; mode: HybridMode; zip?: Blob; zipName?: string; baseURL?: string; downloadFiles?: boolean; requestsPerSecond?: number }
+  | { type: "start"; token: string; mode: HybridMode; zips?: Blob[]; zipName?: string; baseURL?: string; downloadFiles?: boolean; requestsPerSecond?: number }
   | { type: "http"; id: number; status?: number; headers?: Record<string, string>; body?: Uint8Array; error?: string }
   | { type: "rpc"; id: number; result?: unknown; error?: string }
   | { type: "ack"; id: number }
@@ -61,7 +61,8 @@ export interface HybridStart {
   client: StoreClient;
   token: string;
   mode: HybridMode;
-  zip?: Blob | undefined;
+  /** Der Notion-Export: ein ZIP oder seine einzeln geladenen Teile (BSD-565). */
+  zips?: Blob[] | undefined;
   zipName?: string | undefined;
   transport: NotionTransport;
   baseURL?: string | undefined;
@@ -194,7 +195,7 @@ export class HybridImportManager {
         }
       }
     });
-    worker.postMessage({ type: "start", token: s.token, mode: s.mode, ...(s.zip ? { zip: s.zip } : {}), ...(s.zipName ? { zipName: s.zipName } : {}), ...(s.baseURL ? { baseURL: s.baseURL } : {}),
+    worker.postMessage({ type: "start", token: s.token, mode: s.mode, ...(s.zips?.length ? { zips: s.zips } : {}), ...(s.zipName ? { zipName: s.zipName } : {}), ...(s.baseURL ? { baseURL: s.baseURL } : {}),
       ...(s.downloadFiles !== undefined ? { downloadFiles: s.downloadFiles } : {}), ...(s.requestsPerSecond !== undefined ? { requestsPerSecond: s.requestsPerSecond } : {}) });
   }
 

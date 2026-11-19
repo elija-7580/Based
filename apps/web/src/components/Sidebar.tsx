@@ -823,9 +823,9 @@ function RecordingPill({ onOpenPage }: { onOpenPage: (id: string) => void }) {
   const clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
   return (
     <button type="button" className="rec-pill" data-testid="recording-pill" data-paused={s.paused ? "" : undefined} onClick={() => onOpenPage(page)}
-      aria-label={`${s.paused ? "Recording paused" : "Recording"}, ${clock} — open meeting`}>
+      aria-label={`${s.paused ? "Recording paused" : s.transcription === "live" ? "Transcribing" : "Recording"}, ${clock} — open meeting`}>
       <span className="rec-dot" aria-hidden="true" />
-      {s.paused ? "Paused" : "Recording"}
+      {s.paused ? "Paused" : s.transcription === "live" ? "Transcribing" : "Recording"}
       <span className="t-data rec-time">{clock}</span>
     </button>
   );

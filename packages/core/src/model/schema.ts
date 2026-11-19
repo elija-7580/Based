@@ -109,7 +109,8 @@ export const stamp = z.looseObject({ millis: int, counter: int.nonnegative(), no
 export const parentRef = z.string().regex(/^(w|b:[\s\S]*|d:[\s\S]*)$/, "ungültiger parent");
 
 export const assetRef = z.looseObject({ id: z.string(), name: z.string(), size: int.optional(), mime: z.string().optional() });
-export const dateValue = z.looseObject({ start: swiftDate, end: swiftDate.optional(), includeTime: z.boolean(), remind: z.boolean().optional() });
+// BSD-578: `day`/`endDay` = Kalendertag eines Datums ohne Uhrzeit (model/calendar-day.ts)
+export const dateValue = z.looseObject({ start: swiftDate, end: swiftDate.optional(), includeTime: z.boolean(), remind: z.boolean().optional(), day: z.string().optional(), endDay: z.string().optional() });
 
 export const marks = z.looseObject({
   b: z.boolean().optional(), i: z.boolean().optional(), u: z.boolean().optional(), s: z.boolean().optional(), c: z.boolean().optional(),

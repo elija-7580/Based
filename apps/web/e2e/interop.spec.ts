@@ -106,7 +106,7 @@ test("Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bi
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
-  await expect(dialog).toContainText("Obsidian vault");
+  await expect(dialog.getByTestId("import-sources")).toContainText("ObsidianChoose the vault folder"); // BSD-567: je App eine Zeile
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
   const vault = zip([
     { path: "Garden/.obsidian/app.json", data: Buffer.from("{}") },
@@ -163,7 +163,7 @@ test("Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
-  await expect(dialog).toContainText("Bear export");
+  await expect(dialog.getByTestId("import-sources")).toContainText("Bear"); // BSD-567
   const bear = zip([
     { path: "Bear Notes/Shopping.textbundle/text.md", data: Buffer.from("# Shopping\n\n::Urgent:: buy for [[Dinner ideas]]\n- [ ] Lemons") },
     { path: "Bear Notes/Shopping.textbundle/info.json", data: Buffer.from(JSON.stringify({ version: 2, creatorIdentifier: "net.shinyfrog.bear" })) },
@@ -304,6 +304,68 @@ test("JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7)
   await page.getByRole("treeitem", { name: "people" }).click();
   await expect(page.getByText("Alan").first()).toBeVisible();
   await expect(page.getByText("math").first()).toBeVisible();
+});
+
+/** tar-Archiv (ustar, nur Dateien) – so schreibt Joplin seinen Export (.jex). */
+function tar(files: { path: string; data: string }[]): Buffer {
+  const out: Buffer[] = [];
+  for (const f of files) {
+    const data = Buffer.from(f.data, "utf8");
+    const h = Buffer.alloc(512);
+    h.write(f.path, 0, 100, "utf8");
+    h.write("0000644\0", 100); h.write("0000000\0", 108); h.write("0000000\0", 116);
+    h.write(data.length.toString(8).padStart(11, "0") + "\0", 124);
+    h.write("00000000000\0", 136); h.write("        ", 148); h.write("0", 156); h.write("ustar\0" + "00", 257);
+    let sum = 0;
+    for (const b of h) sum += b;
+    h.write(sum.toString(8).padStart(6, "0") + "\0 ", 148);
+    out.push(h, data, Buffer.alloc((512 - (data.length % 512)) % 512));
+  }
+  out.push(Buffer.alloc(1024));
+  return Buffer.concat(out);
+}
+
+test("Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  await expect(dialog.getByTestId("import-sources")).toContainText("JEX (.jex)"); // BSD-567
+  const id = (c: string) => c.repeat(32);
+  const item = (title: string, body: string, meta: Record<string, string | number>) => `${title}\n\n${body}${body ? "\n\n" : ""}${Object.entries(meta).map(([k, v]) => `${k}: ${v}`).join("\n")}`;
+  const jex = tar([
+    { path: `${id("a")}.md`, data: item("Recipes", "", { id: id("a"), parent_id: "", type_: 2 }) },
+    { path: `${id("b")}.md`, data: item("Pancakes", `Flour and eggs. See [syrup](:/${id("c")}).`, { id: id("b"), parent_id: id("a"), type_: 1 }) },
+    { path: `${id("c")}.md`, data: item("Maple syrup", "Boil the sap.", { id: id("c"), parent_id: id("a"), type_: 1 }) },
+  ]);
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "joplin.jex", mimeType: "application/octet-stream", buffer: jex });
+  await expect(dialog.getByTestId("import-summary")).toHaveText("Imported 4 pages.");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("treeitem", { name: "joplin" })).toBeVisible();
+  const hits = await quickFind(page, "Flour and eggs");
+  await expect(hits.first()).toContainText("Pancakes");
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Page title")).toHaveValue("Pancakes");
+  await expect(page.getByTestId("page-content")).toContainText("syrup");
+});
+
+test("Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const mapping = {
+    r: { id: "r", parent: null, children: ["u"], message: null },
+    u: { id: "u", parent: "r", children: ["a"], message: { author: { role: "user" }, content: { content_type: "text", parts: ["How do I prune tomatoes?"] }, recipient: "all" } },
+    a: { id: "a", parent: "u", children: [], message: { author: { role: "assistant" }, content: { content_type: "text", parts: ["Pinch the **suckers** early."] }, recipient: "all" } },
+  };
+  const conversations = JSON.stringify([{ title: "Tomato pruning", create_time: 1700000000, update_time: 1700000100, mapping, current_node: "a" }]);
+  const data = zip([{ path: "conversations.json", data: Buffer.from(conversations) }, { path: "chat.html", data: Buffer.from("<html><body></body></html>") }, { path: "user.json", data: Buffer.from("{}") }]);
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "chatgpt-export.zip", mimeType: "application/zip", buffer: data });
+  await expect(dialog.getByTestId("import-summary")).toHaveText("Imported 1 page, 1 database, 1 row.");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  const hits = await quickFind(page, "suckers");
+  await expect(hits.first()).toContainText("Tomato pruning");
 });
 
 test("Export: Markdown mit Frontmatter und JSON (BSD-260)", async ({ page }) => {

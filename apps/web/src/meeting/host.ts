@@ -2,13 +2,12 @@
 // Wiedergabe und der Engine aus Einstellungen → Agents & AI. Eine Transkription gibt es hier (noch) nicht: die
 // Swift-App transkribiert auf dem Gerät (Parakeet); ein Anbieter-Format für Audio gibt es in der Vorlage nicht.
 // Tests/E2E setzen über `globalThis.__basedMeeting` einen festen Transcriber und eine ScriptedEngine ein.
-import {
-  FixedTranscriber, MEETING_SUMMARY_SYSTEM, MeetingRecorder, MIC_HINT_MAC, ScriptedEngine,
-  type CapturedTrack, type ChatEngine, type FixedLine, type ScriptStep, type Transcriber,
-} from "@based/brain";
+// BSD-595: Unterpfade statt "@based/brain" – der ganze Einstieg zöge Anbieter und Agenten-Werkzeuge in den Start-Chunk.
+import { FixedTranscriber, MEETING_SUMMARY_SYSTEM, MeetingRecorder, MIC_HINT_MAC, type CapturedTrack, type FixedLine, type Transcriber } from "@based/brain/meeting";
+import { ScriptedEngine, type ChatEngine, type ScriptStep } from "@based/brain/engine";
 import { meetingInfo, type WorkspaceStore } from "@based/core";
 import type { MeetingHost, MeetingHostState } from "@based/editor";
-import { aiConfig } from "../chat/aiConfig.js";
+import type { AiConfig } from "../chat/aiConfig.js";
 import type { PageReplica, StoreClient } from "../worker/client.js";
 import { canCaptureSystemAudio, canRecordAudio, startBrowserCapture } from "./capture.js";
 import { isTauri } from "../desktop.js";
@@ -32,6 +31,8 @@ export interface MeetingTestHooks {
 /** BSD-281: dazu die Seite der laufenden Aufnahme (Pille oben in der Seitenleiste). */
 export interface WebMeetingHost extends MeetingHost {
   recordingPage(): string | undefined;
+  /** Feedback 18. 11. (Meeting erkannt → „Start transcribing“): Aufnahme im ersten Meeting-Block der Seite starten. */
+  startOnPage(pageID: string): Promise<boolean>;
 }
 
 export function createMeetingHost(client: StoreClient): WebMeetingHost {
@@ -64,9 +65,17 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
     cached = undefined;
     for (const fn of listeners) fn();
   };
-  const config = aiConfig();
-  if (!config.getState().loaded) void config.load();
-  config.subscribe(notify);
+  // BSD-595: Modelle und Anbieter erst laden, wenn der Build AI anbietet (auf der Beta nie – dort gibt es keine
+  // Zusammenfassung, außer per Skript in Tests).
+  let config: AiConfig | undefined;
+  if (AI_OPTION) {
+    void import("../chat/aiConfig.js").then(({ aiConfig }) => {
+      config = aiConfig();
+      if (!config.getState().loaded) void config.load();
+      config.subscribe(notify);
+      notify();
+    });
+  }
 
   const recorder = new MeetingRecorder({
     capture: startBrowserCapture,
@@ -89,8 +98,8 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
     deferTranscription: async () => meetingTranscribePref.get() === "plugged-in" && (await battery()) === true,
     async engine(): Promise<ChatEngine | undefined> {
       if (script) return new ScriptedEngine({ script, label: "Scripted" });
-      const choice = config.activeModel();
-      if (!choice) return undefined;
+      const choice = config?.activeModel();
+      if (!config || !choice) return undefined;
       return config.engine(choice, { system: MEETING_SUMMARY_SYSTEM, maxSteps: 2, policy: { mode: "plan" } });
     },
   });
@@ -207,7 +216,7 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
     canRecord: canRecordAudio,
     canCaptureSystemAudio,
     hasTranscriber: () => { void probeServer(); return activeTranscriber() !== undefined; },
-    hasSummaryEngine: () => script !== undefined || config.activeModel() !== undefined,
+    hasSummaryEngine: () => script !== undefined || config?.activeModel() !== undefined,
     summaryAvailable: () => AI_OPTION || script !== undefined,
     errorFor: (id) => recorder.errorFor(id),
     async start(store, meetingID, opts) {
@@ -217,6 +226,20 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
       lastStore = target;
       await recorder.start(target, meetingID, opts);
       if (!recorder.getState().recording) release();
+    },
+    async startOnPage(pageID) {
+      if (recorder.getState().recording) return false;
+      let r: PageReplica | undefined;
+      try {
+        r = await client.openPage(pageID);
+        const store = r.store;
+        const meetingID = store.descendants(pageID).find((id) => store.blocks.get(id)?.type === "meeting");
+        if (!meetingID) return false;
+        await this.start(store, meetingID, { systemAudio: false });
+        return recorder.getState().recording;
+      } finally {
+        r?.close();
+      }
     },
     pause: () => recorder.pause(),
     resume: () => recorder.resume(),

@@ -200,3 +200,13 @@ Node.js v24 LTS, MIT-Lizenz in `node/LICENSE`). Zur Laufzeit lädt die App nicht
 Bauen: `pnpm --filter @based/desktop sidecar` (läuft vor `tauri dev`/`tauri build` automatisch, auch unter Linux)
 bündelt `apps/desktop/sidecar/entry.ts` mit esbuild nach `apps/desktop/dist-sidecar/based-server.cjs`. Ausprobieren
 ohne App: `node apps/desktop/dist-sidecar/based-server.cjs cli --help`.
+
+## Abhängigkeiten prüfen (BSD-549)
+
+Vor einem Release Candidate: `node ci/deps-audit.mjs` (braucht Netz). Es liest `pnpm audit` (getrennt nach „in der App“
+und „nur Werkzeuge“) und die OSV-Datenbank für `apps/desktop/src-tauri/Cargo.lock` – dieselben GHSA-/RUSTSEC-Meldungen,
+die Dependabot zeigt. Eingeordnete Meldungen stehen mit Grund in `ACCEPTED`; eine neue endet mit Exit 1.
+Ob ein Rust-Paket im Mac-Build landet: `cargo tree -i <paket>@<version> --target aarch64-apple-darwin` (leer = nein).
+Stand 18.11.2026: die moderate Dependabot-Meldung ist glib 0.18.5 (GHSA-wrw7-89jp-8q8g), nur Linux über gtk 0.18 aus
+Tauri, nicht in der Mac-App; behoben erst in glib 0.20 (Bruch, kommt mit Tauri). picomatch 4.0.7 (hoch, keine behobene
+Version) steckt nur in Lint-/Test-/Build-Werkzeugen.

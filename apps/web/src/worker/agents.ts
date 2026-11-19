@@ -3,6 +3,7 @@
 // Hauptthread (tasks/runtime.ts), weil Engine und API-Schlüssel dort leben. Jede Liste, die sich ändert (lokal, anderer
 // Tab, Sync), geht als `agents`-Ereignis an alle Clients.
 import { parseKey, type StoreChange, type WorkspaceStore } from "@based/core";
+import type { WorkspaceTools } from "@based/brain/tools";
 import {
   addConnection, AGENT_RECORD_TYPES, AgentStore, CONNECTION_TYPE, listConnections, removeConnection, updateConnection,
   type ConnectionPatch, type NewConnection, type AgentData, type AgentSnapshot, type NewRun, type PlannerExample, type ProjectStatus, type RunPatch, type TaskEvent } from "@based/brain";
@@ -27,6 +28,8 @@ export type AgentAction =
   | { op: "createRun"; data: NewRun }
   | { op: "updateRun"; id: string; patch: RunPatch }
   | { op: "claimRun"; id: string; owner: string }
+  /** Rückfrage eines Werkzeugs beantworten (Allow/Deny in der Inbox); nur der Mensch in Based löst das aus. */
+  | { op: "resolveRequest"; id: string; ok: boolean }
   | { op: "main" }
   | { op: "saveMain"; patch: Partial<AgentData> & { rules?: string; mode?: AgentData["permissions"]["mode"] }; clear?: (keyof AgentData)[] }
   | { op: "projects" }
@@ -47,7 +50,7 @@ export class AgentHost {
   readonly agents: AgentStore;
   private dirty = false;
 
-  constructor(private readonly store: WorkspaceStore) {
+  constructor(private readonly store: WorkspaceStore, private readonly tools: () => Promise<WorkspaceTools> = () => import("@based/brain/tools").then((m) => new m.WorkspaceTools(store, { groups: ["pages"] }))) {
     this.agents = new AgentStore(store);
   }
 
@@ -73,6 +76,7 @@ export class AgentHost {
       case "createRun": return s.createRun(a.data);
       case "updateRun": return s.updateRun(a.id, a.patch);
       case "claimRun": return s.claimRun(a.id, a.owner);
+      case "resolveRequest": return this.tools().then((t) => this.checked(() => t.resolveRequest(a.id, a.ok)));
       case "main": return s.main();
       case "saveMain": return this.checked(() => s.saveMain((d) => {
         const { rules, mode, ...rest } = a.patch;

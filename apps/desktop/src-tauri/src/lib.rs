@@ -66,6 +66,134 @@ fn power_on_battery() -> Option<bool> {
     }
 }
 
+/// Feedback 18. 11.: Meeting-Erkennung. Welche Apps nehmen gerade über das Mikrofon auf (Bundle-IDs)? Fragt nur
+/// CoreAudio (macOS 14.2+: Prozessliste mit „läuft Eingabe“), hört nichts mit und braucht keine Mikrofon-Freigabe.
+/// Ältere macOS: `["*"]`, wenn das Standard-Mikrofon irgendwo läuft (welche App, ist dort nicht bekannt).
+/// Das Web-Frontend fragt alle paar Sekunden und entscheidet, ob es ein Meeting ist (Liste bekannter Apps).
+#[tauri::command]
+fn mic_users() -> Vec<String> {
+    #[cfg(target_os = "macos")]
+    {
+        mic::users()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Vec::new()
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod mic {
+    use std::ffi::c_void;
+    use std::os::raw::c_char;
+
+    #[repr(C)]
+    struct Address {
+        selector: u32,
+        scope: u32,
+        element: u32,
+    }
+
+    const fn code(s: &[u8; 4]) -> u32 {
+        ((s[0] as u32) << 24) | ((s[1] as u32) << 16) | ((s[2] as u32) << 8) | (s[3] as u32)
+    }
+    const SYSTEM_OBJECT: u32 = 1; // kAudioObjectSystemObject
+    const SCOPE_GLOBAL: u32 = code(b"glob");
+    const ELEMENT_MAIN: u32 = 0;
+    const PROCESS_LIST: u32 = code(b"prs#"); // kAudioHardwarePropertyProcessObjectList (14.2+)
+    const PROCESS_PID: u32 = code(b"ppid"); // kAudioProcessPropertyPID
+    const PROCESS_BUNDLE_ID: u32 = code(b"pbid"); // kAudioProcessPropertyBundleID
+    const PROCESS_RUNNING_INPUT: u32 = code(b"piri"); // kAudioProcessPropertyIsRunningInput
+    const DEFAULT_INPUT: u32 = code(b"dIn "); // kAudioHardwarePropertyDefaultInputDevice
+    const RUNNING_SOMEWHERE: u32 = code(b"gone"); // kAudioDevicePropertyDeviceIsRunningSomewhere
+    const UTF8: u32 = 0x0800_0100; // kCFStringEncodingUTF8
+
+    #[link(name = "CoreAudio", kind = "framework")]
+    extern "C" {
+        fn AudioObjectHasProperty(object: u32, address: *const Address) -> u8;
+        fn AudioObjectGetPropertyDataSize(object: u32, address: *const Address, qualifier_size: u32, qualifier: *const c_void, size: *mut u32) -> i32;
+        fn AudioObjectGetPropertyData(object: u32, address: *const Address, qualifier_size: u32, qualifier: *const c_void, size: *mut u32, data: *mut c_void) -> i32;
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFStringGetCString(s: *const c_void, buffer: *mut c_char, size: isize, encoding: u32) -> u8;
+        fn CFRelease(object: *const c_void);
+    }
+
+    fn address(selector: u32) -> Address {
+        Address { selector, scope: SCOPE_GLOBAL, element: ELEMENT_MAIN }
+    }
+
+    fn get_u32(object: u32, selector: u32) -> Option<u32> {
+        let a = address(selector);
+        let mut value: u32 = 0;
+        let mut size = std::mem::size_of::<u32>() as u32;
+        let status = unsafe { AudioObjectGetPropertyData(object, &a, 0, std::ptr::null(), &mut size, &mut value as *mut u32 as *mut c_void) };
+        (status == 0).then_some(value)
+    }
+
+    fn get_i32(object: u32, selector: u32) -> Option<i32> {
+        get_u32(object, selector).map(|v| v as i32)
+    }
+
+    fn bundle_id(object: u32) -> Option<String> {
+        let a = address(PROCESS_BUNDLE_ID);
+        let mut cf: *const c_void = std::ptr::null();
+        let mut size = std::mem::size_of::<*const c_void>() as u32;
+        let status = unsafe { AudioObjectGetPropertyData(object, &a, 0, std::ptr::null(), &mut size, &mut cf as *mut *const c_void as *mut c_void) };
+        if status != 0 || cf.is_null() {
+            return None;
+        }
+        let mut buffer = [0 as c_char; 256];
+        let ok = unsafe { CFStringGetCString(cf, buffer.as_mut_ptr(), buffer.len() as isize, UTF8) };
+        unsafe { CFRelease(cf) };
+        if ok == 0 {
+            return None;
+        }
+        let text = unsafe { std::ffi::CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().into_owned();
+        (!text.is_empty()).then_some(text)
+    }
+
+    pub fn users() -> Vec<String> {
+        let list = address(PROCESS_LIST);
+        if unsafe { AudioObjectHasProperty(SYSTEM_OBJECT, &list) } == 0 {
+            return fallback();
+        }
+        let mut size: u32 = 0;
+        if unsafe { AudioObjectGetPropertyDataSize(SYSTEM_OBJECT, &list, 0, std::ptr::null(), &mut size) } != 0 || size == 0 {
+            return Vec::new();
+        }
+        let mut ids = vec![0u32; size as usize / std::mem::size_of::<u32>()];
+        if unsafe { AudioObjectGetPropertyData(SYSTEM_OBJECT, &list, 0, std::ptr::null(), &mut size, ids.as_mut_ptr() as *mut c_void) } != 0 {
+            return Vec::new();
+        }
+        ids.truncate(size as usize / std::mem::size_of::<u32>());
+        let own = std::process::id() as i32;
+        let mut out: Vec<String> = Vec::new();
+        for id in ids {
+            if get_u32(id, PROCESS_RUNNING_INPUT) != Some(1) || get_i32(id, PROCESS_PID) == Some(own) {
+                continue;
+            }
+            if let Some(b) = bundle_id(id) {
+                if !out.contains(&b) {
+                    out.push(b);
+                }
+            }
+        }
+        out
+    }
+
+    /// Vor macOS 14.2: nur „das Standard-Mikrofon läuft irgendwo“.
+    fn fallback() -> Vec<String> {
+        let Some(device) = get_u32(SYSTEM_OBJECT, DEFAULT_INPUT).filter(|d| *d != 0) else { return Vec::new() };
+        if get_u32(device, RUNNING_SOMEWHERE) == Some(1) {
+            vec!["*".to_string()]
+        } else {
+            Vec::new()
+        }
+    }
+}
+
 /// BSD-358: HTML der Zwischenablage (public.html) für „Paste“ im Based-Kontextmenü. Das Clipboard-Plugin liefert nur
 /// Text – ohne das kam per Rechtsklick nur unformatierter Text an, ⌘V (Systemweg) fügte mit Formatierung ein.
 /// Nur lesen, nur auf Anfrage aus dem Menü; None = kein HTML (oder nicht macOS).
@@ -222,7 +350,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         // BSD-449: „Change folder…“ für Backups (Ordnerdialog, nur im Hauptfenster erlaubt)
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![power_on_battery, clipboard_html, spell_check, spell_learn, spell_ignore])
+        .invoke_handler(tauri::generate_handler![power_on_battery, mic_users, clipboard_html, spell_check, spell_learn, spell_ignore])
         .setup(|app| {
             create_main_window(app)?;
             Ok(())

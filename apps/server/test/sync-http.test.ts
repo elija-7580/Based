@@ -9,6 +9,7 @@ import { WorkspaceStore as PinnedStore } from "@based/core";
 // Diese Datei prüft das alte Format (Properties im Datenbank-Record, Protokoll 2) – auch wenn die Suite sonst mit
 // BASED_PROPERTY_RECORDS=1 läuft (BSD-30).
 PinnedStore.propertyRecordsByDefault = false;
+PinnedStore.propertyRecordsForNewFiles = false; // BSD-569
 
 const page = (id: string, text: string, millis = 1000, node = "dev"): WireRecord => ({
   kind: "block",

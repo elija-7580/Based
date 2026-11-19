@@ -8,6 +8,7 @@ import type { ChatEvent } from "./events.js";
 import { AbortError, isAbort, isTruncated, type AIProvider, type AIResponse, type ChatMessage, type ToolCall, type ToolSpec } from "./messages.js";
 import { estimateCost } from "./pricing.js";
 import { alwaysAsks } from "./agents/permissions.js";
+import { unwrap } from "./tools/gateway.js";
 
 // MARK: Schnittstellen
 
@@ -33,6 +34,11 @@ export interface ChatEngine {
 export interface ToolResult {
   text: string;
   isError: boolean;
+  /**
+   * Kennung, mit der der Mensch genau diesen Schreibschritt zurücknehmen kann („Undo“ an der Aktion im Chat). Gilt,
+   * solange die App läuft; danach bleibt der Versionsverlauf der Seite.
+   */
+  undo?: string | undefined;
 }
 
 /** Wo Werkzeuge laufen (im Web: im Store-Worker). */
@@ -41,6 +47,24 @@ export interface ToolHost {
   /** Ändert das Werkzeug etwas im Workspace? (für „Ask before edits“) */
   isWrite(name: string): boolean;
   call(name: string, input: JSONValue, signal?: AbortSignal): Promise<ToolResult>;
+  /**
+   * Kurze Werkzeugliste (tools/gateway.ts): nur diese Namen sieht das Modell; den Rest erreicht es über `more_tools`
+   * und `run_tool`. Ohne: alle `specs`. Rechte und Anzeige gelten immer für das gemeinte Werkzeug (`unwrapCall`).
+   */
+  readonly listed?: readonly string[] | undefined;
+}
+
+/** Was das Modell als Werkzeugliste bekommt. */
+export function listedSpecs(host: ToolHost | undefined): ToolSpec[] {
+  if (!host) return [];
+  const listed = host.listed;
+  return listed ? host.specs.filter((s) => listed.includes(s.name)) : [...host.specs];
+}
+
+/** `run_tool {name, args}` → der gemeinte Aufruf (gleiche Kennung). */
+export function unwrapCall(call: ToolCall): ToolCall {
+  const u = unwrap(call.name, call.arguments as JSONValue);
+  return u.name === call.name ? call : { ...call, name: u.name, arguments: u.input as ToolCall["arguments"] };
 }
 
 /**
@@ -90,7 +114,8 @@ function raceAbort<T>(p: Promise<T>, signal: AbortSignal): Promise<T> {
 }
 
 /** Ein Werkzeug ausführen: erst Permission (Modus, ggf. Nutzer fragen), dann der Aufruf. Wirft nur bei Abbruch. */
-export async function executeTool(host: ToolHost, call: ToolCall, policy: ToolPolicy, signal: AbortSignal, emit: (e: ChatEvent) => void): Promise<ToolResult> {
+export async function executeTool(host: ToolHost, given: ToolCall, policy: ToolPolicy, signal: AbortSignal, emit: (e: ChatEvent) => void): Promise<ToolResult> {
+  const call = unwrapCall(given);
   const known = host.specs.some((s) => s.name === call.name);
   if (!known) return { text: `Unknown tool ${call.name}`, isError: true };
   const verdict = await policy.rules?.(call);
@@ -160,7 +185,8 @@ export const BASED_SYSTEM_PROMPT = `You are Based, the user's personal workspace
 Based is a Notion-like workspace (pages, blocks, databases). Pages are read and written as Markdown.
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`, change a passage with \`find_replace\`; use \`replace_page_content\` only when the user wants a rewrite.
-- Databases: \`list_databases\` shows ids and properties, \`query_database\` the rows, \`add_row\` / \`update_row\` set properties by name.`;
+- Databases: \`list_databases\` shows ids and properties, \`query_database\` the rows, \`add_row\` / \`update_row\` set properties by name.
+- There are more tools than your list shows (views, schema, whiteboards, moving pages, trash, history, meetings): \`more_tools\` lists them, \`run_tool\` calls one.`;
 
 export const CONTINUE_PROMPT = "Your reply was cut off by the length limit. Continue exactly where you stopped — no repetition, no preamble.";
 const SUMMARY_PROMPT = "Summarize this earlier part of a conversation between the user and their assistant in at most 250 words. Keep facts, decisions, names, ids of pages and open tasks. Write in the conversation's language. Reply with the summary only.";
@@ -219,7 +245,7 @@ export class ModelEngine implements ChatEngine {
   private async loop(request: ChatRequest, signal: AbortSignal, emit: (e: ChatEvent) => void): Promise<void> {
     const { provider, model, tools: host } = this.o;
     const policy: ToolPolicy = this.o.policy ?? { mode: "askEdits" };
-    const specs = [...(host?.specs ?? [])];
+    const specs = listedSpecs(host);
     const today = (this.o.today ?? (() => new Date().toISOString().slice(0, 10)))();
     let system = `${this.o.system ?? BASED_SYSTEM_PROMPT}\n\nToday is ${today}.`;
     if (request.system) system += "\n\n# Agent instructions\n" + request.system;
@@ -277,13 +303,14 @@ export class ModelEngine implements ChatEngine {
       // Auch die Schlussantwort ist ein Ereignis (sonst ginge Text neben einem Tool-Call verloren).
       if (r.message.content) emit({ type: "text", text: r.message.content });
       if (calls.length === 0) return;
-      for (const call of calls) {
+      for (const raw of calls) {
+        const call = unwrapCall(raw); // run_tool zeigt und prüft das gemeinte Werkzeug
         emit({ type: "toolUse", id: call.id, name: call.name, input: call.arguments });
         const res = host
           ? await executeTool(host, call, policy, signal, emit)
           : { text: `Unknown tool ${call.name}`, isError: true };
         messages.push({ role: "tool", content: clip(res.text, TOOL_OUTPUT_MODEL_LIMIT), toolCallID: call.id });
-        emit({ type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError });
+        emit({ type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError, ...(res.undo ? { undo: res.undo } : {}) });
       }
     }
     // BSD-47: das Schrittlimit endet nicht mehr still.
@@ -379,7 +406,7 @@ export class ScriptedEngine implements ChatEngine {
         }
         const res = await run;
         while (pending.length > 0) yield pending.shift()!;
-        yield { type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError };
+        yield { type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError, ...(res.undo ? { undo: res.undo } : {}) };
       } else if ("wait" in step) await sleep(step.wait, signal);
       else if ("hold" in step) await raceAbort(new Promise<void>(() => undefined), signal);
       else if ("fail" in step) throw new Error(step.fail);
