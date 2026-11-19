@@ -392,6 +392,8 @@ test("Karte: kein Land-Band über die ganze Welt (Datumsgrenze)", async ({ page,
   const out = map.getByRole("button", { name: "Zoom out" });
   for (let i = 0; i < 12 && (await out.isEnabled()); i++) await out.click();
   await page.waitForTimeout(300);
+  // Review 2026-11-19: die Küstenlinien kommen als eigener Chunk mit der ersten Karte
+  await expect(page.getByTestId("map-basemap")).toHaveAttribute("data-land", "ready");
   // Farbe an bekannten Orten: Nordmeer (0°, 67° N) ist Meer wie der Atlantik, Sibirien (100° O, 65° N) Land wie Afrika.
   // Vorher lag dort ein Band über die ganze Welt – Meer wurde Land und Sibirien Meer.
   const [zoom, center] = [Number(await canvas.getAttribute("data-zoom")), (await canvas.getAttribute("data-center"))!.split(" ").map(Number)];

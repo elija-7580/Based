@@ -264,6 +264,8 @@ test("Beta-Build: Start, Seite und Datenbank laden keinen Chat- oder Agenten-Cod
       for (const marker of ["anthropic-version", "api.anthropic.com", "edit_blocks", "draw_board", "save_skill"]) {
         if (text.includes(marker)) offenders.push(`${url.split("/").pop()}: ${marker}`);
       }
+      // Review 2026-11-19: Küstenlinien der Karten-Ansicht (map/land.ts, 26 kB gzip) erst mit der ersten Karte
+      if (text.includes("-59.57,-80.04,-59.87,-80.55")) offenders.push(`${url.split("/").pop()}: LAND_RINGS`);
     }
     expect(offenders).toEqual([]);
   } finally {

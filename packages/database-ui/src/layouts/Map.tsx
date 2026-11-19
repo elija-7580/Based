@@ -7,15 +7,12 @@ import { CellEditor } from "../cells/CellEditor.js";
 import { CellView } from "../cells/CellView.js";
 import { useDB } from "../context.js";
 import { cluster, clampViewport, fitBounds, graticuleStep, mapHeightUnits, pan, project, ringsToPath, toScreen, unproject, worldSize, zoomAt, type Pt, type Size, type Viewport } from "../map/geo.js";
-import { LAND_RINGS } from "../map/land.js";
 import { mapRows, type LocatedRow } from "../map/rows.js";
 import { Icon, type Anchor } from "../ui.js";
 import { CardBody, cardProperties, EmptyState } from "./shared.js";
 
 const CLUSTER_RADIUS = 40;
 const LIST_PAGE = 100;
-let landPath: string | undefined;
-const land = () => (landPath ??= ringsToPath(LAND_RINGS));
 
 /** Eigenschaft, nach der die Karte auslegt (`mapPropertyID`, sonst die erste Place-Property). */
 export function mapProperty(db: Database, view: DatabaseView): PropertySchema | undefined {
@@ -49,6 +46,24 @@ function graticuleLines(vp: Viewport, size: Size): { x: number[]; y: number[] } 
 }
 
 let landShape: Path2D | undefined;
+let landLoad: Promise<void> | undefined;
+
+/**
+ * Review 2026-11-19: Die Küstenlinien (map/land.ts, 67 kB roh, 26 kB gzip) kommen erst mit der ersten Karte, nicht
+ * im Erststart-Chunk. Bis sie da sind (ein lokaler Chunk, wenige ms), zeigt die Karte Fläche und Gradnetz ohne Land.
+ */
+function useLand(): Path2D | undefined {
+  const [shape, setShape] = useState(landShape);
+  useEffect(() => {
+    if (shape) return;
+    let live = true;
+    landLoad ??= import("../map/land.js").then((m) => { landShape ??= new Path2D(ringsToPath(m.LAND_RINGS)); });
+    // Scheitert das Laden (Chunk fehlt), bleibt die Karte ohne Land; die nächste Karte versucht es neu.
+    landLoad.then(() => { if (live) setShape(landShape); }, () => { landLoad = undefined; });
+    return () => { live = false; };
+  }, [shape]);
+  return shape;
+}
 
 /**
  * Basiskarte auf <canvas>: Land als ein Path2D in Weltkoordinaten (einmal gebaut), pro Bild nur Transformation und
@@ -57,6 +72,7 @@ let landShape: Path2D | undefined;
 function Basemap({ vp, size }: { vp: Viewport; size: Size }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [theme, setTheme] = useState(0);
+  const land = useLand();
   useEffect(() => {
     const o = new MutationObserver(() => setTheme((n) => n + 1));
     o.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "style", "class"] });
@@ -75,19 +91,18 @@ function Basemap({ vp, size }: { vp: Viewport; size: Size }) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = token("--surface-soft");
     ctx.fillRect(0, 0, size.width, size.height);
-    landShape ??= new Path2D(land());
     const w = worldSize(vp.zoom);
     const tx = size.width / 2 - vp.cx * w, ty = size.height / 2 - vp.cy * w;
     const first = Math.floor(-tx / w);
     ctx.fillStyle = token("--bg");
     ctx.strokeStyle = token("--line");
-    for (let k = first - 2; k <= first + 3; k++) {
+    for (let k = first - 2; land && k <= first + 3; k++) {
       // eine Weltbreite Rand: Ringe über die Datumsgrenze ragen in die Nachbarkopie (ringsToPath, BSD-503)
       if (tx + (k + 2) * w <= 0 || tx + (k - 1) * w >= size.width) continue;
       ctx.setTransform(dpr * w, 0, 0, dpr * w, dpr * (tx + k * w), dpr * ty);
-      ctx.fill(landShape);
+      ctx.fill(land);
       ctx.lineWidth = 1 / w;
-      ctx.stroke(landShape);
+      ctx.stroke(land);
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const g = graticuleLines(vp, size);
@@ -98,8 +113,8 @@ function Basemap({ vp, size }: { vp: Viewport; size: Size }) {
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.globalAlpha = 1;
-  }, [vp, size, theme]);
-  return <canvas ref={ref} className="dbui-map-svg" style={{ width: size.width, height: size.height }} aria-hidden data-testid="map-basemap" />;
+  }, [vp, size, theme, land]);
+  return <canvas ref={ref} className="dbui-map-svg" style={{ width: size.width, height: size.height }} aria-hidden data-testid="map-basemap" data-land={land ? "ready" : undefined} />;
 }
 
 function SelectedCard({ rows, view, onClose, onFocus }: { rows: LocatedRow[]; view: DatabaseView; onClose: () => void; onFocus: (r: LocatedRow) => void }) {

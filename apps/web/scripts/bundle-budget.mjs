@@ -3,11 +3,12 @@
 // vom 11.11.2026 (JS 1 120 kB, CSS 87 kB gzip); wer sie anhebt, schreibt den Grund in den Commit.
 // BSD-595 (19.11.2026): Chat, Agenten und Anbieter sind eigene Chunks – Start-JS 1 063 → 918 kB, Store-Worker
 // 319 → 281 kB gzip (je KiB wie unten). Grenzen auf den neuen Stand + 5 %; der Store-Worker wird jetzt mitgemessen.
+// Review 19.11.2026: Küstenlinien der Karte als eigener Chunk – Start-JS 918 → 893 kB; JS-Grenze 965 → 940 kB.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
-const BUDGET_KB = { js: 965, css: 95, worker: 295 };
+const BUDGET_KB = { js: 940, css: 95, worker: 295 };
 const dir = new URL("../dist/assets/", import.meta.url).pathname;
 const html = readFileSync(new URL("../dist/index.html", import.meta.url), "utf8");
 const entry = (ext) => {
