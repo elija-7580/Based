@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore, type DragEvent } from "react";
 import { Icon, type IconName } from "../icons.js";
 import type { History, Route } from "../shell/router.js";
 import { keyLabel } from "../shell/keyHints.js";
+import { noteDragStart, releasedAsClick } from "../shell/clickSlop.js";
 
 const DRAG_TYPE = "application/x-based-tab";
 
@@ -61,6 +62,11 @@ export function TabBar({ history, titles }: { history: History; titles: Readonly
     setDrop(undefined);
     if (!dragged) return;
     e.preventDefault();
+    // Feedback 20. 11.: kurz „gezogen“ und auf sich selbst losgelassen = Klick (shell/clickSlop.ts)
+    if (dragged === id && releasedAsClick(e)) {
+      history.activate(id);
+      return;
+    }
     const from = tabs.findIndex((t) => t.id === dragged);
     const box = e.currentTarget.getBoundingClientRect();
     const slot = tabs.findIndex((t) => t.id === id) + (e.clientX > box.left + box.width / 2 ? 1 : 0);
@@ -104,6 +110,7 @@ export function TabBar({ history, titles }: { history: History; titles: Readonly
               history.close(t.id);
             }}
             onDragStart={(e) => {
+              noteDragStart(e);
               e.dataTransfer.setData(DRAG_TYPE, t.id);
               e.dataTransfer.effectAllowed = "move";
             }}

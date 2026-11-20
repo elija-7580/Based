@@ -1,12 +1,17 @@
 // Backlinks am Seitenende: Seiten, die diese Seite erwähnen oder verlinken (Index im Store-Worker). Frischt sich
 // auf, wenn sich Titel oder Seitenstruktur ändern und wenn das Fenster wieder in den Vordergrund kommt.
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { IconView } from "@based/editor";
 import { BasedButton } from "@based/ui/astryx";
 import { Icon } from "../icons.js";
 import type { StoreClient } from "../worker/client.js";
 import type { PageInfo, UnlinkedMentionInfo } from "../worker/protocol.js";
 import "./backlinks.css";
+
+/** Ruhe nach Änderungen an Titeln/Outline, bevor neu abgefragt wird. */
+const REFRESH_MS = 1500;
+/** Fensterfokus fragt höchstens so oft neu ab. */
+const FOCUS_MS = 30_000;
 
 export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient; pageID: string; onOpenPage: (id: string) => void }) {
   const state = useSyncExternalStore(client.subscribe, client.getState);
@@ -15,19 +20,33 @@ export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient;
   const [unlinked, setUnlinked] = useState<UnlinkedMentionInfo[]>([]);
   const [showUnlinked, setShowUnlinked] = useState(false);
   const [tick, setTick] = useState(0);
+  // Feedback 20. 11.: Jede Sync-Änderung (Titel, Outline) und jedes Zurückkommen ins Fenster fragte Backlinks und
+  // unverlinkte Erwähnungen sofort neu ab. Die Abfragen stellen sich im Store-Worker vor alles andere – Seiten aus
+  // Suche und Seitenleiste öffneten dann erst nach dem zweiten, dritten Klick. Jetzt: beim Öffnen einmal, danach
+  // gebündelt (Ruhe von REFRESH_MS), beim Fokus höchstens alle FOCUS_MS.
+  const last = useRef(0);
   useEffect(() => {
-    const again = () => setTick((n) => n + 1);
+    const again = () => { if (Date.now() - last.current >= FOCUS_MS) setTick((n) => n + 1); };
     window.addEventListener("focus", again);
     return () => window.removeEventListener("focus", again);
   }, []);
+  const seen = useRef<{ titles: unknown; outline: unknown } | undefined>(undefined);
+  useEffect(() => {
+    const prev = seen.current;
+    seen.current = { titles: state.titles, outline: state.outline };
+    if (!prev) return;
+    const t = setTimeout(() => setTick((n) => n + 1), REFRESH_MS);
+    return () => clearTimeout(t);
+  }, [state.titles, state.outline]);
   useEffect(() => {
     let alive = true;
+    last.current = Date.now();
     void client.backlinks(pageID).then((r) => alive && setLinks(r), () => undefined);
     void client.unlinkedMentions(pageID).then((r) => alive && setUnlinked(r), () => undefined);
     return () => {
       alive = false;
     };
-  }, [client, pageID, state.titles, state.outline, tick]);
+  }, [client, pageID, tick]);
   if (links.length === 0 && unlinked.length === 0) return null;
   const link = (m: UnlinkedMentionInfo) => {
     void client.command({ op: "linkMention", blockID: m.blockID, start: m.start, length: m.length, pageID }).then(() => setTick((n) => n + 1), () => undefined);

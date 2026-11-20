@@ -20,7 +20,7 @@ import { GIVE_ONCE_URL, PAID_PLANS_AT_USERS, SPONSOR_URL } from "../../shell/sup
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { HangsSection } from "./hangs.js";
-import { autoUpdatePref, deviceNode, fallbackHomePage, lazyStoreSetting, meetingDetectPref, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, fallbackHomePage, homeStaysEmpty, lazyStoreSetting, meetingDetectPref, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { browserKeep, keepRow } from "../../shell/storagePersist.js";
 import { weekStartForLocale } from "@based/core";
@@ -409,8 +409,10 @@ function StartPageSection({ state }: SettingsSectionProps) {
   const trashed = value ? (state.outline?.trash ?? []).some((t) => t.id === value) : false;
   const current = value && node && !trashed ? state.titles.get(value) || "Untitled" : undefined;
   // BSD-461: ohne AI wird keine Seite „Home“ mehr angelegt, sondern eine vorhandene Seite Home.
-  const firstPage = !ai && state.outline ? fallbackHomePage(state.outline, state.titles) : undefined;
-  const fallback = ai ? "Dashboard" : firstPage ? state.titles.get(firstPage) || "Untitled" : "A new page called Home";
+  // Feedback 20. 11.: Wurde Home auf diesem Gerät schon vergeben (oder zurückgesetzt), rückt keine Seite mehr nach.
+  const empty = homeStaysEmpty(value, { cleared: startPage.cleared(), trashedID: startPage.trashed() }, state.outline);
+  const firstPage = !ai && !empty && state.outline ? fallbackHomePage(state.outline, state.titles) : undefined;
+  const fallback = ai ? "Dashboard" : firstPage ? state.titles.get(firstPage) || "Untitled" : "No page chosen";
   return (
     <Group>
       <Row label="Home" hint={ai

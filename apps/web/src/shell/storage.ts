@@ -130,6 +130,8 @@ export const recentPages = {
  * oder `undefined` für das Dashboard. „Home“ in der Seitenleiste, neue Tabs und der App-Start führen dorthin.
  */
 const startPageListeners = new Set<() => void>();
+const START_PAGE_DECIDED = "based.startPage.decided";
+const START_PAGE_TRASHED = "based.startPage.trashed";
 export const startPage = {
   get: (): string | undefined => {
     const v = read<unknown>("based.startPage", undefined);
@@ -137,7 +139,23 @@ export const startPage = {
   },
   set: (id: string | undefined) => {
     write("based.startPage", id);
+    write(START_PAGE_DECIDED, true);
+    write(START_PAGE_TRASHED, undefined);
     startPageListeners.forEach((f) => f());
+  },
+  /**
+   * Feedback 20. 11.: Home wurde nach Löschen oder „Remove as Home“ sofort mit der nächsten Seite neu besetzt. Die
+   * Shell besetzt Home nur noch, wenn auf diesem Gerät nie etwas gewählt wurde oder die gewählte Seite in diesem
+   * Workspace nie vorkam (anderer oder neuer Workspace) – siehe `homeStaysEmpty`.
+   */
+  cleared: (): boolean => read<unknown>(START_PAGE_DECIDED, false) === true && read<unknown>("based.startPage", undefined) === undefined,
+  /** Die Home-Seite liegt im Papierkorb: merken, damit sie auch nach endgültigem Löschen nicht ersetzt wird. */
+  noteTrashed: (id: string) => {
+    if (read<unknown>(START_PAGE_TRASHED, undefined) !== id) write(START_PAGE_TRASHED, id);
+  },
+  trashed: (): string | undefined => {
+    const v = read<unknown>(START_PAGE_TRASHED, undefined);
+    return typeof v === "string" ? v : undefined;
   },
   subscribe: (f: () => void) => {
     startPageListeners.add(f);
@@ -151,6 +169,22 @@ export const startPage = {
  */
 export function homeTarget(chosen: string | undefined, live?: { has(id: string): boolean }): { name: "page"; id: string } | { name: "home" } {
   return chosen && (!live || live.has(chosen)) ? { name: "page", id: chosen } : { name: "home" };
+}
+
+/**
+ * Feedback 20. 11.: Bleibt Home leer (statt eine andere Seite nachrücken zu lassen)? Ja, wenn man Home selbst entfernt
+ * hat (`cleared`), die gewählte Seite im Papierkorb liegt oder dort lag (`trashedID`, auch nach endgültigem Löschen).
+ * Kennt der Workspace die gewählte Seite gar nicht (anderer oder frischer Workspace), darf die Shell eine wählen.
+ */
+export function homeStaysEmpty(
+  chosen: string | undefined,
+  o: { cleared: boolean; trashedID?: string | undefined },
+  outline: { nodes: Readonly<Record<string, unknown>>; trash: readonly { id: string }[] } | undefined,
+): boolean {
+  if (!chosen) return o.cleared;
+  if (!outline) return false;
+  if (outline.trash.some((t) => t.id === chosen)) return true;
+  return !outline.nodes[chosen] && o.trashedID === chosen;
 }
 
 /** Die Willkommensseite, die der Store-Worker in einem frischen Workspace anlegt (worker/host.ts). */

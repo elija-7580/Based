@@ -47,7 +47,8 @@ test("ohne AI: kein Chat, keine Agenten, Home ist eine Seite", { tag: "@smoke" }
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
 
   // BSD-461: Einstellungen → Home nennt die Seite, die Home ist (keine „neue Seite Home“ mehr)
-  await page.evaluate(() => localStorage.removeItem("based.startPage"));
+  // (frisches Gerät: weder Home gewählt noch je vergeben – Feedback 20. 11.)
+  await page.evaluate(() => { localStorage.removeItem("based.startPage"); localStorage.removeItem("based.startPage.decided"); });
   await page.goto("/#prefs-editor");
   await page.reload();
   await expect(page.getByTestId("settings-section-start-page")).toContainText("Welcome to Based");
@@ -131,6 +132,7 @@ test("ohne AI: Rechtsklick auf die Home-Seite ohne „Use dashboard as Home“, 
   await expect(menu.getByRole("menuitem", { name: "Rename" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: /dashboard/i })).toHaveCount(0);
   await expect(menu.getByRole("menuitem", { name: "Set as Home" })).toHaveCount(0);
+  await expect(menu.getByRole("menuitem", { name: "Remove as Home" })).toBeVisible();
   if (browserName === "chromium") {
     await page.screenshot({ path: "../../docs/design/screens/home-page-menu-no-ai-light.png" });
     await page.keyboard.press("Escape");
@@ -157,4 +159,54 @@ test("ohne AI: Rechtsklick auf die Home-Seite ohne „Use dashboard as Home“, 
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await nav(page).getByRole("button", { name: "Home" }).click();
   await expect(page.getByLabel("Page title")).toHaveValue("Other home");
+});
+
+// Feedback 20. 11.: Home wurde nach „Remove as Home“ oder Löschen der Home-Seite sofort mit der nächsten Seite neu
+// besetzt. Jetzt bleibt Home leer (Start-Ansicht mit „Choose a page…“), bis man selbst eine Seite wählt.
+test("ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite", async ({ page, browserName }) => {
+  await ready(page);
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  const menu = page.getByRole("menu", { name: "Page actions" });
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click({ button: "right" });
+  await menu.getByRole("menuitem", { name: "Remove as Home" }).click();
+  await nav(page).getByRole("button", { name: "Home" }).click();
+  const plain = page.getByTestId("home-plain");
+  await expect(plain).toBeVisible();
+  await expect(plain.getByRole("heading", { name: "Home" })).toBeVisible();
+  // keine Seite rückt nach – auch nicht nach einem Neuladen
+  await page.waitForTimeout(500);
+  await expect(page.getByLabel("Page title")).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await nav(page).getByRole("button", { name: "Home" }).click();
+  await expect(plain).toBeVisible();
+  if (browserName === "chromium") {
+    await page.screenshot({ path: "../../docs/design/screens/home-plain-light.png" });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: "../../docs/design/screens/home-plain-dark.png" });
+    await page.keyboard.press("ControlOrMeta+Shift+l");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  }
+
+  // Seite wählen → Home öffnet sie
+  await plain.getByRole("button", { name: "Choose a page…" }).click();
+  const picker = page.getByTestId("page-picker");
+  await picker.getByRole("searchbox").fill("Welcome");
+  await picker.getByText("Welcome to Based", { exact: true }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+
+  // eine andere Seite als Home, dann in den Papierkorb → Home bleibt leer statt „Welcome to Based“
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(page.getByLabel("Page title")).toBeFocused();
+  await page.keyboard.type("Short-lived home");
+  await page.getByRole("treeitem", { name: "Short-lived home" }).click({ button: "right" });
+  await menu.getByRole("menuitem", { name: "Set as Home" }).click();
+  await page.getByRole("treeitem", { name: "Short-lived home" }).click({ button: "right" });
+  await menu.getByRole("menuitem", { name: "Move to Trash" }).click();
+  await nav(page).getByRole("button", { name: "Home" }).click();
+  await expect(plain).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.getByLabel("Page title")).toHaveCount(0);
 });

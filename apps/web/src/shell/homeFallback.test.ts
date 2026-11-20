@@ -1,6 +1,6 @@
 // BSD-461: Home ohne AI fällt auf eine vorhandene Seite zurück, statt eine leere Seite „Home“ anzulegen.
 import { describe, expect, it } from "vitest";
-import { fallbackHomePage, homeTarget, WELCOME_TITLE } from "./storage.js";
+import { fallbackHomePage, homeStaysEmpty, homeTarget, WELCOME_TITLE } from "./storage.js";
 
 const outline = (o: { priv?: string[]; team?: string[]; kinds?: Record<string, string>; trash?: string[] }) => ({
   sections: [{ id: "t1" }, { id: "private" }],
@@ -24,5 +24,25 @@ describe("fallbackHomePage (BSD-461)", () => {
   });
   it("eine schon gewählte Home-Seite (auch eine alte leere „Home“) bleibt", () => {
     expect(homeTarget("old-home", { has: () => true })).toEqual({ name: "page", id: "old-home" });
+  });
+});
+
+describe("homeStaysEmpty (Feedback 20. 11.)", () => {
+  const o = { nodes: { a: {}, t: {} }, trash: [{ id: "t" }] };
+  it("frisches Gerät: Shell darf eine Seite wählen", () => {
+    expect(homeStaysEmpty(undefined, { cleared: false }, o)).toBe(false);
+  });
+  it("„Remove as Home“: bleibt leer", () => {
+    expect(homeStaysEmpty(undefined, { cleared: true }, o)).toBe(true);
+  });
+  it("Home-Seite im Papierkorb oder schon endgültig gelöscht: bleibt leer", () => {
+    expect(homeStaysEmpty("t", { cleared: false }, o)).toBe(true);
+    expect(homeStaysEmpty("gone", { cleared: false, trashedID: "gone" }, o)).toBe(true);
+  });
+  it("Seite, die dieser Workspace nie kannte (anderer/neuer Workspace): Shell darf wählen", () => {
+    expect(homeStaysEmpty("foreign", { cleared: false }, o)).toBe(false);
+  });
+  it("vorhandene Seite: nicht leer", () => {
+    expect(homeStaysEmpty("a", { cleared: false }, o)).toBe(false);
   });
 });

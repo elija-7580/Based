@@ -838,3 +838,6 @@ button.row:hover, a.row:hover { background: var(--bg); }
 :is(.astryx-text-input, .astryx-text-area) :is(input, textarea):focus-visible { outline: none; }
 /* Auf einer grauen Fläche (Gruppe, Karte) wäre das Feld unsichtbar: dort eine Stufe dunkler. */
 :is(.astryx-card, .astryx-section:not([data-variant="transparent"]), .settings-group, .lib-bulk) :is(.astryx-text-input, .astryx-text-area) { background: var(--selected); }
+/* Feedback 20. 11.: Home ohne Home-Seite (screens/HomePlain.tsx) */
+.home-plain-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-4); }
+.home-plain-search { display: inline-flex; align-items: center; gap: var(--space-2); }

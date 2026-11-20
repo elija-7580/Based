@@ -164,11 +164,35 @@ function onRecorded(h: HangRecord | undefined) {
   persistSoon();
 }
 
+/**
+ * Feedback 20. 11.: Der Worker meldet lange Arbeit („busy“, Ende in Date.now()). Eine Anfrage, die währenddessen
+ * wartete, nennt sie in der Hänger-Liste („store openPage (waiting for backlinks)“) – vorher stand dort nur die
+ * wartende Anfrage, die selbst schnell war.
+ */
+const recentBusy: { op: string; ms: number; end: number }[] = [];
+export function noteStoreBusy(op: string, ms: number, at: number) {
+  const end = perfNow() - (Date.now() - at);
+  recentBusy.push({ op, ms, end });
+  if (recentBusy.length > 32) recentBusy.shift();
+  if (ms >= 1000) diagnosticsLog.add("warning", `store busy ${(ms / 1000).toFixed(1)} s · ${op}`);
+}
+
+/** Die längste gemeldete Arbeit, die während [t0, t1] endete und mindestens ein Drittel der Wartezeit ausmacht. */
+export function waitedFor(t0: number, t1: number, list: readonly { op: string; ms: number; end: number }[] = recentBusy): string | undefined {
+  let best: { op: string; ms: number } | undefined;
+  for (const b of list) {
+    if (b.end < t0 - 5 || b.end > t1 + 5) continue;
+    if (!best || b.ms > best.ms) best = b;
+  }
+  return best && best.ms * 3 >= t1 - t0 ? best.op : undefined;
+}
+
 /** Store-Anfrage beantwortet (aus StoreClient): über 1 s → Hänger „worker“ mit Operationsnamen. */
 export function noteStoreRequest(op: string, t0: number, t1: number) {
   const ms = t1 - t0 - hangMonitor.blockedBetween(t0, t1);
   if (ms < hangMonitor.thresholds.worker) return;
-  onRecorded(hangMonitor.record({ ms, source: "worker", culprit: `store ${op}` }));
+  const behind = waitedFor(t0, t1);
+  onRecorded(hangMonitor.record({ ms, source: "worker", culprit: behind && behind !== op ? `store ${op} (waiting for ${behind})` : `store ${op}` }));
 }
 
 /** Ziel als fester Name: data-testid, sonst Rolle bzw. Elementart. Nie Text. */
