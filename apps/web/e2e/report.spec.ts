@@ -90,6 +90,35 @@ test("Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem",
   expect(r!.shotSize).toBe(0);
 });
 
+// BSD-616: Das mehrzeilige Feld ist ein Feld nach elements.md – Fläche `surface-raised`, kein Rahmen; beim Tippen zeigt
+// allein der Fokusrahmen der Fläche den Fokus (kein zweiter Rahmen am <textarea>).
+test("Problem melden: mehrzeiliges Feld ist eine Fläche ohne Rahmen, ein Fokusrahmen", async ({ page }) => {
+  await ready(page);
+  await openNewPage(page, "Field");
+  await page.keyboard.press("ControlOrMeta+Shift+b");
+  const dialog = page.getByRole("dialog", { name: "Report a problem" });
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  const box = dialog.getByRole("textbox", { name: "What did you do, and what happened?" });
+  const look = () => box.evaluate((el) => {
+    const field = el.closest<HTMLElement>(".astryx-text-area")!;
+    const probe = document.createElement("i");
+    probe.style.background = "var(--surface-raised)";
+    document.body.append(probe);
+    const raised = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    const f = getComputedStyle(field);
+    return { border: f.borderTopColor, bg: f.backgroundColor, raised, shadow: f.boxShadow, outline: getComputedStyle(el).outlineStyle };
+  });
+  const rest = await look();
+  expect(rest.border).toBe("rgba(0, 0, 0, 0)");
+  expect(rest.bg).toBe(rest.raised);
+  await box.focus();
+  await page.keyboard.type("It broke");
+  const focused = await look();
+  expect(focused.shadow).toContain("inset");
+  expect(focused.outline).toBe("none");
+});
+
 // BSD-467: Nach dem Speichern zeigt der Dialog den Weg zu uns – Adresse, Hinweis zum Anhang, Knopf „Email report“
 // (mailto mit Version, Kanal, System; ohne Seiteninhalt und ohne Notiz). Fotos 1280 × 820 hell/dunkel.
 for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Report saved → Email report öffnet eine Mail an hello@basednotes.app (${theme})`, async ({ page, browserName }) => {
