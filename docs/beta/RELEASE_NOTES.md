@@ -50,6 +50,8 @@ New since the first test build (0.2.2):
   become boards. The import dialog lists every source with how to export from it.
 - Notion: a workspace exported in several parts (`…-Part-1.zip`, `…-Part-2.zip`) can be picked together; relation
   columns in a Notion CSV export come in as relations; percent columns show 25 % instead of 0.25 %.
+- Importing the same Notion export (Markdown & CSV) a second time updates the pages already there instead of
+  adding a copy of each. HTML files attached to a Notion page come in as HTML blocks, not as empty subpages.
 - A date without a time keeps its day, whatever time zone your Mac is in.
 - Connect AI apps (Settings → System): copy a ready setup for Claude Code, Claude Desktop or Cursor; they work on
   your pages through Based's local server on your Mac. They can't delete for good or empty the Trash – that stays
