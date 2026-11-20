@@ -123,3 +123,24 @@ test("Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach N
   await expect.poll(top).toEqual(["Search", "Home", "Chat"]);
   await expect.poll(footer).toEqual(["Library", "Trash", "Settings"]);
 });
+
+// BSD-625: Das Menü an der Fußzeile (Library, Trash, Settings) öffnet am Mauszeiger – dort, am unteren Fensterrand,
+// rückt es nach oben und bleibt ganz im Fenster (wie das Kontextmenü der Seiten, BSD-288); auch im kleinsten Fenster.
+for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }]) {
+  test(`Rechtsklick auf die Fußzeile: Menü bleibt im Fenster (${size.width} × ${size.height})`, async ({ page }) => {
+    await ready(page);
+    await page.setViewportSize(size);
+    const tools = nav(page).getByRole("group", { name: "Workspace tools" });
+    for (const name of ["Library", "Trash"]) {
+      await tools.getByRole("button", { name }).click({ button: "right" });
+      const menu = page.getByTestId("nav-menu");
+      await expect(menu).toBeVisible();
+      const box = (await menu.boundingBox())!;
+      expect(box.y, name).toBeGreaterThanOrEqual(8);
+      expect(box.y + box.height, name).toBeLessThanOrEqual(size.height - 8 + 1);
+      await expect(menu.getByRole("menuitem", { name: "Hide from sidebar" })).toBeInViewport();
+      await page.keyboard.press("Escape");
+      await expect(menu).toHaveCount(0);
+    }
+  });
+}
