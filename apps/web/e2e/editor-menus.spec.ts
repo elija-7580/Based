@@ -96,6 +96,25 @@ for (const theme of ["light", "dark"] as const) test(`Blockmenü: Aktionen mit I
   await shot(page, "block-menu-color", "1280x820", theme);
 });
 
+// BSD-622: Das Blockmenü verspricht nur Kürzel, die es gibt („Copy link to block“ hatte ⌥⇧L, das nirgends belegt ist),
+// und schreibt sie wie das System und die Übersicht: ⇧⌘P auf dem Mac (nicht ⌘⇧P), Ctrl+Shift+P sonst.
+test("Blockmenü: Kürzel in der Schreibweise des Systems, keins für „Copy link to block“", async ({ page }) => {
+  await newPage(page);
+  await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
+  await page.keyboard.type("Hint block");
+  await page.keyboard.press("Escape");
+  await page.getByTestId("block-editor").locator(".bx2-block").first().locator(".bx2-grip").click();
+  const menu = page.getByTestId("block-menu");
+  await expect(menu).toBeVisible();
+  const mac = await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.platform) || /Mac OS X/.test(navigator.userAgent));
+  const hint = (name: string) => menu.getByRole("menuitem", { name }).locator(".bx2-menu-hint");
+  await expect(hint("Copy link to block")).toHaveCount(0);
+  await expect(hint("Duplicate")).toHaveText(mac ? "⌘D" : "Ctrl+D");
+  await expect(hint("Move to")).toHaveText(mac ? "⇧⌘P" : "Ctrl+Shift+P");
+  await expect(hint("Move up")).toHaveText(mac ? "⇧⌘↑" : "Ctrl+Shift+↑");
+  await expect(hint("Delete")).toHaveText(mac ? "⌫" : "Backspace");
+});
+
 test("Slash-Menü schließt bei Klick daneben, der Text bleibt", async ({ page }) => {
   await newPage(page);
   await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
