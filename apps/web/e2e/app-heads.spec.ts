@@ -44,3 +44,22 @@ for (const theme of ["light", "dark"] as const) {
     expect(wrong).toEqual([]);
   });
 }
+
+// BSD-618: Meetings hat denselben Kopf wie die Library – Zeile 1 Titel und Anzahl, Zeile 2 der Umschalter
+// Pages · Meetings an der linken Kante (vorher stand er vor dem Titel, der Kopf sprang beim Wechsel).
+test("Meetings: Umschalter in Zeile 2 unter dem Titel, linke Kante wie der Titel", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  for (const hash of ["#meetings", "#library"]) {
+    await page.evaluate((h) => { location.hash = h; }, hash);
+    const root = page.getByTestId(hash === "#meetings" ? "meetings" : "library");
+    const title = root.locator("h1");
+    const switcher = root.getByRole("radiogroup", { name: "Library view" });
+    await expect(title).toBeVisible();
+    await expect(switcher).toBeVisible();
+    const t = (await title.boundingBox())!, s = (await switcher.boundingBox())!;
+    expect(s.y, hash).toBeGreaterThanOrEqual(t.y + t.height - 1);
+    expect(Math.abs(s.x - t.x), hash).toBeLessThanOrEqual(12);
+  }
+});
