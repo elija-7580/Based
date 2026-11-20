@@ -1,61 +1,61 @@
-success 099a71efea312f6915c53b11ad1f9c4784a48b3e
-  ✓  280 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.4s)
-  ✓  281 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.3s)
-  ✓  282 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.5s)
-  ✓  284 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (3.4s)
-  ✓  285 [webkit] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (3.4s)
-  ✓  283 [webkit] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (8.9s)
+success 7bc673dc3ce59273bbb35626996a246ee30e14c2
+  ✓  252 [webkit] › e2e/startup-perf.spec.ts:132:1 › Tippen zeichnet nur das eigene Textfeld neu (3.5s)
+  ✓  251 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (5.2s)
+  ✓  254 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (3.8s)
+  ✓  253 [webkit] › e2e/storage.spec.ts:55:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (7.3s)
+  ✓  255 [webkit] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (4.0s)
+  ✓  256 [webkit] › e2e/storage.spec.ts:76:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (3.2s)
+  -  258 [webkit] › e2e/storage.spec.ts:93:1 › Screenshots web-storage-warning-*
+  ✓  257 [webkit] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (2.6s)
+(node:23294) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  260 [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (2.9s)
+  ✓  261 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Pages: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (6.2s)
+  ✓  262 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (6.5s)
+  -  263 [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
+  ✓  259 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (17.8s)
+  ✓  265 [webkit] › e2e/sync-assets.spec.ts:167:1 › komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Server nimmt gzip an und antwortet gepackt (2.1s)
+  ✓  264 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (5.1s)
+(node:24225) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  266 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.3s)
+  ✓  267 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (10.9s)
+  ✓  269 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.3s)
+  ✓  270 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (3.7s)
+  ✓  268 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (14.2s)
+  ✓  271 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.1s)
+  ✓  272 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (3.9s)
+  -  274 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  275 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  273 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (3.6s)
+  ✓  277 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.6s)
+  ✓  278 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.9s)
+  ✓  276 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (5.9s)
+  ✓  279 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.6s)
+  ✓  280 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.1s)
+  ✓  281 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.6s)
+  ✓  283 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (3.5s)
+  ✓  284 [webkit] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (2.9s)
+  ✓  282 [webkit] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (8.8s)
   ✓  286 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.3s)
-  ✓  288 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.2s)
-  ✓  289 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.2s)
-  ✓  287 [webkit] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (4.3s)
-  ✓  291 [webkit] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (1.5s)
-  ✓  290 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.1s)
-  ✓  292 [webkit] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.5s)
-  -  294 [webkit] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
-  ✓  293 [webkit] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (2.4s)
-  ✓  295 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (5.0s)
-  ✓  296 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (5.0s)
-  ✓  297 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.5s)
-  ✓  298 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.2s)
-  ✓  299 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (5.4s)
-  ✓  300 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (5.2s)
-  ✓  301 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.3s)
-  ✓  302 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.2s)
-  -  303 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
-  ✓  304 [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (3.7s)
+  ✓  287 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.4s)
+  ✓  288 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.3s)
+  ✓  285 [webkit] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (4.4s)
+  ✓  290 [webkit] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (1.9s)
+  ✓  289 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.0s)
+  ✓  291 [webkit] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.1s)
+  -  293 [webkit] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
+  ✓  292 [webkit] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (2.5s)
+  ✓  294 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (5.4s)
+  ✓  295 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (5.1s)
+  ✓  296 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.4s)
+  ✓  297 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.1s)
+  ✓  298 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (5.8s)
+  ✓  299 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (5.3s)
+  ✓  300 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.3s)
+  ✓  301 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.1s)
+  -  302 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+  ✓  303 [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (3.8s)
 
-
-  1) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
-
-    Error: expect(received).toEqual(expected) // deep equality
-
-    - Expected  - 1
-    + Received  + 1
-
-      Array [
-        "Chat",
-        "Search",
-    -   "Home",
-        "Library",
-    +   "Home",
-      ]
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      104 |   // Library aus dem Fuß nach oben hinter Home
-      105 |   await drag(tools.getByRole("button", { name: "Library" }), item("Home"), (b) => ({ x: b.width / 2, y: b.height - 4 }));
-    > 106 |   await expect.poll(top).toEqual(["Chat", "Search", "Home", "Library"]);
-          |                          ^
-      107 |   await expect.poll(footer).toEqual(["Trash", "Settings"]);
-      108 |   // Search in den Fuß vor Trash
-      109 |   await drag(item("Search"), tools.getByRole("button", { name: /^Trash/ }), (b) => ({ x: 4, y: b.height / 2 }));
-        at /home/runner/work/Based/Based/apps/web/e2e/sidebar-nav.spec.ts:106:26
-
-    Error Context: test-results/sidebar-nav-Einträge-ziehe-52dba--bleibt-nach-Neuladen-Reset-webkit/error-context.md
-
-  1 flaky
-    [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
   56 skipped
-  246 passed (10.4m)
+  247 passed (10.6m)
