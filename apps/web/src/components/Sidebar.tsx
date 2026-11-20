@@ -797,8 +797,10 @@ function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, 
       {label}
     </button>
   );
+  // BSD-626: wie BSD-288 – unten anstoßend nach oben, höher als das Fenster: rollen.
+  const pos = useMenuInWindow(ref, menu);
   return (
-    <div ref={ref} role="menu" aria-label={`Actions for ${count} pages`} className="menu" style={{ left: menu.x, top: menu.y }}>
+    <div ref={ref} role="menu" aria-label={`Actions for ${count} pages`} className="menu" style={pos}>
       <p className="menu-foot t-meta">{count} pages selected</p>
       {item(allFavorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!allFavorite))}
       {item("Duplicate", "duplicate", onDuplicate)}
@@ -832,6 +834,20 @@ function RecordingPill({ onOpenPage }: { onOpenPage: (id: string) => void }) {
 }
 
 /** BSD-281: Rechtsklick auf einen Eintrag der Leiste – oben anpinnen/lösen, ausblenden, und alle Einträge ein-/ausblenden. */
+/**
+ * BSD-288/625/626: Lage eines Menüs am Mauszeiger, das ganz im Fenster bleibt – stößt es unten an, rückt es nach oben
+ * (8 px Rand); ist es höher als das Fenster, rollt es.
+ */
+function useMenuInWindow(ref: { current: HTMLElement | null }, at: { x: number; y: number }): CSSProperties {
+  const [top, setTop] = useState(at.y);
+  useLayoutEffect(() => {
+    const h = ref.current?.offsetHeight ?? 0;
+    const margin = 8;
+    setTop(Math.max(margin, Math.min(at.y, window.innerHeight - h - margin)));
+  }, [ref, at.y]);
+  return { left: at.x, top, maxHeight: "calc(100vh - var(--space-4))", overflowY: "auto" };
+}
+
 function NavMenu({ menu, place, advanced, ai, prefs, onClose, onPin, onUnpin, onHide, onToggle, onLower, onReset }: {
   menu: { id: NavID; x: number; y: number };
   place: "top" | "footer" | "none";
@@ -879,14 +895,9 @@ function NavMenu({ menu, place, advanced, ai, prefs, onClose, onPin, onUnpin, on
   };
   // BSD-625: wie das Kontextmenü der Seiten (BSD-288) bleibt das Menü ganz im Fenster – die Fußzeile (Library, Trash,
   // Settings) liegt am unteren Rand, dort rückt es nach oben; ist es höher als das Fenster, rollt es.
-  const [top, setTop] = useState(menu.y);
-  useLayoutEffect(() => {
-    const h = ref.current?.offsetHeight ?? 0;
-    const margin = 8;
-    setTop(Math.max(margin, Math.min(menu.y, window.innerHeight - h - margin)));
-  }, [menu.y]);
+  const pos = useMenuInWindow(ref, menu);
   return (
-    <div ref={ref} role="menu" aria-label={`${def.name} in the sidebar`} className="menu" style={{ left: menu.x, top, maxHeight: "calc(100vh - var(--space-4))", overflowY: "auto" }} data-testid="nav-menu" onKeyDown={keyNav}>
+    <div ref={ref} role="menu" aria-label={`${def.name} in the sidebar`} className="menu" style={pos} data-testid="nav-menu" onKeyDown={keyNav}>
       {place !== "top" ? <button type="button" role="menuitem" className="menu-item" onClick={run(onPin)}><Icon name="plus" size={16} />Pin to top</button> : null}
       {place === "top" && pinned ? <button type="button" role="menuitem" className="menu-item" onClick={run(onUnpin)}><Icon name="back" size={16} />{def.home === "footer" ? "Move back to the bottom" : "Unpin from top"}</button> : null}
       {place === "top" && def.home === "top" ? <button type="button" role="menuitem" className="menu-item" onClick={run(onLower)}><Icon name="back" size={16} />Move to the bottom</button> : null}
@@ -970,13 +981,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   );
   // BSD-288: Das Menü bleibt ganz im Fenster – unten anstoßend rückt es nach oben, ist es höher als das Fenster,
   // rollt es (kleinstes Fenster 900 × 600).
-  const [top, setTop] = useState(menu.y);
-  useLayoutEffect(() => {
-    const h = ref.current?.offsetHeight ?? 0;
-    const margin = 8;
-    setTop(Math.max(margin, Math.min(menu.y, window.innerHeight - h - margin)));
-  }, [menu.y]);
-  const pos: CSSProperties = { left: menu.x, top, maxHeight: "calc(100vh - var(--space-4))", overflowY: "auto" };
+  const pos = useMenuInWindow(ref, menu);
   return (
     <div ref={ref} role="menu" aria-label="Page actions" className="menu" style={pos}>
       {item(favorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!favorite))}

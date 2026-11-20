@@ -71,3 +71,31 @@ test("Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend", 
   await expect(sidebar).toBeHidden();
   await expect(page.getByTestId("sidebar-show")).toBeVisible();
 });
+
+// BSD-626: Das Sammelmenü bleibt ganz im Fenster wie das Menü einer Seite (BSD-288) – auch für Seiten am unteren Rand
+// der Seitenleiste im kleinsten Fenster.
+test("Sammelmenü am unteren Rand (900 × 600) bleibt im Fenster", async ({ page }) => {
+  await ready(page);
+  await page.setViewportSize({ width: 900, height: 600 });
+  await page.evaluate(async () => {
+    const b = (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<string> } } }).__based;
+    for (let i = 1; i <= 16; i++) await b.client.command({ op: "createPage", title: `Page ${String(i).padStart(2, "0")}` });
+  });
+  const tree = page.getByRole("tree", { name: "Pages" });
+  const items = tree.getByRole("treeitem", { name: /^Page \d\d$/ });
+  await expect(items).toHaveCount(16);
+  const last = items.last(), before = items.nth(14);
+  await before.scrollIntoViewIfNeeded();
+  await before.click();
+  await last.click({ modifiers: ["Shift"] });
+  await expect(tree.locator("[data-picked]")).toHaveCount(2);
+  const row = (await last.boundingBox())!;
+  expect(row.y, "die Zeile liegt unten im Fenster (sonst prüft der Test nichts)").toBeGreaterThan(600 / 2);
+  await last.click({ button: "right" });
+  const bulk = page.getByRole("menu", { name: "Actions for 2 pages" });
+  await expect(bulk).toBeVisible();
+  const box = (await bulk.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(8);
+  expect(box.y + box.height).toBeLessThanOrEqual(600 - 8 + 1);
+  await expect(bulk.getByRole("menuitem", { name: "Move to Trash" })).toBeInViewport();
+});
