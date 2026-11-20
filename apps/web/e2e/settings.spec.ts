@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
+const diagTab = (page: import("@playwright/test").Page, name: string) =>
+  page.getByTestId("settings-section-diagnostics-details").getByRole("radio", { name, exact: true }).click();
+
 // Einstellungen aus Astryx-Komponenten: Navigation links, Abschnitte rechts, ehrliche „Coming later“-Seiten.
 
 async function open(page: Page, hash = "appearance") {
@@ -136,16 +140,18 @@ test("Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalt
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (t: string) => { (globalThis as unknown as { __copied: string[] }).__copied.push(t); } } });
   });
   await open(page, "prefs-diagnostics");
-  // BSD-319: Diagnostics in Gruppen – vorige Sitzung unter „Problems“, Log und Bericht unter „Log“.
-  await expect(page.getByTestId("settings-section-diagnostics-problems")).toContainText("didn't close normally");
+  // BSD-319 / Feedback 20. 11.: vorige Sitzung in der Übersicht, Log unter Details → Log, Bericht mit einem Knopf oben.
+  const overview = page.getByTestId("settings-section-diagnostics-status");
+  await expect(overview).toContainText("didn't close normally");
   await expect(page.getByTestId("diagnostics-last-session")).toContainText("Ended unexpectedly");
-  const section = page.getByTestId("settings-section-diagnostics-log");
+  await diagTab(page, "Log");
+  const section = page.getByTestId("diagnostics-tab-log");
   await expect(section.getByTestId("diagnostics-log")).toContainText("start");
   // Ein Fehler mit Token und Inhalt landet geschwärzt im Log.
   await page.evaluate(() => setTimeout(() => { throw new Error("failed with Bearer abc123 on “Secret page”"); }));
   await expect(section.getByTestId("diagnostics-log")).toContainText("Bearer ‹redacted›");
-  await section.getByRole("button", { name: "Copy diagnostics" }).click();
-  await expect(section.getByRole("button", { name: "Copied" })).toBeVisible();
+  await overview.getByRole("button", { name: "Copy report" }).click();
+  await expect(overview.getByRole("button", { name: "Copied" })).toBeVisible();
   const report = await page.evaluate(() => (globalThis as unknown as { __copied: string[] }).__copied.at(-1) ?? "");
   expect(report).toContain("ended unexpectedly");
   expect(report).toContain("boom before crash");

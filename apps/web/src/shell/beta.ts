@@ -99,6 +99,13 @@ export function workspaceNameHint(channel: Channel = CHANNEL): string {
 }
 
 /** BSD-483: Diagnostics → Crash reports → Sending – auf beta der Weg zu uns (BSD-467: Mail an hello@basednotes.app). */
+/** Feedback 20. 11.: Satz unter „Copy report“ in Diagnostics → Overview; auf beta der Weg zu uns (wie BSD-483). */
+export function copyReportHint(channel: Channel = CHANNEL): string {
+  return channel === "beta"
+    ? "Copy the report and email it to hello@basednotes.app. It holds the state, hangs and log — never page content."
+    : "Copy the report and pass it on. It holds the state, hangs and log — never page content.";
+}
+
 export function reportSendingHint(channel: Channel = CHANNEL): string {
   return channel === "beta"
     ? "Based doesn’t send reports by itself — save the report as a file and email it to hello@basednotes.app."

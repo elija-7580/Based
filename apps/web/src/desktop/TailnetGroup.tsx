@@ -1,6 +1,6 @@
 // BSD-315: „Reachable from my other devices (Tailscale)“ – der lokale Server lauscht zusätzlich nur auf den
 // Tailscale-Adressen dieses Rechners. Geräte koppeln per QR-Code mit eigenem, widerrufbarem Token (nie das
-// Haupt-Token), Liste der Geräte mit „Revoke“.
+// Haupt-Token), Liste der Geräte mit „Revoke“. Feedback 20. 11.: Karte „Reachable from your phone“ in LocalServerSection.
 import { Code } from "@astryxdesign/core/Code";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Switch } from "@astryxdesign/core/Switch";
@@ -43,13 +43,13 @@ export function TailnetGroup() {
   return (
     <Group>
       <Switch
-        label="Reachable from my other devices (Tailscale)"
-        description="Also listens on this computer's Tailscale address – never on Wi-Fi or the open network. Your phone pairs with its own token, which you can revoke here."
+        label="Reachable from your phone"
+        description="Through Tailscale only – never over Wi-Fi or the open internet. Each phone gets its own key, which you can revoke here."
         value={s.tailnet} onChange={(on) => { setPairing(undefined); void ls.setTailnet(on); }} labelPosition="start" labelSpacing="spread" width="100%" data-testid="tailnet-switch"
       />
       {s.tailnet && running ? (
         urls && urls.length > 0 ? (
-          <Row label="Address in your tailnet"><Value testID="tailnet-address">{urls.join(" · ")}</Value></Row>
+          <Row label="Address for your phone" hint="Your computer in Tailscale"><Value testID="tailnet-address">{urls.join(" · ")}</Value></Row>
         ) : (
           <Text type="supporting" color="secondary" role="status" data-testid="tailnet-missing">Tailscale isn't running on this computer. Install Tailscale, sign in, then turn this off and on again.</Text>
         )

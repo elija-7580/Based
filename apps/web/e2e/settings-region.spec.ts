@@ -53,6 +53,8 @@ test("Workspace-Name in Einstellungen → General", async ({ page }) => {
 test("Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205)", async ({ page, browserName }) => {
   await ready(page);
   await page.goto("/#prefs-workspace");
+  // Feedback 20. 11.: das Icon ist ein Knopf neben dem Namen, die Auswahl öffnet sich im Popover
+  await page.getByRole("button", { name: "Add a workspace icon" }).click();
   const icons = page.getByTestId("workspace-icon");
   await icons.getByRole("button", { name: "Icon 🚀" }).click();
   await expect(icons.getByRole("button", { name: "Icon 🚀" })).toHaveAttribute("aria-pressed", "true");
@@ -63,6 +65,7 @@ test("Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
     await expect(page.getByTestId("workspace-icon-badge")).toHaveText("🚀");
   }
+  if (!(await page.getByTestId("workspace-icon").isVisible())) await page.getByRole("button", { name: "Workspace icon 🚀, change" }).click();
   await page.getByTestId("workspace-icon").getByRole("button", { name: "No icon" }).click();
   await expect(page.getByTestId("workspace-icon-badge")).toHaveCount(0);
 });

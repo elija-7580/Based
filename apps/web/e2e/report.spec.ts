@@ -4,6 +4,10 @@ import { expect, type Page } from "@playwright/test";
 import { editor, openNewPage, ready, test } from "./replay/fixture.js";
 import { overflows, overlaps } from "./layout-checks.js";
 
+// Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
+const diagTab = (page: import("@playwright/test").Page, name: string) =>
+  page.getByTestId("settings-section-diagnostics-details").getByRole("radio", { name, exact: true }).click();
+
 const SECRET = "Quarterly salary Ada Lovelace 4711";
 
 type Row = { id: string; bundle: Record<string, unknown> & { recording: { events: { kind: string }[] }; state: { blocks?: unknown; doc?: unknown; root?: string }; layout: { items: { kind: string }[] }; screenshot?: string; note: string }; screenshot?: Blob };
@@ -60,7 +64,8 @@ for (const { name, t, open, kinds: expectedKinds, list } of EDITORS) t(`⇧⌘B 
 
   // Danach in Settings → Diagnostics → Reports
   await saved.getByRole("button", { name: "Open Diagnostics" }).click();
-  const reports = page.getByTestId("settings-section-diagnostics-reports");
+  await diagTab(page, "Reports");
+  const reports = page.getByTestId("diagnostics-tab-reports");
   await expect(reports.getByText("Typed two lines, the list jumped")).toBeVisible();
   await reports.getByRole("button", { name: "Delete" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete report" }).click();
@@ -171,15 +176,17 @@ for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Report saved �
 
 test("Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht", async ({ page }) => {
   await ready(page, "prefs-diagnostics");
-  for (const id of ["status", "problems", "reports", "log", "dev"]) await expect(page.getByTestId(`settings-section-diagnostics-${id}`)).toBeVisible();
+  for (const id of ["status", "details", "dev"]) await expect(page.getByTestId(`settings-section-diagnostics-${id}`)).toBeVisible();
   await expect(page.getByTestId("diagnostics-version")).toContainText("commit");
-  await expect(page.getByTestId("settings-section-diagnostics-problems")).toContainText("Nothing to report");
+  await expect(page.getByTestId("settings-section-diagnostics-status")).toContainText("Nothing to report");
   await expect(page.getByTestId("settings-missing")).toHaveCount(0);
 
   await page.evaluate(() => setTimeout(() => { throw new Error("boom for the filter"); }));
-  const problems = page.getByTestId("settings-section-diagnostics-problems");
+  const problems = page.getByTestId("settings-section-diagnostics-status");
   await expect(problems.getByTestId("diagnostics-errors")).toHaveText("1");
-  const log = page.getByTestId("settings-section-diagnostics-log");
+  await expect(problems).toContainText("1 thing to look at");
+  await diagTab(page, "Log");
+  const log = page.getByTestId("diagnostics-tab-log");
   await log.getByRole("radio", { name: "Errors" }).click();
   await expect(log.getByTestId("diagnostics-log")).toContainText("boom for the filter");
   await expect(log.getByTestId("diagnostics-log")).not.toContainText("boot:");

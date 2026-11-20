@@ -5,6 +5,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ready, test } from "./replay/fixture.js";
 
+// Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
+const diagTab = (page: import("@playwright/test").Page, name: string) =>
+  page.getByTestId("settings-section-diagnostics-details").getByRole("radio", { name, exact: true }).click();
+
 const screens = fileURLToPath(new URL("../../../docs/design/screens", import.meta.url));
 const STARTED = Date.UTC(2026, 10, 12, 17, 0, 0);
 const TITLE = "Geheimes Tagebuch Ada";
@@ -23,7 +27,8 @@ async function plantCrash(page: Page, consent: boolean) {
 test("Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an", async ({ page }) => {
   await plantCrash(page, false);
   await ready(page, "prefs-diagnostics");
-  const section = page.getByTestId("settings-section-diagnostics-crash");
+  await diagTab(page, "Crash reports");
+  const section = page.getByTestId("diagnostics-tab-crash");
   await expect(section).toBeVisible();
   await expect(page.getByTestId("crash-report-prompt")).toHaveCount(0);
   const sw = section.getByRole("switch", { name: "Offer a report after a crash or freeze" });
@@ -105,7 +110,8 @@ test("Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunk
     await ready(page, "prefs-diagnostics");
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
-    const section = page.getByTestId("settings-section-diagnostics-crash");
+    await diagTab(page, "Crash reports");
+    const section = page.getByTestId("diagnostics-tab-crash");
     for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
       await page.setViewportSize({ width: w, height: h });
       await section.scrollIntoViewIfNeeded();

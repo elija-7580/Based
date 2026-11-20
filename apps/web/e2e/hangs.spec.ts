@@ -6,6 +6,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ready, test } from "./replay/fixture.js";
 
+// Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
+const diagTab = (page: import("@playwright/test").Page, name: string) =>
+  page.getByTestId("settings-section-diagnostics-details").getByRole("radio", { name, exact: true }).click();
+
 const screens = fileURLToPath(new URL("../../../docs/design/screens", import.meta.url));
 
 interface Hang { at: number; ms: number; source: string; activity: string; breadcrumbs: string[]; culprit?: string; ongoing?: boolean }
@@ -27,7 +31,7 @@ async function testHang(page: Page, ms: number): Promise<Hang> {
 
 test("Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten", async ({ page, browserName }) => {
   await ready(page, "prefs-diagnostics");
-  const section = page.getByTestId("settings-section-diagnostics-hangs");
+  const section = page.getByTestId("diagnostics-tab-hangs");
   await expect(section).toBeVisible();
   // ein Klick als Schritt davor (Ziel als Test-ID, nie Text)
   await page.getByTestId("settings-section-diagnostics-status").click();
@@ -56,14 +60,14 @@ test("Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache un
   await expect(first).toContainText("during route settings");
   await first.getByRole("button", { name: "Show the steps before this hang" }).click();
   await expect(first.getByTestId("hang-steps")).toContainText(/Steps before: .*click settings-section-diagnostics-status \(group\) › test hang 300 › test hang 1000/);
-  // im Log (Warnung ab 1 s) und im Bündel „Problem melden“, ohne Inhalte
-  await expect(page.getByTestId("diagnostics-log")).toContainText("main thread blocked for");
+  // im Bündel „Problem melden“, ohne Inhalte
   const bundle = await page.evaluate(() => (globalThis as unknown as { __basedReport: { bundle(n: string): { hangs?: { stats: { count: number }; hangs: Hang[] } } } }).__basedReport.bundle("x"));
   expect(bundle.hangs?.stats.count).toBeGreaterThanOrEqual(2);
   expect(bundle.hangs?.hangs.some((h) => h.breadcrumbs.at(-1) === "test hang 1000")).toBe(true);
   if (browserName === "chromium") {
     await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.getByRole("button", { name: "Copy diagnostics" }).click();
+    // Feedback 20. 11.: ein Knopf oben nimmt alles mit
+    await page.getByRole("button", { name: "Copy report" }).click();
     await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
     const text = await page.evaluate(() => navigator.clipboard.readText());
     expect(text).toMatch(/hangs this session: \d+ hangs?/);
@@ -75,20 +79,25 @@ test("Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache un
     expect(hangText).toMatch(/^hangs this session: \d+ hangs?/);
     expect(hangText).toContain("test hang 300");
     expect(hangText).toContain("test hang 1000");
+  }
+  // Hänger-Zeilen lassen sich markieren (Daten, keine Bedienung)
+  expect(await first.evaluate((el) => getComputedStyle(el.querySelector("[data-testid='hang-steps']") ?? el).userSelect)).toBe("text");
+  // im Log (Warnung ab 1 s)
+  await diagTab(page, "Log");
+  await expect(page.getByTestId("diagnostics-log")).toContainText("main thread blocked for");
+  if (browserName === "chromium") {
     // … und das ganze Log (gezeigte Zeilen) auf einmal
     await page.getByRole("button", { name: /^Copy log \(\d+\)$/ }).click();
     const logText = await page.evaluate(() => navigator.clipboard.readText());
     expect(logText).toContain("main thread blocked for");
     expect(logText.split("\n").length).toBeGreaterThan(1);
   }
-  // Hänger-Zeilen lassen sich markieren (Daten, keine Bedienung)
-  expect(await first.evaluate((el) => getComputedStyle(el.querySelector("[data-testid='hang-steps']") ?? el).userSelect)).toBe("text");
   // ⌘A im Log markiert nur das Log
   await page.getByTestId("diagnostics-log").focus();
   await page.keyboard.press("ControlOrMeta+a");
   const sel = await page.evaluate(() => globalThis.getSelection()?.toString() ?? "");
   expect(sel).toContain("main thread blocked for");
-  expect(sel).not.toContain("Copy diagnostics");
+  expect(sel).not.toContain("Copy report");
 });
 
 test("3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten", async ({ page }) => {
@@ -100,21 +109,23 @@ test("3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“
   await page.waitForTimeout(2700);
   await page.reload({ waitUntil: "commit" });
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "", { timeout: 20_000 });
-  const problems = page.getByTestId("settings-section-diagnostics-problems");
+  const problems = page.getByTestId("settings-section-diagnostics-status");
   await expect(problems.getByTestId("diagnostics-last-session")).toHaveText("Ended in a hang", { timeout: 10_000 });
   // Chromium: der Worker hält die Dauer fest; WebKit: der Hauptthread beim Verlassen (Worker-Speicher hängt dort mit)
   // WebKit: je nach Zeitpunkt des Neuladens kommt der Marker „lief noch“ (Worker) oder „gleich danach neu geladen“ (pagehide) an
   await expect(problems).toContainText(/Based hung for (\d\.\d s|more than \d+ s) during route settings and was (reloaded or closed right after|then closed or reloaded)/);
-  const section = page.getByTestId("settings-section-diagnostics-hangs");
+  const section = page.getByTestId("diagnostics-tab-hangs");
   await expect(section.getByTestId("hangs-ended-in-hang")).toBeVisible();
   await expect(section).toContainText(/Steps before: .*click settings-section-diagnostics-status \(group\) › test hang 3000/);
   // frühere Sitzung mit dem Hänger (einmal, nicht doppelt)
   const prev = section.getByTestId("hang-session").first();
   await prev.getByRole("button", { name: "Show hangs" }).click();
   await expect(prev.getByTestId("hang-item").filter({ hasText: /[23]\.\d s · Main thread/ })).toHaveCount(1);
+  await diagTab(page, "Log");
   await expect(page.getByTestId("diagnostics-log")).toContainText("previous session ended in a hang");
   // Absturzbericht von Hand: Art „hang“
-  await page.getByTestId("settings-section-diagnostics-crash").getByRole("button", { name: "Prepare report…" }).click();
+  await diagTab(page, "Crash reports");
+  await page.getByTestId("diagnostics-tab-crash").getByRole("button", { name: "Prepare report…" }).click();
   const dialog = page.getByRole("dialog", { name: "Based hung and was closed" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByTestId("crash-report-summary")).toContainText("during route settings");
@@ -138,7 +149,7 @@ test("Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start ze
   await next.goto("/#prefs-diagnostics");
   await expect(next.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   // ein anderer Tab: erst übernommen, wenn der Marker nicht mehr frisch ist (er könnte einem Tab gehören, der noch hängt)
-  const problems = next.getByTestId("settings-section-diagnostics-problems");
+  const problems = next.getByTestId("settings-section-diagnostics-status");
   if (browserName === "webkit") {
     // Bekannte Grenze: WebKit leitet Speicherzugriffe aus Workern über den Hauptthread – beim harten Beenden mitten im
     // Hänger bleibt nur „nicht sauber beendet“ mit der letzten Aktivität aus dem Herzschlag.
@@ -148,7 +159,7 @@ test("Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start ze
   }
   await expect(problems.getByTestId("diagnostics-last-session")).toHaveText("Ended in a hang", { timeout: 15_000 });
   await expect(problems).toContainText("Based hung for more than 2 s during route settings and was then closed or reloaded.");
-  const prev = next.getByTestId("settings-section-diagnostics-hangs").getByTestId("hang-session").first();
+  const prev = next.getByTestId("diagnostics-tab-hangs").getByTestId("hang-session").first();
   await prev.getByRole("button", { name: "Show hangs" }).click();
   await expect(prev.getByTestId("hang-item").first()).toContainText("still blocked when the session ended");
 });
@@ -208,7 +219,7 @@ test("Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenst
     await page.goto("about:blank");
     await ready(page, "prefs-diagnostics");
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
-    const section = page.getByTestId("settings-section-diagnostics-hangs");
+    const section = page.getByTestId("diagnostics-tab-hangs");
     await page.getByTestId("settings-section-diagnostics-status").click();
     await hang(page, 300);
     await testHang(page, 300);
