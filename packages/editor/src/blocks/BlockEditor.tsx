@@ -21,6 +21,7 @@ import { PageOutline } from "../ui/Outline.js";
 import { DatabasePicker, MovePicker, PageTargetPicker, type DatabaseRef, type DatabaseSource } from "../ui/MovePicker.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
 import { BasedButton, BasedDialog, BasedIconButton, BasedMediaPlayer } from "@based/ui/astryx";
+import { comboLabel } from "@based/ui";
 import { IconView, onPhosphorLoaded, phosphorMarkup } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, fillMention, offsetOf, renderRich, selectionIn, type MentionInfo } from "./dom.js";
@@ -3105,6 +3106,13 @@ export function blockTypeLabel(b: Pick<Block, "type" | "props"> | undefined): st
 /** Sekunden seit 2001-01-01 (Swift) → Datum. */
 const SWIFT_EPOCH = 978307200;
 
+/** BSD-622: Kürzel aus der Register-Schreibweise („Mod+Shift+P“) in der Schreibweise des Systems – „⇧⌘P“ auf dem Mac,
+ *  „Ctrl+Shift+P“ sonst (wie Tastenkappen, Übersicht und Kontextmenü; @based/ui keys.ts). */
+function keyHint(combo: string): string {
+  const nav = (globalThis.navigator ?? {}) as { platform?: string; userAgent?: string };
+  return comboLabel(combo, /Mac|iPhone|iPad/.test(nav.platform ?? "") || /Mac OS X|iPhone|iPad/.test(nav.userAgent ?? ""));
+}
+
 /** Zeile in einem Editor-Menü: Icon links in einer Spalte, Text, Kürzel rechts – wie `.menu-item` der App. */
 function MenuRow({ icon, label, hint, danger, sub, role = "menuitem", checked, onSelect }: {
   icon: ReactNode; label: string; hint?: string | undefined; danger?: boolean | undefined; sub?: boolean | undefined;
@@ -3244,14 +3252,15 @@ function BlockMenu({ id, x, y, view0, onClose, onMove }: { id: string; x: number
   if (targets.length) actions.push({ group: "turn", label: "Turn into", icon: "turnInto", sub: true, run: () => setView("turn") });
   if (editable) actions.push({ group: "turn", label: "Color", icon: "palette", sub: true, run: () => setView("color") });
   if (b?.type === "databaseInline" && ids.length === 1 && props.onOpenPage) actions.push({ group: "edit", label: "Open as full page", icon: "expand", run: () => props.onOpenPage?.(id) });
-  if (link) actions.push({ group: "edit", label: "Copy link to block", icon: "link", hint: "⌥⇧L", run: () => void navigator.clipboard?.writeText(link).catch(() => undefined) });
+  // BSD-622: ohne Kürzel – ⌥⇧L war nirgends belegt. Die übrigen in der Schreibweise des Systems (keyHint).
+  if (link) actions.push({ group: "edit", label: "Copy link to block", icon: "link", run: () => void navigator.clipboard?.writeText(link).catch(() => undefined) });
   if (editable) {
     actions.push(
-      { group: "edit", label: "Duplicate", icon: "duplicate", hint: "⌘D", run: () => ctrl.select(duplicate(store, ids)) },
-      ...(onMove ? [{ group: "edit" as const, label: "Move to", icon: "move", hint: "⌘⇧P", run: () => onMove(ids) }] : []),
-      { group: "edit", label: "Move up", icon: "up", hint: "⌘⇧↑", run: () => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); } },
-      { group: "edit", label: "Move down", icon: "down", hint: "⌘⇧↓", run: () => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); } },
-      { group: "edit", label: "Delete", icon: "trash", hint: "Del", danger: true, run: () => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); } },
+      { group: "edit", label: "Duplicate", icon: "duplicate", hint: keyHint("Mod+D"), run: () => ctrl.select(duplicate(store, ids)) },
+      ...(onMove ? [{ group: "edit" as const, label: "Move to", icon: "move", hint: keyHint("Mod+Shift+P"), run: () => onMove(ids) }] : []),
+      { group: "edit", label: "Move up", icon: "up", hint: keyHint("Mod+Shift+ArrowUp"), run: () => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); } },
+      { group: "edit", label: "Move down", icon: "down", hint: keyHint("Mod+Shift+ArrowDown"), run: () => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); } },
+      { group: "edit", label: "Delete", icon: "trash", hint: keyHint("Backspace"), danger: true, run: () => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); } },
     );
   }
   actions.push({ group: "copy", label: "Copy as Markdown", icon: "export", run: () => void navigator.clipboard?.writeText(blocksMarkdown(store, ids)).catch(() => undefined) });
@@ -3338,9 +3347,9 @@ function FormatBar({ x, y, caret, onMark, onColor, onAI, onLink, onEquation, onT
   const runs = cmd.runsOf(b?.text);
   const on = (key: FormatMark | "link") => caret.from !== caret.to && cmd.hasMark(runs, caret.from, caret.to, key);
   const items: { m: FormatMark; icon: MenuIconName; label: string; key: string }[] = [
-    { m: "b", icon: "bold", label: "Bold", key: "⌘B" }, { m: "i", icon: "italic", label: "Italic", key: "⌘I" },
-    { m: "u", icon: "underline", label: "Underline", key: "⌘U" }, { m: "s", icon: "strike", label: "Strikethrough", key: "⌘⇧S" },
-    { m: "c", icon: "code", label: "Code", key: "⌘E" },
+    { m: "b", icon: "bold", label: "Bold", key: keyHint("Mod+B") }, { m: "i", icon: "italic", label: "Italic", key: keyHint("Mod+I") },
+    { m: "u", icon: "underline", label: "Underline", key: keyHint("Mod+U") }, { m: "s", icon: "strike", label: "Strikethrough", key: keyHint("Mod+Shift+S") },
+    { m: "c", icon: "code", label: "Code", key: keyHint("Mod+E") },
   ];
   const turnable = cmd.isTextBlock(b);
   return (
