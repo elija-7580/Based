@@ -50,6 +50,38 @@ function useRevision(store: WorkspaceStore | undefined) {
   return useSyncExternalStore(store ? (fn) => store.observe(() => fn()) : noop, () => store?.revision ?? -1);
 }
 
+/** Höchstens so oft wird „Edited …“ neu gerechnet, solange sich die Seite ändert (die Anzeige ist minutengenau). */
+const EDITED_REFRESH_MS = 1000;
+
+/**
+ * „Edited …“ der Seite. `lastEdited` läuft über den ganzen Teilbaum der Replik – bei einer Seite mit 2 000 Unterseiten
+ * ~30 ms, und die Seite zeichnet bei jeder Taste neu. Deshalb höchstens einmal je Sekunde gerechnet; ändert sich die
+ * Seite dazwischen, kommt der neue Stand spätestens eine Sekunde später (eigener Neuzeichen-Anstoß).
+ */
+function useLastEdited(store: WorkspaceStore | undefined, pageID: string, revision: number): number | undefined {
+  const cache = useRef<{ store: WorkspaceStore; pageID: string; revision: number; at: number; value: number | undefined } | undefined>(undefined);
+  const [, refresh] = useState(0);
+  const c = cache.current;
+  const now = performance.now();
+  let value: number | undefined;
+  let stale = false;
+  if (!store) value = undefined;
+  else if (c && c.store === store && c.pageID === pageID && (c.revision === revision || now - c.at < EDITED_REFRESH_MS)) {
+    value = c.value;
+    stale = c.revision !== revision;
+  } else {
+    value = lastEdited(store, pageID);
+    cache.current = { store, pageID, revision, at: now, value };
+  }
+  const due = stale && c ? Math.max(0, EDITED_REFRESH_MS - (now - c.at)) : undefined;
+  useEffect(() => {
+    if (due === undefined) return;
+    const t = setTimeout(() => refresh((n) => n + 1), due + 1);
+    return () => clearTimeout(t);
+  }, [due === undefined, revision]); // ein Anstoß je neuem Stand
+  return value;
+}
+
 export function PageView({ client, state, pageID, history, onOpenPage, onNavigate, focusBlock }: Props) {
   const [replica, setReplica] = useState<PageReplica | undefined>();
   const [failed, setFailed] = useState<string | undefined>();
@@ -68,7 +100,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       opened?.close();
     };
   }, [client, pageID]);
-  useRevision(replica?.store);
+  const revision = useRevision(replica?.store);
   const [menu, setMenu] = useState<{ top: number; right: number } | undefined>();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [moving, setMoving] = useState(false);
@@ -176,7 +208,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const subpages = (outline?.children[pageID] ?? []).filter((id) => store?.blocks.get(id)?.type !== "databaseInline").length;
   // BSD-255: eine Inline-Datenbank lässt sich per „Open as full page“ wie eine Datenbankseite öffnen.
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
-  const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
+  const editedAt = useLastEdited(store, pageID, revision);
+  const edited = store && page ? editedLabel(editedAt) : undefined;
 
   const board = isBoardPage(page);
   const loading = !store && !failed;

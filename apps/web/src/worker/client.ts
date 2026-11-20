@@ -13,6 +13,7 @@ import {
   type WireRecord,
 } from "@based/core";
 import type { ImportPayload } from "./importer.js";
+import { LayeredMap } from "./titleMap.js";
 import type { ExportFile, PageExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
 import type { DueItem } from "@based/brain/home";
 import type { MeetingListItem, UnlinkedMentionInfo } from "./protocol.js";
@@ -79,6 +80,8 @@ export class StoreClient {
   private pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void; t0: number; req: Request }>();
   private listeners = new Set<() => void>();
   private state: ShellState = INITIAL;
+  /** Stand von `state.titles` (gleiches Objekt), auf den die nächsten Titeländerungen aufsetzen. */
+  private titleMap = LayeredMap.of<string, string>();
   private replicas = new Map<string, PageReplica>();
   private lastSearch: number | undefined;
   /** Neue Gerätekennung (der Hauptthread speichert sie). */
@@ -217,12 +220,10 @@ export class StoreClient {
       }
       case "outline": this.set({ outline: ev.outline }); return;
       case "titles": {
-        const titles = new Map(ev.full ? [] : this.state.titles);
-        for (const [id, t] of Object.entries(ev.titles)) {
-          if (t) titles.set(id, t);
-          else titles.delete(id);
-        }
-        this.set({ titles });
+        // Nur die Änderungen kopieren, nicht alle Titel (LayeredMap; bei 120 000 Titeln ~20 ms je Taste im Titel).
+        const changes = Object.entries(ev.titles).map(([id, t]) => [id, t || undefined] as const);
+        this.titleMap = ev.full ? LayeredMap.of(changes.filter((c): c is readonly [string, string] => c[1] !== undefined)) : this.titleMap.with(changes);
+        this.set({ titles: this.titleMap });
         return;
       }
       case "status": this.set({ status: ev.status }); return;

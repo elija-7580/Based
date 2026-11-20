@@ -1,12 +1,38 @@
 // Backlinks am Seitenende: Seiten, die diese Seite erwähnen oder verlinken (Index im Store-Worker). Frischt sich
-// auf, wenn sich Titel oder Seitenstruktur ändern und wenn das Fenster wieder in den Vordergrund kommt.
-import { useEffect, useState, useSyncExternalStore } from "react";
+// auf, wenn sich Titel oder Seitenstruktur ändern und wenn das Fenster wieder in den Vordergrund kommt; unverlinkte
+// Erwähnungen nur, wenn sich der eigene Titel ändert (sie durchsuchen den ganzen Text).
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { IconView } from "@based/editor";
 import { BasedButton } from "@based/ui/astryx";
 import { Icon } from "../icons.js";
 import type { StoreClient } from "../worker/client.js";
 import type { PageInfo, UnlinkedMentionInfo } from "../worker/protocol.js";
 import "./backlinks.css";
+
+/** Nach einer Änderung kurz warten: Tippen im Titel fragt nicht je Taste neu (unverlinkte Erwähnungen gehen über
+ *  den ganzen Text des Workspaces, bei 20 000 Seiten ~120 ms im Store-Worker). */
+const REFRESH_DELAY_MS = 400;
+
+/**
+ * `load` ausführen, wenn sich `deps` ändern: sofort beim ersten Mal und wenn sich `now` ändert (andere Seite, Fenster
+ * wieder vorn, „Link“ geklickt), sonst gesammelt nach REFRESH_DELAY_MS. Eine abgebrochene sofortige Anfrage (React
+ * baut den Effekt im Entwicklungsmodus doppelt auf) gilt als nicht gestellt.
+ */
+function useRefresh<T>(now: string, deps: readonly unknown[], load: () => Promise<T>, set: (v: T) => void) {
+  const shown = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    let alive = true, done = false;
+    const run = () => void load().then((r) => { done = true; if (alive) set(r); }, () => { done = true; });
+    const immediate = shown.current !== now;
+    shown.current = now;
+    const t = immediate ? (run(), undefined) : setTimeout(run, REFRESH_DELAY_MS);
+    return () => {
+      alive = false;
+      if (t !== undefined) clearTimeout(t);
+      else if (!done) shown.current = undefined;
+    };
+  }, [now, ...deps]); // `deps` bestimmt der Aufrufer (gleich lang bei jedem Aufruf)
+}
 
 export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient; pageID: string; onOpenPage: (id: string) => void }) {
   const state = useSyncExternalStore(client.subscribe, client.getState);
@@ -20,14 +46,12 @@ export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient;
     window.addEventListener("focus", again);
     return () => window.removeEventListener("focus", again);
   }, []);
-  useEffect(() => {
-    let alive = true;
-    void client.backlinks(pageID).then((r) => alive && setLinks(r), () => undefined);
-    void client.unlinkedMentions(pageID).then((r) => alive && setUnlinked(r), () => undefined);
-    return () => {
-      alive = false;
-    };
-  }, [client, pageID, state.titles, state.outline, tick]);
+  const now = `${pageID}\u0001${tick}`;
+  // Backlinks kommen aus einem Index (billig) und zeigen Titel anderer Seiten: bei Titel- und Strukturänderungen neu.
+  useRefresh(now, [client, state.titles, state.outline], () => client.backlinks(pageID), setLinks);
+  // Unverlinkte Erwähnungen hängen am Titel dieser Seite (gesucht wird er im Text der anderen): nur neu fragen, wenn
+  // er sich ändert, die Seite wechselt oder das Fenster wieder nach vorn kommt – nicht bei jedem anderen Titel.
+  useRefresh(now, [client, state.titles.get(pageID)], () => client.unlinkedMentions(pageID), setUnlinked);
   if (links.length === 0 && unlinked.length === 0) return null;
   const link = (m: UnlinkedMentionInfo) => {
     void client.command({ op: "linkMention", blockID: m.blockID, start: m.start, length: m.length, pageID }).then(() => setTick((n) => n + 1), () => undefined);

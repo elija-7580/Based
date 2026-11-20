@@ -479,8 +479,19 @@ export class StoreHost {
     const ws = this.ws!;
     const history = new PageHistory(ws.store, new VersionHistory(ws.history ?? new MemoryHistoryStorage()));
     this.history = history;
-    ws.store.observe((c) => history.onChange(c));
-    this.historyTimer = setInterval(() => history.tick(), 20_000);
+    // Der Takt läuft nur, solange Seiten auf eine Version warten – im Leerlauf weckt nichts den Worker (wie BSD-596
+    // im Hauptthread; vorher alle 20 s, auch ohne jede Änderung).
+    const tick = () => {
+      history.tick();
+      if (!history.pending && this.historyTimer) {
+        clearInterval(this.historyTimer);
+        this.historyTimer = undefined;
+      }
+    };
+    ws.store.observe((c) => {
+      history.onChange(c);
+      if (history.pending && !this.historyTimer && !this.stopped) this.historyTimer = setInterval(tick, 20_000);
+    });
     // Alte Versionen ausdünnen, nicht beim Start selbst.
     setTimeout(() => history.maintain(), 30_000);
   }
@@ -589,8 +600,12 @@ export class StoreHost {
     // Nur das Gerüst (ADR 0017 Stufe B): Signaturen und Titel gibt es nur für Seiten; ob ein anderer Block umgezogen
     // ist, sagt die Änderung selbst (`StoreChange.moved`).
     for (const b of this.store.skeletonBlocks()) {
-      if (isPageLike(b)) this.signatures.set(b.id, structureSignature(b));
-      if (hasPageTitle(b)) this.titles.set(b.id, titleOf(this.store, b.id));
+      if (hasPageTitle(b)) {
+        // Zeilen außerhalb des Papierkorbs haben keine Signatur (structureSignature): kein Eintrag nötig.
+        const sig = structureSignature(b);
+        if (sig) this.signatures.set(b.id, sig);
+        this.titles.set(b.id, titleOf(this.store, b.id));
+      }
     }
   }
 
@@ -624,10 +639,13 @@ export class StoreHost {
   private trackBlock(id: string, moved: boolean) {
     const store = this.store;
     const b = store.blocks.get(id);
-    if (isPageLike(b) || this.signatures.has(id)) {
+    // Seiten, Zeilen und Inline-Datenbanken (stehen seit BSD-377 in der Seitenleiste: eine in den Papierkorb gelegte
+    // blieb dort sonst bis zur nächsten anderen Strukturänderung stehen). Eine gelöschte Zeile hatte keine Signatur –
+    // ihr Titel muss trotzdem aus der Tabelle.
+    if (hasPageTitle(b) || this.signatures.has(id) || (!b && this.titles.has(id))) {
       const sig = structureSignature(b);
       if (sig !== (this.signatures.get(id) ?? "")) this.structureDirty = true;
-      if (b && isPageLike(b)) this.signatures.set(id, sig);
+      if (b && hasPageTitle(b) && sig) this.signatures.set(id, sig);
       else this.signatures.delete(id);
       this.trackTitle(id);
     } else if (this.structureDirty) {
@@ -744,11 +762,12 @@ export class StoreHost {
     const deps = this.syncedDeps.get(pageID);
     if (!keys || !deps) return;
     const store = this.store;
-    // Auch Kopien in schon mitgeführten Originalen zählen (verschachtelt).
-    const next = syncedDependencies(store, pageID, (id) => subtree(store, id));
+    // Auch Kopien in schon mitgeführten Originalen zählen (verschachtelt). Der Teilbaum der Seite einmal für beide.
+    const own = subtree(store, pageID);
+    const next = syncedDependencies(store, pageID, (id) => (id === pageID ? own : subtree(store, id)));
     const newRoots = [...next.roots].filter((r) => !deps.roots.has(r));
     const newAncestors = [...next.ancestors].filter((a) => !deps.ancestors.has(a));
-    const newDatabases = [...this.linkedOf(pageID, next.roots)].filter((d) => !deps.databases.has(d));
+    const newDatabases = [...this.linkedOf(pageID, next.roots, own)].filter((d) => !deps.databases.has(d));
     if (newRoots.length === 0 && newAncestors.length === 0 && newDatabases.length === 0) return;
     for (const r of newRoots) deps.roots.add(r);
     for (const a of newAncestors) deps.ancestors.add(a);
@@ -758,12 +777,18 @@ export class StoreHost {
     if (records.length) this.opts.post({ type: "pageChanges", pageID, upserts: records, deletions: [] });
   }
 
-  /** BSD-212: Datenbanken, die die Seite (samt Synced-Originalen) nur verknüpft zeigt. */
-  private linkedOf(pageID: string, roots: Iterable<string>): Set<string> {
+  /** BSD-212: Datenbanken, die die Seite (samt Synced-Originalen) nur verknüpft zeigt. `own`: Teilbaum der Seite, falls schon da. */
+  private linkedOf(pageID: string, roots: Iterable<string>, own: readonly string[] = subtree(this.store, pageID)): Set<string> {
     const store = this.store;
-    const ids = [pageID, ...subtree(store, pageID)];
-    for (const r of roots) ids.push(r, ...subtree(store, r));
-    return dbops.linkedDatabases(store, ids);
+    function* ids(): Generator<string> {
+      yield pageID;
+      yield* own;
+      for (const r of roots) {
+        yield r;
+        yield* subtree(store, r);
+      }
+    }
+    return dbops.linkedDatabases(store, ids());
   }
 
   /** Datenbank-Records samt Zeilen (mit Inhalt) für verknüpfte Ansichten. */
@@ -861,13 +886,16 @@ export class StoreHost {
     const page = store.blocks.get(pageID);
     const deps = { roots: new Set<string>(), ancestors: new Set<string>(), databases: new Set<string>() };
     if (page) {
-      for (const r of this.recordsFor([pageID, ...subtree(store, pageID)])) records.push(r);
+      // Den Teilbaum einmal gehen (vorher dreimal je Öffnen: Records, Synced-Originale, verknüpfte Datenbanken –
+      // bei einer Datenbank mit 100 000 Zeilen je ~80 ms).
+      const own = subtree(store, pageID);
+      for (const r of this.recordsFor([pageID, ...own])) records.push(r);
       // Synced-Kopien zeigen den Inhalt eines Originals, das auf einer anderen Seite liegen kann.
-      const d = syncedDependencies(store, pageID, (id) => subtree(store, id));
+      const d = syncedDependencies(store, pageID, (id) => (id === pageID ? own : subtree(store, id)));
       deps.roots = d.roots;
       deps.ancestors = d.ancestors;
       for (const r of this.syncedRecords(d.roots, d.ancestors)) records.push(r);
-      deps.databases = this.linkedOf(pageID, d.roots);
+      deps.databases = this.linkedOf(pageID, d.roots, own);
       for (const r of this.databaseRecords(deps.databases)) records.push(r);
       for (const r of records) if (r.kind !== "workspace") keys.add(recordKey(r));
     }
@@ -1299,10 +1327,14 @@ export class StoreHost {
     }
   }
 
+  private stopped = false;
+
   stop() {
+    this.stopped = true;
     this.assets?.stop();
     this.sync?.stop();
     if (this.historyTimer) clearInterval(this.historyTimer);
+    this.historyTimer = undefined;
   }
 
   private onSyncStatus(s: string) {
