@@ -69,7 +69,7 @@ function WelcomeStart({ client, pending, onOpenPage, onNavigate, onImport, back 
   const [busy, setBusy] = useState(false);
   const first = useRef<HTMLButtonElement>(null);
   // BSD-620: Fokus auf der ersten Wahl (Return wählt sie); kam man mit der Maus hierher, ohne Rahmen, bis eine Taste kommt.
-  const [quiet, setQuiet] = useState(false);
+  const [quiet, setQuiet] = useState(lastInputWasPointer); // Review 20.11.: ohne kurzen Rahmen beim ersten Rendern
   useEffect(() => {
     setQuiet(lastInputWasPointer());
     first.current?.focus({ preventScroll: true });
