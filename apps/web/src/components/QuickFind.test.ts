@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { highlightRanges } from "./QuickFind.js";
+import { enterWaits, highlightRanges } from "./QuickFind.js";
 
 const marked = (text: string, query: string) => highlightRanges(text, query).map(([a, z]) => text.slice(a, z));
 
@@ -21,5 +21,16 @@ describe("Quick Find: Markierung", () => {
   });
   it("ändert die Faltung die Länge (ß), wird nichts an falscher Stelle markiert", () => {
     expect(marked("Jonas Weiß kommt", "weiss")).toEqual([]);
+  });
+});
+
+describe("Quick Find: Enter vor den Treffern (Review 20.11.)", () => {
+  it("wartet auf die Treffer zur Eingabe, wenn eine Seite gewählt ist", () => {
+    expect(enterWaits(0, 0, false)).toBe(true);
+    expect(enterWaits(2, 2, false)).toBe(true);
+  });
+  it("öffnet sofort, wenn die Treffer zur Eingabe passen oder ein Befehl gewählt ist", () => {
+    expect(enterWaits(0, 0, true)).toBe(false);
+    expect(enterWaits(1, 2, false)).toBe(false);
   });
 });

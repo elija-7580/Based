@@ -124,6 +124,33 @@ test("Quick Find: Tippfehler finden, markieren und heißen „Closest matches“
   await expect(input).toBeFocused();
 });
 
+// Review 20.11. (Beta-Weg 6): Enter gleich nach dem Tippen öffnete die zuletzt besuchte Seite statt des Treffers, weil
+// die Suche im Worker noch lief. Die Suche wird hier künstlich verzögert, damit der Fall jedes Mal eintritt.
+test("Quick Find: Enter gleich nach dem Tippen öffnet den Treffer, nicht die zuletzt besuchte Seite", async ({ page }) => {
+  await ready(page);
+  for (const t of ["Kestrel plans", "Osprey notes"]) {
+    await page.keyboard.press("ControlOrMeta+Alt+n");
+    await expect(page.getByLabel("Page title")).toHaveValue("");
+    await page.getByLabel("Page title").fill(t);
+    await expect(page.getByRole("treeitem", { name: t })).toBeVisible();
+  }
+  await expect(page.getByLabel("Page title")).toHaveValue("Osprey notes");
+  const qf = page.getByRole("dialog", { name: "Quick Find" });
+  const input = qf.getByRole("combobox", { name: "Search pages" });
+  // Erst wenn der Index die neue Seite kennt (sonst gibt es nichts zu öffnen)
+  await page.keyboard.press("ControlOrMeta+k");
+  await input.fill("kestrel");
+  await expect(qf.getByRole("listbox", { name: "Results" }).getByRole("option")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await expect(qf).toHaveCount(0);
+  await based(page, `const c = b.client, s = c.search.bind(c); c.search = (...a) => new Promise((ok) => setTimeout(ok, 600)).then(() => s(...a));`);
+  await page.keyboard.press("ControlOrMeta+k");
+  await input.fill("kestrel");
+  await page.keyboard.press("Enter");
+  await expect(qf).toHaveCount(0);
+  await expect(page.getByLabel("Page title")).toHaveValue("Kestrel plans");
+});
+
 test("Quick Find: die Auswahl bleibt beim Blättern mit den Pfeiltasten sichtbar", async ({ page }) => {
   await ready(page);
   await page.setViewportSize({ width: 900, height: 600 });
