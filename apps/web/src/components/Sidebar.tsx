@@ -877,8 +877,16 @@ function NavMenu({ menu, place, advanced, ai, prefs, onClose, onPin, onUnpin, on
     const i = items.indexOf(document.activeElement as HTMLButtonElement);
     items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus();
   };
+  // BSD-625: wie das Kontextmenü der Seiten (BSD-288) bleibt das Menü ganz im Fenster – die Fußzeile (Library, Trash,
+  // Settings) liegt am unteren Rand, dort rückt es nach oben; ist es höher als das Fenster, rollt es.
+  const [top, setTop] = useState(menu.y);
+  useLayoutEffect(() => {
+    const h = ref.current?.offsetHeight ?? 0;
+    const margin = 8;
+    setTop(Math.max(margin, Math.min(menu.y, window.innerHeight - h - margin)));
+  }, [menu.y]);
   return (
-    <div ref={ref} role="menu" aria-label={`${def.name} in the sidebar`} className="menu" style={{ left: menu.x, top: menu.y }} data-testid="nav-menu" onKeyDown={keyNav}>
+    <div ref={ref} role="menu" aria-label={`${def.name} in the sidebar`} className="menu" style={{ left: menu.x, top, maxHeight: "calc(100vh - var(--space-4))", overflowY: "auto" }} data-testid="nav-menu" onKeyDown={keyNav}>
       {place !== "top" ? <button type="button" role="menuitem" className="menu-item" onClick={run(onPin)}><Icon name="plus" size={16} />Pin to top</button> : null}
       {place === "top" && pinned ? <button type="button" role="menuitem" className="menu-item" onClick={run(onUnpin)}><Icon name="back" size={16} />{def.home === "footer" ? "Move back to the bottom" : "Unpin from top"}</button> : null}
       {place === "top" && def.home === "top" ? <button type="button" role="menuitem" className="menu-item" onClick={run(onLower)}><Icon name="back" size={16} />Move to the bottom</button> : null}
