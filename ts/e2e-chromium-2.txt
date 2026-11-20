@@ -1,25 +1,4 @@
-failure 7bc673dc3ce59273bbb35626996a246ee30e14c2
-
-      759 |         for (const b of await home.locator(sel).all()) {
-      760 |           const r = (await b.boundingBox())!;
-    > 761 |           expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
-          |                                                                          ^
-      762 |         }
-      763 |       }
-      764 |       expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:761:74
-
-    Error Context: test-results/polish-Home-neben-dem-offe-f0ee5-600-und-1280-×-820-BSD-599--chromium-retry1/error-context.md
-
-  2) [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon 
-
-    Error: nach Klick 1: Continue
-
-    expect(received).toBe(expected) // Object.is equality
-
-    Expected: false
-    Received: true
-
+failure fcdd156e776932a01f2fd95ccce640dd760c1f5f
       501 |       await welcome(mouse.page).getByRole("button", { name: "Continue" }).click();
       502 |       const r = await ring(mouse.page);
     > 503 |       expect(r.ring, `nach Klick ${i + 1}: ${r.name}`).toBe(false);
@@ -51,11 +30,32 @@ failure 7bc673dc3ce59273bbb35626996a246ee30e14c2
 
     Error Context: test-results/welcome-Einstieg-nach-Maus-9030f-hmen-mit-der-Tastatur-schon-chromium-retry1/error-context.md
 
-  2 failed
-    [chromium] › e2e/polish.spec.ts:741:1 › Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599) 
+  2) [chromium] › e2e/polish.spec.ts:741:1 › Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599) 
+
+    Error: .home-head .based-switcher in der Spalte (900, light)
+
+    expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 468.5
+    Received:    475.734375
+
+      759 |         for (const b of await home.locator(sel).all()) {
+      760 |           const r = (await b.boundingBox())!;
+    > 761 |           expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
+          |                                                                          ^
+      762 |         }
+      763 |       }
+      764 |       expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
+        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:761:74
+
+    Error Context: test-results/polish-Home-neben-dem-offe-f0ee5-600-und-1280-×-820-BSD-599--chromium/error-context.md
+
+  1 failed
     [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon 
+  1 flaky
+    [chromium] › e2e/polish.spec.ts:741:1 › Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599) 
   13 skipped
-  288 passed (6.0m)
+  288 passed (6.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
