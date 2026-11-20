@@ -357,7 +357,11 @@
 .dbui-menu-check { display: inline-flex; margin-left: auto; }
 .dbui-menu-sep { height: 1px; background: var(--line); margin: var(--space-1) 0; }
 .dbui-menu-heading { padding: var(--space-2) var(--space-2) var(--space-1); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
-.dbui-menu-scroll { max-height: calc(var(--space-8) * 6); overflow: auto; display: flex; flex-direction: column; }
+/* BSD-623: nur senkrecht rollen. WebKit zeichnet den Rollbalken als feste Spalte (BSD-261) und rechnet „width: 100%“
+   der Zeilen ohne ihn – die Zeilen wären um die Balkenbreite zu breit und das Menü rollte seitlich. Gestreckt statt
+   100 % passen sie neben den Balken. */
+.dbui-menu-scroll { max-height: calc(var(--space-8) * 6); overflow: hidden auto; display: flex; flex-direction: column; }
+.dbui-menu-scroll > .dbui-menu-item { width: auto; }
 .dbui-back { border: 0; background: transparent; color: var(--muted); display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); }
 .dbui-back .dbui-icon { transform: rotate(180deg); }
 .dbui-input, .dbui-select {
