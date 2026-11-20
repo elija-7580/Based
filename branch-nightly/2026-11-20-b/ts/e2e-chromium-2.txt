@@ -1,4 +1,4 @@
-failure 5d7db6b6d919f77e81859236588a0d6fdae60ef6
+failure 1d79b4dfdfa2d711bc56065df4d6fec807e94818
       759 |         for (const b of await home.locator(sel).all()) {
       760 |           const r = (await b.boundingBox())!;
     > 761 |           expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
@@ -55,7 +55,7 @@ failure 5d7db6b6d919f77e81859236588a0d6fdae60ef6
   1 flaky
     [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
   13 skipped
-  284 passed (6.3m)
+  285 passed (6.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
