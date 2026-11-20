@@ -10,11 +10,11 @@ import type { Block, BlockProps, Database, DatabaseView, PropertySchema, Propert
 import { parseDate, parseSwiftDouble } from "../query/value.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { ZERO_STAMP } from "../hlc.js";
-import type { WorkspaceStore } from "../store/store.js";
+import { recordKey, type WorkspaceStore } from "../store/store.js";
 import { AssetRejected, commitImport, importAssetFrom, emptyReport, ImportBuilder, looksLikeLocalFile, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportBuilderWire, type ImportReport } from "./builder.js";
 import { basename, comparePaths, dirname, extname, ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { graphemes, trimSpaces } from "./html.js";
-import { notionIDInName, removingPercentEncoding } from "./importids.js";
+import { derivedID, notionIDInName, notionUUID, removingPercentEncoding } from "./importids.js";
 import { decodeCSV, MarkdownImporter, unguardCSVFormula, type MarkdownBlock } from "./markdown.js";
 import { decodeTextBytes, parseDelimited, sniffDelimiter } from "./file-preview.js";
 import { cleanTitle, NotionHTMLImporter, parseNotionNumber } from "./notion-html.js";
@@ -58,8 +58,20 @@ export interface PreparedImport {
   /** Notion-HTML-Exporte, mit voller Treue gelesen (`commitImport`). */
   builder: ImportBuilder | undefined;
   /** Markdown/CSV: Records in Schreibreihenfolge; Wurzeln mit vorläufigen Sortierschlüsseln (`rootKeys`). */
-  markdown: { records: WireRecord[]; rootKeys: string[]; report: ImportReport } | undefined;
+  markdown: { records: WireRecord[]; rootKeys: string[]; report: ImportReport; reimport?: MarkdownReimport | undefined } | undefined;
   notes: string[];
+}
+
+/**
+ * BSD-611: der Teil eines „Markdown & CSV“-Exports aus Notion, dessen Records stabile IDs tragen (Dateien und
+ * Datenbanken mit Notion-ID im Namen, IDs wie im HTML-Weg). Er wird wie der HTML-Export über den Reimport-Schutz
+ * (`commitImport`, BSD-32) geschrieben: ein zweiter Import aktualisiert, in Based Geändertes bleibt.
+ */
+export interface MarkdownReimport {
+  /** Schlüssel (`kind:id`) der Records in `records`, die zu diesem Teil gehören. */
+  keys: string[];
+  /** Container, deren ganzer Inhalt aus diesem Import stammt (`b:<id>`, `d:<id>`). */
+  complete: string[];
 }
 
 /** Archive: ZIP, Joplin (.jex/.tar), Bear-Sicherung (.bear2bk) und gepackte TextBundles (.textpack) – die letzten beiden sind ZIPs. */
@@ -267,8 +279,32 @@ export function commitPreparedImport(store: WorkspaceStore, prepared: PreparedIm
     const real = new Map<string, string>();
     let o: string | undefined, k: string | undefined = start;
     for (let j = 0; j <= m.rootKeys.length; j++) { o = keyBetween(o, undefined); k = keyBetween(k, undefined); real.set(o, k); }
-    store.transact("Import", (tx) => {
+    // BSD-611: Notion-Markdown mit stabilen IDs wie der HTML-Weg über den Reimport-Schutz; der Rest wie bisher.
+    let plainRecords = m.records;
+    if (m.reimport && m.reimport.keys.length > 0) {
+      const keys = new Set(m.reimport.keys);
+      const part = new ImportBuilder({ createdBy: null, now: opts.now });
+      const rootSK = new Map<string, string>();
+      plainRecords = [];
       for (const rec of m.records) {
+        if (!keys.has(recordKey(rec))) { plainRecords.push(rec); continue; }
+        const c = structuredClone(rec);
+        if (c.kind === "block") {
+          const root = c.data.parent === "w";
+          if (root) rootSK.set(c.data.id, real.get(c.data.sk) ?? c.data.sk);
+          part.add(c.data, root);
+        } else if (c.kind === "database") part.addDatabase(c.data);
+        else if (c.kind === "view") part.addView(c.data);
+      }
+      for (const c of m.reimport.complete) part.markComplete(c);
+      const pr = commitImport(store, part, parent, "Import", (id) => rootSK.get(id));
+      // Zahlen stehen schon im Markdown-Bericht; von hier nur „Updated …“/„Kept …“.
+      r.warnings.push(...pr.warnings);
+      r.keptLocalChanges += pr.keptLocalChanges;
+      r.keptLocalAdditions += pr.keptLocalAdditions;
+    }
+    if (plainRecords.length > 0) store.transact("Import", (tx) => {
+      for (const rec of plainRecords) {
         const c = structuredClone(rec);
         if (c.kind === "block" && c.data.parent === "w") {
           c.data.parent = parent;
@@ -315,6 +351,16 @@ class MarkdownNotionImporter {
   /** Relationsspalten, aufgelöst erst nach allen Quellen (das Ziel kann später importiert werden). */
   private relations: { db: Database; prop: PropertySchema; cells: { rowID: string; links: RelationLink[] }[] }[] = [];
   private rowDatabase = new Map<string, string>();
+  /**
+   * BSD-611: IDs aus der Notion-ID im Dateinamen (Seiten wie im HTML-Weg die Notion-ID, Datenbanken deren abgeleitete
+   * IDs), je Lauf höchstens einmal vergeben. Records unter diesen IDs gehen über den Reimport-Schutz (`reimport`).
+   */
+  private stable = new Set<string>();
+  /** Schlüssel der Records aus Quellen mit stabilen IDs (für `MarkdownReimport.keys`). */
+  private stableKeys: string[] = [];
+  private complete: string[] = [];
+  /** Container-ID je CSV-Datenbank (Schlüssel wie `dbIDs`). */
+  private dbBlocks = new Map<string, string>();
 
   constructor(private readonly opts: NotionImportOptions) {
     this.now = opts.now ?? swiftNow;
@@ -323,36 +369,69 @@ class MarkdownNotionImporter {
 
   private put(r: WireRecord) { this.records.push(r); }
 
-  run(sources: ImportSource[]): { records: WireRecord[]; rootKeys: string[]; report: ImportReport } {
+  /** BSD-611: Notion-ID aus „Titel <32 hex>.md“ bzw. „Titel <32 hex>(_all).csv“; nur so geschriebene Namen zählen. */
+  private notionID(p: string): string | undefined {
+    const stem = cleanTitleSource(p);
+    return isNotionName(stem) ? notionUUID(stem.slice(-32)) : undefined;
+  }
+
+  /** Stabile ID, falls in diesem Lauf noch frei – sonst (dieselbe Notion-ID zweimal) eine neue wie bisher. */
+  private claim(id: string | undefined): string {
+    if (id === undefined || this.stable.has(id)) return makeRecordID();
+    this.stable.add(id);
+    return id;
+  }
+
+  /** IDs für die Blöcke im Inhalt einer Seite: stabil (Zähler in Lesereihenfolge) unter einer stabilen Seite. */
+  private childIDs(pageID: string): () => string {
+    if (!this.stable.has(pageID)) return makeRecordID;
+    let n = 0;
+    return () => derivedID(pageID, "md-block", String(n++));
+  }
+
+  run(sources: ImportSource[]): { records: WireRecord[]; rootKeys: string[]; report: ImportReport; reimport?: MarkdownReimport } {
     const rootKeys: string[] = [];
     let key: string | undefined;
     for (const src of sources) {
       this.files = src.files;
       this.ids = new Map();
       this.dbIDs = new Map();
+      this.dbBlocks = new Map();
       this.byNotionID = new Map();
       this.consumed = new Set();
       const root = normalizePath(src.path);
       this.notionExport = isDir(this.files, root) && this.files.walk(root).some((f) => ["md", "csv"].includes(extname(f).toLowerCase()) && isNotionName(basename(stripExtension(f))));
       this.suffixIndex = undefined;
+      const stableBefore = this.stable.size, first = this.records.length;
       this.assignIDs(root);
       if (this.opts.isCancelled?.()) throw new ImportCancelled();
       key = keyBetween(key, undefined);
       rootKeys.push(key);
       const id = this.importItem(normalizePath(src.path), "w", key, rootKeys);
       if (id !== undefined) this.report.rootIDs.push(id);
+      // BSD-611: eine Quelle mit Notion-IDs geht ganz über den Reimport-Schutz (auch ihre Seiten ohne Notion-ID).
+      if (this.stable.size > stableBefore) for (let i = first; i < this.records.length; i++) this.stableKeys.push(recordKey(this.records[i]!));
     }
     this.resolveRelations();
-    return { records: this.records, rootKeys, report: this.report };
+    const out: { records: WireRecord[]; rootKeys: string[]; report: ImportReport; reimport?: MarkdownReimport } = { records: this.records, rootKeys, report: this.report };
+    if (this.stableKeys.length > 0) out.reimport = { keys: this.stableKeys, complete: this.complete };
+    return out;
   }
 
   private assignIDs(p: string) {
     if (!this.files.exists(p)) return;
     if (isDir(this.files, p)) { for (const c of this.files.list(p)) this.assignIDs(c); }
     else if (NOTE_EXT.has(extname(p).toLowerCase()) || extname(p).toLowerCase() === "csv") {
-      this.ids.set(p, makeRecordID());
-      if (extname(p).toLowerCase() === "csv") { if (!this.dbIDs.has(dbKey(p))) this.dbIDs.set(dbKey(p), makeRecordID()); }
-      else {
+      if (extname(p).toLowerCase() === "csv") {
+        // BSD-611: „X <id>.csv“ und „X <id>_all.csv“ sind dieselbe Datenbank – ein Container, IDs wie im HTML-Weg
+        // (Container = Notion-ID, Datenbank = derivedID(Container, "database")).
+        const k = dbKey(p);
+        let block = this.dbBlocks.get(k);
+        if (block === undefined) { block = this.claim(this.notionID(p)); this.dbBlocks.set(k, block); }
+        this.ids.set(p, block);
+        if (!this.dbIDs.has(k)) this.dbIDs.set(k, this.stable.has(block) ? derivedID(block, "database") : makeRecordID());
+      } else {
+        this.ids.set(p, this.claim(extname(p).toLowerCase() === "md" ? this.notionID(p) : undefined));
         const nid = notionIDInName(basename(stripExtension(p)));
         if (nid !== undefined && !this.byNotionID.has(nid)) this.byNotionID.set(nid, p);
       }
@@ -498,13 +577,13 @@ class MarkdownNotionImporter {
     if (!this.report.warnings.includes(w)) this.report.warnings.push(w);
   }
 
-  private putImported(item: MarkdownBlock, parent: string, sortKey: string) {
+  private putImported(item: MarkdownBlock, parent: string, sortKey: string, nextID: () => string = makeRecordID) {
     const props: BlockProps = { ...item.props };
     if (item.type === "table" && props.tableColumns === undefined) props.tableColumns = 2;
-    const id = makeRecordID();
+    const id = nextID();
     this.put({ kind: "block", data: makeBlock({ id, type: item.type, parent, sk: sortKey, text: toRichText(item.text), props, createdBy: this.userID }, this.now()) });
     const keys = keysBetween(item.children.length, undefined, undefined);
-    item.children.forEach((c, i) => this.putImported(c, "b:" + id, keys[i]!));
+    item.children.forEach((c, i) => this.putImported(c, "b:" + id, keys[i]!, nextID));
   }
 
   private importPage(p: string, parent: string, sortKey: string, values: Record<string, PropertyValue> = {}, db?: Database, rowTitle?: string): string | undefined {
@@ -536,6 +615,8 @@ class MarkdownNotionImporter {
 
     const blocks = importer.parse(body);
     const folder = this.childFolder(p);
+    const nextID = this.childIDs(id);
+    if (this.stable.has(id)) this.complete.push("b:" + id);
     // Einzelne Links auf Dateien im Unterordner werden an Ort und Stelle die Unterseiten selbst.
     const keys = keysBetween(blocks.length, undefined, undefined);
     let lastKey: string | undefined;
@@ -546,7 +627,7 @@ class MarkdownNotionImporter {
       const decoded = target !== undefined ? removingPercentEncoding(target) : undefined;
       // Notion schreibt Lesezeichen und Einbettungen als Absatz „[https://…](https://…)“ – wieder ein Lesezeichen.
       if (target !== undefined && /^https?:\/\//i.test(target) && b.children.length === 0 && b.text.map((r) => r.t).join("").trim() === target) {
-        this.putImported({ type: "bookmark", text: [], props: { url: target }, children: [] }, "b:" + id, k);
+        this.putImported({ type: "bookmark", text: [], props: { url: target }, children: [] }, "b:" + id, k, nextID);
         return;
       }
       if (target !== undefined && decoded !== undefined && !target.includes("://")) {
@@ -572,11 +653,11 @@ class MarkdownNotionImporter {
           const label = b.text.map((r) => r.t).join("").trim();
           const props: BlockProps = { ...this.asset(decoded, dir) };
           if (label !== "" && label !== basename(u) && label !== decoded && label !== target) props.caption = label;
-          this.putImported({ type: kind, text: [], props, children: [] }, "b:" + id, k);
+          this.putImported({ type: kind, text: [], props, children: [] }, "b:" + id, k, nextID);
           return;
         }
       }
-      this.putImported(b, "b:" + id, k);
+      this.putImported(b, "b:" + id, k, nextID);
     });
     // Übrige Kinder im Ordner (vom Inhalt nicht verlinkt).
     // Auch Unterordner ohne eigene Seite: ihr Inhalt ging vorher verloren.
@@ -626,6 +707,8 @@ class MarkdownNotionImporter {
     }
     const blockID = this.ids.get(p) ?? makeRecordID();
     const now = this.now();
+    // BSD-611: Datenbank mit Notion-ID – Eigenschaften, Optionen, Ansicht und Zeilen ohne Datei wie im HTML-Weg.
+    const stableDB = this.stable.has(blockID) ? this.dbIDs.get(dbKey(p)) : undefined;
 
     const props: PropertySchema[] = [{ id: "title", name: header[0] === "" ? "Name" : header[0]!, type: "title" }];
     header.forEach((name, ci) => {
@@ -634,7 +717,9 @@ class MarkdownNotionImporter {
       const hint = hints[ci];
       // Relationsspalten („Titel (Pfad.md), …“) löst resolveRelations auf, auch über Quellen hinweg (#44).
       const relation = hint === undefined && isRelationColumn(column);
-      const prop: PropertySchema = { id: makeRecordID(), name: name === "" ? `Column ${ci}` : name, type: (relation ? "relation" : hint ?? inferCSVType(name, column)) as PropertySchema["type"] };
+      const propName = name === "" ? `Column ${ci}` : name;
+      const taken = stableDB !== undefined && props.some((x) => x.name === propName);
+      const prop: PropertySchema = { id: stableDB !== undefined && !taken ? derivedID(stableDB, "property", propName) : makeRecordID(), name: propName, type: (relation ? "relation" : hint ?? inferCSVType(name, column)) as PropertySchema["type"] };
       const nf = hint !== undefined || relation || prop.type === "number" ? undefined : csvNumberFormat(column);
       if (nf !== undefined) { prop.type = "number"; prop.numberFormat = nf as never; }
       if (prop.type === "select" || prop.type === "multiSelect" || prop.type === "status") {
@@ -642,11 +727,11 @@ class MarkdownNotionImporter {
         for (const v of column) {
           const tokens = prop.type === "multiSelect" ? v.split(",").filter((s) => s.length > 0).map(trimSpaces) : [trimSpaces(v)];
           for (const t of tokens) {
-            if (t !== "" && !options.some((o) => o.name === t)) options.push({ id: makeRecordID(), name: t, color: PALETTE[options.length % PALETTE.length] as never });
+            if (t !== "" && !options.some((o) => o.name === t)) options.push({ id: stableDB !== undefined && !taken ? derivedID(stableDB, propName, t) : makeRecordID(), name: t, color: PALETTE[options.length % PALETTE.length] as never });
           }
         }
         prop.options = options;
-        if (prop.type === "status") prop.statusGroups = [{ id: makeRecordID(), name: "To-do", color: "gray", optionIDs: options.map((o) => o.id) }];
+        if (prop.type === "status") prop.statusGroups = [{ id: stableDB !== undefined && !taken ? derivedID(stableDB + propName, "todo") : makeRecordID(), name: "To-do", color: "gray", optionIDs: options.map((o) => o.id) }];
       }
       if (prop.type === "uniqueID") prop.idPrefix = uniqueIDPrefix(column.map(trimSpaces).filter((v) => v !== ""))!;
       props.push(prop);
@@ -659,7 +744,8 @@ class MarkdownNotionImporter {
       if (max > 0) db.nextUniqueID = Math.max(db.nextUniqueID ?? 0, max + 1);
     });
     this.put({ kind: "database", data: db });
-    const view: DatabaseView = { id: makeRecordID(), databaseID: db.id, blockID, name: "Table", type: "table", sortKey: keyBetween(undefined, undefined), createdAt: now, updatedAt: now, stamp: { ...ZERO_STAMP } };
+    if (stableDB !== undefined) this.complete.push("d:" + db.id);
+    const view: DatabaseView = { id: stableDB !== undefined ? derivedID(blockID, "view") : makeRecordID(), databaseID: db.id, blockID, name: "Table", type: "table", sortKey: keyBetween(undefined, undefined), createdAt: now, updatedAt: now, stamp: { ...ZERO_STAMP } };
     this.put({ kind: "view", data: view });
     this.put({ kind: "block", data: makeBlock({ id: blockID, type: inline ? "databaseInline" : "databasePage", parent, sk: sortKey, props: { databaseID: db.id, viewIDs: [view.id] }, createdBy: this.userID }, now) });
     this.report.databases += 1;
@@ -704,7 +790,7 @@ class MarkdownNotionImporter {
         const pid = this.importPage(f, "d:" + db.id, k, values, db);
         if (pid !== undefined) { track(pid); return; }
       }
-      const rid = makeRecordID();
+      const rid = stableDB !== undefined ? this.claim(derivedID(stableDB, "row", String(ri))) : makeRecordID();
       track(rid);
       this.put({ kind: "block", data: makeBlock({ id: rid, type: "page", parent: "d:" + db.id, sk: k, text: rowTitle, values, createdBy: this.userID }, now) });
       this.report.rows += 1;

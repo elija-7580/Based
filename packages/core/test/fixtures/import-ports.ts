@@ -142,7 +142,10 @@ export function canonical(store: WorkspaceStore, json: unknown[]): unknown[] {
   const walk = (v: unknown): unknown => {
     if (typeof v === "string") return rename(v);
     if (Array.isArray(v)) return v.map(walk);
-    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [rename(k), walk(x)]));
+    // BSD-611 (bewusste Abweichung von Swift): Notion-„Markdown & CSV“ geht in TS über den Reimport-Schutz und trägt
+    // Fingerabdrücke. Sie hängen an den echten IDs, die die kanonische Form gerade ersetzt – darum hier ohne
+    // (geprüft werden sie in import-sources.test.ts). Kein kanonischer Swift-Fall enthält einen Fingerabdruck.
+    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).filter(([k]) => k !== "importFingerprint").map(([k, x]) => [rename(k), walk(x)]));
     return v;
   };
   const key = (r: unknown) => { const o = r as { kind: string; data: { id: string } }; return [o.kind, o.data.id] as const; };
