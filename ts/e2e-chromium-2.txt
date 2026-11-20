@@ -1,61 +1,61 @@
-failure 6a257e34321784ab7f3f1801c3d25522cc5bf72a
-  ✓  292 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (1.8s)
-  ✓  290 [chromium] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (3.3s)
-  ✓  293 [chromium] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (1.6s)
-  ✓  294 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (3.0s)
-  ✓  295 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (684ms)
-  ✓  296 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.0s)
-  ✓  297 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (1.8s)
+failure bf4d5f128f34491400ddd551b80e06860d24e57a
+  ✓  293 [chromium] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (1.1s)
+  ✓  294 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (3.1s)
+  ✓  295 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (694ms)
+  ✓  296 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.3s)
+  ✓  297 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (1.9s)
   ✓  298 [chromium] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (3.7s)
   ✓  299 [chromium] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (1.2s)
-  ✓  300 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (711ms)
+  ✓  300 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (1.0s)
   -  301 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+  ✘  302 [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (1.4s)
+  ✘  303 [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (retry #1) (985ms)
 
 
-  1) [chromium] › e2e/polish.spec.ts:741:1 › Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599) 
+  1) [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon 
 
-    Error: .home-head .based-switcher in der Spalte (900, dark)
+    Error: nach Klick 1: Continue
 
-    expect(received).toBeLessThanOrEqual(expected)
+    expect(received).toBe(expected) // Object.is equality
 
-    Expected: <= 468.5
-    Received:    475.734375
+    Expected: false
+    Received: true
 
-      759 |         for (const b of await home.locator(sel).all()) {
-      760 |           const r = (await b.boundingBox())!;
-    > 761 |           expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
-          |                                                                          ^
-      762 |         }
-      763 |       }
-      764 |       expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:761:74
+      501 |       await welcome(mouse.page).getByRole("button", { name: "Continue" }).click();
+      502 |       const r = await ring(mouse.page);
+    > 503 |       expect(r.ring, `nach Klick ${i + 1}: ${r.name}`).toBe(false);
+          |                                                        ^
+      504 |     }
+      505 |     await expect(step(mouse.page)).toHaveAttribute("data-step", "start");
+      506 |     await expect(welcome(mouse.page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
+        at /home/runner/work/Based/Based/apps/web/e2e/welcome.spec.ts:503:56
 
-    Error Context: test-results/polish-Home-neben-dem-offe-f0ee5-600-und-1280-×-820-BSD-599--chromium/error-context.md
+    Error Context: test-results/welcome-Einstieg-nach-Maus-9030f-hmen-mit-der-Tastatur-schon-chromium/error-context.md
 
     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
-    Error: .home-head .based-switcher in der Spalte (900, light)
+    Error: nach Klick 1: Continue
 
-    expect(received).toBeLessThanOrEqual(expected)
+    expect(received).toBe(expected) // Object.is equality
 
-    Expected: <= 468.5
-    Received:    475.734375
+    Expected: false
+    Received: true
 
-      759 |         for (const b of await home.locator(sel).all()) {
-      760 |           const r = (await b.boundingBox())!;
-    > 761 |           expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
-          |                                                                          ^
-      762 |         }
-      763 |       }
-      764 |       expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:761:74
+      501 |       await welcome(mouse.page).getByRole("button", { name: "Continue" }).click();
+      502 |       const r = await ring(mouse.page);
+    > 503 |       expect(r.ring, `nach Klick ${i + 1}: ${r.name}`).toBe(false);
+          |                                                        ^
+      504 |     }
+      505 |     await expect(step(mouse.page)).toHaveAttribute("data-step", "start");
+      506 |     await expect(welcome(mouse.page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
+        at /home/runner/work/Based/Based/apps/web/e2e/welcome.spec.ts:503:56
 
-    Error Context: test-results/polish-Home-neben-dem-offe-f0ee5-600-und-1280-×-820-BSD-599--chromium-retry1/error-context.md
+    Error Context: test-results/welcome-Einstieg-nach-Maus-9030f-hmen-mit-der-Tastatur-schon-chromium-retry1/error-context.md
 
   1 failed
-    [chromium] › e2e/polish.spec.ts:741:1 › Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599) 
+    [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon 
   13 skipped
-  286 passed (5.9m)
+  288 passed (6.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
