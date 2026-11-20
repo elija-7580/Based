@@ -83,3 +83,34 @@ und Agenten-Kerncode (`core/editor/agent.ts`, `core/whiteboard/agent.ts` ≈ 43 
 sowie Importer (≈ 165 kB) und Whiteboard (≈ 75 kB), die erst beim Import bzw. beim ersten Board gebraucht werden
 (Backlog, nach dem 23.11.). Die Küstenlinien der Karte (67 kB roh, 25 kB gzip) lädt seit dem Review vom 19.11. erst
 die erste Karte; `e2e/beta-build.spec.ts` prüft das.
+
+## Laufzeit-Analyse 20.11.2026 (Store-Worker in Node, Elijas Größenordnung)
+
+Workspace aus 20 000 Seiten mit je 25 Blöcken und einer Datenbank mit 100 000 Zeilen (620 000 Records), Store-Host
+(`apps/web/src/worker/host.ts`) direkt in Node auf `node:sqlite`, Linux-Container (2 Kerne). Messskript nicht im Repo;
+die Wächter stehen in `packages/core/test/runtime-costs.test.ts`, `apps/web/src/worker/host-costs.test.ts`,
+`apps/web/src/worker/titleMap.test.ts` und den Ordner-Sync-/Backup-Tests des Servers.
+
+| Vorgang | vorher | nachher |
+| --- | --- | --- |
+| Neue Datenbankzeile (Worker) | 101 ms, Gliederung 3,2 MB an die Oberfläche | 0,6 ms, keine Gliederung |
+| Zeile umsortieren (Worker) | 95 ms (p95 591 ms), Gliederung neu | 0,9 ms |
+| Seite anlegen / Favorit / Papierkorb (Worker, mit ~15 ms Messaufschlag) | 114 / 100 / 112 ms | 64 / 47 / 58 ms |
+| `buildOutline` allein | 95 ms | 59 ms (Gerüst als eigene Liste, ein Durchgang) |
+| Titel tippen: Titel-Tabelle im Hauptthread (120 000 Titel) | ~22 ms je Taste (ganze Map kopiert) | < 0,1 ms (`LayeredMap`) |
+| Titel tippen: unverlinkte Erwähnungen (Worker) | 124 ms je Taste, auch bei jedem anderen Titel | einmal 400 ms nach der letzten Taste, nur bei eigenem Titel |
+| Quick Find nur Titel (@-Menü) | 25–36 ms | 4–11 ms |
+| Quick Find Volltext je Anfrage | 35–270 ms | 23–270 ms (BSD-515 bleibt der Hebel) |
+| Datenbankseite öffnen (Worker, 100 000 Zeilen) | 509 ms | 209 ms (Teilbaum einmal statt dreimal) |
+| „Edited …“ einer Seite mit 2 000 Unterseiten (Hauptthread) | ~28 ms je Taste | höchstens einmal je Sekunde |
+| 20 000 von 40 000 Zeilen zufällig löschen | 807 ms | 342 ms (Geschwisterliste per binärer Suche) |
+| Library / Graph bauen | 235 / 853 ms | 155 / 530 ms |
+| Ordner-Sync (iCloud), lokaler Server, je Runde alle 5 s | ~230 ms Durchsuchen aller Records + Zustand schreiben | nur geänderte Records; alles alle 10 min |
+| Backup stündlich ohne Änderung | ganzer Export + Hash | übersprungen (Store-Revision) |
+| Worker im Leerlauf | Takt alle 20 s (Versionsverlauf) | kein Takt, solange keine Seite auf eine Version wartet |
+
+Offen (Backlog): Gliederung als Änderung statt 3 MB je Strukturänderung (ADR 0017 A5); Seiten-Replik nimmt den
+Inhalt aller Unterseiten mit (Seite mit 2 000 Unterseiten: 52 000 Records, ~550 ms bis zur Replik); Quick Find und
+Suchindex (Aufbau 3,5 s beim ersten ⌘K, BSD-515); sortierte Ansicht mit 100 000 Zeilen sortiert je Zellenänderung im
+Hauptthread neu (~110 ms, BSD-605); der lokale Server hält mit Ordner-Sync eine zweite volle Kopie des Workspaces im
+Speicher (ADR 0017 Stufe D); Meeting-Erkennung fragt in der Mac-App alle 3 s das Mikrofon ab.
