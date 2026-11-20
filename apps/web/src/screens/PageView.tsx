@@ -522,7 +522,7 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions, board }:
   const ref = useRef<HTMLDivElement>(null);
   useMenuKeys(ref, onClose);
   return (
-    <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right }}>
+    <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right, maxHeight: `calc(100vh - ${pos.top}px - var(--space-2))` }}>
       {actions ? (
         <>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="link" size={18} />Copy link</button>

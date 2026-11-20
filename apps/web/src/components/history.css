@@ -30,3 +30,7 @@
 .vh-confirm p { margin: 0; }
 .vh-toast { display: flex; align-items: center; gap: var(--space-3); justify-content: center; padding: var(--space-2) var(--space-4); background: var(--surface-raised); flex-wrap: wrap; }
 .page-menu { min-width: 220px; }
+/* BSD-624: reicht der Platz unter dem Knopf nicht (900 × 600), rollt das Menü senkrecht und bleibt
+   8 px über dem Fensterrand (max-height setzt PageMenu); die Zeilen behalten ihre Höhe. */
+.page-menu { overflow-y: auto; overscroll-behavior: contain; }
+.page-menu > * { flex-shrink: 0; }
