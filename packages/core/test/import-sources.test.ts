@@ -3,7 +3,7 @@
 // Joplin (JEX), Roam Research (JSON), Google Keep (Takeout), Simplenote, Standard Notes, ChatGPT und Claude.
 import { zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
-import { extractTar, ImportFiles, importNotionItems, isTar, MemoryAssetSink, MemoryPersistence, plainText, WorkspaceStore, type Block, type ImportReport } from "../src/index.js";
+import { derivedID, extractTar, ImportFiles, importNotionItems, isTar, MemoryAssetSink, MemoryPersistence, plainText, WorkspaceStore, type Block, type ImportReport } from "../src/index.js";
 import { MarkdownImporter } from "../src/interop/markdown.js";
 import { parseDate } from "../src/query/value.js";
 
@@ -372,5 +372,100 @@ describe("ChatGPT und Claude", () => {
     const rows = kids(s, "d:" + dbNamed(s, "Claude").id);
     expect(outline(s, "b:" + rows[0]!.id)).toEqual(["text: You", "text: Where to?", "text: Attached: map.pdf", "divider: ", "text: Claude", "heading2: Options", "numberedList: Rome", "numberedList: Oslo"]);
     expect(outline(s, "b:" + named(s, "Claude projects").id)).toEqual(["page: Based", "  page: Spec", "    text: text"]);
+  });
+});
+
+describe("BSD-611: Notion „Markdown & CSV“ ein zweites Mal importiert", () => {
+  const csv = "Name,Status,Points\nWrite report,In progress,3\nNo file row,Done,5\n";
+  const md = {
+    [`Home ${H}.md`]: `# Home\n\nIntro paragraph\n\n[Tasks](Home%20${H}/Tasks%20${T}.csv)\n\n[Sub](Home%20${H}/Sub%20${S}.md)\n`,
+    [`Home ${H}/Sub ${S}.md`]: "# Sub\n\nSub body\n",
+    [`Home ${H}/Tasks ${T}.csv`]: csv,
+    [`Home ${H}/Tasks ${T}_all.csv`]: csv,
+    [`Home ${H}/Tasks ${T}/Write report ${R1}.md`]: "# Write report\n\nStatus: In progress\n\nRow body\n",
+  };
+  const zipOf = (m: Record<string, string>) => zipSync(Object.fromEntries(Object.entries(m).map(([k, v]) => [k, enc.encode(v)])));
+  const whole = zipOf(md);
+  const part = zipOf(md); // dasselbe Export als Teil-Archiv („…-Part-1.zip“)
+  const live = (s: WorkspaceStore) => [...s.blocks.values()].filter((b) => b.trashedAt === undefined);
+  const counts = (s: WorkspaceStore) => ({
+    blocks: live(s).length,
+    pages: live(s).filter((b) => b.type === "page").length,
+    databases: s.databases.size,
+    rows: live(s).filter((b) => b.parent.startsWith("d:")).length,
+  });
+  const run = (s: WorkspaceStore, m: Record<string, Uint8Array>, path: string) => importNotionItems(s, [{ files: files(m), path }], { assets: new MemoryAssetSink() });
+  const fresh = () => new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+
+  it("zweimal (ZIP, Teil-Archiv, ZIP): gleiche Zahl Seiten, Datenbanken und Zeilen, Meldung „Updated …“; IDs wie im HTML-Weg", () => {
+    const s = fresh();
+    run(s, { "Export-x.zip": whole }, "Export-x.zip");
+    const first = counts(s);
+    expect(first).toEqual({ blocks: 8, pages: 4, databases: 1, rows: 2 });
+    // Seiten tragen die Notion-ID, die Datenbank die abgeleitete ID des HTML-Wegs.
+    expect(named(s, "Home").id).toBe(dash(H));
+    expect(named(s, "Write report").id).toBe(dash(R1));
+    expect(s.blocks.get(dash(T))?.type).toBe("databaseInline");
+    expect(dbNamed(s, "Tasks").id).toBe(derivedID(dash(T), "database"));
+    expect(live(s).every((b) => typeof (b as Record<string, unknown>).importFingerprint === "string")).toBe(true);
+    const r2 = run(s, { "Export-x-Part-1.zip": part }, "Export-x-Part-1.zip");
+    expect(counts(s)).toEqual(first);
+    expect(r2.warnings.find((w) => w.startsWith("Updated"))).toMatch(/^Updated \d+ existing blocks/);
+    expect(r2.pages).toBe(3); expect(r2.rows).toBe(2); expect(r2.databases).toBe(1);
+    run(s, { "Export-x.zip": whole }, "Export-x.zip");
+    expect(counts(s)).toEqual(first);
+    expect(outline(s, "w")).toEqual(["page: Home", "  text: Intro paragraph", "  databaseInline: ", "  page: Sub", "    text: Sub body"]);
+  });
+
+  it("in Based Geändertes bleibt: Zeilenwert, Absatz und hinzugefügter Block", () => {
+    const s = fresh();
+    run(s, { "Export-x.zip": whole }, "Export-x.zip");
+    const db = dbNamed(s, "Tasks");
+    const points = db.properties.find((p) => p.name === "Points")!.id;
+    const row = named(s, "No file row");
+    const intro = kids(s, "b:" + dash(H)).find((b) => plainText(b.text) === "Intro paragraph")!;
+    s.transact("edit", (tx) => {
+      tx.update(row.id, (b) => { b.values = { ...b.values, [points]: { number: { _0: 42 } } as never }; });
+      tx.update(intro.id, (b) => { b.text = "Intro edited in Based"; });
+    });
+    s.transact("add", (tx) => tx.put({ kind: "block", data: { id: "local-1", type: "text", parent: "b:" + dash(S), sk: "zz", text: "added in Based", createdAt: 1, updatedAt: 1 } as Block }));
+    const before = counts(s);
+    const r = run(s, { "Export-x.zip": whole }, "Export-x.zip");
+    expect(counts(s)).toEqual(before);
+    expect((s.blocks.get(row.id)!.values?.[points] as { number: { _0: number } }).number._0).toBe(42);
+    expect(plainText(s.blocks.get(intro.id)!.text)).toBe("Intro edited in Based");
+    expect(titles(s, "b:" + dash(S))).toEqual(["Sub body", "added in Based"]);
+    expect(r.keptLocalChanges).toBeGreaterThan(0);
+  });
+
+  it("derselbe Export erst als HTML, dann als Markdown & CSV: aktualisiert statt doppelt", () => {
+    const page = (id: string, title: string, body: string) => `<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>${title}</title></head><body><article id="${dash(id)}" class="page sans"><header><h1 class="page-title">${title}</h1></header><div class="page-body">${body}</div></article></body></html>`;
+    const html = zipSync({
+      [`Home ${H}.html`]: enc.encode(page(H, "Home", `<p>Intro paragraph</p><div id="${dash(T)}" class="collection-content"><h4 class="collection-title">Tasks</h4><table class="collection-content"><thead><tr><th><span class="icon property-icon"><svg class="typesTitle"></svg></span>Name</th><th><span class="icon property-icon"><svg class="typesText"></svg></span>Status</th><th><span class="icon property-icon"><svg class="typesNumber"></svg></span>Points</th></tr></thead><tbody><tr id="${dash(R1)}"><td class="cell-title"><a href="Home%20${H}/Tasks%20${T}/Write%20report%20${R1}.html">Write report</a></td><td>In progress</td><td>3</td></tr><tr><td class="cell-title">No file row</td><td>Done</td><td>5</td></tr></tbody></table></div><figure class="link-to-page"><a href="Home%20${H}/Sub%20${S}.html">Sub</a></figure>`)),
+      [`Home ${H}/Sub ${S}.html`]: enc.encode(page(S, "Sub", "<p>Sub body</p>")),
+      [`Home ${H}/Tasks ${T}/Write report ${R1}.html`]: enc.encode(page(R1, "Write report", "<p>Row body</p>")),
+    });
+    const s = fresh();
+    run(s, { "Export-h.zip": html }, "Export-h.zip");
+    const fromHTML = counts(s);
+    const dbID = dbNamed(s, "Tasks").id;
+    const r = run(s, { "Export-x.zip": whole }, "Export-x.zip");
+    // Seiten, Datenbank und Zeilen sind dieselben Records (gleiche IDs); nur die Inhaltsblöcke werden ersetzt.
+    expect(counts(s)).toEqual(fromHTML);
+    expect(s.databases.size).toBe(1);
+    expect(dbNamed(s, "Tasks").id).toBe(dbID);
+    expect(r.warnings.some((w) => w.startsWith("Updated"))).toBe(true);
+    expect(titles(s, "b:" + dash(S))).toEqual(["Sub body"]);
+  });
+
+  it("gewöhnliche Markdown-Ordner bleiben wie bisher (kein Reimport-Schutz, keine Fingerabdrücke)", () => {
+    const s = fresh();
+    const plain = { "Notes/A.md": "# A\n\ntext\n", "Notes/B.md": "# B\n" };
+    run(s, plain as never, "Notes");
+    expect(live(s).some((b) => "importFingerprint" in b)).toBe(false);
+    const n = live(s).length;
+    const sf = files(plain);
+    importNotionItems(s, [{ files: sf, path: "Notes" }]);
+    expect(live(s).length).toBe(2 * n);
   });
 });

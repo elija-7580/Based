@@ -24,6 +24,27 @@ im Browser: `apps/web/e2e/interop.spec.ts`. Für den großen Notion-Import über
 
 Nicht lesbar, mit Hinweis im Bericht: OneNote (.one, .onepkg), Pages, verschlüsselte Standard-Notes-Sicherungen.
 
+## Derselbe Notion-Export ein zweites Mal (BSD-32, BSD-611)
+
+Beide Notion-Formate aktualisieren beim zweiten Import an Ort und Stelle statt doppelt anzulegen („Updated N existing
+blocks from an earlier import“); in Based geänderte oder hinzugefügte Blöcke bleiben, unverändert Verschwundenes geht
+weg (Seiten und Zeilen in den Papierkorb). Grundlage sind stabile IDs aus der Notion-ID im Dateinamen:
+
+- Seite `Titel <32 hex>.html|.md` → die Notion-ID; Datenbank `Titel <32 hex>(_all).csv` bzw. die Tabelle im HTML →
+  Container = Notion-ID, Datenbank `derivedID(Container, "database")`, Ansicht `derivedID(Container, "view")`,
+  Eigenschaften `derivedID(Datenbank, "property", Name)`, Optionen `derivedID(Datenbank, Name, Wert)`, Zeilen ohne
+  eigene Datei `derivedID(Datenbank, "row", Index)` (`importids.ts`, beide Wege gleich).
+- Inhaltsblöcke einer Markdown-Seite: `derivedID(Seite, "md-block", Zähler)`; der HTML-Weg nimmt Notions Block-IDs.
+- Markdown & CSV: eine Quelle mit mindestens einer solchen Datei geht als Ganzes über `commitImport` (auch ihre Seiten
+  ohne Notion-ID, die dann bei jedem Import neu entstehen und die alte, unveränderte Fassung in den Papierkorb legen).
+  Gewöhnliche Markdown-Ordner ohne Notion-IDs bleiben wie bisher: jeder Import legt neue Seiten an.
+- Erst HTML, dann Markdown & CSV desselben Exports (oder umgekehrt): Seiten, Datenbanken und Zeilen sind dieselben
+  Records und werden aktualisiert; die Inhaltsblöcke der Seiten werden ersetzt (andere Block-IDs je Format), lokal
+  Geändertes bleibt daneben stehen. Inline-Datenbanken treffen sich nur, wenn Notion im HTML dieselbe ID an die
+  Tabelle schreibt wie an die CSV (so in den bisher gesehenen Exporten).
+- Ein Markdown-Import von vor BSD-611 (zufällige IDs) wird beim ersten neuen Import noch einmal angelegt; ab dann
+  aktualisiert er.
+
 Canvas und Excalidraw im Vault (`interop/board-import.ts`): Textkarten werden Formen mit Markdown, Notiz-Karten
 Seitenkarten (echte Links), Bilder und Dateien Datei-Objekte, Gruppen und Excalidraw-Rahmen Rahmen, Kanten und an
 zwei Formen gebundene Pfeile Verbindungen, Freihand und lose Linien Tinte. Farben nach dem Farbton auf die Board-Palette
