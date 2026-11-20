@@ -11,6 +11,7 @@ import { QuickFind } from "./components/QuickFind.js";
 import { pagePick } from "./shell/pagePick.js";
 import { DevOverlay } from "./components/DevOverlay.js";
 import { ReportProblemDialog } from "./components/ReportProblem.js";
+import { TrashUndo } from "./components/TrashUndo.js";
 import { ShortcutHud } from "./components/ShortcutHud.js";
 import { ShortcutSheet } from "./components/ShortcutSheet.js";
 import { installArrowNav } from "./shell/arrowNav.js";
@@ -410,6 +411,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       {sheet ? <ShortcutSheet ai={ai} onClose={() => setSheet(false)} /> : null}
       <ShortcutHud ai={ai} />
       <ReportProblemDialog onOpenDiagnostics={() => history.navigate({ name: "settings", page: "diagnostics" })} />
+      <TrashUndo client={client} onOpenPage={openPage} />
       {importing ? <ImportDialog client={client} initial={importing} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
       {pick ? <QuickFind client={client} titles={state.titles} recent={recent} onOpen={(id) => pick.resolve(id)} onClose={() => pick.resolve(undefined)} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}

@@ -26,6 +26,7 @@ import { keyLabel } from "../shell/keyHints.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
 import { HybridImportPill } from "./NotionHybrid.js";
+import { movedToTrash } from "../shell/trashUndo.js";
 
 /** Nur geschlossene Formen werden im aktiven Zustand gefüllt (Lupe und Zahnrad nicht). */
 const FILLABLE = new Set<IconName>(["home", "graph", "trash", "chat", "settings", "library", "search"]);
@@ -568,6 +569,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           onTrash={() => {
             const ids = [...picked];
             void client.command({ op: "trash", ids });
+            movedToTrash(ids, activeID && ids.includes(activeID) ? activeID : undefined);
             clearPicked();
             if (activeID && ids.includes(activeID)) onNavigate({ name: "home" });
           }}
@@ -594,6 +596,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           onQuickMove={(section) => void client.command({ op: "moveToSection", ids: [menu.id], section })}
           onTrash={() => {
             void client.command({ op: "trash", ids: [menu.id] });
+            movedToTrash([menu.id], activeID === menu.id ? menu.id : undefined);
             if (activeID === menu.id) onNavigate({ name: "home" });
           }}
         />

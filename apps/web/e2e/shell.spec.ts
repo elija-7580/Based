@@ -234,3 +234,44 @@ test("Sync-Server in den Einstellungen: Status in der Seitenleiste", async ({ pa
   await page.getByRole("button", { name: "Disconnect" }).click();
   await expect(page.getByTestId("sync-status")).toHaveText(/On this device|Not saved/);
 });
+
+// BSD-619 (Elija 20.11.): Nach „Move to Trash“ der Hinweis „Moved to Trash · Undo“ (4 s); Undo holt die Seite zurück
+// und öffnet sie wieder. ⌘Z außerhalb eines Textfelds tut dasselbe – auch nachdem der Hinweis gegangen ist. Im Text
+// einer Seite bleibt ⌘Z das Undo des Editors.
+test("Move to Trash: Hinweis mit Undo, ⌘Z holt die Seite zurück", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await newTopLevelPage(page, "Keep me please");
+  const toast = page.getByTestId("trash-toast");
+  const tree = page.getByRole("treeitem", { name: "Keep me please" });
+  await page.getByRole("button", { name: "Move to Trash" }).click();
+  await expect(tree).toHaveCount(0);
+  await expect(toast).toContainText("Moved to Trash");
+  await toast.getByRole("button", { name: "Undo" }).click();
+  await expect(tree).toHaveCount(1);
+  await expect(page.getByLabel("Page title")).toHaveValue("Keep me please");
+  await expect(toast).toHaveCount(0);
+
+  // ⌘Z, nachdem der Hinweis von selbst gegangen ist
+  await page.getByRole("button", { name: "Move to Trash" }).click();
+  await expect(tree).toHaveCount(0);
+  await expect(toast).toBeVisible();
+  await expect(toast).toHaveCount(0, { timeout: 6000 });
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(tree).toHaveCount(1);
+  await expect(page.getByLabel("Page title")).toHaveValue("Keep me please");
+  // noch einmal ⌘Z: nichts mehr zurückzuholen, nichts passiert
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(tree).toHaveCount(1);
+
+  // im Text der Seite gehört ⌘Z dem Editor (die gelöschte Seite bleibt im Papierkorb)
+  await newTopLevelPage(page, "Second page");
+  await page.getByRole("button", { name: "Move to Trash" }).click();
+  await expect(page.getByRole("treeitem", { name: "Second page" })).toHaveCount(0);
+  await page.getByRole("treeitem", { name: "Keep me please" }).click();
+  await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
+  await page.keyboard.type("typed");
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(page.getByRole("treeitem", { name: "Second page" })).toHaveCount(0);
+});
