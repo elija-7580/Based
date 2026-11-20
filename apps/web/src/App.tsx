@@ -188,7 +188,11 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   const newDatabase = useCallback(async () => {
     const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" });
-    if (id) openPage(id);
+    // BSD-617: wie eine neue Seite (BSD-482) – die Schreibmarke steht im Titel, wer gleich tippt, benennt sie.
+    if (id) {
+      markFreshPage(id);
+      openPage(id);
+    }
   }, [client, openPage]);
 
   const newFromTemplate = useCallback(async (template: StarterTemplateID) => {

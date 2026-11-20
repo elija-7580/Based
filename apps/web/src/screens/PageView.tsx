@@ -599,6 +599,7 @@ function onLastLine(el: HTMLTextAreaElement): boolean {
 function TitleField({ id, title, readOnly, onRename }: { id: string; title: string; readOnly: boolean; onRename: (t: string) => void }) {
   const [value, setValue] = useState(title);
   const focused = useRef(false);
+  const typed = useRef(false);
   const field = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (!focused.current) setValue(title === "Untitled" ? "" : title);
@@ -608,7 +609,12 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
   useEffect(() => {
     if (readOnly || !takeFreshPage(id)) return;
     if (document.activeElement?.closest(".page-body")) return;
-    field.current?.focus();
+    const el = field.current;
+    el?.focus();
+    // BSD-617: Steht schon ein Titel da (neue Datenbank: „Untitled database“), ist er markiert – Tippen ersetzt ihn.
+    // Erst im nächsten Bild: der Wert des Feldes kann im selben Durchgang noch nachgezogen werden.
+    typed.current = false;
+    requestAnimationFrame(() => { if (el && document.activeElement === el && !typed.current) el.select(); });
   }, [id, readOnly]);
   useLayoutEffect(() => {
     const el = field.current;
@@ -636,6 +642,7 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
         onBlur={() => (focused.current = false)}
         onChange={(e) => {
           const next = e.target.value.replace(/[\r\n]+/g, " ");
+          typed.current = true;
           setValue(next);
           onRename(next);
         }}

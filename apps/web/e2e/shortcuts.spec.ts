@@ -158,3 +158,26 @@ test("Neue Seite: Schreibmarke steht im Titel, Enter geht in den Text; Öffnen e
   await expect(title).toHaveValue("Typed right away");
   await expect(title).not.toBeFocused();
 });
+
+// BSD-617: Neue Datenbank (⌘N → New database) → Schreibmarke im Titel, „Untitled database“ ist markiert: Tippen benennt
+// die Datenbank. Vorher blieb der Fokus auf der Seite und das Getippte ging verloren.
+test("Neue Datenbank: Titel hat den Fokus, Tippen ersetzt „Untitled database“", async ({ page }) => {
+  await ready(page);
+  const title = page.getByLabel("Page title");
+  await page.keyboard.press("ControlOrMeta+n");
+  await expect(page.getByTestId("new-palette")).toBeVisible();
+  await page.keyboard.type("datab");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".shell-database.full")).toBeVisible();
+  await expect(title).toBeFocused();
+  await expect(title).toHaveValue("Untitled database");
+  await expect.poll(() => title.evaluate((el: HTMLTextAreaElement) => el.selectionEnd - el.selectionStart)).toBe("Untitled database".length);
+  await page.keyboard.type("Reading list");
+  await expect(title).toHaveValue("Reading list");
+  await expect(page.getByRole("treeitem", { name: "Reading list", exact: true })).toHaveCount(1);
+  // vorhandene Datenbank wieder öffnen: kein Fokus im Titel
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("treeitem", { name: "Reading list", exact: true }).click();
+  await expect(title).toHaveValue("Reading list");
+  await expect(title).not.toBeFocused();
+});
