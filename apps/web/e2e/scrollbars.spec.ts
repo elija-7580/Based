@@ -88,3 +88,19 @@ test("Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfot
     }
   }
 });
+
+// BSD-623: Ein Menü mit festem Balken (Typ-Menü „New property“, lange Auswahllisten) rollt nur senkrecht – die
+// Balkenspalte macht den Inhalt nicht breiter als das Menü, es gibt keinen waagrechten Balken.
+test("Rollbalken: Menü „New property“ rollt nicht waagrecht", async ({ page }) => {
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: "New database" }).click();
+  const db = page.locator(".shell-database.full");
+  await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+  await page.getByRole("button", { name: /add property|new property/i }).first().click();
+  const list = page.getByRole("menu", { name: "Property type" });
+  await expect(list).toBeVisible();
+  const m = await list.evaluate((e: HTMLElement) => ({ sw: e.scrollWidth, cw: e.clientWidth, sh: e.scrollHeight, ch: e.clientHeight, bar: e.offsetHeight - e.clientHeight }));
+  expect(m.sh, "die Liste rollt senkrecht (sonst prüft der Test nichts)").toBeGreaterThan(m.ch);
+  expect(m.sw).toBeLessThanOrEqual(m.cw);
+  expect(m.bar, "kein waagrechter Balken").toBe(0);
+});
