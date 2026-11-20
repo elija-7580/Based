@@ -3,5 +3,5 @@
 .based-media-el { display: block; width: 100%; max-height: 70vh; border-radius: calc(var(--radius-lg) - var(--space-2)); background: var(--ink); cursor: pointer; }
 .based-media[data-kind="audio"] .based-media-el { display: none; }
 .based-media-bar { min-width: 0; user-select: none; }
-.based-media-time { font-family: var(--font-mono); font-size: var(--type-meta-size); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.based-media-time { font-family: var(--font-ui); font-size: var(--type-meta-size); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .based-media-seek { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }

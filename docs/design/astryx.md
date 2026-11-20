@@ -64,10 +64,12 @@ Systemschema fast schwarz auf Dunkel. `theme.spec.ts` prüft Titel und Wortmarke
 
 Nicht aus Based-Tokens (es gibt keine): Diagrammfarben (`--color-data-*`) und Syntaxfarben von `CodeBlock` – Astryx-Standard.
 
-Schriften für Stil Bold (Schibsted Grotesk, Literata) sind lokal gebündelt: `@fontsource/schibsted-grotesk` und
-`@fontsource/literata`, beide **SIL Open Font License 1.1** (Lizenztext in den Paketen). `src/boldFonts.ts` wird nur
-nachgeladen, wenn der Stil aktiv ist. E2E `theme.spec.ts` prüft für Default und Bold, dass kein Request an fremde
-Hosts geht.
+Schriften für Font „Based“ (Schibsted Grotesk, Literata) sind lokal gebündelt, als variable Schriften (jedes Gewicht,
+echte Kursive): `@fontsource-variable/schibsted-grotesk` und `@fontsource-variable/literata`, beide **SIL Open Font
+License 1.1** (Lizenztext in den Paketen). `src/fonts.ts`: Der Start wartet höchstens 800 ms auf die Dateien, beim
+Umschalten wechselt die Schrift erst, wenn sie geladen ist – nie Ersatzschrift, die dann umspringt. E2E
+`theme.spec.ts` prüft, dass kein Request an fremde Hosts geht; `font-consistency.spec.ts` prüft Familien, Gewichte
+und dass nichts künstlich verdickt wird.
 
 ## Based-Wrapper (`@based/ui/astryx`)
 

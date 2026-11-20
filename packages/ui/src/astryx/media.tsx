@@ -1,6 +1,6 @@
 // BSD-447: Wiedergabe für Video- und Audio-Blöcke mit Based-Bedienung statt der Browser-Steuerleiste (System-Element,
 // in WebKit und Chromium verschieden, mit eigenem „⋮“-Menü). Leiste: Abspielen/Pause (BasedIconButton), Zeit in
-// --font-mono, Fortschritt als Astryx-Slider, Ton aus/an, bei Video Vollbild. Tastatur auf dem Player: Leertaste/K
+// UI-Schrift mit festen Ziffern, Fortschritt als Astryx-Slider, Ton aus/an, bei Video Vollbild. Tastatur auf dem Player: Leertaste/K
 // spielt oder hält an, ←/→ springen 5 s, M schaltet den Ton, F Vollbild. Aussehen nur aus Tokens (media.css).
 import { HStack } from "@astryxdesign/core/Layout";
 import { Slider } from "@astryxdesign/core/Slider";

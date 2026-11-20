@@ -31,6 +31,7 @@ import "@astryxdesign/core/astryx.css";
 import { Theme } from "@astryxdesign/core/theme";
 import { astryxThemes } from "./astryxTheme.js";
 import "./styles.css";
+import { waitForBasedFonts } from "./fonts.js";
 // Nichts vom System: eigenes Kontextmenü, eigene Auswahllisten und Tooltips im ganzen Fenster (@based/ui/native).
 import "@based/ui/native.css";
 import { installNativeFree } from "@based/ui/native";
@@ -71,6 +72,9 @@ bootMark("scripts loaded");
 
 // Vor dem ersten Rendern setzen, damit Dunkel nicht hell aufblitzt.
 applyAppearance(appearanceStore.get());
+// Font „Based“: Dateien jetzt anstoßen (parallel zum Start); gezeichnet wird erst, wenn sie da sind – höchstens
+// 800 ms –, damit der erste Text nicht in der Ersatzschrift erscheint und dann umspringt (fonts.ts).
+const fontsBeforeFirstPaint = appearanceStore.get().font === "based" ? waitForBasedFonts(800) : Promise.resolve();
 
 // BSD-235 Teil 2: Gast-Modus. `#/share/<Share-URL>` → Konfiguration verschlüsselt ablegen, auf `?guest=<id>` umleiten;
 // `?guest=<id>` → eigener Store (Speicher), Sync mit dem Link-Geheimnis, Start auf der geteilten Seite.
@@ -283,7 +287,7 @@ function start(guest: GuestBoot | undefined) {
   if (!root) throw new Error("#root fehlt");
   // Sync-Server erst aus IndexedDB lesen (wenige ms), damit die Einstellungen ihn beim ersten Zeichnen kennen.
   bootMark("shell started");
-  void syncConfig.load().finally(() => {
+  void Promise.all([syncConfig.load().catch(() => undefined), fontsBeforeFirstPaint]).finally(() => {
     bootMark("settings read");
     createRoot(root).render(<StrictMode><Root /></StrictMode>);
   });

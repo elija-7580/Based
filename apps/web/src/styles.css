@@ -24,6 +24,8 @@ body {
    gewinnen weiterhin, aber Astryx-Komponenten behalten ihre eigene Schrift-, Text- und Fokusfarbe. */
 @layer reset {
   button { font: inherit; color: inherit; cursor: pointer; }
+  /* Elija 20.11.: Felder zeigten sonst die Systemschrift des Browsers – beim Klicken in einen Text sprang die Schrift. */
+  input, select, textarea { font: inherit; letter-spacing: inherit; color: inherit; }
   a { color: inherit; text-decoration: none; }
   :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   h1, h2, h3, p { margin: 0; }
@@ -271,7 +273,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .option .check { visibility: hidden; }
 .option[aria-selected="true"] .check { visibility: visible; }
 .popover-foot { margin: var(--space-1) var(--space-1) 0; padding: var(--space-3) var(--space-2) var(--space-1); border-top: 1px solid var(--line); }
-.details { font-family: var(--font-mono); font-size: var(--type-data-size); color: var(--muted); }
+.details { font-family: var(--font-ui); font-size: var(--type-data-size); color: var(--muted); }
 
 /* Seitenbaum (virtualisiert: feste Zeilenhöhe = --space-6) */
 .tree { flex: 1 1 0; min-height: 0; margin: var(--space-2) calc(-1 * var(--space-1)) 0; padding: 0 var(--space-1); }

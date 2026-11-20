@@ -22,7 +22,7 @@
 .bx-meet-btn.is-primary { background: var(--button); color: var(--button-ink); border-color: var(--button); }
 .bx-meet-btn:disabled { opacity: 0.5; cursor: default; }
 .bx-meet-btn:not(:disabled):hover { box-shadow: var(--shadow-control); }
-.bx-meet-clock, .bx-meet-time { font-family: var(--font-mono); font-size: var(--type-data-size); font-variant-numeric: tabular-nums; }
+.bx-meet-clock, .bx-meet-time { font-family: var(--font-ui); font-size: var(--type-data-size); font-variant-numeric: tabular-nums; }
 .bx-meet-clock { color: var(--ink); }
 .bx-meet-time {
   border: 0; background: var(--bg); color: var(--ink-2); border-radius: var(--radius-xs); padding: 0 var(--space-1); cursor: pointer;
@@ -35,7 +35,7 @@
 .bx-meet-error { color: var(--danger); }
 .bx-meet-check { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); font-size: var(--type-description-size); }
 .bx-meet-banner { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink-2); font-size: var(--type-description-size); }
-.bx-meet-playing { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted); font-family: var(--font-mono); font-size: var(--type-data-size); }
+.bx-meet-playing { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted); font-family: var(--font-ui); font-variant-numeric: tabular-nums; font-size: var(--type-data-size); }
 .bx-meet-link { border: 0; background: none; padding: 0; font: inherit; color: var(--ink-2); cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); }
 .bx-meet-link:hover { color: var(--ink); }
 .bx-meet-chip {

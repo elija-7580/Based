@@ -93,6 +93,10 @@
   pointer-events: none;
   position: absolute;
 }
+/* Elija 20.11.: Überschriften standen in der Textschrift (Font Based: Literata, künstlich verdickt), der Seitentitel
+   darüber in der Überschriften-Schrift – jetzt alle Überschriften in --font-head. Seitenschrift Serif/Mono setzt
+   --font-head mit (styles.css), dort bleibt die Seite in einer Schrift. */
+.bx2-t-heading1, .bx2-t-heading2, .bx2-t-heading3, .bx2-t-heading4 { font-family: var(--font-head); }
 .bx2-t-heading1 { font-size: 1.875em; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; }
 .bx2-t-heading2 { font-size: 1.5em; font-weight: 650; line-height: 1.3; }
 .bx2-t-heading3 { font-size: 1.25em; font-weight: 600; line-height: 1.3; }
