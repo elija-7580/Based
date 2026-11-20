@@ -1,40 +1,18 @@
-success c9044f0d2d10b9baa5bb4cad63ea2a593ad4e532
-  ✓  290 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.3s)
-  ✓  289 [webkit] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.9s)
-  -  292 [webkit] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
-  ✓  291 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.6s)
-  ✓  294 [webkit] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (3.7s)
-  ✓  293 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (8.3s)
-  ✓  295 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (5.7s)
-  ✓  296 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.5s)
-  ✓  297 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.4s)
-  ✓  298 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (6.8s)
-  ✓  299 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (5.4s)
-  ✓  300 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.3s)
-  ✓  301 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.6s)
-  -  302 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
-  ✘  303 [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (2.3s)
-  ✓  304 [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (retry #1) (4.3s)
+failure bf4d5f128f34491400ddd551b80e06860d24e57a
+  ✓  292 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (6.7s)
+  ✓  294 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (5.2s)
+  ✓  295 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.4s)
+  ✓  296 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.0s)
+  ✓  297 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (5.3s)
+  ✓  298 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (5.2s)
+  ✓  299 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.3s)
+  ✓  300 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.4s)
+  -  301 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+  ✘  302 [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (2.0s)
+  ✘  303 [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (retry #1) (2.0s)
 
 
-  1) [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: 320
-    Received: 360
-
-      49 |   await page.mouse.wheel(0, 120);
-      50 |   await expect.poll(() => inner.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
-    > 51 |   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(outerTop);
-         |                                                         ^
-      52 | });
-      53 |
-        at /home/runner/work/Based/Based/apps/web/e2e/scroll-latch.spec.ts:51:57
-
-    Error Context: test-results/scroll-latch-Einstellungen-2f14e-icht-ab-neue-Geste-rollt-es-webkit/error-context.md
-
-  2) [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon 
+  1) [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon 
 
     Error: nach Klick 2: Continue
 
@@ -54,8 +32,30 @@ success c9044f0d2d10b9baa5bb4cad63ea2a593ad4e532
 
     Error Context: test-results/welcome-Einstieg-nach-Maus-9030f-hmen-mit-der-Tastatur-schon-webkit/error-context.md
 
-  2 flaky
-    [webkit] › e2e/scroll-latch.spec.ts:6:1 › Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es 
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: nach Klick 2: Continue
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      501 |       await welcome(mouse.page).getByRole("button", { name: "Continue" }).click();
+      502 |       const r = await ring(mouse.page);
+    > 503 |       expect(r.ring, `nach Klick ${i + 1}: ${r.name}`).toBe(false);
+          |                                                        ^
+      504 |     }
+      505 |     await expect(step(mouse.page)).toHaveAttribute("data-step", "start");
+      506 |     await expect(welcome(mouse.page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
+        at /home/runner/work/Based/Based/apps/web/e2e/welcome.spec.ts:503:56
+
+    Error Context: test-results/welcome-Einstieg-nach-Maus-9030f-hmen-mit-der-Tastatur-schon-webkit-retry1/error-context.md
+
+  1 failed
     [webkit] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon 
   56 skipped
-  244 passed (12.4m)
+  245 passed (10.2m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
