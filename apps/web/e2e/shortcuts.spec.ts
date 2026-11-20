@@ -111,6 +111,26 @@ test("Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen",
   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
 });
 
+// BSD-624: Im kleinsten Fenster (900 × 600) bleibt das •••-Menü 8 px über dem Fensterrand und rollt; die letzte Zeile
+// („Edited …“) und „Move to Trash“ sind erreichbar, die Zeilen behalten ihre Höhe.
+test("•••-Menü bei 900 × 600: bleibt im Fenster und rollt", async ({ page }) => {
+  await ready(page);
+  await page.setViewportSize({ width: 900, height: 600 });
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expectEditable(page);
+  await page.getByRole("button", { name: "Page menu" }).click();
+  const menu = page.getByRole("menu", { name: "Page menu" });
+  await expect(menu).toBeVisible();
+  const box = (await menu.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(600 - 8);
+  const rows = await menu.getByRole("menuitem").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
+  expect(Math.min(...rows), "Zeilen werden nicht gestaucht").toBeGreaterThanOrEqual(28);
+  const edited = menu.getByTestId("page-menu-edited");
+  await edited.scrollIntoViewIfNeeded();
+  await expect(edited).toBeInViewport();
+  await expect(menu.getByRole("menuitem", { name: "Move to Trash" })).toBeInViewport();
+});
+
 // BSD-482: Neue Seite → Schreibmarke im Titel (⌥⌘N, ⌘N → New page, „+“ neben Private), Enter springt in den Text.
 // Eine vorhandene Seite öffnen stiehlt keinen Fokus.
 test("Neue Seite: Schreibmarke steht im Titel, Enter geht in den Text; Öffnen einer Seite fokussiert nichts", async ({ page, browserName }) => {
