@@ -34,6 +34,34 @@ function copy(text: string): Promise<boolean> {
   return navigator.clipboard?.writeText(text).then(() => true, () => false) ?? Promise.resolve(false);
 }
 
+/** Adresse, unter der ein MCP-Client den Server erreicht (Streamable HTTP, `POST /mcp`; apps/server/src/app.ts). */
+export function mcpEndpoint(url: string): string {
+  return `${url.replace(/\/+$/, "")}/mcp`;
+}
+
+/**
+ * BSD-630 (Elija 20.11.: „die Server-Adresse gehört kopierbar gemacht, dass lokale MCPs easy zu verbinden sind“):
+ * eine Adresse in Mono, markierbar, daneben „Copy“; nach dem Kopieren steht kurz „Copied“ im Knopf.
+ */
+function CopyAddress({ label, hint, address, testID }: { label: string; hint?: string; address: string; testID: string }) {
+  const [copied, setCopied] = useState<boolean>();
+  useEffect(() => {
+    if (copied === undefined) return;
+    const t = setTimeout(() => setCopied(undefined), 2000);
+    return () => clearTimeout(t);
+  }, [copied]);
+  return (
+    <Lines gap={1} testID={testID}>
+      <Row label={label} {...(hint ? { hint } : {})}>
+        <BasedButton label={copied ? "Copied" : "Copy"} variant="secondary" ariaLabel={copied ? "Copied" : `Copy ${label.toLowerCase()}`}
+          onClick={() => void copy(address).then(setCopied)} />
+      </Row>
+      <Snippet testID={`${testID}-value`}>{address}</Snippet>
+      {copied === false ? <Note>Select the address above and copy it.</Note> : null}
+    </Lines>
+  );
+}
+
 /** Eine Zeile je Client: Name, wo man es einfügt, „Copy setup“; darunter das kopierte Schnipsel. */
 function ClientRows({ make, disabled }: { make: (c: AIAppClient) => Promise<string>; disabled: boolean }) {
   const [shown, setShown] = useState<{ client: AIAppClient; text: string; copied: boolean }>();
@@ -79,6 +107,12 @@ function localHint(enabled: boolean, status: string, error: string | undefined):
   return "Starting…";
 }
 
+/** BSD-630: Adresse des lokalen Servers für MCP-Clients, die HTTP sprechen (127.0.0.1, Token des Macs als Bearer). */
+function LocalMcpAddress({ url, inDialog = false }: { url: string; inDialog?: boolean }) {
+  const setups = inDialog ? "the setups below use `based mcp`, which finds it by itself" : "the setups under Connect… use `based mcp`, which finds it by itself";
+  return <CopyAddress label="Local MCP address" hint={`For apps that connect over HTTP on this Mac. They need this Mac's local token; ${setups}.`} address={mcpEndpoint(url)} testID="ai-apps-local-mcp" />;
+}
+
 function MacTarget() {
   const ls = localServer();
   const s = useSyncExternalStore(ls.subscribe, ls.getState);
@@ -97,6 +131,7 @@ function MacTarget() {
       <Row label="Command line tool" hint={s.cli.installed ? `Apps start \`${PLACES.cliName} mcp\`. Installed at ${s.cli.target ?? ""}.` : `Apps start \`${PLACES.cliName} mcp\`, so no token ends up in their settings. Install the command first.`}>
         {s.cli.installed ? null : <BasedButton label="Install…" disabled={s.cli.busy} onClick={() => void ls.installCli()} />}
       </Row>
+      {s.status === "running" && s.url ? <LocalMcpAddress url={s.url} inDialog /> : null}
       {s.cli.message ? <Note>{s.cli.message}</Note> : null}
       <ClientRows disabled={!s.cli.installed} make={async (c) => macSetup(c, command)} />
     </Lines>
@@ -132,6 +167,7 @@ function ServerTarget({ onOpenSync }: { onOpenSync: () => void }) {
   return (
     <Lines gap={4}>
       <Row label="Server"><Value testID="ai-apps-server-url">{target.url}</Value></Row>
+      <CopyAddress label="MCP address" hint="For apps that connect over HTTP. Each app sends its own token, which Copy setup creates below." address={mcpEndpoint(target.url)} testID="ai-apps-server-mcp" />
       <Note>Each app gets its own token, shown once in the setup you copy. Revoke it here when you stop using the app. With end-to-end encryption, the server only serves areas that are open to agents.</Note>
       <ClientRows disabled={false} make={make} />
       {tokens.length > 0 ? (
@@ -166,12 +202,15 @@ export function ConnectAIAppsDialog({ open, onClose, onOpenSync }: { open: boole
 function AIAppsSection({ navigate }: SettingsSectionProps) {
   const [open, setOpen] = useState(false);
   const rules = settingsPageVisible("agents");
+  const ls = localServer();
+  const local = useSyncExternalStore(ls.subscribe, ls.getState);
   return (
     <Group>
       <Row label="Claude Code, Claude Desktop, Cursor"
         hint={`Connected apps search, read and write your pages and databases through MCP, as you can in Based.${rules ? " Writing follows the permission rules under Agents & AI." : ""}`}>
         <BasedButton label="Connect…" variant="primary" onClick={() => setOpen(true)} />
       </Row>
+      {local.status === "running" && local.url ? <LocalMcpAddress url={local.url} /> : null}
       <SemanticSearchSetup onOpenSync={() => navigate({ name: "settings", page: "sync" })} />
       {rules ? <Row label="Permission rules"><BasedButton label="Open Agents & AI" variant="ghost" onClick={() => navigate({ name: "settings", page: "agents" })} /></Row> : null}
       {open ? <ConnectAIAppsDialog open onClose={() => setOpen(false)} onOpenSync={() => { setOpen(false); navigate({ name: "settings", page: "sync" }); }} /> : null}

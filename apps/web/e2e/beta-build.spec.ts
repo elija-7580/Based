@@ -272,3 +272,30 @@ test("Beta-Build: Start, Seite und Datenbank laden keinen Chat- oder Agenten-Cod
     await close();
   }
 });
+
+// BSD-630: Auch in der Beta steht unter Connect AI apps die Adresse des lokalen Servers für MCP-Clients kopierbar da
+// (im Browser per Test-Haken, in der Mac-App vom laufenden Server). Fotos 1280 × 820 hell/dunkel.
+for (const theme of ["light", "dark"] as const) {
+  test(`Beta-Build: lokale MCP-Adresse kopierbar (${theme})`, async ({ playwright, browserName, baseURL }) => {
+    test.setTimeout(90_000);
+    const { page, close } = await fresh(playwright, browserName, baseURL!, theme);
+    try {
+      if (browserName === "chromium") await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+      await page.goto("/#prefs-ai-apps");
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await page.evaluate(() => (globalThis as unknown as { __basedLocalServerTest(p: unknown): void }).__basedLocalServerTest({ status: "running", enabled: true, url: "http://127.0.0.1:47822" }));
+      const local = page.getByTestId("ai-apps-local-mcp");
+      await expect(local.getByTestId("ai-apps-local-mcp-value")).toHaveText("http://127.0.0.1:47822/mcp");
+      await local.getByRole("button", { name: "Copy local mcp address" }).click();
+      await expect(local.getByRole("button", { name: "Copied" })).toBeVisible();
+      if (browserName === "chromium") {
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("http://127.0.0.1:47822/mcp");
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: `${SHOTS}beta-ai-apps-mcp-address-${theme}.png` });
+      }
+      await clean(page, "Connect AI apps mit MCP-Adresse");
+    } finally {
+      await close();
+    }
+  });
+}

@@ -147,3 +147,40 @@ test("BSD-581: Server – eigenes Token je App, gilt für /mcp, widerrufbar", as
   await expect(d.getByTestId("ai-apps-tokens").getByText("Claude Code", { exact: true })).toHaveCount(0);
   expect((await mcp(token!)).status).toBe(401);
 });
+
+// BSD-630 (Elija 20.11.): Die Adresse, die ein MCP-Client braucht, steht kopierbar da – auf der Seite und im Dialog die
+// des lokalen Servers (http://127.0.0.1:<port>/mcp), im Ziel „Server“ die des eigenen Servers. „Copy“ legt genau sie in
+// die Zwischenablage und meldet „Copied“.
+test("BSD-630: MCP-Adresse kopierbar – lokal auf der Seite und im Dialog, Server im Dialog", async ({ page, context, browserName }) => {
+  if (browserName === "chromium") await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.addInitScript(([url, token]) => { if (!sessionStorage.getItem("ai-apps-init")) { localStorage.setItem("based.sync", JSON.stringify({ url, token })); sessionStorage.setItem("ai-apps-init", "1"); } }, [serverURL, TOKEN] as const);
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Connect AI apps" }).click();
+  const settings = page.getByTestId("settings-page");
+  // ohne laufenden lokalen Server keine lokale Adresse
+  await expect(settings.getByTestId("ai-apps-local-mcp")).toHaveCount(0);
+  await patch(page, { ...MAC, url: "http://127.0.0.1:47822" });
+  const local = settings.getByTestId("ai-apps-local-mcp").first();
+  await expect(local.getByTestId("ai-apps-local-mcp-value")).toHaveText("http://127.0.0.1:47822/mcp");
+  await local.getByRole("button", { name: "Copy local mcp address" }).click();
+  await expect(local.getByRole("button", { name: "Copied" })).toBeVisible();
+  if (browserName === "chromium") expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("http://127.0.0.1:47822/mcp");
+  await expect(local.getByRole("button", { name: "Copy local mcp address" })).toBeVisible({ timeout: 5000 });
+
+  await page.getByRole("button", { name: "Connect…" }).click();
+  const dialog = page.getByTestId("ai-apps-dialog");
+  await expect(dialog.getByTestId("ai-apps-local-mcp-value")).toHaveText("http://127.0.0.1:47822/mcp");
+  await dialog.getByTestId("ai-apps-target").getByRole("radio", { name: "Server" }).click();
+  const remote = dialog.getByTestId("ai-apps-server-mcp");
+  await expect(remote.getByTestId("ai-apps-server-mcp-value")).toHaveText(`${serverURL}/mcp`);
+  await remote.getByRole("button", { name: "Copy mcp address" }).click();
+  await expect(remote.getByRole("button", { name: "Copied" })).toBeVisible();
+  if (browserName === "chromium") expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`${serverURL}/mcp`);
+  // die Adresse spricht wirklich MCP (mit dem Token des Servers)
+  const init = { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "e2e", version: "1" } } };
+  const r = await fetch(`${serverURL}/mcp`, { method: "POST", headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json", Accept: "application/json, text/event-stream" }, body: JSON.stringify(init) });
+  expect(r.status).toBe(200);
+});
