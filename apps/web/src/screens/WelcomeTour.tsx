@@ -66,7 +66,9 @@ export function TourStep({ step, env, onGo, onClose, onNavigate }: StepProps) {
   const skip = () => { const to = skipTarget(env); if (to) onGo(to); else onClose?.(); };
 
   // Return drückt „Continue“: der Knopf hat nach jedem Schrittwechsel den Fokus (nach einem Mausklick ohne Rahmen, BSD-620).
-  const [quiet, setQuiet] = useState(false);
+  // Review 20.11.: gleich beim ersten Rendern richtig – jeder Schritt ist eine neue Instanz (key={at}); mit `false` als
+  // Start stand der Rahmen nach einem Mausklick bis zum Effekt kurz da (welcome.spec BSD-620 in der CI rot, lokal 3 von 6).
+  const [quiet, setQuiet] = useState(lastInputWasPointer);
   useEffect(() => {
     setQuiet(lastInputWasPointer());
     root.current?.querySelector<HTMLElement>(".tour-next button")?.focus({ preventScroll: true });
