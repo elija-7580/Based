@@ -1,61 +1,61 @@
-success 5c026a9d926fa7441382106a9caecfea155e51fc
-  ✓  260 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.3s)
-  ✓  263 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (2.1s)
-  ✓  264 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.2s)
-  ✓  262 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (8.0s)
-  ✓  265 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (2.5s)
-  ✓  267 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.6s)
-  ✓  266 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (4.0s)
-  ✓  268 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.5s)
-  ✓  270 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.2s)
-  ✓  269 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (4.2s)
-  ✓  271 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.0s)
-  ✓  273 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.0s)
-  ✓  272 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (3.7s)
-  ✓  274 [chromium] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (1.7s)
-  ✓  275 [chromium] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (3.1s)
-  ✓  276 [chromium] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (3.8s)
-  ✓  278 [chromium] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (1.9s)
-  ✓  277 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.4s)
-  ✓  279 [chromium] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (976ms)
-  ✓  281 [chromium] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.3s)
-  ✓  280 [chromium] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (2.2s)
-  -  283 [chromium] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
-  ✓  282 [chromium] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.4s)
-  ✓  285 [chromium] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.4s)
-  ✓  284 [chromium] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (4.2s)
-  ✓  286 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (2.6s)
-  ✓  287 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (3.8s)
-  ✓  288 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (977ms)
-  ✓  289 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.3s)
-  ✓  290 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (2.2s)
-  ✓  291 [chromium] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (4.1s)
-  ✓  292 [chromium] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (1.8s)
-  ✓  293 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (1.3s)
-  -  294 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+failure 1d79b4dfdfa2d711bc56065df4d6fec807e94818
+  ✓  292 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (1.4s)
+  ✓  293 [chromium] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (956ms)
+  ✓  291 [chromium] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (3.2s)
+  ✓  294 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (3.2s)
+  ✓  295 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (688ms)
+  ✓  296 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (4.7s)
+  ✓  297 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (1.9s)
+  ✓  298 [chromium] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (3.8s)
+  ✓  299 [chromium] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (1.2s)
+  ✓  300 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (1.0s)
+  -  301 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
 
 
-  1) [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
+  1) [chromium] › e2e/polish.spec.ts:741:1 › Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599) 
 
-    Test timeout of 30000ms exceeded.
+    Error: .home-head .based-switcher in der Spalte (900, light)
 
-    Error: locator.boundingBox: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('[data-editable-id]:focus')
+    expect(received).toBeLessThanOrEqual(expected)
 
+    Expected: <= 468.5
+    Received:    475.734375
 
-      544 |     // Zeilen bis kurz vor den unteren Rand
-      545 |     for (let i = 0; i < 40; i++) {
-    > 546 |       const box = await page.locator("[data-editable-id]:focus").boundingBox();
-          |                                                                  ^
-      547 |       if (box && box.y > h - 140) break;
-      548 |       await page.keyboard.type(`Line ${i + 1}`);
-      549 |       await page.keyboard.press("Enter");
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:546:66
+      759 |         for (const b of await home.locator(sel).all()) {
+      760 |           const r = (await b.boundingBox())!;
+    > 761 |           expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
+          |                                                                          ^
+      762 |         }
+      763 |       }
+      764 |       expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
+        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:761:74
 
-    Error Context: test-results/polish-Slash--und--Menü-üb-7f046-nicht-auch-unten-im-Fenster-chromium/error-context.md
+    Error Context: test-results/polish-Home-neben-dem-offe-f0ee5-600-und-1280-×-820-BSD-599--chromium/error-context.md
 
-  1 flaky
-    [chromium] › e2e/polish.spec.ts:538:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: .home-head .based-switcher in der Spalte (900, light)
+
+    expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 468.5
+    Received:    475.734375
+
+      759 |         for (const b of await home.locator(sel).all()) {
+      760 |           const r = (await b.boundingBox())!;
+    > 761 |           expect(r.x + r.width, `${sel} in der Spalte (${w}, ${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
+          |                                                                          ^
+      762 |         }
+      763 |       }
+      764 |       expect(await home.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), `kein waagrechtes Rollen (${w})`).toBe(true);
+        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:761:74
+
+    Error Context: test-results/polish-Home-neben-dem-offe-f0ee5-600-und-1280-×-820-BSD-599--chromium-retry1/error-context.md
+
+  1 failed
+    [chromium] › e2e/polish.spec.ts:741:1 › Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900 × 600 und 1280 × 820 (BSD-599) 
   13 skipped
-  279 passed (7.9m)
+  286 passed (5.9m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf

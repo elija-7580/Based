@@ -1,61 +1,61 @@
-success 5c026a9d926fa7441382106a9caecfea155e51fc
-  ✓  240 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (6.4s)
-  ✓  242 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (3.4s)
-  ✓  243 [webkit] › e2e/startup-perf.spec.ts:132:1 › Tippen zeichnet nur das eigene Textfeld neu (4.3s)
-  ✓  244 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (6.3s)
-  ✓  246 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (4.0s)
-  ✓  245 [webkit] › e2e/storage.spec.ts:51:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (7.9s)
-  ✓  248 [webkit] › e2e/storage.spec.ts:72:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (3.4s)
-  ✓  247 [webkit] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (5.0s)
-  -  249 [webkit] › e2e/storage.spec.ts:88:1 › Screenshots web-storage-warning-*
-(node:22766) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  250 [webkit] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (3.4s)
-  ✓  252 [webkit] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (3.6s)
-  ✓  253 [webkit] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Pages: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (8.5s)
-  ✓  254 [webkit] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (6.4s)
-  ✓  251 [webkit] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (20.8s)
-  -  255 [webkit] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓  256 [webkit] › e2e/sync-assets.spec.ts:167:1 › komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Server nimmt gzip an und antwortet gepackt (1.4s)
-(node:23651) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  257 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (6.7s)
-  ✓  258 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (6.0s)
-  ✓  259 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (15.5s)
-  ✓  260 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (15.6s)
-  ✓  261 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.9s)
-  ✓  262 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (5.6s)
-  -  264 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  265 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  263 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.1s)
-  ✓  267 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.3s)
-  ✓  266 [webkit] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (6.9s)
-  ✓  268 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.2s)
-  ✓  269 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.0s)
-  ✓  270 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (2.0s)
-  ✓  271 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.2s)
-  ✓  273 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.6s)
-  ✓  274 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.9s)
-  ✓  272 [webkit] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (11.1s)
-  ✓  275 [webkit] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (3.8s)
-  ✓  276 [webkit] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (4.9s)
-  ✓  277 [webkit] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (3.4s)
-  ✓  278 [webkit] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (2.3s)
-  ✓  279 [webkit] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.8s)
-  ✓  281 [webkit] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.3s)
-  ✓  280 [webkit] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.7s)
-  -  283 [webkit] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
-  ✓  282 [webkit] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.2s)
-  ✓  285 [webkit] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (5.1s)
-  ✓  284 [webkit] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (8.0s)
-  ✓  286 [webkit] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (6.1s)
-  ✓  287 [webkit] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.5s)
-  ✓  288 [webkit] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (6.8s)
-  ✓  289 [webkit] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (7.0s)
-  ✓  290 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (6.0s)
-  ✓  291 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.5s)
-  ✓  292 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.6s)
-  -  293 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+success 1d79b4dfdfa2d711bc56065df4d6fec807e94818
+  ✓  299 [webkit] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (5.2s)
+  ✓  300 [webkit] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (2.3s)
+  ✓  301 [webkit] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (2.1s)
+  -  302 [webkit] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
 
+
+  1) [webkit] › e2e/report.spec.ts:30:70 › ⇧⌘B (Block-Editor): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext 
+
+    Error: select
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      51 |   expect(b.note).toBe("Typed two lines, the list jumped");
+      52 |   const kinds = new Set(b.recording.events.map((e) => e.kind));
+    > 53 |   for (const k of expectedKinds) expect(kinds.has(k), k).toBe(true);
+         |                                                          ^
+      54 |   expect(JSON.stringify(b.state.blocks)).toContain(list);
+      55 |   expect(b.layout.items.some((i) => i.kind === "block")).toBe(true);
+      56 |   expect(b.screenshot).toBe("screenshot.png");
+        at /home/runner/work/Based/Based/apps/web/e2e/report.spec.ts:53:58
+
+    Error Context: test-results/report-⇧⌘B-Block-Editor-Bü-2a90b-nd-Layout-–-ohne-Nutzertext-webkit/error-context.md
+
+  2) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+        "Chat",
+        "Search",
+    -   "Home",
+        "Library",
+    +   "Home",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      104 |   // Library aus dem Fuß nach oben hinter Home
+      105 |   await drag(tools.getByRole("button", { name: "Library" }), item("Home"), (b) => ({ x: b.width / 2, y: b.height - 4 }));
+    > 106 |   await expect.poll(top).toEqual(["Chat", "Search", "Home", "Library"]);
+          |                          ^
+      107 |   await expect.poll(footer).toEqual(["Trash", "Settings"]);
+      108 |   // Search in den Fuß vor Trash
+      109 |   await drag(item("Search"), tools.getByRole("button", { name: /^Trash/ }), (b) => ({ x: 4, y: b.height / 2 }));
+        at /home/runner/work/Based/Based/apps/web/e2e/sidebar-nav.spec.ts:106:26
+
+    Error Context: test-results/sidebar-nav-Einträge-ziehe-52dba--bleibt-nach-Neuladen-Reset-webkit/error-context.md
+
+  2 flaky
+    [webkit] › e2e/report.spec.ts:30:70 › ⇧⌘B (Block-Editor): Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext 
+    [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
   56 skipped
-  237 passed (12.2m)
+  242 passed (10.4m)
