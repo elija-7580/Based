@@ -830,10 +830,11 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .sync-card-hint { color: var(--muted); padding-top: var(--space-1); }
 
 /* Element-System v11 (docs/design/elements.md): Felder sind Flächen ohne Rahmen; den Fokus zeigt allein der Fokusrahmen. */
-.astryx-text-input { background: var(--surface-raised); border-color: transparent; border-radius: var(--radius-md); box-shadow: none; }
-.astryx-text-input:hover { border-color: transparent; }
-.astryx-text-input:focus-within { outline: none; box-shadow: inset 0 0 0 var(--space-half) var(--focus-ring); }
+/* BSD-616: das mehrzeilige Feld (.astryx-text-area: Problem melden, Formular, Einstellungen) genauso. */
+:is(.astryx-text-input, .astryx-text-area) { background: var(--surface-raised); border-color: transparent; border-radius: var(--radius-md); box-shadow: none; }
+:is(.astryx-text-input, .astryx-text-area):hover { border-color: transparent; }
+:is(.astryx-text-input, .astryx-text-area):focus-within { outline: none; box-shadow: inset 0 0 0 var(--space-half) var(--focus-ring); }
 /* Den Rahmen zeichnet die Fläche des Feldes – das <input> darin bekommt keinen zweiten. */
-.astryx-text-input :is(input, textarea):focus-visible { outline: none; }
+:is(.astryx-text-input, .astryx-text-area) :is(input, textarea):focus-visible { outline: none; }
 /* Auf einer grauen Fläche (Gruppe, Karte) wäre das Feld unsichtbar: dort eine Stufe dunkler. */
-:is(.astryx-card, .astryx-section:not([data-variant="transparent"]), .settings-group, .lib-bulk) .astryx-text-input { background: var(--selected); }
+:is(.astryx-card, .astryx-section:not([data-variant="transparent"]), .settings-group, .lib-bulk) :is(.astryx-text-input, .astryx-text-area) { background: var(--selected); }
