@@ -548,7 +548,9 @@ function isUnchangedImport(store: WorkspaceStore, id: string): boolean {
  * Wurzeln werden an `parent` angehängt. Reimport-Schutz (BSD-32): jeder importierte Block merkt sich einen
  * Fingerabdruck; in Based geänderte oder hinzugefügte Blöcke bleiben.
  */
-export function commitImport(store: WorkspaceStore, builder: ImportBuilder, parent = "w", name = "Import"): ImportReport {
+export function commitImport(store: WorkspaceStore, builder: ImportBuilder, parent = "w", name = "Import",
+                             /** BSD-611: Sortierschlüssel für neue Wurzeln (Markdown-Weg: Reihenfolge der gewählten Quellen). */
+                             rootSortKey?: (id: string) => string | undefined): ImportReport {
   const report = builder.report();
   const roots = new Set(builder.roots);
   const importedIDs = new Set(builder.blocks.map((b) => b.id));
@@ -582,8 +584,12 @@ export function commitImport(store: WorkspaceStore, builder: ImportBuilder, pare
           b.sk = existing.sk;
         } else {
           b.parent = parent;
-          rootKey = keyBetween(rootKey, undefined);
-          b.sk = rootKey;
+          const given = rootSortKey?.(b.id);
+          if (given !== undefined) b.sk = given;
+          else {
+            rootKey = keyBetween(rootKey, undefined);
+            b.sk = rootKey;
+          }
         }
       }
       if (b.createdBy === undefined && store.userID !== null) b.createdBy = store.userID;
