@@ -527,10 +527,21 @@ export class WorkspaceStore {
 
   /**
    * Alle Gerüst-Blöcke (Seiten, Datenbanken, Zeilen, Papierkorb) – ohne Inhalt nachzuladen. Für alles, was über
-   * „alle Seiten“ läuft: Seitenleiste, Titel, Papierkorb, Quick Find nach Titel.
+   * „alle Seiten“ läuft: Seitenleiste, Titel, Papierkorb, Quick Find nach Titel. Läuft nur über die Gerüst-Blöcke
+   * selbst (eigene Liste), nicht über allen Inhalt im Speicher – bei 20 000 Seiten mit je 25 Blöcken ein Fünftel.
    */
   *skeletonBlocks(): IterableIterator<Block> {
-    for (const b of this.blocks.loaded()) if (isSkeletonBlock(b)) yield b;
+    for (const id of this.skeleton) {
+      const b = this.blocks.peek(id);
+      if (b) yield b;
+    }
+  }
+
+  /** IDs der Gerüst-Blöcke im Speicher (gepflegt in `_set`, `_remove`, `adopt`). */
+  private readonly skeleton = new Set<string>();
+  private trackSkeleton(b: Block) {
+    if (isSkeletonBlock(b)) this.skeleton.add(b.id);
+    else this.skeleton.delete(b.id);
   }
 
   private stray(b: Block) {
@@ -543,6 +554,7 @@ export class WorkspaceStore {
   private adopt(b: Block): boolean {
     if (this.blocks.peek(b.id) !== undefined || this.gone.has(b.id)) return false;
     this.blocks.set(b.id, b);
+    this.trackSkeleton(b);
     // Die Uhr setzt hinter allem fort, was sie gesehen hat (siehe Konstruktor) – auch hinter Nachgeladenem.
     if (this.resume) this.clock.observe(b.stamp ?? ZERO_STAMP);
     return true;
@@ -802,6 +814,7 @@ export class WorkspaceStore {
       case "block": {
         const old = this.blocks.get(r.data.id);
         this.blocks.set(r.data.id, r.data);
+        this.trackSkeleton(r.data);
         if (this.lazySource) {
           this.gone.delete(r.data.id);
           if (!old) this.blockTotal += 1;
@@ -844,6 +857,7 @@ export class WorkspaceStore {
       const old = this.blocks.get(id);
       if (old) this.unindex(old);
       this.blocks.delete(id);
+      this.skeleton.delete(id);
       if (this.lazySource) {
         this.gone.add(id);
         if (old) this.blockTotal -= 1;
@@ -884,6 +898,27 @@ export class WorkspaceStore {
     }
     const list = this.childIndex.get(b.parent);
     if (!list) return;
+    // Binäre Suche nach (sk, id) des alten Stands statt indexOf über alle Geschwister (viele Zeilen einer großen
+    // Datenbank löschen oder verschieben war sonst quadratisch). Der Eintrag selbst kann im Speicher schon der neue
+    // Block sein (`_set` setzt erst, dann wird umsortiert) – er wird an seiner ID erkannt, nicht an seinem sk.
+    let lo = 0, hi = list.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      const x = list[mid]!;
+      if (x === b.id) {
+        list.splice(mid, 1);
+        return;
+      }
+      const xs = this.blocks.peek(x)?.sk;
+      if (xs === undefined) break;
+      if (xs < b.sk || (xs === b.sk && x < b.id)) lo = mid + 1;
+      else hi = mid;
+    }
+    if (list[lo] === b.id) {
+      list.splice(lo, 1);
+      return;
+    }
+    // Nicht sortiert gefunden (sollte nicht vorkommen): wie bisher suchen.
     const i = list.indexOf(b.id);
     if (i >= 0) list.splice(i, 1);
   }
