@@ -16,6 +16,18 @@ import { skipTarget, stepAfter, tourStepText, tourSteps, type TourEnv } from "./
 import "./welcome.css";
 
 /** Umgebung dieses Builds. Ein Test kann den Meeting-Schritt im Browser einschalten (`__basedTourMeetings`). */
+/**
+ * BSD-620: Kam die letzte Eingabe vom Zeiger (Maus, Trackpad)? Der Einstieg setzt den Fokus nach jedem Schritt selbst
+ * (Return drückt „Continue“, im letzten Schritt steht er auf der ersten Wahl). Nach einem Mausklick soll dabei kein
+ * Fokusrahmen erscheinen (elements.md Abschnitt 3) – der Fokus bleibt, nur der Rahmen ruht, bis die Tastatur kommt.
+ */
+let pointerLast = false;
+if (typeof document !== "undefined") {
+  document.addEventListener("pointerdown", () => { pointerLast = true; }, true);
+  document.addEventListener("keydown", () => { pointerLast = false; }, true);
+}
+export const lastInputWasPointer = (): boolean => pointerLast;
+
 export function tourEnv(revisit = false): TourEnv {
   const mac = isTauri();
   const force = (globalThis as { __basedTourMeetings?: unknown }).__basedTourMeetings === true;
@@ -53,10 +65,15 @@ export function TourStep({ step, env, onGo, onClose, onNavigate }: StepProps) {
   const back = () => { if (!first) onGo(stepAfter(steps, step, -1)); };
   const skip = () => { const to = skipTarget(env); if (to) onGo(to); else onClose?.(); };
 
-  // Return drückt „Continue“: der Knopf hat nach jedem Schrittwechsel den Fokus.
-  useEffect(() => { root.current?.querySelector<HTMLElement>(".tour-next button")?.focus({ preventScroll: true }); }, [step]);
+  // Return drückt „Continue“: der Knopf hat nach jedem Schrittwechsel den Fokus (nach einem Mausklick ohne Rahmen, BSD-620).
+  const [quiet, setQuiet] = useState(false);
+  useEffect(() => {
+    setQuiet(lastInputWasPointer());
+    root.current?.querySelector<HTMLElement>(".tour-next button")?.focus({ preventScroll: true });
+  }, [step]);
 
   const onKey = (e: KeyboardEvent) => {
+    setQuiet(false);
     if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
     if (e.key === "ArrowRight") { e.preventDefault(); next(); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); back(); }
@@ -64,7 +81,7 @@ export function TourStep({ step, env, onGo, onClose, onNavigate }: StepProps) {
   };
 
   return (
-    <section ref={root} className="welcome-tour" aria-labelledby="tour-title" data-testid="tour-step" data-step={step} data-arrow-nav="off" onKeyDown={onKey}>
+    <section ref={root} className="welcome-tour" aria-labelledby="tour-title" data-testid="tour-step" data-step={step} data-arrow-nav="off" data-quiet-focus={quiet ? "" : undefined} onKeyDown={onKey}>
       <TourProgress steps={steps} at={step} />
       <header className="welcome-head">
         {step === "welcome" ? <LogoIntro /> : null}

@@ -63,3 +63,5 @@
 .tour-actions .welcome-foot { flex: 1 1 calc(var(--page-measure) / 2); }
 .tour-next { display: contents; }
 .tour-extra { display: flex; }
+/* BSD-620: Nach einem Mausklick setzt der Einstieg den Fokus ohne Rahmen; die erste Taste zeigt ihn wieder. */
+[data-quiet-focus] :focus-visible { outline: none; box-shadow: none; }

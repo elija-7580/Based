@@ -480,3 +480,48 @@ test("Einstieg: Bildschirmfotos", async ({ playwright, browserName, baseURL }) =
     await close();
   }
 });
+
+// BSD-620: Der Einstieg setzt den Fokus nach jedem Schritt selbst (Return drückt „Continue“, am Ende steht er auf der
+// ersten Wahl). Mit der Maus durchgeklickt erscheint dabei kein Fokusrahmen (elements.md Abschnitt 3); mit der Tastatur
+// bleibt er sichtbar, und die erste Taste nach einem Mausklick zeigt ihn wieder.
+const ring = (page: Page) => page.evaluate(() => {
+  const el = document.activeElement as HTMLElement | null;
+  if (!el || el === document.body) return { name: "", ring: false };
+  const s = getComputedStyle(el);
+  // der Fokusrahmen ist eine Kontur (styles.css: :focus-visible → outline 2px focus-ring)
+  return { name: (el.textContent ?? "").trim().slice(0, 20), ring: el.matches(":focus-visible") && s.outlineStyle !== "none" && parseFloat(s.outlineWidth) > 0 };
+});
+test("Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(90_000);
+  const mouse = await fresh(playwright, browserName, baseURL!);
+  try {
+    await mouse.page.goto("/");
+    await ready(mouse.page);
+    for (let i = 0; i < 8 && (await step(mouse.page).getAttribute("data-step")) !== "start"; i++) {
+      await welcome(mouse.page).getByRole("button", { name: "Continue" }).click();
+      const r = await ring(mouse.page);
+      expect(r.ring, `nach Klick ${i + 1}: ${r.name}`).toBe(false);
+    }
+    await expect(step(mouse.page)).toHaveAttribute("data-step", "start");
+    await expect(welcome(mouse.page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
+    expect((await ring(mouse.page)).ring, "erste Wahl nach Mausklick").toBe(false);
+    await mouse.page.keyboard.press("Tab");
+    expect((await ring(mouse.page)).ring, "Tab nach Mausklick zeigt den Rahmen").toBe(true);
+  } finally {
+    await mouse.close();
+  }
+  const keys = await fresh(playwright, browserName, baseURL!);
+  try {
+    await keys.page.goto("/");
+    await ready(keys.page);
+    for (let i = 0; i < 8 && (await step(keys.page).getAttribute("data-step")) !== "start"; i++) {
+      const before = await step(keys.page).getAttribute("data-step");
+      await keys.page.keyboard.press("Enter");
+      await expect(step(keys.page)).not.toHaveAttribute("data-step", before!);
+    }
+    await expect(welcome(keys.page).getByRole("button", { name: /Import from Notion/ })).toBeFocused();
+    expect((await ring(keys.page)).ring, "erste Wahl nach Return").toBe(true);
+  } finally {
+    await keys.close();
+  }
+});
