@@ -16,7 +16,7 @@ import { firstRun, type WelcomePending } from "../shell/firstRun.js";
 import { keyLabel } from "../shell/keyHints.js";
 import type { StoreClient } from "../worker/client.js";
 import { WELCOME_GUIDES } from "../worker/welcomeGuides.js";
-import { TourProgress, TourStep, tourEnv } from "./WelcomeTour.js";
+import { TourProgress, TourStep, lastInputWasPointer, tourEnv } from "./WelcomeTour.js";
 import { stepAfter, tourSteps } from "./welcomeTourSteps.js";
 import "./welcome.css";
 
@@ -68,7 +68,12 @@ export function Welcome(props: Props) {
 function WelcomeStart({ client, pending, onOpenPage, onNavigate, onImport, back }: Props & { back: (() => void) | undefined }) {
   const [busy, setBusy] = useState(false);
   const first = useRef<HTMLButtonElement>(null);
-  useEffect(() => first.current?.focus({ preventScroll: true }), []);
+  // BSD-620: Fokus auf der ersten Wahl (Return wählt sie); kam man mit der Maus hierher, ohne Rahmen, bis eine Taste kommt.
+  const [quiet, setQuiet] = useState(false);
+  useEffect(() => {
+    setQuiet(lastInputWasPointer());
+    first.current?.focus({ preventScroll: true });
+  }, []);
   const steps = tourSteps(tourEnv());
 
   const guides = () => client.command<string[]>({ op: "addWelcomeGuides", parent: pending.page }).catch(() => [] as string[]);
@@ -86,7 +91,7 @@ function WelcomeStart({ client, pending, onOpenPage, onNavigate, onImport, back 
 
   return (
     <div className="content welcome" data-testid="welcome">
-      <div className="column" data-testid="tour-step" data-step="start">
+      <div className="column" data-testid="tour-step" data-step="start" data-quiet-focus={quiet ? "" : undefined} onKeyDown={() => setQuiet(false)}>
         {back ? <TourProgress steps={steps} at="start" /> : null}
         <header className="welcome-head">
           <h1 className="t-title">How do you want to start?</h1>
