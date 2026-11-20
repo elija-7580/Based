@@ -29,6 +29,7 @@ import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
 import { takeFreshPage } from "../shell/freshPage.js";
+import { movedToTrash } from "../shell/trashUndo.js";
 import type { PageReplica, ShellState, StoreClient } from "../worker/client.js";
 import type { HistoryRestoreResult } from "../worker/protocol.js";
 
@@ -253,6 +254,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             {guestReadOnly ? null : (
               <BasedIconButton label="Move to Trash" icon={<Icon name="trash" size={18} />} onClick={() => {
                 void client.command({ op: "trash", ids: [pageID] });
+                movedToTrash([pageID], pageID);
                 onNavigate({ name: "home" });
               }} />
             )}
@@ -275,7 +277,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             find: () => setFind((f) => ({ focus: (f?.focus ?? 0) + 1, step: f?.step ?? { n: 0, delta: 1 } })),
             stats: store && !dbID && !board ? pageTextStats(store, pageID) : undefined,
             board,
-            trash: guestReadOnly ? undefined : () => { void client.command({ op: "trash", ids: [pageID] }); onNavigate({ name: "home" }); },
+            trash: guestReadOnly ? undefined : () => { void client.command({ op: "trash", ids: [pageID] }); movedToTrash([pageID], pageID); onNavigate({ name: "home" }); },
             edited,
           } : undefined} />
       ) : null}
