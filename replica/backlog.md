@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 44 (Sonderlauf am Tag 2026-11-19, TS-Stack, Abschnitt direkt unten; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 45 (Nachtlauf 2026-11-20, TS-Stack, Abschnitt direkt unten; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,22 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 45 (Nachtlauf 2026-11-20, Feature-Stopp)
+
+Inbox leer; die Bereit-Einträge BSD-604 (Teil 2), 613, 614, 615, 585 sind laut eigenem Text erst ab 24.11. dran. Schicht A prüfte Datensicherheit, Notion-Import und ersten Start (ohne Befund) und behob BSD-611; Schicht B ging den Beta-Build als neuer Tester durch (Chromium/WebKit, hell/dunkel) und behob neun Fehler. main de906140 → 5c026a9d → 1d79b4df (Fast-Forward), `run-ts.sh --fast` grün auf jedem Stand, berührte Specs in Chromium und WebKit grün.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-611 Notion „Markdown & CSV“ zweimal importiert → doppelt | ✅ | stabile IDs wie im HTML-Weg nur für Dateien mit Notion-ID, Reimport-Schutz; ältere Markdown-Imports einmal neu angelegt |
+| BSD-616 Mehrzeilige Felder mit Rahmen | ✅ | report.spec |
+| BSD-617 ⌘N → New database ohne Schreibmarke | ✅ | shortcuts.spec |
+| BSD-618 Library → Meetings: Umschalter vor dem Titel | ✅ | app-heads.spec |
+| BSD-622 Blockmenü: falsche Kürzel | ✅ | editor-menus.spec |
+| BSD-623 „New property“ rollt seitlich (WebKit) | ✅ | scrollbars.spec |
+| BSD-624 •••-Seitenmenü ragt bei 900 × 600 aus dem Fenster | ✅ | shortcuts.spec |
+| BSD-625/626 Seitenleisten-Menüs öffnen unter dem Fensterrand | ✅ | sidebar-nav.spec, sidebar-multi.spec |
+| BSD-619/620/621 Feinschliff (Papierkorb-Rückmeldung, Fokusrahmen, Filterzeile) | ❌ | Blockiert, je eine Frage an Elija |
 
 ## Pass 44 (Sonderlauf am Tag 2026-11-19)
 
