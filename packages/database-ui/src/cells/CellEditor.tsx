@@ -1,6 +1,7 @@
 // BSD-155: Zellen-Editoren für alle bearbeitbaren Property-Typen. Jede Änderung geht über eine
 // Store-Transaktion (setValue/setRelation/addOption); Text wird beim Schließen übernommen (wie Notion).
 import { BasedField } from "@based/ui/astryx";
+import { DateField, TimeField } from "@based/ui/native";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   addOption, pv, rowsOf, setRelation, setValue, titleOf, valueCase,
@@ -183,21 +184,31 @@ function DateEditor({ row, prop, anchor, onClose }: CellEditorProps) {
   const { store } = useDB();
   const d = storedDate(row, prop);
   const save = (next: DateValue | null) => setValue(store, row.id, prop.id, next ? pv("date", next) : null);
-  const type = d?.includeTime ? "datetime-local" : "date";
+  // BSD-621 (Elija 20.11.): Datum und Uhrzeit als Based-Felder (Textfeld + Based-Kalender bzw. Zeitliste,
+  // @based/ui/native) statt <input type="date|datetime-local"> – kein System-Blau, keine Systemauswahl. Den Rahmen
+  // zeigt allein das Feld mit dem Fokus; die Zelle darunter nimmt ihren zurück (styles.css).
+  const time = d?.includeTime ?? false;
+  const field = (which: "start" | "end", seconds: number | undefined, label: string) => {
+    const full = seconds !== undefined ? toInputValue(seconds, true) : "";
+    const day = full.slice(0, 10), clock = full.slice(11, 16);
+    const put = (nextDay: string, nextClock: string) => {
+      const s = fromInputValue(time && nextClock ? `${nextDay}T${nextClock}` : nextDay);
+      if (s !== undefined) save(withDate(d, which === "start" ? { start: s } : { end: s }));
+    };
+    return (
+      <div className="dbui-field">
+        <span className="dbui-field-label">{label}</span>
+        <span className="dbui-date-fields">
+          <DateField className="dbui-input" aria-label={`${prop.name} ${which}`} value={day} onChange={(v) => { if (v) put(v, clock || "00:00"); }} />
+          {time ? <TimeField className="dbui-input" aria-label={`${prop.name} ${which} time`} value={clock} onChange={(v) => { if (v) put(day || toInputValue(Date.now() / 1000 - 978_307_200, false), v); }} /> : null}
+        </span>
+      </div>
+    );
+  };
   return (
     <Popover anchor={anchor} onClose={onClose} className="dbui-date-editor" label={`Edit ${prop.name}`}>
-      <label className="dbui-field">
-        <span className="dbui-field-label">{d?.end !== undefined ? "Start" : "Date"}</span>
-        <input className="dbui-input" type={type} value={d ? toInputValue(d.start, d.includeTime) : ""} aria-label={`${prop.name} start`}
-          onChange={(e) => { const s = fromInputValue(e.target.value); if (s !== undefined) save(withDate(d, { start: s })); }} />
-      </label>
-      {d?.end !== undefined && (
-        <label className="dbui-field">
-          <span className="dbui-field-label">End</span>
-          <input className="dbui-input" type={type} value={toInputValue(d.end, d.includeTime)} aria-label={`${prop.name} end`}
-            onChange={(e) => { const s = fromInputValue(e.target.value); if (s !== undefined) save(withDate(d, { end: s })); }} />
-        </label>
-      )}
+      {field("start", d?.start, d?.end !== undefined ? "Start" : "Date")}
+      {d?.end !== undefined ? field("end", d.end, "End") : null}
       <div className="dbui-toggles">
         <label className="dbui-toggle"><input type="checkbox" checked={d?.end !== undefined} onChange={(e) => save(withDate(d, e.target.checked ? { end: d?.start ?? withDate(undefined, {}).start } : { end: undefined }))} />End date</label>
         <label className="dbui-toggle"><input type="checkbox" checked={d?.includeTime ?? false} onChange={(e) => save(withDate(d, { includeTime: e.target.checked }))} />Include time</label>

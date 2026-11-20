@@ -402,7 +402,13 @@ textarea.dbui-input { padding: var(--space-1) var(--space-2); resize: vertical; 
 .dbui-filter-group.nested { background: var(--surface-soft); border-radius: var(--radius-md); padding: var(--space-2); flex: 1; }
 .dbui-filter-line { display: flex; align-items: flex-start; gap: var(--space-2); }
 .dbui-filter-join { flex: none; width: calc(var(--space-8) + var(--space-2)); color: var(--muted); font-size: var(--type-meta-size); padding-top: var(--space-1); }
-.dbui-filter-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; flex: 1; }
+/* BSD-621: Eine Bedingung bleibt eine Zeile – Eigenschaft und Operator in ihrer Breite, der Wert nimmt den Rest (und
+   schrumpft), der Mülleimer steht immer rechts daneben; Optionen brechen innerhalb des Werts um. */
+.dbui-filter-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: nowrap; flex: 1; min-width: 0; }
+.dbui-filter-row > .dbui-select { flex: none; max-width: calc(var(--space-8) * 3); }
+.dbui-filter-row > :is(.dbui-input, .dbui-inline, .dbui-option-choices) { flex: 1 1 auto; min-width: 0; }
+.dbui-filter-row > .dbui-inline > :is(.dbui-input, .dbui-select) { min-width: 0; flex: 1 1 auto; }
+.dbui-filter-row > .dbui-icon-btn { flex: none; margin-left: auto; }
 .dbui-inline { display: inline-flex; gap: var(--space-1); }
 .dbui-option-choices { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .dbui-choice { border: 1px solid transparent; background: transparent; border-radius: var(--radius-sm); padding: 1px; }
@@ -709,3 +715,8 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
    Überfahren oder Fokus. Ihr Platz bleibt, damit beim Überfahren nichts springt. */
 .dbui-root.inline .dbui-head.untitled .dbui-toolbar { border-bottom: 0; opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .dbui-root.inline:is(:hover, :focus-within) .dbui-head.untitled .dbui-toolbar { opacity: 1; }
+/* BSD-621: Datumsauswahl – Datum und Uhrzeit nebeneinander als Based-Felder; solange ein Feld darin den Fokus zeigt,
+   nimmt die aktive Zelle darunter ihren Rahmen zurück (ein Rahmen zur Zeit, elements.md Abschnitt 3). */
+.dbui-date-fields { display: flex; gap: var(--space-2); }
+.dbui-date-fields > * { flex: 1 1 0; min-width: 0; }
+:root:has(.dbui-date-editor :focus-visible) .dbui-cell.active { box-shadow: none; }

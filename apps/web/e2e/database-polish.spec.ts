@@ -103,3 +103,56 @@ test("Lostippen in einer Zelle verliert keine Zeichen, während der Editor öffn
     await expect(titles.nth(1)).toHaveText(new RegExp(`^${text}(Open)?$`));
   }
 });
+
+// BSD-621 (Elija 20.11.): (1) Eine Filterbedingung bleibt eine Zeile – der Mülleimer steht rechts neben dem Wert, auch
+// in 900 × 600. (2) Datumsauswahl ohne Systemfeld: Datum als Based-Feld (kein <input type=date>, kein System-Blau);
+// solange es den Fokus zeigt, hat die Zelle darunter keinen Rahmen – ein Rahmen zur Zeit.
+test("Filterzeile ohne Umbruch, Datumsauswahl mit einem Fokusrahmen und Based-Feld", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  // Vorlage „Tasks“ (Name, Status, Due, Priority) – Ansicht „All tasks“ ist die Tabelle
+  const id = await page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string> } } }).__based.client.command({ op: "addStarterTemplate", template: "tasks" }));
+  await page.goto(`/#page-${id}`);
+  const db = page.locator(".shell-database.full");
+  await db.getByText("All tasks", { exact: true }).click();
+  await expect(db.getByRole("columnheader", { name: /Due/ }).first()).toBeVisible();
+
+  for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }]) {
+    await page.setViewportSize(size);
+    await db.getByRole("button", { name: "Filter" }).first().click();
+    await page.getByText("Add filter rule").click();
+    const row = page.getByTestId("filter-condition").first();
+    await expect(row).toBeVisible();
+    const value = (await row.getByRole("textbox", { name: "Value" }).boundingBox())!;
+    const bin = (await row.getByRole("button", { name: "Remove filter" }).boundingBox())!;
+    const mid = (b: { y: number; height: number }) => b.y + b.height / 2;
+    expect(Math.abs(mid(bin) - mid(value)), `${size.width}: Mülleimer in der Zeile`).toBeLessThan(4);
+    expect(bin.x, `${size.width}: rechts neben dem Wert`).toBeGreaterThan(value.x + value.width - 1);
+    await row.getByRole("button", { name: "Remove filter" }).click();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+  }
+  await page.setViewportSize({ width: 1280, height: 820 });
+
+  // Datumszelle „Due“ der ersten Zeile bearbeiten
+  const header = db.getByRole("columnheader", { name: /^Due/ }).first();
+  const col = await header.evaluate((h) => [...h.parentElement!.children].indexOf(h));
+  const cell = db.locator(".dbui-vrow[data-row-id]").first().locator(".dbui-cell").nth(col - 1);
+  await cell.dblclick();
+  const editor = page.locator(".dbui-date-editor");
+  await expect(editor).toBeVisible();
+  expect(await editor.locator("input[type=date], input[type=datetime-local], input[type=time]").count()).toBe(0);
+  const day = editor.getByRole("textbox", { name: "Due start" });
+  await day.focus();
+  await page.keyboard.press("End");
+  await expect(day).toBeFocused();
+  // ein Rahmen zur Zeit: die Zelle nimmt ihren zurück, solange das Feld den Fokus zeigt
+  const active = db.locator(".dbui-cell.active");
+  await expect(active).toHaveCount(1);
+  expect(await day.evaluate((el) => el.matches(":focus-visible"))).toBe(true);
+  expect(await active.evaluate((el) => getComputedStyle(el).boxShadow)).toBe("none");
+  await day.fill("2026-11-24");
+  await page.keyboard.press("Tab");
+  await expect(cell).toContainText(/Nov(ember)? 24, 2026/);
+});
