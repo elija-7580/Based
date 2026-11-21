@@ -151,6 +151,36 @@ test("Quick Find: Enter gleich nach dem Tippen öffnet den Treffer, nicht die zu
   await expect(page.getByLabel("Page title")).toHaveValue("Kestrel plans");
 });
 
+// BSD-643: Endet die Suche mit einem Fehler, blieb ein wartendes Enter für immer stehen (Enter tat nichts mehr, bis man
+// die Eingabe änderte). Jetzt zeigt Quick Find zu dieser Eingabe keine Treffer, und Enter geht danach wieder.
+test("Quick Find: scheitert die Suche, hängt Enter nicht", async ({ page }) => {
+  await ready(page);
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.getByLabel("Page title").fill("Kestrel plans");
+  await expect(page.getByRole("treeitem", { name: "Kestrel plans" })).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(page.getByLabel("Page title")).toHaveValue("");
+  const qf = page.getByRole("dialog", { name: "Quick Find" });
+  const input = qf.getByRole("combobox", { name: "Search pages" });
+  const results = qf.getByRole("listbox", { name: "Results" }).getByRole("option");
+  await page.keyboard.press("ControlOrMeta+k");
+  await input.fill("kestrel");
+  await expect(results).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  // Die nächste Suche wirft (nach kurzer Zeit, damit Enter wartet); danach wieder die echte Suche
+  await based(page, `const c = b.client, s = c.search.bind(c); let fail = true; c.search = (...a) => fail ? new Promise((ok) => setTimeout(ok, 300)).then(() => { fail = false; throw new Error("worker gone"); }) : s(...a);`);
+  await page.keyboard.press("ControlOrMeta+k");
+  await input.fill("kestrel");
+  await page.keyboard.press("Enter");
+  await expect(qf.getByText(/No results for/)).toBeVisible();
+  await expect(qf).toBeVisible();
+  await input.fill("kestrel p");
+  await expect(results).toHaveCount(1);
+  await page.keyboard.press("Enter");
+  await expect(qf).toHaveCount(0);
+  await expect(page.getByLabel("Page title")).toHaveValue("Kestrel plans");
+});
+
 test("Quick Find: die Auswahl bleibt beim Blättern mit den Pfeiltasten sichtbar", async ({ page }) => {
   await ready(page);
   await page.setViewportSize({ width: 900, height: 600 });

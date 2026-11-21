@@ -7,6 +7,7 @@ import { fold, typoBudget, typoDistance } from "@based/core";
 import { useRestoreFocus } from "../shell/restoreFocus.js";
 import { Icon, type IconName } from "../icons.js";
 import { aiSetting } from "../shell/ai.js";
+import { diagnosticsLog } from "../shell/diagnostics.js";
 import { matchCommands, type NavCommand } from "../shell/sidebarNav.js";
 import { DATE_OPTIONS, SORT_OPTIONS, toSearchFilters, type QuickFindFilters } from "../shell/quickFindFilters.js";
 import type { RecentEntry } from "../shell/storage.js";
@@ -74,7 +75,16 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
       setHits(r.hits);
       setTook(performance.now() - t0);
       setSelected(0);
-    }).catch(() => undefined);
+    }).catch((e: unknown) => {
+      // BSD-643: Die Suche ist gescheitert (Worker-Fehler). Ohne das bliebe ein wartendes Enter für immer stehen:
+      // leere Liste zu dieser Eingabe zeigen (das wartende Enter verfällt dann ohne Treffer), Grund ins Diagnose-Log.
+      if (!alive) return;
+      diagnosticsLog.add("warning", `quick find: search failed (${e instanceof Error ? e.message : String(e)})`);
+      shownFor.current = searchKey;
+      setHits([]);
+      setTook(undefined);
+      setSelected(0);
+    });
     return () => {
       alive = false;
     };
