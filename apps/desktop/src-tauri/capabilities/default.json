@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Fenster schließen/ausblenden (⌘W beim letzten Tab, BSD-310), Seitenfenster öffnen, Menü, Updater, Zwischenablage (Based-Kontextmenü; Rückfragen sind Based-Dialoge), Neustart nach dem Update, HTTP nur zu Notion (API-Import, BSD-217: API und von Notion gehostete Dateien). BSD-319: Dateien nur in ~/.config/based/reports (Fehlerberichte) lesen, schreiben, löschen; Bericht im Finder zeigen. BSD-456: Sicherung vor jedem App-Update in $APPDATA/pre-update (schreiben, umbenennen, zurücklesen, alte löschen). Feedback 18. 11.: Meeting erkannt – Hauptfenster zeigen/nach vorn holen, kleines Meeting-Fenster öffnen und schließen.",
+  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Fenster schließen/ausblenden (⌘W beim letzten Tab, BSD-310), Seitenfenster öffnen, Menü, Updater, Zwischenablage (Based-Kontextmenü; Rückfragen sind Based-Dialoge), Neustart nach dem Update, HTTP nur zu Notion (API-Import, BSD-217: API und von Notion gehostete Dateien) und BSD-632: POST https://basednotes.app/api/report („Send to Based“). BSD-319: Dateien nur in ~/.config/based/reports (Fehlerberichte) lesen, schreiben, löschen; Bericht im Finder zeigen. BSD-456: Sicherung vor jedem App-Update in $APPDATA/pre-update (schreiben, umbenennen, zurücklesen, alte löschen). Feedback 18. 11.: Meeting erkannt – Hauptfenster zeigen/nach vorn holen, kleines Meeting-Fenster öffnen und schließen.",
   "windows": [
     "main",
     "page-*"
@@ -25,6 +25,9 @@
       "allow": [
         {
           "url": "https://api.notion.com/*"
+        },
+        {
+          "url": "https://basednotes.app/api/report"
         },
         {
           "url": "https://*.notion.so/*"

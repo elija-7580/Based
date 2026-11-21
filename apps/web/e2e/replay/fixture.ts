@@ -8,6 +8,8 @@ export const test = base.extend<{ page: Page }>({
   page: async ({ playwright, browserName, baseURL }, use) => {
     const dir = mkdtempSync(join(tmpdir(), "based-report-"));
     const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL!, viewport: { width: 1280, height: 820 } });
+    // BSD-632: Nie einen echten Bericht an basednotes.app – Tests, die senden, leiten auf einen lokalen Dienst um (page.route).
+    await ctx.route("https://basednotes.app/**", (r) => r.abort());
     try {
       await use(ctx.pages()[0] ?? (await ctx.newPage()));
     } finally {

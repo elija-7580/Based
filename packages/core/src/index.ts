@@ -238,6 +238,7 @@ export {
 export {
   BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, FEEDBACK_EMAIL, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
   reportEmail, systemLabel, type ReportEmail, type ReportEmailInput,
+  REPORT_ID, REPORT_MAX_BYTES, REPORT_URL, canSendReport, reportRequestBody, reportSendResult, type ReportSendResult,
   buildBugBundle, bundleID, comboFor, exportEvent, layoutIssues, mapStrings, normalizeDoc, parseBugBundle, replayPlan, scrambleDeep, scrambleHTML, scrambleText, summarizeBundle,
   type BugApp, type BugBundle, type BugBundleInput, type BugBundleSummary, type BugEnv, type BugState, type InputRecorderOptions, type LayoutIssue, type LayoutItem,
   type BlockChangeRecord, type Lazy, type Mods, type RecordedEvent, type RecordedInput, type Rect, type ReplayAction, type ReplayPlan, type SelectionInfo,

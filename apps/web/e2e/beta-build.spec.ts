@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { overflows, overlaps } from "./layout-checks.js";
+import { routeReports, startReportServer } from "./report-server.js";
 import { expectEditable, focusEditorEnd } from "./editor-helpers.js";
 
 // BSD-305 Teil 5 (Beta-Umfang): Durchgang im echten Beta-Build. Läuft nur, wenn der Build mit BASED_CHANNEL=beta
@@ -25,6 +26,8 @@ async function fresh(playwright: Parameters<Parameters<typeof test>[2]>[0]["play
     (globalThis as { __basedWelcome?: boolean }).__basedWelcome = true;
     localStorage.setItem("based.appearance", JSON.stringify({ theme: t }));
   }, theme);
+  // BSD-632: Nie einen echten Bericht an basednotes.app (Tests, die senden, leiten per page.route auf einen lokalen Dienst um).
+  await ctx.route("https://basednotes.app/**", (r) => r.abort());
   const page = ctx.pages()[0] ?? (await ctx.newPage());
   return { page, close: async () => { await ctx.close(); rmSync(dir, { recursive: true, force: true }); } };
 }
@@ -199,6 +202,38 @@ test("Beta-Build: Problem melden führt zur Mail an hello@basednotes.app", async
     await clean(page, "Report saved");
   } finally {
     await close();
+  }
+});
+
+// BSD-632: Im Beta-Build ist „Send to Based“ der Hauptknopf; ein Klick bringt den Bericht zum Server (lokal gestartet,
+// basednotes.app umgeleitet) – mit Kanal beta, ohne Seitentext.
+test("Beta-Build: Problem melden – Send to Based kommt beim Server an", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(90_000);
+  const server = await startReportServer();
+  const { page, close } = await fresh(playwright, browserName, baseURL!, "light");
+  try {
+    await routeReports(page, server);
+    await page.goto("/");
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByTestId("welcome").getByRole("button", { name: "Skip" }).click();
+    await page.getByTestId("welcome").getByRole("button", { name: /Start empty/ }).click();
+    await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();
+    await page.keyboard.type("Secret beta page text");
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    const dialog = page.getByRole("dialog", { name: "Report a problem" });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await dialog.getByRole("textbox", { name: "What did you do, and what happened?" }).fill("Beta note");
+    await dialog.getByRole("button", { name: "Send to Based" }).click();
+    const sent = page.getByRole("dialog", { name: "Sent. Thank you!" });
+    await expect(sent.getByTestId("report-sent")).toHaveAttribute("data-state", "sent", { timeout: 15_000 });
+    const id = (await sent.getByTestId("report-id").textContent())!.replace("Report ", "");
+    const stored = server.report(id)!;
+    expect(stored.note).toBe("Beta note");
+    expect(JSON.stringify(stored)).not.toContain("Secret beta page text");
+    await clean(page, "Sent. Thank you!");
+  } finally {
+    await close();
+    await server.stop();
   }
 });
 

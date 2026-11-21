@@ -1,16 +1,22 @@
 // BSD-319: Ablauf „Problem melden“ ohne React – einfrieren, Bildschirmfoto, Dialog auf, speichern. Auslöser: ⌘⇧B,
 // ⌘K → „Report a problem“, Menü Hilfe (Mac-App), Settings → Diagnostics.
-import type { BugBundle } from "@based/core";
+import type { BugBundle, ReportSendResult } from "@based/core";
 import { captureScreenshot, freezeReport, makeBundle, type FrozenReport } from "./bugReport.js";
 import { diagnosticsLog } from "./diagnostics.js";
 import { reportsChanged, reportStore, type SavedReport } from "./reportStore.js";
+import { sendSaved } from "./reportSend.js";
 
 export interface ReportDraft {
   frozen: FrozenReport;
   screenshot?: Blob;
 }
 
-type State = { phase: "idle" } | { phase: "capturing" } | { phase: "open"; draft: ReportDraft } | { phase: "saved"; draft: ReportDraft; saved: SavedReport; bundle: BugBundle };
+/** BSD-632: „Send to Based“ – läuft noch, oder wie es ausging (fehlt: nur gespeichert). */
+export type SendState = { kind: "sending" } | ReportSendResult;
+
+type State =
+  | { phase: "idle" } | { phase: "capturing" } | { phase: "open"; draft: ReportDraft }
+  | { phase: "saved"; draft: ReportDraft; saved: SavedReport; bundle: BugBundle; send?: SendState };
 
 let state: State = { phase: "idle" };
 const listeners = new Set<() => void>();
@@ -53,6 +59,18 @@ export async function saveReport(note: string, opts: { realText: boolean; screen
   reportsChanged();
   set({ phase: "saved", draft, saved, bundle });
   return saved;
+}
+
+/**
+ * BSD-632: Ein Klick – lokal speichern (wie „Save report“) und an Based senden. Der Dialog zeigt sofort „Sending…“,
+ * dann „Sent“ oder „will send later“ (Warteschlange). Das Senden scheitert nie laut: der Bericht liegt ja lokal.
+ */
+export async function sendReport(note: string, opts: { realText: boolean; screenshot: boolean }): Promise<SendState> {
+  const saved = await saveReport(note, opts);
+  if (state.phase === "saved") set({ ...state, send: { kind: "sending" } });
+  const result = await sendSaved(saved.id).catch((e: unknown): SendState => ({ kind: "later", reason: e instanceof Error ? e.message : String(e) }));
+  if (state.phase === "saved" && state.saved.id === saved.id) set({ ...state, send: result });
+  return result;
 }
 
 export function closeReport() {
