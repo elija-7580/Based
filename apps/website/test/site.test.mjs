@@ -438,6 +438,7 @@ test("waitlist: with WAITLIST_RELOAD=1 the service stops cleanly once its file h
   const dir = mkdtempSync(join(tmpdir(), "based-wl-reload-"));
   const copy = join(dir, "waitlist.mjs");
   writeFileSync(copy, readFileSync(join(ROOT, "server", "waitlist.mjs")));
+  writeFileSync(join(dir, "report.mjs"), readFileSync(join(ROOT, "server", "report.mjs"))); // BSD-632: imported module
   const child = spawn(process.execPath, ["--no-warnings", copy], {
     env: { ...process.env, PORT: "0", WAITLIST_DB: join(dir, "w.sqlite"), WAITLIST_RELOAD: "1", WAITLIST_RELOAD_MS: "100" },
     stdio: ["ignore", "pipe", "pipe"]

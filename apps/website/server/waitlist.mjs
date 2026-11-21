@@ -17,6 +17,10 @@
 // BSD-631: with WAITLIST_STATS_TOKEN set, GET /api/waitlist/stats and /api/waitlist/check?email=… answer with numbers
 // and yes/no only (Authorization: Bearer <token>), so Elija and the agents can check the list over HTTPS. Unset: 404.
 //
+// BSD-632: POST /api/report takes problem reports from the app and puts them into the Based backlog (server/report.mjs).
+//   node server/waitlist.mjs reports                  list received reports and whether they reached the backlog (CSV)
+//   node server/waitlist.mjs reports retry            send the ones that gave up again
+//
 // Caddy forwards /api/* here. Data lives in $WAITLIST_DB (default ./data/waitlist.sqlite).
 // IP addresses are only held in memory for rate limiting (max. one hour), never stored.
 import { createServer } from "node:http";
@@ -25,6 +29,7 @@ import { createReadStream, mkdirSync, readFileSync, statSync } from "node:fs";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { REPORT_MAX_BYTES, createReports, parseReport } from "./report.mjs";
 
 const DB_PATH = process.env.WAITLIST_DB || "./data/waitlist.sqlite";
 // PORT=0: a free port from the system (tests); empty or missing: 8790
@@ -80,6 +85,9 @@ db.exec(`
 if (!db.prepare("PRAGMA table_info(invites)").all().some((c) => c.name === "last_download_at")) {
   db.exec("ALTER TABLE invites ADD COLUMN last_download_at TEXT");
 }
+
+// BSD-632: problem reports live next to the database (/data/reports in Docker).
+const reports = createReports({ db, dir: process.env.REPORTS_DIR || join(dirname(DB_PATH), "reports") });
 
 // The text shown next to the form when someone signs up; stored with each entry as proof of consent.
 const CONSENT = "basednotes.app 2026-11: We only use your email to tell you when the beta opens. Unsubscribe any time.";
@@ -159,7 +167,14 @@ if (cmd === "delete") {
 if (cmd === "purge") {
   const r = db.prepare(`DELETE FROM waitlist WHERE created_at < datetime('now', '-${RETENTION_DAYS} days')`).run();
   const i = db.prepare("DELETE FROM invites WHERE expires_at < ?").run(daysFromNow(-INVITE_KEEP_DAYS));
-  console.log(`purged ${r.changes}, invites ${i.changes}`);
+  console.log(`purged ${r.changes}, invites ${i.changes}, reports ${reports.purge()}`);
+  process.exit(0);
+}
+if (cmd === "reports") {
+  if (process.argv[3] === "retry") { console.log(`retry ${reports.retry()}`); process.exit(0); }
+  console.log(csv(reports.list(), ["id", "received_at", "version", "system", "screenshot", "notion_page", "attempts", "next_try_at", "last_error"]));
+  const s = reports.stats();
+  console.error(`${s.total} reports, ${s.in_backlog} in the backlog, ${s.waiting} waiting; Notion ${s.notion ? "configured" : "not configured (NOTION_TOKEN, NOTION_BACKLOG_DATA_SOURCE)"}`);
   process.exit(0);
 }
 
@@ -167,6 +182,7 @@ if (cmd === "purge") {
 const hits = new Map(); // ip → timestamps (memory only)
 const dlHits = new Map(); // same for /api/download, own budget
 const statsHits = new Map(); // BSD-631: /api/waitlist/stats|check, own budget
+const reportHits = new Map(); // BSD-632: /api/report, own budget
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_HITS = 8;
 const MAX_DL_HITS = 20;
@@ -180,11 +196,11 @@ function limited(ip, map = hits, max = MAX_HITS) {
 }
 setInterval(() => {
   const t = Date.now();
-  for (const map of [hits, dlHits, statsHits]) for (const [ip, list] of map) if (!list.some((x) => t - x < 60 * 60 * 1000)) map.delete(ip);
+  for (const map of [hits, dlHits, statsHits, reportHits]) for (const [ip, list] of map) if (!list.some((x) => t - x < 60 * 60 * 1000)) map.delete(ip);
 }, 10 * 60 * 1000).unref();
 
-function send(res, status, body) {
-  res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
+function send(res, status, body, headers = {}) {
+  res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store", ...headers });
   res.end(JSON.stringify(body));
 }
 
@@ -222,12 +238,48 @@ function stats(req, res, url, ip) {
   if (!timingSafeEqual(digest(given), digest(token))) return send(res, 401, { error: "unauthorized" });
   if (url.pathname === "/api/waitlist/stats") {
     const w = countWaitlist.get();
-    return send(res, 200, { count: Number(w.count), last_created_at: w.last ?? null, invites_active: Number(countActiveInvites.get(now()).n) });
+    return send(res, 200, { count: Number(w.count), last_created_at: w.last ?? null, invites_active: Number(countActiveInvites.get(now()).n), reports: reports.stats() });
   }
   const email = clean(url.searchParams.get("email"), 254).toLowerCase();
   if (!EMAIL.test(email)) return send(res, 422, { error: "email" });
   const row = findEmail.get(email);
   return send(res, 200, { listed: Boolean(row), created_at: row?.created_at ?? null });
+}
+
+// ---- BSD-632: problem reports from the app --------------------------------------------------
+// The app (web view or Tauri) posts from its own origin, so CORS is open and there is no origin check: anyone may
+// send a report, the rate limit and the size limit keep it small.
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "86400" };
+
+function readBody(req, max) {
+  return new Promise((resolve) => {
+    let size = 0;
+    let over = Number(req.headers["content-length"]) > max;
+    const chunks = [];
+    req.on("data", (c) => {
+      size += c.length;
+      if (size > max) over = true;
+      if (over) { chunks.length = 0; if (size > 8 * max) req.destroy(); return; } // read on (so the client sees the 413), keep nothing
+      chunks.push(c);
+    });
+    req.on("end", () => resolve(over ? { tooLarge: true } : { buf: Buffer.concat(chunks) }));
+    req.on("error", () => resolve({ error: true }));
+    req.on("close", () => resolve(over ? { tooLarge: true } : { error: true }));
+  });
+}
+
+async function report(req, res, ip) {
+  if (limited(ip, reportHits)) return send(res, 429, { error: "slow down" }, CORS);
+  const body = await readBody(req, REPORT_MAX_BYTES);
+  if (body.tooLarge) return send(res, 413, { error: "too large" }, { ...CORS, connection: "close" });
+  if (body.error) return send(res, 400, { error: "bad request" }, CORS);
+  let parsed;
+  try { parsed = parseReport(JSON.parse(body.buf.toString("utf8"))); } catch { parsed = undefined; }
+  if (!parsed) return send(res, 400, { error: "bad request" }, CORS);
+  let r;
+  try { r = reports.receive(parsed); } catch (e) { console.error(`report not stored: ${e.message}`); return send(res, 500, { error: "not stored" }, CORS); }
+  send(res, 200, { ok: true, id: r.id, ...(r.duplicate ? { duplicate: true } : {}) }, CORS);
+  if (!r.duplicate) void reports.pump();
 }
 
 const upsert = db.prepare(`
@@ -301,6 +353,10 @@ const server = createServer(async (req, res) => {
   }
   const clientIp = () => String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
   if (req.method === "GET" && (url.pathname === "/api/waitlist/stats" || url.pathname === "/api/waitlist/check")) return stats(req, res, url, clientIp());
+  if (url.pathname === "/api/report") {
+    if (req.method === "OPTIONS") { res.writeHead(204, CORS); return res.end(); }
+    if (req.method === "POST") return report(req, res, clientIp());
+  }
   if (req.method !== "POST" || !["/api/waitlist", "/api/ideas"].includes(url.pathname)) return send(res, 404, { error: "not found" });
 
   const origin = req.headers.origin;
@@ -328,6 +384,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => console.log(`waitlist service on :${server.address().port}, db ${DB_PATH}`));
+reports.start();
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { server.close(); db.close(); process.exit(0); });
 
 // Reload on update (WAITLIST_RELOAD=1, set in deploy/website): the server pulls main every 10 minutes but doesn't
@@ -336,8 +393,9 @@ for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { server.close();
 // finish; an interrupted one can be resumed (BSD-557).
 if (process.env.WAITLIST_RELOAD === "1") {
   const self = fileURLToPath(import.meta.url);
+  const modules = [self, join(dirname(self), "report.mjs")]; // BSD-632: the service is two files now
   const every = Number(process.env.WAITLIST_RELOAD_MS) || 60_000;
-  const hash = () => { try { return createHash("sha256").update(readFileSync(self)).digest("hex"); } catch { return undefined; } };
+  const hash = () => { try { const h = createHash("sha256"); for (const f of modules) h.update(readFileSync(f)); return h.digest("hex"); } catch { return undefined; } };
   const running = hash();
   let seen;
   const timer = setInterval(() => {
@@ -345,7 +403,7 @@ if (process.env.WAITLIST_RELOAD === "1") {
     if (h === undefined || h === running) { seen = undefined; return; }
     if (h !== seen) { seen = h; return; } // still being written (git checkout): wait for one more check
     clearInterval(timer);
-    console.log("waitlist.mjs changed - restarting with the new code");
+    console.log("waitlist.mjs changed - restarting with the new code"); // (or report.mjs; the tests look for this line)
     server.close(() => { db.close(); process.exit(0); });
     server.closeIdleConnections();
     setTimeout(() => { db.close(); process.exit(0); }, 10 * 60_000).unref();

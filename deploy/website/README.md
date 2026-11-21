@@ -51,7 +51,7 @@ Die Seiten neu bauen (nach einer Änderung im Canvas oder an den Texten): `pnpm 
 docker compose exec waitlist node --no-warnings waitlist.mjs export        # CSV auf die Konsole
 docker compose exec waitlist node --no-warnings waitlist.mjs ideas         # Ideen von der Roadmap
 docker compose exec waitlist node --no-warnings waitlist.mjs delete a@b.c  # Löschwunsch erfüllen
-docker compose exec waitlist node --no-warnings waitlist.mjs purge         # Einträge älter als 24 Monate löschen
+docker compose exec waitlist node --no-warnings waitlist.mjs purge         # Einträge älter als 24 Monate löschen (Berichte: 90 Tage)
 ```
 
 Die Datenbank liegt im Volume `waitlist-data` (`/data/waitlist.sqlite`). Sicherung:
@@ -96,12 +96,47 @@ Zahlen). Prüfen:
 
 ```bash
 curl -s -H "Authorization: Bearer <Token>" https://basednotes.app/api/waitlist/stats
-# {"count":12,"last_created_at":"2026-11-20T…","invites_active":0}
+# {"count":12,"last_created_at":"2026-11-20T…","invites_active":0,"reports":{"total":0,"in_backlog":0,"waiting":0,"notion":false}}
 curl -s -H "Authorization: Bearer <Token>" "https://basednotes.app/api/waitlist/check?email=a@b.c"
 # {"listed":true,"created_at":"2026-11-20T…"}
 ```
 
 Falsches Token: 401. Gleiches Ratenlimit wie die Formulare (8 Abrufe je 10 Minuten und Adresse).
+
+## Problemberichte aus der App ins Backlog (BSD-632)
+
+In der App schickt ⇧⌘B → „Send to Based“ den Bericht an `POST /api/report`. Der Dienst speichert ihn unter
+`/data/reports/<id>.json` (+ `.png`, falls ein Bildschirmfoto dabei ist) und legt im Notion-Backlog einen Eintrag an:
+Name „Mac-Beta · Bericht <Datum> – <Version>, <System>“, Status Inbox, Quelle Log/Bericht, Typ Bug, im Inhalt Notiz,
+Zusammenfassung, Layout-Funde, letzte Schritte, Bildschirmfoto und das Bündel als Datei. Ohne Einrichtung werden die
+Berichte nur gespeichert; nichts geht verloren, sie gehen nach der Einrichtung von selbst nach Notion. Klappt Notion
+nicht, versucht der Dienst es wieder (5 Minuten, dann doppelt so lange, höchstens 6 Stunden, 12 Versuche). Nach 90 Tagen
+werden die Berichte auf dem Server gelöscht.
+
+Einmalig einrichten (10 Minuten):
+
+1. In Notion: **Settings → Connections → Develop or manage integrations** (öffnet notion.so/profile/integrations)
+   → **New integration**: Name „Based Server“, Workspace „Elijás Second Brain“, Typ **Internal** → Save.
+2. Bei der Integration unter **Capabilities** „Read content“, „Update content“ und „Insert content“ anhaken, sonst
+   nichts (keine Nutzerinformationen). Dann den **Internal Integration Secret** kopieren (beginnt mit `ntn_`).
+3. Die Datenbank **Based Backlog** öffnen → oben rechts **•••** → **Connections** → **Based Server** hinzufügen.
+   (Nur diese Datenbank, damit der Schlüssel sonst nichts sieht.)
+4. Am Server:
+   ```bash
+   cd Based/deploy/website            # bzw. Based/deploy/website/edge
+   cat >> .env <<'ENV'
+   NOTION_TOKEN=ntn_…
+   NOTION_BACKLOG_DATA_SOURCE=756f15b3-f24d-4b7c-aecf-88ed8fac1119
+   ENV
+   docker compose up -d waitlist
+   ```
+5. Prüfen: in der App ⇧⌘B → „Send to Based“ → „Sent“. Nach ein paar Sekunden steht der Eintrag im Backlog (Inbox).
+   Am Server:
+   ```bash
+   docker compose exec waitlist node --no-warnings waitlist.mjs reports         # Liste, Spalte notion_page
+   docker compose exec waitlist node --no-warnings waitlist.mjs reports retry   # aufgegebene erneut senden
+   ```
+   Oder ohne SSH über `stats` (oben): `reports.in_backlog` zählt hoch, `reports.notion` ist `true`.
 
 `.env` ist in git ausgeschlossen (`deploy/**/.env`) und bleibt beim automatischen Update erhalten.
 
