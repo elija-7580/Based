@@ -52,7 +52,7 @@ In this beta:
 - Import from Notion (direct or export .zip), Markdown, HTML, CSV, Obsidian, Logseq, Evernote, Bear, Word, OPML;
   export to Markdown, HTML, PDF and Word
 - Report a problem (⇧⌘B) and opt-in crash reports, without page content
-- Not in this beta: AI and agents, meeting notes, graph, real-time editing across devices, iPhone and web
+- Not in this beta: AI and agents, AI meeting summaries, graph, real-time editing across devices, iPhone and web
 
 ## 0.2.2 – first test build
 
