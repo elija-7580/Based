@@ -300,9 +300,9 @@
 }
 
 [data-typeface="based"] {
-  --font-ui: "Schibsted Grotesk", system-ui, sans-serif;
-  --font-head: "Schibsted Grotesk", system-ui, sans-serif;
-  --font-body: Literata, Georgia, serif;
+  --font-ui: "Schibsted Grotesk Variable", "Schibsted Grotesk", system-ui, sans-serif;
+  --font-head: "Schibsted Grotesk Variable", "Schibsted Grotesk", system-ui, sans-serif;
+  --font-body: "Literata Variable", Literata, Georgia, serif;
 }
 
 [data-style="bold"] {

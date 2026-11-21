@@ -3,7 +3,8 @@
 // Projekt-Detail (BSD-133).
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
-import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
+import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange, type AppFont } from "./appearance.js";
+import { basedFontsReady, loadBasedFonts } from "./fonts.js";
 import { ImportDialog } from "./components/ImportExport.js";
 import { hybridImport } from "./worker/notionHybridClient.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
@@ -63,10 +64,9 @@ const Welcome = lazy(() => import("./screens/Welcome.js").then((m) => ({ default
 const WelcomeTourScreen = lazy(() => import("./screens/WelcomeTour.js").then((m) => ({ default: m.WelcomeTourScreen })));
 const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
-/** Mitgelieferte Schriften nur laden, wenn Font = Based sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
-function ensureBoldFonts() {
-  void import("./boldFonts.js").catch(() => undefined);
-}
+
+/** Schrift, die gerade am Wurzelelement steht (bis Font „Based“ geladen ist, bleibt sie stehen). */
+const shownFont = (): AppFont => (document.documentElement.dataset.typeface === "based" ? "based" : "system");
 
 /** Ziel nimmt Text auf (Eingabefeld, Textbereich, bearbeitbarer Inhalt)? Dann gehört ⌫ dem Feld. */
 function isTextTarget(t: EventTarget | null): boolean {
@@ -91,9 +91,14 @@ export function App({ client, history }: { client: StoreClient; history: History
   const tourOpen = useSyncExternalStore(welcomeTour.subscribe, welcomeTour.get);
 
   useEffect(() => {
-    applyAppearance(appearance);
-    if (appearance.font === "based") ensureBoldFonts();
-    return appearance.theme === "system" ? onSystemThemeChange(() => applyAppearance(appearance)) : undefined;
+    // Font „Based“ erst setzen, wenn die Dateien da sind – sonst zeigt die Oberfläche kurz die Ersatzschrift und
+    // springt dann um (fonts.ts). Bis dahin bleibt die bisherige Schrift stehen.
+    let live = true;
+    const apply = () => applyAppearance(appearance.font === "based" && !basedFontsReady() ? { ...appearance, font: shownFont() } : appearance);
+    apply();
+    if (appearance.font === "based" && !basedFontsReady()) void loadBasedFonts().then(() => { if (live) applyAppearance(appearance); });
+    const off = appearance.theme === "system" ? onSystemThemeChange(apply) : undefined;
+    return () => { live = false; off?.(); };
   }, [appearance]);
 
   useEffect(() => recentPages.subscribe(setRecent), []);

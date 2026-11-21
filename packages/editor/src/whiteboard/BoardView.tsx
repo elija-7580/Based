@@ -451,6 +451,10 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
     const scheme = window.matchMedia("(prefers-color-scheme: dark)");
     const onScheme = () => { theme = readBoardTheme(el); themeVersion += 1; schedule(); };
     scheme.addEventListener("change", onScheme);
+    // Leinwand-Text zeichnet mit der Schrift, die gerade geladen ist, und zeichnet nie von selbst nach: kommt eine
+    // Schrift später an (Font „Based“, anderer Zeichenbereich), neu messen und zeichnen – sonst bliebe die Ersatzschrift.
+    const fontSet = (document as Document & { fonts?: FontFaceSet }).fonts;
+    fontSet?.addEventListener("loadingdone", onScheme);
 
     const off = ctl.subscribe(schedule);
 
@@ -621,6 +625,7 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
       themeWatch.disconnect();
       dprQuery.removeEventListener("change", onDpr);
       scheme.removeEventListener("change", onScheme);
+      fontSet?.removeEventListener("loadingdone", onScheme);
       off();
       cv.removeEventListener("pointerdown", onDown);
       cv.removeEventListener("pointermove", onMove);
