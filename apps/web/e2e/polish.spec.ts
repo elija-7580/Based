@@ -753,6 +753,12 @@ test("Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900
       const home = page.getByTestId("home");
       const box = async (sel: string) => (await home.locator(sel).first().boundingBox())!;
       await expect.poll(async () => (await box(".home-greet")).width, { message: `Begrüßung ${w}` }).toBeGreaterThan(0);
+      // BSD-627: Ob das Panel schwebt, rechnet useChatFloats (dockLayout.ts) erst im resize-Ereignis nach. Gemessen
+      // wird die fertige Anordnung, nicht das eine Bild dazwischen, in dem das Panel bei 900 noch andockt (unter Last
+      // in der CI: Spalte bis x = 468, Umschalter bis 475).
+      const chatDock = page.getByTestId("chat-dock");
+      if (w === 900) await expect(chatDock).toHaveAttribute("data-floating");
+      else await expect(chatDock).not.toHaveAttribute("data-floating");
       const panel = (await home.boundingBox())!;
       // nichts ragt seitlich aus der Spalte (Umschalter, Knöpfe im Kopf, Begrüßung, Composer)
       for (const sel of [".home-head .based-switcher", ".home-head .btn", ".home-greet", ".home-dock"]) {
@@ -770,11 +776,10 @@ test("Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900
         const a = (await arc.boundingBox())!;
         expect(a.y, `Bogen unter der Begrüßung (${theme})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
         expect(a.x + a.width, `Bogen in der Spalte (${theme})`).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
-        await page.screenshot({ path: `../../docs/design/screens/web-home-chat-open-${theme}.png` });
+        if (process.env.BASED_SCREENSHOTS === "1") await page.screenshot({ path: `../../docs/design/screens/web-home-chat-open-${theme}.png` });
       } else {
         // BSD-607: in 900 × 600 schwebt das Panel über Home (wie die Seitenleiste unter 860 px), Home behält die
         // volle Spalte – der Bogen bleibt dann auch hier.
-        await expect(page.getByTestId("chat-dock")).toHaveAttribute("data-floating");
         expect(panel.width, `Home-Spalte bei schwebendem Chat (${theme})`).toBeGreaterThanOrEqual(480 - 2 * 12);
         await expect(arc).toBeVisible();
       }
