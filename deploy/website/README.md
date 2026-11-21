@@ -77,6 +77,34 @@ docker compose exec waitlist node --no-warnings waitlist.mjs revoke a@b.c       
 `invites` meldet am Ende, ob die DMG auf dem Server liegt. Ohne DMG antwortet der Download mit 503 und zählt nichts.
 `purge` löscht Einladungen 30 Tage nach Ablauf (steht so in der Datenschutzerklärung).
 
+## Zahlen von außen prüfen (BSD-631)
+
+Damit Elija und die Agenten ohne SSH sehen, ob die Warteliste speichert, gibt es zwei Lese-Routen. Sie zeigen nur
+Zahlen bzw. Ja/Nein, nie eine Adressliste, und sind aus (404), solange kein Token gesetzt ist.
+
+Einmalig am Server (5 Minuten):
+
+```bash
+cd Based/deploy/website            # bzw. Based/deploy/website/edge (Server mit edge-caddy)
+openssl rand -hex 24               # Token erzeugen
+echo 'WAITLIST_STATS_TOKEN=<das Token>' >> .env
+docker compose up -d waitlist
+```
+
+Das Token dann auf einer privaten Notion-Seite „Based — Zugänge für Agenten“ ablegen (nur dieses Token, es zeigt nur
+Zahlen). Prüfen:
+
+```bash
+curl -s -H "Authorization: Bearer <Token>" https://basednotes.app/api/waitlist/stats
+# {"count":12,"last_created_at":"2026-11-20T…","invites_active":0}
+curl -s -H "Authorization: Bearer <Token>" "https://basednotes.app/api/waitlist/check?email=a@b.c"
+# {"listed":true,"created_at":"2026-11-20T…"}
+```
+
+Falsches Token: 401. Gleiches Ratenlimit wie die Formulare (8 Abrufe je 10 Minuten und Adresse).
+
+`.env` ist in git ausgeschlossen (`deploy/**/.env`) und bleibt beim automatischen Update erhalten.
+
 ## Später: based-server auf derselben Maschine
 
 Den Block `sync.basednotes.app` in `Caddyfile` einkommentieren und den Dienst `based` aus `deploy/docker-compose.yml`

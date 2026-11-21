@@ -17,6 +17,8 @@ services:
       PORT: "8790"
       TZ: Europe/Vienna
       WAITLIST_RELOAD: "1"
+      # BSD-631: read-only numbers at /api/waitlist/stats|check (empty = switched off)
+      WAITLIST_STATS_TOKEN: ${WAITLIST_STATS_TOKEN:-}
     volumes:
       # the folder, not the file: a file mount keeps the old version after git replaces it (WAITLIST_RELOAD)
       - ../../apps/website/server:/app:ro

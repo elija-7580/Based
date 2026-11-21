@@ -14,12 +14,15 @@
 //   node server/waitlist.mjs invites                  list invites with downloads and status as CSV
 //   node server/waitlist.mjs revoke <email|token>     withdraw the active link(s)
 //
+// BSD-631: with WAITLIST_STATS_TOKEN set, GET /api/waitlist/stats and /api/waitlist/check?email=… answer with numbers
+// and yes/no only (Authorization: Bearer <token>), so Elija and the agents can check the list over HTTPS. Unset: 404.
+//
 // Caddy forwards /api/* here. Data lives in $WAITLIST_DB (default ./data/waitlist.sqlite).
 // IP addresses are only held in memory for rate limiting (max. one hour), never stored.
 import { createServer } from "node:http";
 import { DatabaseSync } from "node:sqlite";
 import { createReadStream, mkdirSync, readFileSync, statSync } from "node:fs";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -163,6 +166,7 @@ if (cmd === "purge") {
 // ---- HTTP -----------------------------------------------------------------------------
 const hits = new Map(); // ip → timestamps (memory only)
 const dlHits = new Map(); // same for /api/download, own budget
+const statsHits = new Map(); // BSD-631: /api/waitlist/stats|check, own budget
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_HITS = 8;
 const MAX_DL_HITS = 20;
@@ -176,7 +180,7 @@ function limited(ip, map = hits, max = MAX_HITS) {
 }
 setInterval(() => {
   const t = Date.now();
-  for (const map of [hits, dlHits]) for (const [ip, list] of map) if (!list.some((x) => t - x < 60 * 60 * 1000)) map.delete(ip);
+  for (const map of [hits, dlHits, statsHits]) for (const [ip, list] of map) if (!list.some((x) => t - x < 60 * 60 * 1000)) map.delete(ip);
 }, 10 * 60 * 1000).unref();
 
 function send(res, status, body) {
@@ -203,6 +207,28 @@ function readJson(req) {
 // Control characters become spaces (built from char codes to keep the regex lint-clean).
 const CONTROL = new RegExp("[" + String.fromCharCode(0) + "-" + String.fromCharCode(31) + String.fromCharCode(127) + "]", "g");
 const clean = (v, max) => String(v ?? "").replace(CONTROL, " ").trim().slice(0, max);
+
+// ---- BSD-631: read-only numbers for Elija and the agents ------------------------------------
+const countWaitlist = db.prepare("SELECT COUNT(*) AS count, MAX(created_at) AS last FROM waitlist");
+const countActiveInvites = db.prepare("SELECT COUNT(*) AS n FROM invites WHERE revoked_at IS NULL AND expires_at > ? AND downloads < max_downloads");
+const findEmail = db.prepare("SELECT created_at FROM waitlist WHERE email = ?");
+const digest = (s) => createHash("sha256").update(String(s)).digest();
+
+function stats(req, res, url, ip) {
+  const token = String(process.env.WAITLIST_STATS_TOKEN || "").trim();
+  if (!token) return send(res, 404, { error: "not found" }); // switched off until the token is set
+  if (limited(ip, statsHits)) return send(res, 429, { error: "slow down" });
+  const given = /^Bearer\s+(\S+)$/i.exec(String(req.headers.authorization || ""))?.[1] || "";
+  if (!timingSafeEqual(digest(given), digest(token))) return send(res, 401, { error: "unauthorized" });
+  if (url.pathname === "/api/waitlist/stats") {
+    const w = countWaitlist.get();
+    return send(res, 200, { count: Number(w.count), last_created_at: w.last ?? null, invites_active: Number(countActiveInvites.get(now()).n) });
+  }
+  const email = clean(url.searchParams.get("email"), 254).toLowerCase();
+  if (!EMAIL.test(email)) return send(res, 422, { error: "email" });
+  const row = findEmail.get(email);
+  return send(res, 200, { listed: Boolean(row), created_at: row?.created_at ?? null });
+}
 
 const upsert = db.prepare(`
   INSERT INTO waitlist (email, name, role, created_at, updated_at, consent) VALUES (?, ?, ?, ?, ?, ?)
@@ -273,6 +299,8 @@ const server = createServer(async (req, res) => {
   if ((req.method === "GET" || req.method === "HEAD") && url.pathname === "/api/download") {
     return download(req, res, url, String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim());
   }
+  const clientIp = () => String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+  if (req.method === "GET" && (url.pathname === "/api/waitlist/stats" || url.pathname === "/api/waitlist/check")) return stats(req, res, url, clientIp());
   if (req.method !== "POST" || !["/api/waitlist", "/api/ideas"].includes(url.pathname)) return send(res, 404, { error: "not found" });
 
   const origin = req.headers.origin;
