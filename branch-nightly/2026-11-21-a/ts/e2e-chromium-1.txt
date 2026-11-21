@@ -1,17 +1,61 @@
-cancelled d2ac449be3e813ccf374bf55ce79031a4cf84be1
-(kein Testlog – Lauf vor den Tests beendet; Ende des Playwright-Setups:)
-The following additional packages will be installed:
-  libgl1-mesa-dri libglx-mesa0 mesa-libgallium xfonts-encodings xfonts-utils
-Recommended packages:
-  fonts-ipafont-mincho fonts-tlwg-loma
-The following NEW packages will be installed:
-  fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
-  fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
-  xfonts-utils
-The following packages will be upgraded:
-  libgbm1 libgl1-mesa-dri libglx-mesa0 mesa-libgallium
-4 upgraded, 9 newly installed, 0 to remove and 61 not upgraded.
-Need to get 0 B/32.1 MB of archives.
-After this operation, 79.7 MB of additional disk space will be used.
-Selecting previously unselected package fonts-ipafont-gothic.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%
+success e8a8dd0ee99b01b5f906108df5d53c7f5b9a5c6e
+  ✓  290 [chromium] › e2e/html-block-file.spec.ts:79:1 › HTML-Datei öffnen ersetzt den Code; HTML-Datei auf die Seite ziehen legt einen HTML-Block an (1.4s)
+  ✓  291 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1280×820) (1.2s)
+  ✓  292 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 900×600) (1.2s)
+  ✓  287 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.0s)
+  ✓  293 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1728×1000) (1.2s)
+  ✓  295 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1280×820) (1.3s)
+  ✓  294 [chromium] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.2s)
+  ✓  296 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 900×600) (1.4s)
+  ✓  298 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1728×1000) (1.2s)
+  ✓  297 [chromium] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (2.9s)
+  ✓  300 [chromium] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (1.3s)
+  ✓  299 [chromium] › e2e/html-block-file.spec.ts:116:1 › HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos (2.8s)
+  -  301 [chromium] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  302 [chromium] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (2.0s)
+  ✓  303 [chromium] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.0s)
+  ✓  304 [chromium] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.0s)
+  ✓  305 [chromium] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (1.9s)
+  ✓  306 [chromium] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (1.9s)
+  ✓  307 [chromium] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (2.0s)
+  ✓  308 [chromium] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (1.9s)
+  ✓  309 [chromium] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.0s)
+  ✓  310 [chromium] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.3s)
+  ✓  311 [chromium] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (1.4s)
+  ✓  312 [chromium] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.0s)
+  ✓  313 [chromium] › e2e/interop.spec.ts:328:1 › Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563) (1.8s)
+  ✓  314 [chromium] › e2e/interop.spec.ts:352:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (1.9s)
+  ✓  315 [chromium] › e2e/interop.spec.ts:371:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.2s)
+  ✓  316 [chromium] › e2e/interop.spec.ts:390:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.3s)
+  ✓  317 [chromium] › e2e/interop.spec.ts:416:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.6s)
+
+
+  1) [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('home-plain')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('home-plain') with timeout 5000ms
+      - waiting for getByTestId('home-plain')
+
+
+      207 |   await menu.getByRole("menuitem", { name: "Move to Trash" }).click();
+      208 |   await nav(page).getByRole("button", { name: "Home" }).click();
+    > 209 |   await expect(plain).toBeVisible();
+          |                       ^
+      210 |   await page.waitForTimeout(500);
+      211 |   await expect(page.getByLabel("Page title")).toHaveCount(0);
+      212 | });
+        at /home/runner/work/Based/Based/apps/web/e2e/ai-switch.spec.ts:209:23
+
+    Error Context: test-results/ai-switch-ohne-AI-Home-ble-d0eab-nach-Löschen-der-Home-Seite-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite 
+  21 skipped
+  294 passed (7.4m)
