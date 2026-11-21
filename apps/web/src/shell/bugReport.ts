@@ -145,11 +145,18 @@ export function installBugRecorder(win: Window & typeof globalThis = globalThis 
     const root = rootOf(e.target);
     if (root) lastRoot = root;
     // Block-Editor: Auswahl per Maus (Klick, Ziehen, Blockauswahl) nach dem Loslassen – wird als „select“ wiedergegeben.
+    // BSD-628: im nächsten Bild, spätestens nach 50 ms – WebKit drosselt requestAnimationFrame unter Last (und in
+    // verdeckten Fenstern) so stark, dass das Bild erst nach ⇧⌘B kam und die Auswahl im Bericht fehlte.
     if (phase === "up" && root && blockEditors.has(root)) {
-      win.requestAnimationFrame(() => {
+      let done = false;
+      const select = () => {
+        if (done) return;
+        done = true;
         const t = currentBlock(root);
         if (t) record({ kind: "select", root, sel: blockSel(t), cause: "pointer" });
-      });
+      };
+      win.requestAnimationFrame(select);
+      win.setTimeout(select, 50);
     }
   };
   doc.addEventListener("pointerdown", pointer("down"), opts);

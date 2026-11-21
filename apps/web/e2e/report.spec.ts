@@ -8,7 +8,8 @@ import { overflows, overlaps } from "./layout-checks.js";
 const diagTab = (page: import("@playwright/test").Page, name: string) =>
   page.getByTestId("settings-section-diagnostics-details").getByRole("radio", { name, exact: true }).click();
 
-const SECRET = "Quarterly salary Ada Lovelace 4711";
+// BSD-628: Die Zahl hat acht Stellen – „4711“ stand um hh:47:11 auch in der Bericht-ID und in Zeitstempeln (falscher Alarm).
+const SECRET = "Quarterly salary Ada Lovelace 47110815";
 
 type Row = { id: string; bundle: Record<string, unknown> & { recording: { events: { kind: string }[] }; state: { blocks?: unknown; doc?: unknown; root?: string }; layout: { items: { kind: string }[] }; screenshot?: string; note: string }; screenshot?: Blob };
 
@@ -60,7 +61,7 @@ for (const { name, t, open, kinds: expectedKinds, list } of EDITORS) t(`⇧⌘B 
   expect(b.screenshot).toBe("screenshot.png");
   expect(r!.shotSize).toBeGreaterThan(1000);
   const json = JSON.stringify(b);
-  for (const word of ["Quarterly", "salary", "Lovelace", "4711", "second line"]) expect(json).not.toContain(word);
+  for (const word of ["Quarterly", "salary", "Lovelace", "47110815", "second line"]) expect(json).not.toContain(word);
 
   // Danach in Settings → Diagnostics → Reports
   await saved.getByRole("button", { name: "Open Diagnostics" }).click();
@@ -165,7 +166,7 @@ for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Report saved �
   expect(text).toMatch(/subject=Based \S+ – problem report/);
   expect(text).toContain("Channel: dev");
   expect(text).toMatch(/Report: \d{8}-\d{6}-\w+/);
-  for (const leak of ["Quarterly", "Lovelace", "4711", "Mozilla"]) expect(text).not.toContain(leak);
+  for (const leak of ["Quarterly", "Lovelace", "47110815", "Mozilla"]) expect(text).not.toContain(leak);
   await expect(saved).toBeVisible();
 
   // kleinstes Fenster: nichts läuft heraus, Knopf erreichbar
