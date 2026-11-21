@@ -420,47 +420,55 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   // Einträge ziehen: umsortieren und zwischen oben und Fuß verschieben (pro Gerät gemerkt, wie Anpinnen/Ausblenden).
   const navDragging = useRef<NavID | undefined>(undefined);
   const [navDrop, setNavDrop] = useState<{ id: NavID; side: "before" | "after" } | undefined>();
-  const navDrag = (id: NavID, list: "top" | "footer", go: () => void) => ({
-    draggable: true,
-    onDragStart: (e: DragEvent<HTMLElement>) => {
-      noteDragStart(e);
-      navDragging.current = id;
-      e.dataTransfer.setData(NAV_DRAG_TYPE, id);
-      e.dataTransfer.effectAllowed = "move";
-    },
-    onDragEnd: () => {
-      navDragging.current = undefined;
-      setNavDrop(undefined);
-    },
-    onDragOver: (e: DragEvent<HTMLElement>) => {
-      if (!navDragging.current) return;
-      e.preventDefault();
-      // auf sich selbst: Ablegen erlauben (wird zum Klick, siehe onDrop), aber keine Einfügemarke
-      if (navDragging.current === id) return;
-      e.dataTransfer.dropEffect = "move";
+  const navDrag = (id: NavID, list: "top" | "footer", go: () => void) => {
+    // oben stehen die Einträge untereinander, im Fuß (Icon-Zeile) nebeneinander
+    const navSide = (e: DragEvent<HTMLElement>): "before" | "after" => {
       const r = e.currentTarget.getBoundingClientRect();
-      // oben stehen die Einträge untereinander, im Fuß (Icon-Zeile) nebeneinander
       const first = list === "top" || FOOTER_STYLE !== "icons" ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
-      const side = first ? "before" : "after";
-      if (navDrop?.id !== id || navDrop.side !== side) setNavDrop({ id, side });
-    },
-    onDragLeave: () => setNavDrop((d) => (d?.id === id ? undefined : d)),
-    onDrop: (e: DragEvent<HTMLElement>) => {
-      const moved = navDragging.current;
-      const side = navDrop?.id === id ? navDrop.side : "before";
-      navDragging.current = undefined;
-      setNavDrop(undefined);
-      if (!moved) return;
-      e.preventDefault();
-      if (moved === id) {
-        if (releasedAsClick(e)) go();
-        return;
-      }
-      const ids = list === "top" ? layout.top : layout.footer;
-      const before = side === "before" ? id : ids[ids.indexOf(id) + 1];
-      changeNav((p) => moveNav(p, moved, list, before === moved ? ids[ids.indexOf(moved) + 1] : before, { advanced, ai }));
-    },
-  });
+      return first ? "before" : "after";
+    };
+    return {
+      draggable: true,
+      onDragStart: (e: DragEvent<HTMLElement>) => {
+        noteDragStart(e);
+        navDragging.current = id;
+        e.dataTransfer.setData(NAV_DRAG_TYPE, id);
+        e.dataTransfer.effectAllowed = "move";
+      },
+      onDragEnd: () => {
+        navDragging.current = undefined;
+        setNavDrop(undefined);
+      },
+      onDragOver: (e: DragEvent<HTMLElement>) => {
+        if (!navDragging.current) return;
+        e.preventDefault();
+        // auf sich selbst: Ablegen erlauben (wird zum Klick, siehe onDrop), aber keine Einfügemarke
+        if (navDragging.current === id) return;
+        e.dataTransfer.dropEffect = "move";
+        const side = navSide(e);
+        if (navDrop?.id !== id || navDrop.side !== side) setNavDrop({ id, side });
+      },
+      onDragLeave: () => setNavDrop((d) => (d?.id === id ? undefined : d)),
+      onDrop: (e: DragEvent<HTMLElement>) => {
+        const moved = navDragging.current;
+        // BSD-628: Seite aus der Position des Drops selbst (wie onDragOver), nicht aus dem React-Zustand – unter Last kam
+        // der Drop vor dem Neuzeichnen nach dem letzten dragover an, der Zustand war alt (oder leer) und der Eintrag
+        // landete „before“ statt „after“ (wie beim Seitenbaum, onDrop oben).
+        const side = navSide(e);
+        navDragging.current = undefined;
+        setNavDrop(undefined);
+        if (!moved) return;
+        e.preventDefault();
+        if (moved === id) {
+          if (releasedAsClick(e)) go();
+          return;
+        }
+        const ids = list === "top" ? layout.top : layout.footer;
+        const before = side === "before" ? id : ids[ids.indexOf(id) + 1];
+        changeNav((p) => moveNav(p, moved, list, before === moved ? ids[ids.indexOf(moved) + 1] : before, { advanced, ai }));
+      },
+    };
+  };
   const dropClass = (id: NavID) => (navDrop?.id === id ? ` nav-drop-${navDrop.side}` : "");
   const navButton = (n: NavEntry) => (
     <button key={n.id} type="button" className={"nav-item" + dropClass(n.id)} aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "top", n.go)}>
