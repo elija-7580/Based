@@ -343,6 +343,27 @@ interface ContentEntry {
   path: string[];
 }
 
+/**
+ * Die ersten `k` Einträge nach `cmp`, in dieser Reihenfolge – dasselbe wie `[...items].sort(cmp).slice(0, k)`, wenn
+ * `cmp` streng ordnet, aber ohne alles zu sortieren: meist ein Vergleich je Eintrag (mit dem bisher k-ten).
+ */
+export function firstK<T>(items: readonly T[], k: number, cmp: (a: T, b: T) => number): T[] {
+  const top: T[] = [];
+  if (k <= 0) return top;
+  for (const x of items) {
+    if (top.length === k && cmp(x, top[k - 1]!) >= 0) continue;
+    let lo = 0, hi = top.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (cmp(top[mid]!, x) <= 0) lo = mid + 1;
+      else hi = mid;
+    }
+    top.splice(lo, 0, x);
+    if (top.length > k) top.pop();
+  }
+  return top;
+}
+
 function comparePaths(a: string[], b: string[]): number {
   const n = Math.min(a.length, b.length);
   for (let i = 0; i < n; i++) if (a[i] !== b[i]) return a[i]! < b[i]! ? -1 : 1;
@@ -627,10 +648,11 @@ export class SearchIndex implements SearchSource {
     const tick = () => (++n & 4095) === 0 && cancelled();
     for (const [id, folded] of this.titles) {
       if (tick()) return undefined;
-      const b = blocks.get(id);
-      if (!b || !allowed(b)) continue;
+      // Erst der Text (passt meist nicht), dann Block und Filter – gleiches Ergebnis, ein Bruchteil der Arbeit.
       const s = titleScore(folded, q, terms);
-      if (s !== undefined) hits.set(id, { pageID: id, score: s + recency(b) });
+      if (s === undefined) continue;
+      const b = blocks.get(id);
+      if (b && allowed(b)) hits.set(id, { pageID: id, score: s + recency(b) });
     }
     if (!filters.titleOnly) {
       // Erster passender Block je Seite in Dokumentreihenfolge.
@@ -655,8 +677,9 @@ export class SearchIndex implements SearchSource {
       }
       for (const [id, folded] of this.rows) {
         if (tick()) return undefined;
+        if (!terms.every((t) => folded.includes(t)) || hits.has(id)) continue;
         const b = blocks.get(id);
-        if (hits.has(id) || !b || !allowed(b) || !terms.every((t) => folded.includes(t))) continue;
+        if (!b || !allowed(b)) continue;
         hits.set(id, { pageID: id, score: 15 });
         snippetOf.set(id, () => snippet(rowText(b), folded, terms[0]!));
       }
@@ -680,7 +703,7 @@ export class SearchIndex implements SearchSource {
       if (t === undefined) titleCache.set(id, (t = searchTitle(this, id)));
       return t;
     };
-    out.sort((a, b) => {
+    const order = (a: SearchHit, b: SearchHit): number => {
       switch (sort) {
         case "bestMatch": {
           if (a.score !== b.score) return b.score - a.score;
@@ -693,8 +716,10 @@ export class SearchIndex implements SearchSource {
         case "createdNewest": return date(b, true) - date(a, true) || byId(a, b);
         case "createdOldest": return date(a, true) - date(b, true) || byId(a, b);
       }
-    });
-    const top = out.slice(0, limit);
+    };
+    // Gebraucht werden nur die ersten `limit`: bei vielen Treffern (kurze Anfrage, viele gleiche Punkte) nur diese
+    // auswählen statt alle zu sortieren – dasselbe Ergebnis (die Ordnung ist streng: zuletzt nach ID).
+    const top = limit > 0 && Number.isFinite(limit) && out.length > limit ? firstK(out, limit, order) : out.sort(order).slice(0, limit);
     for (const h of top) {
       const make = snippetOf.get(h.pageID);
       if (make) h.snippet = make();

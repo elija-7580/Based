@@ -197,13 +197,19 @@ function hashFile(path: string): Promise<string> {
  */
 export function referencedAssets(store: WorkspaceStore): Set<string> {
   const out = new Set<string>();
+  for (const r of store.allRecords()) assetHashesIn(r.data, out);
+  return out;
+}
+
+/** Wie `referencedAssets`, für einen einzelnen Wert (z. B. die Daten eines geänderten Records). */
+export function assetHashesIn(value: unknown, out: Set<string> = new Set()): Set<string> {
   const walk = (v: unknown) => {
     if (typeof v === "string") {
       if (v.length === 64 && ASSET_HASH.test(v)) out.add(v);
     } else if (Array.isArray(v)) v.forEach(walk);
     else if (typeof v === "object" && v !== null) for (const x of Object.values(v)) walk(x);
   };
-  for (const r of store.allRecords()) walk(r.data);
+  walk(value);
   return out;
 }
 

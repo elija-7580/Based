@@ -597,9 +597,11 @@ export class ShareService {
   /** Gehört die Datei (SHA-256) zu einem Record, den der Principal lesen darf? */
   canReadAsset(p: SharePrincipal, hash: string): boolean {
     if (p.kind === "owner") return true;
+    // Erst die Rolle (ein Weg nach oben), dann der Text: Records außerhalb des geteilten Bereichs – fast alle – werden
+    // nicht mehr je Datei-Anfrage als JSON ausgegeben (bei 600 000 Records ~1 s je Bild einer geteilten Seite).
     for (const r of this.store.allRecords()) {
-      if (r.kind === "workspace" || !JSON.stringify(r.data).includes(hash)) continue;
-      if (this.canRead(p, r)) return true;
+      if (r.kind === "workspace" || !this.canRead(p, r)) continue;
+      if (JSON.stringify(r.data).includes(hash)) return true;
     }
     return false;
   }

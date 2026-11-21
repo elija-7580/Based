@@ -60,6 +60,51 @@ describe("Ordner-Sync im Server (BSD-334)", () => {
     expect(b.assets.status(hash).complete).toBe(true);
   });
 
+  it("Laufzeit (20.11.): eine Runde sieht nur geänderte Records an; ein später angekommener Anhang wird nachgeholt", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "based-icloud-"));
+    const { a, b } = await two(folder);
+    // Die erste Runde (beim Start) sieht alles an. Danach zählen, wie oft der ganze Workspace nach Anhängen durchsucht
+    // wird (vorher: jede Runde, alle 5 s).
+    await b.folderSync!.round();
+    let scans = 0;
+    const svc = b.folderSync! as unknown as { o: { referencedAssets: () => ReadonlySet<string> } };
+    const scan = svc.o.referencedAssets;
+    svc.o.referencedAssets = () => { scans += 1; return scan(); };
+    await b.folderSync!.round();
+    await b.folderSync!.round();
+    expect(scans).toBe(0);
+    // Mac A nennt eine Datei, die erst später im Ordner liegt: B merkt sie sich und holt sie, sobald sie da ist
+    const bytes = Buffer.from("arrives later");
+    const hash = await sha256Hex(new Uint8Array(bytes));
+    const now = 800_000_000;
+    a.sync.store.applyRemote([{ kind: "block", data: { id: "LATE", type: "file", parent: "w", sk: "a2", props: { asset: { id: hash, name: "late.txt", size: bytes.length } }, createdAt: now, updatedAt: now, stamp: { millis: Date.now(), counter: 0, node: "client-a" } } }]);
+    await a.folderSync!.round();
+    await b.folderSync!.round();
+    expect(b.sync.store.blocks.has("LATE")).toBe(true);
+    expect(b.assets.status(hash).complete).toBe(false);
+    await a.assets.write(hash, 0, bytes.length, bytes);
+    await a.folderSync!.round(); // spätestens jede 12. Runde schreibt A seine Anhänge; hier ausdrücklich:
+    await a.folderSync!.assets.push();
+    await b.folderSync!.round();
+    expect(b.assets.status(hash).complete).toBe(true);
+    expect(scans).toBe(0);
+  });
+
+  it("Laufzeit (20.11.): unveränderter Zustand wird nicht jede Runde neu gespeichert", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "based-icloud-"));
+    const { a } = await two(folder);
+    await a.folderSync!.round();
+    let writes = 0;
+    const p = a.sync.persistence as unknown as { setMeta: (k: string, v: string) => void };
+    const setMeta = p.setMeta.bind(p);
+    p.setMeta = (k, v) => { if (k === "folder-sync.state") writes += 1; setMeta(k, v); };
+    for (let i = 0; i < 5; i++) await a.folderSync!.round();
+    expect(writes).toBe(0);
+    createPage(a.sync.store, { title: "New" });
+    await a.folderSync!.round();
+    expect(writes).toBeGreaterThan(0);
+  });
+
   it("Zustand übersteht den Neustart (kein erneutes Lesen), Optionen", async () => {
     const folder = mkdtempSync(join(tmpdir(), "based-icloud-"));
     const dbDir = mkdtempSync(join(tmpdir(), "based-icloud-db-"));

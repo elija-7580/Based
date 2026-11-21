@@ -7,7 +7,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { parseKey, type WorkspaceStore } from "@based/core";
 import { type SqlDatabase } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
-import { ASSET_CHUNK_LIMIT, ASSET_HASH, AssetError, AssetStore, parseRange, referencedAssets } from "./assets.js";
+import { ASSET_CHUNK_LIMIT, ASSET_HASH, AssetError, AssetStore, assetHashesIn, parseRange, referencedAssets } from "./assets.js";
 import { Collab, YStateStore } from "./collab.js";
 import { createLogger, type Logger } from "./log.js";
 import { createMcpServer, mcpToolList } from "./mcp.js";
@@ -301,7 +301,7 @@ export function createApp(opts: AppOptions): App {
   const backups = opts.backupDir ? new Backups(opts.backupDir, sync.store, assets, log, opts.backupCreate ?? true) : undefined;
   // BSD-334: Ordner-Sync – nach Backups, damit ein Stand vor dem ersten Einmischen gesichert werden kann
   const folderSync = opts.folderSync
-    ? new FolderSyncService({ ...opts.folderSync, store: sync.store, persistence: sync.persistence, assets, log, referencedAssets: () => referencedAssets(sync.store) })
+    ? new FolderSyncService({ ...opts.folderSync, store: sync.store, persistence: sync.persistence, assets, log, referencedAssets: () => referencedAssets(sync.store), assetsOf: (r) => assetHashesIn(r.data) })
     : undefined;
   if (folderSync) {
     folderSync.start();

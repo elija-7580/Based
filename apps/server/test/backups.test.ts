@@ -5,7 +5,10 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { ARCHIVE_VERSION, createPage, emptyTrash, encodeArchive, keyOf, snapshotName, trashPages, type WireRecord } from "@based/core";
+import { ARCHIVE_VERSION, createPage, emptyTrash, encodeArchive, keyOf, snapshotName, trashPages, WorkspaceStore, type WireRecord } from "@based/core";
+import { AssetStore } from "../src/assets.js";
+import { Backups } from "../src/backups.js";
+import { silentLogger } from "../src/log.js";
 import { parseOptions } from "../src/main.js";
 import { startApp, TOKEN } from "./helpers.js";
 
@@ -129,5 +132,24 @@ describe("Backups (BSD-274)", () => {
     expect(store.blocks.get("img558")).toBeDefined();
     expect(app.assets.locate(hash)?.size).toBe(png.length);
     expect(readdirSync(join(dir, "snapshots"))).not.toContain(s); // vom Aufräumen gelöscht – die Datei ist trotzdem da
+  });
+  it("Laufzeit (20.11.): ohne Änderung seit dem letzten Stand wird nicht der ganze Workspace ausgegeben", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "based-backups-"));
+    const store = new WorkspaceStore({ node: "BACKUPREV0000001" });
+    const backups = new Backups(dir, store, new AssetStore(mkdtempSync(join(tmpdir(), "based-backup-assets-"))), silentLogger);
+    createPage(store, { title: "One" });
+    let exports = 0;
+    const exportRecords = store.exportRecords.bind(store);
+    store.exportRecords = () => { exports += 1; return exportRecords(); };
+    expect(await backups.snapshot()).toBeDefined();
+    expect(await backups.snapshot()).toBeUndefined();
+    expect(await backups.snapshot()).toBeUndefined();
+    expect(exports).toBe(1);
+    createPage(store, { title: "Two" });
+    expect(await backups.snapshot()).toBeDefined();
+    expect(exports).toBe(2);
+    // „Jetzt sichern“ (force) sichert immer
+    expect(await backups.snapshot(true)).toBeDefined();
+    expect(exports).toBe(3);
   });
 });
