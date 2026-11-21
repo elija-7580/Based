@@ -3,6 +3,7 @@
 import { expect, type Page } from "@playwright/test";
 import { editor, openNewPage, ready, test } from "./replay/fixture.js";
 import { overflows, overlaps } from "./layout-checks.js";
+import { bestOf, expectFaster } from "./perf.js";
 import { routeReports, startReportServer } from "./report-server.js";
 
 // Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
@@ -357,4 +358,26 @@ test("Send to Based ohne Server: Warteschlange, nach dem Neuladen gesendet", asy
   } finally {
     await server.stop();
   }
+});
+
+// BSD-642: Das Foto kopierte je Element den ganzen berechneten Stil (WebKit: immer per cssText) – ⇧⌘B bis zum Dialog
+// dauerte in WebKit 1,6–4 s, unter Last fehlte das Foto (Grenze 5 s). Mit der Liste der sichtbaren Eigenschaften:
+// unter 1,5 s, mit Foto; getComputedStyle ist danach wieder das Original.
+test("⇧⌘B öffnet den Dialog mit Foto in unter 1,5 s", { tag: "@perf" }, async ({ page }, info) => {
+  await ready(page);
+  await openNewPage(page, "Fast");
+  await page.keyboard.type("hello world");
+  const dialog = page.getByRole("dialog", { name: "Report a problem" });
+  const ms = await bestOf(3, async () => {
+    const t0 = Date.now();
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    const took = Date.now() - t0;
+    await expect(dialog.getByRole("checkbox", { name: "Include a screenshot" })).toBeEnabled();
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toBeHidden();
+    return took;
+  }, (v) => v >= 1500, (a, b) => a < b);
+  expectFaster(info, "⇧⌘B bis Dialog mit Foto", ms, 1500);
+  expect(await page.evaluate(() => /\[native code\]/.test(String(window.getComputedStyle)))).toBe(true);
 });

@@ -273,16 +273,71 @@ export function freezeReport(win: Window = globalThis as unknown as Window): Fro
   return { at: Date.now(), events: recorder.snapshot(), state, layout: layoutSnapshot(win), env, app, log: diagnosticsLog.getSnapshot(), hangs: hangBundle() };
 }
 
+/**
+ * BSD-642: Diese Eigenschaften übernimmt das Foto je Element (statt aller ~400). html-to-image kopiert sonst den
+ * vollständigen berechneten Stil inline – in WebKit über `cssText` sogar immer, auch mit einer Liste. Das machte das
+ * SVG mehrere MB groß; Klonen und Rastern dauerten in WebKit 1–1,9 s (unter Last über die 5-s-Grenze, Foto fehlte).
+ * Mit der Liste: WebKit ~0,45 s, Chromium ~0,1 s, gleiches Bild. Fehlt eine Eigenschaft, die etwas sichtbar macht,
+ * gehört sie hierher.
+ */
+export const SHOT_STYLE_PROPS: readonly string[] = [
+  "display", "position", "top", "right", "bottom", "left", "z-index", "float", "clear", "box-sizing",
+  "width", "height", "min-width", "min-height", "max-width", "max-height",
+  "margin-top", "margin-right", "margin-bottom", "margin-left", "padding-top", "padding-right", "padding-bottom", "padding-left",
+  "flex-direction", "flex-wrap", "flex-grow", "flex-shrink", "flex-basis", "order",
+  "align-items", "align-self", "align-content", "justify-content", "justify-items", "justify-self",
+  "grid-template-columns", "grid-template-rows", "grid-template-areas", "grid-auto-flow", "grid-auto-columns", "grid-auto-rows",
+  "grid-column-start", "grid-column-end", "grid-row-start", "grid-row-end", "row-gap", "column-gap",
+  "overflow-x", "overflow-y", "visibility", "opacity", "transform", "transform-origin", "clip-path", "isolation", "mix-blend-mode", "filter", "backdrop-filter",
+  "color", "background-color", "background-image", "background-size", "background-position", "background-repeat", "background-clip", "background-origin",
+  "border-top-width", "border-right-width", "border-bottom-width", "border-left-width",
+  "border-top-style", "border-right-style", "border-bottom-style", "border-left-style",
+  "border-top-color", "border-right-color", "border-bottom-color", "border-left-color",
+  "border-top-left-radius", "border-top-right-radius", "border-bottom-right-radius", "border-bottom-left-radius",
+  "box-shadow", "outline-width", "outline-style", "outline-color", "outline-offset",
+  "font-family", "font-size", "font-weight", "font-style", "font-variant-numeric", "font-feature-settings", "line-height", "letter-spacing", "word-spacing",
+  "text-align", "text-indent", "text-transform", "text-decoration-line", "text-decoration-color", "text-decoration-style", "text-overflow", "text-shadow",
+  "white-space", "word-break", "overflow-wrap", "vertical-align", "direction", "-webkit-line-clamp", "-webkit-box-orient",
+  "list-style-type", "list-style-position", "object-fit", "object-position", "table-layout", "border-collapse", "border-spacing",
+  "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "content", "caret-color", "aspect-ratio",
+];
+
+/**
+ * Für die Dauer des Fotos liefert `getComputedStyle` ein leeres `cssText` – dann nimmt html-to-image die Liste oben
+ * statt des ganzen Stils (WebKit füllt `cssText` sonst immer). Sonst unverändert; danach wieder das Original.
+ */
+async function withListedStyles<T>(win: Window, run: () => Promise<T>): Promise<T> {
+  const w = win as { getComputedStyle: Window["getComputedStyle"] };
+  const original = w.getComputedStyle;
+  w.getComputedStyle = ((el: Element, pseudo?: string | null) => {
+    const style = original.call(win, el, pseudo);
+    return new Proxy(style, {
+      get(target, key) {
+        if (key === "cssText") return "";
+        const v = Reflect.get(target, key, target) as unknown;
+        return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+      },
+    });
+  }) as Window["getComputedStyle"];
+  try {
+    return await run();
+  } finally {
+    w.getComputedStyle = original;
+  }
+}
+
 /** Bildschirmfoto des Fensters (DOM gerastert; der Melde-Dialog bleibt draußen). Scheitert still → undefined. */
 export async function captureScreenshot(win: Window = globalThis as unknown as Window): Promise<Blob | undefined> {
   try {
     const { toBlob } = await import("html-to-image");
     const node = win.document.body;
-    const blob = await toBlob(node, {
+    const backgroundColor = win.getComputedStyle(node).backgroundColor || undefined;
+    const blob = await withListedStyles(win, () => toBlob(node, {
       width: win.innerWidth, height: win.innerHeight, pixelRatio: Math.min(2, win.devicePixelRatio || 1), cacheBust: false,
       filter: (n) => !(n instanceof Element && n.hasAttribute(REPORT_EXCLUDE)),
-      backgroundColor: win.getComputedStyle(win.document.body).backgroundColor || undefined,
-    });
+      includeStyleProperties: [...SHOT_STYLE_PROPS],
+      ...(backgroundColor ? { backgroundColor } : {}),
+    }));
     return blob ?? undefined;
   } catch (e) {
     diagnosticsLog.add("warning", `report screenshot failed: ${e instanceof Error ? e.message : String(e)}`);
