@@ -306,23 +306,38 @@ export const SHOT_STYLE_PROPS: readonly string[] = [
  * Für die Dauer des Fotos liefert `getComputedStyle` ein leeres `cssText` – dann nimmt html-to-image die Liste oben
  * statt des ganzen Stils (WebKit füllt `cssText` sonst immer). Sonst unverändert; danach wieder das Original.
  */
-async function withListedStyles<T>(win: Window, run: () => Promise<T>): Promise<T> {
+// Review 21.11.: Zwei Fotos können sich überlappen (das erste läuft nach der 5-s-Grenze in reportUI weiter, ⇧⌘B
+// danach erneut). Ohne Zähler hielte das zweite die schon ersetzte Funktion für das Original und stellte sie zum
+// Schluss wieder her – `getComputedStyle` bliebe für immer ersetzt. Darum je Fenster: einmal ersetzen, beim letzten
+// Ende zurück.
+const listedStyles = new WeakMap<object, { original: Window["getComputedStyle"]; depth: number }>();
+
+export async function withListedStyles<T>(win: Window, run: () => Promise<T>): Promise<T> {
   const w = win as { getComputedStyle: Window["getComputedStyle"] };
-  const original = w.getComputedStyle;
-  w.getComputedStyle = ((el: Element, pseudo?: string | null) => {
-    const style = original.call(win, el, pseudo);
-    return new Proxy(style, {
-      get(target, key) {
-        if (key === "cssText") return "";
-        const v = Reflect.get(target, key, target) as unknown;
-        return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
-      },
-    });
-  }) as Window["getComputedStyle"];
+  let entry = listedStyles.get(win);
+  if (!entry) {
+    const original = w.getComputedStyle;
+    entry = { original, depth: 0 };
+    listedStyles.set(win, entry);
+    w.getComputedStyle = ((el: Element, pseudo?: string | null) => {
+      const style = original.call(win, el, pseudo);
+      return new Proxy(style, {
+        get(target, key) {
+          if (key === "cssText") return "";
+          const v = Reflect.get(target, key, target) as unknown;
+          return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+        },
+      });
+    }) as Window["getComputedStyle"];
+  }
+  entry.depth++;
   try {
     return await run();
   } finally {
-    w.getComputedStyle = original;
+    if (--entry.depth === 0) {
+      w.getComputedStyle = entry.original;
+      listedStyles.delete(win);
+    }
   }
 }
 
