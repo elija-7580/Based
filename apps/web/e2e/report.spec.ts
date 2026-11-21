@@ -3,6 +3,7 @@
 import { expect, type Page } from "@playwright/test";
 import { editor, openNewPage, ready, test } from "./replay/fixture.js";
 import { overflows, overlaps } from "./layout-checks.js";
+import { routeReports, startReportServer } from "./report-server.js";
 
 // Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
 const diagTab = (page: import("@playwright/test").Page, name: string) =>
@@ -274,4 +275,86 @@ test("Aufzeichnung kostet beim Tippen messbar nichts", async ({ page }) => {
   });
   // unter 0,05 ms je Taste (ein Bild hat 16 ms)
   expect(extra).toBeLessThan(0.05);
+});
+
+// BSD-632: „Send to Based“ – ein Klick speichert lokal und schickt den Bericht an den Server (hier der echte Dienst aus
+// apps/website/server, lokal gestartet; basednotes.app wird umgeleitet). Ohne Nutzertext, mit Foto, 900 × 600 passt.
+for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Send to Based: Bericht kommt beim Server an, ohne Nutzertext (${theme})`, async ({ page, browserName }) => {
+  const server = await startReportServer();
+  try {
+    await routeReports(page, server);
+    await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await ready(page);
+    await openNewPage(page, "Send");
+    await page.keyboard.type(SECRET);
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    const dialog = page.getByRole("dialog", { name: "Report a problem" });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    // Hauptknopf rechts außen, das Foto als Vorschau, Senden erst mit Satz
+    const send = dialog.getByRole("button", { name: "Send to Based" });
+    await expect(send).toBeDisabled();
+    await expect(dialog.getByTestId("report-shot")).toBeVisible();
+    await dialog.getByRole("textbox", { name: "What did you do, and what happened?" }).fill("Private note about Lovelace");
+    await page.mouse.move(0, 0);
+    expect(await overflows(page)).toEqual([]);
+    expect(await overlaps(page)).toEqual([]);
+    if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") await dialog.screenshot({ path: `../../docs/design/screens/report-send-${theme}.png` });
+    await page.setViewportSize({ width: 900, height: 600 });
+    for (const name of ["Cancel", "Save report", "Send to Based"]) await expect(dialog.getByRole("button", { name })).toBeInViewport({ ratio: 1 });
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await send.click();
+
+    const sent = page.getByRole("dialog", { name: "Sent. Thank you!" });
+    await expect(sent.getByTestId("report-sent")).toHaveAttribute("data-state", "sent", { timeout: 15_000 });
+    const id = (await sent.getByTestId("report-id").textContent())!.replace("Report ", "");
+    expect(id).toMatch(/^\d{8}-\d{6}-[0-9a-f]{4}$/);
+    if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") await sent.screenshot({ path: `../../docs/design/screens/report-sent-${theme}.png` });
+    // beim Server: Bündel mit Satz, ohne Seitentext, Foto daneben
+    const stored = server.report(id)!;
+    expect(stored).toBeDefined();
+    expect(stored.note).toBe("Private note about Lovelace");
+    const json = JSON.stringify(stored);
+    for (const word of ["Quarterly", "salary", "47110815"]) expect(json).not.toContain(word);
+    expect(server.hasScreenshot(id)).toBe(true);
+    // lokal gespeichert, nicht in der Warteschlange
+    const [r] = await savedReports(page);
+    expect(r!.id).toBe(id);
+    expect((r as unknown as { outbox?: boolean }).outbox).toBeUndefined();
+    await sent.getByRole("button", { name: "Done" }).click();
+    await expect(sent).toBeHidden();
+  } finally {
+    await server.stop();
+  }
+});
+
+// BSD-632: Server nicht erreichbar → „Report saved“ mit „Waiting to send“, der Bericht wartet in der Warteschlange und
+// geht nach dem Neuladen von selbst raus (gleiche ID; der Server legt keinen zweiten an).
+test("Send to Based ohne Server: Warteschlange, nach dem Neuladen gesendet", async ({ page }) => {
+  const server = await startReportServer();
+  try {
+    await routeReports(page, { status: 503 });
+    await ready(page);
+    await openNewPage(page, "Offline");
+    await page.keyboard.type("hello");
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    const dialog = page.getByRole("dialog", { name: "Report a problem" });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await dialog.getByRole("textbox", { name: "What did you do, and what happened?" }).fill("Offline report");
+    await dialog.getByRole("button", { name: "Send to Based" }).click();
+    const saved = page.getByRole("dialog", { name: "Report saved" });
+    await expect(saved.getByTestId("report-queued")).toHaveAttribute("data-state", "later", { timeout: 15_000 });
+    await expect(saved).toContainText("will be sent automatically");
+    await expect(saved.getByRole("button", { name: "Email report" })).toBeVisible();
+    const [r] = await savedReports(page);
+    expect((r as unknown as { outbox?: boolean }).outbox).toBe(true);
+    await saved.getByRole("button", { name: "Done" }).click();
+
+    // Netz wieder da: Neuladen sendet die Warteschlange
+    await routeReports(page, server);
+    await ready(page);
+    await expect.poll(() => server.report(r!.id)?.note, { timeout: 20_000 }).toBe("Offline report");
+    await expect.poll(async () => (await savedReports(page))[0] as unknown as { outbox?: boolean }).not.toHaveProperty("outbox", true);
+  } finally {
+    await server.stop();
+  }
 });

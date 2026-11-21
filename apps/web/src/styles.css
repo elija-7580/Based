@@ -377,6 +377,10 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .dialog-options .option[aria-checked="true"] { background: var(--bg); box-shadow: var(--shadow-panel); }
 .dialog-error { color: var(--danger); }
 .dialog-report ul { margin: var(--space-1) 0 0; padding-left: var(--space-5); max-height: 30vh; overflow-y: auto; }
+/* BSD-632: Vorschau des Bildschirmfotos im Dialog „Report a problem“ – Fläche statt Rahmen, ganz sichtbar, nicht markierbar. */
+.report-shot { display: block; width: 100%; max-height: 20vh; object-fit: contain; padding: var(--space-1); box-sizing: border-box; background: var(--surface-raised); border-radius: var(--radius-md); user-select: none; -webkit-user-select: none; }
+/* In niedrigen Fenstern (unter 720 px, z. B. 900 × 600) ginge sonst der Dialog über den Rand – dort ohne Vorschau, das Häkchen bleibt. */
+@media (max-height: 45rem) { .report-shot { display: none; } }
 .progress { height: var(--space-2); border-radius: var(--radius-pill); background: var(--surface-raised); overflow: hidden; }
 .progress > span { display: block; height: 100%; background: var(--ink-2); border-radius: inherit; transition: width var(--duration-fast) var(--ease-out); }
 .qf-item mark { background: var(--marker); color: inherit; border-radius: var(--radius-xs); }
