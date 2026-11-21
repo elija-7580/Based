@@ -1,61 +1,61 @@
-success e8a8dd0ee99b01b5f906108df5d53c7f5b9a5c6e
-  ✓  290 [chromium] › e2e/html-block-file.spec.ts:79:1 › HTML-Datei öffnen ersetzt den Code; HTML-Datei auf die Seite ziehen legt einen HTML-Block an (1.4s)
-  ✓  291 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1280×820) (1.2s)
-  ✓  292 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 900×600) (1.2s)
-  ✓  287 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.0s)
-  ✓  293 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1728×1000) (1.2s)
-  ✓  295 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1280×820) (1.3s)
-  ✓  294 [chromium] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.2s)
-  ✓  296 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 900×600) (1.4s)
-  ✓  298 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1728×1000) (1.2s)
-  ✓  297 [chromium] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (2.9s)
-  ✓  300 [chromium] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (1.3s)
-  ✓  299 [chromium] › e2e/html-block-file.spec.ts:116:1 › HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos (2.8s)
-  -  301 [chromium] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
-  ✓  302 [chromium] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (2.0s)
-  ✓  303 [chromium] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.0s)
-  ✓  304 [chromium] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.0s)
-  ✓  305 [chromium] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (1.9s)
-  ✓  306 [chromium] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (1.9s)
-  ✓  307 [chromium] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (2.0s)
-  ✓  308 [chromium] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (1.9s)
-  ✓  309 [chromium] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.0s)
-  ✓  310 [chromium] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.3s)
-  ✓  311 [chromium] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (1.4s)
-  ✓  312 [chromium] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.0s)
-  ✓  313 [chromium] › e2e/interop.spec.ts:328:1 › Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563) (1.8s)
-  ✓  314 [chromium] › e2e/interop.spec.ts:352:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (1.9s)
-  ✓  315 [chromium] › e2e/interop.spec.ts:371:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.2s)
-  ✓  316 [chromium] › e2e/interop.spec.ts:390:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.3s)
-  ✓  317 [chromium] › e2e/interop.spec.ts:416:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.6s)
+failure d4b25b920a7d9ba37f202a6244cf5f8a1d22cc48
+  ✓  315 [chromium] › e2e/interop.spec.ts:352:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (1.9s)
+  ✓  316 [chromium] › e2e/interop.spec.ts:371:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.2s)
+  ✓  317 [chromium] › e2e/interop.spec.ts:390:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.3s)
+  ✓  318 [chromium] › e2e/interop.spec.ts:416:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.6s)
 
 
-  1) [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite 
+  1) [chromium] › e2e/find.spec.ts:156:1 › Quick Find: scheitert die Suche, hängt Enter nicht ──────
 
-    Error: expect(locator).toBeVisible() failed
+    Test timeout of 30000ms exceeded.
 
-    Locator: getByTestId('home-plain')
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog', { name: 'Quick Find' }).getByRole('combobox', { name: 'Search pages' })
+
+
+      171 |   await based(page, `const c = b.client, s = c.search.bind(c); let fail = true; c.search = (...a) => fail ? new Promise((ok) => setTimeout(ok, 300)).then(() => { fail = false; throw new Error("worker gone"); }) : s(...a);`);
+      172 |   await page.keyboard.press("ControlOrMeta+k");
+    > 173 |   await input.fill("kestrel");
+          |               ^
+      174 |   await page.keyboard.press("Enter");
+      175 |   await expect(qf.getByText(/No results for/)).toBeVisible();
+      176 |   await expect(qf).toBeVisible();
+        at /home/runner/work/Based/Based/apps/web/e2e/find.spec.ts:173:15
+
+    Error Context: test-results/find-Quick-Find-scheitert-die-Suche-hängt-Enter-nicht-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('dialog', { name: 'Quick Find' }).getByRole('listbox', { name: 'Results' }).getByRole('option')
+    Expected: 1
+    Received: 3
+    Timeout:  5000ms
 
     Call log:
-      - Expect "toBeVisible" getByTestId('home-plain') with timeout 5000ms
-      - waiting for getByTestId('home-plain')
+      - Expect "toHaveCount" getByRole('dialog', { name: 'Quick Find' }).getByRole('listbox', { name: 'Results' }).getByRole('option') with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Quick Find' }).getByRole('listbox', { name: 'Results' }).getByRole('option')
+        14 × locator resolved to 3 elements
+           - unexpected value "3"
 
 
-      207 |   await menu.getByRole("menuitem", { name: "Move to Trash" }).click();
-      208 |   await nav(page).getByRole("button", { name: "Home" }).click();
-    > 209 |   await expect(plain).toBeVisible();
-          |                       ^
-      210 |   await page.waitForTimeout(500);
-      211 |   await expect(page.getByLabel("Page title")).toHaveCount(0);
-      212 | });
-        at /home/runner/work/Based/Based/apps/web/e2e/ai-switch.spec.ts:209:23
+      166 |   await page.keyboard.press("ControlOrMeta+k");
+      167 |   await input.fill("kestrel");
+    > 168 |   await expect(results).toHaveCount(1);
+          |                         ^
+      169 |   await page.keyboard.press("Escape");
+      170 |   // Die nächste Suche wirft (nach kurzer Zeit, damit Enter wartet); danach wieder die echte Suche
+      171 |   await based(page, `const c = b.client, s = c.search.bind(c); let fail = true; c.search = (...a) => fail ? new Promise((ok) => setTimeout(ok, 300)).then(() => { fail = false; throw new Error("worker gone"); }) : s(...a);`);
+        at /home/runner/work/Based/Based/apps/web/e2e/find.spec.ts:168:25
 
-    Error Context: test-results/ai-switch-ohne-AI-Home-ble-d0eab-nach-Löschen-der-Home-Seite-chromium/error-context.md
+    Error Context: test-results/find-Quick-Find-scheitert-die-Suche-hängt-Enter-nicht-chromium-retry1/error-context.md
 
-  1 flaky
-    [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite 
+  1 failed
+    [chromium] › e2e/find.spec.ts:156:1 › Quick Find: scheitert die Suche, hängt Enter nicht ───────
   21 skipped
-  294 passed (7.4m)
+  295 passed (7.7m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
