@@ -25,3 +25,6 @@ test-results/
 .codebase-memory/
 .cbmignore.off
 pw-install.log
+
+# server secrets (WAITLIST_STATS_TOKEN, NOTION_TOKEN) live in .env next to the compose files
+deploy/**/.env

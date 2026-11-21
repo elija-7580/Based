@@ -27,6 +27,7 @@ import { registerContextItems } from "@based/ui/native";
 import { shortcutLabel } from "@based/ui";
 import { TabBar } from "./components/TabBar.js";
 import { PageView } from "./screens/PageView.js";
+import { HomePlain } from "./screens/HomePlain.js";
 import { loadChatRuntime } from "./chat/load.js";
 import { installHistoryGestures } from "./shell/historyGestures.js";
 import { installKeyHints } from "./shell/keyHints.js";
@@ -41,7 +42,7 @@ import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
 import { markFreshPage } from "./shell/freshPage.js";
 import { hiddenRoute } from "./shell/hiddenRoute.js";
-import { fallbackHomePage, homeTarget, meetingDetectPref, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
+import { fallbackHomePage, homeStaysEmpty, homeTarget, meetingDetectPref, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
 // BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
@@ -126,6 +127,11 @@ export function App({ client, history }: { client: StoreClient; history: History
     const t = homeTarget(homeChoice, state.outline ? { has: (id) => Boolean(state.outline!.nodes[id]) && !state.outline!.trash.some((x) => x.id === id) } : undefined);
     return t.name === "page" ? t.id : undefined;
   })();
+  // Feedback 20. 11.: Home bleibt leer (HomePlain), wenn man sie entfernt oder die Home-Seite gelöscht hat.
+  const homeEmpty = homeStaysEmpty(homeChoice, { cleared: startPage.cleared(), trashedID: startPage.trashed() }, state.outline);
+  useEffect(() => {
+    if (homeChoice && state.outline?.trash.some((t) => t.id === homeChoice)) startPage.noteTrashed(homeChoice);
+  }, [homeChoice, state.outline]);
   const goHome = useCallback(() => navigate(homePage ? { name: "page", id: homePage } : { name: "home" }), [navigate, homePage]);
   const goHomeRef = useRef(goHome);
   goHomeRef.current = goHome;
@@ -138,8 +144,10 @@ export function App({ client, history }: { client: StoreClient; history: History
   // BSD-486: ausgeblendete Ansicht (alter Tab, Lesezeichen) → Home, und die Adresse wird #home statt stehen zu bleiben.
   const hidden = hiddenRoute(route, ai);
   useEffect(() => { if (hidden) history.navigate({ name: "home" }, { replace: true }); }, [hidden, history]);
+  // Feedback 20. 11.: Nach Löschen der Home-Seite oder „Remove as Home“ bleibt Home leer (HomePlain) – keine andere
+  // Seite rückt mehr nach (homeStaysEmpty).
   useEffect(() => {
-    if (ai || !wantsHome || homePage || !state.ready || !state.outline || welcome || creatingHome.current) return;
+    if (ai || !wantsHome || homePage || !state.ready || !state.outline || welcome || creatingHome.current || homeEmpty) return;
     const existing = fallbackHomePage(state.outline, state.titles);
     if (existing) {
       startPage.set(existing);
@@ -150,7 +158,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       .then((id) => { if (id) startPage.set(id); })
       .catch(() => undefined)
       .finally(() => { creatingHome.current = false; });
-  }, [ai, wantsHome, homePage, state.ready, state.outline, state.titles, welcome, client]);
+  }, [ai, wantsHome, homePage, state.ready, state.outline, state.titles, welcome, client, homeEmpty]);
   useEffect(() => installNewTabIntent(), []);
   // BSD-168: Rechtschreibprüfung (Einstellungen → My settings); contenteditable erbt `spellcheck` vom body.
   const spellCheck = useSyncExternalStore(spellCheckPref.subscribe, spellCheckPref.get);
@@ -364,7 +372,9 @@ export function App({ client, history }: { client: StoreClient; history: History
     // Ohne AI: Home zeigt die Home-Seite (oder lädt, bis sie angelegt ist); AI-Routen (alte Tabs, Links) landen hier.
     screen = homePage
       ? <PageView key={homePage} client={client} state={state} pageID={homePage} history={history} onOpenPage={openPage} onNavigate={navigate} />
-      : <div className="screen-loading" role="status" aria-label="Loading" />;
+      : state.ready && homeEmpty
+        ? <HomePlain state={state} onNewPage={() => void newPage()} onQuickFind={() => setQuickFind(true)} />
+        : <div className="screen-loading" role="status" aria-label="Loading" />;
   } else if (hidden) {
     // Beta-Gate (BSD-486): ausgeblendete Ansicht – der Effekt oben schreibt gleich auf #home um.
     screen = <div className="screen-loading" role="status" aria-label="Loading" />;

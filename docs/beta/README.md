@@ -91,7 +91,10 @@ Based Notes Beta checks for updates on its own and asks before installing. You c
 ## Feedback and problems
 
 - **Report a problem:** **Help → Report a Problem…** or **⇧⌘B**. Describe what you did and what happened, then
-  **Save report** and attach the file to an email. Reports contain no page text unless you tick “Include real text”.
+  click **Send to Based**. That's all: the report reaches us directly, and the app shows its report ID. If you are
+  offline, the app keeps the report and sends it on the next start. Reports contain no page text unless you tick
+  “Include real text”; switch off “Include screenshot” if your screen shows something private. (Up to version 0.2.11
+  there is no Send button yet: **Save report** and attach the file to an email.)
 - **Crash reports:** if Based closes unexpectedly, it offers a report on the next start. It contains no page content.
 - **Email:** hello@basednotes.app – bugs, ideas, anything that felt slow or confusing.
 
@@ -102,3 +105,4 @@ The most useful feedback: what you expected, what happened instead, and whether 
 Based has no investors and sells no ads. During the beta every feature is free for everyone, and donations pay for
 the servers. If you like what you're testing, [sponsor Based on GitHub](https://github.com/sponsors/elija-7580): $3 a month is enough, or give once.
 It's a donation, so you get nothing extra for it. Paid plans start once Based is out of beta and has 1,000 users. Until then, nothing costs money.
+As a thank-you, beta testers get Based Cloud free for 12 months once it launches, and the founder price after that.

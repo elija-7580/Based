@@ -3,8 +3,15 @@
 import { expect, type Page } from "@playwright/test";
 import { editor, openNewPage, ready, test } from "./replay/fixture.js";
 import { overflows, overlaps } from "./layout-checks.js";
+import { bestOf, expectFaster } from "./perf.js";
+import { routeReports, startReportServer } from "./report-server.js";
 
-const SECRET = "Quarterly salary Ada Lovelace 4711";
+// Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
+const diagTab = (page: import("@playwright/test").Page, name: string) =>
+  page.getByTestId("settings-section-diagnostics-details").getByRole("radio", { name, exact: true }).click();
+
+// BSD-628: Die Zahl hat acht Stellen – „4711“ stand um hh:47:11 auch in der Bericht-ID und in Zeitstempeln (falscher Alarm).
+const SECRET = "Quarterly salary Ada Lovelace 47110815";
 
 type Row = { id: string; bundle: Record<string, unknown> & { recording: { events: { kind: string }[] }; state: { blocks?: unknown; doc?: unknown; root?: string }; layout: { items: { kind: string }[] }; screenshot?: string; note: string }; screenshot?: Blob };
 
@@ -56,11 +63,12 @@ for (const { name, t, open, kinds: expectedKinds, list } of EDITORS) t(`⇧⌘B 
   expect(b.screenshot).toBe("screenshot.png");
   expect(r!.shotSize).toBeGreaterThan(1000);
   const json = JSON.stringify(b);
-  for (const word of ["Quarterly", "salary", "Lovelace", "4711", "second line"]) expect(json).not.toContain(word);
+  for (const word of ["Quarterly", "salary", "Lovelace", "47110815", "second line"]) expect(json).not.toContain(word);
 
   // Danach in Settings → Diagnostics → Reports
   await saved.getByRole("button", { name: "Open Diagnostics" }).click();
-  const reports = page.getByTestId("settings-section-diagnostics-reports");
+  await diagTab(page, "Reports");
+  const reports = page.getByTestId("diagnostics-tab-reports");
   await expect(reports.getByText("Typed two lines, the list jumped")).toBeVisible();
   await reports.getByRole("button", { name: "Delete" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete report" }).click();
@@ -160,7 +168,7 @@ for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Report saved �
   expect(text).toMatch(/subject=Based \S+ – problem report/);
   expect(text).toContain("Channel: dev");
   expect(text).toMatch(/Report: \d{8}-\d{6}-\w+/);
-  for (const leak of ["Quarterly", "Lovelace", "4711", "Mozilla"]) expect(text).not.toContain(leak);
+  for (const leak of ["Quarterly", "Lovelace", "47110815", "Mozilla"]) expect(text).not.toContain(leak);
   await expect(saved).toBeVisible();
 
   // kleinstes Fenster: nichts läuft heraus, Knopf erreichbar
@@ -171,15 +179,17 @@ for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Report saved �
 
 test("Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht", async ({ page }) => {
   await ready(page, "prefs-diagnostics");
-  for (const id of ["status", "problems", "reports", "log", "dev"]) await expect(page.getByTestId(`settings-section-diagnostics-${id}`)).toBeVisible();
+  for (const id of ["status", "details", "dev"]) await expect(page.getByTestId(`settings-section-diagnostics-${id}`)).toBeVisible();
   await expect(page.getByTestId("diagnostics-version")).toContainText("commit");
-  await expect(page.getByTestId("settings-section-diagnostics-problems")).toContainText("Nothing to report");
+  await expect(page.getByTestId("settings-section-diagnostics-status")).toContainText("Nothing to report");
   await expect(page.getByTestId("settings-missing")).toHaveCount(0);
 
   await page.evaluate(() => setTimeout(() => { throw new Error("boom for the filter"); }));
-  const problems = page.getByTestId("settings-section-diagnostics-problems");
+  const problems = page.getByTestId("settings-section-diagnostics-status");
   await expect(problems.getByTestId("diagnostics-errors")).toHaveText("1");
-  const log = page.getByTestId("settings-section-diagnostics-log");
+  await expect(problems).toContainText("1 thing to look at");
+  await diagTab(page, "Log");
+  const log = page.getByTestId("diagnostics-tab-log");
   await log.getByRole("radio", { name: "Errors" }).click();
   await expect(log.getByTestId("diagnostics-log")).toContainText("boom for the filter");
   await expect(log.getByTestId("diagnostics-log")).not.toContainText("boot:");
@@ -266,4 +276,108 @@ test("Aufzeichnung kostet beim Tippen messbar nichts", async ({ page }) => {
   });
   // unter 0,05 ms je Taste (ein Bild hat 16 ms)
   expect(extra).toBeLessThan(0.05);
+});
+
+// BSD-632: „Send to Based“ – ein Klick speichert lokal und schickt den Bericht an den Server (hier der echte Dienst aus
+// apps/website/server, lokal gestartet; basednotes.app wird umgeleitet). Ohne Nutzertext, mit Foto, 900 × 600 passt.
+for (const theme of ["light", "dark"] as const) test(`⇧⌘B → Send to Based: Bericht kommt beim Server an, ohne Nutzertext (${theme})`, async ({ page, browserName }) => {
+  const server = await startReportServer();
+  try {
+    await routeReports(page, server);
+    await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await ready(page);
+    await openNewPage(page, "Send");
+    await page.keyboard.type(SECRET);
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    const dialog = page.getByRole("dialog", { name: "Report a problem" });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    // Hauptknopf rechts außen, das Foto als Vorschau, Senden erst mit Satz
+    const send = dialog.getByRole("button", { name: "Send to Based" });
+    await expect(send).toBeDisabled();
+    await expect(dialog.getByTestId("report-shot")).toBeVisible();
+    await dialog.getByRole("textbox", { name: "What did you do, and what happened?" }).fill("Private note about Lovelace");
+    await page.mouse.move(0, 0);
+    expect(await overflows(page)).toEqual([]);
+    expect(await overlaps(page)).toEqual([]);
+    if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") await dialog.screenshot({ path: `../../docs/design/screens/report-send-${theme}.png` });
+    await page.setViewportSize({ width: 900, height: 600 });
+    for (const name of ["Cancel", "Save report", "Send to Based"]) await expect(dialog.getByRole("button", { name })).toBeInViewport({ ratio: 1 });
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await send.click();
+
+    const sent = page.getByRole("dialog", { name: "Sent. Thank you!" });
+    await expect(sent.getByTestId("report-sent")).toHaveAttribute("data-state", "sent", { timeout: 15_000 });
+    const id = (await sent.getByTestId("report-id").textContent())!.replace("Report ", "");
+    expect(id).toMatch(/^\d{8}-\d{6}-[0-9a-f]{4}$/);
+    if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") await sent.screenshot({ path: `../../docs/design/screens/report-sent-${theme}.png` });
+    // beim Server: Bündel mit Satz, ohne Seitentext, Foto daneben
+    const stored = server.report(id)!;
+    expect(stored).toBeDefined();
+    expect(stored.note).toBe("Private note about Lovelace");
+    const json = JSON.stringify(stored);
+    for (const word of ["Quarterly", "salary", "47110815"]) expect(json).not.toContain(word);
+    expect(server.hasScreenshot(id)).toBe(true);
+    // lokal gespeichert, nicht in der Warteschlange
+    const [r] = await savedReports(page);
+    expect(r!.id).toBe(id);
+    expect((r as unknown as { outbox?: boolean }).outbox).toBeUndefined();
+    await sent.getByRole("button", { name: "Done" }).click();
+    await expect(sent).toBeHidden();
+  } finally {
+    await server.stop();
+  }
+});
+
+// BSD-632: Server nicht erreichbar → „Report saved“ mit „Waiting to send“, der Bericht wartet in der Warteschlange und
+// geht nach dem Neuladen von selbst raus (gleiche ID; der Server legt keinen zweiten an).
+test("Send to Based ohne Server: Warteschlange, nach dem Neuladen gesendet", async ({ page }) => {
+  const server = await startReportServer();
+  try {
+    await routeReports(page, { status: 503 });
+    await ready(page);
+    await openNewPage(page, "Offline");
+    await page.keyboard.type("hello");
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    const dialog = page.getByRole("dialog", { name: "Report a problem" });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await dialog.getByRole("textbox", { name: "What did you do, and what happened?" }).fill("Offline report");
+    await dialog.getByRole("button", { name: "Send to Based" }).click();
+    const saved = page.getByRole("dialog", { name: "Report saved" });
+    await expect(saved.getByTestId("report-queued")).toHaveAttribute("data-state", "later", { timeout: 15_000 });
+    await expect(saved).toContainText("will be sent automatically");
+    await expect(saved.getByRole("button", { name: "Email report" })).toBeVisible();
+    const [r] = await savedReports(page);
+    expect((r as unknown as { outbox?: boolean }).outbox).toBe(true);
+    await saved.getByRole("button", { name: "Done" }).click();
+
+    // Netz wieder da: Neuladen sendet die Warteschlange
+    await routeReports(page, server);
+    await ready(page);
+    await expect.poll(() => server.report(r!.id)?.note, { timeout: 20_000 }).toBe("Offline report");
+    await expect.poll(async () => (await savedReports(page))[0] as unknown as { outbox?: boolean }).not.toHaveProperty("outbox", true);
+  } finally {
+    await server.stop();
+  }
+});
+
+// BSD-642: Das Foto kopierte je Element den ganzen berechneten Stil (WebKit: immer per cssText) – ⇧⌘B bis zum Dialog
+// dauerte in WebKit 1,6–4 s, unter Last fehlte das Foto (Grenze 5 s). Mit der Liste der sichtbaren Eigenschaften:
+// unter 1,5 s, mit Foto; getComputedStyle ist danach wieder das Original.
+test("⇧⌘B öffnet den Dialog mit Foto in unter 1,5 s", { tag: "@perf" }, async ({ page }, info) => {
+  await ready(page);
+  await openNewPage(page, "Fast");
+  await page.keyboard.type("hello world");
+  const dialog = page.getByRole("dialog", { name: "Report a problem" });
+  const ms = await bestOf(3, async () => {
+    const t0 = Date.now();
+    await page.keyboard.press("ControlOrMeta+Shift+b");
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    const took = Date.now() - t0;
+    await expect(dialog.getByRole("checkbox", { name: "Include a screenshot" })).toBeEnabled();
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toBeHidden();
+    return took;
+  }, (v) => v >= 1500, (a, b) => a < b);
+  expectFaster(info, "⇧⌘B bis Dialog mit Foto", ms, 1500);
+  expect(await page.evaluate(() => /\[native code\]/.test(String(window.getComputedStyle)))).toBe(true);
 });

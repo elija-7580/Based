@@ -355,7 +355,15 @@ export type Event =
   /** Änderungen an einer offenen Seite (für die Replik im Hauptthread). */
   | { type: "pageChanges"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] }
   /** BSD-231: Fortschritt beim Laden eines lokalen Modells; `done` am Ende, `error` beim Scheitern/Abbruch. */
-  | { type: "localModelProgress"; id: string; loaded: number; total: number; done?: boolean; error?: string };
+  | { type: "localModelProgress"; id: string; loaded: number; total: number; done?: boolean; error?: string }
+  /**
+   * Feedback 20. 11.: Der Worker war mit einer Anfrage lange beschäftigt (`ms` ≥ BUSY_REPORT_MS, `at` = Ende in
+   * Date.now()). Damit nennt die Hänger-Liste bei einer wartenden Anfrage, worauf sie gewartet hat.
+   */
+  | { type: "busy"; op: string; ms: number; at: number };
+
+/** Ab dieser Dauer meldet der Worker eine Anfrage als „busy“ (Hänger-Diagnose). */
+export const BUSY_REPORT_MS = 400;
 
 /** Was Worker und Hauptthread zum Reden brauchen (Worker, MessagePort oder ein Test-Kanal). */
 export interface Endpoint<In, Out> {

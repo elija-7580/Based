@@ -401,6 +401,52 @@ export function parseBugBundle(json: unknown): BugBundle | undefined {
   return b as BugBundle;
 }
 
+// MARK: Senden an uns (BSD-632)
+
+// Ein Klick („Send to Based“): Die App schickt das Bündel an den Wartelisten-Server auf basednotes.app, der legt daraus
+// einen Eintrag im Backlog an (apps/website/server/report.mjs). Vertrag: Koordinationsseite 21.11., Schicht A.
+// Fehlschläge landen in der Warteschlange und gehen beim nächsten Start erneut raus; gleiche ID zweimal = „duplicate“.
+
+export const REPORT_URL = "https://basednotes.app/api/report";
+/** Höchstens so groß ist der Body (wie REPORT_MAX_BYTES am Server). */
+export const REPORT_MAX_BYTES = 8 * 1024 * 1024;
+/** Form der Bündel-ID, die der Server annimmt (`bundleID`). */
+export const REPORT_ID = /^[0-9]{8}-[0-9]{6}-[0-9a-f]{4}$/;
+
+/** Body für POST /api/report: Bündel und optional das Bildschirmfoto (PNG, Base64 ohne Präfix). */
+export function reportRequestBody(bundle: BugBundle, screenshotBase64?: string): string {
+  return JSON.stringify(screenshotBase64 ? { bundle, screenshot: screenshotBase64 } : { bundle });
+}
+
+/** Was nach einem Versuch zu tun ist. */
+export type ReportSendResult =
+  | { kind: "sent"; id: string; duplicate: boolean }
+  /** 413: ohne Bildschirmfoto noch einmal. */
+  | { kind: "too-large" }
+  /** 400 oder sonst nicht annehmbar: nicht wiederholen (bleibt lokal gespeichert). */
+  | { kind: "rejected"; status: number }
+  /** 429, 5xx, Netzfehler: in die Warteschlange, später erneut. */
+  | { kind: "later"; reason: string };
+
+/** Antwort des Servers einordnen (`status` 0 = Netzfehler). */
+export function reportSendResult(status: number, body: unknown, id: string): ReportSendResult {
+  const b = body as { ok?: unknown; id?: unknown; duplicate?: unknown } | null;
+  if (status >= 200 && status < 300) {
+    if (b && b.ok === true) return { kind: "sent", id: typeof b.id === "string" ? b.id : id, duplicate: b.duplicate === true };
+    return { kind: "later", reason: `unexpected answer (${status})` };
+  }
+  if (status === 413) return { kind: "too-large" };
+  if (status === 429) return { kind: "later", reason: "rate limited" };
+  if (status === 0) return { kind: "later", reason: "offline" };
+  if (status >= 500) return { kind: "later", reason: `server error ${status}` };
+  return { kind: "rejected", status };
+}
+
+/** Lässt sich das Bündel überhaupt senden (ID in Serverform, Format)? Ältere/fremde Bündel bleiben nur lokal. */
+export function canSendReport(bundle: BugBundle): boolean {
+  return bundle.format === BUNDLE_FORMAT && REPORT_ID.test(bundle.id);
+}
+
 // MARK: Wiedergabe
 
 export type ReplayAction =

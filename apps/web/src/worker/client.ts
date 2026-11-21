@@ -88,6 +88,8 @@ export class StoreClient {
   onDevice: ((node: string) => void) | undefined;
   /** BSD-418: Anfrage brauchte über 1 s (Operationsname ohne Inhalte, monotone Zeiten) – Hänger-Analyse. */
   onSlowRequest: ((op: string, t0: number, t1: number) => void) | undefined;
+  /** Feedback 20. 11.: der Worker war lange mit `op` beschäftigt (`at` = Ende, Date.now()). */
+  onBusy: ((op: string, ms: number, at: number) => void) | undefined;
   /** BSD-596: jede Nachricht des Workers (Antwort oder Ereignis) – Anlass für die Hänger-Messung. */
   onWorkerMessage: (() => void) | undefined;
 
@@ -227,6 +229,7 @@ export class StoreClient {
         return;
       }
       case "status": this.set({ status: ev.status }); return;
+      case "busy": this.onBusy?.(ev.op, ev.ms, ev.at); return;
       case "device": this.onDevice?.(ev.node); return;
       case "chats": this.set({ chats: ev.chats }); return;
       case "agents": this.set({ agents: ev.snapshot }); return;

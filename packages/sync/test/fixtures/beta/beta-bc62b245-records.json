@@ -1,0 +1,143 @@
+{
+  "label": "beta-bc62b245",
+  "commit": "bc62b245",
+  "schemaVersion": 4,
+  "propertyRecords": true,
+  "expect": {
+    "workspace": "My Workspace",
+    "blocks": [
+      "page:Beta notes",
+      "page:Beta notes / bulletedList:Bullet",
+      "page:Beta notes / code:const x = 1;",
+      "page:Beta notes / databaseInline:",
+      "page:Beta notes / databaseInline:",
+      "page:Beta notes / heading1:Heading",
+      "page:Beta notes / page:Child page",
+      "page:Beta notes / page:Child page / image:",
+      "page:Beta notes / page:Child page / page:Grandchild",
+      "page:Beta notes / text:Plain paragraph with ünïcödé and emoji 🙂",
+      "page:Beta notes / todo:A task",
+      "page:Beta notes / toggle:Toggle",
+      "page:Beta notes / toggle:Toggle / text:Inside the toggle",
+      "page:In the trash (trash)"
+    ],
+    "databases": [
+      {
+        "title": "Dates",
+        "properties": [
+          "Name:title",
+          "Tags:multiSelect",
+          "When:date"
+        ],
+        "rows": [
+          {
+            "title": "Day only",
+            "values": {
+              "When": {
+                "date": {
+                  "_0": {
+                    "start": 817081200,
+                    "includeTime": false,
+                    "day": "2026-11-23"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "title": "Range",
+            "values": {
+              "When": {
+                "date": {
+                  "_0": {
+                    "start": 817081200,
+                    "end": 817426800,
+                    "includeTime": false,
+                    "day": "2026-11-23",
+                    "endDay": "2026-11-27"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "title": "With time",
+            "values": {
+              "When": {
+                "date": {
+                  "_0": {
+                    "start": 817113600,
+                    "includeTime": true
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "views": [
+          "table"
+        ]
+      },
+      {
+        "title": "Tasks",
+        "properties": [
+          "Checked:checkbox",
+          "Name:title",
+          "Note:text",
+          "Points:number",
+          "Stage:select[Open,Done]",
+          "Tags:multiSelect"
+        ],
+        "rows": [
+          {
+            "title": "First row",
+            "values": {
+              "Stage": {
+                "select": {
+                  "_0": "edcc3a10-07cc-4785-b276-fdde86bf7618"
+                }
+              },
+              "Points": {
+                "number": {
+                  "_0": 3
+                }
+              },
+              "Note": {
+                "text": {
+                  "_0": "note one"
+                }
+              }
+            }
+          },
+          {
+            "title": "Second row",
+            "values": {
+              "Stage": {
+                "select": {
+                  "_0": "c1c9dfd4-d6ae-43da-9ddb-5862e4d41429"
+                }
+              },
+              "Points": {
+                "number": {
+                  "_0": 5
+                }
+              },
+              "Checked": {
+                "checkbox": {
+                  "_0": true
+                }
+              }
+            }
+          }
+        ],
+        "views": [
+          "board",
+          "table"
+        ]
+      }
+    ],
+    "assets": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:photo.png"
+    ]
+  }
+}

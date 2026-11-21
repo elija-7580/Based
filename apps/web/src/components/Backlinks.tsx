@@ -9,29 +9,24 @@ import type { StoreClient } from "../worker/client.js";
 import type { PageInfo, UnlinkedMentionInfo } from "../worker/protocol.js";
 import "./backlinks.css";
 
-/** Nach einer Änderung kurz warten: Tippen im Titel fragt nicht je Taste neu (unverlinkte Erwähnungen gehen über
- *  den ganzen Text des Workspaces, bei 20 000 Seiten ~120 ms im Store-Worker). */
-const REFRESH_DELAY_MS = 400;
+/** Ruhe nach Änderungen an Titeln/Outline, bevor neu abgefragt wird. */
+const REFRESH_MS = 1500;
+/** Fensterfokus fragt höchstens so oft neu ab. */
+const FOCUS_MS = 30_000;
 
-/**
- * `load` ausführen, wenn sich `deps` ändern: sofort beim ersten Mal und wenn sich `now` ändert (andere Seite, Fenster
- * wieder vorn, „Link“ geklickt), sonst gesammelt nach REFRESH_DELAY_MS. Eine abgebrochene sofortige Anfrage (React
- * baut den Effekt im Entwicklungsmodus doppelt auf) gilt als nicht gestellt.
- */
-function useRefresh<T>(now: string, deps: readonly unknown[], load: () => Promise<T>, set: (v: T) => void) {
-  const shown = useRef<string | undefined>(undefined);
+/** Zähler, der REFRESH_MS nach der letzten Änderung von `deps` einen Schritt weiterzählt (nicht beim ersten Aufbau). */
+function useSettled(deps: readonly unknown[]): number {
+  const [n, setN] = useState(0);
+  const first = useRef(true);
   useEffect(() => {
-    let alive = true, done = false;
-    const run = () => void load().then((r) => { done = true; if (alive) set(r); }, () => { done = true; });
-    const immediate = shown.current !== now;
-    shown.current = now;
-    const t = immediate ? (run(), undefined) : setTimeout(run, REFRESH_DELAY_MS);
-    return () => {
-      alive = false;
-      if (t !== undefined) clearTimeout(t);
-      else if (!done) shown.current = undefined;
-    };
-  }, [now, ...deps]); // `deps` bestimmt der Aufrufer (gleich lang bei jedem Aufruf)
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const t = setTimeout(() => setN((x) => x + 1), REFRESH_MS);
+    return () => clearTimeout(t);
+  }, deps); // `deps` bestimmt der Aufrufer (gleich lang bei jedem Aufruf)
+  return n;
 }
 
 export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient; pageID: string; onOpenPage: (id: string) => void }) {
@@ -41,17 +36,36 @@ export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient;
   const [unlinked, setUnlinked] = useState<UnlinkedMentionInfo[]>([]);
   const [showUnlinked, setShowUnlinked] = useState(false);
   const [tick, setTick] = useState(0);
+  // Feedback 20. 11.: Jede Sync-Änderung (Titel, Outline) und jedes Zurückkommen ins Fenster fragte Backlinks und
+  // unverlinkte Erwähnungen sofort neu ab. Die Abfragen stellen sich im Store-Worker vor alles andere – Seiten aus
+  // Suche und Seitenleiste öffneten dann erst nach dem zweiten, dritten Klick. Jetzt: beim Öffnen einmal, danach
+  // gebündelt (Ruhe von REFRESH_MS), beim Fokus höchstens alle FOCUS_MS.
+  const last = useRef(0);
   useEffect(() => {
-    const again = () => setTick((n) => n + 1);
+    const again = () => { if (Date.now() - last.current >= FOCUS_MS) setTick((n) => n + 1); };
     window.addEventListener("focus", again);
     return () => window.removeEventListener("focus", again);
   }, []);
-  const now = `${pageID}\u0001${tick}`;
-  // Backlinks kommen aus einem Index (billig) und zeigen Titel anderer Seiten: bei Titel- und Strukturänderungen neu.
-  useRefresh(now, [client, state.titles, state.outline], () => client.backlinks(pageID), setLinks);
-  // Unverlinkte Erwähnungen hängen am Titel dieser Seite (gesucht wird er im Text der anderen): nur neu fragen, wenn
-  // er sich ändert, die Seite wechselt oder das Fenster wieder nach vorn kommt – nicht bei jedem anderen Titel.
-  useRefresh(now, [client, state.titles.get(pageID)], () => client.unlinkedMentions(pageID), setUnlinked);
+  // Backlinks kommen aus einem Index (billig) und zeigen Titel anderer Seiten: nach Titel- und Strukturänderungen neu.
+  const linksSettled = useSettled([state.titles, state.outline]);
+  // Unverlinkte Erwähnungen hängen am Titel dieser Seite (gesucht wird er im Text der anderen, bei 20 000 Seiten
+  // ~120 ms im Worker): nur neu, wenn sich dieser Titel ändert – nicht bei jedem anderen Titel im Workspace.
+  const unlinkedSettled = useSettled([state.titles.get(pageID)]);
+  useEffect(() => {
+    let alive = true;
+    last.current = Date.now();
+    void client.backlinks(pageID).then((r) => alive && setLinks(r), () => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [client, pageID, tick, linksSettled]);
+  useEffect(() => {
+    let alive = true;
+    void client.unlinkedMentions(pageID).then((r) => alive && setUnlinked(r), () => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [client, pageID, tick, unlinkedSettled]);
   if (links.length === 0 && unlinked.length === 0) return null;
   const link = (m: UnlinkedMentionInfo) => {
     void client.command({ op: "linkMention", blockID: m.blockID, start: m.start, length: m.length, pageID }).then(() => setTick((n) => n + 1), () => undefined);

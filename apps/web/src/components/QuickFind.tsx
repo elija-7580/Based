@@ -7,6 +7,7 @@ import { fold, typoBudget, typoDistance } from "@based/core";
 import { useRestoreFocus } from "../shell/restoreFocus.js";
 import { Icon, type IconName } from "../icons.js";
 import { aiSetting } from "../shell/ai.js";
+import { diagnosticsLog } from "../shell/diagnostics.js";
 import { matchCommands, type NavCommand } from "../shell/sidebarNav.js";
 import { DATE_OPTIONS, SORT_OPTIONS, toSearchFilters, type QuickFindFilters } from "../shell/quickFindFilters.js";
 import type { RecentEntry } from "../shell/storage.js";
@@ -23,6 +24,14 @@ interface Props {
   onClose: () => void;
   /** BSD-281: Befehle („All tasks“, „Graph“, „Settings“ …) – alles bleibt über ⌘K erreichbar. */
   onCommand?: (id: string) => void;
+}
+
+/**
+ * Review 20.11.: Muss Enter auf die Treffer warten? Ja, wenn die Auswahl auf einer Seite steht (nicht auf einem Befehl –
+ * die passen immer zur Eingabe) und die gezeigten Seiten noch nicht zur aktuellen Eingabe gehören.
+ */
+export function enterWaits(cur: number, commandCount: number, hitsCurrent: boolean): boolean {
+  return cur >= commandCount && !hitsCurrent;
 }
 
 export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose, onCommand }: Props) {
@@ -45,20 +54,37 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
     return () => client.cancelSearch();
   }, [client]);
 
+  // Review 20.11. (Beta-Weg 6): Enter, bevor die Treffer zur Eingabe da sind, öffnete den obersten Eintrag der alten Liste
+  // (zuletzt geöffnete Seiten oder Treffer der vorigen Eingabe) – meist die Seite, die schon offen war. Jetzt wartet
+  // Enter auf die Treffer genau dieser Eingabe; Befehle stehen sofort fest und öffnen gleich.
+  const searchKey = query.trim() ? JSON.stringify([query, filters, currentPage?.id]) : "";
+  const shownFor = useRef("");
+  const pendingEnter = useRef<number | undefined>(undefined);
   useEffect(() => {
     if (!query.trim()) {
       setHits(undefined);
       setTook(undefined);
+      shownFor.current = "";
       return;
     }
     let alive = true;
     const t0 = performance.now();
     void client.search(query, undefined, { filters: toSearchFilters(filters, currentPage?.id), sort: filters.sort }).then((r) => {
       if (!alive || !r) return;
+      shownFor.current = searchKey;
       setHits(r.hits);
       setTook(performance.now() - t0);
       setSelected(0);
-    }).catch(() => undefined);
+    }).catch((e: unknown) => {
+      // BSD-643: Die Suche ist gescheitert (Worker-Fehler). Ohne das bliebe ein wartendes Enter für immer stehen:
+      // leere Liste zu dieser Eingabe zeigen (das wartende Enter verfällt dann ohne Treffer), Grund ins Diagnose-Log.
+      if (!alive) return;
+      diagnosticsLog.add("warning", `quick find: search failed (${e instanceof Error ? e.message : String(e)})`);
+      shownFor.current = searchKey;
+      setHits([]);
+      setTook(undefined);
+      setSelected(0);
+    });
     return () => {
       alive = false;
     };
@@ -87,6 +113,17 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
     if ("command" in it) onCommand?.(it.command.id);
     else onOpen(it.pageID);
   };
+  const enter = () => {
+    if (enterWaits(cur, commands.length, shownFor.current === searchKey)) pendingEnter.current = cur;
+    else open(cur);
+  };
+  // Die Treffer zur Eingabe sind da: ein wartendes Enter öffnet jetzt (gleiche Stelle in der neuen Liste).
+  useEffect(() => {
+    const i = pendingEnter.current;
+    if (i === undefined || shownFor.current !== searchKey) return;
+    pendingEnter.current = undefined;
+    open(i);
+  }, [hits, searchKey]);
 
   return (
     <div className="qf-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -113,7 +150,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             aria-label="Search pages"
             placeholder="Search pages and content…"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
+            onChange={(e) => { setQuery(e.target.value); setSelected(0); pendingEnter.current = undefined; }}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
                 e.preventDefault();
@@ -126,7 +163,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
                 setSelected(Math.max(0, Math.min(items.length - 1, cur + (e.key === "PageDown" ? PAGE : -PAGE))));
               } else if (e.key === "Enter") {
                 e.preventDefault();
-                open(cur);
+                enter();
               } else if (e.key === "Escape") {
                 e.preventDefault();
                 onClose();

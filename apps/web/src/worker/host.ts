@@ -92,7 +92,7 @@ import { BrainHost } from "./brain.js";
 import { dueItems } from "@based/brain/home";
 import { localModels } from "@based/brain";
 import { localEmbedderLoader } from "./embedder.js";
-import type { MeetingListItem, StoreInfo } from "./protocol.js";
+import { BUSY_REPORT_MS, type MeetingListItem, type StoreInfo } from "./protocol.js";
 import type { AssetGetResult, AssetInfo, Command, LocalModelAction, LocalModelInfo, LocalModelPurpose, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -207,6 +207,7 @@ export class StoreHost {
   async handle(msg: RequestMessage): Promise<void> {
     const reply = (result: unknown) => this.opts.post({ type: "reply", id: msg.id, ok: true, result });
     this.currentRequest = msg.type === "command" ? `command ${msg.command.op}` : msg.type;
+    const op = this.currentRequest, began = Date.now();
     try {
       switch (msg.type) {
         case "init": reply(await this.init(msg.device, msg.sync, msg.opfs, msg.propertyRecords, msg.lazy, msg.userID)); break;
@@ -269,6 +270,14 @@ export class StoreHost {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
     }
     this.flush();
+    // `init` wartet auf Dateien und Netz – das blockiert die Schlange nicht und wird nicht gemeldet.
+    if (msg.type !== "init") this.reportBusy(op, began);
+  }
+
+  /** Feedback 20. 11.: lange Arbeit im Worker melden, damit wartende Anfragen ihren Verursacher nennen (shell/hangs.ts). */
+  private reportBusy(op: string, began: number): void {
+    const at = Date.now(), ms = at - began;
+    if (ms >= BUSY_REPORT_MS) this.opts.post({ type: "busy", op, ms, at });
   }
 
   /**
@@ -1111,7 +1120,9 @@ export class StoreHost {
       if (!p) return;
       this.pendingSearch = undefined;
       // Abbrechen, sobald eine neuere Suche ansteht (z. B. über `defer` eingereiht).
+      const began = Date.now();
       const r = this.search(p.query, p.limit, () => this.pendingSearch !== undefined, p.filters, p.sort);
+      this.reportBusy("search", began);
       if (r) this.opts.post({ type: "reply", id: p.id, ok: true, result: r });
       else this.opts.post({ type: "reply", id: p.id, ok: false, error: "cancelled", cancelled: true });
     };

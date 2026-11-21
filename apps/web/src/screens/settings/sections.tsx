@@ -8,7 +8,7 @@ import { ToggleButton } from "@astryxdesign/core/ToggleButton";
 import { TEAMSPACE_ICONS } from "../../components/TeamspaceDialog.js";
 import { Text } from "@astryxdesign/core/Text";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
-import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
+import { BasedButton, BasedConfirm, BasedField, BasedPopover } from "@based/ui/astryx";
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import type { Appearance } from "../../appearance.js";
 import { ExportDialog, ImportDialog } from "../../components/ImportExport.js";
@@ -18,9 +18,8 @@ import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { appIdentity, checkForUpdates, isTauri, openExternal, type AppIdentity } from "../../desktop.js";
 import { GIVE_ONCE_URL, PAID_PLANS_AT_USERS, SPONSOR_URL } from "../../shell/support.js";
 import { validateSyncForm } from "../../shell/settings.js";
-import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
-import { HangsSection } from "./hangs.js";
-import { autoUpdatePref, deviceNode, fallbackHomePage, lazyStoreSetting, meetingDetectPref, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { DetailsSection, DeveloperSection, OverviewSection } from "./diagnostics.js";
+import { autoUpdatePref, deviceNode, fallbackHomePage, homeStaysEmpty, lazyStoreSetting, meetingDetectPref, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { browserKeep, keepRow } from "../../shell/storagePersist.js";
 import { weekStartForLocale } from "@based/core";
@@ -204,39 +203,51 @@ function ImportSection({ client, navigate }: SettingsSectionProps) {
 
 const count = (n: number, one: string) => `${n} ${n === 1 ? one : one + "s"}`;
 
+// Feedback 20. 11. („Settings → Workspace besser machen“): drei ruhige Flächen statt einer langen. Name und Icon in einer
+// Zeile (Icon als Knopf mit Auswahl im Popover statt einer Reihe aus 13 Emojis), Inhalt mit Export, Papierkorb.
 function WorkspaceSection({ client, state, navigate }: SettingsSectionProps) {
   const [confirm, setConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
   const nodes = Object.values(state.outline?.nodes ?? {});
   const trash = state.outline?.trash.length ?? 0;
+  const icon = state.outline?.workspaceIcon;
   return (
-    <Group>
-      <Row label="Name" hint={workspaceNameHint()}>
-        <WorkspaceName name={state.outline?.workspaceName ?? ""} onRename={(name) => void client.command({ op: "renameWorkspace", name })} />
-      </Row>
-      <Row label="Icon" hint="Shown next to the workspace name; syncs to every device">
-        <HStack gap={1} wrap="wrap" role="group" aria-label="Workspace icon" data-testid="workspace-icon">
-          <ToggleButton label="No icon" isPressed={!state.outline?.workspaceIcon} onPressedChange={() => void client.command({ op: "setWorkspaceIcon" })}>–</ToggleButton>
-          {TEAMSPACE_ICONS.map((e) => (
-            <ToggleButton key={e} label={`Icon ${e}`} isPressed={state.outline?.workspaceIcon === e} onPressedChange={() => void client.command({ op: "setWorkspaceIcon", icon: e })}>{e}</ToggleButton>
-          ))}
-        </HStack>
-      </Row>
-      <Row label="Contents" hint="Pages and databases outside the Trash">
-        <Value testID="workspace-counts">{count(nodes.filter((n) => n.kind === "page").length, "page")} · {count(nodes.filter((n) => n.kind === "database").length, "database")}</Value>
-      </Row>
-      <Row label="Export all content" hint="Take everything with you">
-        <BasedButton label="Export…" onClick={() => setExporting(true)} />
-      </Row>
-      <Row label="Trash" hint={trash ? `${count(trash, "page")} waiting in the Trash` : "The Trash is empty"}>
-        <HStack gap={2}>
-          <BasedButton label="Open Trash" variant="ghost" onClick={() => navigate({ name: "trash" })} />
-          {mayDeleteForever() ? <BasedButton label="Empty Trash…" variant="danger" disabled={trash === 0} onClick={() => setConfirm(true)} /> : null}
-        </HStack>
-      </Row>
+    <VStack gap={4}>
+      <Group>
+        <Row label="Name and icon" hint={workspaceNameHint()}>
+          <HStack gap={2} vAlign="center" className="workspace-identity">
+            <BasedPopover label="Workspace icon" width={264} align="end"
+              trigger={<BasedButton label={icon ?? "Add icon"} variant="secondary" ariaLabel={icon ? `Workspace icon ${icon}, change` : "Add a workspace icon"} />}>
+              <HStack gap={1} wrap="wrap" role="group" aria-label="Workspace icon" data-testid="workspace-icon">
+                <ToggleButton label="No icon" isPressed={!icon} onPressedChange={() => void client.command({ op: "setWorkspaceIcon" })}>–</ToggleButton>
+                {TEAMSPACE_ICONS.map((e) => (
+                  <ToggleButton key={e} label={`Icon ${e}`} isPressed={icon === e} onPressedChange={() => void client.command({ op: "setWorkspaceIcon", icon: e })}>{e}</ToggleButton>
+                ))}
+              </HStack>
+            </BasedPopover>
+            <WorkspaceName name={state.outline?.workspaceName ?? ""} onRename={(name) => void client.command({ op: "renameWorkspace", name })} />
+          </HStack>
+        </Row>
+      </Group>
+      <Group>
+        <Row label="Contents" hint="Pages and databases outside the Trash. Export takes all of it with you.">
+          <HStack gap={3} vAlign="center">
+            <Value testID="workspace-counts">{count(nodes.filter((n) => n.kind === "page").length, "page")} · {count(nodes.filter((n) => n.kind === "database").length, "database")}</Value>
+            <BasedButton label="Export…" onClick={() => setExporting(true)} />
+          </HStack>
+        </Row>
+      </Group>
+      <Group>
+        <Row label="Trash" hint={trash ? `${count(trash, "page")} waiting in the Trash` : "The Trash is empty"}>
+          <HStack gap={2}>
+            <BasedButton label="Open Trash" variant="ghost" onClick={() => navigate({ name: "trash" })} />
+            {mayDeleteForever() ? <BasedButton label="Empty Trash…" variant="danger" disabled={trash === 0} onClick={() => setConfirm(true)} /> : null}
+          </HStack>
+        </Row>
+      </Group>
       <BasedConfirm open={confirm} onClose={() => setConfirm(false)} title="Empty the Trash?" description={`${count(trash, "page")} will be deleted for good. This can't be undone.`} actionLabel="Empty Trash" onConfirm={async () => { await client.command({ op: "emptyTrash" }); }} />
       {exporting ? <ExportDialog client={client} onClose={() => setExporting(false)} /> : null}
-    </Group>
+    </VStack>
   );
 }
 
@@ -251,7 +262,7 @@ function WorkspaceName({ name, onRename }: { name: string; onRename: (name: stri
   const commit = () => { if (value.trim() && value.trim() !== name) onRename(value); else setValue(name); };
   return (
     <span data-testid="workspace-name" onBlur={commit}>
-      <BasedField label="Workspace name" value={value} onChange={setValue} placeholder="Workspace" onEnter={commit} />
+      <BasedField label="Workspace name" labelHidden value={value} onChange={setValue} placeholder="Workspace" onEnter={commit} />
     </span>
   );
 }
@@ -409,8 +420,10 @@ function StartPageSection({ state }: SettingsSectionProps) {
   const trashed = value ? (state.outline?.trash ?? []).some((t) => t.id === value) : false;
   const current = value && node && !trashed ? state.titles.get(value) || "Untitled" : undefined;
   // BSD-461: ohne AI wird keine Seite „Home“ mehr angelegt, sondern eine vorhandene Seite Home.
-  const firstPage = !ai && state.outline ? fallbackHomePage(state.outline, state.titles) : undefined;
-  const fallback = ai ? "Dashboard" : firstPage ? state.titles.get(firstPage) || "Untitled" : "A new page called Home";
+  // Feedback 20. 11.: Wurde Home auf diesem Gerät schon vergeben (oder zurückgesetzt), rückt keine Seite mehr nach.
+  const empty = homeStaysEmpty(value, { cleared: startPage.cleared(), trashedID: startPage.trashed() }, state.outline);
+  const firstPage = !ai && !empty && state.outline ? fallbackHomePage(state.outline, state.titles) : undefined;
+  const fallback = ai ? "Dashboard" : firstPage ? state.titles.get(firstPage) || "Untitled" : "No page chosen";
   return (
     <Group>
       <Row label="Home" hint={ai
@@ -503,12 +516,9 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "device", page: "account", title: "This device", order: 10, component: DeviceSection, keywords: ["Device ID", "Storage"] });
   registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection, provides: ["Automatic update checks on or off"], keywords: ["Check for updates", "Check automatically", "Version"] });
   // BSD-319: Diagnostics in Gruppen (diagnostics.tsx)
-  registerSettingsSection({ id: "diagnostics-status", page: "diagnostics", title: "Status", order: 10, component: StatusSection, keywords: ["Version", "Sync", "Storage", "Clock"] });
-  registerSettingsSection({ id: "diagnostics-problems", page: "diagnostics", title: "Problems", order: 20, component: ProblemsSection, provides: ["Hang reports"], keywords: ["Errors", "Warnings", "Freezes"] });
-  registerSettingsSection({ id: "diagnostics-hangs", page: "diagnostics", title: "Hangs", order: 22, component: HangsSection, keywords: ["Freeze", "Slow"] });
-  registerSettingsSection({ id: "diagnostics-crash", page: "diagnostics", title: "Crash reports", order: 25, component: CrashReportsSection, keywords: ["Offer a report after a crash", "Send report"] });
-  registerSettingsSection({ id: "diagnostics-reports", page: "diagnostics", title: "Reports", order: 30, component: ReportsSection, provides: ["Layout audit"], keywords: ["Report a problem", "Bug report", "Feedback"] });
-  registerSettingsSection({ id: "diagnostics-log", page: "diagnostics", title: "Log", order: 40, component: LogSection, provides: ["Logs"], keywords: ["Events on this device"] });
+  registerSettingsSection({ id: "diagnostics-status", page: "diagnostics", title: "Overview", order: 10, component: OverviewSection, keywords: ["Version", "Sync", "Storage", "Clock", "Problems", "Errors", "Warnings", "Freezes", "Copy report"] });
+  // Feedback 20. 11.: Hangs, Log, Absturz- und Fehlerberichte in einem Abschnitt mit Umschalter
+  registerSettingsSection({ id: "diagnostics-details", page: "diagnostics", title: "Details", order: 20, component: DetailsSection, provides: ["Hang reports", "Logs", "Layout audit"], keywords: ["Hangs", "Freeze", "Slow", "Log", "Events on this device", "Crash reports", "Offer a report after a crash", "Send report", "Report a problem", "Bug report", "Feedback"] });
   registerSettingsSection({ id: "diagnostics-dev", page: "diagnostics", title: "For developers", order: 50, component: DeveloperSection, keywords: ["Developer view", "Editor recording", "Design kit"] });
   if (AI_OPTION) registerSettingsSection({ id: "ai-switch", page: "agents", title: "AI", order: 5, component: AiSwitchSection, keywords: ["AI features", "Turn AI off"] });
   // BSD-159: Anbieter, Schlüssel, Modelle und Freigaben aus dem Chat-Bereich.

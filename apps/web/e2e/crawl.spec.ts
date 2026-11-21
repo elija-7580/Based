@@ -290,7 +290,7 @@ test("Fotos: Home, Chat, Diagnose", async ({ page, browserName }) => {
     await ready(page);
     for (const [name, hash] of [["home", "#home"], ["chat-empty", "#chat"], ["settings-diagnostics", "#prefs-diagnostics"]] as const) {
       await goHash(page, hash);
-      if (name === "settings-diagnostics") await page.getByRole("button", { name: "Copy diagnostics" }).click();
+      if (name === "settings-diagnostics") await page.getByRole("button", { name: "Copy report" }).click();
       for (const [w, h, suffix] of [[1280, 820, ""], [900, 600, "-900"], [1728, 1000, "-1728"]] as const) {
         await page.setViewportSize({ width: w, height: h });
         await page.mouse.move(w - 10, h - 10);

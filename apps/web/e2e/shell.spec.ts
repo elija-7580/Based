@@ -126,6 +126,27 @@ test("Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Positi
   await expect.poll(names).toEqual(["Alpha", "Welcome to Based"]);
 });
 
+// Feedback 20. 11. („muss ein paar Mal draufdrücken“): WebKit macht aus einem Klick mit ein paar Pixeln Zittern eine
+// native Ziehbewegung auf die Stelle selbst – der Klick ging verloren. Jetzt zählt das als Klick (shell/clickSlop.ts).
+test("Klick mit leichtem Zittern öffnet die Seite und die Suche", async ({ page }) => {
+  await newTopLevelPage(page, "Alpha");
+  await newTopLevelPage(page, "Beta");
+  const wobble = async (x: number, y: number) => {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 5, y + 1, { steps: 3 });
+    await page.mouse.up();
+  };
+  const row = (await page.getByRole("treeitem", { name: "Alpha" }).boundingBox())!;
+  await wobble(row.x + 60, row.y + row.height / 2);
+  await expect(page.getByLabel("Page title")).toHaveValue("Alpha");
+  const names = () => page.locator('[role="treeitem"][aria-level="1"]').evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")));
+  await expect.poll(names).toEqual(["Welcome to Based", "Alpha", "Beta"]);
+  const search = (await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Search" }).boundingBox())!;
+  await wobble(search.x + 30, search.y + search.height / 2);
+  await expect(page.getByLabel("Search pages")).toBeVisible();
+});
+
 test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
   await based(page).seed(5000);
   await expect(page.getByRole("treeitem", { name: "Page 0001" })).toBeVisible();

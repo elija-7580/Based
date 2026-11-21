@@ -27,6 +27,7 @@ import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
 import { HybridImportPill } from "./NotionHybrid.js";
 import { movedToTrash } from "../shell/trashUndo.js";
+import { noteDragStart, releasedAsClick } from "../shell/clickSlop.js";
 
 /** Nur geschlossene Formen werden im aktiven Zustand gefüllt (Lupe und Zahnrad nicht). */
 const FILLABLE = new Set<IconName>(["home", "graph", "trash", "chat", "settings", "library", "search"]);
@@ -259,7 +260,11 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     if (!id) return;
     e.preventDefault();
     if (row.kind === "page") {
-      if (row.id === id) return;
+      // Feedback 20. 11.: ein paar Pixel „gezogen“ und auf sich selbst losgelassen = Klick (shell/clickSlop.ts)
+      if (row.id === id) {
+        if (releasedAsClick(e)) open(id);
+        return;
+      }
       if (zone === "inside") setExp((s) => s.add(row.id));
       void client.command({ op: "drop", ids: [id], target: row.id, zone });
     } else if (row.kind === "header" && row.section) {
@@ -371,6 +376,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
         onRename={commitRename}
         onCancelRename={() => setRenaming(undefined)}
         onDragStart={(e) => {
+          noteDragStart(e);
           dragging.current = row.id;
           e.dataTransfer.setData(DRAG_TYPE, row.id);
           e.dataTransfer.effectAllowed = "move";
@@ -414,43 +420,58 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   // Einträge ziehen: umsortieren und zwischen oben und Fuß verschieben (pro Gerät gemerkt, wie Anpinnen/Ausblenden).
   const navDragging = useRef<NavID | undefined>(undefined);
   const [navDrop, setNavDrop] = useState<{ id: NavID; side: "before" | "after" } | undefined>();
-  const navDrag = (id: NavID, list: "top" | "footer") => ({
-    draggable: true,
-    onDragStart: (e: DragEvent<HTMLElement>) => {
-      navDragging.current = id;
-      e.dataTransfer.setData(NAV_DRAG_TYPE, id);
-      e.dataTransfer.effectAllowed = "move";
-    },
-    onDragEnd: () => {
-      navDragging.current = undefined;
-      setNavDrop(undefined);
-    },
-    onDragOver: (e: DragEvent<HTMLElement>) => {
-      if (!navDragging.current || navDragging.current === id) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
+  const navDrag = (id: NavID, list: "top" | "footer", go: () => void) => {
+    // oben stehen die Einträge untereinander, im Fuß (Icon-Zeile) nebeneinander
+    const navSide = (e: DragEvent<HTMLElement>): "before" | "after" => {
       const r = e.currentTarget.getBoundingClientRect();
-      // oben stehen die Einträge untereinander, im Fuß (Icon-Zeile) nebeneinander
       const first = list === "top" || FOOTER_STYLE !== "icons" ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
-      const side = first ? "before" : "after";
-      if (navDrop?.id !== id || navDrop.side !== side) setNavDrop({ id, side });
-    },
-    onDragLeave: () => setNavDrop((d) => (d?.id === id ? undefined : d)),
-    onDrop: (e: DragEvent<HTMLElement>) => {
-      const moved = navDragging.current;
-      const side = navDrop?.id === id ? navDrop.side : "before";
-      navDragging.current = undefined;
-      setNavDrop(undefined);
-      if (!moved || moved === id) return;
-      e.preventDefault();
-      const ids = list === "top" ? layout.top : layout.footer;
-      const before = side === "before" ? id : ids[ids.indexOf(id) + 1];
-      changeNav((p) => moveNav(p, moved, list, before === moved ? ids[ids.indexOf(moved) + 1] : before, { advanced, ai }));
-    },
-  });
+      return first ? "before" : "after";
+    };
+    return {
+      draggable: true,
+      onDragStart: (e: DragEvent<HTMLElement>) => {
+        noteDragStart(e);
+        navDragging.current = id;
+        e.dataTransfer.setData(NAV_DRAG_TYPE, id);
+        e.dataTransfer.effectAllowed = "move";
+      },
+      onDragEnd: () => {
+        navDragging.current = undefined;
+        setNavDrop(undefined);
+      },
+      onDragOver: (e: DragEvent<HTMLElement>) => {
+        if (!navDragging.current) return;
+        e.preventDefault();
+        // auf sich selbst: Ablegen erlauben (wird zum Klick, siehe onDrop), aber keine Einfügemarke
+        if (navDragging.current === id) return;
+        e.dataTransfer.dropEffect = "move";
+        const side = navSide(e);
+        if (navDrop?.id !== id || navDrop.side !== side) setNavDrop({ id, side });
+      },
+      onDragLeave: () => setNavDrop((d) => (d?.id === id ? undefined : d)),
+      onDrop: (e: DragEvent<HTMLElement>) => {
+        const moved = navDragging.current;
+        // BSD-628: Seite aus der Position des Drops selbst (wie onDragOver), nicht aus dem React-Zustand – unter Last kam
+        // der Drop vor dem Neuzeichnen nach dem letzten dragover an, der Zustand war alt (oder leer) und der Eintrag
+        // landete „before“ statt „after“ (wie beim Seitenbaum, onDrop oben).
+        const side = navSide(e);
+        navDragging.current = undefined;
+        setNavDrop(undefined);
+        if (!moved) return;
+        e.preventDefault();
+        if (moved === id) {
+          if (releasedAsClick(e)) go();
+          return;
+        }
+        const ids = list === "top" ? layout.top : layout.footer;
+        const before = side === "before" ? id : ids[ids.indexOf(id) + 1];
+        changeNav((p) => moveNav(p, moved, list, before === moved ? ids[ids.indexOf(moved) + 1] : before, { advanced, ai }));
+      },
+    };
+  };
   const dropClass = (id: NavID) => (navDrop?.id === id ? ` nav-drop-${navDrop.side}` : "");
   const navButton = (n: NavEntry) => (
-    <button key={n.id} type="button" className={"nav-item" + dropClass(n.id)} aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "top")}>
+    <button key={n.id} type="button" className={"nav-item" + dropClass(n.id)} aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "top", n.go)}>
       <Icon name={n.icon} filled={n.active && FILLABLE.has(n.icon)} {...(n.cut ? { cut: n.cut } : {})} />
       {n.name}
       {n.badge ? <span className="badge" aria-label={`${n.badge} in Trash`}>{n.badge}</span> : n.key ? <span className="key keycap">{n.key}</span> : null}
@@ -458,7 +479,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   );
   const iconButton = (n: NavEntry) => (
     <button key={n.id} type="button" className={"icon-btn ghost nav-icon" + dropClass(n.id)} aria-label={n.badge ? `${n.name}, ${n.badge} pages` : n.name} title={n.key ? `${n.name} (${n.key})` : n.name}
-      aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "footer")}>
+      aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "footer", n.go)}>
       <Icon name={n.icon} size={18} filled={n.active && FILLABLE.has(n.icon)} />
       {n.badge ? <span className="nav-icon-badge" aria-hidden="true">{n.badge}</span> : null}
       {n.key ? <span className="key-badge above" aria-hidden="true">{n.key}</span> : null}
@@ -951,7 +972,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   /** Diese Seite ist Home bzw. soll es werden (aus: zurück zum Dashboard). */
   isHome: boolean;
   onHome: (on: boolean) => void;
-  /** BSD-504: Gibt es ein Dashboard (AI an)? Ohne AI ist Home immer eine Seite – an ihr kein „Use dashboard as Home“. */
+  /** BSD-504: Gibt es ein Dashboard (AI an)? Ohne AI heißt es an der Home-Seite „Remove as Home“ (Home bleibt dann leer, Feedback 20. 11.). */
   dashboard: boolean;
   /** Direkt in einen anderen Abschnitt (Private, Teamspaces) – nur für Seiten der obersten Ebene. */
   quickMoves: { id: string; label: string }[];
@@ -988,7 +1009,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   return (
     <div ref={ref} role="menu" aria-label="Page actions" className="menu" style={pos}>
       {item(favorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!favorite))}
-      {isHome && !dashboard ? null : item(isHome ? "Use dashboard as Home" : "Set as Home", "home", () => onHome(!isHome))}
+      {item(isHome ? (dashboard ? "Use dashboard as Home" : "Remove as Home") : "Set as Home", "home", () => onHome(!isHome))}
       {item("Rename", "page", onRename)}
       {canNest ? item("Add a page inside", "plus", onAdd) : null}
       {item("Duplicate", "duplicate", onDuplicate)}

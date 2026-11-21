@@ -41,9 +41,10 @@ import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
 import { bootMark, diagnosticsLog, installDiagnostics, noteActivity } from "./shell/diagnostics.js";
-import { armHangWatch, installHangMonitor, noteStoreRequest } from "./shell/hangs.js";
+import { armHangWatch, installHangMonitor, noteStoreBusy, noteStoreRequest } from "./shell/hangs.js";
 import { installUnloadGuard } from "./shell/unloadGuard.js";
 import { exposeReplayHooks, installBugRecorder } from "./shell/bugReport.js";
+import { installReportOutbox } from "./shell/reportSend.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 // Vor dem ersten Rendern, damit kein Rechtsklick und kein Auswahlfeld je die Systemoberfläche zeigt. Nur beim
@@ -65,6 +66,8 @@ if (!isPromptWindow()) {
   // BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.
   installBugRecorder();
   exposeReplayHooks();
+  // BSD-632: Berichte, die beim „Send to Based“ nicht ankamen, nach dem Start bzw. wieder online erneut senden.
+  installReportOutbox();
 }
 // Zeit bis hierher = Laden und Auswerten aller Skripte (die Importe oben laufen vor dieser Zeile).
 bootMark("scripts loaded");
@@ -189,6 +192,7 @@ function start(guest: GuestBoot | undefined) {
   });
   const client = new StoreClient(link);
   client.onSlowRequest = noteStoreRequest;
+  client.onBusy = noteStoreBusy;
   client.onWorkerMessage = armHangWatch;
   // BSD-235 Teil 3: Widerruf wirkt auch, während der Gast die Seite offen hat (Neuladen zeigt dann den Hinweis).
   const revocation = guest ? watchGuestRevocation(guest.config, () => { diagnosticsLog.add("warning", "guest link revoked while open"); location.reload(); }) : undefined;

@@ -6,6 +6,8 @@ import { parseBugBundle, summarizeBundle, type BugBundle, type BugBundleSummary 
 import { isTauri } from "../desktop.js";
 
 export const REPORTS_DIR = ".config/based/reports";
+/** BSD-632: Marke im Bericht-Ordner – noch nicht an Based gesendet. */
+const OUTBOX = "outbox";
 
 export interface SavedReport extends BugBundleSummary {
   /** Ort für Menschen (Pfad im Dateisystem oder „this browser“). */
@@ -20,6 +22,10 @@ export interface ReportStore {
   remove(id: string): Promise<void>;
   /** Finder öffnen (nur Mac-App). */
   reveal?(id: string): Promise<void>;
+  /** BSD-632: Bericht in die Warteschlange für „Send to Based“ (an) oder heraus (aus). */
+  queue(id: string, on: boolean): Promise<void>;
+  /** BSD-632: IDs der Berichte, die noch gesendet werden sollen. */
+  queued(): Promise<string[]>;
 }
 
 const sortNewest = (a: SavedReport[]) => a.sort((x, y) => y.createdAt.localeCompare(x.createdAt));
@@ -75,6 +81,20 @@ async function fileStore(): Promise<ReportStore> {
       const { revealItemInDir } = await import("@tauri-apps/plugin-opener");
       await revealItemInDir(await join(await where(id), "report.json"));
     },
+    // BSD-632: Warteschlange = leere Datei `outbox` im Bericht-Ordner (bleibt beim Neustart, liest sich ohne App).
+    async queue(id, on) {
+      const marker = `${dir(id)}/${OUTBOX}`;
+      if (on) await fs.writeTextFile(marker, "", { baseDir });
+      else if (await fs.exists(marker, { baseDir })) await fs.remove(marker, { baseDir });
+    },
+    async queued() {
+      if (!(await fs.exists(REPORTS_DIR, { baseDir }))) return [];
+      const out: string[] = [];
+      for (const e of await fs.readDir(REPORTS_DIR, { baseDir })) {
+        if (e.isDirectory && /^[\w-]{1,80}$/.test(e.name) && (await fs.exists(`${dir(e.name)}/${OUTBOX}`, { baseDir }))) out.push(e.name);
+      }
+      return out.sort();
+    },
   };
 }
 
@@ -91,7 +111,7 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-interface Row { id: string; bundle: BugBundle; screenshot?: Blob }
+interface Row { id: string; bundle: BugBundle; screenshot?: Blob; /** BSD-632: noch zu senden. */ outbox?: true }
 
 async function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
   const db = await openDB();
@@ -125,6 +145,16 @@ function browserStore(): ReportStore {
     },
     async remove(id) {
       await tx("readwrite", (s) => s.delete(safeID(id)));
+    },
+    async queue(id, on) {
+      const r = await tx<Row | undefined>("readonly", (s) => s.get(safeID(id)) as IDBRequest<Row | undefined>);
+      if (!r) return;
+      const { outbox: _old, ...rest } = r;
+      await tx("readwrite", (s) => s.put(on ? { ...rest, outbox: true } : rest));
+    },
+    async queued() {
+      const rows = await tx<Row[]>("readonly", (s) => s.getAll() as IDBRequest<Row[]>);
+      return rows.filter((r) => r.outbox).map((r) => r.id).sort();
     },
   };
 }

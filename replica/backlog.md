@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 45 (Nachtlauf 2026-11-20, TS-Stack, Abschnitt direkt unten; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 46 (Nachtlauf 2026-11-21, TS-Stack, Abschnitt direkt unten; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,21 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 46 (Nachtlauf 2026-11-21, Feature-Stopp, RC-Abnahme)
+
+Inbox: BSD-635–638 (Audit „Effizienz“) → Blockiert mit je einer Frage (Umbau über mehrere Pakete, nach der Beta); BSD-642 → Bereit. Schicht A (03:12–04:46) und B (03:12–04:47, dann 04:53–05:27). main 4308e573 → 9bb22aaf → cb2181e2 → 26d684c1 → 906d62f1 → cf05d367 → 16499f07 → f0fff4e9; `run-ts.sh --fast` auf jedem Stand grün, berührte Specs (polish, sidebar, report, find, beta-build) in Chromium und WebKit grün.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-627 polish.spec „Home neben dem offenen Chat“ wackelig | ✅ | Test wartet auf `data-floating`; 48/48 in beiden Browsern |
+| BSD-628 Wackler WebKit (Seitenleiste ziehen, ⇧⌘B-Bündel) | ✅ | Drop nach Drop-Position, Auswahl ohne rAF-Drosselung; Sidebar.tsx, bugReport.ts |
+| BSD-631 Warteliste von außen prüfbar (stats/check) | 🟡 | Mac-Test: Elija setzt `WAITLIST_STATS_TOKEN` am Server |
+| BSD-632 Problem melden mit einem Klick („Send to Based“) | 🟡 | Server POST /api/report → Notion-Backlog, App mit Warteschlange; Mac-Test nach Notion-Einrichtung am Server; nicht im RC 0.2.11 |
+| BSD-629 Gründerangebot für Beta-Tester | 🟡 | nur docs/beta/README.md; Mailtext für die Beta-Release-Seite im Eintrag |
+| BSD-641 Beta-Fixture v0.2.11 (bc62b245) | ✅ | nur neue Dateien in fixtures/beta |
+| BSD-642 Bildschirmfoto beim Melden zu langsam (WebKit) | ✅ | nur sichtbare Stil-Eigenschaften; WebKit 1,1–1,5 s → ~0,45 s, @perf-Test |
+| BSD-643 ⌘K: wartendes Enter hängt, wenn die Suche scheitert | ✅ | find.spec 28/28 |
 
 ## Pass 45 (Nachtlauf 2026-11-20, Feature-Stopp)
 

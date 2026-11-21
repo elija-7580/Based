@@ -98,7 +98,7 @@ die Wächter stehen in `packages/core/test/runtime-costs.test.ts`, `apps/web/src
 | Seite anlegen / Favorit / Papierkorb (Worker, mit ~15 ms Messaufschlag) | 114 / 100 / 112 ms | 64 / 47 / 58 ms |
 | `buildOutline` allein | 95 ms | 59 ms (Gerüst als eigene Liste, ein Durchgang) |
 | Titel tippen: Titel-Tabelle im Hauptthread (120 000 Titel) | ~22 ms je Taste (ganze Map kopiert) | < 0,1 ms (`LayeredMap`) |
-| Titel tippen: unverlinkte Erwähnungen (Worker) | 124 ms je Taste, auch bei jedem anderen Titel | einmal 400 ms nach der letzten Taste, nur bei eigenem Titel |
+| Titel tippen: unverlinkte Erwähnungen (Worker) | 124 ms je Taste, auch bei jedem anderen Titel | einmal 1,5 s nach der letzten Taste, nur bei eigenem Titel |
 | Quick Find nur Titel (@-Menü) | 25–36 ms | 4–11 ms |
 | Quick Find Volltext je Anfrage | 35–270 ms | 23–270 ms (BSD-515 bleibt der Hebel) |
 | Datenbankseite öffnen (Worker, 100 000 Zeilen) | 509 ms | 209 ms (Teilbaum einmal statt dreimal) |

@@ -4,6 +4,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+// Feedback 20. 11.: Diagnostics hat oben die Übersicht, darunter „Details“ mit Umschalter (Hangs · Log · Crash reports · Reports).
+const diagTab = (page: import("@playwright/test").Page, name: string) =>
+  page.getByTestId("settings-section-diagnostics-details").getByRole("radio", { name, exact: true }).click();
+
 // BSD-330: Nebendateien (history.sqlite, ydocs.sqlite) liegen dauerhaft im OPFS – der Versionsverlauf übersteht das
 // Neuladen (vorher fiel er wegen eines zweiten OPFS-Pools still in den Speicher, BSD-300). Fällt eine Nebendatei
 // doch zurück, sagt es die Oberfläche: Hinweis beim Start, Settings → Sync & server und Diagnostics.
@@ -79,6 +83,7 @@ test("erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur i
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await expect(page.getByTestId("diagnostics-storage")).toContainText("Persistent (OPFS) · Version history is kept in memory only");
   // BSD-319: Das Log zeigt Stufen als eigene Spalte (data-level) – die Warnung steht als Zeile der Stufe „warning“ drin.
+  await diagTab(page, "Log");
   await expect(page.getByTestId("diagnostics-log").locator("[data-level=warning]", { hasText: "status: local · Version history is kept in memory only" })).toHaveCount(1);
   await page.goto("/?based-fail-store=history#prefs-sync");
   await expect(page.getByTestId("sync-storage-warning")).toContainText("Version history is kept in memory only");

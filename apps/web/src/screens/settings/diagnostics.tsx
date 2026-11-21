@@ -1,5 +1,7 @@
-// BSD-319: Settings → Diagnostics in klaren Gruppen: Status, Problems, Reports, Log, For developers. Gleiche Zeilen und
-// Abstände wie die übrigen Einstellungen (parts.tsx), keine Debug-Optik; alles per Tastatur erreichbar.
+// BSD-319: Settings → Diagnostics in klaren Gruppen. Feedback 20. 11. („alles in einem“, Entscheidung Elija): oben eine
+// Übersicht – ein Satz, ob alles gut ist, Probleme, Zustand – und EIN Knopf „Copy report“, der alles mitnimmt (Zustand,
+// Hänger, Log, letzte Sitzung). Darunter „Details“ mit Umschalter Hangs · Log · Crash reports · Reports; „For
+// developers“ bleibt hinter dem Schalter. Gleiche Zeilen und Abstände wie die übrigen Einstellungen (parts.tsx).
 import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
 import { HStack, StackItem, VStack } from "@astryxdesign/core/Layout";
@@ -8,7 +10,7 @@ import { BasedButton, BasedConfirm, BasedField, BasedSwitcher } from "@based/ui/
 import { useEffect, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { isTauri } from "../../desktop.js";
-import { reportSendingHint } from "../../shell/beta.js";
+import { copyReportHint, reportSendingHint } from "../../shell/beta.js";
 import { BUILD, recorder } from "../../shell/bugReport.js";
 import { copyText } from "../../shell/copyText.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText, stallCount } from "../../shell/diagnostics.js";
@@ -18,7 +20,8 @@ import { bundleFile, onReportsChanged, reportsChanged, reportStore, type SavedRe
 import { reportUI, startReport } from "../../shell/reportUI.js";
 import { crashConsentPref, crashPrompt, previousCrashReport } from "../../shell/crashReport.js";
 import { devViewPref, deviceNode } from "../../shell/storage.js";
-import { Group, Row, Value } from "./parts.js";
+import { Group, Note, Row, Value } from "./parts.js";
+import { HangsSection } from "./hangs.js";
 import type { SettingsSectionProps } from "./registry.js";
 import { clockSkewText } from "./clockSkew.js";
 
@@ -27,43 +30,81 @@ const useLog = () => useSyncExternalStore(diagnosticsLog.subscribe, diagnosticsL
 
 export const versionText = () => [BUILD.version ? `Version ${BUILD.version}` : "Development build", BUILD.commit ? `commit ${BUILD.commit}` : ""].filter(Boolean).join(" · ");
 
-/** Zustand: Version, Sync, Speicher, Uhr, Hülle, Seiten. */
-export function StatusSection({ state }: SettingsSectionProps) {
+/** Was „Copy report“ über diesen Zustand sagt (ohne Seiteninhalte). */
+function reportFacts(state: SettingsSectionProps["state"]) {
   const s = state.status;
-  const nodes = Object.values(state.outline?.nodes ?? {});
-  return (
-    <Group>
-      <Row label="Version"><Value testID="diagnostics-version">{versionText()}</Value></Row>
-      <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
-      <Row label="Storage"><Value testID="diagnostics-storage">{s.persistent ? "Persistent (OPFS)" : "Memory only"}{s.storageWarnings?.length ? ` · ${s.storageWarnings.join(" ")}` : ""}</Value></Row>
-      {s.clockSkew !== undefined ? <Row label="Clock"><Value>{clockSkewText(s.clockSkew)}</Value></Row> : null}
-      <Row label="Shell"><Value>{isTauri() ? "Desktop app" : "Web browser"}</Value></Row>
-      <Row label="Pages"><Value testID="diagnostics-pages">{`${plural(nodes.filter((n) => n.kind === "page").length, "page")} · ${plural(nodes.filter((n) => n.kind === "database").length, "database")}`}</Value></Row>
-    </Group>
-  );
+  return {
+    version: versionText(),
+    sync: `${s.state}${s.detail ? ` (${s.detail})` : ""}`,
+    storage: (s.persistent ? "persistent" : "memory") + (s.storageWarnings?.length ? ` (${s.storageWarnings.join(" ")})` : ""),
+    clock: s.clockSkew !== undefined ? clockSkewText(s.clockSkew) : undefined,
+    device: deviceNode.get() ?? "-",
+    shell: isTauri() ? "desktop" : "web",
+    pages: Object.keys(state.outline?.nodes ?? {}).length,
+    trash: state.outline?.trash.length ?? 0,
+  };
 }
 
-/** Probleme: letzte Sitzung, Hänger, Fehler und Warnungen mit Zähler. Leer: ein ruhiger Satz. */
-export function ProblemsSection(_: SettingsSectionProps) {
+/** Warnungen, die schon als Hänger zählen, nicht doppelt als „Warnings“. */
+const HANG_WARNING = /^(main thread blocked|slow input|slow store request|store busy|previous session ended in a hang)/;
+
+/**
+ * Übersicht: ein Satz (alles gut / so viele Dinge zum Ansehen), der eine Knopf „Copy report“, darunter die Probleme
+ * (letzte Sitzung, Freezes, Fehler, Warnungen) und der Zustand (Version, Sync, Speicher, Uhr, Hülle, Seiten).
+ */
+export function OverviewSection({ state }: SettingsSectionProps) {
   const log = useLog();
   const notice = previousSessionText();
   // BSD-418: endete die vorige Sitzung in einem Hänger, steht das hier – auch wenn sie danach „sauber“ schloss (Neuladen)
   const hang = useSyncExternalStore(hangHistory.subscribe, hangHistory.get).endedInHang;
   const freezes = stallCount();
   const errors = log.filter((e) => e.level === "error");
-  const warnings = log.filter((e) => e.level === "warning" && !/^(main thread blocked|slow input|slow store request|previous session ended in a hang)/.test(e.message));
-  if (!hang && !notice && freezes === 0 && errors.length === 0 && warnings.length === 0) {
-    return <Group><Row label="Nothing to report" hint="No crashes, freezes or errors on this device since Based started." /></Group>;
-  }
+  const warnings = log.filter((e) => e.level === "warning" && !HANG_WARNING.test(e.message));
+  const issues = [hang || notice ? 1 : 0, freezes ? 1 : 0, errors.length ? 1 : 0, warnings.length ? 1 : 0].reduce((a, b) => a + b, 0);
+  const [copied, setCopied] = useState<"" | "ok" | "failed">("");
+  const copy = () => { void copyText(diagnosticsReport(reportFacts(state))).then((ok) => setCopied(ok ? "ok" : "failed")); };
   const last = (l: DiagnosticsEntry[]) => (l.length ? `Last: ${l.at(-1)!.message}` : undefined);
+  const s = state.status;
+  const nodes = Object.values(state.outline?.nodes ?? {});
   return (
-    <Group>
-      {hang ? <Row label="Last session" hint={ongoingHangNotice(hang.marker)}><Value testID="diagnostics-last-session">Ended in a hang</Value></Row>
-        : notice ? <Row label="Last session" hint={notice}><Value testID="diagnostics-last-session">Ended unexpectedly</Value></Row> : null}
-      {freezes ? <Row label="Freezes" hint="The app stopped responding for two seconds or longer"><Value testID="diagnostics-freezes">{freezes}</Value></Row> : null}
-      {errors.length ? <Row label="Errors" hint={last(errors)}><Value testID="diagnostics-errors">{errors.length}</Value></Row> : null}
-      {warnings.length ? <Row label="Warnings" hint={last(warnings)}><Value testID="diagnostics-warnings">{warnings.length}</Value></Row> : null}
-    </Group>
+    <VStack gap={4}>
+      <Group>
+        <Row label={issues ? `${plural(issues, "thing")} to look at` : "Nothing to report"}
+          hint={issues ? copyReportHint() : "No crashes, freezes or errors on this device since Based started."}>
+          <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy report"} variant="primary" onClick={copy} />
+        </Row>
+        {issues ? null : <Note>{copyReportHint()}</Note>}
+        {hang ? <Row label="Last session" hint={ongoingHangNotice(hang.marker)}><Value testID="diagnostics-last-session">Ended in a hang</Value></Row>
+          : notice ? <Row label="Last session" hint={notice}><Value testID="diagnostics-last-session">Ended unexpectedly</Value></Row> : null}
+        {freezes ? <Row label="Freezes" hint="The app stopped responding for two seconds or longer"><Value testID="diagnostics-freezes">{freezes}</Value></Row> : null}
+        {errors.length ? <Row label="Errors" hint={last(errors)}><Value testID="diagnostics-errors">{errors.length}</Value></Row> : null}
+        {warnings.length ? <Row label="Warnings" hint={last(warnings)}><Value testID="diagnostics-warnings">{warnings.length}</Value></Row> : null}
+      </Group>
+      <Group>
+        <Row label="Version"><Value testID="diagnostics-version">{versionText()}</Value></Row>
+        <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
+        <Row label="Storage"><Value testID="diagnostics-storage">{s.persistent ? "Persistent (OPFS)" : "Memory only"}{s.storageWarnings?.length ? ` · ${s.storageWarnings.join(" ")}` : ""}</Value></Row>
+        {s.clockSkew !== undefined ? <Row label="Clock"><Value>{clockSkewText(s.clockSkew)}</Value></Row> : null}
+        <Row label="Shell"><Value>{isTauri() ? "Desktop app" : "Web browser"}</Value></Row>
+        <Row label="Pages"><Value testID="diagnostics-pages">{`${plural(nodes.filter((n) => n.kind === "page").length, "page")} · ${plural(nodes.filter((n) => n.kind === "database").length, "database")}`}</Value></Row>
+      </Group>
+    </VStack>
+  );
+}
+
+const DETAIL_TABS = [{ id: "hangs", label: "Hangs" }, { id: "log", label: "Log" }, { id: "crash", label: "Crash reports" }, { id: "reports", label: "Reports" }] as const;
+type DetailTab = (typeof DETAIL_TABS)[number]["id"];
+
+/** Details: ein Umschalter statt vier Abschnitte untereinander. */
+export function DetailsSection(props: SettingsSectionProps) {
+  const [tab, setTab] = useState<DetailTab>("hangs");
+  return (
+    <VStack gap={3}>
+      <BasedSwitcher label="Details" value={tab} onChange={(v) => setTab(v as DetailTab)} items={DETAIL_TABS.map((t) => ({ id: t.id, label: t.label }))} />
+      <div data-testid={`diagnostics-tab-${tab}`}>
+        {tab === "hangs" ? <HangsSection {...props} /> : tab === "log" ? <LogSection {...props} /> : tab === "crash" ? <CrashReportsSection {...props} /> : <ReportsSection {...props} />}
+      </div>
+    </VStack>
   );
 }
 
@@ -151,28 +192,14 @@ const LEVELS: { value: LevelFilter; label: string }[] = [
 ];
 
 /** Ganzes Log mit Filter nach Stufe und Suche; Bericht als Text kopieren. */
-export function LogSection({ state }: SettingsSectionProps) {
+export function LogSection(_: SettingsSectionProps) {
   const log = useLog();
   const [level, setLevel] = useState<LevelFilter>("all");
   const [query, setQuery] = useState("");
-  // BSD-300: Kopieren kann scheitern (keine Berechtigung für die Zwischenablage) – dann das sagen, nicht still bleiben.
-  const [copied, setCopied] = useState<"" | "ok" | "failed">("");
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return log.filter((e) => (level === "all" || e.level === level) && (!q || e.message.toLowerCase().includes(q)));
   }, [log, level, query]);
-  const s = state.status;
-  const facts = {
-    version: versionText(),
-    sync: `${s.state}${s.detail ? ` (${s.detail})` : ""}`,
-    storage: (s.persistent ? "persistent" : "memory") + (s.storageWarnings?.length ? ` (${s.storageWarnings.join(" ")})` : ""),
-    clock: s.clockSkew !== undefined ? clockSkewText(s.clockSkew) : undefined,
-    device: deviceNode.get() ?? "-",
-    shell: isTauri() ? "desktop" : "web",
-    pages: Object.keys(state.outline?.nodes ?? {}).length,
-    trash: state.outline?.trash.length ?? 0,
-  };
-  const copy = () => { void copyText(diagnosticsReport(facts)).then((ok) => setCopied(ok ? "ok" : "failed")); };
   // Nur die gezeigten Zeilen (Filter und Suche gelten) – fürs schnelle Weitergeben eines Ausschnitts.
   const [logCopied, setLogCopied] = useState<"" | "ok" | "failed">("");
   const copyLog = () => { void copyText(shown.map(logLine).join("\n")).then((ok) => setLogCopied(ok ? "ok" : "failed")); };
@@ -190,11 +217,9 @@ export function LogSection({ state }: SettingsSectionProps) {
   return (
     <Group>
       <Row label="Events on this device" hint="Newest last — no page content">
-        <HStack gap={2}>
-          <BasedButton label={logCopied === "ok" ? "Copied" : logCopied === "failed" ? "Couldn’t copy – try again" : `Copy log (${shown.length})`} variant="ghost" onClick={copyLog}
-            disabled={shown.length === 0} />
-          <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy diagnostics"} onClick={copy} />
-        </HStack>
+        {/* BSD-300: Kopieren kann scheitern (keine Berechtigung für die Zwischenablage) – dann das sagen, nicht still bleiben. */}
+        <BasedButton label={logCopied === "ok" ? "Copied" : logCopied === "failed" ? "Couldn’t copy – try again" : `Copy log (${shown.length})`} variant="ghost" onClick={copyLog}
+          disabled={shown.length === 0} />
       </Row>
       <HStack gap={3} vAlign="end" wrap="wrap">
         <BasedSwitcher label="Level" value={level} onChange={(v) => setLevel(v as LevelFilter)} items={LEVELS.map((l) => ({ id: l.value, label: l.label }))} />

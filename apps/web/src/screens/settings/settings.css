@@ -26,7 +26,7 @@
 .kit { max-width: var(--page-measure); margin-inline: auto; }
 /* BSD-319: Diagnostics – ganzes Log als Datenfläche (Mono, Tabellenziffern, eigener Rollbereich, markierbar);
    die Beschriftungen der Diagnose-Gruppen sind Bedienung und nicht markierbar. */
-[data-testid^="settings-section-diagnostics"] { -webkit-user-select: none; user-select: none; }
+[data-testid^="settings-section-diagnostics"], [data-testid^="diagnostics-tab-"] { -webkit-user-select: none; user-select: none; }
 [data-testid^="settings-section-diagnostics"] :is(input, textarea, .diagnostics-log) { -webkit-user-select: text; user-select: text; }
 /* Hänger sind Daten wie das Log: Zeilen, Ursachen und Schritte lassen sich markieren (Knöpfe bleiben Bedienung). */
 [data-testid^="settings-section-diagnostics"] :is([data-testid="hangs-list"], [data-testid="hangs-previous"]) :not(button, button *) { -webkit-user-select: text; user-select: text; }
