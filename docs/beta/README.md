@@ -101,3 +101,4 @@ The most useful feedback: what you expected, what happened instead, and whether 
 Based has no investors and sells no ads. During the beta every feature is free for everyone, and donations pay for
 the servers. If you like what you're testing, [sponsor Based on GitHub](https://github.com/sponsors/elija-7580): $3 a month is enough, or give once.
 It's a donation, so you get nothing extra for it. Paid plans start once Based is out of beta and has 1,000 users. Until then, nothing costs money.
+As a thank-you, beta testers get Based Cloud free for 12 months once it launches, and the founder price after that.
