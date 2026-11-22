@@ -4,6 +4,15 @@ The build workflow puts the **top section** into the update dialog and the relea
 one line per point (no wrapped lines), each at most 110 characters – a test checks this
 (`apps/desktop/test/config.test.mjs`). Details go into the section below it. Newest first; written for testers.
 
+## 0.2.13 – a calmer look
+
+- Databases look like on basednotes.app: quiet tables, tidier board, timeline, calendar, list and gallery
+- Page header is calmer: Export and Move to Trash now live in the ••• menu
+- Sidebar: no empty Teamspaces section; “New teamspace…” is in the menu next to Private
+- HTML blocks use the fonts of your page, and the white strip at their right edge is gone
+- Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
+- Like Based? It runs on donations, $3 a month helps: github.com/sponsors/elija-7580
+
 ## 0.2.12 – first beta
 
 - Quick Find (⌘K): Enter right after typing opens the match you typed, and Esc always closes it
