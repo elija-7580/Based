@@ -58,7 +58,7 @@
 /* BSD-375: Inline-Datenbank ohne Titel – kein graues „Untitled“ (wie Notion); beim Überfahren oder im Fokus erscheint
    der Platzhalter, damit man ihr einen Namen geben kann. Platz bleibt, damit nichts springt. */
 .dbui-root.inline:not(:hover) .dbui-title:placeholder-shown:not(:focus)::placeholder { color: transparent; }
-.dbui-toolbar { display: flex; align-items: center; gap: var(--space-1); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.dbui-toolbar { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
 .dbui-tabs { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
 /* Ansichten als Pillen (Notion-Struktur, Based-Fläche): aktiv = `selected`-Fläche, keine Unterstreichung. */
 .dbui-tabs { padding: var(--space-1) 0; }
@@ -68,8 +68,9 @@
   font-size: var(--type-description-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-description-tracking); user-select: none; -webkit-user-select: none;
   transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
 }
-.dbui-tab:hover { background: var(--surface-soft); color: var(--ink); }
-.dbui-tab[aria-selected="true"] { background: var(--selected); color: var(--ink); }
+.dbui-tab:hover { background: var(--surface-raised); color: var(--ink); }
+/* 22. 11. 2026 (wie basednotes.app): die aktive Ansicht ist die eine Pille in Tinte, „New“ daneben ist neutral. */
+.dbui-tab[aria-selected="true"] { background: var(--button); color: var(--button-ink); }
 .dbui-tabs.single { padding: var(--space-1) 0; }
 .dbui-tabs.single .dbui-icon-btn { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .dbui-root:hover .dbui-tabs.single .dbui-icon-btn, .dbui-tabs.single .dbui-icon-btn:focus-visible { opacity: 1; }
@@ -82,8 +83,12 @@
 }
 .dbui-chip.ghost { background: transparent; color: var(--muted); }
 .dbui-chip.ghost:hover { background: var(--surface-raised); color: var(--ink); }
-.dbui-chip.primary { background: var(--button); color: var(--button-ink); font-weight: var(--type-meta-weight); }
+.dbui-chip.primary { background: var(--surface-raised); color: var(--ink); font-weight: var(--type-meta-weight); }
+.dbui-chip.primary:hover { background: var(--selected); }
 .dbui-rowcount { padding: 0 var(--space-2); }
+/* Ganze Seite: Werkzeuge treten zurück (wie inline), „New“ und gesetzte Filter bleiben voll; beim Überfahren oder mit Fokus alles voll. */
+.dbui-root:not(.inline) .dbui-actions > :is(.dbui-chip.ghost, .dbui-icon-btn, .dbui-rowcount) { opacity: 0.45; transition: opacity var(--duration-fast) var(--ease-out); }
+.dbui-root:not(.inline) .dbui-head:is(:hover, :focus-within) .dbui-actions > :is(.dbui-chip.ghost, .dbui-icon-btn, .dbui-rowcount) { opacity: 1; }
 .dbui-search { width: calc(var(--space-8) * 3); min-height: var(--space-6); }
 .dbui-icon-btn {
   width: var(--space-6); height: var(--space-6); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--muted);
@@ -113,8 +118,6 @@
   font-size: var(--type-description-size); line-height: calc(var(--space-5) - var(--space-1)); color: var(--ink); background: var(--dbui-tone-gray); max-width: 100%;
 }
 .dbui-pill-text { overflow: hidden; text-overflow: ellipsis; }
-.dbui-pill.status { border-radius: var(--radius-pill); }
-.dbui-dot { width: calc(var(--space-2) - 1px); height: calc(var(--space-2) - 1px); border-radius: var(--radius-pill); background: var(--dbui-strong-gray); flex: none; }
 .dbui-pill-x { border: 0; background: transparent; padding: 0; display: inline-flex; color: var(--muted); }
 .tone-gray { --dbui-tone: var(--dbui-tone-gray); --dbui-strong: var(--dbui-strong-gray); }
 .tone-blue { --dbui-tone: var(--dbui-tone-blue); --dbui-strong: var(--dbui-strong-blue); }
@@ -123,7 +126,6 @@
 .tone-green { --dbui-tone: var(--dbui-tone-green); --dbui-strong: var(--dbui-strong-green); }
 .tone-red { --dbui-tone: var(--dbui-tone-red); --dbui-strong: var(--dbui-strong-red); }
 .dbui-pill[class*="tone-"] { background: var(--dbui-tone); }
-.dbui-pill[class*="tone-"] .dbui-dot { background: var(--dbui-strong); }
 .dbui-person { display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap; }
 .dbui-avatar {
   width: var(--icon-md); height: var(--icon-md); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--ink-2);
@@ -150,13 +152,15 @@
 .dbui-thead {
   position: sticky; top: 0; z-index: 2; display: flex; height: var(--dbui-row); background: var(--bg); border-bottom: 1px solid var(--line);
 }
-.dbui-th { position: relative; flex: none; display: flex; align-items: stretch; border-right: 1px solid var(--line); }
-.dbui-th:last-of-type { border-right: 0; }
+/* Tabelle wie auf basednotes.app (22. 11. 2026): nur waagrechte Haarlinien, kein Typ-Icon im Kopf – Spalten trennt der Abstand. */
+.dbui-th { position: relative; flex: none; display: flex; align-items: stretch; }
 .dbui-th-btn {
   flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-2); border: 0; background: transparent; color: var(--muted);
   font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); text-align: left;
 }
-.dbui-th-btn:hover { background: var(--surface-soft); color: var(--ink); }
+/* Spaltenkopf leise (`muted`, Schrift `label`); `.dbui-root button` erbt sonst die Tinte. */
+.dbui-root .dbui-th-btn { color: var(--muted); font-weight: var(--type-meta-weight); }
+.dbui-root .dbui-th-btn:hover { background: var(--surface-soft); color: var(--ink); }
 .dbui-resize { position: absolute; right: -3px; top: 0; bottom: 0; width: calc(var(--space-1) + 2px); cursor: col-resize; z-index: 1; touch-action: none; }
 .dbui-resize:hover { background: var(--line); }
 /* BSD-444: Hülle nur für die ARIA-Rolle (Zelle, Tablist) – nimmt nicht am Layout teil */
@@ -179,10 +183,9 @@
 .dbui-table .dbui-new-row:hover { background: linear-gradient(to right, transparent var(--dbui-gutter), var(--surface-soft) var(--dbui-gutter)); }
 .dbui-cell {
   flex: none; position: relative; display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-2); min-width: 0; overflow: hidden;
-  border-right: 1px solid var(--line); cursor: default;
+  cursor: default;
 }
 .dbui-vrow.wrap .dbui-cell { align-items: flex-start; padding-top: var(--cell-pad); padding-bottom: var(--cell-pad); }
-.dbui-cell:last-child { border-right: 0; }
 .dbui-cell.title { font-weight: var(--type-meta-weight); }
 .dbui-cell.active { box-shadow: inset 0 0 0 2px var(--focus-ring); border-radius: var(--radius-xs); }
 /* Zellbereich (⇧-Pfeile, Ziehen): getönt; die aktive Zelle behält ihren Rahmen. */
