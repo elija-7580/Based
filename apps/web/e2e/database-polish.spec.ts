@@ -154,5 +154,5 @@ test("Filterzeile ohne Umbruch, Datumsauswahl mit einem Fokusrahmen und Based-Fe
   expect(await active.evaluate((el) => getComputedStyle(el).boxShadow)).toBe("none");
   await day.fill("2026-11-24");
   await page.keyboard.press("Tab");
-  await expect(cell).toContainText(/Nov(ember)? 24, 2026/);
+  await expect(cell).toContainText(/Nov 24(, 2026)?/);
 });

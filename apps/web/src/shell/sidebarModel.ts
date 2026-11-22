@@ -4,13 +4,11 @@ import { PRIVATE_SECTION, sectionKey, type Outline } from "@based/core";
 
 export type SidebarRow =
   /** Abschnittskopf: Favorites, Teamspaces (mit „+“ für einen neuen Teamspace) oder Private (mit „+“ für eine Seite). */
-  | { kind: "header"; key: string; label: string; group: string; section?: string; collapsed: boolean }
+  | { kind: "header"; key: string; label: string; group: string; section?: string; collapsed: boolean; /** „Private“ ohne Teamspaces: ihr Menü bietet „New teamspace…“ an. */ offerTeamspace?: true }
   /** Ein Teamspace unter „Teamspaces“: auf-/zuklappbar, seine Seiten darunter (Tiefe 1). */
   | { kind: "teamspace"; key: string; id: string; name: string; icon?: string; collapsed: boolean; count: number }
   | { kind: "page"; key: string; id: string; depth: number; hasChildren: boolean; expanded: boolean; database: boolean }
-  | { kind: "empty"; key: string; depth: number; parent: string }
-  /** „Create a teamspace“, solange es keinen gibt. */
-  | { kind: "action"; key: string; action: "createTeamspace"; label: string };
+  | { kind: "empty"; key: string; depth: number; parent: string };
 
 export const FAVORITES = "favorites";
 export const TEAMSPACES = "teamspaces";
@@ -53,10 +51,10 @@ export function flattenSidebar(outline: Outline, expanded: ReadonlySet<string>, 
     return rows;
   }
   const teamspaces = outline.sections.filter((s) => s.id !== PRIVATE_SECTION);
+  // 22. 11. 2026 (wie basednotes.app): ohne Teamspaces kein leerer Abschnitt – angelegt wird über das Menü an „Private“.
   const tc = collapsed.has(TEAMSPACES);
-  rows.push({ kind: "header", key: "h/" + TEAMSPACES, label: "Teamspaces", group: TEAMSPACES, collapsed: tc });
+  if (teamspaces.length > 0) rows.push({ kind: "header", key: "h/" + TEAMSPACES, label: "Teamspaces", group: TEAMSPACES, collapsed: tc });
   if (!tc) {
-    if (teamspaces.length === 0) rows.push({ kind: "action", key: "a/createTeamspace", action: "createTeamspace", label: "Create a teamspace" });
     for (const s of teamspaces) {
       const c = collapsed.has(s.id);
       const kids = outline.children[sectionKey(s.id)] ?? [];
@@ -67,7 +65,7 @@ export function flattenSidebar(outline: Outline, expanded: ReadonlySet<string>, 
     }
   }
   const pc = collapsed.has(PRIVATE_SECTION);
-  rows.push({ kind: "header", key: "h/" + PRIVATE_SECTION, label: "Private", group: PRIVATE_SECTION, section: PRIVATE_SECTION, collapsed: pc });
+  rows.push({ kind: "header", key: "h/" + PRIVATE_SECTION, label: "Private", group: PRIVATE_SECTION, section: PRIVATE_SECTION, collapsed: pc, ...(teamspaces.length === 0 ? { offerTeamspace: true as const } : {}) });
   if (!pc) pages(outline.children[sectionKey(PRIVATE_SECTION)] ?? [], 0, "s:" + PRIVATE_SECTION, new Set());
   return rows;
 }

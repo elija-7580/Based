@@ -255,7 +255,7 @@ test("OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260)", a
   await dialog.getByRole("button", { name: "Done" }).click();
   await page.getByRole("treeitem", { name: "Outline" }).click();
   await expect(page.getByTestId("page-content")).toContainText("Beta");
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Export…" }).click(); }
   const exp = page.getByRole("dialog", { name: "Export page" });
   await exp.getByRole("radio", { name: /OPML/ }).click();
   const [file] = await Promise.all([page.waitForEvent("download"), exp.getByRole("button", { name: "Export", exact: true }).click()]);
@@ -266,7 +266,7 @@ test("OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260)", a
   // BSD-260 Teil 6: dieselbe Seite als Word-Dokument
   // Der Dialog bleibt nach dem Export offen
   const exp2 = page.getByRole("dialog", { name: "Export page" });
-  if (!(await exp2.isVisible())) await page.getByRole("button", { name: "Export", exact: true }).click();
+  if (!(await exp2.isVisible())) { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Export…" }).click(); }
   await exp2.getByRole("radio", { name: /Word/ }).click();
   const [doc] = await Promise.all([page.waitForEvent("download"), exp2.getByRole("button", { name: "Export", exact: true }).click()]);
   expect(doc.suggestedFilename()).toBe("Outline.docx");
@@ -370,7 +370,7 @@ test("Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (
 
 test("Export: Markdown mit Frontmatter und JSON (BSD-260)", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Export…" }).click(); }
   const dialog = page.getByRole("dialog", { name: "Export page" });
   await dialog.getByRole("radio", { name: /Markdown/ }).click();
   await dialog.getByTestId("markdown-export-options").getByText("Properties as YAML front matter").click();
@@ -389,7 +389,7 @@ test("Export: Markdown mit Frontmatter und JSON (BSD-260)", async ({ page }) => 
 
 test("Export: Seite als Markdown, Workspace als Based-Archiv", { tag: "@smoke" }, async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Export…" }).click(); }
   const dialog = page.getByRole("dialog", { name: "Export page" });
   await dialog.getByRole("radio", { name: /Markdown/ }).click();
   const [md] = await Promise.all([page.waitForEvent("download"), dialog.getByRole("button", { name: "Export", exact: true }).click()]);

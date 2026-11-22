@@ -299,6 +299,21 @@ export function formatICU(swiftSeconds: number, pattern: string): string {
   return out;
 }
 
+/**
+ * Kurze Anzeige für Tabellenzellen: „Feb 12“ im laufenden Jahr, sonst „Feb 12, 2025“ (mit Zeit „Feb 12 3:15 PM“).
+ * Nur Anzeige – gespeichert wird nichts anderes; ein eigenes Format der Property (`dateFormat`) geht vor.
+ */
+export function shortDate(dv: DateValue, now: Date = new Date()): string {
+  dv = resolveDate(dv);
+  const day = (s: number) => (toJSDate(s).getFullYear() === now.getFullYear() ? "MMM d" : "MMM d, yyyy");
+  let s = formatICU(dv.start, dv.includeTime ? day(dv.start) + " h:mm a" : day(dv.start));
+  if (dv.end !== undefined) {
+    const sameDay = isSameDay(dv.start, dv.end);
+    s += " → " + formatICU(dv.end, dv.includeTime && sameDay ? "h:mm a" : dv.includeTime ? day(dv.end) + " h:mm a" : day(dv.end));
+  }
+  return s;
+}
+
 /** Notions Standardanzeige „May 4, 2025 3:15 PM“ (Swift `DateDisplay.long`). */
 export function longDate(dv: DateValue): string {
   dv = resolveDate(dv);

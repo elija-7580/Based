@@ -10,8 +10,8 @@ import {
   addItem, conditionItem, countConditions, describeCondition, groupItem, isComplete, itemAt, newCondition, removeItem, replaceItem,
   setCombinator, topConditions, valueKind, EMPTY_FILTER,
 } from "./logic/filters.js";
-import { columnWidth, flatten, galleryColumns, nextRowIndex } from "./logic/layout.js";
-import { defaultIsAgentEdit, editText, fromInputValue, optionTone, parseNumberInput, parseTextInput, toInputValue, withDate } from "./logic/values.js";
+import { columnWidth, fillWidths, flatten, galleryColumns, hasStoredWidths, nextRowIndex } from "./logic/layout.js";
+import { defaultIsAgentEdit, editText, fromInputValue, optionTone, parseNumberInput, rowToneClass, parseTextInput, toInputValue, withDate } from "./logic/values.js";
 import { groupProperty, newRowValues } from "./layouts/shared.js";
 
 const stamp = { millis: 1, counter: 0, node: "x" };
@@ -124,6 +124,21 @@ describe("Layout-Logik", () => {
     expect(columnWidth(view(), db, "title")).toBe(280);
     expect(columnWidth(view({ properties: [{ id: "n", visible: true, width: 20 }] }), db, "n")).toBe(72);
   });
+
+  it("Tabelle füllt die Breite, bis jemand eine Spalte festlegt", () => {
+    // gleiches Verhältnis, nie breiter als der Platz
+    expect(fillWidths([280, 180, 180], 800, false)).toEqual([350, 225, 225]);
+    // höchstens doppelt so breit
+    expect(fillWidths([280, 180], 5000, false)).toEqual([560, 360]);
+    // kein Platz übrig oder noch nicht gemessen: Standardbreiten, nie schmaler
+    expect(fillWidths([280, 180], 300, false)).toEqual([280, 180]);
+    expect(fillWidths([280, 180], 0, false)).toEqual([280, 180]);
+    // gespeicherte Breiten gelten genau
+    expect(fillWidths([280, 180], 5000, true)).toEqual([280, 180]);
+    expect(hasStoredWidths(view())).toBe(false);
+    expect(hasStoredWidths(view({ properties: [{ id: "n", visible: true }] }))).toBe(false);
+    expect(hasStoredWidths(view({ properties: [{ id: "n", visible: true, width: 120 }] }))).toBe(true);
+  });
 });
 
 describe("Werte der Editoren", () => {
@@ -153,6 +168,13 @@ describe("Werte der Editoren", () => {
     expect(optionTone("yellow")).toBe("orange");
     expect(optionTone("blueBackground")).toBe("blue");
     expect(optionTone(undefined)).toBe("gray");
+    // Balken in Timeline/Kalender: Farbe des Status, sonst grau (keine Klasse)
+    const toned = { properties: [{ id: "title", name: "Name", type: "title" }, { id: "st", name: "Status", type: "status", options: [{ id: "a", name: "Active", color: "blue" }, { id: "n", name: "Later", color: "gray" }] }] };
+    const r = (values: Record<string, unknown>) => ({ id: "r", type: "page", parent: "d:x", sk: "a", values } as never);
+    expect(rowToneClass(toned as never, r({ st: { status: { _0: "a" } } }))).toBe(" tone-blue");
+    expect(rowToneClass(toned as never, r({ st: { status: { _0: "n" } } }))).toBe("");
+    expect(rowToneClass(toned as never, r({}))).toBe("");
+    expect(rowToneClass({ properties: [] }, r({ st: { status: { _0: "a" } } }))).toBe("");
     expect(defaultIsAgentEdit({ ...row("1"), updatedBy: "agent:based" })).toBe(true);
     expect(defaultIsAgentEdit({ ...row("1"), updatedBy: "me" })).toBe(false);
   });

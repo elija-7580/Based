@@ -222,7 +222,6 @@ export const PROPERTY_ICONS: Record<string, string> = {
 export function OptionPill({ name, color, status, onRemove }: { name: string; color: string | null | undefined; status?: boolean; onRemove?: () => void }) {
   return (
     <span className={`dbui-pill tone-${optionTone(color)}${status ? " status" : ""}`}>
-      {status && <span className="dbui-dot" aria-hidden />}
       <span className="dbui-pill-text">{name}</span>
       {onRemove && (
         <button type="button" className="dbui-pill-x" aria-label={`Remove ${name}`} onClick={(e) => { e.stopPropagation(); onRemove(); }}>

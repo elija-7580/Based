@@ -143,7 +143,8 @@ export function BoardLayout({ view, result }: { view: DatabaseView; result: Quer
   const title = db.properties.find((p) => p.type === "title") ?? { id: "title", name: "Name", type: "title" };
   return (
     <div className="dbui-board" data-testid="board" onKeyDown={cardKeys}>
-      {result.groups.map((g) => <Column key={g.id} group={g} gp={gp} view={view} props={props} onMenu={onMenu} onEditTitle={onEditTitle} />)}
+      {/* Die Spalte „No …“ steht nur da, wenn etwas drin liegt – leer nimmt sie dem Board den ersten Platz weg. */}
+      {result.groups.filter((g) => g.id !== "" || g.rows.length > 0).map((g) => <Column key={g.id} group={g} gp={gp} view={view} props={props} onMenu={onMenu} onEditTitle={onEditTitle} />)}
       {hiddenNames.length > 0 && (
         <section className="dbui-board-hidden" aria-label="Hidden groups">
           <span className="dbui-field-label">Hidden groups</span>

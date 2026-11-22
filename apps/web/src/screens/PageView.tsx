@@ -1,7 +1,7 @@
 // Seite: Vor/Zurück, Breadcrumb, Titel, Metazeile; Inhalt im Steckplatz für @based/editor (bis dahin Lese-Darstellung),
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
-import { BasedButton, BasedIconButton } from "@based/ui/astryx";
+import { BasedIconButton } from "@based/ui/astryx";
 import { BOARD_BACKGROUNDS, boardBackground, setBoardBackground, importPendingSource, isBoardPage, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type BoardBackground, type PageFormatPatch, type WorkspaceStore } from "@based/core";
 import { BoardView, EmojiPicker, IconView, isDrawableIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
@@ -246,18 +246,11 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             {ai ? (
               <BasedIconButton label="AI chat" tooltip="AI chat (⌘J)" pressed={chatOpen} testID="topbar-ai" icon={<Icon name="chat" size={18} filled={chatOpen} />} onClick={toggleChatPanel} />
             ) : null}
-            <BasedButton label="Export" variant="ghost" onClick={() => setExporting(true)} />
+            {/* 22. 11. 2026 (wie basednotes.app): Export und Papierkorb stehen nur noch im •••-Menü. */}
             <BasedIconButton label="Page menu" tooltip="More" menu={{ expanded: menu !== undefined }} icon={<Icon name="more" size={18} />} onClick={(el) => {
               const r = el.getBoundingClientRect();
               setMenu(menu ? undefined : { top: r.bottom + 4, right: window.innerWidth - r.right });
             }} />
-            {guestReadOnly ? null : (
-              <BasedIconButton label="Move to Trash" icon={<Icon name="trash" size={18} />} onClick={() => {
-                void client.command({ op: "trash", ids: [pageID] });
-                movedToTrash([pageID], pageID);
-                onNavigate({ name: "home" });
-              }} />
-            )}
           </>
         ) : null}
       </header>
@@ -373,7 +366,6 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             <TitleField id={pageID} title={title} readOnly={readOnly || !page} onRename={(t) => void client.command({ op: "rename", id: pageID, title: t })} />
             {page ? (
               <div className="meta-line t-desc">
-                <span>Edited {relative(fromSwift(page.updatedAt))}</span>
                 <span>Created {longDate(fromSwift(page.createdAt))}</span>
                 {subpages ? <span>{subpages} {subpages === 1 ? "sub-page" : "sub-pages"}</span> : null}
               </div>

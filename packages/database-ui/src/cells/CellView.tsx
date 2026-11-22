@@ -1,7 +1,7 @@
 // BSD-155: Anzeige einer Zelle für alle Property-Typen (Swift Views/Database/Cells.swift).
 import { memo, useContext, type ReactNode } from "react";
 import {
-  cellText, formatDateCell, formatNumber, formatValue, plainText, titleOf, valueCase,
+  cellText, formatDateShort, formatNumber, formatValue, plainText, titleOf, valueCase,
   type Block, type FormulaRun, type PropertySchema, type Value,
 } from "@based/core";
 import { ShellSlots, useDB, type FileHost } from "../context.js";
@@ -56,7 +56,7 @@ function ComputedValue({ v, prop, wrap }: { v: Value; prop: PropertySchema; wrap
   if (v.t === "bool") return <Check checked={v.v} disabled />;
   if (v.t === "string" && v.rich) return <span className={wrap ? "dbui-wrap" : "dbui-clip"}><RichRuns runs={v.rich} /></span>;
   if (v.t === "number") return <span className="dbui-data dbui-tnum"><Figures text={formatValue(engine, v, prop)} /></span>;
-  if (v.t === "date") return <span className="dbui-data">{formatValue(engine, v, prop)}</span>;
+  if (v.t === "date") return <span className="dbui-data">{formatDateShort(v.v, prop)}</span>;
   return <span className={wrap ? "dbui-wrap" : "dbui-clip"}>{formatValue(engine, v, prop)}</span>;
 }
 
@@ -98,11 +98,11 @@ function CellViewInner({ row, prop, wrap, onToggleCheckbox, onButton, blankEmpty
     }
     case "date": {
       const c = valueCase(row.values?.[prop.id]);
-      return c?.[0] === "date" ? <span className="dbui-data">{formatDateCell(c[1] as never, prop)}</span> : null;
+      return c?.[0] === "date" ? <span className="dbui-data">{formatDateShort(c[1] as never, prop)}</span> : null;
     }
     case "createdTime": case "lastEditedTime": {
       const v = engine.value(row, prop, db);
-      return v.t === "date" ? <span className="dbui-data">{formatDateCell(v.v, prop)}</span> : null;
+      return v.t === "date" ? <span className="dbui-data">{formatDateShort(v.v, prop)}</span> : null;
     }
     case "person": case "createdBy": case "lastEditedBy": {
       const v = engine.value(row, prop, db);

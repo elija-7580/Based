@@ -9,7 +9,7 @@ export const HTML_PREVIEW_TOKENS = [
   "--bg", "--ink", "--ink-2", "--muted", "--line", "--surface-soft", "--surface-raised", "--surface-card", "--selected",
   "--selection-bg", "--focus-ring", "--button", "--button-ink", "--danger", "--shadow-control",
   "--radius-xs", "--radius-sm", "--radius-md", "--radius-pill", "--control-md",
-  "--space-1", "--space-2", "--space-3", "--space-4", "--space-5",
+  "--space-half", "--space-1", "--space-2", "--space-3", "--space-4", "--space-5", "--space-7",
   "--font-ui", "--font-mono", "--type-ui-size", "--type-code-size", "--type-label-weight",
 ] as const;
 
@@ -21,6 +21,8 @@ export interface HtmlPreviewTheme {
   fontSize: string;
   lineHeight: string;
   tokens?: Record<string, string>;
+  /** Fertige `@font-face`-Regeln mit eingebetteten Dateien (siehe `hostFontFaces`). */
+  fontFaces?: string;
 }
 
 /** Schlüssel der Höhenmeldung aus dem Rahmen (postMessage; der Rahmen hat eine eigene, undurchsichtige Origin). */
@@ -52,12 +54,77 @@ export function htmlThemeAt(el: HTMLElement): HtmlPreviewTheme {
   return { scheme: hostScheme(el.ownerDocument), color: css.color, fontFamily: css.fontFamily, fontSize: css.fontSize, lineHeight: css.lineHeight, tokens };
 }
 
+// MARK: Schriften der Seite im Rahmen
+// Der Rahmen hat kein Netz und eine eigene Origin: Webschriften der Seite (Font „Based“: Schibsted Grotesk, Literata)
+// kennt er nicht, Text fiel auf Georgia und die Systemschrift zurück. Deshalb bekommt er die Schriften, die die Seite
+// an dieser Stelle benutzt und schon geladen hat, als eingebettete `data:`-Dateien mit (die CSP erlaubt nur die).
+
+const familyNames = (list: string) => list.split(",").map((f) => f.trim().replace(/^["']|["']$/g, "").toLowerCase()).filter(Boolean);
+const rangeKey = (r: string) => r.toLowerCase().replace(/\s+/g, "").replace(/u\+0+(?=[0-9a-f?])/g, "u+").replace(/-0+(?=[0-9a-f])/g, "-");
+const faceKey = (family: string, style: string, range: string) => `${familyNames(family)[0] ?? ""}|${style.trim() || "normal"}|${rangeKey(range || "U+0-10FFFF")}`;
+
+const fontData = new Map<string, Promise<string | undefined>>();
+function fontDataUrl(url: string): Promise<string | undefined> {
+  let p = fontData.get(url);
+  if (!p) {
+    p = fetch(url).then(async (r) => {
+      if (!r.ok) return undefined;
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return `data:font/woff2;base64,${btoa(bin)}`;
+    }).catch(() => undefined);
+    fontData.set(url, p);
+  }
+  return p;
+}
+
+/** `@font-face`-Regeln (mit eingebetteten Dateien) für die Webschriften, die `theme` nennt und die Seite geladen hat. */
+export async function hostFontFaces(doc: Document, theme: HtmlPreviewTheme): Promise<string> {
+  try {
+    const wanted = new Set(familyNames([theme.fontFamily, theme.tokens?.["--font-ui"] ?? ""].join(",")));
+    const loaded = new Set<string>();
+    doc.fonts?.forEach((f) => { if (f.status === "loaded") loaded.add(faceKey(f.family, f.style, f.unicodeRange)); });
+    if (!loaded.size) return "";
+    const jobs: Promise<string>[] = [];
+    for (const sheet of Array.from(doc.styleSheets)) {
+      let rules: CSSRuleList;
+      try { rules = sheet.cssRules; } catch { continue; }
+      for (const rule of Array.from(rules)) {
+        if (rule.constructor.name !== "CSSFontFaceRule") continue;
+        const st = (rule as CSSFontFaceRule).style;
+        const family = familyNames(st.getPropertyValue("font-family"))[0];
+        const style = st.getPropertyValue("font-style").trim() || "normal";
+        const range = st.getPropertyValue("unicode-range");
+        if (!family || !wanted.has(family) || !loaded.has(faceKey(family, style, range))) continue;
+        const src = /url\(\s*["']?([^"')]+\.woff2[^"')]*)["']?\s*\)/.exec(st.getPropertyValue("src"))?.[1];
+        if (!src) continue;
+        const weight = st.getPropertyValue("font-weight").trim() || "400";
+        jobs.push(fontDataUrl(new URL(src, sheet.href ?? doc.baseURI).href).then((data) => data
+          ? `@font-face{font-family:"${cssValue(family).replace(/"/g, "")}";font-style:${cssValue(style)};font-weight:${cssValue(weight)};font-display:block;src:url(${data}) format("woff2")${range ? `;unicode-range:${cssValue(range)}` : ""}}`
+          : ""));
+      }
+    }
+    return (await Promise.all(jobs)).join("");
+  } catch {
+    return "";
+  }
+}
+
 // Werte kommen aus berechnetem CSS; trotzdem nichts durchlassen, was aus dem <style> ausbrechen könnte.
 const cssValue = (v: string) => v.replace(/[<>{};]/g, "");
 
 /** Grundstil in Based-Optik. Nur :where() (Spezifität 0), damit jedes eigene CSS der Datei gewinnt. */
 const BASED_BASE = [
-  ":where(html){-webkit-text-size-adjust:100%;scrollbar-width:thin;scrollbar-color:var(--line) transparent}",
+  ":where(html){-webkit-text-size-adjust:100%}",
+  // Rollbalken wie in der App (BSD-261): WebKit und Chromium zeichnen mit scrollbar-width/-color den Systembalken mit
+  // heller Spur (am Mac ein weißer Streifen am Rand der Karte) – die Standard-Eigenschaften deshalb nur für Firefox.
+  "@supports not selector(::-webkit-scrollbar){:where(html){scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--ink) 22%,transparent) transparent}}",
+  "::-webkit-scrollbar{width:var(--space-2);height:var(--space-2);background:transparent}",
+  "::-webkit-scrollbar-track,::-webkit-scrollbar-corner,::-webkit-scrollbar-track-piece{background:transparent;border:0}",
+  "::-webkit-scrollbar-button{display:none;width:0;height:0}",
+  "::-webkit-scrollbar-thumb{background-color:color-mix(in srgb,var(--ink) 22%,transparent);border-radius:var(--radius-pill);border:var(--space-half) solid transparent;background-clip:padding-box;min-height:var(--space-7);min-width:var(--space-7)}",
+  "::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background-color:color-mix(in srgb,var(--ink) 40%,transparent)}",
   ":where(html,body){background:transparent}",
   // flow-root: Außenabstände der ersten/letzten Kinder fallen nicht aus dem body heraus (sonst stimmt die Höhe nicht)
   ":where(body){margin:0;display:flow-root;overflow-wrap:anywhere}",
@@ -92,7 +159,7 @@ const BASED_BASE = [
 
 function baseStyle(t: HtmlPreviewTheme, document: boolean): string {
   const vars = Object.entries(t.tokens ?? {}).map(([k, v]) => `${k}:${cssValue(v)}`).join(";");
-  return `<style>:root{color-scheme:${t.scheme};${vars}}` + BASED_BASE +
+  return `<style>${t.fontFaces ?? ""}:root{color-scheme:${t.scheme};${vars}}` + BASED_BASE +
     `:where(body){color:${cssValue(t.color)};font-family:${cssValue(t.fontFamily)};font-size:${cssValue(t.fontSize)};line-height:${cssValue(t.lineHeight)}` +
     // ein Schnipsel liegt mit Innenabstand auf der Karte; eine ganze Datei füllt sie bis an den Rand
     (document ? "}" : ";padding:var(--space-3) var(--space-4)}") + "</style>";

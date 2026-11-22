@@ -116,7 +116,11 @@ test("Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; lösche
   await page.goto("/");
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "local");
-  await page.getByRole("button", { name: "Create a teamspace" }).click();
+  // ohne Teamspaces gibt es keinen leeren Abschnitt: angelegt wird über das Menü an „Private“
+  await expect(page.getByRole("treeitem", { name: "Teamspaces" })).toHaveCount(0);
+  await page.getByRole("treeitem", { name: "Private", exact: true }).hover();
+  await page.getByRole("button", { name: "Section actions for Private" }).click();
+  await page.getByRole("menuitem", { name: "New teamspace…" }).click();
   const dialog = page.getByRole("dialog", { name: "New teamspace" });
   await dialog.getByRole("textbox", { name: "Name" }).fill("Research");
   await dialog.getByRole("button", { name: "Icon 🧪" }).click();
@@ -167,7 +171,7 @@ test("Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; lösche
 
 test("HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Export…" }).click(); }
   const dialog = page.getByRole("dialog", { name: "Export page" });
   await dialog.getByRole("radio", { name: /HTML/ }).click();
   await expect(dialog.getByTestId("html-export-options")).toBeVisible();

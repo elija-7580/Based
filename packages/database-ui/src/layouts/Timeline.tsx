@@ -12,6 +12,7 @@ import {
 } from "@based/core";
 import { CellView } from "../cells/CellView.js";
 import { useDB } from "../context.js";
+import { rowToneClass } from "../logic/values.js";
 import { columnWidth } from "../logic/layout.js";
 import { Icon, OptionPill } from "../ui.js";
 import { useDateDrag, type DateDrag, type DragKind } from "./dateDrag.js";
@@ -49,6 +50,7 @@ interface BarActions {
 const Bar = memo(function Bar({ span, left, width, dragging, a }: { span: RowSpan; left: number; width: number; dragging: boolean; a: BarActions }) {
   const title = rowTitle(span.row);
   const label = spanLabel(span);
+  const tone = rowToneClass(useDB().db, span.row);
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); a.open(span.row.id); return; }
     if (!a.writable || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
@@ -57,7 +59,7 @@ const Bar = memo(function Bar({ span, left, width, dragging, a }: { span: RowSpa
     a.nudge(span.row.id, e.shiftKey ? "end" : "move", e.key === "ArrowLeft" ? -1 : 1);
   };
   return (
-    <div className={"dbui-tl-bar" + (dragging ? " dragging" : "") + (a.writable ? " movable" : "") + (width < MIN_TITLE_W ? " narrow" : "")}
+    <div className={"dbui-tl-bar" + tone + (dragging ? " dragging" : "") + (a.writable ? " movable" : "") + (width < MIN_TITLE_W ? " narrow" : "")}
       data-row-id={span.row.id} role="button" tabIndex={0} aria-label={`${title}, ${label}`} title={`${title} · ${label}`}
       style={{ left, width, top: (ROW_H - BAR_H) / 2, height: BAR_H }}
       onPointerDown={a.writable ? (e) => a.begin(e, span.row.id, "move") : undefined}
@@ -136,7 +138,9 @@ function Timeline({ view, result }: { view: DatabaseView; result: QueryResult })
   const [scale, setScaleState] = useState<TimelineScale>(isScale(view.timelineScale) ? view.timelineScale : "week");
   useEffect(() => { if (isScale(view.timelineScale)) setScaleState(view.timelineScale); }, [view.timelineScale]);
   const showTable = view.timelineShowTable === true;
-  const [sideOpen, setSideOpen] = useState(true);
+  // „No date“ steht nur von selbst offen, wenn es Seiten ohne Datum gibt – sonst nimmt die leere Spalte der Zeitleiste den Platz.
+  const [sideChoice, setSideOpen] = useState<boolean | null>(null);
+  const sideOpen = sideChoice ?? v.undated.length > 0;
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [menu, setMenu] = useRowMenu();
   const scrollRef = useRef<HTMLDivElement>(null);

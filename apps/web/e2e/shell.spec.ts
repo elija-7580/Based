@@ -53,7 +53,7 @@ test("Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig
 
   // Papierkorb
   await page.getByRole("treeitem", { name: "Project plan" }).click();
-  await page.getByRole("button", { name: "Move to Trash" }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Move to Trash" }).click(); }
   await expect(page.getByRole("treeitem", { name: "Project plan" })).toHaveCount(0);
   await expect(page.getByRole("treeitem", { name: "Milestones" })).toHaveCount(0);
   await page.getByRole("button", { name: /^Trash/ }).click();
@@ -244,7 +244,7 @@ test("Move to Trash: Hinweis mit Undo, ⌘Z holt die Seite zurück", async ({ pa
   await newTopLevelPage(page, "Keep me please");
   const toast = page.getByTestId("trash-toast");
   const tree = page.getByRole("treeitem", { name: "Keep me please" });
-  await page.getByRole("button", { name: "Move to Trash" }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Move to Trash" }).click(); }
   await expect(tree).toHaveCount(0);
   await expect(toast).toContainText("Moved to Trash");
   await toast.getByRole("button", { name: "Undo" }).click();
@@ -253,7 +253,7 @@ test("Move to Trash: Hinweis mit Undo, ⌘Z holt die Seite zurück", async ({ pa
   await expect(toast).toHaveCount(0);
 
   // ⌘Z, nachdem der Hinweis von selbst gegangen ist
-  await page.getByRole("button", { name: "Move to Trash" }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Move to Trash" }).click(); }
   await expect(tree).toHaveCount(0);
   await expect(toast).toBeVisible();
   await expect(toast).toHaveCount(0, { timeout: 6000 });
@@ -267,7 +267,7 @@ test("Move to Trash: Hinweis mit Undo, ⌘Z holt die Seite zurück", async ({ pa
 
   // im Text der Seite gehört ⌘Z dem Editor (die gelöschte Seite bleibt im Papierkorb)
   await newTopLevelPage(page, "Second page");
-  await page.getByRole("button", { name: "Move to Trash" }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Move to Trash" }).click(); }
   await expect(page.getByRole("treeitem", { name: "Second page" })).toHaveCount(0);
   await page.getByRole("treeitem", { name: "Keep me please" }).click();
   await page.getByTestId("block-editor").getByTestId("block-editor-tail").click();

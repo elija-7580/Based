@@ -6,7 +6,7 @@ import {
   calculationText, changeAffects, changePropertyType, chartNumber, chartPoints, conversionLoss, createDatabase, dashboardInsert,
   dashboardMove, dashboardRemove, dashboardSetWidth, databaseDependencies, deleteOption, deleteProperty, deleteView, duplicateProperty,
   duplicateRow, duplicateView, evenWidths, filledCellCount, formatNumber, makeRelationTwoWay, movePropertyInView, moveRowToGroup, moveView,
-  pv, removeDashboardWidget, renameProperty, renamingFormulaReferences, renamingRelatedReferences, setCalculation, setColumnWidth,
+  pv, removeDashboardWidget, renameProperty, renamingFormulaReferences, renamingRelatedReferences, setCalculation, setColumnWidth, setColumnWidths,
   setFilter, setPropertyVisible, setRelationTarget, setSorts, setValue, setViewType, valueCase, viewsForBlock, visiblePropertyIDs,
   watchDatabase, wouldCreateRollupCycle, type StoreChange, type WireRecord,
 } from "../src/index.js";
@@ -275,6 +275,12 @@ describe("Ansichten", () => {
     expect(s.views.get("v1")!.properties!.find((p) => p.id === "note")!.width).toBe(260);
     s.undo();
     expect(s.views.get("v1")!.properties!.find((p) => p.id === "note")!.width).toBeUndefined();
+    // mehrere Breiten in einem Schritt (Tabelle, die die Breite füllt, hält beim ersten Ziehen alle fest): ein Undo
+    setColumnWidths(s, "v1", { title: 400, note: 300 });
+    expect(s.views.get("v1")!.properties!.filter((p) => p.width).map((p) => [p.id, p.width])).toEqual([["title", 400], ["note", 300]]);
+    expect(s.views.get("v1")!.properties!.find((p) => p.id === "est")!.visible).toBe(false);
+    s.undo();
+    expect(s.views.get("v1")!.properties!.some((p) => p.width)).toBe(false);
     // Board zeigt neue Properties nicht automatisch
     expect(visiblePropertyIDs(s.views.get("v2")!, db())).toEqual(["title"]);
   });
