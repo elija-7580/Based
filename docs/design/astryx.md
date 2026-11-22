@@ -46,7 +46,7 @@ Notifications, Connected accounts), *Workspace* (General … Billing), *System* 
 About). Über der Seitenliste steht ein Suchfeld; es findet Seiten, Abschnitte und einzelne Einstellungen über die
 `keywords` der Abschnitte (`registerSettingsSection`), verzeiht einen Tippfehler und zeigt nur, was Kanal und
 AI-Schalter gerade zeigen. Wer eine Einstellung baut, trägt ihren Namen in `keywords` ein. ⌘K findet bewusst keine
-Einstellungen. „Not yet“-Seiten bleiben in Based Next sichtbar und fehlen nur auf beta (`BETA_HIDDEN_SETTINGS`).
+Einstellungen. Seiten ohne eigenen Abschnitt („Not yet“) stehen nicht in der Liste (`listedSettingsPages`); nur die Entwickler-Ansicht zeigt sie. Auf beta fehlen zusätzlich die Seiten aus `BETA_HIDDEN_SETTINGS`.
 
 Schalter aus Einstellungen → Appearance:
 

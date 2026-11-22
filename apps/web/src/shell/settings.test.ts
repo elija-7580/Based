@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS_PAGE, resolveSettingsPage, searchSettings, SETTINGS_GROUPS, SETTINGS_PAGES, SettingsRegistry, validateSyncForm, visibleSettingsPages } from "./settings.js";
+import { DEFAULT_SETTINGS_PAGE, listedSettingsPages, resolveSettingsPage, searchSettings, SETTINGS_GROUPS, SETTINGS_PAGES, SettingsRegistry, validateSyncForm, visibleSettingsPages } from "./settings.js";
 
 describe("Einstellungen: Modell", () => {
   it("drei Gruppen: App, Workspace, System; IDs eindeutig, jede Seite in einer Gruppe", () => {
@@ -57,6 +57,18 @@ describe("Einstellungen: Registry", () => {
     expect(r.status("import")).toBe("available");
     off();
     expect(r.status("agents")).toBe("unavailable");
+  });
+  it("Seiten ohne eigenen Abschnitt stehen nicht in der Liste – nur in der Entwickler-Ansicht", () => {
+    const r = new SettingsRegistry<string>();
+    r.register({ id: "look", title: "Appearance", page: "appearance", component: "" });
+    expect(listedSettingsPages(SETTINGS_PAGES, r).map((p) => p.id)).toEqual(["appearance"]);
+    const off = r.register({ id: "members", title: "Members", page: "people", component: "" });
+    expect(listedSettingsPages(SETTINGS_PAGES, r).map((p) => p.id)).toEqual(["appearance", "people"]);
+    off();
+    expect(listedSettingsPages(SETTINGS_PAGES, r).map((p) => p.id)).toEqual(["appearance"]);
+    expect(listedSettingsPages(SETTINGS_PAGES, r, {}, true)).toHaveLength(SETTINGS_PAGES.length);
+    // ein alter Link auf eine nicht gelistete Seite öffnet Appearance
+    expect(resolveSettingsPage("people", listedSettingsPages(SETTINGS_PAGES, r)).id).toBe("appearance");
   });
   it("meldet Änderungen", () => {
     const r = new SettingsRegistry<string>();
