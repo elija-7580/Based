@@ -12,10 +12,10 @@ const nav = (page: Page) => page.getByRole("navigation", { name: "Settings pages
 /** Zeile der Navigation (Astryx setzt aria-current und den „Not yet“-Hinweis an das Listenelement, nicht an den Button). */
 const navRow = (page: Page, name: string) => nav(page).getByRole("listitem").filter({ has: page.getByRole("button", { name, exact: true }) });
 
-test("Navigation: 20 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen", { tag: "@smoke" }, async ({ page }) => {
+test("Navigation: 15 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen", { tag: "@smoke" }, async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
-  await expect(nav(page).getByRole("button")).toHaveCount(20);
+  await expect(nav(page).getByRole("button")).toHaveCount(15);
   for (const group of ["App", "Workspace", "System"]) await expect(nav(page).getByText(group, { exact: true })).toBeVisible();
 
   await nav(page).getByRole("button", { name: "Sync & server" }).click();
@@ -30,8 +30,19 @@ test("Navigation: 20 Seiten in App, Workspace und System, Auswahl steht in der A
   await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
 });
 
-test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", async ({ page }) => {
-  // Offene Punkte auf Seiten mit echten Abschnitten zeigt nur die Entwickler-Ansicht (unten eigens geprüft).
+// Elijá 22.11.2026: Einstellungen ruhiger – was noch nichts einstellt, steht nicht in der Liste.
+test("Unfertige Seiten fehlen in der Liste und in der Suche; ein alter Link öffnet Appearance", async ({ page }) => {
+  await open(page, "prefs-people");
+  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
+  await expect(nav(page).getByText("Not yet")).toHaveCount(0);
+  for (const hidden of ["Notifications", "Connected accounts", "People", "Teamspaces", "Security"]) await expect(nav(page).getByRole("button", { name: hidden, exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("settings-missing")).toHaveCount(0);
+  await page.getByRole("searchbox", { name: "Search settings" }).fill("teamspaces");
+  await expect(page.getByTestId("settings-no-results")).toBeVisible();
+});
+
+test("Entwickler-Ansicht: Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", async ({ page }) => {
+  // Seiten ohne Abschnitt und offene Punkte zeigt nur die Entwickler-Ansicht (Diagnostics → For developers).
   await page.addInitScript(() => localStorage.setItem("based.devView", "true"));
   await open(page, "prefs-people");
   await expect(page.getByRole("heading", { level: 1, name: "People" })).toBeVisible();
@@ -68,9 +79,6 @@ test("Seiten mit echten Einstellungen zeigen keine Liste offener Punkte (Updates
   await expect(page.getByTestId("settings-missing")).toHaveCount(0);
   await expect(page.getByTestId("settings-page")).not.toContainText("Update channel");
   await expect(page.getByTestId("settings-page")).not.toContainText("Mac app");
-  // Seiten ganz ohne Abschnitte sagen weiter ehrlich, was noch kommt.
-  await nav(page).getByRole("button", { name: "People", exact: true }).click();
-  await expect(page.getByTestId("settings-missing").getByRole("heading", { name: "Coming later" })).toBeVisible();
 });
 
 test("Sync-Formular prüft die Adresse, bevor es verbindet", async ({ page }) => {
@@ -154,6 +162,7 @@ test("Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalt
 });
 
 test("Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("based.devView", "true"));
   await open(page, "prefs-people");
   await expect(page.getByTestId("settings-missing").getByText("Members", { exact: true })).toBeVisible();
   // Die Registry ist für Tests am __based-Objekt erreichbar (main.tsx).
@@ -172,6 +181,20 @@ test("Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.ts
   await expect(navRow(page, "People")).toContainText("Not yet");
 });
 
+test("Registry: eine Seite erscheint in der Liste, sobald sie einen Abschnitt hat", async ({ page }) => {
+  await open(page);
+  await expect(nav(page).getByRole("button", { name: "People", exact: true })).toHaveCount(0);
+  await page.evaluate(() => {
+    const based = (globalThis as unknown as { __based: { registerSettingsSection(s: unknown): () => void } }).__based;
+    (globalThis as unknown as { __off: () => void }).__off = based.registerSettingsSection({ id: "test-members", page: "people", title: "Members list", component: () => "Members" });
+  });
+  await nav(page).getByRole("button", { name: "People", exact: true }).click();
+  await expect(page.getByTestId("settings-section-test-members")).toBeVisible();
+  await page.evaluate(() => (globalThis as unknown as { __off: () => void }).__off());
+  await expect(nav(page).getByRole("button", { name: "People", exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
+});
+
 for (const theme of ["light", "dark"] as const) {
   test(`Screenshot Einstellungen (${theme})`, async ({ page, browserName }) => {
     test.skip(!process.env.BASED_SCREENSHOTS || browserName !== "chromium", "nur mit BASED_SCREENSHOTS=1 auf Chromium");
@@ -184,6 +207,21 @@ for (const theme of ["light", "dark"] as const) {
     await expect(page.getByLabel("Server URL")).toBeVisible();
     await page.screenshot({ path: `../../docs/design/screens/web-settings-sync-${theme}.png` });
   });
+  // Checkliste: die ruhigere Liste in drei Fenstergrößen – alle Einträge ohne Rollen sichtbar (ab 820 hoch), nichts gekürzt.
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    test(`Liste der Einstellungen: ${w}×${h} ${theme} – kein „Not yet“, nichts gekürzt`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await open(page);
+      await expect(nav(page).getByText("Not yet")).toHaveCount(0);
+      const rows = nav(page).getByRole("button");
+      await expect(rows).toHaveCount(15);
+      for (const b of await rows.all()) expect(await b.evaluate((e) => e.scrollWidth <= e.clientWidth + 1), "Eintrag nicht abgeschnitten").toBe(true);
+      if (h >= 820) await expect(rows.last()).toBeInViewport({ ratio: 1 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "kein waagrechter Rollbalken").toBe(true);
+      if (process.env.BASED_SCREENSHOTS) await page.screenshot({ path: `../../docs/design/screens/web-settings-list-${theme}-${w}x${h}.png` });
+    });
+  }
 }
 
 // ADR 0017 A3: im Browser sagt Einstellungen → Sync & server, ob der Browser den Workspace behält.
