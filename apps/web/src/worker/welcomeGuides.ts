@@ -112,7 +112,7 @@ export const EVERYTHING: readonly FeatureGroup[] = [
       { text: "Light, dark or the same as your Mac. ⇧⌘L switches.", rows: ["Dark mode (system + toggle)"] },
       { text: "Settings with ⌘, for appearance, Home, writing, sync, import, export and updates.", rows: ["Settings", "Notion-style settings (account/workspace)"] },
       { text: "Updates install when you say so and keep your data.", rows: ["Schema version + migrations for based.sqlite"] },
-      { text: "Something wrong? ⇧⌘B saves a report with diagnostics, without your page text.", rows: ["Diagnostics: logs, hang watchdog, crash report, layout audit", "Copy logs (diagnostic report to clipboard)", "Hang stack sampling (where the main thread is stuck)"] },
+      { text: "Something wrong? ⇧⌘B sends us a report with diagnostics, without your page text.", rows: ["Diagnostics: logs, hang watchdog, crash report, layout audit", "Copy logs (diagnostic report to clipboard)", "Hang stack sampling (where the main thread is stuck)"] },
     ],
   },
 ];

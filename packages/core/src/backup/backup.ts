@@ -10,7 +10,7 @@
 // Wiederherstellen), dazu die neuesten 24 je Stunde, 30 je Tag, 12 je Monat (jeweils der letzte Stand des Zeitraums).
 import { canonicalStringify } from "../json.js";
 import type { WireRecord } from "../model/records.js";
-import { ARCHIVE_VERSION, encodeArchive, readArchive, type ArchiveReadResult } from "../interop/archive.js";
+import { ARCHIVE_VERSION, archiveDamage, encodeArchive, readArchive, type ArchiveDamage, type ArchiveReadResult } from "../interop/archive.js";
 import { recordKey, type RecordKeyString, type WorkspaceStore } from "../store/store.js";
 
 /** Dateizugriff der Hülle; Pfade relativ zum Backup-Ordner, mit „/“. */
@@ -190,9 +190,12 @@ export function snapshotAssetIDs(records: readonly WireRecord[]): string[] {
   return [...out];
 }
 
-export async function readSnapshot(target: BackupTarget, name: string): Promise<ArchiveReadResult> {
+/** BSD-648: `damaged` – der Stand ist unvollständig (unlesbare Zeilen oder weniger Records als im Kopf). */
+export async function readSnapshot(target: BackupTarget, name: string): Promise<ArchiveReadResult & { damaged?: ArchiveDamage }> {
   if (snapshotTime(name) === undefined) throw new Error(`not a snapshot: ${name}`);
-  return readArchive(dec.decode(await target.read(`${SNAPSHOT_DIR}/${name}`)));
+  const read = readArchive(dec.decode(await target.read(`${SNAPSHOT_DIR}/${name}`)));
+  const damaged = archiveDamage(read);
+  return damaged ? { ...read, damaged } : read;
 }
 
 /** Was „Wiederherstellen (ersetzen)“ ändern würde – für die Vorschau und zum Anwenden. */

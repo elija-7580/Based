@@ -2,6 +2,7 @@
 // beim Beenden nach ~/Documents/Based Backups (letzte 10, 24 stündlich, 30 täglich, 12 monatlich). Hier: letzter
 // Stand, „Back up now“, Wiederherstellen mit Vorschau. Vor dem Wiederherstellen sichert der Server den aktuellen
 // Stand – das Wiederherstellen lässt sich so selbst wieder zurücknehmen.
+// BSD-648: Ist der Stand beschädigt (abgeschnitten, unlesbare Zeilen), sagt die Rückfrage das zuerst, mit N von M Records.
 // BSD-449: Ordner frei wählen („Change folder…“, Tauri-Ordnerdialog), z. B. ein externes Laufwerk. Fehlt der Ordner
 // (Laufwerk ab), steht das hier – zurück zum Standardordner geht es nur auf ausdrücklichen Klick, nie still.
 import { AlertDialog } from "@astryxdesign/core/AlertDialog";
@@ -15,7 +16,7 @@ import { isTauri } from "../desktop.js";
 import { relative } from "../shell/format.js";
 import { syncConfig } from "../shell/storage.js";
 import { localServer, PLACES } from "./localServer.js";
-import { restoredMessage } from "./backupText.js";
+import { damagedBackupText, restoredMessage } from "./backupText.js";
 
 type Info = Awaited<ReturnType<ReturnType<typeof localServer>["backups"]>>;
 const pages = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
@@ -28,7 +29,7 @@ export function BackupsGroup() {
   const [info, setInfo] = useState<Info>();
   const [message, setMessage] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const [confirm, setConfirm] = useState<{ name: string; at: number; pages: { added: number; changed: number; removed: number } }>();
+  const [confirm, setConfirm] = useState<{ name: string; at: number; pages: { added: number; changed: number; removed: number }; damaged?: { readable: number; expected: number } }>();
   const running = s.status === "running";
   const load = useCallback(() => { if (running) ls.backups().then(setInfo, (e: unknown) => setMessage(e instanceof Error ? e.message : String(e))); }, [ls, running]);
   useEffect(load, [load]);
@@ -41,7 +42,7 @@ export function BackupsGroup() {
     finally { setBusy(false); }
   };
   const ask = async (x: { name: string; at: number }) => {
-    try { setConfirm({ ...x, pages: (await ls.backupPreview(x.name)).pages }); } catch (e) { setMessage(e instanceof Error ? e.message : String(e)); }
+    try { const p = await ls.backupPreview(x.name); setConfirm({ ...x, pages: p.pages, ...(p.damaged ? { damaged: p.damaged } : {}) }); } catch (e) { setMessage(e instanceof Error ? e.message : String(e)); }
   };
   const changeFolder = async (dir?: string) => {
     setMessage(undefined);
@@ -96,7 +97,7 @@ export function BackupsGroup() {
         </VStack>
       ) : null}
       <AlertDialog isOpen={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(undefined); }} title="Restore this backup?"
-        description={confirm ? `Your workspace becomes the state of ${new Date(confirm.at).toLocaleString()}: ${pagesText(confirm.pages)}. The current state is backed up first.` : ""}
+        description={confirm ? `${damagedBackupText(confirm.damaged)}Your workspace becomes the state of ${new Date(confirm.at).toLocaleString()}: ${pagesText(confirm.pages)}. The current state is backed up first.` : ""}
         actionLabel="Restore" onAction={() => void restore()} />
     </Group>
   );

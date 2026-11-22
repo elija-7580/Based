@@ -4,7 +4,7 @@
 // geschrieben (`commitImportPayload`); dort greift der Reimport-Schutz des Kerns.
 import { ImportFiles, type ByteSource } from "./files.js";
 import { DEFAULT_MAX_ASSET_BYTES, formatBytes, LimitedAssetSink, MemoryAssetSink, mimeFor, type AssetRef, type LazyAsset } from "./builder.js";
-import { isArchive, loadArchive, importArchiveRecords, type ArchiveReadResult } from "./archive.js";
+import { archiveDamage, isArchive, loadArchive, importArchiveRecords, type ArchiveReadResult } from "./archive.js";
 import { commitPreparedImport, preparedImportFromWire, preparedImportToWire, prepareImport, type PreparedImportWire } from "./notion-import.js";
 import type { WorkspaceStore } from "../store/store.js";
 
@@ -152,6 +152,9 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
         } else archiveAssets += loaded.assets.length;
         for (const fail of loaded.assetFailures) out.notes.push(`Skipped ${fail}`);
         if (loaded.read.skipped > 0) out.notes.push(`${name}: skipped ${plural(loaded.read.skipped, "unreadable line")}`);
+        // BSD-648: weniger Records als im Kopf, ohne unlesbare Zeile – die Datei endet zu früh (genau an einer Zeilengrenze).
+        const damage = archiveDamage(loaded.read);
+        if (damage && damage.expected > damage.readable + damage.skipped) out.notes.push(`${name}: only ${damage.readable} of ${damage.expected} records could be read – the file may be incomplete`);
         continue;
       }
       // BSD-260 Teil 7: andere .jsonl sind JSON Lines (Tabelle → Datenbank) und gehen unten in den Baum.

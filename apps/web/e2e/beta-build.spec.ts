@@ -55,6 +55,8 @@ for (const theme of ["light", "dark"] as const) {
       for (const s of ["welcome", "data", "beta"]) {
         await expect(step).toHaveAttribute("data-step", s);
         await expect(step).not.toContainText(/\bAI\b|agent/i);
+        // BSD-646: Schritt „beta“ nennt den Weg aus docs/beta/README.md – ein Klick schickt den Bericht
+        if (s === "beta") await expect(step).toContainText("This sends a report to us in one click, or write to hello@basednotes.app.");
         await clean(page, `Einstieg ${s}`);
         await shoot(page, `welcome-tour-${s}`);
         await welcome.getByRole("button", { name: "Continue" }).click();
@@ -147,9 +149,11 @@ for (const theme of ["light", "dark"] as const) {
       await expect(settings).toContainText("Used for exports");
       await expect(settings).not.toContainText(/share with/i);
       await nav.getByRole("button", { name: "Diagnostics", exact: true }).click();
-      await expect(settings.getByText(/email it to hello@basednotes\.app/)).toBeVisible();
+      // BSD-646: zuerst „Send to Based“ (⇧⌘B), Mail als zweiter Weg – wie docs/beta/README.md
+      const reportHint = settings.getByText(/Send to Based\. Or copy this report and email it to hello@basednotes\.app/);
+      await expect(reportHint).toBeVisible();
       await expect(settings).not.toContainText("pass it on");
-      await settings.getByText(/email it to hello@basednotes\.app/).scrollIntoViewIfNeeded();
+      await reportHint.scrollIntoViewIfNeeded();
       await clean(page, "Diagnostics");
       await shoot(page, "settings-diagnostics");
 

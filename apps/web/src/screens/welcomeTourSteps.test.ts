@@ -37,6 +37,12 @@ describe("welcomeTour", () => {
     expect(t).toMatch(/Export a page or the whole workspace/);
     expect(t).toMatch(/hello@basednotes\.app/);
     expect(tourStepText("beta", mac).points.find((p) => p.keys === "Mod+Shift+B")).toBeTruthy();
+    // BSD-646: ⇧⌘B schickt den Bericht mit einem Klick (BSD-632) – nicht mehr „saves a report“
+    for (const env of [mac, { mac: false, meetings: false }]) {
+      const report = tourStepText("beta", env).points.find((p) => p.keys === "Mod+Shift+B")!.text;
+      expect(report).toMatch(/sends .* in one click/);
+      expect(report).not.toMatch(/saves a report/);
+    }
     expect(tourStepText("welcome", mac).points.map((p) => p.keys)).toEqual(["/", undefined, "Mod+K"]);
   });
 
