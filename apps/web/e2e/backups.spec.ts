@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 // BSD-274: Einstellungen → Sync & server → Backups gegen einen echten TS-Server mit --backups: Seite anlegen,
 // „Back up now“, Seite löschen und Papierkorb leeren, „Restore…“ mit Vorschau → Seite ist wieder da.
 // Im Browser gibt es keine Hülle: der lokale Server wird per Test-Haken auf diesen Server gezeigt.
+// BSD-648: ein beschädigter Stand – die Rückfrage nennt ihn beschädigt, mit N von M lesbaren Records.
 
 const webPort = Number(process.env.BASED_E2E_PORT ?? 4173);
 const TOKEN = "e2e-backups-token-0123456789";
@@ -107,6 +108,31 @@ test("BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup
     }
     await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
   }
+
+  // BSD-648: ein beschädigter Stand (hier: nach zwei Records abgeschnitten) – die Rückfrage sagt das zuerst, mit
+  // N von M lesbaren Records. Wiederherstellen selbst bleibt unverändert; hier wird nur abgebrochen.
+  const newest = readdirSync(join(backupDir, "snapshots")).filter((f) => f.endsWith(".based.jsonl")).sort().at(-1)!;
+  const full = readFileSync(join(backupDir, "snapshots", newest), "utf8").split("\n").filter((l) => l !== "");
+  const at = Date.now() - 3 * 86_400_000;
+  const damagedName = new Date(at).toISOString().replace(/\.\d{3}Z$/, "Z").replace(/:/g, "-") + ".based.jsonl";
+  writeFileSync(join(backupDir, "snapshots", damagedName), full.slice(0, 3).join("\n") + "\n");
+  for (const theme of browserName === "chromium" ? (["light", "dark"] as const) : (["light"] as const)) {
+    await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await openSettings();
+    await patch({ status: "running", enabled: true, url: serverURL, token: TOKEN });
+    const label = await page.evaluate((x) => new Date(x).toLocaleString(), Math.floor(at / 1000) * 1000);
+    await page.getByTestId("backup-list").getByRole("listitem").filter({ hasText: label }).getByRole("button", { name: "Restore…" }).click();
+    const ask = page.getByRole("alertdialog");
+    await expect(ask).toContainText(`This backup is damaged: only 2 of ${full.length - 1} records can be read. Restoring it makes your workspace match the readable part.`);
+    await page.waitForTimeout(400); // Einblenden abwarten (Bildschirmfoto)
+    if (browserName === "chromium") await page.screenshot({ path: join(screens, `web-settings-backups-restore-damaged-${theme}.png`) });
+    await page.keyboard.press("Escape");
+    await expect(ask).toHaveCount(0);
+    await expect(page.getByRole("treeitem", { name: "Precious notes" })).toBeVisible();
+  }
+  await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
 });
 
 // BSD-449: selbst gewählter Ordner (externes Laufwerk). Server mit BASED_BACKUP_CREATE=0 wie aus der App: Backup

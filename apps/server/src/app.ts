@@ -318,7 +318,7 @@ export function createApp(opts: AppOptions): App {
       return json({ dir: backups.dir, reachable, last: backups.last, error: reachable ? backups.lastError : unreachableMessage(backups.dir), snapshots });
     });
     router.add("POST", "/backups", async () => (await backups.reachable()) ? json({ snapshot: (await backups.snapshot(true)) ?? null }, 201) : error(unreachableMessage(backups.dir), 409));
-    router.add("GET", "/backups/:name/preview", async ({ params }) => nameOK(params.name!) ? json({ pages: await backups.preview(params.name!) }) : error("not a backup", 400));
+    router.add("GET", "/backups/:name/preview", async ({ params }) => nameOK(params.name!) ? json(await backups.preview(params.name!)) : error("not a backup", 400));
     router.add("POST", "/backups/:name/restore", async ({ params }) => nameOK(params.name!) ? json(await backups.restore(params.name!)) : error("not a backup", 400));
   }
 
