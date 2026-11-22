@@ -167,7 +167,7 @@ test("Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; lösche
 
 test("HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Export…" }).click(); }
   const dialog = page.getByRole("dialog", { name: "Export page" });
   await dialog.getByRole("radio", { name: /HTML/ }).click();
   await expect(dialog.getByTestId("html-export-options")).toBeVisible();
