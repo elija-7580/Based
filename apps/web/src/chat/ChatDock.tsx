@@ -83,7 +83,7 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
       if (t?.closest(".chat-dock, [data-testid=topbar-ai], [role=menu], [role=dialog], [role=listbox]")) return;
       setOpenSaved(false);
     };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector("[role=menu], [role=dialog]")) setOpenSaved(false); };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector(`:is([role=menu], [role=dialog]):not([popover]:not(:popover-open) *)`)) setOpenSaved(false); };
     document.addEventListener("pointerdown", onDown, true);
     document.addEventListener("keydown", onEsc);
     return () => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("keydown", onEsc); };
