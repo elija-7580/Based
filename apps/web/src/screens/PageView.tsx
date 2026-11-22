@@ -608,9 +608,11 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
   }, [title, id]);
   // BSD-482: eben angelegte Seite → Schreibmarke in den Titel (sobald das Feld bearbeitbar ist)
   // – außer man ist schon im Text der Seite (Klick in die Seite, bevor der Titel bearbeitbar wurde)
+  // BSD-644: Ist inzwischen ein Dialog oder Menü offen (⌘K gleich nach ⌥⌘N), behält er den Fokus – sonst ging Esc an den
+  // Titel und Quick Find blieb offen.
   useEffect(() => {
     if (readOnly || !takeFreshPage(id)) return;
-    if (document.activeElement?.closest(".page-body")) return;
+    if (document.activeElement?.closest(".page-body, [role=dialog], [role=menu], [role=listbox]")) return;
     const el = field.current;
     el?.focus();
     // BSD-617: Steht schon ein Titel da (neue Datenbank: „Untitled database“), ist er markiert – Tippen ersetzt ihn.

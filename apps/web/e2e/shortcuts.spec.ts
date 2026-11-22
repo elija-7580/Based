@@ -201,3 +201,29 @@ test("Neue Datenbank: Titel hat den Fokus, Tippen ersetzt „Untitled database�
   await expect(title).toHaveValue("Reading list");
   await expect(title).not.toBeFocused();
 });
+
+// Der Worker antwortet beim Anlegen künstlich spät (250 ms): So ist das Fenster zwischen „neue Seite“ und dem Fokus im
+// Titel (auf dem Mac ~45 ms) in jedem Lauf offen.
+const slowCreate = (page: Page) => page.evaluate(`(() => {
+  const c = globalThis.__based.client, run = c.command.bind(c);
+  c.command = (cmd, ...a) => /^create(Page|Database)$/.test(cmd.op) ? new Promise((ok) => setTimeout(ok, 250)).then(() => run(cmd, ...a)) : run(cmd, ...a);
+})()`);
+
+// BSD-644: Der späte Fokus der neuen Seite nahm sich den Fokus auch dann, wenn inzwischen Quick Find offen war – Esc
+// ging an den Titel, Quick Find blieb offen (find.spec wackelte). Ein offener Dialog behält jetzt den Fokus.
+test("Neue Seite: ⌘K gleich danach – Quick Find behält den Fokus, Esc schließt", async ({ page }) => {
+  await ready(page);
+  await slowCreate(page);
+  const qf = page.getByRole("dialog", { name: "Quick Find" });
+  const input = qf.getByRole("combobox", { name: "Search pages" });
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.press("ControlOrMeta+k");
+  await expect(input).toBeFocused();
+  await page.keyboard.type("kes");
+  await expect(page.getByLabel("Page title")).toHaveValue(""); // die neue Seite ist da
+  await page.waitForTimeout(150); // Fenster, in dem der Titel sich früher den Fokus nahm
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue("kes");
+  await page.keyboard.press("Escape");
+  await expect(qf).toHaveCount(0);
+});
