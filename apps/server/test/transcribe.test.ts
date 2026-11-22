@@ -1,8 +1,8 @@
 // BSD-231 Teil 3c: POST /local/transcribe – whisper.cpp auf dem eigenen Server (Meeting Notes). Hier mit einem
 // Doppel für whisper-cli (Node-Skript): prüft Argumente ohne Shell, WAV-Kopf, Sprache, Fehler, Aufräumen, Reihenfolge.
-import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { localModels } from "@based/brain";
 import { defaultModelsDir, FileModelStore } from "../src/models.js";
@@ -41,7 +41,6 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     const dir = mkdtempSync(join(tmpdir(), "based-whisper-test-"));
     const app = await startApp({ whisper: fakeWhisper(dir) });
     apps.push(app);
-    const before = readdirSync(tmpdir()).filter((f) => f.startsWith("based-whisper-") && !f.startsWith("based-whisper-test-")).length;
     const r = await post(`${app.url}/local/transcribe?language=de&prompt=${encodeURIComponent("Based, Elijá; $(rm -rf /)\u0007")}`, wav(2));
     expect(r.status).toBe(200);
     const json = (await r.json()) as localModels.WhisperJSON;
@@ -50,7 +49,11 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     expect(args[args.indexOf("-l") + 1]).toBe("de");
     expect(args[args.indexOf("--prompt") + 1]).toBe("Based, Elijá; $(rm -rf /)");
     expect(args).toContain("-oj");
-    expect(readdirSync(tmpdir()).filter((f) => f.startsWith("based-whisper-") && !f.startsWith("based-whisper-test-")).length).toBe(before);
+    // BSD-650: genau der Arbeitsordner dieses Laufs (Pfad aus den Argumenten) ist weg – nicht alle based-whisper-*
+    // im gemeinsamen /tmp zählen, dort legen parallele Läufe (andere Arbeitsordner) eigene an.
+    const work = dirname(args[args.indexOf("-f") + 1]!);
+    expect(work.startsWith(join(tmpdir(), "based-whisper-"))).toBe(true);
+    expect(existsSync(work)).toBe(false);
     expect((await (await fetch(`${app.url}/local/transcribe`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json())).toEqual({ engine: "whisper.cpp", engineInstalled: true, ready: true, model: { source: "file", installed: true } });
   });
 
@@ -67,6 +70,10 @@ describe("POST /local/transcribe (BSD-231 Teil 3c)", () => {
     const failed = await post(`${app.url}/local/transcribe`, wav(1));
     expect(failed.status).toBe(500);
     expect(((await failed.json()) as { error: string }).error).toMatch(/failed to read WAV/);
+    // BSD-650: auch nach einem Fehler ist der Arbeitsordner dieses Laufs weg
+    const calls = readFileSync(join(dir, "calls.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l) as string[]);
+    const work = dirname(calls.at(-1)![calls.at(-1)!.indexOf("-f") + 1]!);
+    expect(existsSync(work)).toBe(false);
   });
 
   it("Mehrere Anfragen laufen nacheinander; ohne Einrichtung keine Route", async () => {
