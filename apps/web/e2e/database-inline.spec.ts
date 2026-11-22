@@ -132,6 +132,7 @@ test("Inline-Liste: Titel ausblenden, keine Tabellenlinien", async ({ page, brow
   await db.hover();
   await db.getByRole("button", { name: "View settings" }).click();
   const settings = page.locator(".dbui-view-settings");
+  await settings.getByRole("menuitem", { name: "Layout" }).click();
   await settings.getByRole("radio", { name: "List" }).click();
   await expect(db.locator('.dbui-body[data-view-type="list"]')).toBeVisible();
   await settings.getByText("Show database title").click();
@@ -158,6 +159,7 @@ test("Inline-Liste: Titel ausblenden, keine Tabellenlinien", async ({ page, brow
   await expect(db.locator(".dbui-toolbar")).toHaveCSS("opacity", "1");
   // Wieder einschalten: Titel zurück
   await db.getByRole("button", { name: "View settings" }).click();
+  await settings.getByRole("menuitem", { name: "Layout" }).click();
   await settings.getByText("Show database title").click();
   await page.keyboard.press("Escape");
   await expect(db.getByRole("textbox", { name: "Database title" })).toBeVisible();

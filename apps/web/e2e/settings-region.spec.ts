@@ -18,6 +18,7 @@ test("Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach de
   await page.getByTestId("type-date").click();
   await page.keyboard.press("Escape");
   await db.getByRole("button", { name: "View settings" }).click();
+  await page.getByRole("dialog", { name: "View settings" }).getByRole("menuitem", { name: "Layout" }).click();
   await page.getByRole("radio", { name: /Calendar/ }).click();
   await page.keyboard.press("Escape");
   const first = db.locator(".dbui-cal-weekdays > span").first();
