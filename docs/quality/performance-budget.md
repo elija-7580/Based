@@ -13,7 +13,7 @@ node ci/perf/measure.mjs --out perf.json        # Chromium über Playwright + CD
 ```
 
 `ci/perf/measure.mjs` misst Bundle (roh/gzip, Erststart getrennt), Kaltstart, beim Start geladene Dateien, Heap nach
-GC, DOM-Knoten, Listener, Leerlauf (Timer-Aufrufe und CPU-Zeit in 10 s), Leck-Schleifen (50× Seite wechseln, 50× ⌘K),
+GC, DOM-Knoten, Listener, Leerlauf (Timer-Aufrufe, Worker-Nachrichten und CPU-Zeit in 10 s), Leck-Schleifen (50× Seite wechseln, 50× ⌘K),
 Tippen auf einer 300-Block-Seite, den Start mit 20 000 Seiten und eine Datenbank mit 100 000 Zeilen (Heap, längste
 Aufgabe beim Öffnen, Neuladen; einzeln mit `--only database`). `BASED_PERF_CHROME=<pfad>` nimmt ein vorhandenes
 Chromium. Die Werte jedes Abends stehen in `perf-history.csv`. Alle Zahlen stammen aus dem Linux-Container
@@ -33,10 +33,11 @@ Chromium. Die Werte jedes Abends stehen in `perf-history.csv`. Alle Zahlen stamm
 | JS-Heap nach Start, leer | – | 9,6 MB (11,2) | `measure.mjs` |
 | JS-Heap mit 20 000 Seiten | kein lineares Wachstum mit der Gesamtgröße | 15,9 MB (0,32 MB je 1 000 Seiten) | `measure.mjs` |
 | 50× Seite wechseln (300 Blöcke): DOM-Knoten nach GC | ±0 | ±0 (vor dem Fix vom 18.11.: +259 907 Knoten, +41 MB) | `e2e/editor-leak.spec.ts` |
-| 50× ⌘K: Heap nach GC | kein Wachstum | −3,6 MB, +349 Knoten (beobachten) | `measure.mjs` |
+| 50× ⌘K: Heap nach GC | kein Wachstum | −3,6 MB, +349 Knoten; 22.11.: 3 × 50 weitere Zyklen 1 166 → 1 200 → 1 133 Knoten, Heap +0,4 MB – kein Leck (Knoten pendeln) | `measure.mjs` |
 | Leerlauf: Timer-Aufrufe in 10 s | 0 | 1 (vorher 200; BSD-596: Hänger-Wächter und Sitzungs-Marke ohne Dauer-Zeitgeber), 0 Intervalle | `measure.mjs` |
 | Leerlauf: CPU des Hauptthreads | 0 % | 0,1 % (nach Editor-Weg 0,9 %) | `measure.mjs` |
 | Leerlauf: requestAnimationFrame, laufende Animationen | 0 | 0 | `measure.mjs` |
+| Leerlauf: Nachrichten aus Workern in 10 s | 0 | 20 (22.11.: Watchdog-Ping alle 500 ms bei vorderem Fenster, BSD-655) | `measure.mjs` (`workerMsgs`, seit 22.11.) |
 | Tippen auf 300-Block-Seite | keine Long Tasks | 0 Long Tasks, 6,1 ms CPU je Zeichen (10,4) | `measure.mjs`, `e2e/startup-perf.spec.ts` |
 | Fehler in der Konsole auf dem Messweg | 0 | 0 | `measure.mjs` |
 | WebView + Node zusammen nach Start (Mac) | < 150 MB | Mac-Test nötig | – |

@@ -4,7 +4,7 @@
 // Aufruf (nach `BASED_CHANNEL=beta pnpm --filter @based/web exec vite build`):
 //   node ci/perf/measure.mjs [--out datei.json] [--pages 20000] [--rows 100000] [--only base|large|database]
 // Misst: Bundle (roh/gzip, Erststart-Chunk getrennt), Kaltstart, geladene Chunks, Heap nach GC, DOM-Knoten, Listener,
-// Leerlauf (Timer/rAF-Aufrufe und CPU-Zeit in 10 s), Leck-Schleifen (50× Seite, 50× ⌘K), Editor-Tippen (Long Tasks),
+// Leerlauf (Timer/rAF-Aufrufe, Worker-Nachrichten und CPU-Zeit in 10 s), Leck-Schleifen (50× Seite, 50× ⌘K), Editor-Tippen (Long Tasks),
 // Start mit großem Workspace, Datenbank mit 100 000 Zeilen (--rows, BSD-605). Zahlen aus dem Linux-Container; Mac-Werte siehe docs/quality/performance-budget.md.
 /* global __perf, document */
 import { spawn } from "node:child_process";
@@ -49,7 +49,10 @@ for (let i = 0; i < 60; i++) { try { await fetch(base); break; } catch { await n
 
 const INIT = () => {
   const w = globalThis;
-  w.__perf = { timeouts: 0, intervals: 0, rafs: 0, liveIntervals: new Map(), longTasks: [] };
+  w.__perf = { timeouts: 0, intervals: 0, rafs: 0, workerMsgs: 0, liveIntervals: new Map(), longTasks: [] };
+  // Review 22.11.: Nachrichten aus Workern wecken den Hauptthread wie ein Zeitgeber (z. B. Watchdog-Ping) – mitzählen
+  const W = w.Worker;
+  if (W) w.Worker = class extends W { constructor(...a) { super(...a); this.addEventListener("message", () => { w.__perf.workerMsgs++; }); } };
   const si = w.setInterval, ci = w.clearInterval, st = w.setTimeout, raf = w.requestAnimationFrame;
   w.setInterval = function (f, ms, ...a) {
     const src = new Error().stack.split("\n").slice(2, 5).join(" | ");
@@ -105,12 +108,12 @@ if (want("base")) await session(async ({ page, cdp, metrics, ready, reqs }) => {
     await page.keyboard.press("Escape");
     await page.waitForTimeout(3000);
     const a = await metrics();
-    const c0 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs }));
+    const c0 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs, w: __perf.workerMsgs }));
     await page.waitForTimeout(10000);
-    const c1 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs, live: [...__perf.liveIntervals.values()] }));
+    const c1 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs, w: __perf.workerMsgs, live: [...__perf.liveIntervals.values()] }));
     const b = await cdp.send("Performance.getMetrics").then((r) => Object.fromEntries(r.metrics.map((x) => [x.name, x.value])));
     const anim = await page.evaluate(() => document.getAnimations().filter((x) => x.playState === "running").length);
-    return { secs: 10, timeoutCalls: c1.t - c0.t, intervalCalls: c1.i - c0.i, rafCalls: c1.r - c0.r, cpuPct: Math.round(((b.TaskDuration - a.taskS) / 10) * 1000) / 10, runningAnimations: anim, liveIntervals: c1.live };
+    return { secs: 10, timeoutCalls: c1.t - c0.t, intervalCalls: c1.i - c0.i, rafCalls: c1.r - c0.r, workerMsgs: c1.w - c0.w, cpuPct: Math.round(((b.TaskDuration - a.taskS) / 10) * 1000) / 10, runningAnimations: anim, liveIntervals: c1.live };
   });
   // Seiten anlegen
   await page.evaluate(async () => {
@@ -155,11 +158,11 @@ if (want("base")) await session(async ({ page, cdp, metrics, ready, reqs }) => {
   await step("idleAfter", async () => {
     await page.waitForTimeout(4000);
     const a = await cdp.send("Performance.getMetrics").then((r) => Object.fromEntries(r.metrics.map((x) => [x.name, x.value])));
-    const c0 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs }));
+    const c0 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs, w: __perf.workerMsgs }));
     await page.waitForTimeout(10000);
-    const c1 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs, live: [...__perf.liveIntervals.values()] }));
+    const c1 = await page.evaluate(() => ({ t: __perf.timeouts, i: __perf.intervals, r: __perf.rafs, w: __perf.workerMsgs, live: [...__perf.liveIntervals.values()] }));
     const b = await cdp.send("Performance.getMetrics").then((r) => Object.fromEntries(r.metrics.map((x) => [x.name, x.value])));
-    return { secs: 10, timeoutCalls: c1.t - c0.t, intervalCalls: c1.i - c0.i, rafCalls: c1.r - c0.r, cpuPct: Math.round(((b.TaskDuration - a.TaskDuration) / 10) * 1000) / 10, liveIntervals: c1.live, ...(await metrics()) };
+    return { secs: 10, timeoutCalls: c1.t - c0.t, intervalCalls: c1.i - c0.i, rafCalls: c1.r - c0.r, workerMsgs: c1.w - c0.w, cpuPct: Math.round(((b.TaskDuration - a.TaskDuration) / 10) * 1000) / 10, liveIntervals: c1.live, ...(await metrics()) };
   });
   out.loadedChunksAfterWalk = [...new Set(reqs.filter((r) => r.endsWith(".js")))].length;
 });
