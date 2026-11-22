@@ -17,6 +17,6 @@ describe("restoredMessage", () => {
 describe("damagedBackupText (BSD-648)", () => {
   it("unversehrt: nichts", () => expect(damagedBackupText(undefined)).toBe(""));
   it("beschädigt: sagt es zuerst, mit N von M Records, und was das Wiederherstellen tut", () => {
-    expect(damagedBackupText({ readable: 2, expected: 7 })).toBe("This backup is damaged: only 2 of 7 records can be read. Restoring it makes your workspace match the readable part. ");
+    expect(damagedBackupText({ readable: 2, expected: 7 })).toBe("This backup is damaged: only 2 of 7 records can be read. ");
   });
 });

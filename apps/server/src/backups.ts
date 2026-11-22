@@ -113,15 +113,18 @@ export class Backups {
 
   list() { return listSnapshots(this.target); }
 
-  /** BSD-648: dazu `damaged`, wenn der Stand unvollständig ist (die Rückfrage sagt es; Wiederherstellen bleibt wie es ist). */
+  /**
+   * BSD-648: dazu `damaged`, wenn der Stand unvollständig ist (die Rückfrage sagt es).
+   * BSD-649: ein beschädigter Stand bringt nur seinen lesbaren Teil zurück und entfernt nichts.
+   */
   async preview(name: string) {
     const read = await readSnapshot(this.target, name);
-    const pages = planRestore(this.store, read.records).pages;
+    const pages = planRestore(this.store, read.records, { keepUnlisted: !!read.damaged }).pages;
     return read.damaged ? { pages, damaged: read.damaged } : { pages };
   }
 
   /**
-   * Wiederherstellen (ersetzen). Vorher wird der aktuelle Stand gesichert – so ist es selbst rückgängig zu machen.
+   * Wiederherstellen (ersetzen; bei beschädigtem Stand nur ergänzen, BSD-649). Vorher wird der aktuelle Stand gesichert – so ist es selbst rückgängig zu machen.
    * `missing`: Dateien, die der Stand nennt, die aber weder hier noch im Backup lesbar sind.
    */
   async restore(name: string): Promise<{ before: string | undefined; pages: { added: number; changed: number; removed: number }; missing: string[] }> {
@@ -136,7 +139,7 @@ export class Backups {
       if (!ok) missing.push(id);
     }
     const before = await this.snapshot(true);
-    const plan = planRestore(this.store, read.records);
+    const plan = planRestore(this.store, read.records, { keepUnlisted: !!read.damaged });
     applyRestore(this.store, plan);
     this.digest = undefined;
     this.log.info("backup restored", { added: plan.pages.added, removed: plan.pages.removed, missing: missing.length });
