@@ -20,8 +20,15 @@ import { damagedBackupText, restoredMessage } from "./backupText.js";
 
 type Info = Awaited<ReturnType<ReturnType<typeof localServer>["backups"]>>;
 const pages = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
-const pagesText = (p: { added: number; changed: number; removed: number }) =>
-  [`${pages(p.added)} ${p.added === 1 ? "comes" : "come"} back`, `${pages(p.changed)} ${p.changed === 1 ? "changes" : "change"}`, `${pages(p.removed)} ${p.removed === 1 ? "goes" : "go"} away`].join(", ");
+const pagesParts = (p: { added: number; changed: number; removed: number }) =>
+  [`${pages(p.added)} ${p.added === 1 ? "comes" : "come"} back`, `${pages(p.changed)} ${p.changed === 1 ? "changes" : "change"}`, `${pages(p.removed)} ${p.removed === 1 ? "goes" : "go"} away`];
+const pagesText = (p: { added: number; changed: number; removed: number }) => pagesParts(p).join(", ");
+/** BSD-649: Rückfrage vor dem Wiederherstellen. Ein beschädigter Stand bringt nur den lesbaren Teil zurück, nichts geht weg. */
+const restoreAsk = (c: { at: number; pages: { added: number; changed: number; removed: number }; damaged?: { readable: number; expected: number } }) => {
+  const when = new Date(c.at).toLocaleString();
+  if (c.damaged) return `${damagedBackupText(c.damaged)}Restoring it brings back the readable part from ${when} and removes nothing: ${pagesParts(c.pages).slice(0, 2).join(", ")}. The current state is backed up first.`;
+  return `Your workspace becomes the state of ${when}: ${pagesText(c.pages)}. The current state is backed up first.`;
+};
 
 export function BackupsGroup() {
   const ls = localServer();
@@ -97,7 +104,7 @@ export function BackupsGroup() {
         </VStack>
       ) : null}
       <AlertDialog isOpen={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(undefined); }} title="Restore this backup?"
-        description={confirm ? `${damagedBackupText(confirm.damaged)}Your workspace becomes the state of ${new Date(confirm.at).toLocaleString()}: ${pagesText(confirm.pages)}. The current state is backed up first.` : ""}
+        description={confirm ? restoreAsk(confirm) : ""}
         actionLabel="Restore" onAction={() => void restore()} />
     </Group>
   );

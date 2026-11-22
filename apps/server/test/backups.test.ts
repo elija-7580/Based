@@ -156,9 +156,18 @@ describe("Backups (BSD-274)", () => {
     const damaged = await call(`${app.url}/backups/${bad}/preview`);
     expect(damaged.status).toBe(200);
     expect(damaged.body.damaged).toEqual({ readable: 2, expected: records.length, skipped: 0 });
-    expect((damaged.body.pages as { removed: number }).removed).toBeGreaterThan(0);
+    // BSD-649: ein beschädigter Stand entfernt nichts
+    expect((damaged.body.pages as { removed: number }).removed).toBe(0);
     // nur gemeldet: die Vorschau ändert nichts
     expect(store.exportRecords()).toHaveLength(records.length);
+    // BSD-649: Wiederherstellen bringt den lesbaren Teil zurück, alles andere bleibt
+    const extra = createPage(store, { title: "Written after the backup" });
+    const restored = await call(`${app.url}/backups/${bad}/restore`, "POST");
+    expect(restored.status).toBe(200);
+    expect((restored.body.pages as { removed: number }).removed).toBe(0);
+    const after = store.exportRecords();
+    expect(after.length).toBeGreaterThanOrEqual(records.length + 1);
+    expect(store.blocks.has(extra)).toBe(true);
   });
 
   it("Laufzeit (20.11.): ohne Änderung seit dem letzten Stand wird nicht der ganze Workspace ausgegeben", async () => {

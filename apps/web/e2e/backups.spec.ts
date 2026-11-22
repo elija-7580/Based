@@ -110,7 +110,7 @@ test("BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup
   }
 
   // BSD-648: ein beschädigter Stand (hier: nach zwei Records abgeschnitten) – die Rückfrage sagt das zuerst, mit
-  // N von M lesbaren Records. Wiederherstellen selbst bleibt unverändert; hier wird nur abgebrochen.
+  // N von M lesbaren Records, und dass nichts entfernt wird (BSD-649); hier wird nur abgebrochen.
   const newest = readdirSync(join(backupDir, "snapshots")).filter((f) => f.endsWith(".based.jsonl")).sort().at(-1)!;
   const full = readFileSync(join(backupDir, "snapshots", newest), "utf8").split("\n").filter((l) => l !== "");
   const at = Date.now() - 3 * 86_400_000;
@@ -125,7 +125,9 @@ test("BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup
     const label = await page.evaluate((x) => new Date(x).toLocaleString(), Math.floor(at / 1000) * 1000);
     await page.getByTestId("backup-list").getByRole("listitem").filter({ hasText: label }).getByRole("button", { name: "Restore…" }).click();
     const ask = page.getByRole("alertdialog");
-    await expect(ask).toContainText(`This backup is damaged: only 2 of ${full.length - 1} records can be read. Restoring it makes your workspace match the readable part.`);
+    await expect(ask).toContainText(`This backup is damaged: only 2 of ${full.length - 1} records can be read. Restoring it brings back the readable part from`);
+    await expect(ask).toContainText("and removes nothing:");
+    await expect(ask).not.toContainText("away"); // BSD-649: nichts geht weg
     await page.waitForTimeout(400); // Einblenden abwarten (Bildschirmfoto)
     if (browserName === "chromium") await page.screenshot({ path: join(screens, `web-settings-backups-restore-damaged-${theme}.png`) });
     await page.keyboard.press("Escape");

@@ -26,7 +26,7 @@ Inbox: leer beim Start. Neu in der Nacht einsortiert: BSD-648 (Befund Schicht A,
 | BSD-646 Einstieg/Diagnostics nennen „Send to Based“ | ✅ | Texte in welcomeTourSteps, beta.ts, welcomeGuides (nur neue Workspaces); Fotos 1280 × 820 |
 | BSD-647 Problemberichte: IndexedDB getAll beim Start | ❌ | Blockiert bis nach der Beta (bräuchte IndexedDB-Versionssprung) |
 | BSD-648 Backup-Stand beschädigt: erkennen und warnen | ✅ | archiveDamage in core, preview liefert damaged, Rückfrage nennt N von M; Restore-Verhalten unverändert |
-| BSD-649 Beschädigten Stand ablehnen oder nur ergänzen? | ❌ | Blockiert, Frage an Elija |
+| BSD-649 Beschädigten Stand ablehnen oder nur ergänzen? | 🟡 | Entscheidung Elija 22.11.: warnen, dann den lesbaren Teil wiederherstellen. Ein beschädigter Stand entfernt nichts mehr (planRestore `keepUnlisted`), Rückfrage sagt es; Mac-Test. Checkliste: geprüft Rückfrage 1280 × 820 hell/dunkel (Chromium), behoben –, offen WebKit nur in der CI |
 | BSD-650 transcribe.test.ts zählt fremde /tmp-Ordner | ✅ | nur Test |
 | BSD-651 welcome.spec Fokusrahmen wackelt in WebKit | ✅ | nur Test: Return erst nach Fokus auf „Continue“; 20/20 je Browser |
 | BSD-652 polish.spec „Alles löschen“ (@perf) wackelt in WebKit | ✅ | nur Test |

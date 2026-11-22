@@ -81,6 +81,21 @@ describe("Backups (BSD-274)", () => {
     expect(s.blocks.has(later)).toBe(false);
   });
 
+  it("BSD-649: `keepUnlisted` (beschädigter Stand) – der lesbare Teil kommt zurück, nichts wird entfernt", async () => {
+    const { s, a } = workspace();
+    const t = memoryTarget();
+    const snap = (await writeSnapshot(t, { records: s.exportRecords(), workspaceName: "W", assets: [], now: new Date("2026-11-12T05:00:00Z") }))!;
+    trashPages(s, [a]);
+    emptyTrash(s);
+    const later = createPage(s, { title: "Written after the backup" });
+    const plan = planRestore(s, (await readSnapshot(t, snap.name)).records, { keepUnlisted: true });
+    expect(plan.removals).toEqual([]);
+    expect(plan.pages).toEqual({ added: 2, changed: 0, removed: 0 });
+    applyRestore(s, plan);
+    expect(s.blocks.get(a)?.text).toBe("Alpha");
+    expect(s.blocks.has(later)).toBe(true);
+  });
+
   it("Aufbewahrung: letzte 10, 24 stündlich, 30 täglich, 12 monatlich – je Zeitraum der neueste; Dateien ohne Stand fallen weg", async () => {
     const start = Date.parse("2026-01-01T00:30:00Z");
     const snaps = Array.from({ length: 24 * 400 }, (_, i) => { const at = start + i * 3_600_000; return { name: snapshotName(new Date(at)), at }; });

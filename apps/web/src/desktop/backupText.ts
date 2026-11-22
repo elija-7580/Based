@@ -9,9 +9,9 @@ export function restoredMessage(at: number, missing: number = 0): string {
 
 /**
  * BSD-648: Satz vorn in der Rückfrage „Restore this backup?“, wenn der Stand unvollständig ist (abgeschnitten oder
- * unlesbare Zeilen). Das Wiederherstellen selbst bleibt wie es ist – die Rückfrage sagt nur klar, was passiert.
+ * unlesbare Zeilen). BSD-649: Dann kommt nur der lesbare Teil zurück, nichts wird entfernt.
  */
 export function damagedBackupText(d: { readable: number; expected: number } | undefined): string {
   if (!d) return "";
-  return `This backup is damaged: only ${d.readable} of ${d.expected} records can be read. Restoring it makes your workspace match the readable part. `;
+  return `This backup is damaged: only ${d.readable} of ${d.expected} records can be read. `;
 }

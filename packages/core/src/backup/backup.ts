@@ -208,8 +208,12 @@ export interface RestorePlan {
 
 const isPage = (r: WireRecord | undefined) => r?.kind === "block" && (r.data.type === "page" || r.data.type === "databasePage");
 
-/** Plan: der Workspace soll genau dem Stand entsprechen (Workspace-Record bleibt der eigene). */
-export function planRestore(store: WorkspaceStore, snapshot: readonly WireRecord[]): RestorePlan {
+/**
+ * Plan: der Workspace soll genau dem Stand entsprechen (Workspace-Record bleibt der eigene).
+ * BSD-649: `keepUnlisted` (beschädigter Stand) – nur der lesbare Teil kommt zurück; was der Stand nicht nennt, bleibt
+ * (es könnte in den unlesbaren Zeilen gestanden haben), also keine `removals`.
+ */
+export function planRestore(store: WorkspaceStore, snapshot: readonly WireRecord[], opts: { keepUnlisted?: boolean } = {}): RestorePlan {
   const current = new Map<RecordKeyString, WireRecord>();
   for (const r of store.exportRecords()) if (r.kind !== "workspace") current.set(recordKey(r), r);
   const wanted = new Map<RecordKeyString, WireRecord>();
@@ -224,6 +228,7 @@ export function planRestore(store: WorkspaceStore, snapshot: readonly WireRecord
     if (isPage(r)) { if (have) pages.changed++; else pages.added++; }
   }
   const removals: RecordKeyString[] = [];
+  if (opts.keepUnlisted) return { upserts, removals, pages };
   for (const [k, r] of current) if (!wanted.has(k)) { removals.push(k); if (isPage(r)) pages.removed++; }
   return { upserts, removals, pages };
 }
