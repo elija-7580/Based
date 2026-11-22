@@ -93,6 +93,15 @@ export interface SettingsSection<C = unknown> {
 
 export type PageStatus = "available" | "partial" | "unavailable";
 
+/**
+ * Seiten für die Navigation und die Suche (Elijá 22.11.2026: Einstellungen ruhiger): eine Seite ohne eigenen
+ * Abschnitt hätte nur die Liste „Coming later“ – sie erscheint erst, wenn ein Abschnitt angemeldet ist. Die
+ * Entwickler-Ansicht (Diagnostics → For developers) zeigt sie weiter, dort mit „Not yet“.
+ */
+export function listedSettingsPages(pages: readonly SettingsPageDef[], registry: { status(pageID: string, opts?: SettingsViewOpts): PageStatus }, opts: SettingsViewOpts = {}, dev = false): SettingsPageDef[] {
+  return pages.filter((p) => dev || registry.status(p.id, opts) !== "unavailable");
+}
+
 /** Registry der Einstellungs-Abschnitte. Generisch im Komponententyp, damit sie ohne React testbar ist. */
 export class SettingsRegistry<C = unknown> {
   private sections = new Map<string, { section: SettingsSection<C>; seq: number }>();
