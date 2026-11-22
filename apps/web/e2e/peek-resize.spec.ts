@@ -91,7 +91,8 @@ test("Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mi
   await expect(page.getByTestId("slash-menu")).toHaveCount(0);
   await expect(peek).toBeVisible();
   // Fokus in der Tabelle dahinter
-  await page.getByRole("gridcell", { name: /^Row 1/ }).click();
+  // (links in der Zelle klicken: die Tabelle füllt die Breite, die Mitte der Titelspalte liegt unter dem Peek)
+  await page.getByRole("gridcell", { name: /^Row 1/ }).click({ position: { x: 24, y: 12 } });
   await page.keyboard.press("Escape"); // Zelleneditor
   await page.keyboard.press("Escape"); // Zellauswahl
   await page.keyboard.press("Escape"); // Peek
