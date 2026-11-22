@@ -10,7 +10,7 @@ import {
   addItem, conditionItem, countConditions, describeCondition, groupItem, isComplete, itemAt, newCondition, removeItem, replaceItem,
   setCombinator, topConditions, valueKind, EMPTY_FILTER,
 } from "./logic/filters.js";
-import { columnWidth, flatten, galleryColumns, nextRowIndex } from "./logic/layout.js";
+import { columnWidth, fillWidths, flatten, galleryColumns, hasStoredWidths, nextRowIndex } from "./logic/layout.js";
 import { defaultIsAgentEdit, editText, fromInputValue, optionTone, parseNumberInput, parseTextInput, toInputValue, withDate } from "./logic/values.js";
 import { groupProperty, newRowValues } from "./layouts/shared.js";
 
@@ -123,6 +123,21 @@ describe("Layout-Logik", () => {
     expect(galleryColumns(100, "large")).toBe(1);
     expect(columnWidth(view(), db, "title")).toBe(280);
     expect(columnWidth(view({ properties: [{ id: "n", visible: true, width: 20 }] }), db, "n")).toBe(72);
+  });
+
+  it("Tabelle füllt die Breite, bis jemand eine Spalte festlegt", () => {
+    // gleiches Verhältnis, nie breiter als der Platz
+    expect(fillWidths([280, 180, 180], 800, false)).toEqual([350, 225, 225]);
+    // höchstens doppelt so breit
+    expect(fillWidths([280, 180], 5000, false)).toEqual([560, 360]);
+    // kein Platz übrig oder noch nicht gemessen: Standardbreiten, nie schmaler
+    expect(fillWidths([280, 180], 300, false)).toEqual([280, 180]);
+    expect(fillWidths([280, 180], 0, false)).toEqual([280, 180]);
+    // gespeicherte Breiten gelten genau
+    expect(fillWidths([280, 180], 5000, true)).toEqual([280, 180]);
+    expect(hasStoredWidths(view())).toBe(false);
+    expect(hasStoredWidths(view({ properties: [{ id: "n", visible: true }] }))).toBe(false);
+    expect(hasStoredWidths(view({ properties: [{ id: "n", visible: true, width: 120 }] }))).toBe(true);
   });
 });
 

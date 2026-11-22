@@ -177,11 +177,11 @@ test.describe("Bearbeiten (kleine Datenbank)", () => {
     await cell(page, "row-3", 7).click();
     await page.getByRole("dialog", { name: "Edit Due" }).getByLabel("Due start").fill("2026-12-24");
     await page.keyboard.press("Escape");
-    await expect(cell(page, "row-3", 7)).toHaveText("December 24, 2026");
+    await expect(cell(page, "row-3", 7)).toHaveText(/^Dec 24(, 2026)?$/);
 
     // Undo über den Store: das Datum ist wieder das alte
     await page.evaluate(() => window.__store.undo());
-    await expect(cell(page, "row-3", 7)).not.toHaveText("December 24, 2026");
+    await expect(cell(page, "row-3", 7)).not.toHaveText(/^Dec 24(, 2026)?$/);
   });
 
   test("Tastatur: Pfeile, Tippen startet die Bearbeitung, Enter springt weiter", async ({ page }) => {

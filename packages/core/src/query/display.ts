@@ -3,7 +3,7 @@
 import { resolveDate } from "../model/calendar-day.js";
 import type { Block, Database, PropertySchema } from "../model/records.js";
 import { cellText, QueryEngine } from "./engine.js";
-import { formatMoment, longDate, plainNumber, type DateValue, type Value } from "./value.js";
+import { formatMoment, longDate, plainNumber, shortDate, type DateValue, type Value } from "./value.js";
 
 const CURRENCY: Record<string, string> = {
   dollar: "$", euro: "€", pound: "£", yen: "¥", franc: "CHF ", rupee: "₹", won: "₩", yuan: "CN¥", real: "R$", ruble: "₽", lira: "₺",
@@ -38,6 +38,11 @@ export function formatDateCell(d: DateValue, p: PropertySchema | undefined): str
   let s = formatMoment(d.start, fmt);
   if (d.end !== undefined) s += " → " + formatMoment(d.end, fmt);
   return s;
+}
+
+/** Datum in einer Tabellenzelle oder Karte: eigenes Format der Property, sonst die kurze Form (`shortDate`). */
+export function formatDateShort(d: DateValue, p: PropertySchema | undefined, now?: Date): string {
+  return p?.dateFormat ? formatDateCell(d, p) : shortDate(d, now);
 }
 
 /** Text einer berechneten Zelle (Formel, Rollup): Zahl im Format, Datum lang, sonst wie `cellText`. */

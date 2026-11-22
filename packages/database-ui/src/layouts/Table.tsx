@@ -1,19 +1,19 @@
 // BSD-155: Tabelle – virtualisierte Zeilen (@tanstack/react-virtual), klebender Kopf mit Property-Menüs,
 // Spaltenbreite ziehen, Gruppen, „+ New“, Berechnungen in der Fußzeile, Tastatur (Pfeile, Enter, Tippen,
 // Entf), Agent-Strich für von Agenten geänderte Zeilen.
-import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from "react";
+import { memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { dbops, deleteRows, plainText,
-  CALCULATION_LABELS, calculationOptions, calculationText, propertyOf, pv, setCalculation, setColumnWidth, setValue, valueCase,
+  CALCULATION_LABELS, calculationOptions, calculationText, propertyOf, pv, setCalculation, setColumnWidth, setColumnWidths, setValue, valueCase,
   setValues, visiblePropertyIDs, type Block, type DatabaseView, type PropertySchema, type QueryResult,
 } from "@based/core";
 import { cellString, decodeTSV, encodeTSV, isMulti, pasteable, planPaste, rangeRect, type CellRange } from "../logic/cellRange.js";
 import { CellEditor, isEditable } from "../cells/CellEditor.js";
 import { CellView } from "../cells/CellView.js";
 import { InlineView, useDB } from "../context.js";
-import { columnWidth, flatten, limitRows, MIN_COLUMN_WIDTH, nextRowIndex, type FlatItem } from "../logic/layout.js";
+import { columnWidth, fillWidths, flatten, hasStoredWidths, limitRows, MIN_COLUMN_WIDTH, nextRowIndex, type FlatItem } from "../logic/layout.js";
 import { AddPropertyMenu, PropertyMenu } from "../menus/PropertyMenu.js";
-import { Icon, MenuItem, Popover, PROPERTY_ICONS, type Anchor } from "../ui.js";
+import { Icon, MenuItem, Popover, type Anchor } from "../ui.js";
 import { EmptyState, GroupHeader, groupProperty, RowMenu, useAddRow } from "./shared.js";
 
 export const ROW_HEIGHT = 36;
@@ -110,7 +110,7 @@ function HeaderCell({ p, width, view, onResize }: { p: PropertySchema; width: nu
   return (
     <div role="columnheader" className="dbui-th" style={{ width }}>
       <button type="button" className="dbui-th-btn" onClick={(e) => setAnchor(e.currentTarget)} title={p.description}>
-        <Icon name={PROPERTY_ICONS[p.type] ?? "text"} size={14} /><span className="dbui-clip">{p.name}</span>
+        <span className="dbui-clip">{p.name}</span>
       </button>
       <span className="dbui-resize" role="separator" aria-orientation="vertical" aria-label={`Resize ${p.name}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} />
       {anchor && <LivePropertyMenu id={p.id} view={view} anchor={anchor} onClose={() => setAnchor(null)} />}
@@ -166,9 +166,31 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
 
   const propIDs = visiblePropertyIDs(view, db).join("\u0001");
   const props = useMemo(() => propIDs.split("\u0001").flatMap((id) => propertyOf(db, id) ?? []), [propIDs, db]);
-  const widthKey = props.map((p) => liveWidths[p.id] ?? columnWidth(view, db, p.id)).join(",");
+  // Platz für die Spalten (ohne Rand, Kästchen-Spalte und „+“): die Tabelle füllt die Seite, solange niemand eine Breite
+  // festgelegt hat (logic/layout.ts fillWidths). 0 = noch nicht gemessen.
+  const [room, setRoom] = useState(0);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => {
+      const cs = gridRef.current ? getComputedStyle(gridRef.current) : null;
+      const margin = cs ? (parseFloat(cs.marginLeft) || 0) + (parseFloat(cs.marginRight) || 0) : 0;
+      setRoom(Math.max(0, Math.floor(el.clientWidth - margin)));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const stored = hasStoredWidths(view);
+  const baseKey = props.map((p) => columnWidth(view, db, p.id)).join(",");
+  const filledKey = useMemo(() => fillWidths(baseKey.split(",").map(Number), room - GUTTER - 40, stored).join(","), [baseKey, room, stored]);
+  const widthKey = props.map((p, i) => liveWidths[p.id] ?? Number(filledKey.split(",")[i])).join(",");
   const widths = useMemo(() => widthKey.split(",").map(Number), [widthKey]);
-  const total = GUTTER + widths.reduce((a, b) => a + b, 0) + 40;
+  const shown = useRef<Record<string, number>>({});
+  shown.current = Object.fromEntries(props.map((p, i) => [p.id, widths[i]!]));
+  // Linien laufen immer über die ganze Breite, auch wenn die Spalten schmaler sind.
+  const total = Math.max(GUTTER + widths.reduce((a, b) => a + b, 0) + 40, room);
   // Horizontale Virtualisierung: nur Spalten im sichtbaren Bereich (plus Puffer) rendern.
   const offsets = useMemo(() => { const o = [GUTTER]; for (const w of widths) o.push(o[o.length - 1]! + w); return o; }, [widths]);
   const [view_, setView_] = useState({ left: 0, width: 1600 });
@@ -532,11 +554,14 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   };
 
   const resize = useCallback((id: string) => (w: number, done: boolean) => {
+    // Füllt die Tabelle noch die Breite, hält das erste Ziehen alle gezeigten Breiten fest – sonst sprängen die anderen
+    // Spalten auf ihre Standardbreite zurück.
     if (done) {
-      setColumnWidth(store, view.id, id, Math.round(w));
-      setLiveWidths((m) => { const n = { ...m }; delete n[id]; return n; });
-    } else setLiveWidths((m) => ({ ...m, [id]: w }));
-  }, [store, view.id]);
+      if (stored) setColumnWidth(store, view.id, id, Math.round(w));
+      else setColumnWidths(store, view.id, { ...Object.fromEntries(Object.entries(shown.current).map(([k, v]) => [k, Math.round(v)])), [id]: Math.round(w) });
+      setLiveWidths({});
+    } else setLiveWidths((m) => ({ ...(stored ? m : shown.current), ...m, [id]: w }));
+  }, [store, view.id, stored]);
 
   const rowOrder = useMemo(() => result.rows.map((r) => r.id), [result.rows]);
   // Gelöschte oder herausgefilterte Zeilen fallen aus der Auswahl.

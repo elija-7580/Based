@@ -63,6 +63,26 @@ export function columnWidth(view: DatabaseView, db: Database, propertyID: string
   return db.properties.find((p) => p.id === propertyID)?.type === "title" || propertyID === "title" ? TITLE_WIDTH : COLUMN_WIDTH;
 }
 
+/** Bis zu diesem Faktor wachsen Spalten ohne gespeicherte Breite, damit die Tabelle die Seite füllt. */
+export const MAX_FILL = 2;
+
+/**
+ * Tabelle füllt die Breite: Solange in der Ansicht keine Spalte eine gespeicherte Breite hat, wachsen alle Spalten im
+ * gleichen Verhältnis bis `available` (höchstens ×`MAX_FILL`). Nur Anzeige – gespeichert wird erst, wenn jemand eine
+ * Spalte zieht (dann alle sichtbaren Breiten, damit nichts springt). Schmaler als die Standardbreiten wird nichts.
+ */
+export function fillWidths(widths: readonly number[], available: number, stored: boolean): number[] {
+  const sum = widths.reduce((a, b) => a + b, 0);
+  if (stored || sum <= 0 || available <= sum) return [...widths];
+  const f = Math.min(MAX_FILL, available / sum);
+  return widths.map((w) => Math.floor(w * f));
+}
+
+/** Hat die Ansicht für eine ihrer Spalten eine gespeicherte Breite? */
+export function hasStoredWidths(view: DatabaseView): boolean {
+  return view.properties?.some((p) => p.width !== undefined && p.width > 0) ?? false;
+}
+
 /** Index des nächsten Elements der Art `row` in Richtung `dir` (für Pfeiltasten), oder -1. */
 export function nextRowIndex(items: FlatItem[], from: number, dir: 1 | -1): number {
   for (let i = from + dir; i >= 0 && i < items.length; i += dir) if (items[i]!.kind === "row") return i;
