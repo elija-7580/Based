@@ -10,6 +10,7 @@ one line per point (no wrapped lines), each at most 110 characters – a test ch
 - Page header is calmer: Export and Move to Trash now live in the ••• menu
 - Sidebar: no empty Teamspaces section; “New teamspace…” is in the menu next to Private
 - HTML blocks use the fonts of your page, and the white strip at their right edge is gone
+- Updates: Based now also looks for a new version every few hours while it is open
 - Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
 - Like Based? It runs on donations, $3 a month helps: github.com/sponsors/elija-7580
 
