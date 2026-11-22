@@ -130,4 +130,31 @@ describe("Backups (BSD-274)", () => {
     expect(app.assets.locate(hash)?.size).toBe(png.length);
     expect(readdirSync(join(dir, "snapshots"))).not.toContain(s); // vom Aufräumen gelöscht – die Datei ist trotzdem da
   });
+
+  it("BSD-648: Vorschau meldet einen beschädigten Stand (N von M Records lesbar); ein unversehrter hat kein `damaged`", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "based-backups-"));
+    const app = await startApp({ backupDir: dir, backupEvery: 3_600_000 });
+    apps.push(app);
+    for (let i = 0; i < 50 && ((await call(`${app.url}/backups`)).body.snapshots as unknown[]).length === 0; i++) await new Promise((r) => setTimeout(r, 50));
+    const store = app.sync.store;
+    for (let i = 0; i < 4; i++) createPage(store, { title: "Kept " + i });
+    const records = store.exportRecords();
+    const at = Date.now() - 2 * 3_600_000;
+    const good = snapshotName(new Date(at));
+    const bad = snapshotName(new Date(at + 60_000));
+    const text = encodeArchive(records, "W", ARCHIVE_VERSION, 0, new Date(at));
+    mkdirSync(join(dir, "snapshots"), { recursive: true });
+    writeFileSync(join(dir, "snapshots", good), text);
+    writeFileSync(join(dir, "snapshots", bad), text.split("\n").slice(0, 3).join("\n") + "\n"); // Kopf + 2 Records
+    const ok = await call(`${app.url}/backups/${good}/preview`);
+    expect(ok.status).toBe(200);
+    expect(ok.body.damaged).toBeUndefined();
+    expect(ok.body.pages).toEqual({ added: 0, changed: 0, removed: 0 });
+    const damaged = await call(`${app.url}/backups/${bad}/preview`);
+    expect(damaged.status).toBe(200);
+    expect(damaged.body.damaged).toEqual({ readable: 2, expected: records.length, skipped: 0 });
+    expect((damaged.body.pages as { removed: number }).removed).toBeGreaterThan(0);
+    // nur gemeldet: die Vorschau ändert nichts
+    expect(store.exportRecords()).toHaveLength(records.length);
+  });
 });

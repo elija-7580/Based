@@ -105,8 +105,11 @@ export class Backups {
 
   list() { return listSnapshots(this.target); }
 
+  /** BSD-648: dazu `damaged`, wenn der Stand unvollständig ist (die Rückfrage sagt es; Wiederherstellen bleibt wie es ist). */
   async preview(name: string) {
-    return planRestore(this.store, (await readSnapshot(this.target, name)).records).pages;
+    const read = await readSnapshot(this.target, name);
+    const pages = planRestore(this.store, read.records).pages;
+    return read.damaged ? { pages, damaged: read.damaged } : { pages };
   }
 
   /**
