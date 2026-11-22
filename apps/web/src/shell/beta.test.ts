@@ -51,7 +51,10 @@ describe("Beta-Gate", () => {
     expect(dev).toContain("Meeting notes");
     expect(beta).toContain("Meeting notes");
     expect(hiddenBlockTypes("beta").has("meeting")).toBe(false);
-    expect(slashItemsFor(true, hiddenBlockTypes("beta"))[0]?.label).toBe("Ask AI");
+    // Elija 22.11.2026: mit AI steht „Ask AI“ am Ende, das Menü beginnt mit „Text“
+    const withAI = slashItemsFor(true, hiddenBlockTypes("beta")).map((s) => s.label);
+    expect(withAI[0]).toBe("Text");
+    expect(withAI.at(-1)).toBe("Ask AI");
   });
 });
 

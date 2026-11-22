@@ -190,7 +190,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
     const chain: string[] = [];
     for (let p = node.parent, n = 0; p && n < 100; p = outline?.nodes[p]?.parent, n++) chain.unshift(p);
     const section = outline?.sections.find((s) => s.id === node.section);
-    if (section && (outline?.sections.length ?? 0) > 1) crumbs.push({ label: section.name });
+    // Elija 22.11.2026 (wie auf der Website „Private / Projects“): der Abschnitt steht immer im Pfad, auch wenn es nur einen gibt.
+    if (section) crumbs.push({ label: section.name });
     for (const id of chain) crumbs.push({ id, label: state.titles.get(id) ?? "Untitled" });
   }
 

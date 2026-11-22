@@ -110,10 +110,14 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
 /** „Ask AI“ steht nur im Menü, wenn die Hülle AI anbietet (AI-Schalter an). */
 export const ASK_AI_ITEM: SlashItem = { type: "ai", label: "Ask AI", group: "AI", icon: "askAI", keywords: "ai write assistant generate", ai: true };
 
-/** Einträge des Slash-Menüs: „Ask AI“ nur mit AI, ohne die Blocktypen, die die Hülle ausblendet (Beta-Gate). */
+/**
+ * Einträge des Slash-Menüs: „Ask AI“ nur mit AI, ohne die Blocktypen, die die Hülle ausblendet (Beta-Gate).
+ * Elija 22.11.2026: das Menü beginnt mit den einfachen Blöcken (Text, Überschriften …); „Ask AI“ steht als eigene
+ * Gruppe am Ende und bleibt über „/ai“ der erste Treffer.
+ */
 export function slashItemsFor(ai: boolean, hidden?: ReadonlySet<string>): readonly SlashItem[] {
   const base = hidden?.size ? SLASH_ITEMS.filter((s) => !hidden.has(s.type)) : SLASH_ITEMS;
-  return ai ? [ASK_AI_ITEM, ...base] : base;
+  return ai ? [...base, ASK_AI_ITEM] : base;
 }
 
 /**
