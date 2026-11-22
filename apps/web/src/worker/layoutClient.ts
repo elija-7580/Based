@@ -4,7 +4,7 @@ import { ForceLayout, layoutBounds, nodeAtPoint } from "@based/core";
 
 export type LayoutWorkerRequest =
   | { type: "start"; generation: number; ids: string[]; links: [number, number][]; initial?: { ids: string[]; x: Float32Array; y: Float32Array }; alpha?: number; keepKnown?: boolean }
-  /** Knoten festhalten und dorthin setzen (Ziehen); `index` −1 lässt los. */
+  /** Knoten dorthin ziehen; `index` −1 lässt los (der Knoten bleibt liegen, wo er abgelegt wurde). */
   | { type: "pin"; generation: number; index: number; x: number; y: number };
 
 export type LayoutWorkerEvent = { type: "positions"; generation: number; x: Float32Array; y: Float32Array; settled: boolean; steps: number };
@@ -141,8 +141,8 @@ export function startLayout(ids: string[], links: [number, number][], previous: 
       get y() { return l.y; },
       get settled() { return l.settled; },
       takeChanged() { const c = changed; changed = false; return c; },
-      tick(budget) { if (!l.settled) { l.run(budget); changed = true; } },
-      pin(index, x, y) { l.pinned = index; if (index >= 0) { l.x[index] = x; l.y[index] = y; l.release(); l.reheat(0.25); changed = true; } },
+      tick(budget) { if (!l.settled) { l.advance(budget); changed = true; } },
+      pin(index, x, y) { if (index >= 0) { l.drag(index, x, y); changed = true; } else l.drop(); },
       bounds: () => l.bounds(),
       nodeAt: (px, py, r) => l.nodeAt(px, py, r),
       positions: () => ({ ids: [...ids], x: l.x.slice(), y: l.y.slice() }),
@@ -161,9 +161,13 @@ export function startLayout(ids: string[], links: [number, number][], previous: 
     const at = new Map(initial.ids.map((id, i) => [id, i]));
     ids.forEach((id, i) => { const j = at.get(id); if (j !== undefined) { x[i] = initial.x[j]!; y[i] = initial.y[j]!; } });
   }
+  // Gezogener (und danach abgelegter) Knoten: sein Platz kommt vom Zeiger. Die Meldungen des Workers hinken eine
+  // Nachricht hinterher – ohne das hier zittert der Knoten unter dem Zeiger.
+  let held: { index: number; x: number; y: number } | undefined;
   listeners.set(gen, (e) => {
     x = e.x;
     y = e.y;
+    if (held) { x[held.index] = held.x; y[held.index] = held.y; }
     settled = e.settled;
     changed = true;
   });
@@ -175,7 +179,7 @@ export function startLayout(ids: string[], links: [number, number][], previous: 
     takeChanged() { const c = changed; changed = false; return c; },
     tick() {},
     pin(index, px, py) {
-      if (index >= 0) { x[index] = px; y[index] = py; changed = true; }
+      if (index >= 0) { held = { index, x: px, y: py }; x[index] = px; y[index] = py; settled = false; changed = true; }
       w.postMessage({ type: "pin", generation: gen, index, x: px, y: py } satisfies LayoutWorkerRequest);
     },
     bounds: () => layoutBounds(x, y, ids.length),
