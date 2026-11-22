@@ -788,9 +788,13 @@ test("Home neben dem offenen Chat: nichts überlappt, nichts ragt hinaus – 900
         if (process.env.BASED_SCREENSHOTS === "1") await page.screenshot({ path: `../../docs/design/screens/web-home-chat-open-${theme}.png` });
       } else {
         // BSD-607: in 900 × 600 schwebt das Panel über Home (wie die Seitenleiste unter 860 px), Home behält die
-        // volle Spalte – der Bogen bleibt dann auch hier.
+        // volle Spalte. Elija 22.11.2026 (Notizen zuerst): über dem Bogen stehen jetzt die Notizen; der leere Bogen
+        // bleibt
+        // nur, wenn er in dieser Höhe noch darunter passt (hängt an wenigen Pixeln: Schrift, „Recent“-Zeile) – sonst
+        // entfällt er. In beiden Fällen bleibt der Composer ohne Scrollen im Fenster; dass der Bogen nichts überdeckt,
+        // prüft der Block darunter.
         expect(panel.width, `Home-Spalte bei schwebendem Chat (${theme})`).toBeGreaterThanOrEqual(480 - 2 * 12);
-        await expect(arc).toBeVisible();
+        await expect.poll(async () => { const d = await box(".home-dock .composer"); return d.y + d.height; }, { message: `Composer im Fenster (${theme})` }).toBeLessThanOrEqual(h + 0.5);
       }
       expect(dock.y, `Composer unter der Begrüßung (${w}, ${theme})`).toBeGreaterThanOrEqual(greet.y + greet.height - 0.5);
       // der Leertext des Bogens überdeckt nichts mehr
