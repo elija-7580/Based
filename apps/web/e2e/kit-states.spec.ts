@@ -557,7 +557,7 @@ for (const theme of ["light", "dark"] as const) for (const style of ["default", 
     const mark = async (loc: Locator, state: string) => loc.evaluate((el, st) => el.setAttribute("data-force", st), state);
     await mark(nav.getByRole("button", { name: "Search" }).first(), "hover");
     await mark(nav.getByRole("button", { name: "Chat" }).first(), "pressed");
-    await mark(nav.getByRole("button", { name: /Create a teamspace/ }).first(), "focus");
+    await mark(nav.getByRole("button", { name: "Home" }).first(), "focus");
     const { ids, force } = await forcer(page);
     await force(await ids("nav.sidebar [data-force=hover], nav.sidebar [data-force=hover] *"), FORCE.hover);
     await force(await ids("nav.sidebar [data-force=pressed], nav.sidebar [data-force=pressed] *"), FORCE.pressed);

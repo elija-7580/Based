@@ -71,7 +71,6 @@ test("Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter �
     seen.push(now);
   }
   expect(seen).toContain("Private");
-  expect(seen).toContain("Teamspaces");
   expect(seen.some((x) => x.startsWith("Search"))).toBe(true);
   expect(seen.some((x) => x.startsWith("Home"))).toBe(true);
 

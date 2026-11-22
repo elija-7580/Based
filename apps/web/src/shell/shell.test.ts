@@ -41,12 +41,13 @@ describe("Seitenleisten-Zeilen", () => {
     expect(ancestorsInOutline(o, c)).toEqual([a, b]);
   });
 
-  it("ohne Teamspaces: Angebot, einen anzulegen; „Teamspaces“ und „Private“ zuklappbar", () => {
+  it("ohne Teamspaces: kein leerer Abschnitt, „Private“ bietet das Anlegen an", () => {
     const s = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "n" });
     const a = createPage(s, { title: "A" });
     const o = buildOutline(s);
-    expect(flattenSidebar(o, new Set()).map((r) => r.key)).toEqual(["h/teamspaces", "a/createTeamspace", "h/private", "s:private/" + a]);
-    expect(flattenSidebar(o, new Set(), new Set(["teamspaces", "private"])).map((r) => r.key)).toEqual(["h/teamspaces", "h/private"]);
+    expect(flattenSidebar(o, new Set()).map((r) => r.key)).toEqual(["h/private", "s:private/" + a]);
+    expect(flattenSidebar(o, new Set(), new Set(["teamspaces", "private"])).map((r) => r.key)).toEqual(["h/private"]);
+    expect(flattenSidebar(o, new Set())[0]).toMatchObject({ kind: "header", offerTeamspace: true });
   });
 
   it("Ablagezonen", () => {

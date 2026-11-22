@@ -307,7 +307,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .tree-header-label { flex: 1; border: 0; background: transparent; color: var(--muted); text-align: left; padding: 0; font: inherit; align-self: stretch; }
 .tree-header-label:hover { color: var(--ink); }
 .tree-header .tree-action { visibility: hidden; }
-.tree-header:hover .tree-action, .tree-header .tree-action:focus-visible { visibility: visible; }
+.tree-header:hover .tree-action, .tree-header .tree-action:focus-visible, .tree-header .tree-action[aria-expanded="true"] { visibility: visible; }
 .tree-header.drop-inside { background: var(--selected); }
 .tree-empty { color: var(--muted); }
 .menu {

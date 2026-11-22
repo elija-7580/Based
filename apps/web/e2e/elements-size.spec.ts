@@ -92,8 +92,9 @@ test("Fotos: Seitenleiste mit 14-px-Zeilen", async ({ page, browserName }) => {
     await page.setViewportSize({ width: 1280, height: 820 });
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-    const create = page.getByRole("button", { name: "Create a teamspace" });
-    await expect(create).toHaveCSS("font-size", "14px");
+    // „Create a teamspace“ gibt es seit 22. 11. 2026 nicht mehr (Abschnitt fehlt, solange leer): die Seitenzeile prüfen
+    const row = page.getByRole("navigation", { name: "Workspace" }).locator(".tree-row").first();
+    await expect(row).toHaveCSS("font-size", "14px");
     await page.screenshot({ path: `../../docs/design/screens/web-elements-v11-size-${theme}.png` });
   }
 });
