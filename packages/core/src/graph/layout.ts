@@ -14,7 +14,7 @@ export interface LayoutOptions {
   alpha?: number;
   /**
    * Knoten mit bekanntem Platz (`initial`) bleiben genau dort; nur neue Knoten suchen sich ihren Platz. So bleibt
-   * ein gemerktes Bild stehen, wenn Seiten dazukommen. `release()` (z. B. beim Ziehen) hebt das auf.
+   * ein gemerktes Bild stehen, wenn Seiten dazukommen. `release()` und `drag()` heben das auf.
    */
   keepKnown?: boolean;
 }
@@ -43,8 +43,17 @@ export class ForceLayout {
   readonly repelRadius: number;
   readonly repelStrength: number;
   readonly gravity: number;
-  /** Festgehaltener Knoten (wird gezogen). */
+  /** Festgehaltener Knoten: wird gezogen oder wurde abgelegt (bleibt dann, wo er hingelegt wurde). */
   pinned = -1;
+  /** Knoten, der gerade gezogen wird (−1: keiner). */
+  private dragging = -1;
+  /**
+   * Ruhiges Ziehen: Beweglichkeit je Knoten (0 = bleibt liegen). Gesetzt, sobald in einem ruhenden Bild gezogen wird –
+   * dann folgen nur die Nachbarn des gezogenen Knotens, abgeschwächt mit dem Abstand im Graph; der Rest bleibt stehen.
+   */
+  private mobility: Float32Array | undefined;
+  private adjStart: Uint32Array | undefined;
+  private adjList: Uint32Array | undefined;
   /** 1 = Knoten bleibt an seinem Platz (`keepKnown`). */
   private frozen: Uint8Array | undefined;
   // Raster (wiederverwendet)
@@ -55,6 +64,12 @@ export class ForceLayout {
 
   static readonly ALPHA_MIN = 0.01;
   static readonly ALPHA_DECAY = 0.985;
+  /** Temperatur, solange gezogen wird: niedrig, damit die Nachbarn weich folgen statt zu springen. */
+  static readonly DRAG_ALPHA = 0.22;
+  /** Nach dem Loslassen kühlt das Bild schneller ab (knapp zwei Sekunden bei einem Schritt je Frame). */
+  static readonly DRAG_ALPHA_DECAY = 0.97;
+  /** Beweglichkeit nach Kanten-Abstand zum gezogenen Knoten (1, 2, 3 Kanten); weiter weg: 0. */
+  static readonly DRAG_REACH: readonly number[] = [1, 0.7, 0.4];
 
   constructor(readonly ids: readonly string[], readonly links: readonly (readonly [number, number])[], opts: LayoutOptions = {}, initial?: ReadonlyMap<string, Point>) {
     const n = ids.length;
@@ -122,9 +137,79 @@ export class ForceLayout {
     return this.alpha < ForceLayout.ALPHA_MIN;
   }
 
-  /** Wieder anstoßen (z. B. beim Ziehen eines Knotens). */
+  /** Das ganze Bild wieder anstoßen. */
   reheat(alpha = 0.3) {
     if (this.alpha < alpha) this.alpha = alpha;
+  }
+
+  /**
+   * Knoten `index` an den Punkt ziehen. Ruht das Bild, bewegt sich dabei nur seine Umgebung (s. `mobility`); läuft
+   * der Aufbau noch, rechnet er einfach weiter. Der Knoten bleibt nach `drop()` liegen, wo er abgelegt wurde.
+   */
+  drag(index: number, px: number, py: number) {
+    if (index < 0 || index >= this.ids.length || !Number.isFinite(px) || !Number.isFinite(py)) return;
+    if (this.dragging !== index) {
+      if (this.settled || this.mobility) this.mobility = this.reach(index);
+      this.frozen = undefined;
+      this.dragging = index;
+      this.pinned = index;
+    }
+    this.x[index] = px;
+    this.y[index] = py;
+    this.vx[index] = 0;
+    this.vy[index] = 0;
+    if (this.alpha < ForceLayout.DRAG_ALPHA) this.alpha = ForceLayout.DRAG_ALPHA;
+  }
+
+  /** Loslassen: der Knoten bleibt liegen, die Umgebung kommt zur Ruhe. */
+  drop() {
+    this.dragging = -1;
+  }
+
+  /** Ruhiges Ziehen aktiv: ein Schritt je Frame statt so viele, wie ins Budget passen (sonst springt das Bild). */
+  get paced(): boolean {
+    return this.mobility !== undefined && !this.settled;
+  }
+
+  /** Weiterrechnen für einen Frame: beim ruhigen Ziehen genau ein Schritt, sonst im Budget. */
+  advance(budgetMs: number, now?: () => number): boolean {
+    if (this.settled) return true;
+    if (this.paced) { this.step(); return this.settled; }
+    return this.run(budgetMs, now);
+  }
+
+  /** Beweglichkeit rund um `index`: Breitensuche über die Kanten, bis `DRAG_REACH` reicht. */
+  private reach(index: number): Float32Array {
+    const n = this.ids.length;
+    if (!this.adjStart || !this.adjList) {
+      const start = new Uint32Array(n + 1);
+      for (const [a, b] of this.links) { start[a + 1]! += 1; start[b + 1]! += 1; }
+      for (let i = 0; i < n; i++) start[i + 1]! += start[i]!;
+      const fill = start.slice(0, n);
+      const list = new Uint32Array(this.links.length * 2);
+      for (const [a, b] of this.links) { list[fill[a]!++] = b; list[fill[b]!++] = a; }
+      this.adjStart = start;
+      this.adjList = list;
+    }
+    const start = this.adjStart, list = this.adjList;
+    const m = new Float32Array(n);
+    const seen = new Uint8Array(n);
+    seen[index] = 1;
+    let ring = [index];
+    for (const w of ForceLayout.DRAG_REACH) {
+      const next: number[] = [];
+      for (const i of ring) {
+        for (let k = start[i]!; k < start[i + 1]!; k++) {
+          const j = list[k]!;
+          if (seen[j]) continue;
+          seen[j] = 1;
+          m[j] = w;
+          next.push(j);
+        }
+      }
+      ring = next;
+    }
+    return m;
   }
 
   /** Ein Simulationsschritt. */
@@ -205,18 +290,32 @@ export class ForceLayout {
     // Schwerkraft, Dämpfung, Bewegung
     const g = this.gravity * a;
     const frozen = this.frozen;
+    const mob = this.mobility;
+    const pin = this.pinned;
+    const pinX = pin >= 0 ? x[pin]! : 0, pinY = pin >= 0 ? y[pin]! : 0;
+    // Schrittweite begrenzen: ein Ausreißer springt nicht aus dem Bild; beim ruhigen Ziehen deutlich enger
+    const max = mob ? L * 0.5 : L * 2;
     for (let i = 0; i < n; i++) {
-      if (i === this.pinned || frozen?.[i]) { vx[i] = 0; vy[i] = 0; continue; }
-      vx[i] = (vx[i]! - x[i]! * g) * 0.6;
-      vy[i] = (vy[i]! - y[i]! * g) * 0.6;
-      // Schrittweite begrenzen: ein Ausreißer springt nicht aus dem Bild
+      if (i === pin || frozen?.[i]) { vx[i] = 0; vy[i] = 0; continue; }
+      let m = 1;
+      if (mob) {
+        m = mob[i]!;
+        // Wer dem gezogenen Knoten im Weg liegt, weicht aus – auch ohne Kante zu ihm
+        if (m < 0.6 && pin >= 0) {
+          const dx = x[i]! - pinX, dy = y[i]! - pinY;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < R2) m = Math.max(m, 0.6 * (1 - Math.sqrt(d2) / R));
+        }
+        if (m === 0) { vx[i] = 0; vy[i] = 0; continue; }
+      }
+      vx[i] = (vx[i]! - x[i]! * g) * 0.6 * m;
+      vy[i] = (vy[i]! - y[i]! * g) * 0.6 * m;
       const sp = Math.sqrt(vx[i]! * vx[i]! + vy[i]! * vy[i]!);
-      const max = L * 2;
       if (sp > max) { vx[i] = (vx[i]! / sp) * max; vy[i] = (vy[i]! / sp) * max; }
       x[i]! += vx[i]!;
       y[i]! += vy[i]!;
     }
-    this.alpha *= ForceLayout.ALPHA_DECAY;
+    this.alpha *= mob ? ForceLayout.DRAG_ALPHA_DECAY : ForceLayout.ALPHA_DECAY;
     this.steps += 1;
   }
 

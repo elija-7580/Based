@@ -24,10 +24,12 @@ function loop() {
   timer = undefined;
   const l = layout;
   if (!l || l.settled) return;
-  l.run(12);
+  // Beim Ziehen (`paced`) ein Schritt je Frame: das Bild folgt weich, statt in einem Häppchen ans Ziel zu springen.
+  const paced = l.paced;
+  l.advance(12);
   send();
   // kurze Pause: der Worker soll dem Hauptthread auf schwachen Geräten nicht den ganzen Kern nehmen
-  if (!l.settled) timer = setTimeout(loop, 4);
+  if (!l.settled) timer = setTimeout(loop, paced ? 16 : 4);
 }
 
 function kick() {
@@ -44,13 +46,9 @@ self.addEventListener("message", (e: MessageEvent<LayoutWorkerRequest>) => {
     send();
     kick();
   } else if (m.type === "pin" && layout && m.generation === generation) {
-    layout.pinned = m.index;
     if (m.index >= 0) {
-      layout.x[m.index] = m.x;
-      layout.y[m.index] = m.y;
-      layout.release();
-      layout.reheat(0.25);
+      layout.drag(m.index, m.x, m.y);
       kick();
-    }
+    } else layout.drop();
   }
 });
