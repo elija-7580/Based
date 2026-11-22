@@ -1,1 +1,1 @@
-success bff17a73adf59cfbff4a09edf9921f3ca48ce7f7 nightly/2026-11-22-a
+success 0b6c03eb7ea6ff512efb3d6e1175d1485a9f4790 nightly/2026-11-22-a
