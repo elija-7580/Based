@@ -128,7 +128,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
       if (t?.closest(".sidebar, .sidebar-show, [role=menu], [role=dialog]")) return;
       setPinned(false);
     };
-    const onEsc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector("[role=menu], [role=dialog]")) setPinned(false); };
+    const onEsc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector(`:is([role=menu], [role=dialog]):not([popover]:not(:popover-open) *)`)) setPinned(false); };
     document.addEventListener("pointerdown", onDown, true);
     document.addEventListener("keydown", onEsc);
     return () => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("keydown", onEsc); };
