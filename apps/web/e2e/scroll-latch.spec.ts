@@ -6,7 +6,9 @@ import { expect, test } from "@playwright/test";
 test("Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste rollt es", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 820 });
   // Unter Last (CI, zwei Browser) liegen zwischen zwei Rad-Ereignissen des Tests mehr als 150 ms – Pause verlängern.
-  await page.addInitScript(() => { (globalThis as { __basedWheelLatchMs?: number }).__basedWheelLatchMs = 800; });
+  // BSD-653: gemessen in WebKit unter Last: das erste Rad-Ereignis nach page.mouse.move kommt bis zu ~1 s später an
+  // (Zeitstempel im Ereignis), die Geste galt dann als beendet. Darum 2 s, und die Pause für die neue Geste länger.
+  await page.addInitScript(() => { (globalThis as { __basedWheelLatchMs?: number }).__basedWheelLatchMs = 2000; });
   await page.goto("/#prefs-diagnostics");
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await expect(page.getByTestId("settings-page")).toBeVisible();
@@ -31,19 +33,23 @@ test("Einstellungen: inneres Feld fängt laufendes Scrollen nicht ab, neue Geste
   const scroller = page.locator("[data-outer-scroll]");
   const innerBox = (await inner.boundingBox())!;
   // Geste beginnt oberhalb des Feldes …
+  // BSD-653: page.mouse.wheel wartet in WebKit nicht, bis die Seite das Ereignis verarbeitet hat. Unter Last kam das erste
+  // Rad-Ereignis erst nach der Mausbewegung an (die Geste begann dann im Feld) oder das letzte erst nach dem Messen.
+  // Darum auf die Wirkung jedes Abschnitts warten statt auf „die Seite steht“.
+  const outerAt = () => scroller.evaluate((el) => el.scrollTop);
   await page.mouse.move(innerBox.x + 40, Math.max(120, innerBox.y - 60));
   await page.mouse.wheel(0, 40);
+  // schnell nachsehen (nicht im Takt von expect.poll): die Pause bis zum nächsten Schritt muss kürzer als die Latch-Pause bleiben
+  await expect.poll(outerAt, { intervals: [10] }).toBe(40);
   // … und läuft weiter, während das Feld unter den Zeiger kommt
   await page.mouse.move(innerBox.x + 40, innerBox.y + 40);
   for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, 40); await page.waitForTimeout(30); }
-  // Weiches Nachrollen (WebKit) abwarten: erst messen, wenn die Seite steht
-  let last = -1;
-  await expect.poll(async () => { const now = await scroller.evaluate((el) => el.scrollTop); const still = now === last; last = now; return still; }, { intervals: [150] }).toBe(true);
+  // alle neun Schritte rollen die Seite (auch weiches Nachrollen in WebKit ist dann fertig), keiner das Feld
+  await expect.poll(outerAt).toBe(9 * 40);
   expect(await inner.evaluate((el) => el.scrollTop)).toBe(0);
-  const outerTop = await scroller.evaluate((el) => el.scrollTop);
-  expect(outerTop).toBeGreaterThan(200);
+  const outerTop = await outerAt();
   // Pause → neue Geste über dem Feld rollt das Feld
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(2400);
   const now = (await inner.boundingBox())!;
   await page.mouse.move(now.x + 40, now.y + 40);
   await page.mouse.wheel(0, 120);
