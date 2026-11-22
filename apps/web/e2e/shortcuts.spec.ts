@@ -166,7 +166,7 @@ test("Neue Seite: Schreibmarke steht im Titel, Enter geht in den Text; Öffnen e
     await page.screenshot({ path: "../../docs/design/screens/new-page-title-focus-dark.png" });
     await page.keyboard.press("ControlOrMeta+Shift+l");
   }
-  await page.getByText("Private", { exact: true }).hover();
+  await page.getByRole("navigation", { name: "Workspace" }).getByText("Private", { exact: true }).hover();
   await page.getByRole("button", { name: "New page in Private" }).click();
   await expect(title).toHaveValue("");
   await expect(title).toBeFocused();
@@ -262,7 +262,7 @@ test("Neue Seite: sofort Getipptes geht nicht verloren (⌥⌘N, ⌘N, „+“),
   await expect(title).toBeFocused();
 
   // „+“ in der Seitenleiste, Tippfehler mit ⌫ im Fenster
-  await page.getByText("Private", { exact: true }).hover();
+  await page.getByRole("navigation", { name: "Workspace" }).getByText("Private", { exact: true }).hover();
   await page.getByRole("button", { name: "New page in Private" }).click();
   await page.keyboard.type("Sidebar plusx");
   await page.keyboard.press("Backspace");
