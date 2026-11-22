@@ -70,10 +70,32 @@ export function updatePrompt(version: string, current: string, notes?: string, n
   return `${name} ${version} is available (you have ${current}).${body}\n\nInstall it and restart now?`;
 }
 
+/**
+ * Elija 22.11.: „Beta hat lange keine Updates mehr gegeben“ – die App suchte nur einmal, kurz nach dem Start; wer sie
+ * tagelang offen lässt, sah nie ein Update. Jetzt sucht sie auch im laufenden Betrieb, frühestens alle 4 Stunden.
+ */
+export const UPDATE_CHECK_EVERY_MS = 4 * 60 * 60 * 1000;
+/** So oft wird nachgesehen, ob die 4 Stunden um sind (ein Timer über Stunden steht still, solange der Mac schläft). */
+export const UPDATE_CHECK_TICK_MS = 15 * 60 * 1000;
+
+/** Ist die stille Suche wieder fällig? */
+export function updateCheckDue(now: number, last: number, every = UPDATE_CHECK_EVERY_MS): boolean {
+  return now - last >= every;
+}
+
+/** Die stille Suche fragt nicht noch einmal nach einer Version, die in dieser Sitzung mit „Later“ abgelehnt wurde. */
+export function shouldOfferUpdate(version: string, declined: ReadonlySet<string>, interactive: boolean): boolean {
+  return interactive || !declined.has(version);
+}
+
+const declinedUpdates = new Set<string>();
+let lastUpdateCheck = 0;
+
 /** Fragt die next-Releases nach einer neueren Version; bei Ja: laden, installieren, neu starten. */
 export async function checkForUpdates(opts: { interactive: boolean }) {
   if (checking) return;
   checking = true;
+  lastUpdateCheck = Date.now();
   try {
     const { check } = await import("@tauri-apps/plugin-updater");
     const update = await check();
@@ -81,12 +103,13 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
       if (opts.interactive) await showMessage(upToDateText(await appIdentity()), { title: "No update available" });
       return;
     }
+    if (!shouldOfferUpdate(update.version, declinedUpdates, opts.interactive)) return;
     const yes = await askUser(updatePrompt(update.version, update.currentVersion, update.body, (await appIdentity()).name), {
       title: "Update available",
       okLabel: "Install and Restart",
       cancelLabel: "Later",
     });
-    if (!yes) return;
+    if (!yes) { declinedUpdates.add(update.version); return; }
     // BSD-456: vor dem Installieren den ganzen Workspace sichern (auch ohne lokalen Server); scheitert das, kein Update.
     const { backupBeforeUpdate } = await import("./desktop/preUpdate.js");
     const { preUpdateFailureText } = await import("@based/core");
@@ -169,6 +192,10 @@ export async function startDesktop(tabs?: { close: () => void; count: () => numb
   await win.listen<string>("desktop://command", (e) => void window.dispatchEvent(new CustomEvent("based:command", { detail: e.payload })));
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
   if (main && autoUpdatePref.get()) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
+  // … und im laufenden Betrieb weiter, solange „Check automatically“ an ist (auch wenn es erst später eingeschaltet wird).
+  if (main) setInterval(() => {
+    if (autoUpdatePref.get() && updateCheckDue(Date.now(), lastUpdateCheck)) void checkForUpdates({ interactive: false });
+  }, UPDATE_CHECK_TICK_MS);
 }
 
 /** BSD-138: „Install Command Line Tool…“ – zeigt, wo das geht (Opt-in in den Einstellungen). */

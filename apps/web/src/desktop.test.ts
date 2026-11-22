@@ -51,3 +51,20 @@ describe("clipboardData", () => {
     expect(clipboardData(null, "<p>x</p>")).toEqual({ text: "", html: "<p>x</p>" });
   });
 });
+
+describe("Update-Suche im laufenden Betrieb (Elija 22.11.)", () => {
+  it("ist frühestens alle 4 Stunden fällig und fragt nicht erneut nach einer abgelehnten Version", async () => {
+    const { UPDATE_CHECK_EVERY_MS, UPDATE_CHECK_TICK_MS, shouldOfferUpdate, updateCheckDue } = await import("./desktop.js");
+    const t0 = 1_800_000_000_000;
+    expect(updateCheckDue(t0 + UPDATE_CHECK_EVERY_MS - 1, t0)).toBe(false);
+    expect(updateCheckDue(t0 + UPDATE_CHECK_EVERY_MS, t0)).toBe(true);
+    // nach langem Schlaf des Macs: sofort beim nächsten Takt
+    expect(updateCheckDue(t0 + 3 * UPDATE_CHECK_EVERY_MS, t0)).toBe(true);
+    expect(UPDATE_CHECK_TICK_MS).toBeLessThan(UPDATE_CHECK_EVERY_MS);
+    const declined = new Set(["0.2.13"]);
+    expect(shouldOfferUpdate("0.2.13", declined, false)).toBe(false);
+    expect(shouldOfferUpdate("0.2.14", declined, false)).toBe(true);
+    // „Check for Updates…“ von Hand fragt immer
+    expect(shouldOfferUpdate("0.2.13", declined, true)).toBe(true);
+  });
+});
