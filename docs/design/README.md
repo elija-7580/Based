@@ -117,6 +117,9 @@ Web-Ansicht — offene Architekturfrage.
   Liste: Zeilen hängen ihren Innenabstand heraus. Galerie: Karten ohne Bild sind eine ruhige Fläche ohne leeres Cover.
 - **Seitenkopf (22. 11. 2026, wie auf basednotes.app):** oben rechts nur Stand („Edited …“), Favorit, Share, Chat und
   „•••“. Export und Papierkorb stehen im •••-Menü. Unter dem Titel steht „Created …“, „Edited …“ nicht noch einmal.
+- **Seitenleiste (22. 11. 2026, wie auf basednotes.app):** ohne Teamspaces gibt es keinen Abschnitt „Teamspaces“ und
+  keine Zeile „Create a teamspace“. Angelegt wird über „•••“ am Abschnitt „Private“ („New teamspace…“); mit dem ersten
+  Teamspace erscheint der Abschnitt mit seinem „+“ wie bisher.
 - **Abschnitt („Section“):** Toggle-Überschrift mit Hintergrundfarbe = Fläche (Radius 14) um Überschrift und Inhalt,
   Farbe aus den Block-Tokens, Linien darin leiser; eingebettete Datenbanken liegen ohne eigene Fläche darin. Slash
   „Section“ legt eine graue an, die Farbe kommt über Blockmenü → Color.

@@ -86,7 +86,7 @@ export const clampPeekWidth = (w: number, viewport: number): number => Math.roun
 
 /** Etwas, das Esc zuerst schließen soll (Menü, Popover, anderer Dialog), ist offen. */
 function overlayOpen(): boolean {
-  return !!document.querySelector("[role=menu], [role=listbox], .dbui-popover, .bx-emoji, dialog[open]:not(:has(.row-peek-body))");
+  return !!document.querySelector(`:is([role=menu], [role=listbox]):not([popover]:not(:popover-open) *), .dbui-popover, .bx-emoji, dialog[open]:not(:has(.row-peek-body))`);
 }
 
 /**
