@@ -105,6 +105,7 @@ test.describe("10.000 Zeilen", () => {
 
     // Gruppieren nach Priority
     await page.getByRole("button", { name: "View settings" }).click();
+    await page.getByRole("dialog", { name: "View settings" }).getByRole("menuitem", { name: "Group" }).click();
     await page.getByRole("dialog", { name: "View settings" }).getByLabel("Group by").selectOption({ label: "Priority" });
     await page.keyboard.press("Escape");
     const heads = page.locator(".dbui-group-head");
@@ -266,6 +267,7 @@ test.describe("Bearbeiten (kleine Datenbank)", () => {
     await page.getByTestId("add-view-board").click();
     await expect(page.getByRole("tab", { name: "Board", exact: true }).nth(1)).toHaveAttribute("aria-selected", "true");
     await page.getByRole("button", { name: "View settings" }).click();
+    await page.getByRole("dialog", { name: "View settings" }).getByRole("menuitem", { name: "Layout" }).click();
     await page.getByRole("radio", { name: "Table" }).click();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("grid")).toBeVisible();

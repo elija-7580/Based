@@ -1,6 +1,6 @@
 // BSD-155: Einstellungen einer Ansicht (Swift ViewSettingsView): Name, Layout, Properties, Gruppierung,
 // Karten, Diagramm, Dashboard-Widgets, Sperre, Duplizieren/Löschen. Alles über Store-Transaktionen.
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { CHART_THEMES } from "../layouts/Chart.js";
 import {
   CALENDAR_PROPERTY_TYPES, DASHBOARD_COLUMNS, PROPERTY_TYPE_LABELS, TIMELINE_SCALES, calendarDateProperty, addDashboardWidget, deleteView, duplicateView, movePropertyInView, removeDashboardWidget,
@@ -12,7 +12,7 @@ import { InlineView, useDB } from "../context.js";
 import { openModeOf } from "../logic/peek.js";
 import { MAP_HEIGHTS } from "../map/geo.js";
 import { mapProperty } from "../layouts/Map.js";
-import { Icon, MenuLabel, MenuSeparator, Popover, VIEW_ICONS, type Anchor } from "../ui.js";
+import { Icon, MenuItem, MenuLabel, MenuSeparator, Popover, VIEW_ICONS, type Anchor } from "../ui.js";
 
 export const LAYOUTS = ["table", "board", "list", "gallery", "chart", "calendar", "timeline", "form", "map"];
 const LAYOUT_LABELS: Record<string, string> = { table: "Table", board: "Board", list: "List", gallery: "Gallery", chart: "Chart", calendar: "Calendar", timeline: "Timeline", dashboard: "Dashboard", form: "Form", map: "Map" };
@@ -28,7 +28,6 @@ function PropertiesSection({ view }: { view: DatabaseView }) {
   return (
     <section className="dbui-config-section" aria-label="Properties">
       <div className="dbui-row-actions">
-        <MenuLabel>Properties</MenuLabel>
         <button type="button" className="dbui-btn ghost small" onClick={() => setAllPropertiesVisible(store, view.id, true)}>Show all</button>
         <button type="button" className="dbui-btn ghost small" onClick={() => setAllPropertiesVisible(store, view.id, false)}>Hide all</button>
       </div>
@@ -272,52 +271,93 @@ function DashboardSection({ view }: { view: DatabaseView }) {
   );
 }
 
+/** Unterseiten der Ansichts-Einstellungen; „main“ ist die kurze Übersicht. */
+type SettingsPage = "main" | "layout" | "properties" | "group" | "cards" | "dates" | "map" | "chart";
+
+const CHART_KIND_LABELS: Record<string, string> = { bar: "Vertical bar", horizontalBar: "Horizontal bar", line: "Line", area: "Area", donut: "Donut", pie: "Pie", number: "Number" };
+const CARD_SIZE_LABELS: Record<string, string> = { small: "Small", medium: "Medium", large: "Large" };
+
+/**
+ * 22. 11. 2026 (Elija): die Einstellungen einer Ansicht sind eine kurze Übersicht (Name, je eine Zeile für Layout,
+ * Properties, Gruppierung …, Sperre, Duplizieren/Löschen); die Einzelheiten stehen auf Unterseiten mit „Zurück“.
+ * Vorher stand alles untereinander – das Popover war höher als das Fenster.
+ */
 export function ViewSettings({ view, anchor, onClose, groups, onDeleted }: {
   view: DatabaseView; anchor: Anchor; onClose: () => void; groups: { id: string; title: string }[]; onDeleted?: () => void;
 }) {
   const { store, db } = useDB();
   const isWidget = view.widgetOf !== undefined;
   const inline = useContext(InlineView) !== null && !isWidget;
+  // `from` merkt sich die Zeile, aus der man kam: zurück auf der Übersicht bekommt sie den Fokus wieder.
+  const [nav, setNav] = useState<{ page: SettingsPage; from?: SettingsPage }>({ page: "main" });
+  const t = view.type;
+  const rows: { id: SettingsPage; icon: string; label: string; value: string }[] = [];
+  if (t !== "dashboard") rows.push({ id: "layout", icon: VIEW_ICONS[t] ?? "table", label: "Layout", value: LAYOUT_LABELS[t] ?? t });
+  if (t === "chart") rows.push({ id: "chart", icon: "chart", label: "Chart options", value: CHART_KIND_LABELS[view.chart?.kind ?? "bar"] ?? "" });
+  if (t === "calendar" || t === "timeline") rows.push({ id: "dates", icon: "calendar", label: "Dates", value: calendarDateProperty(db, view)?.name ?? "None" });
+  if (t === "map") rows.push({ id: "map", icon: "pin", label: "Map", value: mapProperty(db, view)?.name ?? "None" });
+  if (!["dashboard", "chart", "calendar"].includes(t)) rows.push({ id: "properties", icon: "eye", label: "Properties", value: `${visiblePropertyIDs(view, db).length} shown` });
+  if (["table", "board", "list", "gallery", "timeline"].includes(t)) rows.push({ id: "group", icon: "group", label: "Group", value: db.properties.find((p) => p.id === view.groupBy?.propertyID)?.name ?? "None" });
+  if (t === "board" || t === "gallery") rows.push({ id: "cards", icon: "gallery", label: "Cards", value: CARD_SIZE_LABELS[view.cardSize ?? "medium"] ?? "Medium" });
+  // Wechselt das Layout, gibt es die offene Unterseite vielleicht nicht mehr (z. B. „Cards“ in der Tabelle).
+  const page = nav.page === "main" || rows.some((r) => r.id === nav.page) ? nav.page : "main";
+  const current = rows.find((r) => r.id === page);
   return (
-    <Popover anchor={anchor} onClose={onClose} className="dbui-view-settings" label="View settings">
-      <label className="dbui-field"><span className="dbui-field-label">Name</span>
-        <input className="dbui-input" aria-label="View name" defaultValue={view.name} onBlur={(e) => renameView(store, view.id, e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") renameView(store, view.id, e.currentTarget.value); }} />
-      </label>
-      {view.type !== "dashboard" && (
-        <div className="dbui-layouts" role="radiogroup" aria-label="Layout">
-          {LAYOUTS.map((t) => (
-            <button key={t} type="button" role="radio" aria-checked={view.type === t} className="dbui-layout" onClick={() => setViewType(store, view.id, t)}>
-              <Icon name={VIEW_ICONS[t] ?? "table"} />{LAYOUT_LABELS[t]}
-            </button>
-          ))}
-        </div>
-      )}
-      <MenuSeparator />
-      {view.type === "dashboard" ? <DashboardSection view={view} /> : view.type === "chart" ? <ChartSection view={view} /> : (
+    <Popover anchor={anchor} onClose={onClose} className="dbui-view-settings" label="View settings" layoutKey={page}>
+      {page === "main" ? (
         <>
-          {(view.type === "calendar" || view.type === "timeline") && <DatesSection view={view} />}
-          {view.type === "map" && <MapSection view={view} />}
-          {view.type !== "calendar" && <PropertiesSection view={view} />}
-          {["table", "board", "list", "gallery", "timeline"].includes(view.type) && <GroupSection view={view} groups={groups} />}
-          {(view.type === "board" || view.type === "gallery") && <CardSection view={view} />}
-          <section className="dbui-config-section" aria-label="Display">
-            {view.type === "table" && <Toggle label="Wrap all content" checked={view.wrapCells === true} onChange={(on) => updateView(store, view.id, (v) => { if (on) v.wrapCells = true; else delete v.wrapCells; }, "Wrap cells")} />}
-            {inline && <Toggle label="Show database title" checked={view.showTitle !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showTitle; else v.showTitle = false; }, "Database title")} />}
-            <Toggle label="Show page icon" checked={view.showIcons !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showIcons; else v.showIcons = false; }, "Icons")} />
-            <label className="dbui-field"><span className="dbui-field-label">Open pages in</span>
-              <select className="dbui-select" aria-label="Open pages in" value={openModeOf(view)} onChange={(e) => updateView(store, view.id, (v) => { v.openIn = e.target.value; }, "Open pages in")}>
-                <option value="sidePeek">Side peek</option><option value="centerPeek">Center peek</option><option value="fullPage">Full page</option>
-              </select>
-            </label>
-          </section>
+          <label className="dbui-field"><span className="dbui-field-label">Name</span>
+            <input className="dbui-input" aria-label="View name" defaultValue={view.name} onBlur={(e) => renameView(store, view.id, e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") renameView(store, view.id, e.currentTarget.value); }} />
+          </label>
+          {rows.length > 0 && (
+            <div className="dbui-settings-pages" role="menu" aria-label="View options">
+              {rows.map((r) => <MenuItem key={r.id} icon={<Icon name={r.icon} />} hint={r.value} more autoFocus={nav.from === r.id} onClick={() => setNav({ page: r.id })}>{r.label}</MenuItem>)}
+            </div>
+          )}
+          {t === "dashboard" && <DashboardSection view={view} />}
+          <MenuSeparator />
+          {!isWidget && <Toggle label="Lock database" checked={db.locked === true} onChange={(on) => setDatabaseLocked(store, db.id, on)} />}
+          <div className="dbui-row-actions">
+            {!isWidget && <button type="button" className="dbui-btn ghost" onClick={() => { duplicateView(store, view.id); onClose(); }}><Icon name="copy" size={14} />Duplicate view</button>}
+            <button type="button" className="dbui-btn ghost danger" onClick={() => { deleteView(store, view.id); onClose(); onDeleted?.(); }}><Icon name="trash" size={14} />{isWidget ? "Remove widget" : "Delete view"}</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="dbui-settings-pages" role="menu" aria-label="Back">
+            <MenuItem icon={<Icon name="chevronLeft" />} label={`Back from ${current?.label ?? ""}`} autoFocus onClick={() => setNav({ page: "main", from: page })}>{current?.label}</MenuItem>
+          </div>
+          {page === "layout" && (
+            <>
+              <div className="dbui-layouts" role="radiogroup" aria-label="Layout">
+                {LAYOUTS.map((x) => (
+                  <button key={x} type="button" role="radio" aria-checked={t === x} className="dbui-layout" onClick={() => setViewType(store, view.id, x)}>
+                    <Icon name={VIEW_ICONS[x] ?? "table"} />{LAYOUT_LABELS[x]}
+                  </button>
+                ))}
+              </div>
+              {t !== "chart" && (
+                <section className="dbui-config-section" aria-label="Display">
+                  {t === "table" && <Toggle label="Wrap all content" checked={view.wrapCells === true} onChange={(on) => updateView(store, view.id, (v) => { if (on) v.wrapCells = true; else delete v.wrapCells; }, "Wrap cells")} />}
+                  {inline && <Toggle label="Show database title" checked={view.showTitle !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showTitle; else v.showTitle = false; }, "Database title")} />}
+                  <Toggle label="Show page icon" checked={view.showIcons !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showIcons; else v.showIcons = false; }, "Icons")} />
+                  <label className="dbui-field"><span className="dbui-field-label">Open pages in</span>
+                    <select className="dbui-select" aria-label="Open pages in" value={openModeOf(view)} onChange={(e) => updateView(store, view.id, (v) => { v.openIn = e.target.value; }, "Open pages in")}>
+                      <option value="sidePeek">Side peek</option><option value="centerPeek">Center peek</option><option value="fullPage">Full page</option>
+                    </select>
+                  </label>
+                </section>
+              )}
+            </>
+          )}
+          {page === "chart" && <ChartSection view={view} />}
+          {page === "dates" && <DatesSection view={view} />}
+          {page === "map" && <MapSection view={view} />}
+          {page === "properties" && <PropertiesSection view={view} />}
+          {page === "group" && <GroupSection view={view} groups={groups} />}
+          {page === "cards" && <CardSection view={view} />}
         </>
       )}
-      <MenuSeparator />
-      {!isWidget && <Toggle label="Lock database" checked={db.locked === true} onChange={(on) => setDatabaseLocked(store, db.id, on)} />}
-      <div className="dbui-row-actions">
-        {!isWidget && <button type="button" className="dbui-btn ghost" onClick={() => { duplicateView(store, view.id); onClose(); }}><Icon name="copy" size={14} />Duplicate view</button>}
-        <button type="button" className="dbui-btn ghost danger" onClick={() => { deleteView(store, view.id); onClose(); onDeleted?.(); }}><Icon name="trash" size={14} />{isWidget ? "Remove widget" : "Delete view"}</button>
-      </div>
     </Popover>
   );
 }
