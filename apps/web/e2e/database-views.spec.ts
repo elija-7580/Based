@@ -597,6 +597,7 @@ test("BSD-216 Teil 2: Diagramm – Farben und Höhe", async ({ page }) => {
   const svgH = async () => Number(await chart.locator("svg").first().getAttribute("height"));
   const before = await svgH();
   await page.getByRole("button", { name: "View settings" }).click();
+  await page.getByRole("dialog", { name: "View settings" }).getByRole("menuitem", { name: "Chart options" }).click();
   await page.getByLabel("Chart colors").selectOption("green");
   await page.getByLabel("Chart height").selectOption("large");
   await expect(chart).toHaveAttribute("data-theme", "green");

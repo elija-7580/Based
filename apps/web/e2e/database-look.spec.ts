@@ -330,3 +330,91 @@ test("Seitenkopf ruhig: Export und Papierkorb nur im Menü, „Edited“ nur ein
     }
   }
 });
+
+// 22. 11. 2026 (Elija): die Ansichts-Einstellungen sind eine kurze Übersicht mit Unterseiten statt einer langen Liste,
+// die höher war als das Fenster. In allen drei Fenstergrößen passt jede Seite ganz ins Fenster, ohne zu rollen.
+test("Ansichts-Einstellungen: kurze Übersicht, Unterseiten mit Zurück, alles im Fenster", async ({ page, browserName }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const id = await page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string> } } }).__based.client.command({ op: "addStarterTemplate", template: "tasks" }));
+  await page.goto(`/#page-${id}`);
+  const db = page.locator(".shell-database.full");
+  await expect(db.locator(".dbui-board-col").first()).toBeVisible();
+  const dlg = page.getByRole("dialog", { name: "View settings" });
+  const inWindow = async (what: string) => {
+    const box = await dlg.evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, scroll: e.scrollHeight - e.clientHeight, vw: innerWidth, vh: innerHeight }; });
+    expect(box.top, `${what}: oben im Fenster`).toBeGreaterThanOrEqual(0);
+    expect(box.bottom, `${what}: unten im Fenster`).toBeLessThanOrEqual(box.vh);
+    expect(box.left, `${what}: links im Fenster`).toBeGreaterThanOrEqual(0);
+    expect(box.right, `${what}: rechts im Fenster`).toBeLessThanOrEqual(box.vw);
+    expect(box.scroll, `${what}: rollt nicht`).toBeLessThanOrEqual(1);
+  };
+  const shots = process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium";
+
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    await db.getByRole("button", { name: "View settings" }).click();
+    await expect(dlg).toBeVisible();
+    // Übersicht: Name, je eine Zeile mit dem aktuellen Wert, Sperre und Aktionen – keine Einzelheiten
+    await expect(dlg.getByLabel("View name")).toHaveValue("Board");
+    await expect(dlg.getByRole("menuitem")).toHaveText([/Layout.*Board/, /Properties.*1 shown/, /Group.*Status/, /Cards.*Medium/]);
+    await expect(dlg.getByRole("radio")).toHaveCount(0);
+    await expect(dlg.getByLabel("Group by")).toHaveCount(0);
+    await expect(dlg.getByRole("button", { name: "Delete view" })).toBeVisible();
+    await inWindow(`Übersicht ${w}×${h}`);
+    for (const [row, probe] of [["Layout", dlg.getByRole("radio", { name: "Board" })], ["Properties", dlg.getByRole("button", { name: "Show Status" })], ["Group", dlg.getByLabel("Group by")], ["Cards", dlg.getByLabel("Card size")]] as const) {
+      await dlg.getByRole("menuitem", { name: row }).click();
+      await expect(probe).toBeVisible();
+      await expect(dlg.getByLabel("View name")).toHaveCount(0);
+      const back = dlg.getByRole("menuitem", { name: `Back from ${row}` });
+      await expect(back).toBeFocused();
+      await inWindow(`${row} ${w}×${h}`);
+      // Zurück: wieder die Übersicht, der Fokus steht auf der Zeile, aus der man kam
+      await back.click();
+      await expect(dlg.getByRole("menuitem", { name: row })).toBeFocused();
+    }
+    await page.keyboard.press("Escape");
+    await expect(dlg).toBeHidden();
+  }
+
+  // Layout wechseln: die Übersicht folgt (Tabelle hat keine „Cards“), der Wert in der Zeile stimmt
+  await db.getByRole("button", { name: "View settings" }).click();
+  await dlg.getByRole("menuitem", { name: "Layout" }).click();
+  await dlg.getByRole("radio", { name: "Table" }).click();
+  await expect(dlg.getByRole("radio", { name: "Table" })).toBeChecked();
+  await expect(dlg.getByText("Wrap all content")).toBeVisible();
+  await dlg.getByRole("menuitem", { name: "Back from Layout" }).click();
+  await expect(dlg.getByRole("menuitem")).toHaveText([/Layout.*Table/, /Properties.*shown/, /Group.*Status/]);
+  // Tastatur: ↓ wandert durch die Zeilen, Enter öffnet
+  await dlg.getByRole("menuitem", { name: "Layout" }).focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(dlg.getByRole("menuitem", { name: "Properties" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(dlg.getByRole("button", { name: "Hide all" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  if (shots) {
+    // für die Fotos wieder das Board
+    await db.getByRole("button", { name: "View settings" }).click();
+    await dlg.getByRole("menuitem", { name: "Layout" }).click();
+    await dlg.getByRole("radio", { name: "Board" }).click();
+    await page.keyboard.press("Escape");
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) for (const theme of ["light", "dark"]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await db.getByRole("tab", { name: "Board" }).click();
+      await expect(db.locator(".dbui-board-col").first()).toBeVisible();
+      await db.getByRole("button", { name: "View settings" }).click();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `../../docs/design/screens/web-db-view-settings-${w}x${h}-${theme}.png` });
+      for (const row of ["Layout", "Properties", "Group"]) {
+        await dlg.getByRole("menuitem", { name: row }).click();
+        await page.waitForTimeout(200);
+        await page.screenshot({ path: `../../docs/design/screens/web-db-view-settings-${row.toLowerCase()}-${w}x${h}-${theme}.png` });
+        await dlg.getByRole("menuitem", { name: `Back from ${row}` }).click();
+      }
+      await page.keyboard.press("Escape");
+    }
+  }
+});

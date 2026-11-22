@@ -434,6 +434,11 @@ textarea.dbui-input { padding: var(--space-1) var(--space-2); resize: vertical; 
 .dbui-option-config { display: flex; gap: var(--space-2); align-items: center; }
 .dbui-option-config .dbui-pill { flex: none; max-width: calc(var(--space-8) * 2); }
 .dbui-view-settings { width: calc(var(--space-8) * 6 + var(--space-5)); }
+/* Übersicht der Ansichts-Einstellungen: Zeilen wie im Menü, der aktuelle Wert leise rechts vor dem Pfeil;
+   die Kopfzeile einer Unterseite („‹ Layout“) ist dieselbe Zeile und führt zurück. */
+.dbui-settings-pages { display: flex; flex-direction: column; }
+.dbui-settings-pages > .dbui-menu-item { padding: 0 var(--space-2); }
+.dbui-settings-pages .dbui-menu-hint { font-size: var(--type-description-size); max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dbui-layouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); }
 .dbui-layout {
   display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-1); border: 0; border-radius: var(--radius-md);

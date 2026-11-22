@@ -45,6 +45,8 @@ export interface PopoverProps {
   /** Über den Anker legen statt darunter (Zellen-Editoren). */
   cover?: boolean;
   role?: string;
+  /** Ändert sich der Wert (z. B. die Unterseite der Ansichts-Einstellungen), wird das Popover neu ins Fenster gerückt. */
+  layoutKey?: unknown;
 }
 
 /**
@@ -65,12 +67,13 @@ function topLayerHost(anchor: Anchor): HTMLElement | null {
 
 const rectOf = (a: Anchor): DOMRect => (a instanceof HTMLElement ? a.getBoundingClientRect() : "width" in a ? a : new DOMRect(a.x, a.y, 0, 0));
 
-export function Popover({ anchor, onClose, children, label, className, matchWidth, cover, role = "dialog" }: PopoverProps) {
+export function Popover({ anchor, onClose, children, label, className, matchWidth, cover, role = "dialog", layoutKey }: PopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden", top: 0, left: 0 });
   const host = useMemo(() => topLayerHost(anchor), [anchor]);
+  const placed = useRef<{ anchor: Anchor; top: number } | null>(null);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -80,11 +83,16 @@ export function Popover({ anchor, onClose, children, label, className, matchWidt
     const w = el.offsetWidth, h = el.offsetHeight;
     const vw = window.innerWidth, vh = window.innerHeight, m = 8;
     let top = cover ? r.top : r.bottom + 4;
-    if (top + h > vh - m) top = Math.max(m, cover ? vh - m - h : r.top - 4 - h);
+    // Neuer Inhalt im offenen Popover: es bleibt, wo es ist, und rückt nur so weit hoch, dass es ins Fenster passt
+    // (kein Sprung über den Anker).
+    const was = placed.current;
+    if (was && was.anchor === anchor) top = Math.max(m, Math.min(was.top, vh - m - h));
+    else if (top + h > vh - m) top = Math.max(m, cover ? vh - m - h : r.top - 4 - h);
     let left = r.left;
     if (left + w > vw - m) left = Math.max(m, vw - m - w);
+    placed.current = { anchor, top };
     setStyle({ top, left, ...(matchWidth ? { minWidth: Math.max(r.width, 200) } : {}) });
-  }, [anchor, cover, matchWidth, host]);
+  }, [anchor, cover, matchWidth, host, layoutKey]);
 
   useEffect(() => {
     const el = ref.current;
@@ -137,16 +145,23 @@ export function usePopover(): [Anchor | null, (a: Anchor) => void, () => void] {
   return [anchor, setAnchor, () => setAnchor(null)];
 }
 
-export function MenuItem({ icon, children, onClick, selected, danger, disabled, hint, testID }: {
+export function MenuItem({ icon, children, onClick, selected, danger, disabled, hint, testID, more, autoFocus, label }: {
   icon?: ReactNode; children: ReactNode; onClick?: () => void; selected?: boolean; danger?: boolean; disabled?: boolean; hint?: ReactNode; testID?: string;
+  /** Die Zeile öffnet eine Unterseite: Pfeil am Ende. */
+  more?: boolean;
+  /** Fokus beim Einblenden (Wechsel zwischen Übersicht und Unterseite). */
+  autoFocus?: boolean;
+  /** Name für Screenreader, wenn der sichtbare Text allein nicht reicht („Back from Layout“). */
+  label?: string;
 }) {
   return (
     <button type="button" role="menuitem" className={"dbui-menu-item" + (danger ? " danger" : "")} aria-checked={selected} disabled={disabled}
-      onClick={onClick} data-testid={testID}>
+      aria-haspopup={more ? "true" : undefined} aria-label={label} autoFocus={autoFocus} onClick={onClick} data-testid={testID}>
       {icon && <span className="dbui-menu-icon" aria-hidden>{icon}</span>}
       <span className="dbui-menu-label">{children}</span>
       {hint !== undefined && <span className="dbui-menu-hint">{hint}</span>}
       {selected && <span className="dbui-menu-check" aria-hidden><Icon name="check" /></span>}
+      {more && <span className="dbui-menu-icon" aria-hidden><Icon name="chevronRight" size={14} /></span>}
     </button>
   );
 }
