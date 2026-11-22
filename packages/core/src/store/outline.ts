@@ -87,8 +87,13 @@ export function buildOutline(store: WorkspaceStore): Outline {
   // 1) Jede Seite (und eigene Inline-Datenbank) ihrem Behälter zuordnen: Wurzel, nächste Seite darüber, oder keiner.
   const under = new Map<string | typeof ROOT, { id: string; path: OutlinePath }[]>();
   const orphans: string[] = [];
+  // Ein Durchgang über das Gerüst: der Papierkorb wird gleich mitgesammelt (finishOutline lief sonst ein zweites Mal
+  // über alle Blöcke im Speicher).
+  const trashed: Block[] = [];
   for (const b of store.skeletonBlocks()) {
-    if (b.trashedAt !== undefined) continue;
+    if (b.trashedAt !== undefined) { trashed.push(b); continue; }
+    // Datenbankzeilen erscheinen nie (ihr Elternteil ist die Datenbank): vor jeder weiteren Arbeit aussortieren.
+    if (b.parent.startsWith("d:")) continue;
     const page = isPageLike(b);
     if (!page && !(b.type === "databaseInline" && ownsDatabase(store, b))) continue;
     const path: OutlinePath = [[b.sk, b.id]];
@@ -164,7 +169,7 @@ export function buildOutline(store: WorkspaceStore): Outline {
       emit(id, id, SHARED_SECTION);
     }
   }
-  return finishOutline(store, sections, children, nodes);
+  return finishOutline(store, sections, children, nodes, trashed);
 }
 
 function outlineFrame(store: WorkspaceStore) {
@@ -249,9 +254,10 @@ export function buildOutlineByWalk(store: WorkspaceStore): Outline {
   return finishOutline(store, sections, children, nodes);
 }
 
-function finishOutline(store: WorkspaceStore, sections: OutlineSection[], children: Record<string, string[]>, nodes: Record<string, OutlineNode>): Outline {
+/** `trashed`: Gerüst-Blöcke im Papierkorb, falls schon gesammelt (sonst über das Gerüst gesucht). */
+function finishOutline(store: WorkspaceStore, sections: OutlineSection[], children: Record<string, string[]>, nodes: Record<string, OutlineNode>, trashed?: readonly Block[]): Outline {
   const trash: TrashEntry[] = [];
-  for (const b of store.skeletonBlocks()) {
+  for (const b of trashed ?? store.skeletonBlocks()) {
     if (b.trashedAt === undefined) continue;
     const e: TrashEntry = { id: b.id, trashedAt: b.trashedAt };
     const from = parentTitle(store, b);
@@ -286,9 +292,15 @@ export function pageTitles(store: WorkspaceStore): Record<string, string> {
   return out;
 }
 
-/** Was eine Seite in der Seitenleiste ausmacht (ohne Titel): ändert sich das, ist die Struktur neu. */
+/**
+ * Was eine Seite in der Seitenleiste ausmacht (ohne Titel): ändert sich das, ist die Struktur neu.
+ * Datenbankzeilen stehen nie in der Seitenleiste, nur im Papierkorb (mit ihrer Datenbank als Herkunft): eine Zeile
+ * außerhalb des Papierkorbs zählt wie „nicht da“ (`""`). Neue, verschobene oder umbenannte Zeilen bauen die
+ * Gliederung so nicht mehr neu (vorher je Zeile ~100 ms und 3 MB an die Oberfläche bei 20 000 Seiten).
+ */
 export function structureSignature(b: Block | undefined): string {
   if (!b) return "";
+  if (b.parent.startsWith("d:")) return b.trashedAt === undefined ? "" : ["row", b.parent, b.trashedAt].join("\u0001");
   return [b.type, b.parent, b.sk, b.trashedAt ?? "", b.props?.teamspace ?? "", iconText(b) ?? ""].join("\u0001");
 }
 

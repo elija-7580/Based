@@ -45,6 +45,8 @@ export function nodeBackupTarget(root: string, opts: { create?: boolean } = {}):
 export class Backups {
   readonly target: BackupTarget;
   private digest: string | undefined;
+  /** Store-Revision des zuletzt gesicherten Stands. */
+  private revision: number | undefined;
   private timer: NodeJS.Timeout | undefined;
   private running: Promise<SnapshotInfo | undefined> | undefined;
   /** BSD-491: Datei-IDs je Stand – das Aufräumen liest jeden Stand nur einmal je Serverlauf. */
@@ -83,6 +85,10 @@ export class Backups {
 
   private async write(force: boolean): Promise<SnapshotInfo | undefined> {
     {
+      // Seit dem letzten Stand hat sich nichts geändert: nicht stündlich den ganzen Workspace ausgeben und hashen, nur um
+      // das festzustellen (bei 600 000 Records einige Sekunden je Stunde, auch in der Mac-App im Hintergrund).
+      const revision = this.store.revision;
+      if (!force && this.revision === revision) return undefined;
       try {
         const records = this.store.exportRecords();
         const assets = snapshotAssetIDs(records).map((id) => ({ id, read: async () => { const f = this.assets.locate(id); return f ? new Uint8Array(await readFile(f.path)) : undefined; } }));
@@ -93,6 +99,8 @@ export class Backups {
           await pruneBackups(this.target, undefined, this.assetCache);
           this.log.info("backup written", { records: info.records, assets: info.assetsWritten, missing: info.missing.length });
         }
+        // Dieser Stand ist gesichert (eben geschrieben oder gleich dem letzten).
+        this.revision = revision;
         this.lastError = undefined;
         return info;
       } catch (e) {

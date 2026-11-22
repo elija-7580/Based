@@ -104,6 +104,11 @@ export class PageHistory {
     }
   }
 
+  /** Warten Seiten auf eine Version? (Sonst braucht es keinen Takt.) */
+  get pending(): boolean {
+    return this.dirty.size > 0;
+  }
+
   /** Alles, was noch in keiner Version steht. */
   flush() {
     for (const page of [...this.dirty.keys()]) this.snapshot(page, "edit");
