@@ -111,6 +111,7 @@ input::placeholder { color: var(--muted); }
 .brand .on-dark { display: none; }
 [data-theme="dark"] .brand .on-light { display: none; }
 [data-theme="dark"] .brand .on-dark { display: block; }
+.ws-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--weight-heading); font-size: var(--type-ui-size); line-height: var(--type-ui-leading); color: var(--ink); user-select: none; }
 .wordmark { font-family: var(--font-head); font-weight: var(--weight-title); font-size: calc(var(--type-ui-size) + 3px); letter-spacing: -0.03em; }
 .nav-item {
   display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-7); padding: 0 var(--space-3);
@@ -292,6 +293,15 @@ button.row:hover, a.row:hover { background: var(--bg); }
   display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: transform var(--duration-fast) var(--ease-out);
 }
 .twisty.open { transform: rotate(90deg); }
+/* Elija 22.11.2026 (wie auf der Website): in Ruhe zeigt eine Zeile nur ihr Icon; der Pfeil zum Auf- und Zuklappen
+   liegt an derselben Stelle und erscheint beim Überfahren oder mit dem Tastaturfokus (wie in Notion). Nur Deckkraft –
+   nichts verschiebt sich. Ohne Maus (Touch) stehen Pfeil und Icon wie bisher nebeneinander. */
+@media (hover: hover) {
+  .tree-row > .twisty { position: relative; z-index: 1; margin-right: calc(-1 * (var(--space-5) + var(--space-1))); opacity: 0; transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
+  .tree-row > .tree-icon { width: var(--space-5); transition: opacity var(--duration-fast) var(--ease-out); }
+  .tree-row:hover > .twisty, .tree-row:focus-visible > .twisty { opacity: 1; }
+  .tree-row:hover > .tree-icon, .tree-row:focus-visible > .tree-icon { opacity: 0; }
+}
 .twisty:hover { background: var(--surface-raised); color: var(--ink); }
 .tree-icon { width: var(--icon-md); flex: none; display: inline-flex; justify-content: center; color: var(--muted); }
 .tree-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
