@@ -322,6 +322,9 @@
 @media (prefers-reduced-motion: reduce) { .bx2-flash::after { animation: none; opacity: 0; } }
 
 .bx2-tail { min-height: 120px; cursor: text; }
+/* Leere Seite: der Hinweis steht dort, wo der erste Klick die erste Zeile anlegt – gleiche Schrift und Farbe wie der
+   Platzhalter einer leeren Zeile. Kein eigener Knopf: die ganze Fläche ist das Ziel. */
+.bx2-editor[data-empty] > .bx2-tail::before { content: attr(data-hint); display: block; min-height: var(--row-line); line-height: 1.5; color: var(--muted); opacity: 0.7; user-select: none; }
 /* BSD-344: lange Seiten bekommen Luft unter der letzten Zeile (wie Notion), kurze rollen nicht */
 .bx2-editor[data-long] > .bx2-tail { min-height: 40vh; }
 

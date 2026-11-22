@@ -1452,6 +1452,10 @@ export function BlockEditor(props: PageEditorProps) {
     run(cmd.insertBlock(store, { inside: parent }, "text"));
   };
   const onTailClick = () => focusEndOf(pageID);
+  // Elija 22.11.2026: eine leere Seite sagt, wie man anfängt (der Hinweis steht in der Fläche unter dem Titel).
+  // (nicht useHasKids: die Seite selbst zählt als „undurchsichtig“ und hätte danach nie Kinder)
+  const pageKids = useKids(store, pageID);
+  const empty = useBlock(store, pageID) !== undefined && pageKids.length === 0;
 
   // BSD-344: Luft unter der letzten Zeile wie Notion – aber nur, wenn der Inhalt schon den größten Teil des Fensters
   // füllt (kurze Seiten rollen sonst ohne Grund). Gemessen wird die Oberkante der Fläche unter dem letzten Block; die
@@ -1483,10 +1487,10 @@ export function BlockEditor(props: PageEditorProps) {
   return (
     <EditorCtx.Provider value={ctx}>
     <HostRenderCtx.Provider value={props}>
-      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-root={pageID} data-theme={props.theme} data-collab={presence ? "" : undefined} data-long={long ? "" : undefined}
+      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-root={pageID} data-theme={props.theme} data-collab={presence ? "" : undefined} data-long={long ? "" : undefined} data-empty={empty && editable ? "" : undefined}
         tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={onPointerDown} writingsuggestions="false">
         <BlockList parent={pageID} depth={0} />
-        {editable ? <div className="bx2-tail" onClick={onTailClick} data-testid="block-editor-tail" /> : null}
+        {editable ? <div className="bx2-tail" onClick={onTailClick} data-testid="block-editor-tail" data-hint="Write something, or press / for commands" /> : null}
         {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
       {props.outline === false ? null : <PageOutline store={store} pageID={pageID} container={rootEl} />}
