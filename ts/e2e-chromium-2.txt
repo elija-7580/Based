@@ -1,61 +1,61 @@
-success 2d22079ee8ff2f8bfff90c7cf3c2f44291a2cd08
-  ✓  279 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (1.4s)
-  ✓  277 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (7.7s)
-  ✓  280 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (1.9s)
-  ✓  282 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (813ms)
-  ✓  281 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (2.2s)
-  ✓  283 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (843ms)
-  ✓  285 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (913ms)
-  ✓  284 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (2.6s)
-  ✓  286 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.3s)
-  ✓  288 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.2s)
-  ✓  289 [chromium] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (1.2s)
-  ✓  287 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (2.6s)
-  ✓  290 [chromium] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (2.3s)
-  ✓  291 [chromium] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (2.8s)
-  ✓  293 [chromium] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (1.2s)
-  ✓  292 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (2.4s)
-  ✓  294 [chromium] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (728ms)
-  ✓  296 [chromium] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (759ms)
-  ✓  295 [chromium] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (1.3s)
-  -  298 [chromium] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
-  ✓  297 [chromium] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.3s)
-  ✓  300 [chromium] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.2s)
-  ✓  299 [chromium] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (3.7s)
-  ✓  301 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (1.4s)
-  ✓  303 [chromium] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (1.1s)
-  ✓  302 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (3.4s)
-  ✓  304 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (706ms)
-  ✓  305 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.3s)
-  ✓  306 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (1.9s)
-  ✓  307 [chromium] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (3.7s)
-  ✓  308 [chromium] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (1.4s)
-  ✓  309 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (1.0s)
-  -  310 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
-  ✓  311 [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (1.7s)
+success 5d2ee6d5b912ae6f341a68d50bee9a0b0cd3626b
+  ✓  259 [chromium] › e2e/startup-perf.spec.ts:132:1 › Tippen zeichnet nur das eigene Textfeld neu (2.7s)
+  ✓  258 [chromium] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (3.4s)
+  ✓  261 [chromium] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (2.3s)
+  ✓  260 [chromium] › e2e/storage.spec.ts:55:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (3.5s)
+  ✓  262 [chromium] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (2.0s)
+  ✓  263 [chromium] › e2e/storage.spec.ts:76:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (1.7s)
+  -  265 [chromium] › e2e/storage.spec.ts:93:1 › Screenshots web-storage-warning-*
+  ✓  264 [chromium] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (1.4s)
+(node:10970) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  267 [chromium] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (1.5s)
+  ✓  268 [chromium] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Pages: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (2.5s)
+  ✓  269 [chromium] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (3.5s)
+  -  270 [chromium] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
+  ✓  271 [chromium] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (2.9s)
+  ✓  266 [chromium] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (12.7s)
+  ✓  272 [chromium] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (2.7s)
+  ✓  273 [chromium] › e2e/sync-assets.spec.ts:167:1 › komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Server nimmt gzip an und antwortet gepackt (1.4s)
+  ✓  274 [chromium] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (1.8s)
+(node:11566) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  275 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.4s)
+  ✓  277 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (1.8s)
+  ✓  276 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (8.6s)
+  ✓  278 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.4s)
+  ✓  280 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (2.5s)
+  ✓  279 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (4.3s)
+  ✓  281 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.5s)
+  ✓  283 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.5s)
+  ✓  282 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (4.1s)
+  ✓  284 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.9s)
+  ✓  286 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.2s)
+  ✓  285 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (3.5s)
+  ✓  287 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.2s)
+  ✓  288 [chromium] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (3.3s)
+  ✓  289 [chromium] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (2.4s)
+  ✓  290 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.6s)
+  ✓  291 [chromium] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (3.8s)
+  ✓  293 [chromium] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.3s)
+  ✓  292 [chromium] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (2.6s)
+  ✓  294 [chromium] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.5s)
+  ✓  295 [chromium] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (1.2s)
+  ✓  296 [chromium] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.7s)
+  ✓  297 [chromium] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (2.0s)
+  -  299 [chromium] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
+  ✓  298 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (2.3s)
+  ✓  301 [chromium] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (1.8s)
+  ✓  300 [chromium] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (4.4s)
+  ✓  302 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (4.1s)
+  ✓  303 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.1s)
+  ✓  304 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.2s)
+  ✓  305 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (2.5s)
+  ✓  306 [chromium] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (4.3s)
+  ✓  307 [chromium] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (1.5s)
+  ✓  308 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (1.3s)
+  -  309 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+  ✓  310 [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (3.4s)
 
-
-  1) [chromium] › e2e/polish.spec.ts:547:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
-
-    Test timeout of 30000ms exceeded.
-
-    Error: locator.boundingBox: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for locator('[data-editable-id]:focus')
-
-
-      553 |     // Zeilen bis kurz vor den unteren Rand
-      554 |     for (let i = 0; i < 40; i++) {
-    > 555 |       const box = await page.locator("[data-editable-id]:focus").boundingBox();
-          |                                                                  ^
-      556 |       if (box && box.y > h - 140) break;
-      557 |       await page.keyboard.type(`Line ${i + 1}`);
-      558 |       await page.keyboard.press("Enter");
-        at /home/runner/work/Based/Based/apps/web/e2e/polish.spec.ts:555:66
-
-    Error Context: test-results/polish-Slash--und--Menü-üb-7f046-nicht-auch-unten-im-Fenster-chromium/error-context.md
-
-  1 flaky
-    [chromium] › e2e/polish.spec.ts:547:1 › Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenster 
   13 skipped
-  296 passed (6.4m)
+  297 passed (8.7m)
