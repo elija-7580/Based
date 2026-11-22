@@ -282,21 +282,23 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
         <div role="treeitem" aria-expanded={!row.collapsed} aria-selected={false} aria-label={row.label}
           className={"tree-header t-meta" + dropClass} style={style} onDragOver={row.section ? (e) => onDragOver(e, row) : undefined} onDrop={row.section ? (e) => onDrop(e, row) : undefined} onDragLeave={() => setDrop(undefined)}>
           <button type="button" className="tree-header-label" aria-expanded={!row.collapsed} onClick={() => toggleSection(row.group)}>{row.label}</button>
+          {row.offerTeamspace ? (
+            <DropdownMenu
+              hasChevron={false}
+              menuWidth={200}
+              renderTrigger={(p) => (
+                <button type="button" className="tree-action" aria-label={`Section actions for ${row.label}`} title="New teamspace…" {...p}>
+                  <Icon name="more" size={16} />
+                </button>
+              )}
+              items={[{ label: "New teamspace…", icon: <Icon name="teamspace" size={16} />, onClick: () => setEditTeamspace({ name: "" }) }]}
+            />
+          ) : null}
           {add ? (
             <button type="button" className="tree-action" aria-label={add.label} title={add.label} onClick={add.run}>
               <Icon name="plus" size={16} />
             </button>
           ) : null}
-        </div>
-      );
-    }
-    if (row.kind === "action") {
-      return (
-        <div role="treeitem" aria-selected={false} aria-label={row.label} className="tree-action-row" style={style}>
-          <button type="button" className="tree-row tree-create" style={{ ...style, paddingLeft: indent(1) }} onClick={() => setEditTeamspace({ name: "" })}>
-            <Icon name="plus" size={16} />
-            {row.label}
-          </button>
         </div>
       );
     }
