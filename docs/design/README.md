@@ -115,6 +115,8 @@ Web-Ansicht — offene Architekturfrage.
   erscheint nicht, die Knöpfe im Spaltenkopf erst beim Überfahren oder mit Fokus. Timeline und Kalender: Einträge
   tragen die Farbe ihres Status (neutral bleibt grau), die Spalte „No date“ ist zu, solange nichts ohne Datum da ist.
   Liste: Zeilen hängen ihren Innenabstand heraus. Galerie: Karten ohne Bild sind eine ruhige Fläche ohne leeres Cover.
+- **Seitenkopf (22. 11. 2026, wie auf basednotes.app):** oben rechts nur Stand („Edited …“), Favorit, Share, Chat und
+  „•••“. Export und Papierkorb stehen im •••-Menü. Unter dem Titel steht „Created …“, „Edited …“ nicht noch einmal.
 - **Abschnitt („Section“):** Toggle-Überschrift mit Hintergrundfarbe = Fläche (Radius 14) um Überschrift und Inhalt,
   Farbe aus den Block-Tokens, Linien darin leiser; eingebettete Datenbanken liegen ohne eigene Fläche darin. Slash
   „Section“ legt eine graue an, die Farbe kommt über Blockmenü → Color.

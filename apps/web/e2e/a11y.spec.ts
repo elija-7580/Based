@@ -230,9 +230,10 @@ test("Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl", async ({ 
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
   // Export
-  const exportBtn = page.getByRole("button", { name: "Export" });
+  const exportBtn = page.getByRole("button", { name: "Page menu" }); // Export steht seit 22. 11. 2026 nur im Seitenmenü
   await exportBtn.focus();
   await page.keyboard.press("Enter");
+  await page.getByRole("menuitem", { name: "Export…" }).click();
   await expect(page.getByRole("dialog", { name: /Export/ })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: /Export/ })).toHaveCount(0);

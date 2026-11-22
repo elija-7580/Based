@@ -196,7 +196,7 @@ test("Seitenaktionen auf einem Board: ⌘F, •••-Menü, Verlauf und Export 
   await menu.getByText("Version history").click();
   await expect(page.getByRole("dialog").first()).toBeVisible();
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Export" }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Export…" }).click(); }
   await expect(page.getByRole("dialog").first()).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(board).toHaveAttribute("data-objects", "1");
@@ -260,7 +260,7 @@ test("Board im Papierkorb: nur lesen – ansehen und zoomen ja, ändern nein; na
   await fresh(page);
   await newBoard(page);
   await placeNote(page);
-  await page.getByRole("button", { name: "Move to Trash" }).click();
+  { await page.getByRole("button", { name: "Page menu" }).click(); await page.getByRole("menuitem", { name: "Move to Trash" }).click(); }
   await page.getByRole("button", { name: "Trash" }).click();
   await page.getByText("Untitled board").first().click();
   const trashed = page.getByTestId("board");
