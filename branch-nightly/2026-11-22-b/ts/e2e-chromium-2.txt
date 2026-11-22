@@ -1,61 +1,61 @@
-cancelled 863d9c543e1629a1a2f7ca5589f07c1582907c31
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/components/QuickFind.tsx, /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportSend.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/AIAppsSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/SemanticSearchSetup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+success aa870ba7978a2f7d231ad326711ef27e1fb8c848
+  ✓  257 [chromium] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (2.8s)
+  ✓  258 [chromium] › e2e/startup-perf.spec.ts:132:1 › Tippen zeichnet nur das eigene Textfeld neu (2.6s)
+  ✓  259 [chromium] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (2.1s)
+  ✓  261 [chromium] › e2e/switch-parity.spec.ts:42:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (1.3s)
+  ✓  260 [chromium] › e2e/storage.spec.ts:55:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (3.3s)
+  ✓  262 [chromium] › e2e/switch-parity.spec.ts:55:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (1.5s)
+  ✓  263 [chromium] › e2e/storage.spec.ts:76:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (1.8s)
+  -  265 [chromium] › e2e/storage.spec.ts:93:1 › Screenshots web-storage-warning-*
+  ✓  264 [chromium] › e2e/switch-parity.spec.ts:67:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (1.4s)
+(node:11065) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  267 [chromium] › e2e/switch-parity.spec.ts:90:1 › Einstellungen → Pages: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (2.3s)
+  ✓  268 [chromium] › e2e/switch-parity.spec.ts:109:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (2.9s)
+  -  269 [chromium] › e2e/switch-parity.spec.ts:149:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
+  ✓  270 [chromium] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (2.8s)
+  ✓  271 [chromium] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (2.3s)
+  ✓  266 [chromium] › e2e/sync-assets.spec.ts:102:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (11.0s)
+  ✓  273 [chromium] › e2e/sync-assets.spec.ts:167:1 › komprimierter Push aus dem Browser: Preflight erlaubt Content-Encoding, Server nimmt gzip an und antwortet gepackt (1.3s)
+  ✓  272 [chromium] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (2.2s)
+(node:11658) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  274 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.6s)
+  ✓  275 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (8.1s)
+  ✓  276 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (2.2s)
+  ✓  278 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.0s)
+  ✓  277 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (3.6s)
+  ✓  279 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (2.4s)
+  ✓  281 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.4s)
+  ✓  282 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.0s)
+  ✓  280 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (4.3s)
+  ✓  283 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.8s)
+  ✓  285 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.9s)
+  ✓  284 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (3.6s)
+  ✓  286 [chromium] › e2e/theme.spec.ts:154:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.9s)
+  ✓  287 [chromium] › e2e/unlinked.spec.ts:10:1 › unverlinkte Erwähnung finden und verlinken (3.1s)
+  ✓  288 [chromium] › e2e/theme.spec.ts:191:1 › erster Start auf dunklem System: dunkel schon vor dem App-Skript; gespeichertes „light“ bleibt (2.2s)
+  ✓  289 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.4s)
+  ✓  290 [chromium] › e2e/welcome.spec.ts:35:1 › Frischer Speicher → Einstieg in Schritten → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (3.6s)
+  ✓  291 [chromium] › e2e/scrollbars.spec.ts:42:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.7s)
+  ✓  292 [chromium] › e2e/welcome.spec.ts:98:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (2.2s)
+  ✓  294 [chromium] › e2e/welcome.spec.ts:123:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (1.2s)
+  ✓  293 [chromium] › e2e/scrollbars.spec.ts:47:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.5s)
+  ✓  296 [chromium] › e2e/scrollbars.spec.ts:53:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.6s)
+  ✓  295 [chromium] › e2e/welcome.spec.ts:135:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (1.9s)
+  -  298 [chromium] › e2e/welcome.spec.ts:164:1 › Willkommen: Bildschirmfotos
+  ✓  297 [chromium] › e2e/scrollbars.spec.ts:59:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (2.6s)
+  ✓  299 [chromium] › e2e/welcome.spec.ts:207:1 › ohne AI: Start empty → Home ist „Welcome to Based“, keine leere Seite „Home“ (4.0s)
+  ✓  300 [chromium] › e2e/scrollbars.spec.ts:94:1 › Rollbalken: Menü „New property“ rollt nicht waagrecht (1.8s)
+  ✓  301 [chromium] › e2e/welcome.spec.ts:242:1 › Willkommen → Vorlage Tasks: Board mit Aufgaben in < 3 s, Anleitungen bereit, danach kein Willkommen (3.9s)
+  ✓  302 [chromium] › e2e/welcome.spec.ts:281:1 › Vorlagen auch später über ⌘N: Journal (1.0s)
+  ✓  303 [chromium] › e2e/welcome.spec.ts:296:1 › Logo-Intro: läuft einmal und steht dann; mit „Bewegung reduzieren“ sofort das fertige Zeichen (5.3s)
+  ✓  304 [chromium] › e2e/welcome.spec.ts:324:1 › Einstieg: Skip auf jedem Schritt führt zur Wahl, nach der Wahl kein Einstieg mehr (2.2s)
+  ✓  305 [chromium] › e2e/welcome.spec.ts:353:1 › Einstieg erneut über ⌘K: nur lesen, nichts angelegt, Done/Close/Escape schließen (4.0s)
+  ✓  306 [chromium] › e2e/welcome.spec.ts:403:1 › Einstieg: alter Merker ohne Schritt (Update von 0.2.x) → direkt die Wahl (1.7s)
+  ✓  307 [chromium] › e2e/welcome.spec.ts:421:1 › Einstieg: Schritt Meeting notes mit „Turn on meeting notes“ (1.2s)
+  -  308 [chromium] › e2e/welcome.spec.ts:443:1 › Einstieg: Bildschirmfotos
+  ✓  309 [chromium] › e2e/welcome.spec.ts:494:1 › Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon (3.0s)
 
-Running 309 tests using 2 workers, shard 2 of 2
-
-  ✓    2 [chromium] › e2e/keyboard-everywhere.spec.ts:42:1 › Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter öffnet, Esc zurück in die Seite @smoke (2.1s)
-  ✓    1 [chromium] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (3.4s)
-  ✓    3 [chromium] › e2e/keyboard-everywhere.spec.ts:92:1 › ⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächste Pfeiltaste den Fokus zurück (1.4s)
-  ✓    5 [chromium] › e2e/keyboard-everywhere.spec.ts:105:1 › Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück (1.6s)
-  ✓    4 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light) (2.7s)
-  ✓    6 [chromium] › e2e/keyboard-everywhere.spec.ts:123:1 › Übersicht aller Kürzel: ⇧⌘/ öffnet, Suche filtert, Esc schließt; auch über ⌘K @smoke (1.7s)
-  ✓    7 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark) (2.5s)
-  ✓    9 [chromium] › e2e/keyboard-select.spec.ts:39:1 › Einfache Tabelle: Tab, ⇧Tab, Pfeile, Enter, Tab am Ende legt eine Zeile an (1.4s)
-  ✓   10 [chromium] › e2e/keyboard-select.spec.ts:77:1 › Datenbank: Tab im Zellen-Editor, ⇧-Pfeile wählen Bereich, Kopieren, Einfügen, Leeren, Ziehen (1.7s)
-  ✓    8 [chromium] › e2e/keyboard-everywhere.spec.ts:147:1 › ⌘ halten zeigt die Tasten der Stelle: überall, Seitenleiste, Text, Blöcke, Datenbank (5.2s)
-  ✓   12 [chromium] › e2e/keyboard-everywhere.spec.ts:172:1 › Editor: ⌘/ öffnet das Blockmenü, Pfeile und Enter wählen (1.2s)
-  ✓   11 [chromium] › e2e/keyboard-select.spec.ts:133:1 › Blockauswahl: Rechteck aus dem Seitenrand außerhalb der Textspalte, ⇧-Klick erweitert (2.1s)
-  ✓   14 [chromium] › e2e/keyboard-select.spec.ts:162:1 › ⌫ ohne Textfeld im Fokus geht nicht zur vorigen Seite zurück (1.6s)
-  ✓   13 [chromium] › e2e/keyboard-everywhere.spec.ts:189:1 › Mac-Menü: ein Befehl aus dem Register läuft über dieselbe Taste (based:command) (2.1s)
-  ✓   15 [chromium] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (1.7s)
-  ✓   17 [chromium] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (1.9s)
-  ✓   16 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Knöpfe (light) (4.4s)
-  ✓   18 [chromium] › e2e/marquee.spec.ts:57:1 › Aufziehen rechts neben kurzem Text und aus einer leeren Zeile wählt Blöcke; im Text bleibt es Text; Klick setzt den Cursor ans Ende (2.5s)
-  ✓   20 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1280×820) (1.5s)
-  ✓   19 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Felder, Tabs, Pillen (light) (5.0s)
-  ✓   21 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 900×600) (2.0s)
-  ✓   23 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1728×1000) (2.2s)
-  ✓   24 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1280×820) (1.9s)
-  ✓   22 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Knöpfe (dark) (4.5s)
-  ✓   25 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 900×600) (2.1s)
-  ✓   27 [chromium] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1728×1000) (1.5s)
-  ✓   26 [chromium] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Felder, Tabs, Pillen (dark) (5.1s)
-  ✓   28 [chromium] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (2.6s)
-  ✓   29 [chromium] › e2e/kit-states.spec.ts:208:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (light) (3.9s)
-  ✓   30 [chromium] › e2e/meeting.spec.ts:110:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (3.0s)
-  ✓   31 [chromium] › e2e/kit-states.spec.ts:208:3 › Zustands-Galerie: Shell und Editor nutzen nur Token-Farben (dark) (3.9s)
-  ✓   32 [chromium] › e2e/meeting.spec.ts:135:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen (8.3s)
-  ✓   33 [chromium] › e2e/kit-states.spec.ts:261:3 › Zustands-Galerie: Media-Player und Willkommens-Karten nutzen nur Token-Farben (light) (6.4s)
+  13 skipped
+  296 passed (8.0m)
