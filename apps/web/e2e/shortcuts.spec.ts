@@ -227,3 +227,54 @@ test("Neue Seite: ⌘K gleich danach – Quick Find behält den Fokus, Esc schli
   await page.keyboard.press("Escape");
   await expect(qf).toHaveCount(0);
 });
+
+// BSD-645: Zwischen „neue Seite“ und dem Fokus im Titel vergeht etwas Zeit (Worker legt an, Seite lädt; auf dem Mac
+// ~45 ms). Was man darin tippte, ging verloren oder landete im Titel der vorigen Seite. Jetzt kommt alles in den neuen
+// Titel, Enter geht in den Text, das Getippte danach auch.
+test("Neue Seite: sofort Getipptes geht nicht verloren (⌥⌘N, ⌘N, „+“), Enter und Weitertippen auch", async ({ page }) => {
+  await ready(page);
+  const title = page.getByLabel("Page title");
+  const editor = page.getByTestId("block-editor");
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(title).toBeFocused();
+  await page.keyboard.type("Old page");
+  await expect(page.getByRole("treeitem", { name: "Old page", exact: true })).toHaveCount(1);
+  await slowCreate(page);
+
+  // ⌥⌘N aus dem Titel der vorigen Seite: 20 Zeichen ohne Pause, Enter, weiter im Text
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Typed in the gap 20");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Body right after");
+  await expect(title).toHaveValue("Typed in the gap 20");
+  await expect(editor).toContainText("Body right after");
+  await expect(page.getByRole("treeitem", { name: "Typed in the gap 20", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("treeitem", { name: "Old page", exact: true })).toHaveCount(1);
+  await page.keyboard.type(" and more");
+  await expect(editor).toContainText("Body right after and more");
+
+  // ⌘N → New page
+  await page.keyboard.press("ControlOrMeta+n");
+  await expect(page.getByTestId("new-palette")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("From the palette now");
+  await expect(title).toHaveValue("From the palette now");
+  await expect(title).toBeFocused();
+
+  // „+“ in der Seitenleiste, Tippfehler mit ⌫ im Fenster
+  await page.getByText("Private", { exact: true }).hover();
+  await page.getByRole("button", { name: "New page in Private" }).click();
+  await page.keyboard.type("Sidebar plusx");
+  await page.keyboard.press("Backspace");
+  await expect(title).toHaveValue("Sidebar plus");
+  await expect(title).toBeFocused();
+  await expect(page.getByRole("treeitem", { name: "Sidebar plus", exact: true })).toHaveCount(1);
+});
+
+// Ohne künstliche Verzögerung, wie ein Tester: 20 Zeichen gleich nach ⌥⌘N kommen vollständig an (BSD-645).
+test("Neue Seite: 20 Zeichen gleich nach ⌥⌘N kommen alle an", async ({ page }) => {
+  await ready(page);
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Twenty chars at once");
+  await expect(page.getByLabel("Page title")).toHaveValue("Twenty chars at once");
+});

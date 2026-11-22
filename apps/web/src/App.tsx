@@ -41,7 +41,7 @@ import type { History, Route } from "./shell/router.js";
 import { firstRun, welcomeTour } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
-import { markFreshPage } from "./shell/freshPage.js";
+import { beginFreshPage, cancelFreshPage, markFreshPage } from "./shell/freshPage.js";
 import { hiddenRoute } from "./shell/hiddenRoute.js";
 import { fallbackHomePage, homeStaysEmpty, homeTarget, meetingDetectPref, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
@@ -192,21 +192,30 @@ export function App({ client, history }: { client: StoreClient; history: History
 
 
   const newPage = useCallback(async (opts: { parent?: string; section?: string } = {}) => {
-    const id = await client.command<string | undefined>({ op: "createPage", ...opts, format: newPageFormat.get() });
+    // BSD-645: was man tippt, bevor der neue Titel den Fokus hat, fängt freshPage auf und gibt es dem Titel
+    beginFreshPage();
+    const id = await client.command<string | undefined>({ op: "createPage", ...opts, format: newPageFormat.get() }).catch((e: unknown) => {
+      cancelFreshPage();
+      throw e;
+    });
     if (id) {
       markFreshPage(id);
       openPage(id);
-    }
+    } else cancelFreshPage();
     return id;
   }, [client, openPage]);
 
   const newDatabase = useCallback(async () => {
-    const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" });
+    beginFreshPage();
+    const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" }).catch((e: unknown) => {
+      cancelFreshPage();
+      throw e;
+    });
     // BSD-617: wie eine neue Seite (BSD-482) – die Schreibmarke steht im Titel, wer gleich tippt, benennt sie.
     if (id) {
       markFreshPage(id);
       openPage(id);
-    }
+    } else cancelFreshPage();
   }, [client, openPage]);
 
   const newFromTemplate = useCallback(async (template: StarterTemplateID) => {

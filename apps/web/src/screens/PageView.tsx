@@ -28,7 +28,7 @@ import { guestMayEdit, isGuest, mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
-import { takeFreshPage } from "../shell/freshPage.js";
+import { stopTypedAhead, takeFreshPage, takeTypedAhead } from "../shell/freshPage.js";
 import { movedToTrash } from "../shell/trashUndo.js";
 import type { PageReplica, ShellState, StoreClient } from "../worker/client.js";
 import type { HistoryRestoreResult } from "../worker/protocol.js";
@@ -591,6 +591,16 @@ function intoBody(from: Element, detail: { at: "start" | "end"; insert?: boolean
   return host ? !host.dispatchEvent(new CustomEvent("bx:focus", { cancelable: true, detail })) : false;
 }
 
+/**
+ * BSD-645: Aufgefangene Zeichen in den Text der Seite tippen – als ein „beforeinput“, so wie der Editor echtes Tippen
+ * bekommt (das Modell fügt ein und setzt die Schreibmarke dahinter).
+ */
+function typeIntoBody(text: string): void {
+  const node = window.getSelection()?.anchorNode;
+  const at = node instanceof Element ? node : node?.parentElement ?? document.activeElement;
+  at?.dispatchEvent(new InputEvent("beforeinput", { inputType: "insertText", data: text, bubbles: true, cancelable: true }));
+}
+
 /** Steht die Schreibmarke in der letzten Zeile des (evtl. umbrochenen) Titels? Einzeilig: immer. */
 function onLastLine(el: HTMLTextAreaElement): boolean {
   const line = parseFloat(getComputedStyle(el).lineHeight);
@@ -608,17 +618,53 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
   }, [title, id]);
   // BSD-482: eben angelegte Seite → Schreibmarke in den Titel (sobald das Feld bearbeitbar ist)
   // – außer man ist schon im Text der Seite (Klick in die Seite, bevor der Titel bearbeitbar wurde)
+  // BSD-645: was man getippt hat, bevor das Feld da war, kommt jetzt hinein (Enter dazwischen: in die erste Zeile des Textes).
   // BSD-644: Ist inzwischen ein Dialog oder Menü offen (⌘K gleich nach ⌥⌘N), behält er den Fokus – sonst ging Esc an den
   // Titel und Quick Find blieb offen.
   useEffect(() => {
     if (readOnly || !takeFreshPage(id)) return;
-    if (document.activeElement?.closest(".page-body, [role=dialog], [role=menu], [role=listbox]")) return;
+    const ahead = takeTypedAhead();
     const el = field.current;
-    el?.focus();
+    if (ahead?.title) {
+      focused.current = true; // der Wert vom Worker („Untitled …“) soll das Getippte nicht überschreiben
+      setValue(ahead.title);
+      onRename(ahead.title);
+    }
+    const busy = document.activeElement?.closest(".page-body, [role=dialog], [role=menu], [role=listbox]");
+    if (busy || !el) {
+      stopTypedAhead();
+      focused.current = document.activeElement === el;
+      return;
+    }
+    el.focus();
+    if (ahead) {
+      typed.current = true;
+      const end = ahead.title.length;
+      el.setSelectionRange(end, end);
+      // Der Editor hängt sich erst nach diesem Feld ein: bis er die Schreibmarke nimmt, fängt freshPage weiter auf.
+      if (ahead.body !== undefined) {
+        // Danach setzt der Editor die Schreibmarke im nächsten Bild: erst dann den Rest des Getippten dort einfügen.
+        let tries = 0;
+        const inBody = () => Boolean(document.activeElement?.closest(".page-body"));
+        const typeRest = () => {
+          if (!inBody() && ++tries < 60) return void requestAnimationFrame(typeRest);
+          stopTypedAhead();
+          if (inBody() && ahead.body) typeIntoBody(ahead.body);
+        };
+        const into = () => {
+          if (document.activeElement !== el) return stopTypedAhead(); // inzwischen woanders hin geklickt
+          if (intoBody(el, { at: "start", insert: true })) return typeRest();
+          if (++tries < 60) requestAnimationFrame(into);
+          else stopTypedAhead();
+        };
+        into();
+      }
+      return;
+    }
     // BSD-617: Steht schon ein Titel da (neue Datenbank: „Untitled database“), ist er markiert – Tippen ersetzt ihn.
     // Erst im nächsten Bild: der Wert des Feldes kann im selben Durchgang noch nachgezogen werden.
     typed.current = false;
-    requestAnimationFrame(() => { if (el && document.activeElement === el && !typed.current) el.select(); });
+    requestAnimationFrame(() => { if (document.activeElement === el && !typed.current) el.select(); });
   }, [id, readOnly]);
   useLayoutEffect(() => {
     const el = field.current;
