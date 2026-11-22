@@ -297,3 +297,36 @@ test("Board, Timeline, Kalender, Liste, Galerie: eine Kante, volle Breite, Statu
     }
   }
 });
+
+// 22. 11. 2026 (wie basednotes.app): der Seitenkopf zeigt nur, was man ständig braucht. Export und Papierkorb stehen im
+// •••-Menü, „Edited …“ steht einmal (oben rechts), nicht noch einmal unter dem Titel.
+test("Seitenkopf ruhig: Export und Papierkorb nur im Menü, „Edited“ nur einmal", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  const top = page.locator(".topbar");
+  await expect(top.getByRole("button", { name: "Export" })).toHaveCount(0);
+  await expect(top.getByRole("button", { name: "Move to Trash" })).toHaveCount(0);
+  await expect(page.locator(".meta-line")).toContainText("Created");
+  await expect(page.locator(".meta-line")).not.toContainText("Edited");
+  await expect(page.getByTestId("page-edited")).toBeVisible();
+  await top.getByRole("button", { name: "Page menu" }).click();
+  const menu = page.getByRole("menu", { name: "Page menu" });
+  await expect(menu.getByRole("menuitem", { name: "Export…" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Move to Trash" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) for (const theme of ["light", "dark"]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+      await page.mouse.move(4, 4);
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `../../docs/design/screens/web-page-head-website-${w}x${h}-${theme}.png` });
+    }
+  }
+});

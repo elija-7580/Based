@@ -17,6 +17,8 @@ function track(doc: Document) {
     if (t instanceof HTMLElement && t !== doc.body && !inMenu(t)) lastOutsideMenu = t;
   }, true);
 }
+// Schon beim Laden mitlesen: sonst kennt der erste Dialog, der aus einem Menü kommt, den Menüknopf noch nicht.
+if (globalThis.document) track(globalThis.document);
 
 /** Merkt sich den Fokus beim Einhängen und gibt ihn beim Aushängen zurück. */
 export function useReturnFocus(): void {
