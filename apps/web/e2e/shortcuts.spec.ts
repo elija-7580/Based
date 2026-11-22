@@ -201,3 +201,110 @@ test("Neue Datenbank: Titel hat den Fokus, Tippen ersetzt „Untitled database�
   await expect(title).toHaveValue("Reading list");
   await expect(title).not.toBeFocused();
 });
+
+// Der Worker antwortet beim Anlegen künstlich spät (250 ms): So ist das Fenster zwischen „neue Seite“ und dem Fokus im
+// Titel (auf dem Mac ~45 ms) in jedem Lauf offen.
+const slowCreate = (page: Page) => page.evaluate(`(() => {
+  const c = globalThis.__based.client, run = c.command.bind(c);
+  c.command = (cmd, ...a) => /^create(Page|Database)$/.test(cmd.op) ? new Promise((ok) => setTimeout(ok, 250)).then(() => run(cmd, ...a)) : run(cmd, ...a);
+})()`);
+
+// BSD-644: Der späte Fokus der neuen Seite nahm sich den Fokus auch dann, wenn inzwischen Quick Find offen war – Esc
+// ging an den Titel, Quick Find blieb offen (find.spec wackelte). Ein offener Dialog behält jetzt den Fokus.
+test("Neue Seite: ⌘K gleich danach – Quick Find behält den Fokus, Esc schließt", async ({ page }) => {
+  await ready(page);
+  await slowCreate(page);
+  const qf = page.getByRole("dialog", { name: "Quick Find" });
+  const input = qf.getByRole("combobox", { name: "Search pages" });
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.press("ControlOrMeta+k");
+  await expect(input).toBeFocused();
+  await page.keyboard.type("kes");
+  await expect(page.getByLabel("Page title")).toHaveValue(""); // die neue Seite ist da
+  await page.waitForTimeout(150); // Fenster, in dem der Titel sich früher den Fokus nahm
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue("kes");
+  await page.keyboard.press("Escape");
+  await expect(qf).toHaveCount(0);
+});
+
+// BSD-645: Zwischen „neue Seite“ und dem Fokus im Titel vergeht etwas Zeit (Worker legt an, Seite lädt; auf dem Mac
+// ~45 ms). Was man darin tippte, ging verloren oder landete im Titel der vorigen Seite. Jetzt kommt alles in den neuen
+// Titel, Enter geht in den Text, das Getippte danach auch.
+test("Neue Seite: sofort Getipptes geht nicht verloren (⌥⌘N, ⌘N, „+“), Enter und Weitertippen auch", async ({ page }) => {
+  await ready(page);
+  const title = page.getByLabel("Page title");
+  const editor = page.getByTestId("block-editor");
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(title).toBeFocused();
+  await page.keyboard.type("Old page");
+  await expect(page.getByRole("treeitem", { name: "Old page", exact: true })).toHaveCount(1);
+  await slowCreate(page);
+
+  // ⌥⌘N aus dem Titel der vorigen Seite: 20 Zeichen ohne Pause, Enter, weiter im Text
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Typed in the gap 20");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Body right after");
+  await expect(title).toHaveValue("Typed in the gap 20");
+  await expect(editor).toContainText("Body right after");
+  await expect(page.getByRole("treeitem", { name: "Typed in the gap 20", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("treeitem", { name: "Old page", exact: true })).toHaveCount(1);
+  await page.keyboard.type(" and more");
+  await expect(editor).toContainText("Body right after and more");
+
+  // ⌘N → New page
+  await page.keyboard.press("ControlOrMeta+n");
+  await expect(page.getByTestId("new-palette")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("From the palette now");
+  await expect(title).toHaveValue("From the palette now");
+  await expect(title).toBeFocused();
+
+  // „+“ in der Seitenleiste, Tippfehler mit ⌫ im Fenster
+  await page.getByText("Private", { exact: true }).hover();
+  await page.getByRole("button", { name: "New page in Private" }).click();
+  await page.keyboard.type("Sidebar plusx");
+  await page.keyboard.press("Backspace");
+  await expect(title).toHaveValue("Sidebar plus");
+  await expect(title).toBeFocused();
+  await expect(page.getByRole("treeitem", { name: "Sidebar plus", exact: true })).toHaveCount(1);
+});
+
+// Ohne künstliche Verzögerung, wie ein Tester: 20 Zeichen gleich nach ⌥⌘N kommen vollständig an (BSD-645).
+test("Neue Seite: 20 Zeichen gleich nach ⌥⌘N kommen alle an", async ({ page }) => {
+  await ready(page);
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Twenty chars at once");
+  await expect(page.getByLabel("Page title")).toHaveValue("Twenty chars at once");
+});
+
+// BSD-654: Zeichen ohne gewöhnlichen Tastendruck (tote Taste ´+e, Eingabemethode, Emoji-Auswahl) landeten im Fenster
+// vor dem Titelfokus im Titel der vorigen Seite; zweimal ⌥⌘N schrieb in die erste neue Seite statt in die angezeigte.
+test("Neue Seite: é ohne Tastendruck geht nie in die vorige Seite; zweimal ⌥⌘N – Text in der angezeigten Seite", async ({ page }) => {
+  await ready(page);
+  const title = page.getByLabel("Page title");
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(title).toBeFocused();
+  await page.keyboard.type("Page A");
+  await expect(page.getByRole("treeitem", { name: "Page A", exact: true })).toHaveCount(1);
+  await slowCreate(page);
+
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Caf");
+  await page.keyboard.insertText("é");
+  await expect(title).toHaveValue(/^Café?$/);
+  await expect(title).toBeFocused();
+  await expect(page.getByRole("treeitem", { name: "Page A", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("treeitem", { name: /^Page A./ })).toHaveCount(0);
+
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.waitForTimeout(100);
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Second");
+  await expect(title).toHaveValue("Second");
+  await expect(title).toBeFocused();
+  await expect(page.getByRole("treeitem", { name: "Second", exact: true })).toHaveCount(1);
+  // die erste der beiden neuen Seiten bleibt leer, kein Text darin
+  await expect(page.getByRole("treeitem", { name: /^Second./ })).toHaveCount(0);
+});

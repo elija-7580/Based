@@ -178,9 +178,18 @@ test("Alles löschen: Library → alle in den Papierkorb, Papierkorb leeren; die
   await expect(page.getByTestId("trash-more")).toContainText(/\d+ more in Trash/);
   await page.getByRole("button", { name: "Empty Trash" }).click();
   await mark('await page.getByRole("button", { name: "');
+  // BSD-652: „Deleting … forever…“ steht nur, solange der Worker leert – ist er schneller als die nächste Prüfung, war die
+  // Anzeige schon wieder weg (WebKit wackelte). Darum vor dem Klick mitschreiben, ob sie erschienen ist.
+  await page.evaluate(() => {
+    const g = globalThis as { __emptyingSeen?: string };
+    new MutationObserver((_, o) => {
+      const el = document.querySelector("[data-testid='trash-emptying']");
+      if (el) { g.__emptyingSeen = el.textContent ?? ""; o.disconnect(); }
+    }).observe(document.body, { childList: true, subtree: true });
+  });
   await page.getByRole("button", { name: /^Delete \d+ forever$/ }).click();
   await mark('await page.getByRole("button", { name: /');
-  await expect(page.getByTestId("trash-emptying")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (globalThis as { __emptyingSeen?: string }).__emptyingSeen)).toMatch(/^Deleting \d+ pages forever…$/);
   await expect.poll(trashCount, { timeout: 60_000 }).toBe(0);
   await expect(page.getByText("The Trash is empty.")).toBeVisible();
   await mark('await expect(page.getByText("The Trash i');

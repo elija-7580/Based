@@ -167,6 +167,8 @@ test("Quick Find: scheitert die Suche, hängt Enter nicht", async ({ page }) => 
   await input.fill("kestrel");
   await expect(results).toHaveCount(1);
   await page.keyboard.press("Escape");
+  // BSD-644: Esc schließt Quick Find immer (vorher nahm sich der eben angelegte Titel spät den Fokus, Esc ging dorthin)
+  await expect(qf).toHaveCount(0);
   // Die nächste Suche wirft (nach kurzer Zeit, damit Enter wartet); danach wieder die echte Suche
   await based(page, `const c = b.client, s = c.search.bind(c); let fail = true; c.search = (...a) => fail ? new Promise((ok) => setTimeout(ok, 300)).then(() => { fail = false; throw new Error("worker gone"); }) : s(...a);`);
   await page.keyboard.press("ControlOrMeta+k");

@@ -388,8 +388,9 @@ async function captureOverlays(page: Page) {
 /** Schrift für den Bildvergleich: die gebündelte Schibsted Grotesk direkt aus dem Build (Default lädt sie sonst nicht). */
 function fontFaces(): string {
   const faces = readdirSync("dist/assets").flatMap((f) => {
-    const m = /^schibsted-grotesk-latin-(\d00)-normal-.*\.woff2$/.exec(f);
-    return m ? [`@font-face { font-family: KitMatrix; font-weight: ${m[1]}; src: url(/assets/${f}) format("woff2"); }`] : [];
+    // Variable Schrift (fonts.ts, 20.11.): eine Datei für alle Gewichte
+    const m = /^schibsted-grotesk-latin-wght-normal-.*\.woff2$/.exec(f);
+    return m ? [`@font-face { font-family: KitMatrix; font-weight: 400 900; src: url(/assets/${f}) format("woff2-variations"); }`] : [];
   });
   expect(faces.length, "Schibsted Grotesk im Build").toBeGreaterThan(0);
   return faces.join("\n");

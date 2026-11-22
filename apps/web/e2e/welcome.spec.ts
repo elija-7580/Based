@@ -516,6 +516,10 @@ test("Einstieg: nach Mausklick kein Fokusrahmen, mit der Tastatur schon", async 
     await ready(keys.page);
     for (let i = 0; i < 8 && (await step(keys.page).getAttribute("data-step")) !== "start"; i++) {
       const before = await step(keys.page).getAttribute("data-step");
+      // BSD-651: Return gilt dem Knopf, der den Fokus hat – erst drücken, wenn der Einstieg ihn auf „Continue“ gesetzt
+      // hat (der Schritt kommt lazy nach data-ready, der Fokus im Effekt danach). Vorher ging Return in der CI (WebKit)
+      // ins Leere und der Schritt blieb stehen. Prüft zugleich: nach jedem Schrittwechsel steht der Fokus auf „Continue“.
+      await expect(welcome(keys.page).getByRole("button", { name: "Continue" })).toBeFocused();
       await keys.page.keyboard.press("Enter");
       await expect(step(keys.page)).not.toHaveAttribute("data-step", before!);
     }

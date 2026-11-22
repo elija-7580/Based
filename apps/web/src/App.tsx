@@ -3,7 +3,8 @@
 // Projekt-Detail (BSD-133).
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
-import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
+import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange, type AppFont } from "./appearance.js";
+import { basedFontsReady, loadBasedFonts } from "./fonts.js";
 import { ImportDialog } from "./components/ImportExport.js";
 import { hybridImport } from "./worker/notionHybridClient.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
@@ -40,7 +41,7 @@ import type { History, Route } from "./shell/router.js";
 import { firstRun, welcomeTour } from "./shell/firstRun.js";
 import { aiSetting } from "./shell/ai.js";
 import { commandVisible } from "./shell/beta.js";
-import { markFreshPage } from "./shell/freshPage.js";
+import { beginFreshPage, cancelFreshPage, markFreshPage } from "./shell/freshPage.js";
 import { hiddenRoute } from "./shell/hiddenRoute.js";
 import { fallbackHomePage, homeStaysEmpty, homeTarget, meetingDetectPref, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
@@ -63,10 +64,9 @@ const Welcome = lazy(() => import("./screens/Welcome.js").then((m) => ({ default
 const WelcomeTourScreen = lazy(() => import("./screens/WelcomeTour.js").then((m) => ({ default: m.WelcomeTourScreen })));
 const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
-/** Mitgelieferte Schriften nur laden, wenn Font = Based sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
-function ensureBoldFonts() {
-  void import("./boldFonts.js").catch(() => undefined);
-}
+
+/** Schrift, die gerade am Wurzelelement steht (bis Font „Based“ geladen ist, bleibt sie stehen). */
+const shownFont = (): AppFont => (document.documentElement.dataset.typeface === "based" ? "based" : "system");
 
 /** Ziel nimmt Text auf (Eingabefeld, Textbereich, bearbeitbarer Inhalt)? Dann gehört ⌫ dem Feld. */
 function isTextTarget(t: EventTarget | null): boolean {
@@ -91,9 +91,14 @@ export function App({ client, history }: { client: StoreClient; history: History
   const tourOpen = useSyncExternalStore(welcomeTour.subscribe, welcomeTour.get);
 
   useEffect(() => {
-    applyAppearance(appearance);
-    if (appearance.font === "based") ensureBoldFonts();
-    return appearance.theme === "system" ? onSystemThemeChange(() => applyAppearance(appearance)) : undefined;
+    // Font „Based“ erst setzen, wenn die Dateien da sind – sonst zeigt die Oberfläche kurz die Ersatzschrift und
+    // springt dann um (fonts.ts). Bis dahin bleibt die bisherige Schrift stehen.
+    let live = true;
+    const apply = () => applyAppearance(appearance.font === "based" && !basedFontsReady() ? { ...appearance, font: shownFont() } : appearance);
+    apply();
+    if (appearance.font === "based" && !basedFontsReady()) void loadBasedFonts().then(() => { if (live) applyAppearance(appearance); });
+    const off = appearance.theme === "system" ? onSystemThemeChange(apply) : undefined;
+    return () => { live = false; off?.(); };
   }, [appearance]);
 
   useEffect(() => recentPages.subscribe(setRecent), []);
@@ -187,21 +192,30 @@ export function App({ client, history }: { client: StoreClient; history: History
 
 
   const newPage = useCallback(async (opts: { parent?: string; section?: string } = {}) => {
-    const id = await client.command<string | undefined>({ op: "createPage", ...opts, format: newPageFormat.get() });
+    // BSD-645: was man tippt, bevor der neue Titel den Fokus hat, fängt freshPage auf und gibt es dem Titel
+    const token = beginFreshPage();
+    const id = await client.command<string | undefined>({ op: "createPage", ...opts, format: newPageFormat.get() }).catch((e: unknown) => {
+      cancelFreshPage(token);
+      throw e;
+    });
     if (id) {
-      markFreshPage(id);
+      markFreshPage(id, token);
       openPage(id);
-    }
+    } else cancelFreshPage(token);
     return id;
   }, [client, openPage]);
 
   const newDatabase = useCallback(async () => {
-    const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" });
+    const token = beginFreshPage();
+    const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" }).catch((e: unknown) => {
+      cancelFreshPage(token);
+      throw e;
+    });
     // BSD-617: wie eine neue Seite (BSD-482) – die Schreibmarke steht im Titel, wer gleich tippt, benennt sie.
     if (id) {
-      markFreshPage(id);
+      markFreshPage(id, token);
       openPage(id);
-    }
+    } else cancelFreshPage(token);
   }, [client, openPage]);
 
   const newFromTemplate = useCallback(async (template: StarterTemplateID) => {

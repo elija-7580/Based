@@ -1,8 +1,12 @@
 // BSD-274: automatische Backups – Stand schreiben und ohne Unterschied wiederherstellen (inkl. Dateien),
 // inkrementell (Dateien einmal, unveränderter Inhalt = kein neuer Stand), Aufbewahrung 24/30/12, Wiederherstellen
 // nach „Seite gelöscht und Papierkorb geleert“.
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  archiveDamage, prepareFiles, readArchive, readZipEntries, zipEntryData,
   applyRestore, createPage, emptyTrash, listSnapshots, planRestore, pruneBackups, readSnapshot, snapshotAssetCandidates, snapshotAssetIDs, snapshotName, snapshotsToPrune,
   snapshotTime, trashPages, writeSnapshot, WorkspaceStore, canonicalStringify, type BackupTarget, type SnapshotAssetCache, type WireRecord,
 } from "../src/index.js";
@@ -153,5 +157,84 @@ describe("Backups (BSD-274)", () => {
     await writeSnapshot(t, { records: s.exportRecords(), workspaceName: "W", assets: [{ id: other, read: () => new Uint8Array([2]) }], now: at(3), force: true, cache });
     await pruneBackups(t, { recent: 2, hourly: 0, daily: 0, monthly: 0 }, cache);
     expect((await t.list("assets")).sort()).toEqual([other]);
+  });
+
+  // BSD-648: ein beschädigter Stand (abgeschnitten, unlesbare Zeilen) wird erkannt und gemeldet – nur lesen, nichts ändern.
+  describe("beschädigter Stand (BSD-648)", () => {
+    async function snapshotOf(pages: number) {
+      const s = new WorkspaceStore({ node: "n" });
+      for (let i = 0; i < pages; i++) createPage(s, { title: "P" + i });
+      const t = memoryTarget();
+      const info = (await writeSnapshot(t, { records: s.exportRecords(), workspaceName: "W", assets: [], now: new Date("2026-11-12T05:00:00Z") }))!;
+      const key = `snapshots/${info.name}`;
+      return { s, t, info, key, text: new TextDecoder().decode(t.files.get(key)!) };
+    }
+
+    it("unversehrt: kein `damaged`", async () => {
+      const { t, info, s } = await snapshotOf(6);
+      const read = await readSnapshot(t, info.name);
+      expect(read.damaged).toBeUndefined();
+      expect(read.records).toHaveLength(s.exportRecords().length);
+    });
+
+    it("mitten in einer Zeile abgeschnitten: `damaged` mit gelesen/erwartet/unlesbar; der Stand bleibt unverändert", async () => {
+      const { t, info, key, text, s } = await snapshotOf(6);
+      const cut = new TextEncoder().encode(text.slice(0, Math.floor(text.length / 2)));
+      t.files.set(key, cut);
+      const read = await readSnapshot(t, info.name);
+      expect(read.damaged).toEqual({ readable: read.records.length, expected: s.exportRecords().length, skipped: 1 });
+      expect(read.damaged!.readable).toBeLessThan(read.damaged!.expected);
+      expect(t.files.get(key)).toEqual(cut); // nur gelesen
+    });
+
+    it("genau an einer Zeilengrenze abgeschnitten (keine unlesbare Zeile): Kopf ≠ gelesen → `damaged`", async () => {
+      const { t, info, key, text, s } = await snapshotOf(6);
+      const lines = text.split("\n");
+      t.files.set(key, new TextEncoder().encode(lines.slice(0, 4).join("\n") + "\n"));
+      const read = await readSnapshot(t, info.name);
+      expect(read.skipped).toBe(0);
+      expect(read.damaged).toEqual({ readable: 3, expected: s.exportRecords().length, skipped: 0 });
+    });
+
+    it("eine unlesbare Zeile in der Mitte: `damaged`", async () => {
+      const { t, info, key, text, s } = await snapshotOf(3);
+      const lines = text.split("\n");
+      lines[2] = "{kaputt";
+      t.files.set(key, new TextEncoder().encode(lines.join("\n")));
+      const read = await readSnapshot(t, info.name);
+      expect(read.damaged).toEqual({ readable: s.exportRecords().length - 1, expected: s.exportRecords().length, skipped: 1 });
+    });
+
+    it("Archiv-Import: an einer Zeilengrenze abgeschnitten → Hinweis „only N of M records“; unversehrt kein Hinweis", async () => {
+      const { text, s } = await snapshotOf(4);
+      const enc = new TextEncoder();
+      expect(prepareFiles([{ path: "full.based.jsonl", data: enc.encode(text) }]).notes).toEqual([]);
+      const cut = text.split("\n").slice(0, 3).join("\n") + "\n";
+      expect(prepareFiles([{ path: "cut.based.jsonl", data: enc.encode(cut) }]).notes)
+        .toEqual([`cut.based.jsonl: only 2 of ${s.exportRecords().length} records could be read – the file may be incomplete`]);
+      // mitten in der Zeile: der bisherige Hinweis auf die unlesbare Zeile genügt (kein zweiter)
+      expect(prepareFiles([{ path: "half.based.jsonl", data: enc.encode(text.slice(0, text.length - 5)) }]).notes).toEqual(["half.based.jsonl: skipped 1 unreadable line"]);
+    });
+
+    // Archive der Beta-Builds (packages/sync/test/fixtures/beta, nur gelesen) als Backup-Stand: nicht beschädigt.
+    const BETA = fileURLToPath(new URL("../../sync/test/fixtures/beta", import.meta.url));
+    const zips = existsSync(BETA) ? readdirSync(BETA).filter((f) => f.endsWith(".based.zip")).sort() : [];
+    it("die Beta-Archive liegen vor", () => expect(zips).toContain("beta-9614eb09.based.zip"));
+    for (const f of zips) {
+      it(`${f} als Stand: kein \`damaged\`, Wiederherstellen in einen leeren Workspace liest alles`, async () => {
+        const bytes = new Uint8Array(readFileSync(join(BETA, f)));
+        const entry = readZipEntries(bytes).find((e) => e.path === "workspace.jsonl")!;
+        const jsonl = zipEntryData(bytes, entry);
+        const t = memoryTarget();
+        const name = snapshotName(new Date("2026-11-20T08:00:00Z"));
+        t.files.set(`snapshots/${name}`, jsonl);
+        const read = await readSnapshot(t, name);
+        expect(read.damaged).toBeUndefined();
+        expect(archiveDamage(readArchive(new TextDecoder().decode(jsonl)))).toBeUndefined();
+        const fresh = new WorkspaceStore({ node: "m" });
+        applyRestore(fresh, planRestore(fresh, read.records));
+        expect(planRestore(fresh, read.records).upserts).toHaveLength(0);
+      });
+    }
   });
 });

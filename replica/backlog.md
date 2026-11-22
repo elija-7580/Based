@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 46 (Nachtlauf 2026-11-21, TS-Stack, Abschnitt direkt unten; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 47 (Nachtlauf 2026-11-22, TS-Stack, Abschnitt direkt unten; Pass 46 (Nachtlauf 2026-11-21) darunter; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,24 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 47 (Nachtlauf 2026-11-22, Tag vor der Beta, Feature-Stopp)
+
+Inbox: leer beim Start. Neu in der Nacht einsortiert: BSD-648 (Befund Schicht A, Teil 1 Bereit; Teil 2 = BSD-649 Blockiert mit Frage), BSD-650/651/653 (Wackler, vom Hauptlauf angelegt), BSD-652 (Befund Schicht B), BSD-654 (Gegenprüfung von BSD-645 durch Schicht A). Schicht A ~03:10–05:25, Schicht B ~03:10–05:40. main 8715c46f → be30f07f → 13a9e98a → aa870ba7 → 79a01152 → (BSD-654); `run-ts.sh --fast` auf jedem Merge-Stand grün, CI (ts-fast + E2E Chromium/WebKit) auf aa870ba7 grün.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-644 Quick Find: Esc schließt nicht (find.spec wackelt) | ✅ | echter Fehler: neue Seite nahm offenem Dialog den Fokus (PageView TitleField); find/shortcuts 188/188 in beiden Browsern |
+| BSD-645 Neue Seite: Tastendrücke beim Fokuswechsel gehen verloren | 🟡 | shell/freshPage.ts fängt Tasten bis zum Titel-Fokus auf; Mac-Test nötig |
+| BSD-654 Neue Seite: ´+e/IME und zweimal ⌥⌘N landen in fremder Seite | 🟡 | Token je Anlegen, altes Feld verliert Fokus; Mac-Test nötig (deutsche Tastatur) |
+| BSD-646 Einstieg/Diagnostics nennen „Send to Based“ | ✅ | Texte in welcomeTourSteps, beta.ts, welcomeGuides (nur neue Workspaces); Fotos 1280 × 820 |
+| BSD-647 Problemberichte: IndexedDB getAll beim Start | ❌ | Blockiert bis nach der Beta (bräuchte IndexedDB-Versionssprung) |
+| BSD-648 Backup-Stand beschädigt: erkennen und warnen | ✅ | archiveDamage in core, preview liefert damaged, Rückfrage nennt N von M; Restore-Verhalten unverändert |
+| BSD-649 Beschädigten Stand ablehnen oder nur ergänzen? | ❌ | Blockiert, Frage an Elija |
+| BSD-650 transcribe.test.ts zählt fremde /tmp-Ordner | ✅ | nur Test |
+| BSD-651 welcome.spec Fokusrahmen wackelt in WebKit | ✅ | nur Test: Return erst nach Fokus auf „Continue“; 20/20 je Browser |
+| BSD-652 polish.spec „Alles löschen“ (@perf) wackelt in WebKit | ✅ | nur Test |
+| BSD-653 scroll-latch.spec wackelt in WebKit | ✅ | nur Test (Pause im Test 800 ms → 2 s wegen verzögerter Rad-Ereignisse in Playwright-WebKit; App-Wert 150 ms unverändert); 60/60 |
 
 ## Pass 46 (Nachtlauf 2026-11-21, Feature-Stopp, RC-Abnahme)
 

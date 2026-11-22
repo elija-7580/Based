@@ -852,7 +852,7 @@ function RecordingPill({ onOpenPage }: { onOpenPage: (id: string) => void }) {
       aria-label={`${s.paused ? "Recording paused" : s.transcription === "live" ? "Transcribing" : "Recording"}, ${clock} — open meeting`}>
       <span className="rec-dot" aria-hidden="true" />
       {s.paused ? "Paused" : s.transcription === "live" ? "Transcribing" : "Recording"}
-      <span className="t-data rec-time">{clock}</span>
+      <span className="t-meta rec-time">{clock}</span>
     </button>
   );
 }

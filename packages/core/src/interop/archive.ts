@@ -166,6 +166,20 @@ export function readArchive(text: string): ArchiveReadResult {
   return { header, records, skipped };
 }
 
+/**
+ * BSD-648: Ist ein gelesenes Archiv bzw. ein Backup-Stand unvollständig? `skipped > 0` (unlesbare Zeilen) oder weniger
+ * Records als im Kopf stehen (z. B. genau an einer Zeilengrenze abgeschnitten). Liest und meldet nur – ändert nichts.
+ * `readable`: gelesene Records; `expected`: so viele sollten es sein (Kopf, mindestens gelesen + unlesbar).
+ */
+export interface ArchiveDamage { readable: number; expected: number; skipped: number }
+
+export function archiveDamage(read: ArchiveReadResult): ArchiveDamage | undefined {
+  const readable = read.records.length;
+  const header = read.header?.records ?? 0;
+  if (read.skipped === 0 && header <= readable) return undefined;
+  return { readable, expected: Math.max(header, readable + read.skipped), skipped: read.skipped };
+}
+
 export interface LoadedArchive {
   read: ArchiveReadResult;
   /** Dateien aus `assets/` (Pfad → Bytes) zum Ablegen im Asset-Speicher. */

@@ -419,7 +419,7 @@ class LocalServer {
   }
   backups() { return this.call<{ dir: string; reachable?: boolean; last?: { at: number; name: string }; error?: string; snapshots: { name: string; at: number }[] }>("GET", "/backups"); }
   backupNow() { return this.call<{ snapshot: { name: string; at: number } | null }>("POST", "/backups"); }
-  backupPreview(name: string) { return this.call<{ pages: { added: number; changed: number; removed: number } }>("GET", `/backups/${encodeURIComponent(name)}/preview`); }
+  backupPreview(name: string) { return this.call<{ pages: { added: number; changed: number; removed: number }; damaged?: { readable: number; expected: number; skipped: number } }>("GET", `/backups/${encodeURIComponent(name)}/preview`); }
   backupRestore(name: string) { return this.call<{ before?: string; pages: { added: number; changed: number; removed: number }; missing?: string[] }>("POST", `/backups/${encodeURIComponent(name)}/restore`); }
 
   async removeDevice(id: string): Promise<void> {
