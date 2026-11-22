@@ -11,7 +11,7 @@ import {
   setCombinator, topConditions, valueKind, EMPTY_FILTER,
 } from "./logic/filters.js";
 import { columnWidth, fillWidths, flatten, galleryColumns, hasStoredWidths, nextRowIndex } from "./logic/layout.js";
-import { defaultIsAgentEdit, editText, fromInputValue, optionTone, parseNumberInput, parseTextInput, toInputValue, withDate } from "./logic/values.js";
+import { defaultIsAgentEdit, editText, fromInputValue, optionTone, parseNumberInput, rowToneClass, parseTextInput, toInputValue, withDate } from "./logic/values.js";
 import { groupProperty, newRowValues } from "./layouts/shared.js";
 
 const stamp = { millis: 1, counter: 0, node: "x" };
@@ -168,6 +168,13 @@ describe("Werte der Editoren", () => {
     expect(optionTone("yellow")).toBe("orange");
     expect(optionTone("blueBackground")).toBe("blue");
     expect(optionTone(undefined)).toBe("gray");
+    // Balken in Timeline/Kalender: Farbe des Status, sonst grau (keine Klasse)
+    const toned = { properties: [{ id: "title", name: "Name", type: "title" }, { id: "st", name: "Status", type: "status", options: [{ id: "a", name: "Active", color: "blue" }, { id: "n", name: "Later", color: "gray" }] }] };
+    const r = (values: Record<string, unknown>) => ({ id: "r", type: "page", parent: "d:x", sk: "a", values } as never);
+    expect(rowToneClass(toned as never, r({ st: { status: { _0: "a" } } }))).toBe(" tone-blue");
+    expect(rowToneClass(toned as never, r({ st: { status: { _0: "n" } } }))).toBe("");
+    expect(rowToneClass(toned as never, r({}))).toBe("");
+    expect(rowToneClass({ properties: [] }, r({ st: { status: { _0: "a" } } }))).toBe("");
     expect(defaultIsAgentEdit({ ...row("1"), updatedBy: "agent:based" })).toBe(true);
     expect(defaultIsAgentEdit({ ...row("1"), updatedBy: "me" })).toBe(false);
   });

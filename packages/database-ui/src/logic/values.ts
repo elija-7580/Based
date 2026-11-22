@@ -99,6 +99,17 @@ export const storedFiles = (row: Block, p: PropertySchema): StoredFile[] => {
 };
 
 /** Ton (CSS-Klasse) für eine Options-Farbe; nur Token-Flächen, kein Marker (der bedeutet „Agent“). */
+/**
+ * Farbton einer Zeile für Balken in Timeline und Kalender: die Farbe ihres Status (erste Status-Spalte der Datenbank).
+ * Leer, wenn es keinen Status gibt oder er neutral ist – dann bleibt der Balken grau.
+ */
+export function rowToneClass(db: { properties: readonly PropertySchema[] }, row: Block): string {
+  const p = db.properties.find((x) => x.type === "status");
+  const c = p ? valueCase(row.values?.[p.id]) : undefined;
+  const tone = p && c?.[0] === "status" ? optionTone(p.options?.find((o) => o.id === c[1])?.color) : "gray";
+  return tone === "gray" ? "" : ` tone-${tone}`;
+}
+
 export function optionTone(color: string | null | undefined): string {
   switch ((color ?? "default").replace(/Background$/, "")) {
     case "blue": return "blue";

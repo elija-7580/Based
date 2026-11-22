@@ -110,6 +110,11 @@ Web-Ansicht — offene Architekturfrage.
   wachsen im gleichen Verhältnis, bis die Tabelle die Seite füllt (höchstens doppelt so breit); wer eine Spalte zieht,
   legt die Breiten fest. Status ist ein Tag wie jedes andere (eckig, ohne Punkt). Datum kurz („Feb 12“, mit Jahr nur
   außerhalb des laufenden Jahres), solange die Spalte kein eigenes Format hat. Daten in der UI-Schrift, Mono nur für IDs.
+  Alle Ansichten stehen auf einer Kante: auf der Datenbank-Seite auf der des Titels (`--dbui-inset: 0`), sonst mit
+  `--dbui-inset`. Board: Spalten teilen sich die Breite (höchstens doppelte Grundbreite), eine leere Spalte „No …“
+  erscheint nicht, die Knöpfe im Spaltenkopf erst beim Überfahren oder mit Fokus. Timeline und Kalender: Einträge
+  tragen die Farbe ihres Status (neutral bleibt grau), die Spalte „No date“ ist zu, solange nichts ohne Datum da ist.
+  Liste: Zeilen hängen ihren Innenabstand heraus. Galerie: Karten ohne Bild sind eine ruhige Fläche ohne leeres Cover.
 - **Abschnitt („Section“):** Toggle-Überschrift mit Hintergrundfarbe = Fläche (Radius 14) um Überschrift und Inhalt,
   Farbe aus den Block-Tokens, Linien darin leiser; eingebettete Datenbanken liegen ohne eigene Fläche darin. Slash
   „Section“ legt eine graue an, die Farbe kommt über Blockmenü → Color.

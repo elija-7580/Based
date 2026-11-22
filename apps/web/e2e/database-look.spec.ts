@@ -199,3 +199,101 @@ test("Tabelle wie auf der Website: Linien, Breite, Kopf, Status, Datum, Ansichts
   await db.getByRole("tab", { name: "All tasks" }).click();
   await expect.poll(widths).toEqual([before[0]! - 60, ...before.slice(1)]);
 });
+
+// 22. 11. 2026 (Elija): auch die anderen Ansichten sehen aus wie auf basednotes.app – alle auf der Kante von Titel und
+// Pillen, Board-Spalten teilen sich die Breite, Balken in der Farbe des Status, keine leeren Flächen.
+test("Board, Timeline, Kalender, Liste, Galerie: eine Kante, volle Breite, Statusfarben, nichts Leeres", async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const id = await page.evaluate(async () => {
+    interface Tx { put(r: unknown): void; remove(k: string): void }
+    interface Store {
+      blocks: Map<string, { id: string; props?: { databaseID?: string } }>; databases: Map<string, Record<string, unknown>>;
+      views: Map<string, { id: string; blockID: string }>; children(parent: string): string[]; transact(name: string, f: (tx: Tx) => void): void;
+    }
+    const b = (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string>; openPage(id: string): Promise<{ store: Store }> } } }).__based;
+    const blockID = await b.client.command({ op: "createDatabase", title: "Projects" });
+    const { store } = await b.client.openPage(blockID);
+    const block = store.blocks.get(blockID)!;
+    const dbID = block.props!.databaseID!;
+    const db = store.databases.get(dbID)!;
+    const now = (Date.now() - 978_307_200_000) / 1000;
+    const T = new Date();
+    const span = (off: number, len: number) => ({ start: (new Date(T.getFullYear(), T.getMonth(), T.getDate() + off).getTime() - 978_307_200_000) / 1000, end: (new Date(T.getFullYear(), T.getMonth(), T.getDate() + off + len).getTime() - 978_307_200_000) / 1000, includeTime: false });
+    const properties = [{ id: "title", name: "Name", type: "title" },
+      { id: "st", name: "Status", type: "status", options: [{ id: "rd", name: "Ready", color: "blue" }, { id: "ip", name: "In progress", color: "yellow" }, { id: "rv", name: "Review", color: "pink" }, { id: "lt", name: "Later", color: "gray" }] },
+      { id: "du", name: "Due", type: "date" }];
+    const rows: [string, string, number, number][] = [["Website relaunch", "ip", -3, 6], ["Q4 investor update", "rv", -5, 4], ["Acme onboarding", "rd", 1, 5], ["Thesis chapter 2", "ip", -2, 7], ["Offsite planning", "lt", -6, 3], ["Polar Studio proposal", "rv", 0, 3]];
+    const views: [string, string, string, Record<string, unknown>][] = [["v1", "Board", "board", { groupBy: { propertyID: "st" } }], ["v2", "Timeline", "timeline", { datePropertyID: "du" }], ["v3", "Calendar", "calendar", { datePropertyID: "du" }], ["v4", "List", "list", {}], ["v5", "Gallery", "gallery", {}]];
+    store.transact("Seed", (tx) => {
+      for (const r of [...store.children("d:" + dbID)]) tx.remove("block:" + r);
+      for (const v of [...store.views.values()]) if (v.blockID === blockID) tx.remove("view:" + v.id);
+      tx.put({ kind: "database", data: { ...db, properties } });
+      views.forEach((v, i) => tx.put({ kind: "view", data: { id: v[0], databaseID: dbID, blockID, name: v[1], type: v[2], sortKey: "a" + i, createdAt: now, updatedAt: now, stamp: db.stamp, ...v[3] } }));
+      tx.put({ kind: "block", data: { ...block, props: { ...block.props, viewIDs: views.map((v) => v[0]) } } });
+      rows.forEach((r, i) => tx.put({ kind: "block", data: { id: crypto.randomUUID(), type: "page", parent: "d:" + dbID, sk: "c00" + i, text: r[0], values: { st: { status: { _0: r[1] } }, du: { date: { _0: span(r[2], r[3]) } } }, createdAt: now, updatedAt: now } }));
+    });
+    return blockID;
+  });
+  await page.goto(`/#page-${id}`);
+  const db = page.locator(".shell-database.full");
+  // ein Klick auf die schon aktive Ansicht öffnet ihr Menü, deshalb nur wechseln
+  const show = async (name: string) => { const tab = db.getByRole("tab", { name }); if ((await tab.getAttribute("aria-selected")) !== "true") await tab.click(); await expect(db.locator(".dbui-body")).toHaveAttribute("data-view-type", name.toLowerCase()); };
+  // linke und rechte Kante eines Elements gegen Kopf und Werkzeuge der Datenbank
+  const edges = (sel: string) => db.evaluate((el, s) => {
+    const t = el.querySelector(".dbui-actions")!.getBoundingClientRect(), title = el.querySelector(".dbui-head")!.getBoundingClientRect(), r = el.querySelector(s)!.getBoundingClientRect();
+    return { left: Math.round(r.left - title.left), right: Math.round(t.right - r.right) };
+  }, sel);
+
+  // Board: an der Kante, Spalten breiter als die Grundbreite, leere Spalte „No Status“ fehlt, Kopf-Knöpfe erst beim Überfahren
+  await show("Board");
+  const cols = db.locator(".dbui-board-col");
+  await expect(cols).toHaveCount(4);
+  await expect(db.getByRole("region", { name: "No Status" })).toHaveCount(0);
+  expect((await edges(".dbui-board-col")).left).toBe(0);
+  expect(await db.evaluate((el) => { const b = el.querySelector(".dbui-board")!; return b.scrollWidth - b.clientWidth; })).toBe(0);
+  expect((await edges(".dbui-board-col:last-of-type")).right).toBe(0);
+  const hide = cols.first().getByRole("button", { name: /^Hide / });
+  await page.mouse.move(4, 4);
+  await expect.poll(() => hide.evaluate((el) => getComputedStyle(el).opacity)).toBe("0");
+  await cols.first().hover();
+  await expect.poll(() => hide.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+
+  // Timeline: an der Kante, leere „No date“-Spalte zu, Balken in der Farbe des Status (neutral bleibt grau)
+  await show("Timeline");
+  await expect(db.getByRole("complementary", { name: "No date" })).toHaveCount(0);
+  expect(await edges(".dbui-tl-scroll")).toEqual({ left: 0, right: 0 });
+  const bar = (name: string) => db.locator(".dbui-tl-bar", { hasText: name });
+  await expect(bar("Acme onboarding")).toHaveClass(/tone-blue/);
+  await expect(bar("Offsite planning")).not.toHaveClass(/tone-/);
+  expect(await bar("Acme onboarding").evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(await bar("Offsite planning").evaluate((el) => getComputedStyle(el).backgroundColor));
+  await db.getByRole("button", { name: "No date (0)" }).click();
+  await expect(db.getByRole("complementary", { name: "No date" })).toBeVisible();
+
+  // Kalender, Liste, Galerie: an der Kante; Galerie ohne leere graue Fläche
+  await show("Calendar");
+  expect(await edges(".dbui-cal-scroll")).toEqual({ left: 0, right: 0 });
+  await expect(db.locator(".dbui-cal-entry[class*='tone-']").first()).toBeVisible();
+  await show("List");
+  expect(await edges(".dbui-list-row")).toEqual({ left: -12, right: 0 }); // Fläche hängt heraus, das Icon steht auf der Kante
+  expect((await edges(".dbui-list-icon")).left).toBe(0);
+  await show("Gallery");
+  expect(await edges(".dbui-vlist")).toEqual({ left: 0, right: 0 });
+  await expect(db.locator(".dbui-card.gallery")).toHaveCount(6);
+  await expect(db.locator(".dbui-cover")).toHaveCount(0);
+
+  if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+    for (const [w, h, themes] of [[1280, 820, ["light", "dark"]], [900, 600, ["light"]], [1728, 1000, ["light"]]] as const) for (const theme of themes) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      for (const v of ["Board", "Timeline", "Calendar", "List", "Gallery"]) {
+        await show(v);
+        await page.mouse.move(4, 4);
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: `../../docs/design/screens/web-db-${v.toLowerCase()}-website-${w}x${h}-${theme}.png` });
+      }
+    }
+  }
+});

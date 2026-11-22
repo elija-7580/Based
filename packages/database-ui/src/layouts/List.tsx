@@ -142,7 +142,8 @@ function Cover({ row, view }: { row: Block; view: DatabaseView }) {
     return <div className={"dbui-cover" + (cover?.[0] === "color" ? ` tone-${optionTone(String(cover[1]))}` : "")}>{url ? <img src={hrefOf(url)} alt="" loading="lazy" /> : null}</div>;
   }
   const text = store.children("b:" + row.id).slice(0, 6).map((id) => plainText(store.blocks.get(id)?.text)).filter(Boolean).join("\n");
-  return <div className="dbui-cover content">{text}</div>;
+  // Seite ohne Inhalt: keine leere graue Fläche – die Karte zeigt dann nur Titel und Felder.
+  return text ? <div className="dbui-cover content">{text}</div> : null;
 }
 
 const CARD_HEIGHT: Record<string, number> = { small: 180, medium: 220, large: 280 };
