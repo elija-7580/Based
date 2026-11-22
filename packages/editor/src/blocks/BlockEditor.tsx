@@ -6,7 +6,7 @@
 import { boardEmbedView, setBoardEmbedView, type Camera, isBoardPage, blockCommands as cmd, blocksToMarkdown, containingPage, trashedRoot, unsyncCopy, type SyncedPasteProblem, noteBreadcrumb, textStats, BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, effectiveButtonActions, isKnownButtonAction, runButton, setButton, type ButtonAction, type ButtonEffect, type ButtonPause, insertPage, dateParts, withDateParts, type DateParts, CODE_LANGUAGES, codeLanguageID, codePreviewKind, codeView, type CodeView, createLinkedView, wikilinkBefore, dateMentionValue, dateSuggestions, embedTarget, syncedOriginal, syncedPasteProblem, plainText, previewFile, previewKind, type FilePreview, type Block, type RichText, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "./mermaid.js";
 import { appearanceKey, watchAppearance } from "./hostAppearance.js";
-import { HTML_DOCUMENT_HEIGHT, HTML_PREVIEW_HEIGHT, htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostScheme, isHtmlDocument, rememberHeight, rememberedHeight } from "./htmlPreview.js";
+import { HTML_DOCUMENT_HEIGHT, HTML_PREVIEW_HEIGHT, htmlPreviewDoc, htmlPreviewHeight, htmlThemeAt, hostFontFaces, hostScheme, isHtmlDocument, rememberHeight, rememberedHeight } from "./htmlPreview.js";
 import { isEmojiIcon, type PageRef } from "../ui/env.js";
 import { createContext, Fragment, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/props.js";
@@ -2918,10 +2918,15 @@ function HtmlPreview({ code, fill = false, size, onResize }: { code: string; fil
   useEffect(() => {
     const el = host.current;
     if (!el) return;
-    const make = () => setDoc(htmlPreviewDoc(code, htmlThemeAt(el)));
-    if (first.current) { first.current = false; make(); return; }
+    let live = true;
+    // Schriften der Seite kommen eingebettet mit (der Rahmen hat kein Netz); beim zweiten Mal aus dem Zwischenspeicher.
+    const make = () => {
+      const theme = htmlThemeAt(el);
+      void hostFontFaces(el.ownerDocument, theme).then((fontFaces) => { if (live) setDoc(htmlPreviewDoc(code, { ...theme, fontFaces })); });
+    };
+    if (first.current) { first.current = false; make(); return () => { live = false; }; }
     const t = setTimeout(make, 250);
-    return () => clearTimeout(t);
+    return () => { live = false; clearTimeout(t); };
   }, [code, appearance]);
   useEffect(() => {
     if (fill) return;

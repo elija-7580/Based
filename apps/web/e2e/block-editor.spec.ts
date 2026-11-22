@@ -817,6 +817,58 @@ test("Copy and sync: Original und synchronisierte Kopie", async ({ page }) => {
   await expect(editor(page).locator('.bx2-block[data-type="syncedBlock"] [data-editable-id]').first()).toHaveText("Shared line!");
 });
 
+// Elija 22.11.: „Die Schriftarten sind nicht gefixt“ – im HTML-Block stand Text mit Font „Based“ in Georgia und der
+// Systemschrift, weil der Rahmen (kein Netz, eigene Origin) die Webschriften der Seite nicht kennt. Dazu ein weißer
+// Streifen am rechten Rand: der Systemrollbalken mit heller Spur (scrollbar-color), statt des Balkens der App.
+test("HTML-Codeblock: Font „Based“ gilt auch im Rahmen, Rollbalken wie in der App", async ({ page }) => {
+  await page.addInitScript(() => { if (!localStorage.getItem("based.appearance")) localStorage.setItem("based.appearance", JSON.stringify({ theme: "dark", font: "based" })); });
+  await newPage(page);
+  await expect(page.locator("html")).toHaveAttribute("data-typeface", "based");
+  await startTyping(page);
+  await page.keyboard.type("```");
+  await page.evaluate((text) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", text);
+    document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, '<h2>Archiv</h2><p>Grafiker, Musiker, Lehrer.</p><div style="height:3000px"></div>');
+  await editor(page).locator(".bx2-code-lang-btn").click();
+  await page.getByLabel("Search languages").fill("html");
+  await page.keyboard.press("Enter");
+  await page.getByLabel("Page title").click();
+  const inner = page.frameLocator("iframe.bx-html-preview");
+  await expect(inner.locator("h2")).toHaveText("Archiv");
+  // dieselben Schriften wie die Seite, im Rahmen wirklich geladen (nicht nur genannt)
+  const host = await editor(page).getByTestId("html-preview").evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(host).toContain("Literata");
+  expect(await inner.locator("p").evaluate((el) => getComputedStyle(el).fontFamily)).toBe(host);
+  await expect.poll(() => inner.locator("body").evaluate(async () => {
+    await document.fonts.ready;
+    return [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family.replace(/["']/g, "")).sort().join(",");
+  })).toMatch(/literata.*schibsted grotesk/i);
+  // Rollbalken: der eigene schmale der App, nicht der Systembalken mit heller Spur
+  const bar = await inner.locator("html").evaluate((el) => ({
+    color: getComputedStyle(el).scrollbarColor,
+    width: getComputedStyle(el, "::-webkit-scrollbar").width,
+    scrolls: el.scrollHeight > el.clientHeight,
+  }));
+  expect(bar.scrolls).toBe(true);
+  expect(bar.color).toBe("auto");
+  expect(bar.width).toBe(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--space-2").trim()));
+  // Fotos (BASED_SCREENSHOTS=1, Chromium): web-editor-html-font-based-<theme>-<größe>.png
+  if (process.env.BASED_SCREENSHOTS !== "1" || test.info().project.name !== "chromium") return;
+  await page.waitForTimeout(800);
+  for (const theme of ["dark", "light"] as const) {
+    await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t, font: "based" })), theme);
+    await page.reload();
+    await expect(inner.locator("h2")).toHaveText("Archiv");
+    for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `../../docs/design/screens/web-editor-html-font-based-${theme}-${w}x${h}.png` });
+    }
+  }
+});
+
 // BSD-407 Teil 2e: HTML-Codeblock zeigt sein Ergebnis im abgeschotteten Rahmen (sandbox ohne same-origin, CSP).
 // Wie Notions HTML-Block: ohne Rand und Beschriftung, Höhe nach dem Inhalt, der Code ist ausgeblendet, sobald die
 // Schreibmarke den Block verlässt; Ansichten Code | Split | Preview und eine Vollansicht.

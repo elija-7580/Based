@@ -383,7 +383,7 @@ function UpdatesSection() {
       <Row label={app ? `${app.name} ${app.version}` : "Desktop app"} hint={auto ? "Checks for updates when it starts" : "Automatic checks are off — check by hand"}>
         <BasedButton label="Check for updates…" busy={busy} onClick={() => { setBusy(true); void checkForUpdates({ interactive: true }).finally(() => setBusy(false)); }} />
       </Row>
-      <Switch label="Check automatically" description="Look for a new version a few seconds after Based starts" value={auto} onChange={(on) => autoUpdatePref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
+      <Switch label="Check automatically" description="Look for a new version when Based starts and every few hours while it is open" value={auto} onChange={(on) => autoUpdatePref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
     </Group>
   );
 }
