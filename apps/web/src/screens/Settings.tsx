@@ -13,7 +13,7 @@ import type { Route } from "../shell/router.js";
 import { aiSetting } from "../shell/ai.js";
 import { settingsPageVisible } from "../shell/beta.js";
 import { devViewPref } from "../shell/storage.js";
-import { resolveSettingsPage, searchSettings, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages, type SettingsHit } from "../shell/settings.js";
+import { listedSettingsPages, resolveSettingsPage, searchSettings, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages, type SettingsHit } from "../shell/settings.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import { AstryxKit } from "./settings/AstryxKit.js";
 import { settingsRegistry } from "./settings/registry.js";
@@ -42,11 +42,12 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
   useSyncExternalStore(settingsRegistry.subscribe, settingsRegistry.getVersion);
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const view = { ai };
-  const pages = visibleSettingsPages(SETTINGS_PAGES, view).filter((p) => settingsPageVisible(p.id));
+  const dev = useSyncExternalStore(devViewPref.subscribe, devViewPref.get);
+  // Seiten ohne eigenen Abschnitt stehen nur in der Entwickler-Ansicht in der Liste; ein alter Link fällt auf Appearance.
+  const pages = listedSettingsPages(visibleSettingsPages(SETTINGS_PAGES, view).filter((p) => settingsPageVisible(p.id)), settingsRegistry, view, dev);
   const kit = pageID === "kit";
   const page = resolveSettingsPage(pageID, pages);
   const sections = settingsRegistry.sectionsFor(page.id, view);
-  const dev = useSyncExternalStore(devViewPref.subscribe, devViewPref.get);
   // Was noch fehlt, steht nur auf Seiten ohne eigene Abschnitte (sonst wäre die Seite leer) – auf Seiten mit echten
   // Einstellungen ist die Liste Entwickler-Wissen (Settings → Diagnostics → For developers), keine Nutzer-Information.
   const allMissing = settingsRegistry.missingFor(page.id, view);
