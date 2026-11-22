@@ -109,7 +109,7 @@ export {
   filterRemovingProperty, forgetOption, forgetProperty, formulaPropertyReferences, linkMirrors, makeRelationTwoWay, makeWidgetView,
   movePropertyInView, moveDashboardWidget, moveRow, moveRowToGroup, moveView, propertyNamed, propertyOf, pv, removeDashboardWidget,
   renameProperty, renameView, renamingFormulaReferences, renamingRelatedReferences, setAllPropertiesVisible, setCalculation,
-  setColumnWidth, setDashboardRowHeight, setDashboardWidgetWidth, setDatabaseLocked, setDatabaseTitle, setFilter, setGroupBy,
+  setColumnWidth, setColumnWidths, setDashboardRowHeight, setDashboardWidgetWidth, setDatabaseLocked, setDatabaseTitle, setFilter, setGroupBy,
   setGroupHidden, setPropertyVisible, setRelationLimitOne, setRelationTarget, setRollup, setRowTitle, setSorts, setValue, setValues, setViewType,
   uniquePropertyName, updateChart, updateOption, updateProperty, updateView, valueCase, valueForGroup, viewsForBlock, visiblePropertyIDs,
   wouldCreateRollupCycle, DASHBOARD_COLUMNS, DASHBOARD_MAX_WIDGETS_PER_ROW, WIDGET_TYPES,
@@ -121,7 +121,7 @@ export { chartDateBucket, chartNumber, chartPoints } from "./query/chart.js";
 export type { ChartPoint } from "./query/chart.js";
 export {
   ADDABLE_PROPERTY_TYPES, CALCULATION_LABELS, FILTER_OP_LABELS, NUMBER_FORMAT_LABELS, NUMBER_FORMATS, PROPERTY_TYPE_LABELS,
-  READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue, percentShown,
+  READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatDateShort, formatNumber, formatValue, percentShown,
 } from "./query/display.js";
 export { changeAffects, databaseDependencies, watchDatabase } from "./query/dependencies.js";
 export { DEFAULT_GEOCODER, geocodeURL, lookupAddress, parseGeocode, tileURL, validateTiles, visibleTiles } from "./query/geocode.js";

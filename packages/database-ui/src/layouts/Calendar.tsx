@@ -10,6 +10,7 @@ import {
   type Block, type DatabaseView, type LanePlacement, type QueryResult, type RowSpan,
 } from "@based/core";
 import { useDB } from "../context.js";
+import { rowToneClass } from "../logic/values.js";
 import { Icon, Popover, type Anchor } from "../ui.js";
 import { useDateDrag, dayFromPoint, type DateDrag } from "./dateDrag.js";
 import { EmptyState, groupProperty, newRowValues } from "./shared.js";
@@ -45,12 +46,13 @@ const Entry = memo(function Entry({ span, from, to, top, before, after, dragging
 }) {
   const title = rowTitle(span.row);
   const time = timeOf(span);
+  const tone = rowToneClass(useDB().db, span.row);
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); a.open(span.row.id); }
     else if (a.writable && e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { e.preventDefault(); a.nudge(span.row.id, e.key === "ArrowLeft" ? -1 : 1); }
   };
   return (
-    <div className={"dbui-cal-entry" + (before ? " before" : "") + (after ? " after" : "") + (dragging ? " dragging" : "") + (a.writable ? " movable" : "")}
+    <div className={"dbui-cal-entry" + tone + (before ? " before" : "") + (after ? " after" : "") + (dragging ? " dragging" : "") + (a.writable ? " movable" : "")}
       data-row-id={span.row.id} role="button" tabIndex={0} aria-label={`${title}, ${spanLabel(span)}`} title={`${title} · ${spanLabel(span)}`}
       style={{ left: `calc(${pct(from)} + ${before ? 0 : 3}px)`, width: `calc(${pct(to - from + 1)} - ${(before ? 0 : 3) + (after ? 0 : 3)}px)`, top }}
       onPointerDown={a.writable ? (e) => a.begin(e, span.row.id, "move") : undefined}

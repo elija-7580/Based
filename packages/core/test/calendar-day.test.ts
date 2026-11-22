@@ -7,7 +7,7 @@ import {
   calendarDayStart, contentFingerprint, localDay, MemoryPersistence, normalizeDate, resolveDate, stampDay, withCalendarDays, WorkspaceStore,
   type Block, type WireRecord,
 } from "../src/index.js";
-import { longDate, parseDate } from "../src/query/value.js";
+import { longDate, parseDate, shortDate } from "../src/query/value.js";
 
 const at = (y: number, m: number, d: number, h = 0) => (Date.UTC(y, m - 1, d, h) - 978_307_200_000) / 1000;
 const row = (values: Block["values"], text: Block["text"] = "Row"): WireRecord =>
@@ -77,4 +77,14 @@ describe("Kalendertag", () => {
     const old = JSON.stringify({ ...JSON.parse(written), day: undefined });
     expect(run("UTC", old)).toBe("November 17, 2026");
   }, 60_000);
+  it("kurze Anzeige für Tabellenzellen: ohne Jahr im laufenden Jahr, sonst mit; Zeit und Bereich wie in der langen Form", () => {
+    const now = new Date(2026, 10, 22);
+    const local = (y: number, m: number, d: number, h = 0, min = 0) => (new Date(y, m - 1, d, h, min).getTime() - 978_307_200_000) / 1000;
+    expect(shortDate({ start: local(2026, 2, 12), includeTime: false }, now)).toBe("Feb 12");
+    expect(shortDate({ start: local(2025, 2, 12), includeTime: false }, now)).toBe("Feb 12, 2025");
+    expect(shortDate({ start: local(2026, 12, 30), end: local(2027, 1, 2), includeTime: false }, now)).toBe("Dec 30 → Jan 2, 2027");
+    expect(shortDate({ start: local(2026, 5, 4, 15, 15), includeTime: true }, now)).toBe("May 4 3:15 PM");
+    // der Tag des Schreibers gilt auch hier
+    expect(shortDate({ start: at(2026, 11, 17, 23), includeTime: false, day: "2026-11-18" }, now)).toBe("Nov 18");
+  });
 });

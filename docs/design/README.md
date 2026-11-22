@@ -101,10 +101,20 @@ Web-Ansicht — offene Architekturfrage.
   Plan ins Ziel fliegt. Agent-Details (Modell, Laufzeit) nur mit „Show agent details“. Agent- und Projekt-Detail
   als eigene Seiten (`#agent-<id>`, `#project-<id>`).
 - **Seite:** Breadcrumb, Titel, Metazeile, Randspalte für Agent-Notizen, Text max. 720 px.
-- **Datenbank (14. 11. 2026, Notion-Aufbau):** Ansichten als Pillen mit Icon (aktiv = `selected`-Fläche); inline mit nur
-  einer Ansicht kein einzelner Tab („Table“), leerer Titel unsichtbar. Werkzeugleiste inline gedimmt, beim Überfahren
-  oder mit Fokus voll. „New“ neutral in Tinte (keine Akzentfarbe). Tabelle mit Haarlinien, Spaltentyp-Icon im Kopf,
-  Fußzeile ohne Linie – Berechnungen erst beim Überfahren. Daten in der UI-Schrift, Mono nur für IDs.
+- **Datenbank (14. 11. 2026, Notion-Aufbau; Aussehen seit 22. 11. 2026 wie auf basednotes.app):** Ansichten als Pillen
+  mit Icon, die aktive Ansicht ist die eine Pille in Tinte; inline mit nur einer Ansicht kein einzelner Tab („Table“),
+  leerer Titel unsichtbar. Werkzeugleiste gedimmt (inline und auf der ganzen Seite), beim Überfahren oder mit Fokus voll;
+  gesetzte Filter und „New“ bleiben voll. „New“ ist neutral (`surface-raised`), weil die aktive Ansicht schon in Tinte
+  steht. Tabelle nur mit waagrechten Haarlinien über die ganze Breite, Spaltenkopf in `muted` ohne Typ-Icon (der Typ
+  steht im Spaltenmenü), Fußzeile ohne Linie – Berechnungen erst beim Überfahren. Spalten ohne festgelegte Breite
+  wachsen im gleichen Verhältnis, bis die Tabelle die Seite füllt (höchstens doppelt so breit); wer eine Spalte zieht,
+  legt die Breiten fest. Status ist ein Tag wie jedes andere (eckig, ohne Punkt). Datum kurz („Feb 12“, mit Jahr nur
+  außerhalb des laufenden Jahres), solange die Spalte kein eigenes Format hat. Daten in der UI-Schrift, Mono nur für IDs.
+  Alle Ansichten stehen auf einer Kante: auf der Datenbank-Seite auf der des Titels (`--dbui-inset: 0`), sonst mit
+  `--dbui-inset`. Board: Spalten teilen sich die Breite (höchstens doppelte Grundbreite), eine leere Spalte „No …“
+  erscheint nicht, die Knöpfe im Spaltenkopf erst beim Überfahren oder mit Fokus. Timeline und Kalender: Einträge
+  tragen die Farbe ihres Status (neutral bleibt grau), die Spalte „No date“ ist zu, solange nichts ohne Datum da ist.
+  Liste: Zeilen hängen ihren Innenabstand heraus. Galerie: Karten ohne Bild sind eine ruhige Fläche ohne leeres Cover.
 - **Abschnitt („Section“):** Toggle-Überschrift mit Hintergrundfarbe = Fläche (Radius 14) um Überschrift und Inhalt,
   Farbe aus den Block-Tokens, Linien darin leiser; eingebettete Datenbanken liegen ohne eigene Fläche darin. Slash
   „Section“ legt eine graue an, die Farbe kommt über Blockmenü → Color.

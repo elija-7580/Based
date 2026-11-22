@@ -1292,6 +1292,22 @@ export function setColumnWidth(store: WorkspaceStore, viewID: string, propertyID
   }, "Resize column", `width:${viewID}:${propertyID}`);
 }
 
+/** Mehrere Spaltenbreiten in einem Schritt (ein Rückgängig-Schritt) – z. B. wenn eine Tabelle, die die Breite füllt, ihre gezeigten Breiten festhält. */
+export function setColumnWidths(store: WorkspaceStore, viewID: string, widths: Readonly<Record<string, number>>) {
+  const v = store.views.get(viewID);
+  const db = v && store.databases.get(v.databaseID);
+  if (!v || !db) return;
+  updateView(store, viewID, (view) => {
+    const list = view.properties ? structuredClone(view.properties) : fullPropertyList(v, db);
+    for (const [propertyID, width] of Object.entries(widths)) {
+      const item = list.find((x) => x.id === propertyID);
+      if (item) item.width = width;
+      else list.push({ id: propertyID, visible: true, width });
+    }
+    view.properties = list;
+  }, "Resize column", `widths:${viewID}`);
+}
+
 export function setSorts(store: WorkspaceStore, viewID: string, sorts: SortRule[]) {
   updateView(store, viewID, (v) => { if (sorts.length) v.sorts = sorts; else delete v.sorts; }, "Sort");
 }
