@@ -4,6 +4,17 @@ The build workflow puts the **top section** into the update dialog and the relea
 one line per point (no wrapped lines), each at most 110 characters – a test checks this
 (`apps/desktop/test/config.test.mjs`). Details go into the section below it. Newest first; written for testers.
 
+## 0.2.12 – first beta
+
+- Quick Find (⌘K): Enter right after typing opens the match you typed, and Esc always closes it
+- Menus stay inside the window, also in small windows, and scroll when they are long
+- Restoring a damaged backup now warns first and says how much of it can be read
+- Move to Trash shows “Moved to Trash · Undo”, and ⌘Z brings the page back
+- New databases start with the cursor in the title; filter row and date picker are tidier
+- Also in 0.2: meeting notes, more imports, Connect AI apps, a backup before every update
+- Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
+- Like Based? It runs on donations, $3 a month helps: github.com/sponsors/elija-7580
+
 ## 0.2 – release candidate
 
 - Based Beta is now called Based Notes Beta; your workspace, backups and settings stay as they are
