@@ -5,7 +5,7 @@
 // Ablauf beim Senden: Eingabe wird zur Karte → „versteht“ (Skelett) → Plan → die Karte fliegt in den inneren Ring
 // bzw. ins Ziel auf dem Bogen (FLIP, nur Position und Deckkraft, 180 ms; bei „reduzierter Bewegung“ ohne Flug).
 import {
-  composerTask, costLine, FRAME_SPAN_MS, frameStart, greetingSentence, greetingWord, homeModel, showCost, taskCard, type DueItem, type Frame, type NeedsYou,
+  arcStageHeight, composerTask, costLine, FRAME_SPAN_MS, frameStart, greetingSentence, greetingWord, homeModel, showCost, taskCard, type DueItem, type Frame, type NeedsYou,
 } from "@based/brain/home";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { chatController, openChatPanel } from "../chat/runtime.js";
@@ -14,13 +14,14 @@ import { SYNC_LABEL } from "../components/Sidebar.js";
 import { dismissedCards, reducedMotion, useDismissed, useNow } from "../home/hooks.js";
 import { MOTION } from "../shell/motion.js";
 import { TaskCard } from "../home/TaskCard.js";
-import { TimeArc } from "../home/TimeArc.js";
+import { ARC_EMPTY_MIN_WIDTH, SIZES, TimeArc } from "../home/TimeArc.js";
 import "../home/home.css";
 import { Icon } from "../icons.js";
 import type { Route } from "../shell/router.js";
 import { tasksRuntime } from "../tasks/runtime.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
-import { BasedSwitcher } from "@based/ui/astryx";
+import { BasedButton, BasedSwitcher } from "@based/ui/astryx";
+import { recentPages } from "../shell/storage.js";
 
 interface Props {
   client: StoreClient;
@@ -30,7 +31,15 @@ interface Props {
   onNavigate: (r: Route) => void;
   onNewPage: () => void;
   onNewDatabase?: () => void;
+  onImport?: () => void;
 }
+
+/** Wie viele zuletzt geöffnete Seiten Home zeigt (eine bis zwei Zeilen Pillen). */
+const RECENT_SHOWN = 6;
+/** Darunter passt der leere Bogen nicht mehr (sein Hinweistext liefe über die Zeilen darüber): im kleinen Fenster
+ *  entfällt er dann, damit der Composer ohne Scrollen sichtbar bleibt (BSD-301). Mit Karten bleibt er und Home rollt. */
+const ARC_MIN_HEIGHT = arcStageHeight(ARC_EMPTY_MIN_WIDTH, SIZES.done, SIZES.apex, SIZES.ring);
+const shortTitle = (t: string) => (t.length > 28 ? t.slice(0, 27).trimEnd() + "…" : t);
 
 const FRAME_KEY = "based.home.frame";
 const readFrame = (): Frame => {
@@ -42,7 +51,17 @@ const readFrame = (): Frame => {
   }
 };
 
-export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNewPage, onNewDatabase }: Props) {
+export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNewPage, onNewDatabase, onImport }: Props) {
+  // Elija 22.11.2026: Home zeigt zuerst die eigenen Notizen (neu anlegen, zuletzt geöffnet), der Agenten-Bogen steht darunter.
+  const [recentList, setRecentList] = useState(recentPages.get);
+  useEffect(() => recentPages.subscribe(setRecentList), []);
+  const recent = useMemo(() => {
+    const o = state.outline;
+    if (!o) return [];
+    const trashed = new Set(o.trash.map((t) => t.id));
+    return recentList.filter((r) => o.nodes[r.id] && !trashed.has(r.id)).slice(0, RECENT_SHOWN)
+      .map((r) => ({ id: r.id, kind: o.nodes[r.id]!.kind, title: state.titles.get(r.id)?.trim() || "Untitled" }));
+  }, [recentList, state.outline, state.titles]);
   const rt = tasksRuntime(client);
   const ui = useSyncExternalStore(rt.subscribe, rt.getState);
   const snap = state.agents;
@@ -185,6 +204,26 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
   return (
     <div className="home" data-testid="home" ref={homeRef}>
       <div className="home-inner">
+        <section className="home-greet" aria-label="Greeting">
+          <h1 className="t-greeting">{greetingWord(now)}.</h1>
+        </section>
+        <section className="home-notes" aria-label="Your notes" data-testid="home-notes">
+          <div className="home-notes-row">
+            <BasedButton label="New page" icon={<Icon name="plus" size={16} />} onClick={onNewPage} />
+            {onNewDatabase ? <BasedButton label="New database" icon={<Icon name="database" size={16} />} onClick={onNewDatabase} /> : null}
+            {onImport ? <BasedButton label="Import from Notion" variant="ghost" icon={<Icon name="library" size={16} />} onClick={onImport} /> : null}
+          </div>
+          {recent.length ? (
+            <div className="home-notes-row home-recent" data-testid="home-recent">
+              <span className="t-meta home-notes-label">Recent</span>
+              {recent.map((r) => (
+                <BasedButton key={r.id} label={shortTitle(r.title)} ariaLabel={`Open ${r.title}`} variant="ghost"
+                  icon={<Icon name={r.kind === "database" ? "database" : "page"} size={16} />} onClick={() => onOpenPage(r.id)} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+
         <header className="home-head">
           <BasedSwitcher label="Time frame" value={frame} onChange={(v) => {
             const f: Frame = v === "week" || v === "month" ? v : "today";
@@ -198,12 +237,9 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
             <span className="home-status-label">{synced ? "Server connected" : SYNC_LABEL[state.status.state]}</span>
           </span>
           <button type="button" className="btn ghost" onClick={() => onNavigate({ name: "tasks" })} data-testid="home-all-tasks" aria-label="All tasks" title="All tasks"><Icon name="agent" size={16} /><span className="home-btn-label">All tasks</span></button>
-          <button type="button" className="btn ghost" onClick={onNewPage} aria-label="New page" title="New page"><Icon name="plus" size={16} /><span className="home-btn-label">New page</span></button>
-          {onNewDatabase ? <button type="button" className="btn ghost" onClick={onNewDatabase} aria-label="New database" title="New database"><Icon name="database" size={16} /><span className="home-btn-label">New database</span></button> : null}
         </header>
 
-        <section className="home-greet" aria-label="Greeting">
-          <h1 className="t-greeting">{greetingWord(now)}.</h1>
+        <section className="home-greet" aria-label="What Based is doing">
           <p data-testid="home-sentence">
             {segments.map((s, i) => (s.pageID ? <button key={i} type="button" className="home-mark" onClick={() => onOpenPage(s.pageID!)}>{s.text}</button> : s.marker ? <mark key={i}>{s.text}</mark> : <span key={i}>{s.text}</span>))}
             {!snap ? <span>{state.ready ? "Loading what Based is doing…" : "Opening your workspace…"}</span> : null}
@@ -211,7 +247,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
         </section>
 
         <div ref={stageRef} className="home-arc">
-          {model ? (
+          {model && model.empty && arcMax !== undefined && arcMax < ARC_MIN_HEIGHT ? null : model ? (
             <TimeArc model={model} frame={frame} nowMs={now} showDetails={showDetails} titleOf={titleOf} maxHeight={arcMax}
               onOpenRun={(id) => onNavigate({ name: "agent", id })} onOpenPage={onOpenPage} onOpenProject={(id) => onNavigate({ name: "project", id })}
               onUndo={(id) => act(() => rt.runner.undo(id))} onApprove={approve} onAnswer={(id, o) => act(() => rt.runner.answer(id, o))}

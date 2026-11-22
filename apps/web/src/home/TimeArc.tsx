@@ -12,6 +12,8 @@ import { Icon } from "../icons.js";
 import { when } from "./hooks.js";
 
 /** Kartengrößen in Pixeln (CSS übernimmt sie über style). */
+/** Schmaler wird der leere Bogen nicht (BSD-301 Teil 4); passt er auch so nicht ins Fenster, lässt Home ihn weg. */
+export const ARC_EMPTY_MIN_WIDTH = 420;
 export const SIZES = {
   done: { w: 236, h: 60 },
   planned: { w: 208, h: 40 },
@@ -58,7 +60,7 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, maxHeight, 
   }, []);
   // BSD-301 Teil 4: Ohne Karten darf der Bogen schmaler werden (nur der Hinweistext braucht Platz), damit der Composer
   // auch in 900 × 600 mit Tab-Leiste im Startfenster bleibt; mit Karten bleibt die Mindestbreite (sonst zu dicht).
-  const width = fitArcWidth(space, maxHeight, SIZES.done, SIZES.apex, SIZES.ring, model.empty ? 420 : undefined);
+  const width = fitArcWidth(space, maxHeight, SIZES.done, SIZES.apex, SIZES.ring, model.empty ? ARC_EMPTY_MIN_WIDTH : undefined);
 
   // Pixel → Einheiten (Bogen ist 1000 Einheiten breit)
   const k = 1000 / width;

@@ -413,7 +413,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   } else if (welcome && state.ready && state.outline?.nodes[welcome.page] && !state.outline.trash.some((x) => x.id === welcome.page)) {
     screen = <Welcome client={client} pending={welcome} onOpenPage={openPage} onNavigate={navigate} onImport={() => setImporting("pick")} />;
   } else {
-    screen = <Home client={client} showDetails={appearance.agentDetails} state={state} onOpenPage={openPage} onNavigate={navigate} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} />;
+    screen = <Home client={client} showDetails={appearance.agentDetails} state={state} onOpenPage={openPage} onNavigate={navigate} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} onImport={() => setImporting("pick")} />;
   }
 
   return (

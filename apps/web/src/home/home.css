@@ -35,6 +35,13 @@
 }
 .home-greet button.home-mark { border: 0; font: inherit; cursor: pointer; color: var(--ink); }
 
+/* Notizen zuerst (Elija 22.11.2026): neu anlegen, importieren, zuletzt geöffnet – über dem Bogen der Agenten */
+.home-notes { display: flex; flex-direction: column; gap: var(--space-2); }
+.home-notes-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); min-width: 0; }
+/* Schmal (900 × 600 mit Seitenleiste): zwei statt sechs Seiten, damit die Zeile nicht umbricht und der Bogen Platz behält. */
+@container home (max-width: 48rem) { .home-recent > :nth-child(n+4) { display: none; } }
+.home-notes-label { color: var(--muted); margin-right: var(--space-1); user-select: none; }
+
 /* Zeitbogen */
 .arc-stage { position: relative; width: 100%; }
 .arc-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }

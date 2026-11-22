@@ -277,3 +277,56 @@ for (const theme of ["light", "dark"] as const) {
     await page.screenshot({ path: `../../docs/design/screens/web-project-detail-${theme}.png` });
   });
 }
+
+// Elija 22.11.2026 (Vergleich App ↔ Website, Runde 2): Home zeigt zuerst die Notizen – neu anlegen, importieren,
+// zuletzt geöffnet – und darunter den Bogen der Agenten. Fotos mit BASED_SCREENSHOTS=1 (Chromium):
+// docs/design/screens/web-home-notes-<theme>-<breite>.png.
+for (const theme of ["light", "dark"] as const) {
+  test(`Home: Notizen zuerst, Agenten darunter (${theme})`, async ({ page, browserName }) => {
+    await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await open(page);
+    const notes = page.getByTestId("home-notes");
+    for (const name of ["New page", "New database", "Import from Notion"]) await expect(notes.getByRole("button", { name })).toBeVisible();
+
+    // Drei Seiten öffnen: sie stehen danach unter „Recent“, die zuletzt geöffnete zuerst
+    const ids = await page.evaluate(async () => {
+      const c = (globalThis as unknown as { __based: { client: { command: (c: Record<string, unknown>) => Promise<string> } } }).__based.client;
+      const out: string[] = [];
+      for (const title of ["Projects", "Reading list", "A very long page title that goes on and on and on"]) out.push(await c.command({ op: "createPage", title }));
+      return out;
+    });
+    for (const id of ids) {
+      await page.goto(`/#page-${id}`);
+      await expect(page.getByTestId("block-editor")).toBeVisible();
+    }
+    await page.goto("/#home");
+    const recent = page.getByTestId("home-recent");
+    await expect(recent.getByRole("button").first()).toHaveAccessibleName("Open A very long page title that goes on and on and on");
+    await expect(recent.getByRole("button", { name: "Open Projects" })).toBeVisible();
+
+    for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }, { width: 1728, height: 1000 }]) {
+      await page.setViewportSize(size);
+      await page.waitForTimeout(300);
+      // Reihenfolge: Notizen über dem Zeitraum-Umschalter und dem Bogen; nichts überdeckt die Notizen, nichts läuft über
+      const n = (await notes.boundingBox())!;
+      const head = (await page.locator(".home-head").boundingBox())!;
+      const arc = (await page.locator(".home-arc").boundingBox())!;
+      expect(n.y + n.height).toBeLessThanOrEqual(head.y + 1);
+      expect(head.y + head.height).toBeLessThanOrEqual(arc.y + 1);
+      const hint = page.locator(".home-arc").getByText("Nothing on the arc yet");
+      if (await hint.isVisible()) expect((await hint.boundingBox())!.y).toBeGreaterThanOrEqual(head.y + head.height);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+      // „Recent“ bleibt eine Zeile
+      expect((await recent.boundingBox())!.height).toBeLessThan(48);
+      if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: `../../docs/design/screens/web-home-notes-${theme}-${size.width}.png` });
+      }
+    }
+
+    // Eine Seite aus „Recent“ öffnet sie
+    await recent.getByRole("button", { name: "Open Projects" }).click();
+    await expect(page).toHaveURL(new RegExp(`#page-${ids[0]}`));
+  });
+}
