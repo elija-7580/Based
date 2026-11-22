@@ -193,29 +193,29 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   const newPage = useCallback(async (opts: { parent?: string; section?: string } = {}) => {
     // BSD-645: was man tippt, bevor der neue Titel den Fokus hat, fängt freshPage auf und gibt es dem Titel
-    beginFreshPage();
+    const token = beginFreshPage();
     const id = await client.command<string | undefined>({ op: "createPage", ...opts, format: newPageFormat.get() }).catch((e: unknown) => {
-      cancelFreshPage();
+      cancelFreshPage(token);
       throw e;
     });
     if (id) {
-      markFreshPage(id);
+      markFreshPage(id, token);
       openPage(id);
-    } else cancelFreshPage();
+    } else cancelFreshPage(token);
     return id;
   }, [client, openPage]);
 
   const newDatabase = useCallback(async () => {
-    beginFreshPage();
+    const token = beginFreshPage();
     const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" }).catch((e: unknown) => {
-      cancelFreshPage();
+      cancelFreshPage(token);
       throw e;
     });
     // BSD-617: wie eine neue Seite (BSD-482) – die Schreibmarke steht im Titel, wer gleich tippt, benennt sie.
     if (id) {
-      markFreshPage(id);
+      markFreshPage(id, token);
       openPage(id);
-    } else cancelFreshPage();
+    } else cancelFreshPage(token);
   }, [client, openPage]);
 
   const newFromTemplate = useCallback(async (template: StarterTemplateID) => {

@@ -278,3 +278,33 @@ test("Neue Seite: 20 Zeichen gleich nach ⌥⌘N kommen alle an", async ({ page 
   await page.keyboard.type("Twenty chars at once");
   await expect(page.getByLabel("Page title")).toHaveValue("Twenty chars at once");
 });
+
+// BSD-654: Zeichen ohne gewöhnlichen Tastendruck (tote Taste ´+e, Eingabemethode, Emoji-Auswahl) landeten im Fenster
+// vor dem Titelfokus im Titel der vorigen Seite; zweimal ⌥⌘N schrieb in die erste neue Seite statt in die angezeigte.
+test("Neue Seite: é ohne Tastendruck geht nie in die vorige Seite; zweimal ⌥⌘N – Text in der angezeigten Seite", async ({ page }) => {
+  await ready(page);
+  const title = page.getByLabel("Page title");
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(title).toBeFocused();
+  await page.keyboard.type("Page A");
+  await expect(page.getByRole("treeitem", { name: "Page A", exact: true })).toHaveCount(1);
+  await slowCreate(page);
+
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Caf");
+  await page.keyboard.insertText("é");
+  await expect(title).toHaveValue(/^Café?$/);
+  await expect(title).toBeFocused();
+  await expect(page.getByRole("treeitem", { name: "Page A", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("treeitem", { name: /^Page A./ })).toHaveCount(0);
+
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.waitForTimeout(100);
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  await page.keyboard.type("Second");
+  await expect(title).toHaveValue("Second");
+  await expect(title).toBeFocused();
+  await expect(page.getByRole("treeitem", { name: "Second", exact: true })).toHaveCount(1);
+  // die erste der beiden neuen Seiten bleibt leer, kein Text darin
+  await expect(page.getByRole("treeitem", { name: /^Second./ })).toHaveCount(0);
+});

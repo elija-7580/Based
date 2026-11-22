@@ -623,7 +623,7 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
   // Titel und Quick Find blieb offen.
   useEffect(() => {
     if (readOnly || !takeFreshPage(id)) return;
-    const ahead = takeTypedAhead();
+    const ahead = takeTypedAhead(id);
     const el = field.current;
     if (ahead?.title) {
       focused.current = true; // der Wert vom Worker („Untitled …“) soll das Getippte nicht überschreiben
@@ -632,7 +632,7 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
     }
     const busy = document.activeElement?.closest(".page-body, [role=dialog], [role=menu], [role=listbox]");
     if (busy || !el) {
-      stopTypedAhead();
+      stopTypedAhead(id);
       focused.current = document.activeElement === el;
       return;
     }
@@ -648,14 +648,14 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
         const inBody = () => Boolean(document.activeElement?.closest(".page-body"));
         const typeRest = () => {
           if (!inBody() && ++tries < 60) return void requestAnimationFrame(typeRest);
-          stopTypedAhead();
+          stopTypedAhead(id);
           if (inBody() && ahead.body) typeIntoBody(ahead.body);
         };
         const into = () => {
-          if (document.activeElement !== el) return stopTypedAhead(); // inzwischen woanders hin geklickt
+          if (document.activeElement !== el) return stopTypedAhead(id); // inzwischen woanders hin geklickt
           if (intoBody(el, { at: "start", insert: true })) return typeRest();
           if (++tries < 60) requestAnimationFrame(into);
-          else stopTypedAhead();
+          else stopTypedAhead(id);
         };
         into();
       }
