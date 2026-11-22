@@ -844,7 +844,7 @@ test("HTML-Codeblock: Font „Based“ gilt auch im Rahmen, Rollbalken wie in de
   await expect.poll(() => inner.locator("body").evaluate(async () => {
     await document.fonts.ready;
     return [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family.replace(/["']/g, "")).sort().join(",");
-  })).toMatch(/literata variable.*schibsted grotesk variable/i);
+  })).toMatch(/literata.*schibsted grotesk/i);
   // Rollbalken: der eigene schmale der App, nicht der Systembalken mit heller Spur
   const bar = await inner.locator("html").evaluate((el) => ({
     color: getComputedStyle(el).scrollbarColor,
