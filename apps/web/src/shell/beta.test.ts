@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { slashItemsFor } from "@based/editor";
-import { BETA_HIDDEN, BETA_HIDDEN_SETTINGS, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes, productBlurb, productName, reportSendingHint, settingsPageVisible, workspaceNameHint } from "./beta.js";
+import { BETA_HIDDEN, BETA_HIDDEN_SETTINGS, CHANNEL, commandVisible, featureVisible, hiddenBlockTypes, copyReportHint, productBlurb, productName, reportSendingHint, settingsPageVisible, workspaceNameHint } from "./beta.js";
 import { SETTINGS_PAGES } from "./settings.js";
 import { matchCommands, navAvailable, NAV_COMMANDS } from "./sidebarNav.js";
 
@@ -140,5 +140,15 @@ describe("features.csv passt zum Beta-Gate", () => {
     expect(workspaceNameHint("dev")).toMatch(/share/);
     expect(reportSendingHint("beta")).toContain("hello@basednotes.app");
     expect(reportSendingHint("dev")).not.toContain("hello@basednotes.app");
+  });
+
+  it("Diagnostics auf beta nennt zuerst „Send to Based“, dann die Mail – wie docs/beta/README.md (BSD-646)", () => {
+    for (const hint of [copyReportHint("beta"), reportSendingHint("beta")]) {
+      expect(hint).toContain("Send to Based");
+      expect(hint).toContain("hello@basednotes.app");
+      expect(hint.indexOf("Send to Based")).toBeLessThan(hint.indexOf("hello@basednotes.app"));
+      expect(hint).not.toMatch(/doesn’t send|not available/i);
+    }
+    expect(copyReportHint("dev")).not.toContain("hello@basednotes.app");
   });
 });

@@ -99,15 +99,17 @@ export function workspaceNameHint(channel: Channel = CHANNEL): string {
 }
 
 /** BSD-483: Diagnostics → Crash reports → Sending – auf beta der Weg zu uns (BSD-467: Mail an hello@basednotes.app). */
-/** Feedback 20. 11.: Satz unter „Copy report“ in Diagnostics → Overview; auf beta der Weg zu uns (wie BSD-483). */
+/** Feedback 20. 11.: Satz unter „Copy report“ in Diagnostics → Overview; auf beta der Weg zu uns (wie BSD-483).
+ *  BSD-646: zuerst „Send to Based“ (⇧⌘B, BSD-632), Mail als zweiter Weg – wie docs/beta/README.md. */
 export function copyReportHint(channel: Channel = CHANNEL): string {
   return channel === "beta"
-    ? "Copy the report and email it to hello@basednotes.app. It holds the state, hangs and log — never page content."
+    ? "Report a Problem (⇧⌘B) sends it to us in one click with Send to Based. Or copy this report and email it to hello@basednotes.app. It holds the state, hangs and log — never page content."
     : "Copy the report and pass it on. It holds the state, hangs and log — never page content.";
 }
 
+/** BSD-646: Absturzberichte gehen nicht von selbst raus – der Weg zu uns ist „Send to Based“ (⇧⌘B), dann Mail. */
 export function reportSendingHint(channel: Channel = CHANNEL): string {
   return channel === "beta"
-    ? "Based doesn’t send reports by itself — save the report as a file and email it to hello@basednotes.app."
+    ? "Crash reports are never sent on their own. To reach us, use Report a Problem (⇧⌘B) → Send to Based, or save the report as a file and email it to hello@basednotes.app."
     : "Not available in this beta yet — save the report as a file or copy it and pass it on.";
 }

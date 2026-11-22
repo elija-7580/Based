@@ -88,8 +88,8 @@ export function tourStepText(step: Exclude<TourStepID, "start">, env: TourEnv): 
             ? "The iPhone app and sharing. Sync between your Macs works only through an iCloud Drive folder for now."
             : "The iPhone app and sharing." },
           { icon: "inbox", title: "Tell us what breaks", keys: "Mod+Shift+B", text: env.mac
-            ? "Help → Report a Problem saves a report, or write to hello@basednotes.app."
-            : "This saves a report, or write to hello@basednotes.app." },
+            ? "Help → Report a Problem sends it to us in one click, or write to hello@basednotes.app."
+            : "This sends a report to us in one click, or write to hello@basednotes.app." },
           ...(env.mac ? [{ icon: "restore", title: "Updates", text: "Based checks for updates on its own and asks before it installs one." } satisfies TourPoint] : []),
         ],
       };
