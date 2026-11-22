@@ -534,7 +534,8 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
       <div className="brand">
         <img className="on-light" src={markLight} alt="" />
         <img className="on-dark" src={markDark} alt="" />
-        <span className="wordmark">based</span>
+        {/* Elija 22.11.2026 (wie auf der Website): oben steht der Name des Workspace, das Zeichen davor bleibt die Marke. */}
+        {outline?.workspaceName.trim() ? <span className="ws-name" data-testid="workspace-name" title={outline.workspaceName}>{outline.workspaceName}</span> : <span className="wordmark">based</span>}
         {outline?.workspaceIcon ? <span className="ws-icon" data-testid="workspace-icon-badge" title={outline.workspaceName} aria-label={`Workspace ${outline.workspaceName}`}>{outline.workspaceIcon}</span> : null}
         {/* sichtbarer Knopf zum Ausblenden – das Kürzel allein findet niemand (und ⌘\ gibt es nicht auf jeder Tastatur) */}
         <button type="button" className="sidebar-hide icon-btn ghost" data-testid="sidebar-hide"

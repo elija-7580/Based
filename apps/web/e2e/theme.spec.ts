@@ -123,7 +123,7 @@ for (const [theme, os] of [["dark", "light"], ["light", "dark"]] as const) {
     await page.goto("/");
     await ready(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
-    expect(await css(page, ".wordmark", "color")).toBe(token("ink", theme));
+    expect(await css(page, ".ws-name", "color")).toBe(token("ink", theme));
     await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
     const title = page.getByLabel("Page title");
     await expect(title).toHaveValue("Welcome to Based");
