@@ -80,6 +80,8 @@ const LAZY_CACHE_BYTES = 1 << 20;
 export class ImportFiles {
   private readonly files = new Map<string, Uint8Array | LazyFile>();
   private readonly dirs = new Set<string>([""]);
+  /** BSD-656: NFC-Form → Pfad, wie er im Export steht (nur für `match`; bei jeder Änderung neu gebaut). */
+  private nfc: Map<string, string> | undefined;
 
   constructor(entries: Iterable<readonly [string, Uint8Array]> = []) {
     for (const [p, d] of entries) this.add(p, d);
@@ -90,6 +92,7 @@ export class ImportFiles {
     const p = normalizePath(path);
     if (p === "") return;
     this.files.set(p, data);
+    this.nfc = undefined;
     this.addDirectory(dirname(p));
   }
 
@@ -98,6 +101,7 @@ export class ImportFiles {
     const p = normalizePath(path);
     if (p === "") return;
     this.files.set(p, file);
+    this.nfc = undefined;
     this.addDirectory(dirname(p));
   }
 
@@ -105,12 +109,34 @@ export class ImportFiles {
     let p = normalizePath(path);
     while (!this.dirs.has(p)) {
       this.dirs.add(p);
+      this.nfc = undefined;
       p = dirname(p);
     }
   }
 
   remove(path: string) {
     this.files.delete(normalizePath(path));
+    this.nfc = undefined;
+  }
+
+  /**
+   * BSD-656: Pfad aus einem Link, wie er im Baum steht. Links in HTML sind meist NFC, Dateinamen nach dem Neupacken
+   * (alte HFS+-Volumes, manche Zip-Werkzeuge) NFD – oder umgekehrt. Gibt es den Pfad genau so, bleibt er; sonst der
+   * Eintrag mit gleicher NFC-Form, falls es ihn gibt. Die Pfade im Baum selbst ändern sich nicht (abgeleitete IDs).
+   */
+  match(path: string): string | undefined {
+    const p = normalizePath(path);
+    if (this.files.has(p) || this.dirs.has(p)) return p;
+    const key = p.normalize("NFC");
+    if (key === p && p.normalize("NFD") === p) return undefined; // nur ASCII o. Ä.: nichts anders zu schreiben
+    if (!this.nfc) {
+      this.nfc = new Map();
+      for (const q of [...this.dirs, ...this.files.keys()]) {
+        const k = q.normalize("NFC");
+        if (!this.nfc.has(k)) this.nfc.set(k, q);
+      }
+    }
+    return this.nfc.get(key);
   }
 
   get fileCount() {
