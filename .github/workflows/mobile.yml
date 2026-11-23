@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
+#
+# iPhone-Hülle (apps/mobile, ADR 0011: Tauri Mobile um apps/web).
+# - Pull Requests, die die Hülle berühren: unsignierter Bau für den Simulator (beweist, dass sie baut).
+# - Von Hand („Run workflow“, testflight = true): signierter Bau und Upload zu TestFlight. Braucht die vorhandenen
+#   Secrets APPLE_API_ISSUER / APPLE_API_KEY / APPLE_API_KEY_P8 (Rolle „App Manager“ oder höher), die Team-ID aus
+#   APPLE_SIGNING_IDENTITY und einen App-Eintrag in App Store Connect mit der Kennung aus tauri.conf.json.
+name: mobile
+
+on:
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/mobile.yml"
+  workflow_dispatch:
+    inputs:
+      testflight:
+        description: "Signiert bauen und zu TestFlight hochladen"
+        type: boolean
+        default: false
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: Based (iPhone)
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Rust (iPhone und Simulator)
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            apps/mobile/src-tauri/target
+          key: cargo-mobile-${{ runner.os }}-${{ hashFiles('apps/mobile/src-tauri/Cargo.lock') }}
+          restore-keys: cargo-mobile-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Xcode-Projekt erzeugen
+        working-directory: apps/mobile
+        run: |
+          pnpm exec tauri ios init --ci
+          # App-Symbole in allen iPhone-Größen aus dem Based-Zeichen
+          pnpm exec tauri icon ../desktop/src-tauri/icons/icon.png --ios-color "#ffffff" -o "$RUNNER_TEMP/icons"
+          cp -R "$RUNNER_TEMP/icons/ios/." src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
+          ls src-tauri/gen/apple
+
+      - name: Bauen für den Simulator (unsigniert)
+        if: ${{ !inputs.testflight }}
+        working-directory: apps/mobile
+        run: pnpm exec tauri ios build --target aarch64-sim --debug --ci
+
+      - name: Bauen und zu TestFlight hochladen
+        if: ${{ inputs.testflight }}
+        working-directory: apps/mobile
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          set -euo pipefail
+          [ -n "$APPLE_API_KEY_P8" ] || { echo "::error::Secrets für App Store Connect fehlen (ci/setup-apple-secrets.sh)."; exit 1; }
+          mkdir -p ~/private_keys
+          export APPLE_API_KEY_PATH=~/private_keys/AuthKey_${APPLE_API_KEY}.p8
+          printf '%s' "$APPLE_API_KEY_P8" > "$APPLE_API_KEY_PATH"
+          # Team-ID steht in Klammern am Ende der Signatur-Identität.
+          export APPLE_DEVELOPMENT_TEAM="$(printf '%s' "$APPLE_SIGNING_IDENTITY" | sed -n 's/.*(\([A-Z0-9]*\))$/\1/p')"
+          [ -n "$APPLE_DEVELOPMENT_TEAM" ] || { echo "::error::Team-ID nicht in APPLE_SIGNING_IDENTITY gefunden."; exit 1; }
+          pnpm exec tauri ios build --export-method app-store-connect --build-number "$GITHUB_RUN_NUMBER" --ci
+          IPA="$(ls src-tauri/gen/apple/build/arm64/*.ipa | head -1)"
+          xcrun altool --upload-app --type ios --file "$IPA" --apiKey "$APPLE_API_KEY" --apiIssuer "$APPLE_API_ISSUER"
+          rm -f "$APPLE_API_KEY_PATH"
