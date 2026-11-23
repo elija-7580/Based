@@ -31,7 +31,8 @@ Simulator. Von Hand gestartet mit „testflight“ baut der Workflow signiert un
 
 ## Offen
 
-- TestFlight braucht einen App-Eintrag in App Store Connect mit der Kennung aus `tauri.conf.json` und einen
-  API-Schlüssel mit der Rolle „App Manager“ (die vorhandenen Secrets `APPLE_API_*`).
+- App Store Connect (23. 11. 2026): die Kennung `com.friedrich-ulrich.based.next` ist registriert, der App-Eintrag heißt
+  „Based Notes“ („Based“ ist im App Store vergeben; auf dem Homescreen steht „Based“). Der API-Schlüssel der
+  vorhandenen Secrets `APPLE_API_*` braucht die Rolle „App Manager“; der TestFlight-Lauf ist noch nicht gelaufen.
 - Noch nicht auf einem echten Gerät geprüft: Mikrofon in der WebView, Ränder um Notch und Home-Balken,
   Tastatur über dem Editor, Kopplung per Kamera (QR) statt Einfügen.
