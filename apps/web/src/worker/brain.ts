@@ -1,10 +1,11 @@
 // BSD-163 / BSD-198: Agent-Brain-Seite des Store-Hosts (Muster wie worker/chat.ts). Skills und Memories liegen als
 // echte Datenbanken im Store (AgentBrain), der Skill-Router und der lokale Index laufen hier neben den Daten; der
 // Hauptthread bekommt nur Ergebnisse. Schützt die Brain-Seiten vor dem Löschen und repariert nach Änderungen.
-import { isPageLike, isTrashed, parseKey, plainText, titleOf, type StoreChange, type WorkspaceStore } from "@based/core";
+import { isPageLike, isTrashed, meetingInfo, meetingTranscript, parseKey, plainText, titleOf, transcriptText, type StoreChange, type WorkspaceStore } from "@based/core";
 import {
-  AgentBrain, BrainTools, CHAT_TYPE, chunkTexts, deletableIDs, LocalSemanticIndex, SkillCodecError, skillFoldersFromZip, skillFoldersToZip, SkillRouter,
-  type Citation, type MemoryKind, type MemoryRecord, type SemanticHit, type SkillCorrection, type SkillFolder, type SkillRecord, type SkillRouting, type TextEmbedder, type ToolResult, type ToolSpec,
+  AgentBrain, BrainTools, CHAT_TYPE, chunkTexts, deletableIDs, LEARN_PAGE_CHARS, LocalSemanticIndex, personalContext, protectedIDs, SkillCodecError, skillFoldersFromZip, skillFoldersToZip, SkillRouter,
+  STYLE_SAMPLE_CHARS,
+  type Citation, type LearnCandidate, type MemoryKind, type MemoryRecord, type MemorySuggestion, type SemanticHit, type SkillCorrection, type SkillFolder, type SkillRecord, type SkillRouting, type TextEmbedder, type ToolResult, type ToolSpec,
 } from "@based/brain";
 import type { JSONValue } from "@based/core";
 
@@ -23,6 +24,13 @@ export type BrainAction =
   | { op: "memories" }
   | { op: "saveMemory"; title: string; kind: MemoryKind; body: string; updates?: string }
   | { op: "personNames" }
+  /** Lernen aus Notizen (brain/learner.ts): geänderte Seiten; `seed` nimmt einmal die zuletzt bearbeiteten dazu. */
+  | { op: "learnCandidates"; seed?: boolean }
+  | { op: "learnSave"; pageID: string; suggestions: MemorySuggestion[] }
+  | { op: "styleSamples" }
+  | { op: "saveStyle"; body: string }
+  /** Was ein Schreib-Aufruf über den Nutzer wissen soll (About me, Schreibstil, passende Memories). */
+  | { op: "personal"; query: string }
   | { op: "resolveCitations"; markers: { kind: "block" | "page"; id: string }[] }
   | { op: "related"; pageID: string; limit?: number }
   | { op: "toolSpecs" }
@@ -48,6 +56,8 @@ export class BrainHost {
   private indexDirty = new Set<string>();
   private router: { revision: number; router: SkillRouter } | undefined;
   private repairQueued = false;
+  /** Seiten, deren Inhalt sich geändert hat, seit zuletzt daraus gelernt wurde (`remote` = Änderung kam über Sync). */
+  private learnDirty = new Map<string, { remote: boolean }>();
   /** Gibt es (oder gab es) einen Brain? Ohne wird nach Änderungen nichts geprüft (große Workspaces, Importe). */
   private active = false;
   readonly tools: BrainTools;
@@ -64,7 +74,7 @@ export class BrainHost {
 
   handle(a: BrainAction): unknown {
     const b = this.brain;
-    if (a.op === "ensure" || a.op === "saveSkill" || a.op === "importSkills" || a.op === "saveMemory") this.active = true;
+    if (a.op === "ensure" || a.op === "saveSkill" || a.op === "importSkills" || a.op === "saveMemory" || a.op === "learnSave" || a.op === "saveStyle") this.active = true;
     switch (a.op) {
       case "status": {
         const ids = b.find();
@@ -85,6 +95,14 @@ export class BrainHost {
       case "memories": return b.memories() satisfies MemoryRecord[];
       case "saveMemory": return b.saveMemory({ title: a.title, kind: a.kind, body: a.body, updates: a.updates });
       case "personNames": return b.personNames();
+      case "learnCandidates": return this.learnCandidates(a.seed === true) satisfies LearnCandidate[];
+      case "learnSave": {
+        this.learnDirty.delete(a.pageID);
+        return a.suggestions.map((s) => b.saveLearned(s, a.pageID));
+      }
+      case "styleSamples": return this.styleSamples();
+      case "saveStyle": return b.setStyle(a.body);
+      case "personal": return b.exists ? personalContext({ about: b.about(), memories: b.activeMemories(), query: a.query }) : "";
       case "resolveCitations": return this.resolveCitations(a.markers);
       case "related": return this.related(a.pageID, a.limit ?? 5);
       case "toolSpecs": return this.tools.specs satisfies ToolSpec[];
@@ -174,6 +192,87 @@ export class BrainHost {
     return (await this.tools.relatedPages(pageID, limit)).filter((h) => !isTrashed(this.store, h.pageID)).map((h) => ({ ...h, title: titleOf(this.store, h.pageID) }));
   }
 
+  // MARK: Lernen aus Notizen
+
+  /** Darf aus dieser Seite gelernt werden? Nicht aus dem Brain selbst, Vorlagen, Papierkorb und reinen KI-Seiten. */
+  private learnable(id: string): boolean {
+    const s = this.store;
+    const b = s.blocks.get(id);
+    if (!b || !isPageLike(b) || isTrashed(s, id) || b.props?.isTemplate === true || b.origin === "ai") return false;
+    const ids = this.brain.find();
+    if (!ids) return true;
+    return !protectedIDs(s).has(id) && b.parent !== "d:" + ids.memoriesDB && b.parent !== "d:" + ids.skillsDB;
+  }
+
+  /** Text einer Seite: ihre Blöcke und, bei Sprachnotizen und Meetings, das Transkript. Unterseiten zählen selbst. */
+  private pageText(id: string, limit: number, transcripts = true): { text: string; editedAt: number } {
+    const s = this.store;
+    const texts: string[] = [];
+    let editedAt = s.blocks.get(id)?.updatedAt ?? 0, size = 0;
+    const visit = (parent: string) => {
+      for (const k of s.children(parent)) {
+        const c = s.blocks.get(k);
+        if (!c || isPageLike(c) || c.type === CHAT_TYPE || c.trashedAt !== undefined) continue;
+        editedAt = Math.max(editedAt, c.updatedAt);
+        if (size < limit) {
+          const t = c.type === "meeting"
+            ? (transcripts ? transcriptText(meetingTranscript(s, c.id, false), meetingInfo(s, c.id), false) : "")
+            : plainText(c.text);
+          if (t.trim()) {
+            texts.push(t.trim());
+            size += t.length + 1;
+          }
+        }
+        if (c.type !== "meeting" || transcripts) visit("b:" + k);
+      }
+    };
+    visit("b:" + id);
+    return { text: texts.join("\n").slice(0, limit), editedAt };
+  }
+
+  /** Die zuletzt bearbeiteten Seiten, aus denen gelernt werden darf. */
+  private recentPages(limit: number): string[] {
+    const pages = [...this.store.skeletonBlocks()].filter((b) => isPageLike(b) && this.learnable(b.id));
+    return pages.sort((a, b) => b.updatedAt - a.updatedAt).slice(0, limit).map((b) => b.id);
+  }
+
+  private learnCandidates(seed: boolean): LearnCandidate[] {
+    if (seed) for (const id of this.recentPages(15)) if (!this.learnDirty.has(id)) this.learnDirty.set(id, { remote: false });
+    // Memories, die schon auf eine Seite verweisen: ein anderes Gerät hat daraus gelernt (kein zweiter Aufruf).
+    const linked = new Map<string, number>();
+    if (this.learnDirty.size > 0) {
+      for (const m of this.brain.memories()) {
+        const sources = [...m.body.matchAll(/^Source:.*?\(based:\/\/page\/([^)\s]+)\)/gm)].map((x) => x[1]!);
+        if (sources.length === 0) continue;
+        let at = this.store.blocks.get(m.id)?.updatedAt ?? 0;
+        for (const k of this.store.children("b:" + m.id)) at = Math.max(at, this.store.blocks.get(k)?.updatedAt ?? 0);
+        for (const pid of sources) linked.set(pid, Math.max(linked.get(pid) ?? 0, at));
+      }
+    }
+    const out: LearnCandidate[] = [];
+    for (const [id, d] of [...this.learnDirty]) {
+      if (!this.learnable(id)) { this.learnDirty.delete(id); continue; }
+      const { text, editedAt } = this.pageText(id, LEARN_PAGE_CHARS);
+      if (d.remote && (linked.get(id) ?? 0) >= editedAt) { this.learnDirty.delete(id); continue; }
+      out.push({ id, title: titleOf(this.store, id), text, editedAt, ...(d.remote ? { remote: true } : {}) });
+    }
+    return out;
+  }
+
+  /** Schreibproben: eigener Text der zuletzt bearbeiteten Seiten (ohne Transkripte – Gesprochenes ist kein Schreibstil). */
+  private styleSamples(): string {
+    const parts: string[] = [];
+    let size = 0;
+    for (const id of this.recentPages(12)) {
+      const { text } = this.pageText(id, 1200, false);
+      if (text.length < 200) continue;
+      parts.push(text);
+      size += text.length;
+      if (size >= STYLE_SAMPLE_CHARS) break;
+    }
+    return parts.join("\n\n---\n\n").slice(0, STYLE_SAMPLE_CHARS);
+  }
+
   // MARK: Änderungen, Schutz
 
   /** Löschen nur, was nicht zum Brain gehört; `refused` meldet die UI. */
@@ -191,6 +290,14 @@ export class BrainHost {
       const { kind, id } = parseKey(key);
       if (kind !== "block") continue;
       if (this.index) this.indexDirty.add(containingPage(this.store, id) ?? id);
+      // Lernen aus Notizen: nur, was jemand geschrieben hat (hier oder auf einem anderen Gerät) – kein Import, kein Laden.
+      if (change.origin === "local" || change.origin === "undo" || change.origin === "redo" || change.origin === "remote") {
+        const page = containingPage(this.store, id);
+        if (page && this.learnDirty.size < 300) {
+          const was = this.learnDirty.get(page);
+          this.learnDirty.set(page, { remote: change.origin === "remote" && was?.remote !== false });
+        }
+      }
       // Ein Brain kommt über Sync oder Import dazu.
       if (!this.active && (this.store.blocks.get(id)?.props as { brain?: string } | undefined)?.brain) this.active = true;
     }

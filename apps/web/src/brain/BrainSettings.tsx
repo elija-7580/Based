@@ -151,7 +151,15 @@ function MemoriesSection({ client: store, state, navigate }: SettingsSectionProp
         <Switch
           label="Suggest memories from chats"
           description="After an answer, the chat model proposes up to three facts you stated about yourself. Nothing is saved until you click Save. Costs one short model call per answer."
-          value={settings.memories.suggest} onChange={(on) => brainSettings().update((s) => ({ ...s, memories: { suggest: on } }))}
+          value={settings.memories.suggest} onChange={(on) => brainSettings().update((s) => ({ ...s, memories: { ...s.memories, suggest: on } }))}
+          labelPosition="start" labelSpacing="spread" width="100%"
+        />
+      ) : null}
+      {ai ? (
+        <Switch
+          label="Learn from my notes"
+          description="Based reads pages and voice notes a few minutes after you stop editing them and remembers who you are, what you work on and how you write. Ask AI then writes in your voice. Private topics wait in Memories as “To review”. Costs one short model call per edited page, at most 12 an hour."
+          value={settings.memories.learn === true} onChange={(on) => brainSettings().update((s) => ({ ...s, memories: { ...s.memories, learn: on } }))}
           labelPosition="start" labelSpacing="spread" width="100%"
         />
       ) : null}
@@ -165,4 +173,4 @@ function MemoriesSection({ client: store, state, navigate }: SettingsSectionProp
 
 registerSettingsSection({ id: "brain-skills", page: "agents", title: "Skills", order: 20, component: SkillsSection, provides: ["Skills"], keywords: ["Import skills", "Agent Brain"] });
 registerSettingsSection({ id: "brain-privacy", page: "agents", title: "Privacy", order: 30, ai: true, component: PrivacySection, keywords: ["Redact", "What to redact"] });
-registerSettingsSection({ id: "brain-memories", page: "agents", title: "Memories", order: 40, component: MemoriesSection, keywords: ["Saved memories"] });
+registerSettingsSection({ id: "brain-memories", page: "agents", title: "Memories", order: 40, component: MemoriesSection, keywords: ["Saved memories", "Learn from my notes", "Writing style"] });

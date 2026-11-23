@@ -5,6 +5,7 @@ export * from "../redact/rules.js";
 export * from "../redact/redactor.js";
 export * from "../redact/wrap.js";
 export * from "../memory/suggestions.js";
+export * from "../memory/learn.js";
 export * from "../cite/citations.js";
 export * from "../semantic/text.js";
 export * from "../semantic/index.js";

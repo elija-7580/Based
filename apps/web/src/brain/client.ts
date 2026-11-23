@@ -1,5 +1,5 @@
 // Dünner Zugang zum Agent Brain im Store-Worker (worker/brain.ts) über den vorhandenen StoreClient.
-import type { MemoryKind, MemoryRecord, SemanticHit, SkillCorrection, SkillRecord, SkillRouting, ToolResult, ToolSpec } from "@based/brain";
+import type { LearnCandidate, MemoryKind, MemoryRecord, MemorySuggestion, SemanticHit, SkillCorrection, SkillRecord, SkillRouting, ToolResult, ToolSpec } from "@based/brain";
 import type { JSONValue } from "@based/core";
 import type { BrainAction, BrainStatus, ResolvedCitation, SkillImportReport } from "../worker/brain.js";
 import type { StoreClient } from "../worker/client.js";
@@ -24,6 +24,11 @@ export class BrainClient {
   saveMemory(m: { title: string; kind: MemoryKind; body: string; updates?: string | undefined }) {
     return this.call<string>(m.updates ? { op: "saveMemory", title: m.title, kind: m.kind, body: m.body, updates: m.updates } : { op: "saveMemory", title: m.title, kind: m.kind, body: m.body });
   }
+  learnCandidates(seed: boolean) { return this.call<LearnCandidate[]>(seed ? { op: "learnCandidates", seed } : { op: "learnCandidates" }); }
+  learnSave(pageID: string, suggestions: MemorySuggestion[]) { return this.call<string[]>({ op: "learnSave", pageID, suggestions }); }
+  styleSamples() { return this.call<string>({ op: "styleSamples" }); }
+  saveStyle(body: string) { return this.call<string>({ op: "saveStyle", body }); }
+  personal(query: string) { return this.call<string>({ op: "personal", query }); }
   personNames() { return this.call<string[]>({ op: "personNames" }); }
   resolveCitations(markers: { kind: "block" | "page"; id: string }[]) { return this.call<Record<string, ResolvedCitation | null>>({ op: "resolveCitations", markers }); }
   related(pageID: string, limit?: number) { return this.call<(SemanticHit & { title: string })[]>(limit ? { op: "related", pageID, limit } : { op: "related", pageID }); }

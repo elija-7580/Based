@@ -18,6 +18,21 @@ export function cleanAIText(text: string): string {
   return (m ? m[1]! : t).trim();
 }
 
-export function editorAI(write: (system: string, prompt: string, signal: AbortSignal) => Promise<string>, available?: () => boolean): EditorAI {
-  return { write: async (r, signal) => cleanAIText(await write(EDITOR_AI_SYSTEM, aiPrompt(r), signal)), ...(available ? { available } : {}) };
+/** System-Prompt mit dem, was Based über den Nutzer weiß (brain: `personalContext`); ohne Wissen der Grund-Prompt. */
+export const personalSystem = (personal: string): string => (personal.trim() ? `${EDITOR_AI_SYSTEM}\n\n${personal.trim()}` : EDITOR_AI_SYSTEM);
+
+/**
+ * `personal`: holt zu einer Anfrage, was das Gedächtnis hergibt (About me, Schreibstil, passende Memories). Schlägt
+ * das fehl oder dauert es zu lange, wird ohne geschrieben – Ask AI wartet nie darauf.
+ */
+export function editorAI(write: (system: string, prompt: string, signal: AbortSignal) => Promise<string>, available?: () => boolean, personal?: (query: string) => Promise<string>): EditorAI {
+  const system = async (query: string) => {
+    if (!personal) return EDITOR_AI_SYSTEM;
+    const slow = new Promise<string>((resolve) => setTimeout(() => resolve(""), 1500));
+    return personalSystem(await Promise.race([personal(query).catch(() => ""), slow]));
+  };
+  return {
+    write: async (r, signal) => cleanAIText(await write(await system([r.prompt, r.selection ?? "", r.page.slice(0, 1500)].join("\n")), aiPrompt(r), signal)),
+    ...(available ? { available } : {}),
+  };
 }
