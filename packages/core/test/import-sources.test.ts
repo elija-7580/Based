@@ -140,6 +140,7 @@ describe("BSD-661: Notion-Markdown mit Umlauten – Dateiname NFD, Link NFC (ode
       [`Home ${H}/${f("Bild Ä.png")}`]: png,
       [`Home ${H}/${f("Aufgaben")} ${T}.csv`]: enc.encode("Name\nPrüfen\n"),
       [`Home ${H}/${f("Aufgaben")} ${T}_all.csv`]: enc.encode("Name\nPrüfen\n"),
+      [`Home ${H}/${f("Aufgaben")} ${T}/${f("Prüfen")} ${R1}.md`]: enc.encode("# Prüfen\n\nRow body\n"),
     });
   };
   const run = (s: WorkspaceStore, zip: Uint8Array) => importNotionItems(s, [{ files: files({ "Export-u.zip": zip }), path: "Export-u.zip" }], { assets: new MemoryAssetSink(), warnMissingFiles: true });
@@ -149,12 +150,14 @@ describe("BSD-661: Notion-Markdown mit Umlauten – Dateiname NFD, Link NFC (ode
     outline: outline(s, "w"),
     ids: live(s).map((b) => b.id).sort(),
     image: live(s).find((b) => b.type === "image")?.props?.asset !== undefined,
+    rowBody: titles(s, "b:" + dash(R1)),
   });
   const same = fresh();
   run(same, exportZip("NFC", "NFC"));
   const expected = snapshot(same);
 
-  it("Grundlage (gleiche Form): Unterseite und Datenbank an ihrem Platz, Bild als Datei", () => {
+  it("Grundlage (gleiche Form): Unterseite und Datenbank an ihrem Platz, Bild als Datei, Zeile mit Inhalt", () => {
+    expect(expected.rowBody).toEqual(["Row body"]);
     expect(expected.outline.slice(0, 4)).toEqual(["page: Home", "  text: Intro", `  page: ${sub}`, "    text: Sub body"]);
     expect(expected.outline.some((l) => l.startsWith("  text: ") && l.includes(sub))).toBe(false);
     expect(expected.image).toBe(true);

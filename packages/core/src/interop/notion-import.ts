@@ -764,7 +764,8 @@ class MarkdownNotionImporter {
     if (folder !== undefined) {
       for (const f of this.files.list(folder).sort(comparePaths)) {
         if (extname(f).toLowerCase() !== "md" || isDir(this.files, f)) continue;
-        const k = cleanTitle(basename(f));
+        // BSD-661: Schlüssel in NFC – der Zeilentitel aus der CSV und der Dateiname können verschiedene Formen haben
+        const k = cleanTitle(basename(f)).normalize("NFC");
         rowFiles.set(k, [...(rowFiles.get(k) ?? []), f]);
       }
     }
@@ -791,10 +792,11 @@ class MarkdownNotionImporter {
       const rowTitle = r[0] ?? "";
       const own = pageOf?.[ri];
       if (own !== undefined && this.files.isFile(own) && this.importPage(own, "d:" + db.id, k, values, db, rowTitle) !== undefined) return;
-      const files = rowFiles.get(markdownFileName(rowTitle)) ?? rowFiles.get(rowTitle);
+      const fileKey = markdownFileName(rowTitle).normalize("NFC");
+      const files = rowFiles.get(fileKey) ?? rowFiles.get(rowTitle.normalize("NFC"));
       if (files && files.length > 0) {
         const f = files[0]!;
-        rowFiles.set(markdownFileName(rowTitle), files.slice(1));
+        rowFiles.set(fileKey, files.slice(1));
         const pid = this.importPage(f, "d:" + db.id, k, values, db);
         if (pid !== undefined) { track(pid); return; }
       }
