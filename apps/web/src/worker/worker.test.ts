@@ -130,6 +130,31 @@ describe("Store-Worker-Schnittstelle", () => {
     expect(client.getState().titles.has(child)).toBe(false);
   });
 
+  it("Apple Watch: Sprachnotiz wird Seite mit Meeting-Block und der Zeit der Uhr, Diktat wird Seite mit Text", async () => {
+    const { client } = setup();
+    await client.init({ device: "DEV00001" });
+    const at = new Date(2026, 10, 23, 17, 54).getTime();
+    const voice = await client.command<string>({ op: "createCapture", at });
+    const short = await client.command<string>({ op: "createCapture", at, text: "  Call the roofer  " });
+    const long = await client.command<string>({ op: "createCapture", at, text: "Idea for the launch post: start with the import, then show the database views\nSecond thought" });
+    await settle();
+    expect(client.title(voice)).toBe("Voice note — Nov 23, 2026, 5:54 PM");
+    expect(client.title(short)).toBe("Call the roofer");
+    expect(client.title(long)).toBe("Idea for the launch post: start with the import, then show…");
+    const page = async (id: string) => {
+      const r = await client.openPage(id);
+      const blocks = r.store.descendants(id).map((b) => r.store.blocks.get(b)!);
+      r.close();
+      return blocks;
+    };
+    expect((await page(voice)).filter((b) => b.type === "meeting").map((b) => b.text)).toEqual(["Voice note — Nov 23, 2026, 5:54 PM"]);
+    expect(await page(short)).toEqual([]);
+    expect((await page(long)).map((b) => [b.type, b.text])).toEqual([
+      ["text", "Idea for the launch post: start with the import, then show the database views"],
+      ["text", "Second thought"],
+    ]);
+  });
+
   it("Ziehen und Favoriten ändern die Struktur", async () => {
     const { client } = setup();
     const { homePageID } = await client.init({});

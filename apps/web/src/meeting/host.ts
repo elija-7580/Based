@@ -33,6 +33,11 @@ export interface WebMeetingHost extends MeetingHost {
   recordingPage(): string | undefined;
   /** Feedback 18. 11. (Meeting erkannt → „Start transcribing“): Aufnahme im ersten Meeting-Block der Seite starten. */
   startOnPage(pageID: string): Promise<boolean>;
+  /**
+   * Apple Watch (apps/watch): eine fertige Aufnahme als Spur „upload“ in den ersten Meeting-Block der Seite legen.
+   * `false`, wenn die Seite keinen Meeting-Block hat oder die Aufnahme nicht gespeichert werden konnte.
+   */
+  importOnPage(pageID: string, file: { data: Blob; mime: string; duration: number; name: string }): Promise<boolean>;
 }
 
 export function createMeetingHost(client: StoreClient): WebMeetingHost {
@@ -237,6 +242,20 @@ export function createMeetingHost(client: StoreClient): WebMeetingHost {
         if (!meetingID) return false;
         await this.start(store, meetingID, { systemAudio: false });
         return recorder.getState().recording;
+      } finally {
+        r?.close();
+      }
+    },
+    async importOnPage(pageID, file) {
+      let r: PageReplica | undefined;
+      try {
+        r = await client.openPage(pageID);
+        const store = r.store;
+        const meetingID = store.descendants(pageID).find((id) => store.blocks.get(id)?.type === "meeting");
+        if (!meetingID) return false;
+        const ok = await recorder.importRecording(store, meetingID, file);
+        if (ok) remember(store, meetingID);
+        return ok;
       } finally {
         r?.close();
       }

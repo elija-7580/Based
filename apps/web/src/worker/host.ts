@@ -51,6 +51,9 @@ import {
   createDatabase,
   createMeeting,
   meetingTitleFor,
+  voiceNoteTitleFor,
+  blockCommands,
+  captureTextParts,
   dbops,
   plainText,
   MemoryHistoryStorage,
@@ -434,6 +437,18 @@ export class StoreHost {
       case "createMeetingPage": {
         const id = createPage(store, { title: meetingTitleFor(new Date()) });
         createMeeting(store, { parent: "b:" + id });
+        return store.blocks.has(id) ? id : undefined;
+      }
+      case "createCapture": {
+        if (c.text !== undefined) {
+          const { title, body } = captureTextParts(c.text);
+          const id = createPage(store, { title });
+          if (body) for (const line of body.split("\n")) if (line.trim()) blockCommands.insertBlock(store, { inside: id }, "text", { text: line.trim() });
+          return store.blocks.has(id) ? id : undefined;
+        }
+        const title = voiceNoteTitleFor(new Date(c.at));
+        const id = createPage(store, { title });
+        createMeeting(store, { parent: "b:" + id, title });
         return store.blocks.has(id) ? id : undefined;
       }
       case "createBoard": {

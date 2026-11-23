@@ -175,7 +175,7 @@ export type {
 } from "./model/meeting.js";
 export {
   addMeetingContext, addMeetingTrack, appendTranscript, applyMeetingSummary, applySpeakerTurns, createMeeting, editTranscript, findMeetingSection, insertMeetingAfter,
-  meetingContaining, meetingContextText, meetingInfo, pageHasMeeting, meetingNotesText, meetingSection, meetingSummaryTexts, meetingTitleFor, meetingTranscript,
+  meetingContaining, meetingContextText, meetingInfo, pageHasMeeting, meetingNotesText, meetingSection, meetingSummaryTexts, meetingTitleFor, meetingTranscript, voiceNoteTitleFor, captureTextParts, CAPTURE_TITLE_CHARS,
   meetingVocabulary, mergeSpeakers, mergedSpeakers, removeMeetingContext, renameSpeaker, replaceTranscript, setMeetingStatus, setMeetingTitle,
   setSegmentSpeaker, stampNote, stampedNotes, transcriptChunks, unstampedNotes, updateMeeting,
 } from "./store/meeting-ops.js";

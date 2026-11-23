@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 #
-# iPhone-Hülle (apps/mobile, ADR 0011: Tauri Mobile um apps/web).
-# - Pull Requests, die die Hülle berühren: unsignierter Bau für den Simulator (beweist, dass sie baut).
+# iPhone-Hülle (apps/mobile, ADR 0011: Tauri Mobile um apps/web) und Apple Watch App (apps/watch, nativ in Swift).
+# - Pull Requests, die die Hülle oder die Uhr-App berühren: unsignierter Bau für den Simulator (beweist, dass sie
+#   bauen) und die Tests der Übertragungslogik der Uhr.
 # - Von Hand („Run workflow“, testflight = true): signierter Bau und Upload zu TestFlight. Braucht die vorhandenen
 #   Secrets APPLE_API_ISSUER / APPLE_API_KEY / APPLE_API_KEY_P8 (Rolle „App Manager“ oder höher), die Team-ID aus
 #   APPLE_SIGNING_IDENTITY und einen App-Eintrag in App Store Connect mit der Kennung aus tauri.conf.json.
@@ -12,6 +13,7 @@ on:
   pull_request:
     paths:
       - "apps/mobile/**"
+      - "apps/watch/**"
       - ".github/workflows/mobile.yml"
   workflow_dispatch:
     inputs:
@@ -93,3 +95,28 @@ jobs:
           IPA="$(ls src-tauri/gen/apple/build/arm64/*.ipa | head -1)"
           xcrun altool --upload-app --type ios --file "$IPA" --apiKey "$APPLE_API_KEY" --apiIssuer "$APPLE_API_ISSUER"
           rm -f "$APPLE_API_KEY_PATH"
+
+  watch:
+    name: Based (Apple Watch)
+    # Die Uhr-App ist noch nicht Teil des TestFlight-Baus (docs/watch.md, „Offen“); hier nur: baut sie, stimmt die Logik.
+    if: ${{ !inputs.testflight }}
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Übertragung und Ausgang testen (ohne Uhr)
+        working-directory: apps/watch
+        run: swift test
+
+      - name: Xcode-Projekt erzeugen
+        working-directory: apps/watch
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          xcodegen generate
+
+      - name: Bauen für den Simulator (unsigniert)
+        working-directory: apps/watch
+        run: |
+          xcodebuild -project BasedWatch.xcodeproj -scheme BasedWatch -configuration Debug \
+            -destination "generic/platform=watchOS Simulator" CODE_SIGNING_ALLOWED=NO -quiet build
