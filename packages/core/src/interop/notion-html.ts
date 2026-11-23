@@ -349,6 +349,11 @@ export class NotionHTMLImporter {
     return id;
   }
 
+  /** BSD-656: Pfad aus einem Link so, wie er im Export steht (NFC-Link, NFD-Dateiname oder umgekehrt). */
+  private local(u: string): string {
+    return this.files.match(u) ?? u;
+  }
+
   private registerFile(f: string) {
     if (this.pageFiles.has(f)) return;
     const id = notionIDInName(basename(f)) ?? derivedID("html-file", basename(f), basename(dirname(f)));
@@ -486,7 +491,7 @@ export class NotionHTMLImporter {
     if (href.includes("://") || href.startsWith("data:")) return undefined;
     const path = href.split(/[?#]/)[0] ?? href;
     if (!isHTMLFile(path)) return undefined;
-    const u = joinPath(ctx.dir, removingPercentEncoding(path) ?? path);
+    const u = this.local(joinPath(ctx.dir, removingPercentEncoding(path) ?? path));
     if (u === ctx.file || !this.files.isFile(u)) return undefined;
     if (notionIDInName(basename(u)) !== undefined) return undefined;
     const size = this.files.size(u);
@@ -917,7 +922,7 @@ export class NotionHTMLImporter {
     }
     if (src.includes("://") || src.startsWith("data:") || src.startsWith("mailto:")) return { url: src };
     const decoded = removingPercentEncoding(src) ?? src;
-    const u = joinPath(ctx.dir, decoded);
+    const u = this.local(joinPath(ctx.dir, decoded));
     // BSD-254: erst beim Übernehmen in den Asset-Speicher lesen (große Exporte liegen so nie ganz im Speicher)
     const size = this.files.isFile(u) ? this.files.size(u) : undefined;
     if (size !== undefined) return { asset: this.builder.assetLazy(u, size, () => this.files.read(u), basename(u)) };
@@ -992,7 +997,7 @@ export class NotionHTMLImporter {
     }
     const path = href.split("#").find((s) => s.length > 0) ?? href;
     if (!path.toLowerCase().endsWith(".html")) return undefined;
-    const u = joinPath(ctx.dir, removingPercentEncoding(path) ?? path);
+    const u = this.local(joinPath(ctx.dir, removingPercentEncoding(path) ?? path));
     const known = this.pageFiles.get(u);
     if (known !== undefined) return { id: known, file: u };
     const id = notionIDInName(basename(u));
@@ -1215,7 +1220,7 @@ export class NotionHTMLImporter {
   private rowFolder(table: HTMLNode, ctx: Ctx): string | undefined {
     for (const td of table.all((n) => n.tag === "td" && n.has("cell-title"))) {
       const href = td.first((n) => n.tag === "a")?.attr("href");
-      if (href !== undefined && !href.includes("://")) return dirname(joinPath(ctx.dir, removingPercentEncoding(href) ?? href));
+      if (href !== undefined && !href.includes("://")) return dirname(this.local(joinPath(ctx.dir, removingPercentEncoding(href) ?? href)));
     }
     return undefined;
   }
@@ -1257,7 +1262,7 @@ export class NotionHTMLImporter {
       let file: string | undefined;
       const ahref = a?.attr("href");
       if (ahref !== undefined && !ahref.includes("://")) {
-        const u = joinPath(ctx.dir, removingPercentEncoding(ahref) ?? ahref);
+        const u = this.local(joinPath(ctx.dir, removingPercentEncoding(ahref) ?? ahref));
         if (this.files.isFile(u)) file = u;
       }
       const trID = tr.attr("id");

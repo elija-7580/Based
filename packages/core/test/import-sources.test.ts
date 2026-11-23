@@ -128,6 +128,54 @@ describe("Notion: HTML-Export in Teilen", () => {
   });
 });
 
+describe("BSD-656: Notion-HTML mit Umlauten – Dateiname NFD, Link NFC (oder umgekehrt)", () => {
+  const page = (id: string, title: string, body: string) => `<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>${title}</title></head><body><article id="${dash(id)}" class="page sans"><header><h1 class="page-title">${title}</h1></header><div class="page-body">${body}</div></article></body></html>`;
+  const sub = "Über – Plan 🚀 & 100 % «Größe»";
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+  /** Export mit Unterseite, Bild und Zeilenseite; `files`/`links`: Unicode-Form der Dateinamen bzw. der Links. */
+  const exportZip = (files: "NFC" | "NFD", links: "NFC" | "NFD") => {
+    const f = (x: string) => x.normalize(files), l = (x: string) => encodeURIComponent(x.normalize(links));
+    const home = page(H, "Home", `<p>Intro</p><figure id="${dash(OP)}" class="link-to-page"><a href="Home%20${H}/${l(sub)}%20${S}.html">${sub}</a></figure>`
+      + `<figure class="image"><a href="Home%20${H}/${l("Bild Ä.png")}"><img src="Home%20${H}/${l("Bild Ä.png")}"/></a></figure>`
+      + `<div id="${dash(T)}" class="collection-content"><h4 class="collection-title">Aufgaben</h4><table class="collection-content"><thead><tr><th><span class="icon property-icon"><svg class="typesTitle"></svg></span>Name</th></tr></thead><tbody><tr id="${dash(R1)}"><td class="cell-title"><a href="Home%20${H}/${l("Aufgaben")}%20${T}/${l("Prüfen")}%20${R1}.html">Prüfen</a></td></tr></tbody></table></div>`);
+    return zipSync({
+      [`Home ${H}.html`]: enc.encode(home),
+      [`Home ${H}/${f(sub)} ${S}.html`]: enc.encode(page(S, sub, "<p>Sub body</p>")),
+      [`Home ${H}/${f("Bild Ä.png")}`]: png,
+      [`Home ${H}/Aufgaben ${T}/${f("Prüfen")} ${R1}.html`]: enc.encode(page(R1, "Prüfen", "<p>Row body</p>")),
+    });
+  };
+  const run = (s: WorkspaceStore, zip: Uint8Array) => importNotionItems(s, [{ files: files({ "Export-u.zip": zip }), path: "Export-u.zip" }], { assets: new MemoryAssetSink(), warnMissingFiles: true });
+  const fresh = () => new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+  const live = (s: WorkspaceStore) => [...s.blocks.values()].filter((b) => b.trashedAt === undefined);
+  const snapshot = (s: WorkspaceStore) => ({
+    outline: outline(s, "w"),
+    ids: live(s).map((b) => b.id).sort(),
+    image: live(s).find((b) => b.type === "image")?.props?.asset !== undefined,
+    rowBody: titles(s, "b:" + dash(R1)),
+  });
+  const same = fresh();
+  run(same, exportZip("NFC", "NFC"));
+  const expected = snapshot(same);
+
+  it("Grundlage (gleiche Form): Unterseite an ihrem Platz, Bild als Datei, Zeile mit Inhalt", () => {
+    expect(expected.outline.slice(0, 4)).toEqual(["page: Home", "  text: Intro", `  page: ${sub}`, "    text: Sub body"]);
+    expect(expected.outline.some((l) => l.includes("linkToPage"))).toBe(false);
+    expect(expected.image).toBe(true);
+    expect(expected.rowBody).toEqual(["Row body"]);
+  });
+
+  it.each([["NFD", "NFC"], ["NFC", "NFD"]] as const)("Dateinamen %s, Links %s: gleiche Gliederung und IDs; Reimport ohne Duplikate", (fileForm, linkForm) => {
+    const s = fresh();
+    const zip = exportZip(fileForm, linkForm);
+    const r = run(s, zip);
+    expect(r.warnings.filter((w) => /missing|fehlt/i.test(w))).toEqual([]);
+    expect(snapshot(s)).toEqual(expected);
+    run(s, zip);
+    expect(snapshot(s)).toEqual(expected);
+  });
+});
+
 describe("Gewöhnliche Markdown-Ordner", () => {
   it("Ordner werden Seiten, .txt und .markdown sind Notizen, Punkt-Dateien fallen weg, <Pfad mit Leerzeichen>", () => {
     const { s, r } = load({
