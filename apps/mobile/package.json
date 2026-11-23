@@ -1,0 +1,16 @@
+{
+  "name": "@based/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "description": "Tauri-2-Hülle fürs iPhone um apps/web (ADR 0011: Start mit Tauri Mobile). Bauen nur auf dem Mac: docs/mobile.md.",
+  "scripts": {
+    "typecheck": "node -e \"JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.json','utf8'))\"",
+    "test": "node --test test/config.test.mjs",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4"
+  }
+}

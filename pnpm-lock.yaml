@@ -59,6 +59,12 @@ importers:
         specifier: 0.25.12
         version: 0.25.12
 
+  apps/mobile:
+    devDependencies:
+      '@tauri-apps/cli':
+        specifier: ^2.12.4
+        version: 2.12.4
+
   apps/server:
     dependencies:
       '@based/brain':

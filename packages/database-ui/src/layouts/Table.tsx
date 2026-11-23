@@ -49,6 +49,9 @@ interface RowProps {
  *  Tab-Durchlauf sehen die Zelle mit dem einen Fokusrahmen (docs/design/elements.md, Abschnitt 3). */
 const activeCellID = (rowID: string, col: number) => `dbui-active-${rowID}-${col}`;
 
+/** Gerät ohne schwebenden Zeiger (iPhone, iPad ohne Maus). Ohne `matchMedia` (Tests): nein. */
+const touchOnly = (): boolean => globalThis.matchMedia?.("(hover: none)")?.matches ?? false;
+
 const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, range, agent, wrap, onCell, onMenu, onOpen, onToggle, selected, onSelect }: RowProps) {
   const [c0, c1] = range ? range.split(":").map(Number) as [number, number] : [-1, -2];
   return (
@@ -67,7 +70,9 @@ const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, ac
       {lead > 0 && <div className="dbui-col-spacer" style={{ width: lead }} aria-hidden />}
       {props.slice(from, to).map((p, i) => { const col = from + i; return (
         <div key={p.id} role="gridcell" className={"dbui-cell" + (col === activeCol ? " active" : "") + (col >= c0 && col <= c1 ? " in-range" : "") + (p.type === "title" ? " title" : "")} style={{ width: widths[col] }}
-          data-cell={`${row.id}:${col}`} id={col === activeCol ? activeCellID(row.id, col) : undefined} aria-selected={col === activeCol || (col >= c0 && col <= c1)} onClick={(e) => onCell(row, col, e.currentTarget)}>
+          data-cell={`${row.id}:${col}`} id={col === activeCol ? activeCellID(row.id, col) : undefined} aria-selected={col === activeCol || (col >= c0 && col <= c1)}
+          // Touch (kein schwebender Zeiger, also auch kein „Open“ beim Überfahren): ein Tipp auf den Titel öffnet die Zeile.
+          onClick={(e) => { if (p.type === "title" && onOpen && touchOnly()) onOpen(row.id); else onCell(row, col, e.currentTarget); }}>
           <CellView row={row} prop={p} wrap={wrap} blankEmptyTitle onToggleCheckbox={() => onToggle(row, p)} />
           {p.type === "title" && onOpen && (
             <button type="button" className="dbui-open-btn" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onOpen(row.id); }} aria-label={`Open ${plainText(row.text) || "Untitled"}`}>

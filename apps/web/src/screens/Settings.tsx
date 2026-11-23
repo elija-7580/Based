@@ -6,15 +6,17 @@ import { Card } from "@astryxdesign/core/Card";
 import { Layout, LayoutContent, LayoutPanel, VStack } from "@astryxdesign/core/Layout";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedField } from "@based/ui/astryx";
+import { BasedButton, BasedField } from "@based/ui/astryx";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import type { Appearance } from "../appearance.js";
+import { Icon } from "../icons.js";
 import type { Route } from "../shell/router.js";
 import { aiSetting } from "../shell/ai.js";
 import { settingsPageVisible } from "../shell/beta.js";
 import { devViewPref } from "../shell/storage.js";
 import { listedSettingsPages, resolveSettingsPage, searchSettings, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages, type SettingsHit } from "../shell/settings.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
+import { NARROW_WINDOW } from "../components/Sidebar.js";
 import { AstryxKit } from "./settings/AstryxKit.js";
 import { settingsRegistry } from "./settings/registry.js";
 import { registerBuiltinSettings } from "./settings/sections.js";
@@ -39,6 +41,10 @@ export interface SettingsProps {
   onNavigate: (r: Route) => void;
 }
 
+const narrowQuery = () => globalThis.matchMedia?.(NARROW_WINDOW);
+const isNarrow = () => narrowQuery()?.matches ?? false;
+const subscribeNarrow = (f: () => void) => { const m = narrowQuery(); m?.addEventListener("change", f); return () => m?.removeEventListener("change", f); };
+
 export function Settings({ page: pageID, value, onChange, client, state, onNavigate }: SettingsProps) {
   useSyncExternalStore(settingsRegistry.subscribe, settingsRegistry.getVersion);
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
@@ -54,6 +60,10 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
   const allMissing = settingsRegistry.missingFor(page.id, view);
   const missing = sections.length === 0 || dev ? allMissing : [];
   const props = { client, state, appearance: value, setAppearance: onChange, navigate: onNavigate };
+  // Schmales Fenster (Handy): Liste und Seite passen nicht nebeneinander – erst die Liste, nach der Wahl die Seite
+  // mit einem Weg zurück. Ohne gewählte Seite steht die Liste da.
+  const narrow = useSyncExternalStore(subscribeNarrow, isNarrow, () => false);
+  const narrowMode = !narrow ? "" : pageID === undefined ? " narrow-nav" : " narrow-page";
 
   // Suche: ersetzt die Seitenliste durch Treffer (Seiten, Abschnitte, einzelne Einstellungen). ↓/↑ wandern, Enter
   // öffnet, Escape leert. Bewusst nicht in ⌘K – dort stehen Seiten und Befehle, keine Einstellungen.
@@ -132,12 +142,13 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
   return (
     <Layout
       height="fill"
-      className="settings-screen"
+      className={"settings-screen" + narrowMode}
       start={<LayoutPanel label="Settings pages" role="navigation" width={236} padding={3} className="settings-nav">{nav}</LayoutPanel>}
       content={
         <LayoutContent padding={8} label={kit ? "Design kit" : page.title}>
           {kit ? <AstryxKit /> : (
             <VStack gap={6} className="settings-page" data-testid="settings-page" data-page={page.id}>
+              {narrow ? <span className="settings-back"><BasedButton label="Settings" variant="ghost" icon={<Icon name="back" size={16} />} onClick={() => onNavigate({ name: "settings" })} /></span> : null}
               <VStack gap={1}>
                 <Heading level={1}>{page.title}</Heading>
                 <Text type="supporting" color="secondary" display="block">{page.summary}</Text>
