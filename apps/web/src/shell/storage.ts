@@ -295,6 +295,15 @@ export const pendingTranscripts = {
   set: (list: { page: string; meeting: string }[]) => write("based.meeting.pending", list.length ? list : undefined),
 };
 
+/** Apple Watch (apps/mobile): Kennungen der Notizen von der Uhr, die schon eine Seite haben (keine zweite nach Abbruch). */
+export const watchInboxLedger = {
+  get: (): string[] => {
+    const v = read<unknown>("based.watch.imported", []);
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  },
+  set: (ids: string[]) => write("based.watch.imported", ids.length ? ids : undefined),
+};
+
 /** BSD-281: angepinnte und ausgeblendete Einträge der Seitenleiste (pro Gerät). */
 export const sidebarNavPrefs = {
   get: (): unknown => read<unknown>("based.sidebar.nav", undefined),

@@ -4,7 +4,8 @@ Stand 23. 11. 2026. Entscheidung Elija: Based kommt als native iPhone-App aufs H
 
 ## Was die Hülle ist
 
-`apps/mobile` ist eine eigene, dünne Tauri-2-Kiste: ein Fenster um `apps/web/dist`, keine Plugins, keine Rust-Logik.
+`apps/mobile` ist eine eigene, dünne Tauri-2-Kiste: ein Fenster um `apps/web/dist`, keine Rust-Logik. Das einzige
+native Extra ist das Plugin `src-tauri/plugins/watch` (Swift): der Eingang der Apple Watch App, siehe `docs/watch.md`.
 Sie ist bewusst von `apps/desktop` getrennt, damit die Mac-App (Menü, Updater, lokaler Server) unberührt bleibt.
 
 In der Hülle verhält sich die Oberfläche wie im Browser: `isTauri()` ist dort falsch, `isMobileShell()` wahr

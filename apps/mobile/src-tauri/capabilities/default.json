@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Rechte des einen Fensters: nur der Tauri-Kern. Die Oberfläche läuft als Web-App und braucht keine Befehle der Hülle.",
+  "description": "Rechte des einen Fensters: der Tauri-Kern und der Eingang der Apple Watch App (plugins/watch). Sonst braucht die Oberfläche keine Befehle der Hülle.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "based-watch:default"]
 }

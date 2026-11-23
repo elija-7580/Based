@@ -79,6 +79,11 @@ export type Command =
   | { op: "createDatabase"; parent?: string; title?: string }
   /** BSD-256: neue Seite „Meeting …“ mit einem Meeting-Block darin (⌘N → Meeting notes). */
   | { op: "createMeetingPage" }
+  /**
+   * Apple Watch (apps/watch): eine Notiz von der Uhr. Ohne `text` eine Seite mit Meeting-Block für die Aufnahme
+   * (Titel „Voice note — …“ mit der Zeit der Uhr), mit `text` eine Seite mit der diktierten Notiz.
+   */
+  | { op: "createCapture"; at: number; text?: string }
   /** BSD-264: neue Board-Seite (Whiteboard) oben unter Private bzw. unter `parent`. */
   | { op: "createBoard"; parent?: string; title?: string }
   /** BSD-275: Willkommensseiten (Basics, Databases, Keyboard, Your data) unter der Willkommensseite; gibt neue IDs zurück. */
