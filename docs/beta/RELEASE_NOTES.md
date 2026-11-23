@@ -4,6 +4,13 @@ The build workflow puts the **top section** into the update dialog and the relea
 one line per point (no wrapped lines), each at most 110 characters – a test checks this
 (`apps/desktop/test/config.test.mjs`). Details go into the section below it. Newest first; written for testers.
 
+## 0.2.15 – fixes for the first testers
+
+- macOS 13: Esc closes the side peek and the floating sidebar again (no error in the background)
+- Notion import finds sub-pages, images and rows even when file names use accented letters differently
+- Full notes: github.com/elija-7580/Based/blob/beta/docs/beta/RELEASE_NOTES.md
+- Like Based? It runs on donations, $3 a month helps: github.com/sponsors/elija-7580
+
 ## 0.2.14 – tidier settings
 
 - Settings list is shorter: pages that had nothing to set yet are gone until they do
