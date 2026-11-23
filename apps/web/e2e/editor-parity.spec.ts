@@ -405,8 +405,19 @@ test("Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, Inha
   await openBlockPage(page, "Long read");
   await expect(headings).toHaveCount(5);
   await expect(page.getByTestId("page-outline")).toHaveCount(0);
-  await openBlockPage(page, "Welcome to Based");
-  await expect(page.getByTestId("page-outline")).toBeVisible();
+  // Abschalten gilt nur für diese Seite: eine andere mit zwei Überschriften zeigt ihre Gliederung.
+  await createPage(page, "Short read");
+  await openBlockPage(page, "Short read");
+  await focusEditorEnd(page);
+  await paste(page, { "text/plain": "# One\n\nText\n\n## Two\n\nText" });
+  await expect(page.getByTestId("page-outline").getByRole("button")).toHaveCount(2);
+  // Elija 22.11.2026: eine einzelne Überschrift ist keine Gliederung – kein einzelner Strich am Rand.
+  await createPage(page, "One heading");
+  await openBlockPage(page, "One heading");
+  await focusEditorEnd(page);
+  await paste(page, { "text/plain": "# Only\n\nText" });
+  await expect(blockEditor(page).locator('.bx2-block[data-type^="heading"]')).toHaveCount(1);
+  await expect(page.getByTestId("page-outline")).toHaveCount(0);
   await openBlockPage(page, "Long read");
   await page.getByRole("button", { name: "Page menu" }).click();
   await page.getByRole("menuitem", { name: "Show outline" }).click();

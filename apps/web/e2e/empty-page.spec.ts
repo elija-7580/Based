@@ -74,3 +74,29 @@ for (const theme of ["light", "dark"]) {
     }
   });
 }
+
+// Elija 22.11.2026 (Runde 2, Punkt 5): der Pfad nennt den Abschnitt („Private / Titel“) und das Slash-Menü beginnt
+// mit den einfachen Blöcken; „Ask AI“ steht am Ende und bleibt über „/ai“ der erste Treffer.
+test("Seite: Pfad mit Abschnitt, Slash-Menü beginnt mit Text", async ({ page, browserName }) => {
+  await start(page, "light");
+  const id = (await command(page, { op: "createPage", title: "Projects" })) as string;
+  await page.goto(`/#page-${id}`);
+  const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(crumbs).toContainText("Private");
+  await expect(crumbs.locator("[aria-current=page]")).toHaveText("Projects");
+  for (const size of SIZES) {
+    await page.setViewportSize(size);
+    const box = (await crumbs.locator(".crumb-text").boundingBox())!;
+    expect(box.width, `Abschnitt nicht abgeschnitten (${size.width})`).toBeGreaterThan(30);
+  }
+  await page.setViewportSize(SIZES[0]!);
+  await page.getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/");
+  const menu = page.getByTestId("slash-menu");
+  await expect(menu.getByRole("option").first()).toHaveAccessibleName(/^Text/);
+  if (SHOTS && browserName === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-page-path-slash-light-1280.png" });
+  if (await menu.getByRole("option", { name: /Ask AI/ }).count()) {
+    await page.keyboard.type("ai");
+    await expect(menu.getByRole("option").first()).toHaveAccessibleName(/Ask AI/);
+  }
+});

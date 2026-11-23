@@ -429,6 +429,12 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .page-opening { animation: fade-in var(--duration-fast) var(--ease-out) calc(var(--duration-fast) * 3) both; }
 .crumb > [aria-hidden="true"], .crumb:has(> .crumb-more) { flex: none; }
 .crumb-link, .crumb-text { min-width: 0; max-width: calc(var(--space-8) * 6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
+/* Elija 22.11.2026: der Abschnitt („Private“) steht immer im Pfad. Er ist kurz und gibt nicht nach – sonst bliebe
+   neben langen Titeln nur ein abgeschnittener Rest; sehr lange Abschnittsnamen enden nach 16 Zeichen mit „…“. */
+.crumb:has(> .crumb-text) { flex: none; }
+.crumb-text { max-width: 16ch; }
+/* Sehr schmale Kopfzeile (Telefonbreite): der Abschnitt weicht, die Seite behält ihren Namen. */
+@container topbar (max-width: 26rem) { .crumb:has(> .crumb-text) { display: none; } }
 .crumb-link:hover { color: var(--ink); }
 .crumb-current { color: var(--ink); overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
 .trash-banner { display: flex; align-items: center; gap: var(--space-3); justify-content: center; padding: var(--space-2) var(--space-4); background: var(--surface-raised); flex-wrap: wrap; }

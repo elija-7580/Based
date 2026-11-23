@@ -126,7 +126,8 @@ export function PageOutline(props: { store: WorkspaceStore; pageID: string; cont
     };
   }, [container, hidden, ids]);
 
-  if (hidden || headings.length === 0) return null;
+  // Elija 22.11.2026: eine einzelne Überschrift ist keine Gliederung – der eine Strich am Rand kurzer Seiten führte nirgendhin.
+  if (hidden || headings.length < 2) return null;
   return (
     <nav ref={nav} className="bx-outline" aria-label="Page outline" data-testid="page-outline" data-cramped={cramped ? "" : undefined} aria-hidden={cramped || undefined}>
       <ul className="bx-outline-list">
