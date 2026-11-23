@@ -92,11 +92,13 @@ test("Relation zu einer anderen Datenbank: Ziel wählen, verknüpfen, sichtbar a
   await expect(relCell.locator(".dbui-relation")).toHaveText("Moving house");
   if (shots && testInfo.project.name === "chromium") await page.screenshot({ path: `${screens}/web-database-relation-light.png` });
 
-  // nach dem Neuladen steht sie noch da
-  await page.reload();
-  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-  const after = db.getByRole("row").filter({ hasText: "Book the van" }).getByRole("gridcell").nth(-2);
-  await expect(after.locator(".dbui-relation")).toHaveText("Moving house");
+  // nach dem Neuladen steht sie noch da (nur Chromium: WebKit-Testprofile haben kein OPFS, ein Neuladen verlöre dort alles)
+  if (testInfo.project.name === "chromium") {
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    const after = db.getByRole("row").filter({ hasText: "Book the van" }).getByRole("gridcell").nth(-2);
+    await expect(after.locator(".dbui-relation")).toHaveText("Moving house");
+  }
 
   // Gegenrichtung („Show on Projects“): die Projekte zeigen ihre Aufgaben
   await db.getByRole("columnheader", { name: "Relation" }).getByRole("button").first().click();
