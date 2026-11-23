@@ -79,7 +79,7 @@ interface Menu {
   y: number;
 }
 
-export function Sidebar({ client, state, route, homePage, onHome, onNavigate, onOpenPage, onNewPage, onQuickFind, onImportStatus, advanced = false, ai = true }: Props) {
+export function Sidebar({ client, state, route, homePage, onHome: goHome, onNavigate: navigate, onOpenPage: openPage, onNewPage, onQuickFind, onImportStatus, advanced = false, ai = true }: Props) {
   const { outline, titles, status } = state;
   const [expanded, setExpanded] = useState<Set<string>>(expandedPages.get);
   const [collapsed, setCollapsed] = useState<Set<string>>(collapsedSections.get);
@@ -103,6 +103,9 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   const [peek, setPeek] = useState(false);
   const peekTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const peekOpen = () => {
+    // Touch (iPhone, iPad ohne Maus): ein Tipp löst `mouseenter` aus, aber nie `mouseleave` – die Leiste bliebe über
+    // der Seite stehen. Dort öffnet und schließt nur der Knopf („pinned“).
+    if (!canHover()) return;
     if (peekTimer.current) clearTimeout(peekTimer.current);
     setPeek(true);
   };
@@ -116,6 +119,11 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   // bleibt unberührt und gilt wieder, sobald das Fenster breiter ist.
   const narrow = useNarrowWindow();
   const [pinned, setPinned] = useState(false);
+  // Ein Ziel in der schwebenden Leiste gewählt: sie schließt – auch wenn es die schon offene Seite ist (die Route
+  // ändert sich dann nicht, am Handy bliebe die Leiste über der Seite stehen).
+  const onNavigate: Props["onNavigate"] = (r) => { setPinned(false); navigate(r); };
+  const onOpenPage: Props["onOpenPage"] = (...a) => { setPinned(false); return openPage(...a); };
+  const onHome: Props["onHome"] = goHome ? () => { setPinned(false); goHome(); } : undefined;
   const folded = hidden || narrow;
   const floating = folded && (peek || pinned);
   const narrowRef = useRef(narrow);
@@ -1028,6 +1036,9 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
     </div>
   );
 }
+
+/** Gibt es einen Zeiger, der schweben kann (Maus, Trackpad)? Ohne `matchMedia` (Tests): ja. */
+const canHover = (): boolean => globalThis.matchMedia?.("(hover: hover)")?.matches ?? true;
 
 /** BSD-309: Fenster schmaler als 860 px (dort klappt die Seitenleiste ein). */
 export const NARROW_WINDOW = "(max-width: 860px)";
