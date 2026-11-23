@@ -14,7 +14,8 @@ das teilbare Brand-Book liegt als Design-System-Artefakt „Based“ in Claude, 
 2. **Ein Signal.** Der Marker (weicher Textmarker-Ton) bedeutet überall genau eins: *ein Agent hat das
    geschrieben oder geändert.* Nie Deko, nie Button-Farbe, nie Status ohne Agentenbezug.
 3. **Charakter auf Wunsch.** Stärke steckt im Theme, nicht im Standard: *Font → Based* schaltet Schibsted
-   Grotesk + Literata ein, *Stil → Bold* größere Titel und kräftige Überschriften (seit 18. 11. 2026 zwei
+   Grotesk ein – eine Schrift für alles: Oberfläche, Seiten, Ansichten, Meldungen (seit 23. 11. 2026; Literata ist
+   nur noch die Seiten-Schrift „Serif“, auf jedem System dieselbe), *Stil → Bold* größere Titel und kräftige Überschriften (seit 18. 11. 2026 zwei
    getrennte Einstellungen – Bold wechselt die Schrift nicht mehr mit). Der Calm-Modus macht das Signal grau.
 4. **Daten sehen aus wie Daten.** Feste Ziffern (`tabular-nums`) für Zahlen, Daten und Zeiten in der UI-Schrift;
    Monospace nur noch für IDs und Code (Entscheidung 14. 11. 2026).
@@ -35,7 +36,7 @@ erfolgreiche Apps (Obsidian, Bear) sind im Standard ruhig und lassen sich tief a
 | Fokus, Auswahl | `focus-ring` grau / weiß (Tastatur-Fokus, fokussierte Tabelle, Zelleneditor, markiertes Medium) · `selection-bg` (markierter Text) · `selected` (Zeilen, Menüeinträge) – neutral, nie Marker (BSD-367) |
 | Signal | `marker` #F1DE8A (Fläche, Tag) · `marker-strong` #E0C24A (3-px-Strich) · `marker-calm` |
 | Status | Ready, Review, Blocked, Neutral als Tönungen mit Tinte; „In progress“ = Marker |
-| Schrift | Default: Systemschrift, Titel 32/650, Text 16/1.68, Beschreibung 13/450 +0,005 em, Meta 12/500 +0,01 em, Tab-Label 10,5/600 +0,02 em · Font Based: Schibsted Grotesk, Literata · Stil Bold: Titel 40/800, Text 17/1.7 · Mono 11,5 für Daten |
+| Schrift | Default: Systemschrift, Titel 32/650, Text 16/1.68, Beschreibung 13/450 +0,005 em, Meta 12/500 +0,01 em, Tab-Label 10,5/600 +0,02 em · Font Based: Schibsted Grotesk überall · Seiten-Schrift Serif: Literata · Stil Bold: Titel 40/800, Text 17/1.7 · Mono 11,5 für Daten |
 | Bedienelemente | `control-md` 32 (Standard) · `control-sm` 28 (nur dichte Daten) · `control-lg` 40 · `keycap` 20 · Beschriftung `label` 14/500 |
 | Abstände | 4-px-Raster `space-1…8` · Seitenbreite 720 px · Randspalte 120 px · Seitenleiste 232 px |
 | Radien | 3 (Tags) · 6 (Code) · 10 (Nav, Kacheln) · 14 (Zeilen in Gruppen) · 18 (Karten, Gruppen, Popover) · 36 (Sheets) · Pille (Buttons, Picker, Tab-Leiste) · Icon 23 % |

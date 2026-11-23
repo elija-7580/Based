@@ -38,7 +38,8 @@ test("HTML-Ergebnis folgt App-Schrift und Seitenschrift – auch wieder zurück"
     else delete document.documentElement.dataset.typeface;
   }, s);
   await style("based");
-  await expect.poll(async () => (await frameFont(page)).body).toContain("Literata");
+  // Elija 23.11.: Font Based ist eine Schrift für alles, auch für den Seitentext (vorher Literata)
+  await expect.poll(async () => (await frameFont(page)).body).toContain("Schibsted Grotesk");
   await expect.poll(async () => (await frameFont(page)).ui).toContain("Schibsted Grotesk");
   await style(undefined);
   await expect.poll(() => frameFont(page)).toEqual(start);
@@ -46,7 +47,7 @@ test("HTML-Ergebnis folgt App-Schrift und Seitenschrift – auch wieder zurück"
   // Seitenschrift Serif und zurück
   const pageFont = (f: string) => page.locator(".page[data-font]").evaluate((el, v) => el.setAttribute("data-font", v), f);
   await pageFont("serif");
-  await expect.poll(async () => (await frameFont(page)).body).toContain("serif");
+  await expect.poll(async () => (await frameFont(page)).body).toContain("Literata");
   await pageFont("default");
   await expect.poll(() => frameFont(page)).toEqual(start);
 });
