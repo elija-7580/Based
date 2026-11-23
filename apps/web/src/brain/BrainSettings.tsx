@@ -6,11 +6,11 @@ import { Text } from "@astryxdesign/core/Text";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { VStack } from "@astryxdesign/core/Layout";
 import { Redactor, REDACT_KIND_LABELS, REDACT_KINDS, type SkillRecord } from "@based/brain";
-import { BasedButton } from "@based/ui/astryx";
+import { BasedButton, BasedConfirm } from "@based/ui/astryx";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Group, Row, Value } from "../screens/settings/parts.js";
 import { registerSettingsSection, type SettingsSectionProps } from "../screens/settings/registry.js";
-import type { BrainStatus } from "../worker/brain.js";
+import type { BrainStatus, LearnedStatus } from "../worker/brain.js";
 import { BrainClient } from "./client.js";
 import { brainSettings } from "./settings.js";
 import "./brain.css";
@@ -143,26 +143,56 @@ function PrivacySection({ client: store }: SettingsSectionProps) {
 function MemoriesSection({ client: store, state, navigate }: SettingsSectionProps) {
   const client = useRef(new BrainClient(store)).current;
   const settings = useSyncExternalStore(brainSettings().subscribe, brainSettings().getState);
-  const [status] = useBrainStatus(client, state.outline);
+  const [status, reload] = useBrainStatus(client, state.outline);
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
+  const [learned, setLearned] = useState<LearnedStatus>({ count: 0, review: 0 });
+  const [forgetting, setForgetting] = useState(false);
+  useEffect(() => { void client.learned().then(setLearned, () => undefined); }, [client, status]);
+  const forget = async () => {
+    await client.forgetLearned();
+    // Auch der Lesestand auf diesem Gerät: sonst gälten die Seiten weiter als gelesen.
+    try { localStorage.removeItem("based.brain.learn"); } catch { /* nur für diese Sitzung */ }
+    setForgetting(false);
+    reload();
+  };
+  const learnedHint = learned.count === 0
+    ? "Nothing yet. What Based learns shows up here and in the Memories database, each with the page it came from."
+    : `${learned.review > 0 ? `${learned.review} private ${learned.review === 1 ? "topic waits" : "topics wait"} as “To review” and ${learned.review === 1 ? "is" : "are"} not used yet. ` : ""}Each memory links the page it came from.`;
   return (
     <Group>
       {ai ? (
         <Switch
           label="Suggest memories from chats"
           description="After an answer, the chat model proposes up to three facts you stated about yourself. Nothing is saved until you click Save. Costs one short model call per answer."
-          value={settings.memories.suggest} onChange={(on) => brainSettings().update((s) => ({ ...s, memories: { suggest: on } }))}
+          value={settings.memories.suggest} onChange={(on) => brainSettings().update((s) => ({ ...s, memories: { ...s.memories, suggest: on } }))}
           labelPosition="start" labelSpacing="spread" width="100%"
         />
+      ) : null}
+      {ai ? (
+        <Switch
+          label="Learn from my notes"
+          description="Based reads pages and voice notes a few minutes after you stop editing them and remembers who you are, what you work on and how you write. Ask AI then writes in your voice. Private topics wait in Memories as “To review”. Costs one short model call per edited page, at most 12 an hour. Turn it off to pause."
+          value={settings.memories.learn === true} onChange={(on) => brainSettings().update((s) => ({ ...s, memories: { ...s.memories, learn: on } }))}
+          labelPosition="start" labelSpacing="spread" width="100%"
+        />
+      ) : null}
+      {ai && (settings.memories.learn === true || learned.count > 0) ? (
+        <Row label="Learned from your notes" hint={learnedHint}>
+          <Value testID="learned-count">{learned.count}</Value>
+          {learned.count > 0 ? <BasedButton label="Forget…" variant="ghost" onClick={() => setForgetting(true)} /> : null}
+        </Row>
       ) : null}
       <Row label="Saved memories" hint={ai ? "Agents read them as context; edit or delete rows in the Memories database." : "MCP clients read them as context; edit or delete rows in the Memories database."}>
         <Value testID="memory-count">{status?.memories ?? 0}</Value>
         {status?.exists && status.rootID ? <BasedButton label="Open Agent Brain" variant="ghost" onClick={() => navigate({ name: "page", id: status.rootID! })} /> : null}
       </Row>
+      <BasedConfirm open={forgetting} onClose={() => setForgetting(false)} title="Forget what Based learned?"
+        description={`${learned.count} ${learned.count === 1 ? "memory" : "memories"} learned from your notes, including your writing style, ${learned.count === 1 ? "moves" : "move"} to the Trash. Memories you saved yourself stay.`}
+        actionLabel="Forget" onConfirm={forget} />
     </Group>
   );
 }
 
 registerSettingsSection({ id: "brain-skills", page: "agents", title: "Skills", order: 20, component: SkillsSection, provides: ["Skills"], keywords: ["Import skills", "Agent Brain"] });
 registerSettingsSection({ id: "brain-privacy", page: "agents", title: "Privacy", order: 30, ai: true, component: PrivacySection, keywords: ["Redact", "What to redact"] });
-registerSettingsSection({ id: "brain-memories", page: "agents", title: "Memories", order: 40, component: MemoriesSection, keywords: ["Saved memories"] });
+registerSettingsSection({ id: "brain-memories", page: "agents", title: "Memories", order: 40, component: MemoriesSection, keywords: ["Saved memories", "Learn from my notes", "Writing style"] });

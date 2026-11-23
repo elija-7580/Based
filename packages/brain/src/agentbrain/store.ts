@@ -9,11 +9,12 @@
 // wird übernommen.
 import {
   addOption, addProperty, addRow, createDatabase, insertPage, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
-  plainText, restorePages, setValue, sortKeys, titleOf, toRichText,
+  plainText, restorePages, setValue, sortKeys, titleOf, toRichText, trashPages,
   type Block, type BlockProps, type MarkdownBlock, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
 import { decodeSkill, encodeSkill, isTextData, skillFileLanguage, type SkillDocument, type SkillFolder } from "../skills/codec.js";
-import { MEMORY_KINDS, MEMORY_STATUSES, normalizedWords, similarTitles, type MemoryKind, type MemoryRecord, type MemoryStatus } from "../memory/suggestions.js";
+import { MEMORY_KINDS, MEMORY_STATUSES, normalizedWords, similarTitles, type MemoryKind, type MemoryRecord, type MemoryStatus, type MemorySuggestion } from "../memory/suggestions.js";
+import { isLearned, LEARNED_PREFIX, STYLE_TITLE } from "../memory/learn.js";
 import { tokenize } from "../semantic/text.js";
 
 /** Link auf eine Seite in Markdown (wird beim Schreiben eine Erwähnung und damit eine Kante im Graphen). */
@@ -576,12 +577,15 @@ export class AgentBrain {
   }
 
   /** Memory speichern – NUR nach Bestätigung des Nutzers aufrufen. Ähnlicher Titel → an diese Memory anhängen. */
-  saveMemory(m: { title: string; kind: MemoryKind; body: string; updates?: string | undefined }): string {
+  saveMemory(m: { title: string; kind: MemoryKind; body: string; updates?: string | undefined; source?: string | undefined }): string {
     const ids = this.ensure();
     const db = ids.memoriesDB;
     const existing = (m.updates && this.memories().find((x) => x.id === m.updates)) || this.memories().find((x) => similarTitles(x.title, m.title));
+    // `source` (gelernt aus einer Seite): Verknüpfung, damit man sieht, woher es kommt – und es wieder vergessen kann.
+    const from = m.source ? this.learnedLine(m.source) : undefined;
+    const body = from ? `${m.body}\n\n${from}` : m.body;
     if (existing) {
-      this.store.transact("Update memory", (tx) => this.putMarkdown(tx, existing.id, m.body));
+      this.store.transact("Update memory", (tx) => this.putMarkdown(tx, existing.id, body, "end", true));
       return existing.id;
     }
     const values: Record<string, PropertyValue> = {};
@@ -591,7 +595,47 @@ export class AgentBrain {
       if (opt) values[pid] = { select: { _0: opt } } as PropertyValue;
     }
     const id = addRow(this.store, db, { title: m.title, values })!;
-    this.store.transact("New memory", (tx) => this.putMarkdown(tx, id, m.body));
+    this.store.transact("New memory", (tx) => this.putMarkdown(tx, id, body, "end", true));
+    return id;
+  }
+
+  /**
+   * Aus Notizen Gelerntes ablegen (memory/learn.ts) – ohne Nachfrage, deshalb: Heikles nur als „To review“ (zählt
+   * erst nach Freigabe), alles andere wie `saveMemory`, mit der Seite als Quelle.
+   */
+  saveLearned(m: MemorySuggestion, source?: string): string {
+    if (!m.sensitive) return this.saveMemory({ title: m.title, kind: m.kind, body: m.body, updates: m.updates, source });
+    const from = source ? this.learnedLine(source) : undefined;
+    return this.remember({ fact: `${m.title}: ${m.body}`, kind: m.kind, review: true, detail: from ?? LEARNED_PREFIX + " your notes" }).id;
+  }
+
+  private learnedLine(source: string): string | undefined {
+    const src = this.store.blocks.get(source);
+    if (!src || (src.type !== "page" && src.type !== "databasePage")) return undefined;
+    return `${LEARNED_PREFIX} [${(titleOf(this.store, src.id) || "Untitled").replace(/[[\]]/g, "")}](${PAGE_LINK}${src.id})`;
+  }
+
+  /** Memories, die das Lernen aus Notizen angelegt oder ergänzt hat (Zeile „Learned from: …“), dazu der Schreibstil. */
+  learnedMemories(): MemoryRecord[] {
+    return this.memories().filter((m) => m.status !== "Superseded" && (isLearned(m.body) || normalizedWords(m.title) === normalizedWords(STYLE_TITLE)));
+  }
+
+  /** Alles Gelernte in den Papierkorb (wiederherstellbar). Gibt die Anzahl zurück. */
+  forgetLearned(): number {
+    const ids = this.learnedMemories().map((m) => m.id);
+    return ids.length ? trashPages(this.store, ids).length : 0;
+  }
+
+  /** Die eine Memory „Writing style“: der Rumpf wird ersetzt (kein Anhängen – der Stil ist immer der aktuelle). */
+  setStyle(body: string): string {
+    const ids = this.ensure();
+    const existing = this.memories().find((x) => normalizedWords(x.title) === normalizedWords(STYLE_TITLE));
+    if (existing) {
+      this.setBody(existing.id, body, "Update memory");
+      return existing.id;
+    }
+    const id = addRow(this.store, ids.memoriesDB, { title: STYLE_TITLE, values: { ...this.selectValue(ids.memoriesDB, "Type", "Preference", MEMORY_KINDS), ...this.selectValue(ids.memoriesDB, "Status", "Active", MEMORY_STATUSES) } })!;
+    this.store.transact("New memory", (tx) => this.putMarkdown(tx, id, body));
     return id;
   }
 

@@ -13,7 +13,8 @@ export interface BrainSettings {
     check?: boolean;
   };
   skills: { auto: boolean };
-  memories: { suggest: boolean };
+  /** `learn`: von selbst aus Notizen und Sprachnotizen lernen (opt-in, ein Modellaufruf je geänderter Seite). */
+  memories: { suggest: boolean; learn?: boolean };
 }
 
 export const DEFAULT_BRAIN_SETTINGS: BrainSettings = {
@@ -58,7 +59,7 @@ export function parseBrainSettings(v: unknown): BrainSettings {
       ...(o.redact?.check === true ? { check: true } : {}),
     },
     skills: { auto: o.skills?.auto !== false },
-    memories: { suggest: o.memories?.suggest === true },
+    memories: { suggest: o.memories?.suggest === true, ...(o.memories?.learn === true ? { learn: true } : {}) },
   };
 }
 

@@ -248,3 +248,46 @@ test("Screenshots web-brain-refused-*", async ({ page, browserName }) => {
     }
   }
 });
+
+// Das Gedächtnis lernt von selbst (opt-in): eine Seite, die ruht, wird einmal gelesen; was das Modell findet, steht
+// ohne Nachfrage in Memories – mit der Seite als Quelle.
+for (const theme of ["light", "dark"] as const) {
+  test(`learn from my notes: a settled page becomes a memory (${theme})`, async ({ page }) => {
+    await fresh(page, theme);
+    await page.goto("/#prefs-agents");
+    const toggle = page.getByRole("switch", { name: "Learn from my notes" });
+    await expect(toggle).not.toBeChecked();
+    await toggle.check();
+    await toggle.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${SHOTS}settings-memories-learn-${theme}.png` });
+    await expect(page.getByTestId("memory-count")).toHaveText("0");
+    await page.goto("/#home");
+    await openChat(page);
+    await useScript(page, [{ text: '{"memories":[{"title":"Project Based","type":"Work","body":"Building a notes app that should replace Notion."}]}' }]);
+    const result = await page.evaluate(async () => {
+      const g = globalThis as unknown as {
+        __basedChat: { controller: { o: { backend: { chatTool(n: string, i: unknown): Promise<{ text: string }> } } } };
+        __basedLearner: { o: { now?: () => number }; tick(): Promise<string> };
+      };
+      await g.__basedChat.controller.o.backend.chatTool("create_page", { title: "Ideas", markdown: "I am building Based, a notes app. It should replace Notion for me and work on my phone. ".repeat(4) });
+      g.__basedLearner.o.now = () => Date.now() + 10 * 60_000;
+      return [await g.__basedLearner.tick(), await g.__basedLearner.tick()];
+    });
+    expect(result).toEqual(["page", "idle"]);
+    await page.goto("/#prefs-agents");
+    await expect(page.getByTestId("memory-count")).toHaveText("1");
+    // Sichtbar und löschbar: die Zeile zählt das Gelernte, „Forget…“ fragt nach und räumt nur das Gelernte weg.
+    await expect(page.getByTestId("learned-count")).toHaveText("1");
+    await page.getByTestId("learned-count").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${SHOTS}settings-memories-learned-${theme}.png` });
+    await page.getByRole("button", { name: "Forget…" }).click();
+    const dialog = page.getByRole("alertdialog", { name: "Forget what Based learned?" });
+    await expect(dialog).toContainText("1 memory learned from your notes");
+    await page.waitForTimeout(300); // Einblendung des Dialogs abwarten (nur fürs Foto)
+    await page.screenshot({ path: `${SHOTS}settings-memories-forget-${theme}.png` });
+    await dialog.getByRole("button", { name: "Forget" }).click();
+    await expect(page.getByTestId("learned-count")).toHaveText("0");
+    await expect(page.getByTestId("memory-count")).toHaveText("0");
+    expect(await page.evaluate(() => localStorage.getItem("based.brain.learn"))).toBeNull();
+  });
+}

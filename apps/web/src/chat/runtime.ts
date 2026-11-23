@@ -3,7 +3,11 @@
 import { chatTitleFrom, combineToolHosts, MAIN_AGENT_ID, mainArgument, Permissions, ScriptedEngine, targetPage, type AgentData, type ChatEvent, type ScriptStep, type StoredChatEvent } from "@based/brain";
 import type { StoreClient } from "../worker/client.js";
 import { aiConfig } from "./aiConfig.js";
+import { BrainClient } from "../brain/client.js";
+import { Learner } from "../brain/learner.js";
+import { brainSettings } from "../brain/settings.js";
 import { installBrain } from "../brain/setup.js";
+import { aiEnabled } from "../shell/ai.js";
 import { ChatController } from "./controller.js";
 import { mcpRuntime } from "./mcp.js";
 import { openChatPanel } from "./panel.js";
@@ -70,6 +74,14 @@ export function chatController(client: StoreClient): ChatController {
     });
     // Agent Brain: Skills, Privacy-Redact, Memories, Zitate (BSD-163/198/199).
     installBrain(client, shared);
+    // Das Gedächtnis lernt von selbst aus Notizen (opt-in, brain/learner.ts).
+    const chat = shared;
+    const learner = new Learner({
+      client: new BrainClient(client), settings: brainSettings(), canWrite: () => aiEnabled() && chat.canWrite(),
+      write: (system, prompt, signal) => chat.write(system, prompt, signal),
+    });
+    learner.start();
+    (globalThis as { __basedLearner?: Learner }).__basedLearner = learner;
     // BSD-222: Werkzeuge der MCP-Connections neben denen des Workspaces und des Agent Brain; vor dem Turn kurz auf
     // laufende Verbindungsaufbauten warten (höchstens 4 s), damit frisch eingerichtete Server schon mitmachen.
     const mcp = mcpRuntime(client);
