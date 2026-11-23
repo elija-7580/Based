@@ -1,0 +1,61 @@
+cancelled 9d9d7a045dbf96dd2e608e5bf25a433f724e1e91
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/components/QuickFind.tsx, /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportSend.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/AIAppsSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/SemanticSearchSetup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 334 tests using 2 workers, shard 1 of 2
+
+  ✓    2 [chromium] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (light) (9.9s)
+  ✓    3 [chromium] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (dark) (9.7s)
+(node:3676) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    4 [chromium] › e2e/ai-apps.spec.ts:54:1 › BSD-581: This Mac – ohne Mac-App ein Hinweis, mit lokalem Server Schnipsel ohne Token (1.6s)
+  ✓    5 [chromium] › e2e/ai-apps.spec.ts:92:1 › BSD-581: Server – eigenes Token je App, gilt für /mcp, widerrufbar (4.7s)
+  ✓    6 [chromium] › e2e/ai-apps.spec.ts:154:1 › BSD-630: MCP-Adresse kopierbar – lokal auf der Seite und im Dialog, Server im Dialog (4.4s)
+  ✓    7 [chromium] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (1.3s)
+  ✓    8 [chromium] › e2e/ai-switch.spec.ts:58:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (1.2s)
+  ✓    9 [chromium] › e2e/ai-switch.spec.ts:85:3 › Screenshots ohne AI (light) (1.3s)
+  ✓   10 [chromium] › e2e/ai-switch.spec.ts:85:3 › Screenshots ohne AI (dark) (1.3s)
+  ✓   11 [chromium] › e2e/ai-switch.spec.ts:105:1 › ohne AI: kein Ask AI im Block-Editor (853ms)
+
+  ✓    1 [chromium] › e2e/a11y.spec.ts:129:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (40.3s)
+  -   13 [chromium] › e2e/a11y.spec.ts:168:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓   14 [chromium] › e2e/a11y.spec.ts:210:1 › Quick Find: Esc gibt den Fokus zurück (789ms)
+  ✓   12 [chromium] › e2e/ai-switch.spec.ts:126:1 › ohne AI: Rechtsklick auf die Home-Seite ohne „Use dashboard as Home“, andere Seite „Set as Home“ (1.8s)
+  ✓   15 [chromium] › e2e/a11y.spec.ts:226:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (1.3s)
+  ✓   16 [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite (3.8s)
+  ✓   17 [chromium] › e2e/app-heads.spec.ts:24:3 › Köpfe der App-Screens: Titel 20/600, Anzahl in meta daneben (light) (2.5s)
+  ✓   18 [chromium] › e2e/appearance-baked.spec.ts:12:1 › HTML-Ergebnis folgt App-Schrift und Seitenschrift – auch wieder zurück (2.3s)
+(node:4228) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   19 [chromium] › e2e/app-heads.spec.ts:24:3 › Köpfe der App-Screens: Titel 20/600, Anzahl in meta daneben (dark) (3.1s)
+  ✓   21 [chromium] › e2e/app-heads.spec.ts:50:1 › Meetings: Umschalter in Zeile 2 unter dem Titel, linke Kante wie der Titel (2.4s)
+  -   22 [chromium] › e2e/beta-build.spec.ts:43:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (light)
+  -   23 [chromium] › e2e/beta-build.spec.ts:43:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (dark)
+  -   24 [chromium] › e2e/beta-build.spec.ts:184:1 › Beta-Build: Problem melden führt zur Mail an hello@basednotes.app
+  -   25 [chromium] › e2e/beta-build.spec.ts:214:1 › Beta-Build: Problem melden – Send to Based kommt beim Server an
+  -   26 [chromium] › e2e/beta-build.spec.ts:246:1 › Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home
+  -   27 [chromium] › e2e/beta-build.spec.ts:274:1 › Beta-Build: Start, Seite und Datenbank laden keinen Chat- oder Agenten-Code
+  -   28 [chromium] › e2e/beta-build.spec.ts:318:3 › Beta-Build: lokale MCP-Adresse kopierbar (light)
+  -   29 [chromium] › e2e/beta-build.spec.ts:318:3 › Beta-Build: lokale MCP-Adresse kopierbar (dark)
+  ✓   30 [chromium] › e2e/beta-data.spec.ts:129:1 › BSD-469 Beta-Weg 2: Notion-Export importieren, als Markdown/HTML/Archiv exportieren und wieder importieren, Sicherung vor dem Update zurückspielen (7.4s)
+  -   31 [chromium] › e2e/beta-requests.spec.ts:96:1 › BSD-609: Rückfrage einer KI-App erscheint in der Beta, Allow löscht, Decline lässt im Papierkorb
+  ✓   32 [chromium] › e2e/block-drag.spec.ts:52:1 › Drei gewählte Blöcke ziehen gemeinsam; ⌘Z holt in einem Schritt zurück; Esc bricht ab (1.6s)
+  ✓   20 [chromium] › e2e/backups.spec.ts:42:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (11.8s)
+  ✓   33 [chromium] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (light, 1280×820) (1.2s)
+(node:4516) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   35 [chromium] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (light, 900×600) (1.7s)

@@ -1,0 +1,61 @@
+cancelled 9d9d7a045dbf96dd2e608e5bf25a433f724e1e91
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/components/QuickFind.tsx, /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportSend.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/AIAppsSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/SemanticSearchSetup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 322 tests using 2 workers, shard 2 of 2
+
+  ✓    2 [webkit] › e2e/keyboard-everywhere.spec.ts:42:1 › Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter öffnet, Esc zurück in die Seite @smoke (3.8s)
+  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (5.0s)
+  ✓    3 [webkit] › e2e/keyboard-everywhere.spec.ts:91:1 › ⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächste Pfeiltaste den Fokus zurück (1.4s)
+  -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -    6 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓    5 [webkit] › e2e/keyboard-everywhere.spec.ts:104:1 › Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück (2.3s)
+  ✓    8 [webkit] › e2e/keyboard-everywhere.spec.ts:122:1 › Übersicht aller Kürzel: ⇧⌘/ öffnet, Suche filtert, Esc schließt; auch über ⌘K @smoke (2.4s)
+  ✓    7 [webkit] › e2e/keyboard-select.spec.ts:39:1 › Einfache Tabelle: Tab, ⇧Tab, Pfeile, Enter, Tab am Ende legt eine Zeile an (4.9s)
+  ✓   10 [webkit] › e2e/keyboard-select.spec.ts:77:1 › Datenbank: Tab im Zellen-Editor, ⇧-Pfeile wählen Bereich, Kopieren, Einfügen, Leeren, Ziehen (5.4s)
+  ✓    9 [webkit] › e2e/keyboard-everywhere.spec.ts:146:1 › ⌘ halten zeigt die Tasten der Stelle: überall, Seitenleiste, Text, Blöcke, Datenbank (6.9s)
+  ✓   12 [webkit] › e2e/keyboard-everywhere.spec.ts:171:1 › Editor: ⌘/ öffnet das Blockmenü, Pfeile und Enter wählen (1.9s)
+  ✓   11 [webkit] › e2e/keyboard-select.spec.ts:133:1 › Blockauswahl: Rechteck aus dem Seitenrand außerhalb der Textspalte, ⇧-Klick erweitert (4.4s)
+  ✓   13 [webkit] › e2e/keyboard-everywhere.spec.ts:188:1 › Mac-Menü: ein Befehl aus dem Register läuft über dieselbe Taste (based:command) (2.6s)
+  ✓   14 [webkit] › e2e/keyboard-select.spec.ts:162:1 › ⌫ ohne Textfeld im Fokus geht nicht zur vorigen Seite zurück (2.1s)
+  ✓   15 [webkit] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (3.5s)
+  ✓   17 [webkit] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (4.4s)
+  ✓   18 [webkit] › e2e/marquee.spec.ts:57:1 › Aufziehen rechts neben kurzem Text und aus einer leeren Zeile wählt Blöcke; im Text bleibt es Text; Klick setzt den Cursor ans Ende (3.4s)
+  ✓   19 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1280×820) (2.8s)
+  ✓   16 [webkit] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Knöpfe (light) (14.7s)
+  ✓   20 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 900×600) (3.0s)
+  ✓   22 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1728×1000) (3.4s)
+  ✓   23 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1280×820) (2.1s)
+  ✓   24 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 900×600) (2.1s)
+  ✓   25 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1728×1000) (2.1s)
+  ✓   21 [webkit] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Felder, Tabs, Pillen (light) (11.5s)
+  ✓   26 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (4.4s)
