@@ -71,7 +71,9 @@ test("Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen"
   await page.locator(".page-head").click({ position: { x: 1, y: 1 } }); // Fokus aus dem Editor, damit ⌘K greift
   await expect.poll(async () => {
     hits = await quickFind(page, "zeppelin");
-    const text = (await hits.first().textContent({ timeout: 2000 }).catch(() => "")) ?? "";
+    // Nur ein Treffer der Suche zählt (er trägt einen Textauszug): bis die Treffer da sind, zeigt die Liste noch
+    // „Recent“ – dort steht dieselbe Seite ohne Auszug.
+    const text = (await hits.filter({ has: page.getByTestId("qf-snippet") }).first().textContent({ timeout: 2000 }).catch(() => "")) ?? "";
     await page.keyboard.press("Escape");
     return text;
   }, { timeout: 10_000 }).toContain("Quarterly zeppelin maintenance");
