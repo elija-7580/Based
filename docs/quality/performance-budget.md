@@ -28,7 +28,7 @@ Chromium. Die Werte jedes Abends stehen in `perf-history.csv`. Alle Zahlen stamm
 | Erststart-JS gesamt mit Workern (gzip) | – | 1 178 kB nach Review (1 387), 3 Dateien | `ci/perf/measure.mjs` |
 | Erststart-CSS (gzip) | Grenze 95 kB | 77 kB | `bundle-budget.mjs` |
 | Web-Bundle gesamt (dist) | so klein wie möglich | 27,0 MB, davon 11,0 MB `ort-wasm-simd-threaded.wasm` | – |
-| Kaltstart bis Seitenleiste, leerer Workspace | < 1 s | 0,69 s (0,78) | `measure.mjs` |
+| Kaltstart bis Seitenleiste, leerer Workspace | < 1 s | 0,69 s (0,78); 23.11.: 0,82 s, abwechselnd gegen den Stand vom 22.11. gemessen 0,78 s (Median je 6 Läufe, +4,7 % im Rauschen, Einzelwerte 0,70–1,25 s) | `measure.mjs` |
 | Start mit 20 000 Seiten bis Seitenleiste | < 2 s | 1,0 s (1,56), längste Aufgabe < 50 ms | `e2e/startup-perf.spec.ts`, `scale-perf.spec.ts` |
 | JS-Heap nach Start, leer | – | 9,6 MB (11,2) | `measure.mjs` |
 | JS-Heap mit 20 000 Seiten | kein lineares Wachstum mit der Gesamtgröße | 15,9 MB (0,32 MB je 1 000 Seiten) | `measure.mjs` |
@@ -37,7 +37,7 @@ Chromium. Die Werte jedes Abends stehen in `perf-history.csv`. Alle Zahlen stamm
 | Leerlauf: Timer-Aufrufe in 10 s | 0 | 1 (vorher 200; BSD-596: Hänger-Wächter und Sitzungs-Marke ohne Dauer-Zeitgeber), 0 Intervalle | `measure.mjs` |
 | Leerlauf: CPU des Hauptthreads | 0 % | 0,1 % (nach Editor-Weg 0,9 %) | `measure.mjs` |
 | Leerlauf: requestAnimationFrame, laufende Animationen | 0 | 0 | `measure.mjs` |
-| Leerlauf: Nachrichten aus Workern in 10 s | 0 | 20 (22.11.: Watchdog-Ping alle 500 ms bei vorderem Fenster, BSD-655) | `measure.mjs` (`workerMsgs`, seit 22.11.) |
+| Leerlauf: Nachrichten aus Workern in 10 s | 0 | 0 seit BSD-655 (23.11.; vorher 20: Watchdog-Ping alle 500 ms bei vorderem Fenster) | `measure.mjs` (`workerMsgs`, seit 22.11.) |
 | Tippen auf 300-Block-Seite | keine Long Tasks | 0 Long Tasks, 6,1 ms CPU je Zeichen (10,4) | `measure.mjs`, `e2e/startup-perf.spec.ts` |
 | Fehler in der Konsole auf dem Messweg | 0 | 0 | `measure.mjs` |
 | WebView + Node zusammen nach Start (Mac) | < 150 MB | Mac-Test nötig | – |
@@ -74,6 +74,21 @@ eine zweite Map mit 100 000 Einträgen in `StoreClient` (`titles`: der Worker me
 jeder Zeile), mehrere Kopien der Zeilenliste der Abfrage (je 0,46 MB) und die Messwerte des Virtualisierers
 (Float64Array, 1,6 MB). Der Plan aus BSD-605 (Hauptthread bekommt nur ein Fenster der Zeilen, Abfragen im Worker)
 trifft also die Ursache; das ist ein Umbau von Replik und Datenbank-Ansicht und kommt nach dem 23.11.
+
+## Import großer Exporte (Beta-Weg 2, 23.11.2026, Beta-Build, main c93417db)
+
+Erzeugter Notion-HTML-Export (je Seite 20 Absätze), Import über Einstellungen → Import wie ein Tester, Playwright + CDP;
+Skript im Bericht vom 23.11. beschrieben (nicht im Repo).
+
+| Kennzahl | Ziel | 3 000 Seiten | 10 000 Seiten |
+| --- | --- | --- | --- |
+| Import bis zur Zusammenfassung | – | 9,7 s | 33,6 s |
+| Längste Aufgabe im Hauptthread | < 200 ms | 296 ms | **1 140 ms** (Backlog: Nutzlast wird im Hauptthread zweimal geklont) |
+| JS-Heap nach GC (leer 10 MB) | kein lineares Wachstum | 16,8 MB | 24,6 MB |
+| Export Markdown (ganzer Workspace) | keine Long Tasks | 0,7 s, 0 | 2,7 s, 0 |
+| Leerlauf-CPU danach | 0 % | 0 % | 0,4 % |
+| Neuladen bis bereit | < 2 s | 1,3 s | 2,8 s |
+| Fehler in der Konsole | 0 | 0 | 0 |
 
 ## Auf beta ausgeblendet, aber im Erststart-Chunk
 
