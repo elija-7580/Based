@@ -8,8 +8,13 @@
   var SITE_ID = "3";
   var loaded = false;
 
-  function store(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (_) {} }
-  function stored() { try { return localStorage.getItem(KEY); } catch (_) { return null; } }
+  function store(v) {
+    try {
+      if (v) localStorage.setItem(KEY, v);
+      else localStorage.removeItem(KEY);
+    } catch { /* storage blocked: the choice lasts for this page only */ }
+  }
+  function stored() { try { return localStorage.getItem(KEY); } catch { return null; } }
 
   function track() {
     var q = (window._paq = window._paq || []);
