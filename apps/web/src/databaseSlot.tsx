@@ -65,7 +65,7 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
   const databases = useMemo(() => {
     const client = editorClient();
     const pageID = store.blocks.get(blockID)?.type === "databasePage" ? blockID : store.containingPage(blockID) ?? blockID;
-    return client ? { list: async () => (await client.listDatabases("")).map((d) => ({ id: d.id, title: d.title })), include: (id: string) => client.includeDatabase(pageID, id) } : undefined;
+    return client ? { list: async () => (await client.listDatabases("", 500)).map((d) => ({ id: d.id, title: d.title, ...(d.path ? { path: d.path } : {}) })), include: (id: string) => client.includeDatabase(pageID, id) } : undefined;
   }, [store, blockID]);
   // BSD-216: bekannte Personen (Agent Brain „People“) für die Personen-Auswahl
   const people = useMemo(() => {

@@ -343,8 +343,8 @@ export class StoreClient {
   }
 
   /** BSD-212: Datenbanken nach Titel (Auswahl „Linked view of database“). */
-  listDatabases(query: string): Promise<DatabaseInfo[]> {
-    return this.request({ type: "listDatabases", query });
+  listDatabases(query: string, limit?: number): Promise<DatabaseInfo[]> {
+    return this.request({ type: "listDatabases", query, ...(limit === undefined ? {} : { limit }) });
   }
 
   /** BSD-90: unverlinkte Erwähnungen einer Seite. */

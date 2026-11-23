@@ -164,7 +164,11 @@ export class StoreHost {
   private links: LinkIndex | undefined;
   private linksDirty = new Set<RecordKeyString>();
   /** Je offener Seite: Synced-Originale von anderen Seiten (samt Inhalt) und deren Vorfahren, die die Replik mitführt. */
-  private syncedDeps = new Map<string, { roots: Set<string>; ancestors: Set<string>; databases: Set<string> }>();
+  /**
+   * Je offener Seite, was ihre Replik außer dem eigenen Teilbaum führt. `related`: Ziel-Datenbanken von Relationen
+   * (Record, Properties, Zeilen ohne Inhalt) – ohne sie blieben Relationen und Rollups zu einer anderen Datenbank leer.
+   */
+  private syncedDeps = new Map<string, { roots: Set<string>; ancestors: Set<string>; databases: Set<string>; related: Set<string> }>();
   private syncedDirty = new Set<string>();
   private lastStatus = "";
   /** Versionsverlauf (BSD-73). */
@@ -223,7 +227,7 @@ export class StoreHost {
         case "backlinks": reply(this.backlinks(msg.pageID)); break;
         case "includeSynced": reply(this.includeSynced(msg.pageID, msg.source)); break;
         case "includeDatabase": reply(this.includeDatabase(msg.pageID, msg.databaseID)); break;
-        case "listDatabases": reply(this.listDatabases(msg.query)); break;
+        case "listDatabases": reply(this.listDatabases(msg.query, msg.limit)); break;
         case "dueItems": reply(dueItems(this.store, msg.fromMs, msg.toMs)); break;
         case "meetings": reply(this.meetings()); break;
         // ADR 0017 Stufe B: Mit Laden nach Bedarf müsste jede Seitenöffnung die ganze Datei absuchen (gemessen 1 s bei
@@ -637,6 +641,8 @@ export class StoreHost {
         this.notePageChange(pageID, key);
         // Eine Synced-Kopie ist dazugekommen oder zeigt woandershin: die Replik braucht das Original.
         if (kind === "block" && (store.blocks.get(id)?.props?.syncSource || store.blocks.get(id)?.props?.databaseID)) this.syncedDirty.add(pageID);
+        // Eine Relation zeigt (neu) auf eine andere Datenbank: die Replik braucht deren Zeilen.
+        else if (kind === "database" || kind === "property") this.syncedDirty.add(pageID);
       }
     }
     this.chatHost?.noteChange(change);
@@ -723,6 +729,14 @@ export class StoreHost {
       if (kind === "database" && deps.databases.has(id)) return true;
       if (kind === "block" && dbops.enclosingDatabases(store, id).some((d) => deps.databases.has(d))) return true;
     }
+    // Ziel-Datenbanken von Relationen: Record und Zeilen (ohne deren Inhalt).
+    if (deps?.related.size) {
+      if (kind === "database" && deps.related.has(id)) return true;
+      if (kind === "block") {
+        const parent = store.blocks.get(id)?.parent;
+        if (parent?.startsWith("d:") && deps.related.has(parent.slice(2))) return true;
+      }
+    }
     let blockID: string | undefined;
     if (kind === "block") blockID = id;
     else if (kind === "database") blockID = store.databases.get(id)?.blockID;
@@ -777,11 +791,13 @@ export class StoreHost {
     const newRoots = [...next.roots].filter((r) => !deps.roots.has(r));
     const newAncestors = [...next.ancestors].filter((a) => !deps.ancestors.has(a));
     const newDatabases = [...this.linkedOf(pageID, next.roots, own)].filter((d) => !deps.databases.has(d));
-    if (newRoots.length === 0 && newAncestors.length === 0 && newDatabases.length === 0) return;
+    for (const d of newDatabases) deps.databases.add(d);
+    const newRelated = [...this.relatedOf(pageID, next.roots, deps.databases, own)].filter((d) => !deps.related.has(d));
+    if (newRoots.length === 0 && newAncestors.length === 0 && newDatabases.length === 0 && newRelated.length === 0) return;
     for (const r of newRoots) deps.roots.add(r);
     for (const a of newAncestors) deps.ancestors.add(a);
-    for (const d of newDatabases) deps.databases.add(d);
-    const records = [...this.syncedRecords(newRoots, newAncestors), ...this.databaseRecords(newDatabases)];
+    for (const d of newRelated) deps.related.add(d);
+    const records = [...this.syncedRecords(newRoots, newAncestors), ...this.databaseRecords(newDatabases), ...this.relatedRecords(newRelated)];
     for (const r of records) keys.add(recordKey(r));
     if (records.length) this.opts.post({ type: "pageChanges", pageID, upserts: records, deletions: [] });
   }
@@ -800,6 +816,70 @@ export class StoreHost {
     return dbops.linkedDatabases(store, ids());
   }
 
+  /**
+   * Ziel-Datenbanken der Relationen aller Datenbanken, die die Seite zeigt (eigene, verknüpfte, bei einer Zeilenseite
+   * die der Zeile) – soweit die Replik sie nicht ohnehin ganz führt. Eine Stufe: was die Zellen und Rollups brauchen.
+   */
+  private relatedOf(pageID: string, roots: Iterable<string>, linked: ReadonlySet<string>, own: readonly string[] = subtree(this.store, pageID)): Set<string> {
+    const store = this.store;
+    const full = new Set<string>(linked);
+    const shown = new Set<string>(linked);
+    const see = (id: string) => {
+      const db = store.blocks.get(id)?.props?.databaseID;
+      if (typeof db !== "string" || !store.databases.has(db)) return;
+      shown.add(db);
+      if (store.databases.get(db)!.blockID === id) full.add(db);
+    };
+    see(pageID);
+    for (const id of own) see(id);
+    for (const r of roots) { see(r); for (const id of subtree(store, r)) see(id); }
+    for (const d of dbops.enclosingDatabases(store, pageID)) shown.add(d);
+    const out = new Set<string>();
+    for (const d of shown) {
+      for (const p of store.databases.get(d)?.properties ?? []) {
+        const t = p.type === "relation" ? p.relation?.databaseID : undefined;
+        if (t !== undefined && !full.has(t) && store.databases.has(t)) out.add(t);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Die Besitzer-Seite einer Datenbank und ihre Vorfahren (nur die Blöcke selbst). Ohne sie hält die Replik die Zeilen
+   * für gelöscht (`isTrashed` endet an der ersten fehlenden Stufe) und zeigt Relationen auf sie nicht an.
+   */
+  private ownerChain(databaseID: string): WireRecord[] {
+    const store = this.store;
+    const out: WireRecord[] = [];
+    let cur = store.blocks.get(store.databases.get(databaseID)?.blockID ?? "");
+    for (let n = 0; cur && n < 1000; n++) {
+      out.push({ kind: "block", data: cur });
+      const p = cur.parent;
+      const next = p.startsWith("b:") ? p.slice(2) : p.startsWith("d:") ? store.databases.get(p.slice(2))?.blockID : undefined;
+      if (next === undefined) break;
+      // eine Datenbank dazwischen (Zeilenseite): ihr Record gehört zur Kette
+      if (p.startsWith("d:")) for (const r of store.databaseRecords(p.slice(2))) out.push(r);
+      cur = store.blocks.get(next);
+    }
+    return out;
+  }
+
+  /** Für Relationsziele: Datenbank-Records, die Besitzer-Seite (Titel) und die Zeilen selbst – ohne deren Inhalt. */
+  private relatedRecords(databaseIDs: Iterable<string>): WireRecord[] {
+    const store = this.store;
+    const out: WireRecord[] = [];
+    for (const d of databaseIDs) {
+      if (!store.databases.has(d)) continue;
+      for (const r of store.databaseRecords(d)) out.push(r);
+      for (const r of this.ownerChain(d)) out.push(r);
+      for (const id of store.children("d:" + d)) {
+        const row = store.blocks.get(id);
+        if (row) out.push({ kind: "block", data: row });
+      }
+    }
+    return out;
+  }
+
   /** Datenbank-Records samt Zeilen (mit Inhalt) für verknüpfte Ansichten. */
   private databaseRecords(databaseIDs: Iterable<string>): WireRecord[] {
     const store = this.store;
@@ -807,6 +887,7 @@ export class StoreHost {
     for (const d of databaseIDs) {
       if (!store.databases.has(d)) continue;
       for (const r of store.databaseRecords(d)) out.push(r);
+      for (const r of this.ownerChain(d)) out.push(r);
       const ids: string[] = [];
       for (const row of store.children("d:" + d)) ids.push(row, ...subtree(store, row));
       for (const r of this.recordsFor(ids)) out.push(r);
@@ -823,6 +904,9 @@ export class StoreHost {
     deps.databases.add(databaseID);
     const records = this.databaseRecords([databaseID]);
     for (const r of records) keys.add(recordKey(r));
+    // ihre Relationsziele kommen mit dem nächsten Schub nach
+    this.syncedDirty.add(pageID);
+    this.scheduleFlush();
     return { found: true, records };
   }
 
@@ -893,7 +977,7 @@ export class StoreHost {
     const records: WireRecord[] = [{ kind: "workspace", data: store.workspace }];
     const keys = new Set<RecordKeyString>();
     const page = store.blocks.get(pageID);
-    const deps = { roots: new Set<string>(), ancestors: new Set<string>(), databases: new Set<string>() };
+    const deps = { roots: new Set<string>(), ancestors: new Set<string>(), databases: new Set<string>(), related: new Set<string>() };
     if (page) {
       // Den Teilbaum einmal gehen (vorher dreimal je Öffnen: Records, Synced-Originale, verknüpfte Datenbanken –
       // bei einer Datenbank mit 100 000 Zeilen je ~80 ms).
@@ -906,6 +990,8 @@ export class StoreHost {
       for (const r of this.syncedRecords(d.roots, d.ancestors)) records.push(r);
       deps.databases = this.linkedOf(pageID, d.roots, own);
       for (const r of this.databaseRecords(deps.databases)) records.push(r);
+      deps.related = this.relatedOf(pageID, d.roots, deps.databases, own);
+      for (const r of this.relatedRecords(deps.related)) records.push(r);
       for (const r of records) if (r.kind !== "workspace") keys.add(recordKey(r));
     }
     this.openPages.set(pageID, keys);

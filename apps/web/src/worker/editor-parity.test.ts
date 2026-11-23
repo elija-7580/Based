@@ -1,6 +1,6 @@
 // Editor-Parität im Store-Worker: Seiten-Angaben und Seitensuche fürs @-Menü, Backlinks, und Synced-Originale von
 // anderen Seiten in der Seiten-Replik (beim Öffnen, nach dem Einfügen einer Kopie und über `includeSynced`).
-import { dbops, keyBetween, type Block } from "@based/core";
+import { dbops, keyBetween, QueryEngine, setRelation, titleOf, WorkspaceStore, type Block, type WireRecord } from "@based/core";
 import { openWorkspace } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { afterEach, describe, expect, it } from "vitest";
@@ -130,5 +130,81 @@ describe("Worker: verknüpfte Datenbank-Ansichten (BSD-212)", () => {
     const opened = host.openPage(other);
     const ids = opened.records.map((x) => x.data.id);
     expect(ids).toEqual(expect.arrayContaining([made.databaseID, ...rows, linked.blockID, linked.viewID]));
+  });
+});
+
+describe("Worker: Relationen zu einer anderen Datenbank", () => {
+  /** Replik wie im Hauptthread: nur die Records, die der Worker für die Seite schickt. */
+  function replica(opened: { records: WireRecord[]; propertyRecords?: boolean }) {
+    const records = structuredClone(opened.records);
+    return new WorkspaceStore({ node: "replica", persistence: { loadAll: () => records, write() {}, tombstone: () => undefined }, propertyRecords: opened.propertyRecords === true, resumeClock: false });
+  }
+  const linkedTitles = (r: WorkspaceStore, databaseID: string, rowID: string, propertyID: string) => {
+    const db = r.databases.get(databaseID)!;
+    const v = new QueryEngine(r).value(r.blocks.get(rowID)!, db.properties.find((p) => p.id === propertyID)!, db);
+    return v.t === "list" ? v.v.flatMap((x) => (x.t === "page" ? [titleOf(r, x.v)] : [])) : [];
+  };
+
+  it("openPage bringt Ziel-Datenbank, Zeilen und Besitzer-Kette mit: die Relation ist in der Replik sichtbar", async () => {
+    const { host, store, page, sent } = await setup();
+    const home = page("Home");
+    const tasks = dbops.createDatabase(store, { parent: "b:" + home, title: "Tasks", sampleRows: 1 });
+    const projects = dbops.createDatabase(store, { parent: "b:" + home, title: "Projects", sampleRows: 2 });
+    const [task] = store.children("d:" + tasks.databaseID);
+    const [p1, p2] = store.children("d:" + projects.databaseID);
+    store.transact("t", (tx) => { tx.update(p1!, (b) => { b.text = "Move"; }); tx.update(p2!, (b) => { b.text = "Relaunch"; }); });
+    // Inhalt einer Zielzeile: gehört nicht in die Replik der Aufgaben-Seite
+    const now = store.now();
+    store.transact("t", (tx) => tx.put({ kind: "block", data: { id: "p1-note", type: "text", parent: "b:" + p1, sk: keyBetween(undefined, undefined), text: "note", createdAt: now, updatedAt: now } as Block }));
+    const rel = dbops.addProperty(store, tasks.databaseID, "Project", "relation")!;
+    dbops.setRelationTarget(store, tasks.databaseID, rel, projects.databaseID);
+    setRelation(store, task!, rel, [p1!]);
+
+    const opened = host.openPage(tasks.blockID);
+    const ids = opened.records.map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(ids).toEqual(expect.arrayContaining([projects.databaseID, projects.blockID, home, p1, p2]));
+    expect(ids).not.toContain("p1-note");
+    const r = replica(opened);
+    expect(linkedTitles(r, tasks.databaseID, task!, rel)).toEqual(["Move"]);
+
+    // Änderung an einer Zielzeile und eine neue Zielzeile kommen an
+    host.flush();
+    sent.length = 0;
+    store.transact("t", (tx) => tx.update(p1!, (b) => { b.text = "Moving house"; }));
+    const added = dbops.addRow(store, projects.databaseID)!;
+    host.flush();
+    const changed = sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(changed).toEqual(expect.arrayContaining([p1, added]));
+  });
+
+  it("eine Relation, die erst bei offener Seite ihr Ziel bekommt, holt die Ziel-Datenbank nach", async () => {
+    const { host, store, page, sent } = await setup();
+    const home = page("Home");
+    const tasks = dbops.createDatabase(store, { parent: "b:" + home, title: "Tasks", sampleRows: 1 });
+    const projects = dbops.createDatabase(store, { parent: "b:" + page("Elsewhere"), title: "Projects", sampleRows: 1 });
+    const [p1] = store.children("d:" + projects.databaseID);
+    const opened = host.openPage(tasks.blockID);
+    expect(opened.records.map((x) => (x.kind === "workspace" ? "" : x.data.id))).not.toContain(projects.databaseID);
+    host.flush();
+    sent.length = 0;
+    const rel = dbops.addProperty(store, tasks.databaseID, "Project", "relation")!;
+    dbops.setRelationTarget(store, tasks.databaseID, rel, projects.databaseID);
+    host.flush();
+    const got = sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(got).toEqual(expect.arrayContaining([projects.databaseID, projects.blockID, p1]));
+  });
+
+  it("eine Zeilenseite zeigt die Relationen ihrer Datenbank", async () => {
+    const { host, store, page } = await setup();
+    const home = page("Home");
+    const tasks = dbops.createDatabase(store, { parent: "b:" + home, title: "Tasks", sampleRows: 1 });
+    const projects = dbops.createDatabase(store, { parent: "b:" + home, title: "Projects", sampleRows: 1 });
+    const [task] = store.children("d:" + tasks.databaseID);
+    const [p1] = store.children("d:" + projects.databaseID);
+    const rel = dbops.addProperty(store, tasks.databaseID, "Project", "relation")!;
+    dbops.setRelationTarget(store, tasks.databaseID, rel, projects.databaseID);
+    setRelation(store, task!, rel, [p1!]);
+    const ids = host.openPage(task!).records.map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(ids).toEqual(expect.arrayContaining([projects.databaseID, p1]));
   });
 });
