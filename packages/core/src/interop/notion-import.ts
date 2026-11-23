@@ -473,18 +473,26 @@ class MarkdownNotionImporter {
     return key;
   }
 
+  /**
+   * BSD-661: Pfad aus einem Link so, wie er im Export steht – NFC-Link, NFD-Dateiname (neu gepackt auf dem Mac) oder
+   * umgekehrt (wie BSD-656 im HTML-Import). Pfade im Baum, Schlüssel und abgeleitete IDs bleiben, wie sie sind.
+   */
+  private local(u: string): string {
+    return this.files.match(u) ?? u;
+  }
+
   private resolver(dir: string): (target: string) => string | undefined {
     return (target) => {
       if (target.includes("://")) return undefined;
       const decoded = removingPercentEncoding(target);
       if (decoded === undefined) return undefined;
-      const u = joinPath(dir, decoded);
+      const u = this.local(joinPath(dir, decoded));
       const direct = this.ids.get(u);
       if (direct !== undefined) return direct;
       // HTML-Exporte verlinken Seiten, die Datenbanken wurden („.md“ → „.csv“).
-      if (extname(u) === "md") { const id = this.ids.get(stripExtension(u) + ".csv"); if (id !== undefined) return id; }
+      if (extname(u) === "md") { const id = this.ids.get(this.local(stripExtension(u) + ".csv")); if (id !== undefined) return id; }
       // CSV-Links neuerer Exporte zeigen auf „X.csv“, die Zeilen liegen in „X_all.csv“.
-      if (extname(u) === "csv") return this.ids.get(joinPath(dirname(u), basename(stripExtension(u)) + "_all.csv"));
+      if (extname(u) === "csv") return this.ids.get(this.local(joinPath(dirname(u), basename(stripExtension(u)) + "_all.csv")));
       return undefined;
     };
   }
@@ -552,7 +560,7 @@ class MarkdownNotionImporter {
 
   private asset(src: string, dir: string): { url?: string; asset?: AssetRef } {
     if (src.includes("://")) return { url: src };
-    const u = joinPath(dir, src);
+    const u = this.local(joinPath(dir, src));
     if (!this.files.isFile(u)) {
       if (this.opts.warnMissingFiles && looksLikeLocalFile(src)) this.warn(`Missing file “${u}” — it isn't in the import`);
       return { url: src };
@@ -631,9 +639,9 @@ class MarkdownNotionImporter {
         return;
       }
       if (target !== undefined && decoded !== undefined && !target.includes("://")) {
-        let u = joinPath(dir, decoded);
+        let u = this.local(joinPath(dir, decoded));
         if (extname(u).toLowerCase() === "md" && !this.files.isFile(u)) {
-          const csv = stripExtension(u) + ".csv";
+          const csv = this.local(stripExtension(u) + ".csv");
           if (this.files.isFile(csv)) u = csv;
         }
         const ext = extname(u).toLowerCase();
@@ -642,7 +650,7 @@ class MarkdownNotionImporter {
         const own = folder !== undefined && dirname(u) === folder;
         if (ext === "md" && own && this.files.isFile(u) && !this.consumed.has(u)) { this.importPage(u, "b:" + id, k); return; }
         if (ext === "csv" && own) {
-          const all = joinPath(dirname(u), basename(stripExtension(u)) + "_all.csv");
+          const all = this.local(joinPath(dirname(u), basename(stripExtension(u)) + "_all.csv"));
           const pick = this.files.isFile(all) ? all : u;
           if (this.files.isFile(pick) && !this.consumed.has(pick)) { this.importDatabase(pick, "b:" + id, k, true); return; }
         }
