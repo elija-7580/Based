@@ -167,7 +167,7 @@ for (const theme of ["light", "dark"] as const) {
       await shoot(page, "library");
       await page.keyboard.press("ControlOrMeta+n");
       const palette = page.getByTestId("new-palette");
-      await expect(palette.getByRole("option")).toHaveText([/New page/, /meeting notes/i, /New database/, /Import/, /New board/, /Tasks template/, /Notes template/, /Journal template/, /Wiki template/]);
+      await expect(palette.getByRole("option")).toHaveText([/New page/, /meeting notes/i, /New database/, /Import/, /New board/, /Record a voice note/, /Tasks template/, /Notes template/, /Journal template/, /Wiki template/]);
       await page.keyboard.type("tasks");
       await page.keyboard.press("Enter");
       await expect(page.locator(".shell-database.full")).toBeVisible();

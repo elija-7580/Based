@@ -472,3 +472,16 @@ test("⌘N → Meeting notes: Block-Editor, Notizen per Klick und Tastatur, Pfei
   expect((await layout()).page).toEqual(["meeting"]);
 });
 
+
+// 23. 11. (Elija: „Ideen festhalten mit Audio“): ⌘N → „Record a voice note“ legt die Notiz an und nimmt sofort auf.
+test("⌘N → Record a voice note: neue Notiz, Aufnahme läuft sofort, nach dem Stop abspielbar", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Playwright-WebKit hat kein Fake-Mikrofon; Aufnahme nur in Chromium geprüft.");
+  await page.keyboard.press("ControlOrMeta+n");
+  const palette = page.getByTestId("new-palette");
+  await palette.getByRole("option", { name: /Record a voice note/ }).click();
+  await expect(block(page)).toHaveAttribute("data-recording", "true", { timeout: 15_000 });
+  await page.waitForTimeout(1200);
+  await block(page).getByRole("button", { name: "Stop" }).click();
+  await expect(block(page)).toHaveAttribute("data-status", "done", { timeout: 15_000 });
+  await expect(block(page).getByRole("button", { name: "Play recording" })).toBeVisible();
+});
