@@ -7,7 +7,7 @@ import {
   objectsInRect, panBy, pointInPolygon, readingOrder, recognizeShape, rectContains, rectFromPoints, resizeRect, scaleInto, screenToWorld, selectionBounds, shareInside, simplifyInk, unionRect,
   toggleTask, visibleRect, worldRectToScreen, zoomByWheel, zoomStep, zoomTo,
   BOARD_FILL_COLORS, BOARD_HIGHLIGHT_COLORS, BOARD_HIGHLIGHT_WIDTHS, BOARD_PEN_WIDTHS, BOARD_STROKE_COLORS, boardFileParts, FILE_CARD_SIZE, IMAGE_MAX_SIDE, PDF_PAGE_WIDTH, PREVIEW_SIZES,
-  type BoardFileInfo, type BoardPoint as Point, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
+  type BoardFileInfo, type BoardPoint as Point, type ConnectorShape, type BoardRect as Rect, type BoardSize as Size, type Camera, type Handle, type InkPoint, type WBObject, type WBShape,
 } from "@based/core";
 import type { BoardBackground, BoardSession } from "./session.js";
 
@@ -564,6 +564,30 @@ export class BoardController {
       else if (row === "stroke" && ((o.kind === "ink" && o.style?.tool !== "hl") || o.kind === "text" || o.kind === "connector" || o.kind === "shape")) style.color = color;
       else continue;
       patches.set(id, { style });
+    }
+    return patches.size > 0 && this.session.patch(patches);
+  }
+
+  // MARK: Form der Verbindungen (BSD-267)
+
+  /** Form der gewählten Verbindungen (für das Menü): `null` ohne Verbindung, `undefined` bei verschiedenen Formen. */
+  get selectionLineShape(): ConnectorShape | null | undefined {
+    let found: ConnectorShape | null = null;
+    for (const id of this.selection) {
+      const o = this.session.get(id);
+      if (!o || !isConnector(o)) continue;
+      if (found !== null && found !== o.shape) return undefined;
+      found = o.shape;
+    }
+    return found;
+  }
+  /** Gewählte Verbindungen gebogen, gerade oder gewinkelt – ein Undo-Schritt; Gesperrtes bleibt. */
+  setLineShape(shape: ConnectorShape): boolean {
+    if (this.readOnly) return false;
+    const patches = new Map<string, Record<string, unknown>>();
+    for (const id of this.selection) {
+      const o = this.session.get(id);
+      if (o && isConnector(o) && !isLocked(o) && o.shape !== shape) patches.set(id, { shape });
     }
     return patches.size > 0 && this.session.patch(patches);
   }

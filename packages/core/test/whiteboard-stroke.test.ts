@@ -109,4 +109,37 @@ describe("echte Links vom Board", () => {
     store.transact("redo", (tx) => tx.put({ kind: "block", data: boardObjectToBlock(objs[3]!, board, 2, store.blocks.get("ab")) }));
     expect(backlinksTo(store, b)).toEqual([board]);
   });
+
+  it("bestehende Backlinks und Graph-Kanten bleiben unverändert; das Board kommt nur dazu", () => {
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "local", now: () => 1 });
+    const a = createPage(store, { title: "A" }), b = createPage(store, { title: "B" }), c = createPage(store, { title: "C" });
+    // C erwähnt B im Text, A verlinkt C per Link-to-page – wie in jedem Workspace ohne Board.
+    store.transact("text", (tx) => {
+      tx.put({ kind: "block", data: { id: "cm", type: "text", parent: "b:" + c, sk: "a0", createdAt: 1, updatedAt: 1, text: [{ t: "see " }, { t: "B", mention: { page: { _0: b } } }] } as never });
+      tx.put({ kind: "block", data: { id: "al", type: "linkToPage", parent: "b:" + a, sk: "a0", createdAt: 1, updatedAt: 1, props: { linkTarget: c } } as never });
+    });
+    const pages = [a, b, c];
+    const before = new Map(pages.map((p) => [p, backlinksTo(store, p)]));
+    expect(before.get(b)).toEqual([c]);
+    expect(before.get(c)).toEqual([a]);
+    const edgesBefore = buildPageGraph(store).edges.map((e) => `${e.k}:${e.s}>${e.t}`);
+
+    const board = createBoardPage(store, { title: "Map" });
+    const objs: WBObject[] = [
+      { id: "ca", kind: "page", z: "a0", x: 0, y: 0, w: 240, h: 72, rot: 0, ref: a },
+      { id: "cb", kind: "page", z: "a1", x: 400, y: 0, w: 240, h: 72, rot: 0, ref: b },
+      { id: "ab", kind: "connector", z: "a2", from: { id: "ca", side: "auto" }, to: { id: "cb", side: "auto" }, shape: "elbow" },
+    ];
+    const byID = new Map(objs.map((o) => [o.id, o]));
+    store.transact("draw", (tx) => { for (const o of objs) tx.put({ kind: "block", data: boardObjectToBlock(o, board, 1, undefined, byID) }); });
+    // Jede bisherige Rückverbindung ist noch da; neu sind nur das Board und die Verbindung A → B.
+    for (const p of pages) expect(backlinksTo(store, p)).toEqual(expect.arrayContaining(before.get(p)!));
+    expect(backlinksTo(store, c)).toEqual(before.get(c));
+    expect(backlinksTo(store, b).sort()).toEqual([a, board, c].sort());
+    expect(buildPageGraph(store).edges.map((e) => `${e.k}:${e.s}>${e.t}`)).toEqual(expect.arrayContaining(edgesBefore));
+
+    // Board in den Papierkorb: alles wie vorher.
+    store.transact("trash", (tx) => { for (const id of [board, "ca", "cb", "ab"]) tx.update(id, (x) => { x.trashedAt = 2; }); });
+    for (const p of pages) expect(backlinksTo(store, p)).toEqual(before.get(p));
+  });
 });
