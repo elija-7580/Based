@@ -656,8 +656,10 @@ export class StoreHost {
         this.notePageChange(pageID, key);
         // Eine Synced-Kopie ist dazugekommen oder zeigt woandershin: die Replik braucht das Original.
         if (kind === "block" && (store.blocks.get(id)?.props?.syncSource || store.blocks.get(id)?.props?.databaseID)) this.syncedDirty.add(pageID);
-        // Eine Relation zeigt (neu) auf eine andere Datenbank: die Replik braucht deren Zeilen.
-        else if (kind === "database" || kind === "property") this.syncedDirty.add(pageID);
+        // Eine Relation zeigt (neu) auf eine andere Datenbank: die Replik braucht deren Zeilen. Review 23.11.: nur wenn
+        // der geänderte Record jetzt eine Relation enthält – ein neues Ziel kann nur so entstehen (Umbenennen, neue
+        // Auswahl-Option usw. gingen sonst bei jeder Änderung den ganzen Teilbaum der Seite durch).
+        else if ((kind === "database" || kind === "property") && this.mayAddRelationTarget(kind, id)) this.syncedDirty.add(pageID);
       }
     }
     this.chatHost?.noteChange(change);
@@ -857,6 +859,12 @@ export class StoreHost {
       }
     }
     return out;
+  }
+
+  /** Kann diese Änderung an einer Datenbank oder Property ein neues Relationsziel bringen? (Gelöschtes nie: es wird nur mehr.) */
+  private mayAddRelationTarget(kind: "database" | "property", id: string): boolean {
+    if (kind === "property") return this.store.properties.get(id)?.schema.type === "relation";
+    return this.store.databases.get(id)?.properties.some((p) => p.type === "relation") === true;
   }
 
   /**

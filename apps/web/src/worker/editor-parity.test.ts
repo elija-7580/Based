@@ -194,6 +194,30 @@ describe("Worker: Relationen zu einer anderen Datenbank", () => {
     expect(got).toEqual(expect.arrayContaining([projects.databaseID, projects.blockID, p1]));
   });
 
+  it("Review 23.11.: Änderungen an Properties ohne Relation gehen den Teilbaum der offenen Seite nicht neu durch", async () => {
+    const { host, store, page, sent } = await setup();
+    const home = page("Home");
+    const tasks = dbops.createDatabase(store, { parent: "b:" + home, title: "Tasks", sampleRows: 3 });
+    const projects = dbops.createDatabase(store, { parent: "b:" + page("Elsewhere"), title: "Projects", sampleRows: 1 });
+    const status = dbops.addProperty(store, tasks.databaseID, "Status", "select")!;
+    host.openPage(tasks.blockID);
+    host.flush();
+    const h = host as unknown as { refreshSyncedDeps(p: string): void };
+    const orig = h.refreshSyncedDeps.bind(host);
+    let walks = 0;
+    h.refreshSyncedDeps = (p) => { walks++; orig(p); };
+    for (let i = 0; i < 5; i++) { dbops.renameProperty(store, tasks.databaseID, status, "Status " + i); host.flush(); }
+    expect(walks).toBe(0);
+    // eine Relation bekommt ihr Ziel: weiterhin nachgeholt
+    sent.length = 0;
+    const rel = dbops.addProperty(store, tasks.databaseID, "Project", "relation")!;
+    dbops.setRelationTarget(store, tasks.databaseID, rel, projects.databaseID);
+    host.flush();
+    expect(walks).toBeGreaterThan(0);
+    const got = sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(got).toContain(projects.databaseID);
+  });
+
   it("eine Zeilenseite zeigt die Relationen ihrer Datenbank", async () => {
     const { host, store, page } = await setup();
     const home = page("Home");
