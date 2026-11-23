@@ -283,6 +283,13 @@ test("Feedback 17. 11.: ohne Transkription aufnehmen, später einrichten → „
   await page.waitForTimeout(1500);
   await block(page).getByRole("button", { name: "Stop" }).click();
   await expect(block(page)).toHaveAttribute("data-status", "done", { timeout: 15_000 });
+  // 23. 11.: ohne Transkript gab es keinen Weg, die Aufnahme anzuhören – „Play recording“ spielt sie von vorn.
+  await block(page).getByRole("button", { name: "Play recording" }).click();
+  await expect(page.getByTestId("meeting-playback")).toContainText(/Playing|Paused/);
+  await expect(page.getByTestId("meeting-playback").locator(".bx-meet-error")).toHaveCount(0);
+  await block(page).getByRole("button", { name: "Stop playback" }).click();
+  await expect(page.getByTestId("meeting-playback")).toHaveCount(0);
+  await expect(block(page).getByRole("button", { name: "Play recording" })).toBeVisible();
   await block(page).getByRole("tab", { name: "Transcript" }).click();
   await expect(page.getByTestId("meeting-transcript-empty")).toContainText("Set it up in Settings → Meeting notes");
   await expect(block(page).getByRole("button", { name: "Transcribe recording" })).toHaveCount(0);
@@ -465,3 +472,16 @@ test("⌘N → Meeting notes: Block-Editor, Notizen per Klick und Tastatur, Pfei
   expect((await layout()).page).toEqual(["meeting"]);
 });
 
+
+// 23. 11. (Elija: „Ideen festhalten mit Audio“): ⌘N → „Record a voice note“ legt die Notiz an und nimmt sofort auf.
+test("⌘N → Record a voice note: neue Notiz, Aufnahme läuft sofort, nach dem Stop abspielbar", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Playwright-WebKit hat kein Fake-Mikrofon; Aufnahme nur in Chromium geprüft.");
+  await page.keyboard.press("ControlOrMeta+n");
+  const palette = page.getByTestId("new-palette");
+  await palette.getByRole("option", { name: /Record a voice note/ }).click();
+  await expect(block(page)).toHaveAttribute("data-recording", "true", { timeout: 15_000 });
+  await page.waitForTimeout(1200);
+  await block(page).getByRole("button", { name: "Stop" }).click();
+  await expect(block(page)).toHaveAttribute("data-status", "done", { timeout: 15_000 });
+  await expect(block(page).getByRole("button", { name: "Play recording" })).toBeVisible();
+});

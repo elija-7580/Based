@@ -16,6 +16,11 @@ basednotes.app {
 	handle /api/* {
 		reverse_proxy basednotes-waitlist:8790
 	}
+	# Opt-in visit statistics (see /privacy#analytics): only the two tracker paths, no Matomo admin.
+	@matomo path /matomo.js /matomo.php
+	handle @matomo {
+		reverse_proxy ops-matomo:80
+	}
 	handle {
 		root * /srv/basednotes
 		@hashed path /assets/* /fonts/*

@@ -232,6 +232,13 @@ export function App({ client, history }: { client: StoreClient; history: History
     const id = await client.command<string | undefined>({ op: "createMeetingPage" });
     if (id) openPage(id);
   }, [client, openPage]);
+  // 23. 11. (Elija: „Ideen festhalten mit Audio“): ein Befehl – neue Notiz, die Aufnahme läuft sofort.
+  const newVoiceNote = useCallback(async () => {
+    const id = await client.command<string | undefined>({ op: "createMeetingPage" });
+    if (!id) return;
+    openPage(id);
+    await meetingHost()?.startOnPage(id);
+  }, [client, openPage]);
 
   // Feedback 18. 11.: Mac-App – startet eine Meeting-App (Zoom, Teams, Meet …) das Mikrofon, fragt ein kleines Fenster
   // oben rechts, ob Based transkribieren soll. „Start transcribing“: neues Meeting, Fenster nach vorn, Aufnahme läuft.
@@ -364,6 +371,7 @@ export function App({ client, history }: { client: StoreClient; history: History
     { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting("pick") },
     // BSD-264: Board-Seite (auf beta ausgeblendet, solange es nur die Fläche gibt); nach „Import…“, damit die Ziffern 1–5 bleiben
     ...(commandVisible("board") ? [{ id: "board", title: "New board", icon: "board", keywords: "whiteboard canvas draw sticky", run: () => void newBoard() } satisfies PaletteCommand] : []),
+    ...(commandVisible("meeting") ? [{ id: "voice-note", title: "Record a voice note", icon: "mic", keywords: "audio idea memo dictate record sprachnotiz", run: () => void newVoiceNote() } satisfies PaletteCommand] : []),
     // BSD-436: Startvorlagen auch später (wie im Willkommensbildschirm), oben unter Private
     ...STARTER_TEMPLATES.map((t) => ({ id: "template-" + t.id, title: `${t.title} template`, icon: t.icon as IconName, keywords: "template starter", run: () => void newFromTemplate(t.id) }) satisfies PaletteCommand),
   ];

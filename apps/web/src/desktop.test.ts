@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { clipboardData, isTauri, updatePrompt, upToDateText } from "./desktop.js";
+import { clipboardData, isMobileShell, isTauri, updatePrompt, upToDateText } from "./desktop.js";
 
 describe("desktop (BSD-164)", () => {
   it("erkennt die Tauri-Hülle an __TAURI_INTERNALS__", () => {
     expect(isTauri({})).toBe(false);
     expect(isTauri({ __TAURI_INTERNALS__: {} })).toBe(true);
+  });
+  it("Handy-Hülle (apps/mobile): verhält sich wie der Browser, nicht wie die Mac-App", () => {
+    const iphone = { __TAURI_INTERNALS__: {}, navigator: { userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15", maxTouchPoints: 5 } };
+    const ipad = { __TAURI_INTERNALS__: {}, navigator: { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15", maxTouchPoints: 5 } };
+    const mac = { __TAURI_INTERNALS__: {}, navigator: { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15", maxTouchPoints: 0 } };
+    expect([isMobileShell(iphone), isTauri(iphone)]).toEqual([true, false]);
+    expect([isMobileShell(ipad), isTauri(ipad)]).toEqual([true, false]);
+    expect([isMobileShell(mac), isTauri(mac)]).toEqual([false, true]);
+    expect(isMobileShell({ navigator: iphone.navigator })).toBe(false);
   });
 });
 
