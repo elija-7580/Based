@@ -1,0 +1,61 @@
+success 6deead00e64af5d082c9665404e940e5b3a5ea06
+  ✓  307 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.1s)
+  ✓  308 [webkit] › e2e/html-block-file.spec.ts:41:1 › Größe ziehen: Breite rechts, Höhe unten; bleibt nach dem Neuladen; ⌘Z nimmt sie zurück (5.8s)
+  ✓  309 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (4.7s)
+  ✓  311 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.7s)
+  ✓  310 [webkit] › e2e/html-block-file.spec.ts:79:1 › HTML-Datei öffnen ersetzt den Code; HTML-Datei auf die Seite ziehen legt einen HTML-Block an (4.7s)
+  -  312 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  314 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  315 [webkit] › e2e/home.spec.ts:285:3 › Home: Notizen zuerst, Agenten darunter (light) (3.4s)
+  ✓  313 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1280×820) (5.8s)
+  ✓  316 [webkit] › e2e/home.spec.ts:285:3 › Home: Notizen zuerst, Agenten darunter (dark) (2.9s)
+  ✓  317 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 900×600) (3.5s)
+  ✓  318 [webkit] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (6.2s)
+  ✓  319 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1728×1000) (6.5s)
+  ✓  321 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1280×820) (2.6s)
+  ✓  322 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 900×600) (2.2s)
+  ✓  320 [webkit] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (9.0s)
+  ✓  323 [webkit] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1728×1000) (3.4s)
+  ✓  324 [webkit] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (5.6s)
+  -  326 [webkit] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  325 [webkit] › e2e/html-block-file.spec.ts:116:1 › HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos (7.1s)
+  ✓  327 [webkit] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (2.2s)
+  ✓  328 [webkit] › e2e/interop.spec.ts:80:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (3.1s)
+  ✓  329 [webkit] › e2e/interop.spec.ts:104:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (3.3s)
+  ✓  330 [webkit] › e2e/interop.spec.ts:134:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (3.6s)
+  ✓  331 [webkit] › e2e/interop.spec.ts:161:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (3.0s)
+  ✓  332 [webkit] › e2e/interop.spec.ts:187:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (2.7s)
+  ✓  333 [webkit] › e2e/interop.spec.ts:208:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (2.7s)
+  ✓  334 [webkit] › e2e/interop.spec.ts:228:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.7s)
+  ✓  335 [webkit] › e2e/interop.spec.ts:247:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (4.3s)
+  ✓  336 [webkit] › e2e/interop.spec.ts:278:1 › Word-Dokument (.docx) importieren (BSD-260) (3.1s)
+  ✓  337 [webkit] › e2e/interop.spec.ts:295:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (3.0s)
+  ✓  338 [webkit] › e2e/interop.spec.ts:328:1 › Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563) (2.7s)
+  ✓  339 [webkit] › e2e/interop.spec.ts:352:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (2.6s)
+  ✓  340 [webkit] › e2e/interop.spec.ts:371:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (2.6s)
+  ✓  341 [webkit] › e2e/interop.spec.ts:390:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.6s)
+  ✓  342 [webkit] › e2e/interop.spec.ts:416:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (3.5s)
+
+
+  1) [webkit] › e2e/graph-drag.spec.ts:14:1 › Knoten ziehen: Umgebung folgt, der Rest bleibt stehen, der Knoten bleibt liegen 
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 5
+    Received:   4.601589163136227
+
+      54 |   // der Knoten bleibt, wo er abgelegt wurde; der Nachbar ist gefolgt; weit Entferntes hat sich nicht bewegt
+      55 |   expect(Math.hypot(after.tip.x - target.x, after.tip.y - target.y)).toBeLessThan(1.5);
+    > 56 |   expect(Math.hypot(after.next.x - before.next.x, after.next.y - before.next.y)).toBeGreaterThan(5);
+         |                                                                                  ^
+      57 |   expect(Math.hypot(after.far.x - before.far.x, after.far.y - before.far.y)).toBeLessThan(0.01);
+      58 |   // die Seite ohne Verbindung ebenso – außer der Knoten wurde in ihre Nähe gelegt (dann darf sie ausweichen)
+      59 |   const near = (p: { x: number; y: number }) => Math.hypot(before.lonely.x - p.x, before.lonely.y - p.y) < 130;
+        at /home/runner/work/Based/Based/apps/web/e2e/graph-drag.spec.ts:56:82
+
+    Error Context: test-results/graph-drag-Knoten-ziehen-U-31ade-en-der-Knoten-bleibt-liegen-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/graph-drag.spec.ts:14:1 › Knoten ziehen: Umgebung folgt, der Rest bleibt stehen, der Knoten bleibt liegen 
+  33 skipped
+  307 passed (15.6m)
