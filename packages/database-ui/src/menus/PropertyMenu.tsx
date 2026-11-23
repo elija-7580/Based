@@ -1,7 +1,7 @@
 // BSD-155: Menü einer Property (Spaltenkopf): umbenennen, Typ ändern (mit Verlust-Warnung über
 // conversionLoss), Einstellungen je Typ (Optionen, Zahlformat, Formel, Relation, Rollup, Datum, ID),
 // sortieren, filtern, gruppieren, verstecken, duplizieren, löschen.
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   ADDABLE_PROPERTY_TYPES, CALCULATION_LABELS, ENUMS, NUMBER_FORMAT_LABELS, NUMBER_FORMATS, PROPERTY_TYPE_LABELS, addOption, addProperty,
   changePropertyType, conversionLoss, deleteOption, deleteProperty, duplicateProperty, filledCellCount, makeRelationTwoWay, plainText,
@@ -85,12 +85,28 @@ function RelationConfig({ p }: { p: PropertySchema }) {
   const rel = p.relation;
   const target = rel ? store.databases.get(rel.databaseID) : undefined;
   const violations = rel?.limitOne ? relationLimitViolations(store, db.id, p.id).length : 0;
+  // Alle Datenbanken des Workspaces, nicht nur die dieser Seite: die Shell liefert die Liste und holt die gewählte
+  // in den Store der Seite (wie bei der Dashboard-Quelle, BSD-216).
+  const { databases } = useContext(ShellSlots);
+  const [listed, setListed] = useState<{ id: string; title: string; path?: string }[]>([]);
+  useEffect(() => {
+    if (!databases) return;
+    let live = true;
+    databases.list().then((l) => { if (live) setListed(l); }, () => undefined);
+    return () => { live = false; };
+  }, [databases]);
+  const local = [...store.databases.values()].map((d) => ({ id: d.id, title: plainText(d.title) || titleOf(store, d.blockID) }));
+  const choices = [...local, ...listed.filter((d) => !store.databases.has(d.id)).map((d) => ({ id: d.id, title: d.path ? `${d.title} — ${d.path}` : d.title }))];
+  const choose = async (id: string) => {
+    if (id && !store.databases.has(id) && databases && !(await databases.include(id))) return;
+    setRelationTarget(store, db.id, p.id, id || undefined);
+  };
   return (
     <div className="dbui-config-section">
       <MenuLabel>Related database</MenuLabel>
-      <select className="dbui-select" aria-label="Related database" value={rel?.databaseID ?? ""} onChange={(e) => setRelationTarget(store, db.id, p.id, e.target.value || undefined)}>
+      <select className="dbui-select" aria-label="Related database" value={rel?.databaseID ?? ""} onChange={(e) => void choose(e.target.value)}>
         <option value="">Choose…</option>
-        {[...store.databases.values()].map((d) => <option key={d.id} value={d.id}>{plainText(d.title) || titleOf(store, d.blockID)}</option>)}
+        {choices.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
       </select>
       {rel && (
         <>
@@ -274,15 +290,28 @@ function DescriptionField({ p }: { p: PropertySchema }) {
 }
 
 /** „+“ im Tabellenkopf: Typ wählen → Property anlegen (sichtbar in dieser Ansicht) → Menü der neuen Property. */
+const NEEDS_SETUP = new Set(["relation", "rollup", "formula"]);
+
 export function AddPropertyMenu({ view, anchor, onClose, onAdded }: { view: DatabaseView; anchor: Anchor; onClose: () => void; onAdded?: (id: string) => void }) {
   const { store, db } = useDB();
+  // Relation, Rollup und Formel sind ohne Einstellung leer: nach dem Anlegen gleich die Einstellungen zeigen.
+  const [added, setAdded] = useState<{ id: string; type: string } | null>(null);
+  if (added) {
+    return (
+      <Popover key="setup" anchor={anchor} onClose={onClose} className="dbui-property-menu" label={`New ${PROPERTY_TYPE_LABELS[added.type] ?? "property"}`}>
+        <MenuLabel>{PROPERTY_TYPE_LABELS[added.type] ?? "Property"}</MenuLabel>
+        <LiveConfig id={added.id} />
+      </Popover>
+    );
+  }
   return (
-    <Popover anchor={anchor} onClose={onClose} className="dbui-property-menu" label="New property">
+    <Popover key="type" anchor={anchor} onClose={onClose} className="dbui-property-menu" label="New property">
       <MenuLabel>New property</MenuLabel>
       <TypeMenu onPick={(type) => {
         const id = addProperty(store, db.id, PROPERTY_TYPE_LABELS[type] ?? "Property", type, { showIn: view.id });
-        onClose();
         if (id) onAdded?.(id);
+        if (id && NEEDS_SETUP.has(type)) setAdded({ id, type });
+        else onClose();
       }} />
     </Popover>
   );

@@ -52,7 +52,7 @@ export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => 
 
 /** BSD-216: andere Datenbanken des Workspaces (Dashboard-Quelle); `include` holt sie in den Store dieser Seite. */
 export interface DatabaseSource {
-  list(): Promise<{ id: string; title: string }[]>;
+  list(): Promise<{ id: string; title: string; path?: string }[]>;
   include(id: string): Promise<boolean>;
 }
 

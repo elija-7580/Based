@@ -254,7 +254,7 @@ export type Request =
   /** BSD-212: Datenbank (Record + Zeilen) für eine verknüpfte Ansicht in die Replik von `pageID` (Antwort: SyncedRecords). */
   | { type: "includeDatabase"; pageID: string; databaseID: string }
   /** BSD-212: Datenbanken nach Titel (Antwort: DatabaseInfo[]). */
-  | { type: "listDatabases"; query: string }
+  | { type: "listDatabases"; query: string; limit?: number }
   /** BSD-281: alle Meeting-Blöcke (Antwort: MeetingListItem[], neueste zuerst). */
   | { type: "meetings" }
   /** BSD-90: Stellen, an denen der Titel der Seite als reiner Text vorkommt (Antwort: UnlinkedMentionInfo[]). */
