@@ -128,6 +128,52 @@ describe("Notion: HTML-Export in Teilen", () => {
   });
 });
 
+describe("BSD-661: Notion-Markdown mit Umlauten – Dateiname NFD, Link NFC (oder umgekehrt)", () => {
+  const sub = "Über – Plan 🚀 & 100 % «Größe»";
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+  /** Export „Markdown & CSV“ mit Unterseite, Bild und Datenbank; `files`/`links`: Unicode-Form der Dateinamen bzw. Links. */
+  const exportZip = (files: "NFC" | "NFD", links: "NFC" | "NFD") => {
+    const f = (x: string) => x.normalize(files), l = (x: string) => encodeURIComponent(x.normalize(links));
+    return zipSync({
+      [`Home ${H}.md`]: enc.encode(`# Home\n\nIntro\n\n[${sub}](Home%20${H}/${l(sub)}%20${S}.md)\n\n![](Home%20${H}/${l("Bild Ä.png")})\n\n[Aufgaben](Home%20${H}/${l("Aufgaben")}%20${T}.csv)\n`),
+      [`Home ${H}/${f(sub)} ${S}.md`]: enc.encode(`# ${sub}\n\nSub body\n`),
+      [`Home ${H}/${f("Bild Ä.png")}`]: png,
+      [`Home ${H}/${f("Aufgaben")} ${T}.csv`]: enc.encode("Name\nPrüfen\n"),
+      [`Home ${H}/${f("Aufgaben")} ${T}_all.csv`]: enc.encode("Name\nPrüfen\n"),
+    });
+  };
+  const run = (s: WorkspaceStore, zip: Uint8Array) => importNotionItems(s, [{ files: files({ "Export-u.zip": zip }), path: "Export-u.zip" }], { assets: new MemoryAssetSink(), warnMissingFiles: true });
+  const fresh = () => new WorkspaceStore({ persistence: new MemoryPersistence(), node: "t" });
+  const live = (s: WorkspaceStore) => [...s.blocks.values()].filter((b) => b.trashedAt === undefined);
+  const snapshot = (s: WorkspaceStore) => ({
+    outline: outline(s, "w"),
+    ids: live(s).map((b) => b.id).sort(),
+    image: live(s).find((b) => b.type === "image")?.props?.asset !== undefined,
+  });
+  const same = fresh();
+  run(same, exportZip("NFC", "NFC"));
+  const expected = snapshot(same);
+
+  it("Grundlage (gleiche Form): Unterseite und Datenbank an ihrem Platz, Bild als Datei", () => {
+    expect(expected.outline.slice(0, 4)).toEqual(["page: Home", "  text: Intro", `  page: ${sub}`, "    text: Sub body"]);
+    expect(expected.outline.some((l) => l.startsWith("  text: ") && l.includes(sub))).toBe(false);
+    expect(expected.image).toBe(true);
+  });
+
+  it.each([["NFD", "NFC"], ["NFC", "NFD"]] as const)("Dateinamen %s, Links %s: gleiche Gliederung, IDs und Bild; Reimport ohne Duplikate", (fileForm, linkForm) => {
+    const s = fresh();
+    const zip = exportZip(fileForm, linkForm);
+    const r = run(s, zip);
+    expect(r.warnings.filter((w) => w.startsWith("Missing file"))).toEqual([]);
+    const got = snapshot(s);
+    expect(got.outline.map((l) => l.normalize("NFC"))).toEqual(expected.outline);
+    expect(got.ids).toEqual(expected.ids);
+    expect(got.image).toBe(true);
+    run(s, zip);
+    expect(snapshot(s).ids).toEqual(expected.ids);
+  });
+});
+
 describe("BSD-656: Notion-HTML mit Umlauten – Dateiname NFD, Link NFC (oder umgekehrt)", () => {
   const page = (id: string, title: string, body: string) => `<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>${title}</title></head><body><article id="${dash(id)}" class="page sans"><header><h1 class="page-title">${title}</h1></header><div class="page-body">${body}</div></article></body></html>`;
   const sub = "Über – Plan 🚀 & 100 % «Größe»";
