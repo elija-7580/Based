@@ -7,9 +7,9 @@ import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
-import { desktopClipboard, desktopSpelling, isPageWindow, isTauri, startDesktop } from "./desktop.js";
+import { desktopClipboard, desktopSpelling, isMobileShell, isPageWindow, isTauri, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
-import { deviceNode, guestDeviceNode, lazyStoreSetting, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
+import { deviceNode, guestDeviceNode, lazyStoreSetting, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig, watchInboxLedger } from "./shell/storage.js";
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
@@ -38,7 +38,7 @@ import { installNativeFree } from "@based/ui/native";
 import { iconElement } from "./icons.js";
 import { ShellDatabaseView } from "./databaseSlot.js";
 import { connectAssets } from "./assetBridge.js";
-import { connectEditor, ShellPageEditor } from "./editorSlot.js";
+import { connectEditor, meetingHost, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
 import { bootMark, diagnosticsLog, installDiagnostics, noteActivity } from "./shell/diagnostics.js";
@@ -264,6 +264,15 @@ function start(guest: GuestBoot | undefined) {
       if (!guest) firstRun.noteInit(r);
       // ADR 0017 A3: dauerhaften Speicher anfragen (nur im Browser, nur wenn wirklich im Browser gespeichert wird).
       if (!guest && !isTauri() && r.persistent) installBrowserKeep(window);
+      // Apple Watch: Notizen, die die Uhr ans iPhone geschickt hat, werden Seiten (nur in der Handy-Hülle).
+      if (!guest && isMobileShell()) {
+        void import("./mobile/watchInbox.js").then((m) => m.startWatchInbox(m.tauriWatchBridge(), {
+          createCapture: (at, text) => client.command<string | undefined>({ op: "createCapture", at, ...(text === undefined ? {} : { text }) }),
+          importAudio: meetingHost() ? (page, file) => meetingHost()!.importOnPage(page, file) : undefined,
+          ledger: watchInboxLedger,
+          discard: async (page) => { await client.command({ op: "trash", ids: [page] }); await client.command({ op: "deleteForever", ids: [page] }); },
+        }));
+      }
     })
     .catch(() => undefined);
 

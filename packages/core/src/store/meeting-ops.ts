@@ -33,6 +33,31 @@ export function meetingTitleFor(date: Date): string {
   return `Meeting notes — ${d}, ${t}`;
 }
 
+/** Titel einer Sprachnotiz von der Apple Watch (apps/watch): wie `meetingTitleFor`, mit der Zeit der Aufnahme. */
+export function voiceNoteTitleFor(date: Date): string {
+  const d = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const t = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `Voice note — ${d}, ${t}`;
+}
+
+/** Längster Seitentitel aus einer diktierten Notiz; der Rest steht als Absatz auf der Seite. */
+export const CAPTURE_TITLE_CHARS = 60;
+
+/**
+ * Diktierte Notiz von der Uhr → Seitentitel und Text. Kurze, einzeilige Notizen sind nur der Titel; längere bekommen
+ * als Titel den Anfang bis zur Wortgrenze (mit „…“) und stehen ganz im Text, damit nichts verloren geht.
+ */
+export function captureTextParts(text: string): { title: string; body: string | undefined } {
+  const clean = text.replace(/\r\n?/g, "\n").trim();
+  if (!clean) return { title: "Untitled", body: undefined };
+  const first = clean.split("\n")[0]!.trim();
+  if (clean === first && first.length <= CAPTURE_TITLE_CHARS) return { title: first, body: undefined };
+  if (first.length <= CAPTURE_TITLE_CHARS) return { title: first, body: clean };
+  const cut = first.slice(0, CAPTURE_TITLE_CHARS);
+  const space = cut.lastIndexOf(" ");
+  return { title: (space > 20 ? cut.slice(0, space) : cut).trimEnd() + "…", body: clean };
+}
+
 export interface CreateMeetingOptions {
   /** Elternverweis (`b:<id>` oder `w`). */
   parent: string;

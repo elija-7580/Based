@@ -5,6 +5,7 @@
 // BSD-552: fünfte Seite „Everything in Based“ – alle Funktionen der Beta, gruppiert. Jede Zeile nennt die Zeilen aus
 // replica/features.csv, die sie abdeckt (welcomeGuides.test.ts prüft: nur Zeilen mit beta = beta, und jede solche
 // Zeile ist abgedeckt). Auf beta ohne ausgeblendete Funktionen (shell/beta.ts) und ohne AI.
+// BSD-662: Whiteboard gehört zur Beta (Elija 23.11.), Gruppe „Boards“ nur, solange das Gate es zeigt.
 import { insertPage, keysBetween, type Block, type WorkspaceStore } from "@based/core";
 import { AI_OPTION } from "../shell/ai.js";
 import { CHANNEL, featureVisible, type Channel, type GatedFeature } from "../shell/beta.js";
@@ -97,6 +98,13 @@ export const EVERYTHING: readonly FeatureGroup[] = [
       { text: "Page history: see and restore earlier versions of a page.", rows: ["Page history / versions"] },
       { text: "Trash: deleted pages wait there until you restore them or delete them for good.", rows: ["Trash with restore and delete forever"] },
       { text: "Backups every hour with the local server (Settings → Sync & server), and a full copy before every update.", rows: ["Automatic local backups + one-click restore"] },
+    ],
+  },
+  {
+    title: "Boards",
+    feature: "whiteboard",
+    lines: [
+      { text: "⌘N → New board: an endless canvas for notes, shapes, drawings and arrows.", rows: ["Whiteboard (board pages)"] },
     ],
   },
   {

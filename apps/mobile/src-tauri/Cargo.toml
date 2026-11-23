@@ -6,7 +6,7 @@ version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 rust-version = "1.77.2"
-# ADR 0011: keine eigene Rust-Logik – nur die Tauri-Vorlage. Eigene Kiste (nicht apps/desktop), damit die Mac-App
+# ADR 0011: keine eigene Rust-Logik – nur die Tauri-Vorlage und native Extras als Plugins (plugins/watch: Apple Watch). Eigene Kiste (nicht apps/desktop), damit die Mac-App
 # mit Menü, Updater und Beilage unberührt bleibt.
 
 [lib]
@@ -18,6 +18,8 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
+# Eingang der Apple Watch App (apps/watch): WatchConnectivity in Swift.
+based-watch = { package = "tauri-plugin-based-watch", path = "plugins/watch" }
 
 [profile.release]
 codegen-units = 1

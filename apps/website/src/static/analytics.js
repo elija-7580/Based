@@ -8,12 +8,7 @@
   var SITE_ID = "3";
   var loaded = false;
 
-  function store(v) {
-    try {
-      if (v) localStorage.setItem(KEY, v);
-      else localStorage.removeItem(KEY);
-    } catch { /* storage blocked: the choice lasts for this page only */ }
-  }
+  function store(v) { try { if (v) localStorage.setItem(KEY, v); else localStorage.removeItem(KEY); } catch { /* storage blocked */ } }
   function stored() { try { return localStorage.getItem(KEY); } catch { return null; } }
 
   function track() {
