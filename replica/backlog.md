@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 48 (Nachtlauf 2026-11-23, TS-Stack, Abschnitt direkt unten; Pass 47 (Nachtlauf 2026-11-22) darunter; Pass 46 (Nachtlauf 2026-11-21) darunter; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 49 (Nachlauf 2026-11-23 ab 14:00, Abschnitt direkt unten; Pass 48 (Nachtlauf 2026-11-23) darunter; Pass 47 (Nachtlauf 2026-11-22) darunter; Pass 46 (Nachtlauf 2026-11-21) darunter; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,19 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 49 (Nachlauf 2026-11-23 ab 14:00, Beta-Tag, Feature-Stopp)
+
+Auslöser verspätet (13:45); Elija: „work anyway“. Inbox leer. Schicht A (Kern/Server) und B (Oberfläche) parallel, nur Chromium (WebKit in der Umgebung nicht installiert). main 1d76af20 → 897ac6d1 (Schicht A) → b94c26b4 (PR #62, Elija) → 7f99557d (BSD-663); `run-ts.sh --fast` auf jedem Merge-Stand grün. Branch beta nicht angefasst.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-655 Watchdog-Worker pingt im Leerlauf | 🟡 | Worker an die Messkette gekoppelt (resume/pause), Leerlauf 10 → 0 Nachrichten in 5 s; Mac-Test (Energiebedarf 0,0) offen; nicht auf beta vor Ende Welle 1 |
+| BSD-661 Notion-Markdown-Import: NFD-Dateinamen | ✅ | Prüfrunde fand Lücke nach BSD-656 (nur HTML); Markdown/CSV-Import löst Links über ImportFiles.match, Zeilentitel in NFC; Kandidat für den Beta-Agent |
+| BSD-591 Agent-Parität 6/7 | 🟡 | neu: create_schedule über MCP; ask_user, Captures, Coding-Sitzungen blockiert (Oberfläche/Produktfrage) |
+| BSD-663 wackeliger brain-Test read/edit_blocks | ✅ | echter Fehler: neue zufällige ID machte eine gelesene Kennung mehrdeutig, Zeile übersprungen; jetzt gilt der Block von vor dem Skript; Regressionstest mit gelenkter ID |
+| BSD-267 Whiteboard 5: Verbindungen | 🟡 | Linienform per Rechtsklick (gebogen/gerade/gewinkelt) auf nightly/2026-11-23-b2 (6deead00), NICHT auf main: Whiteboard ist auf beta sichtbar → Feature-Stopp |
+| BSD-662 Whiteboard: features.csv beta=after vs. auf beta sichtbar | ❌ | Blockiert, Frage an Elija |
 
 ## Pass 48 (Nachtlauf 2026-11-23, Beta-Tag, Feature-Stopp)
 
