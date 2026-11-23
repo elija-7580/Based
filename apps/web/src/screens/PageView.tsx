@@ -22,6 +22,7 @@ import { featureVisible } from "../shell/beta.js";
 import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
+import { PageTile } from "../components/PageTile.js";
 import { hybridImport } from "../worker/notionHybridClient.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
 import { guestMayEdit, isGuest, mayDeleteForever } from "../shell/guest.js";
@@ -256,7 +257,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
               ) : c.id ? (
                 <button type="button" className="crumb-link" title={c.label} data-menu-trigger="" aria-haspopup="menu" aria-expanded={crumbMenu?.key === c.id}
                   onClick={(e) => toggleCrumb(e, { key: c.id!, self: c.id!, pages: outline?.children[c.id!] ?? [] })}>
-                  <CrumbIcon node={outline?.nodes[c.id]} /><span className="crumb-label">{c.label}</span>
+                  <CrumbIcon id={c.id} node={outline?.nodes[c.id]} /><span className="crumb-label">{c.label}</span>
                 </button>
               ) : <span className="crumb-text" title={c.label}>{c.label}</span>}
               <span aria-hidden="true">/</span>
@@ -448,8 +449,8 @@ interface CrumbMenuState { key: string; self?: string; pages: readonly string[];
 /** So viele Unterseiten zeigt das Breadcrumb-Menü sofort; der Rest hinter „N more“. */
 const CRUMB_MENU_FIRST = 5;
 
-function CrumbIcon({ node }: { node: Outline["nodes"][string] | undefined }) {
-  return <span className="crumb-icon" aria-hidden="true"><IconView icon={node?.icon} fallback={<Icon name={node?.kind === "database" ? "database" : "page"} size={16} />} /></span>;
+function CrumbIcon({ id, node }: { id: string; node: Outline["nodes"][string] | undefined }) {
+  return <span className="crumb-icon" aria-hidden="true"><IconView icon={node?.icon} fallback={<PageTile id={id} database={node?.kind === "database"} />} /></span>;
 }
 
 function CrumbMenu({ menu, outline, titles, current, onClose, onOpen }: { menu: CrumbMenuState; outline: Outline; titles: ReadonlyMap<string, string>; current: string; onClose: () => void; onOpen: (id: string) => void }) {
@@ -460,7 +461,7 @@ function CrumbMenu({ menu, outline, titles, current, onClose, onOpen }: { menu: 
   const rest = menu.pages.length - shown.length;
   const row = (id: string, self: boolean) => (
     <button key={id} type="button" role="menuitem" className="menu-item crumb-menu-item" aria-current={id === current ? "page" : undefined} data-self={self ? "" : undefined} title={titles.get(id) ?? "Untitled"} onClick={() => onOpen(id)}>
-      <CrumbIcon node={outline.nodes[id]} /><span className="crumb-menu-title">{titles.get(id) ?? "Untitled"}</span>
+      <CrumbIcon id={id} node={outline.nodes[id]} /><span className="crumb-menu-title">{titles.get(id) ?? "Untitled"}</span>
     </button>
   );
   return (

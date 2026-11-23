@@ -17,6 +17,8 @@ import { TaskCard } from "../home/TaskCard.js";
 import { ARC_EMPTY_MIN_WIDTH, SIZES, TimeArc } from "../home/TimeArc.js";
 import "../home/home.css";
 import { Icon } from "../icons.js";
+import { IconView } from "@based/editor";
+import { PageTile } from "../components/PageTile.js";
 import type { Route } from "../shell/router.js";
 import { tasksRuntime } from "../tasks/runtime.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
@@ -60,7 +62,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
     if (!o) return [];
     const trashed = new Set(o.trash.map((t) => t.id));
     return recentList.filter((r) => o.nodes[r.id] && !trashed.has(r.id)).slice(0, RECENT_SHOWN)
-      .map((r) => ({ id: r.id, kind: o.nodes[r.id]!.kind, title: state.titles.get(r.id)?.trim() || "Untitled" }));
+      .map((r) => ({ id: r.id, kind: o.nodes[r.id]!.kind, icon: o.nodes[r.id]!.icon, title: state.titles.get(r.id)?.trim() || "Untitled" }));
   }, [recentList, state.outline, state.titles]);
   const rt = tasksRuntime(client);
   const ui = useSyncExternalStore(rt.subscribe, rt.getState);
@@ -218,7 +220,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
               <span className="t-meta home-notes-label">Recent</span>
               {recent.map((r) => (
                 <BasedButton key={r.id} label={shortTitle(r.title)} ariaLabel={`Open ${r.title}`} variant="ghost"
-                  icon={<Icon name={r.kind === "database" ? "database" : "page"} size={16} />} onClick={() => onOpenPage(r.id)} />
+                  icon={<IconView icon={r.icon} fallback={<PageTile id={r.id} database={r.kind === "database"} />} />} onClick={() => onOpenPage(r.id)} />
               ))}
             </div>
           ) : null}
