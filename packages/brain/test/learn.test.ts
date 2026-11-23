@@ -103,7 +103,7 @@ describe("what was learned is saved without asking, private topics wait", () => 
     const m = brain.activeMemories().find((x) => x.id === id)!;
     expect(m.body).toContain("Building a notes app.");
     expect(m.body).toContain("Wants it to replace Notion.");
-    expect(m.body).toContain(`Source: [Ideas](based://page/${page})`);
+    expect(m.body).toContain(`Learned from: [Ideas](based://page/${page})`);
   });
 
   it("puts sensitive facts into “To review”, where they don't count yet", () => {
@@ -116,13 +116,27 @@ describe("what was learned is saved without asking, private topics wait", () => 
     // Eine Quelle, die es nicht (mehr) gibt, verhindert das Merken nicht.
     expect(brain.saveLearned({ title: "Money", kind: "Profile", body: "Has a loan.", sensitive: true }, "missing")).toBeTruthy();
   });
+
+  it("can be forgotten as a whole – what the user saved stays", () => {
+    const store = memoryStore();
+    const brain = new AgentBrain(store);
+    const page = createPage(store, { title: "Ideas" });
+    const own = brain.saveMemory({ title: "Role", kind: "Profile", body: "Founder." });
+    brain.saveLearned({ title: "Project Based", kind: "Work", body: "Building a notes app.", sensitive: false }, page);
+    brain.saveLearned({ title: "Health", kind: "Profile", body: "Sees a doctor monthly.", sensitive: true }, page);
+    brain.setStyle("- Short.");
+    expect(brain.learnedMemories()).toHaveLength(3);
+    expect(brain.forgetLearned()).toBe(3);
+    expect(brain.memories().map((m) => m.id)).toEqual([own]);
+    expect(brain.forgetLearned()).toBe(0);
+  });
 });
 
 describe("personal context for writing", () => {
   const mem = (title: string, kind: MemoryRecord["kind"], body: string): MemoryRecord => ({ id: title, title, kind, body });
   const memories = [
     mem(STYLE_TITLE, "Preference", "- Short, direct sentences.\n- German."),
-    mem("Project Based", "Work", "A notes app that should replace Notion.\n\nSource: [Ideas](based://page/p1)"),
+    mem("Project Based", "Work", "A notes app that should replace Notion.\n\nLearned from: [Ideas](based://page/p1)"),
     mem("Anna", "People", "Designs the website."),
     mem("Role", "Profile", "Solo founder."),
   ];
@@ -139,7 +153,7 @@ describe("personal context for writing", () => {
     expect(c).toContain("- Project Based: A notes app that should replace Notion.");
     expect(c).toContain("- Anna: Designs the website.");
     expect(c).toContain("- Role: Solo founder.");
-    expect(c).not.toContain("Source:");
+    expect(c).not.toContain("Learned from:");
     expect(c.length).toBeLessThanOrEqual(2400);
   });
 

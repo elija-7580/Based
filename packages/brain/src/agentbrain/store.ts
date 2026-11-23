@@ -9,12 +9,12 @@
 // wird übernommen.
 import {
   addOption, addProperty, addRow, createDatabase, insertPage, isTrashed, keyOf, makeBlock, makeRecordID, MarkdownExporter, MarkdownImporter,
-  plainText, restorePages, setValue, sortKeys, titleOf, toRichText,
+  plainText, restorePages, setValue, sortKeys, titleOf, toRichText, trashPages,
   type Block, type BlockProps, type MarkdownBlock, type PropertyValue, type Tx, type WorkspaceStore,
 } from "@based/core";
 import { decodeSkill, encodeSkill, isTextData, skillFileLanguage, type SkillDocument, type SkillFolder } from "../skills/codec.js";
 import { MEMORY_KINDS, MEMORY_STATUSES, normalizedWords, similarTitles, type MemoryKind, type MemoryRecord, type MemoryStatus, type MemorySuggestion } from "../memory/suggestions.js";
-import { STYLE_TITLE } from "../memory/learn.js";
+import { isLearned, LEARNED_PREFIX, STYLE_TITLE } from "../memory/learn.js";
 import { tokenize } from "../semantic/text.js";
 
 /** Link auf eine Seite in Markdown (wird beim Schreiben eine Erwähnung und damit eine Kante im Graphen). */
@@ -581,10 +581,9 @@ export class AgentBrain {
     const ids = this.ensure();
     const db = ids.memoriesDB;
     const existing = (m.updates && this.memories().find((x) => x.id === m.updates)) || this.memories().find((x) => similarTitles(x.title, m.title));
-    // `source` (gelernt aus einer Seite): Verknüpfung wie bei `remember`, damit man sieht, woher es kommt.
-    const src = m.source ? this.store.blocks.get(m.source) : undefined;
-    const body = src && (src.type === "page" || src.type === "databasePage")
-      ? `${m.body}\n\nSource: [${(titleOf(this.store, src.id) || "Untitled").replace(/[[\]]/g, "")}](${PAGE_LINK}${src.id})` : m.body;
+    // `source` (gelernt aus einer Seite): Verknüpfung, damit man sieht, woher es kommt – und es wieder vergessen kann.
+    const from = m.source ? this.learnedLine(m.source) : undefined;
+    const body = from ? `${m.body}\n\n${from}` : m.body;
     if (existing) {
       this.store.transact("Update memory", (tx) => this.putMarkdown(tx, existing.id, body, "end", true));
       return existing.id;
@@ -606,13 +605,25 @@ export class AgentBrain {
    */
   saveLearned(m: MemorySuggestion, source?: string): string {
     if (!m.sensitive) return this.saveMemory({ title: m.title, kind: m.kind, body: m.body, updates: m.updates, source });
-    const fact = `${m.title}: ${m.body}`;
-    try {
-      return this.remember({ fact, kind: m.kind, review: true, ...(source ? { source } : {}) }).id;
-    } catch (e) {
-      if (!(e instanceof RememberError)) throw e;
-      return this.remember({ fact, kind: m.kind, review: true }).id;
-    }
+    const from = source ? this.learnedLine(source) : undefined;
+    return this.remember({ fact: `${m.title}: ${m.body}`, kind: m.kind, review: true, detail: from ?? LEARNED_PREFIX + " your notes" }).id;
+  }
+
+  private learnedLine(source: string): string | undefined {
+    const src = this.store.blocks.get(source);
+    if (!src || (src.type !== "page" && src.type !== "databasePage")) return undefined;
+    return `${LEARNED_PREFIX} [${(titleOf(this.store, src.id) || "Untitled").replace(/[[\]]/g, "")}](${PAGE_LINK}${src.id})`;
+  }
+
+  /** Memories, die das Lernen aus Notizen angelegt oder ergänzt hat (Zeile „Learned from: …“), dazu der Schreibstil. */
+  learnedMemories(): MemoryRecord[] {
+    return this.memories().filter((m) => m.status !== "Superseded" && (isLearned(m.body) || normalizedWords(m.title) === normalizedWords(STYLE_TITLE)));
+  }
+
+  /** Alles Gelernte in den Papierkorb (wiederherstellbar). Gibt die Anzahl zurück. */
+  forgetLearned(): number {
+    const ids = this.learnedMemories().map((m) => m.id);
+    return ids.length ? trashPages(this.store, ids).length : 0;
   }
 
   /** Die eine Memory „Writing style“: der Rumpf wird ersetzt (kein Anhängen – der Stil ist immer der aktuelle). */

@@ -276,5 +276,18 @@ for (const theme of ["light", "dark"] as const) {
     expect(result).toEqual(["page", "idle"]);
     await page.goto("/#prefs-agents");
     await expect(page.getByTestId("memory-count")).toHaveText("1");
+    // Sichtbar und löschbar: die Zeile zählt das Gelernte, „Forget…“ fragt nach und räumt nur das Gelernte weg.
+    await expect(page.getByTestId("learned-count")).toHaveText("1");
+    await page.getByTestId("learned-count").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${SHOTS}settings-memories-learned-${theme}.png` });
+    await page.getByRole("button", { name: "Forget…" }).click();
+    const dialog = page.getByRole("alertdialog", { name: "Forget what Based learned?" });
+    await expect(dialog).toContainText("1 memory learned from your notes");
+    await page.waitForTimeout(300); // Einblendung des Dialogs abwarten (nur fürs Foto)
+    await page.screenshot({ path: `${SHOTS}settings-memories-forget-${theme}.png` });
+    await dialog.getByRole("button", { name: "Forget" }).click();
+    await expect(page.getByTestId("learned-count")).toHaveText("0");
+    await expect(page.getByTestId("memory-count")).toHaveText("0");
+    expect(await page.evaluate(() => localStorage.getItem("based.brain.learn"))).toBeNull();
   });
 }

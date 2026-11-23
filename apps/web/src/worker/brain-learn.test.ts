@@ -39,7 +39,7 @@ describe("BrainHost: learning from notes", () => {
     t.host.handle({ op: "learnSave", pageID: id, suggestions: [{ title: "Project Based", kind: "Work", body: "Building a notes app.", sensitive: false }] });
     expect(t.candidates()).toEqual([]);
     const m = (t.host.handle({ op: "memories" }) as { title: string; body: string }[]).find((x) => x.title === "Project Based")!;
-    expect(m.body).toContain(`Source: [Ideas](based://page/${id})`);
+    expect(m.body).toContain(`Learned from: [Ideas](based://page/${id})`);
     new WorkspaceTools(t.store).callSync("append_markdown", { page_id: id, markdown: "More." });
     expect(t.candidates().map((x) => x.id)).toEqual([id]);
   });

@@ -3,7 +3,7 @@
 // Hauptthread bekommt nur Ergebnisse. Schützt die Brain-Seiten vor dem Löschen und repariert nach Änderungen.
 import { isPageLike, isTrashed, meetingInfo, meetingTranscript, parseKey, plainText, titleOf, transcriptText, type StoreChange, type WorkspaceStore } from "@based/core";
 import {
-  AgentBrain, BrainTools, CHAT_TYPE, chunkTexts, deletableIDs, LEARN_PAGE_CHARS, LocalSemanticIndex, personalContext, protectedIDs, SkillCodecError, skillFoldersFromZip, skillFoldersToZip, SkillRouter,
+  AgentBrain, BrainTools, CHAT_TYPE, chunkTexts, deletableIDs, LEARN_PAGE_CHARS, learnedPageIDs, LocalSemanticIndex, personalContext, protectedIDs, SkillCodecError, skillFoldersFromZip, skillFoldersToZip, SkillRouter,
   STYLE_SAMPLE_CHARS,
   type Citation, type LearnCandidate, type MemoryKind, type MemoryRecord, type MemorySuggestion, type SemanticHit, type SkillCorrection, type SkillFolder, type SkillRecord, type SkillRouting, type TextEmbedder, type ToolResult, type ToolSpec,
 } from "@based/brain";
@@ -29,6 +29,9 @@ export type BrainAction =
   | { op: "learnSave"; pageID: string; suggestions: MemorySuggestion[] }
   | { op: "styleSamples" }
   | { op: "saveStyle"; body: string }
+  /** Wie viel gelernt wurde und was auf Freigabe wartet (Einstellungen → Memories). */
+  | { op: "learned" }
+  | { op: "forgetLearned" }
   /** Was ein Schreib-Aufruf über den Nutzer wissen soll (About me, Schreibstil, passende Memories). */
   | { op: "personal"; query: string }
   | { op: "resolveCitations"; markers: { kind: "block" | "page"; id: string }[] }
@@ -41,6 +44,12 @@ export interface BrainStatus {
   rootID?: string;
   skills: number;
   memories: number;
+}
+
+export interface LearnedStatus {
+  count: number;
+  /** Davon heikel: warten in Memories als „To review“. */
+  review: number;
 }
 
 export interface SkillImportReport {
@@ -102,6 +111,11 @@ export class BrainHost {
       }
       case "styleSamples": return this.styleSamples();
       case "saveStyle": return b.setStyle(a.body);
+      case "learned": {
+        const all = b.exists ? b.learnedMemories() : [];
+        return { count: all.length, review: all.filter((m) => m.status === "To review").length } satisfies LearnedStatus;
+      }
+      case "forgetLearned": return b.exists ? b.forgetLearned() : 0;
       case "personal": return b.exists ? personalContext({ about: b.about(), memories: b.activeMemories(), query: a.query }) : "";
       case "resolveCitations": return this.resolveCitations(a.markers);
       case "related": return this.related(a.pageID, a.limit ?? 5);
@@ -242,7 +256,7 @@ export class BrainHost {
     const linked = new Map<string, number>();
     if (this.learnDirty.size > 0) {
       for (const m of this.brain.memories()) {
-        const sources = [...m.body.matchAll(/^Source:.*?\(based:\/\/page\/([^)\s]+)\)/gm)].map((x) => x[1]!);
+        const sources = learnedPageIDs(m.body);
         if (sources.length === 0) continue;
         let at = this.store.blocks.get(m.id)?.updatedAt ?? 0;
         for (const k of this.store.children("b:" + m.id)) at = Math.max(at, this.store.blocks.get(k)?.updatedAt ?? 0);

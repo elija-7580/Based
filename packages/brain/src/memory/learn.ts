@@ -91,6 +91,13 @@ export function markLearned(state: LearnState, id: string, text: string, now: nu
   return { ...state, pages, runs: called ? [...state.runs.filter((t) => now - t < HOUR), now] : state.runs };
 }
 
+/** So beginnt die Zeile, die eine gelernte Memory mit ihrer Seite verknüpft. */
+export const LEARNED_PREFIX = "Learned from:";
+export const isLearned = (body: string): boolean => body.split("\n").some((l) => l.trim().startsWith(LEARNED_PREFIX));
+/** Seiten, aus denen eine Memory gelernt wurde. */
+export const learnedPageIDs = (body: string): string[] =>
+  body.split("\n").filter((l) => l.trim().startsWith(LEARNED_PREFIX)).flatMap((l) => [...l.matchAll(/\(based:\/\/page\/([^)\s]+)\)/g)].map((m) => m[1]!));
+
 // MARK: Schreibstil
 
 export const STYLE_TITLE = "Writing style";
@@ -143,7 +150,7 @@ export function relevantMemories(memories: readonly MemoryRecord[], query: strin
 }
 
 /** Zeilen wie „About: …“/„Source: …“ sind Verknüpfungen, kein Wissen. */
-const factText = (body: string) => body.split("\n").filter((l) => !/^(About|Source|Replaces):\s/.test(l.trim())).join("\n").trim();
+const factText = (body: string) => body.split("\n").filter((l) => !/^(About|Source|Replaces|Learned from):\s/.test(l.trim())).join("\n").trim();
 
 /**
  * Zusatz zum System-Prompt eines Schreib-Aufrufs: wer der Nutzer ist („About me“), wie er schreibt („Writing
