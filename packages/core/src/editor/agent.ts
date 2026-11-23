@@ -381,6 +381,9 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
     return false;
   };
 
+  /** BSD-663: Blöcke der Seite vor dem Skript – auf sie beziehen sich die Kennungen aus read_blocks. */
+  const readBefore = new Set(pageLines(store, pageID).map((l) => l.block.id));
+
   /** Kennung, Name aus dem Skript oder volle ID → Block-ID. `x.2` = zweites Kind (Spalte) von x. */
   const resolve = (raw: string): string => {
     const dot = /^(.+)\.(\d+)$/.exec(raw);
@@ -397,6 +400,10 @@ export function runBlockScript(store: WorkspaceStore, pageID: string, script: st
     if (exact) return exact;
     const hits = low.length >= 4 ? ids.filter((id) => id.toLowerCase().startsWith(low)) : [];
     if (hits.length === 1) return hits[0]!;
+    // BSD-663: Kennungen stammen aus read_blocks vor dem Skript. Ein Block, den eine frühere Zeile angelegt hat (neue,
+    // zufällige ID mit gleichem Anfang), macht sie nicht mehrdeutig – dann gilt der Block, der schon vorher da war.
+    const old = hits.filter((id) => readBefore.has(id));
+    if (old.length === 1) return old[0]!;
     if (hits.length > 1) return fail(`${raw} matches ${hits.length} blocks — use a longer handle from read_blocks`);
     // Spalten und Blöcke in Spalten stehen im Umriss; alles andere gehört nicht zu dieser Seite
     if (store.blocks.has(raw) && inPage(raw)) return raw;

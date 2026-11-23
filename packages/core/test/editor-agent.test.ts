@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Elija Samuel Friedrich-Ulrich
 // Agent-Parität 2/7: der Seiten-Editor als Text – Umriss lesen (`blockOutline`), per Skript ändern (`runBlockScript`).
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   blockHandles, blockOutline, BLOCK_SCRIPT_HELP, createPage, MarkdownImporter, MemoryPersistence, plainText, putMarkdownBlocks, runBlockScript, sortKeys, WorkspaceStore,
   type Block, type BoardFileInfo,
@@ -388,5 +388,30 @@ describe("runBlockScript – verlässlich", () => {
   it("die Hilfe nennt jede Anweisung und die Farben aus dem Kern", () => {
     for (const word of ["set", "move", "indent", "outdent", "dup", "del", "check", "uncheck", "uncols", "cell", "row", "col", "md:", "after=", "before=", "in=", "left=", "right=", "page=", "blue", "yellow"]) expect(BLOCK_SCRIPT_HELP, word).toContain(word);
     expect(BLOCK_SCRIPT_HELP.length, "die Beschreibung kostet Token: sie steht in der Anleitung (based_guide blocks), nicht an jedem Werkzeug").toBeLessThan(3400);
+  });
+});
+
+// BSD-663: Kennungen aus read_blocks gelten für die Seite, wie der Agent sie las. Ein Block, den eine frühere Zeile
+// desselben Skripts anlegt, darf mit gleichem Anfang (zufällige ID) eine alte Kennung nicht mehrdeutig machen.
+describe("BSD-663: neue Blöcke im Skript machen gelesene Kennungen nicht mehrdeutig", () => {
+  it("die erste Zeile legt einen Block an, dessen ID mit der Kennung eines alten Blocks beginnt – move trifft den alten", () => {
+    const { store, h, ok, shape } = setup("Intro\n\nThird paragraph");
+    const third = h("Third");
+    const intro = h("Intro");
+    const real = globalThis.crypto.randomUUID.bind(globalThis.crypto);
+    let first = true;
+    // die nächste neue ID beginnt mit derselben Kennung wie „Third“
+    const spy = vi.spyOn(globalThis.crypto, "randomUUID").mockImplementation(() => {
+      if (!first) return real();
+      first = false;
+      const r = real();
+      return (third + r.slice(third.length)) as ReturnType<typeof real>;
+    });
+    try {
+      const r = ok(`h2 s: Checklist {before=${intro}}\nmove ${third} {right=${intro}}`);
+      expect(r).toMatchObject({ added: 1, moved: 1 });
+      expect([...store.blocks.keys()].filter((id) => id.toLowerCase().startsWith(third))).toHaveLength(2);
+    } finally { spy.mockRestore(); }
+    expect(shape()).toBe(['h2 "Checklist"', "cols 2", "  col", '    text "Intro"', "  col", '    text "Third paragraph"'].join("\n"));
   });
 });
