@@ -672,7 +672,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .page-icon-picker { position: absolute; top: 100%; left: 0; z-index: 30; margin-top: var(--space-1); }
 .page-locked { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); margin-bottom: var(--space-2); }
 .page[data-full-width] .page-grid { max-width: none; }
-.page[data-font="serif"] { --font-body: ui-serif, "New York", Georgia, serif; --font-head: ui-serif, "New York", Georgia, serif; }
+.page[data-font="serif"] { --font-body: var(--font-serif); --font-head: var(--font-serif); }
 .page[data-font="mono"] { --font-body: var(--font-mono); --font-head: var(--font-mono); }
 .page[data-font="serif"] .title-input, .page[data-font="mono"] .title-input { font-family: var(--font-head); }
 .page[data-small-text] { --type-body-size: var(--type-ui-size); }
@@ -690,7 +690,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .page-bg-sample[data-bg="lines"] { background-image: linear-gradient(to bottom, transparent calc(var(--space-2) - 1px), var(--line) 0); background-size: 100% var(--space-2); }
 .page-bg-sample[data-bg="grid"] { background-image: linear-gradient(to bottom, transparent calc(var(--space-2) - 1px), var(--line) 0), linear-gradient(to right, transparent calc(var(--space-2) - 1px), var(--line) 0); background-size: var(--space-2) var(--space-2); }
 .menu-label { margin: 0; padding: var(--space-2) var(--space-3) 0; color: var(--muted); user-select: none; -webkit-user-select: none; }
-.page-font[data-font="serif"] .page-font-sample { font-family: ui-serif, "New York", Georgia, serif; }
+.page-font[data-font="serif"] .page-font-sample { font-family: var(--font-serif); }
 .page-font[data-font="mono"] .page-font-sample { font-family: var(--font-mono); }
 .menu-check { margin-left: auto; color: var(--ink); }
 

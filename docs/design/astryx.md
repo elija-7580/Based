@@ -54,7 +54,7 @@ Schalter aus Einstellungen → Appearance:
 |---|---|
 | Theme Hell / Dunkel / System | `<Theme mode>`; „System“ wird in `appearance.ts` aufgelöst, damit `data-theme` für tokens.css und Astryx gleich ist |
 | Dichte | eigenes Theme `based-compact` (Steuerhöhen 24/28/36 statt 28/32/40) |
-| Font Based | `data-typeface="based"`: `--font-ui`, `--font-head`, `--font-body` aus tokens.css (Schibsted Grotesk, Literata – lokal gebündelt) |
+| Font Based | `data-typeface="based"`: `--font-ui`, `--font-head`, `--font-body` aus tokens.css, alle drei Schibsted Grotesk (seit 23. 11. 2026: eine Schrift überall); `--font-serif` (Literata) nur für die Seiten-Schrift „Serif“ – lokal gebündelt |
 | Stil Bold | `data-style="bold"`: nur `--size-title`, `--weight-title`, `--weight-heading`, `--size-body` – keine Schrift |
 | Marker, Calm | keine – der Marker ist kein Theme-Wert |
 

@@ -5,7 +5,7 @@
 /** „system“ folgt dem Betriebssystem (wie Appearance.system in der Swift-App). */
 export type Theme = "light" | "dark" | "system";
 export type EffectiveTheme = "light" | "dark";
-/** Schrift der App: die des Systems oder die mitgelieferten (Schibsted Grotesk, Literata). */
+/** Schrift der App, überall dieselbe: die des Systems oder die mitgelieferte Schibsted Grotesk. Literata ist die Seiten-Schrift „Serif“. */
 export type AppFont = "system" | "based";
 /** Charakter: Bold macht Titel größer und Überschriften kräftiger – die Schrift wählt `font`. */
 export type Style = "default" | "bold";

@@ -41,7 +41,7 @@ const CHOICES: Choice[] = [
     options: [{ value: "light", label: "Light", swatch: "light" }, { value: "dark", label: "Dark", swatch: "dark" }, { value: "system", label: "System" }],
   },
   // Elija 18.11.: Schrift und Stil getrennt – „Font“ wählt die Schrift der ganzen App, „Style“ nur noch Größe und Gewicht.
-  { key: "font", label: "Font", hint: "For the whole app. Based uses Schibsted Grotesk and Literata, bundled with the app", options: [{ value: "system", label: "System" }, { value: "based", label: "Based" }] },
+  { key: "font", label: "Font", hint: "For the whole app: pages, views and messages. Based uses Schibsted Grotesk, bundled with the app", options: [{ value: "system", label: "System" }, { value: "based", label: "Based" }] },
   { key: "style", label: "Style", hint: "Bold makes titles larger and headings heavier", options: [{ value: "default", label: "Default" }, { value: "bold", label: "Bold" }] },
   {
     key: "marker", label: "Marker", hint: "How Based marks its work",
@@ -404,7 +404,7 @@ function AboutSection() {
       <Row label="Source code" hint="Opens GitHub in a new tab">
         <Link href="https://github.com/elija-7580/Based" target="_blank">github.com/elija-7580/Based</Link>
       </Row>
-      <Row label="Fonts" hint="Font Based uses Schibsted Grotesk and Literata (SIL Open Font License 1.1), bundled with the app">
+      <Row label="Fonts" hint="Font Based uses Schibsted Grotesk, page font Serif uses Literata (SIL Open Font License 1.1), bundled with the app">
         <Text type="supporting" color="secondary">No requests to font servers</Text>
       </Row>
       <Row label="Icons" hint="Page icons from Phosphor Icons (MIT License, © Phosphor Icons), bundled with the app">

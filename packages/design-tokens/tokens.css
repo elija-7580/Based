@@ -234,6 +234,7 @@
   --touch-min: 44px;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: "Literata Variable", Literata, Georgia, serif;
   --font-ui: var(--font-sans);
   --font-head: var(--font-sans);
   --font-body: var(--font-sans);
@@ -302,7 +303,7 @@
 [data-typeface="based"] {
   --font-ui: "Schibsted Grotesk Variable", "Schibsted Grotesk", system-ui, sans-serif;
   --font-head: "Schibsted Grotesk Variable", "Schibsted Grotesk", system-ui, sans-serif;
-  --font-body: "Literata Variable", Literata, Georgia, serif;
+  --font-body: "Schibsted Grotesk Variable", "Schibsted Grotesk", system-ui, sans-serif;
 }
 
 [data-style="bold"] {

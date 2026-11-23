@@ -60,6 +60,8 @@ export function buildCss(): string {
     ...icon.map((t): [string, string] => [t.name, t.value]),
     ["font-sans", families.sans],
     ["font-mono", families.mono],
+    // Seiten-Schrift „Serif“ (••• → Font): auf jedem System dieselbe, mitgelieferte Schrift.
+    ["font-serif", families["bold-serif"]],
     // Semantic type roles, switched by data-style and data-density.
     ["font-ui", "var(--font-sans)"],
     ["font-head", "var(--font-sans)"],
@@ -84,7 +86,9 @@ export function buildCss(): string {
   const solid: [string, string][] = [["chrome-bg", "var(--surface-raised)"], ["chrome-filter", "none"], ["chrome-edge", "none"]];
   // Elija 18.11.: Schrift und Stil sind zwei Einstellungen. data-typeface="based" wählt die mitgelieferten Schriften,
   // data-style="bold" nur noch Größen und Gewichte (vorher wechselte Bold heimlich auch die Schrift).
-  const typeface: [string, string][] = [["font-ui", families["bold-sans"]], ["font-head", families["bold-sans"]], ["font-body", families["bold-serif"]]];
+  // Elija 23.11.: eine gewählte Schrift gilt überall. Vorher stand der Seitentext (und mit ihm Meldungen, Chat, Dialoge)
+  // in Literata, der Rest in Schibsted Grotesk – das wirkte zufällig. Literata bleibt als Seiten-Schrift „Serif“.
+  const typeface: [string, string][] = [["font-ui", families["bold-sans"]], ["font-head", families["bold-sans"]], ["font-body", families["bold-sans"]]];
   const bold: [string, string][] = [
     ["size-title", "40px"], ["weight-title", "800"], ["tracking-title", "-0.035em"],
     ["size-greeting", "36px"], ["weight-heading", "700"],
