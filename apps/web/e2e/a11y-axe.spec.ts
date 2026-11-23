@@ -53,6 +53,9 @@ for (const theme of ["light", "dark"] as const) {
     await go("#home");
     await page.keyboard.press("ControlOrMeta+k");
     await expect(page.getByRole("dialog", { name: "Quick Find" })).toBeVisible();
+    // Erst prüfen, wenn der Dialog fertig eingeblendet ist: mitten in der Einblendung misst axe gemischte Farben
+    // (WebKit: „Recent“ mit 4,44 statt der endgültigen Werte).
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
     found.push(...await scan(page, "quick-find"));
     expect(found).toEqual([]);
   });
