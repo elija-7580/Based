@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 47 (Nachtlauf 2026-11-22, TS-Stack, Abschnitt direkt unten; Pass 46 (Nachtlauf 2026-11-21) darunter; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 48 (Nachtlauf 2026-11-23, TS-Stack, Abschnitt direkt unten; Pass 47 (Nachtlauf 2026-11-22) darunter; Pass 46 (Nachtlauf 2026-11-21) darunter; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,19 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 48 (Nachtlauf 2026-11-23, Beta-Tag, Feature-Stopp)
+
+Inbox: leer beim Start; Bereit + autonom nur BSD-655 (laut Review nach dem 23.11., liegen gelassen). Nacht = Prüfen: Schicht A Kern/Server seit 729e411c + Go/No-Go „Import aus Notion“, Schicht B Elijas Oberflächen-Commits vom 22.11. in Chromium 1254 + WebKit 2388. Neu einsortiert: BSD-656 (Bereit, umgesetzt), BSD-660 (Blockiert, Layoutfrage). main 7ffacffc → cbe65de9 → 3803bf1e; `run-ts.sh --fast` auf jedem Merge-Stand grün.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-656 Notion-HTML-Import: Umlaut-Dateiname (NFD) vs. Link (NFC) | ✅ | ImportFiles.match (NFC-Zweitindex nur zum Nachschlagen), derivedIDs unverändert; import-sources.test beide Richtungen, interop 32/32 beide Browser |
+| BSD-657 Esc wirft in WebKit vor 17 (`:popover-open`) | ✅ | openOverlay in @based/ui/native; old-webkit-esc.spec stellt alten Parser nach; echtes macOS 13/Safari 16 nicht geprüft |
+| BSD-658 kit-states Grundbilder Seitenleiste/Home | ✅ | 8 Grundbilder neu nach 44135c42/c8edae4b/93a433a5 |
+| BSD-659 polish/shortcuts: Klick nach ⌥⌘N trifft vorige Seite | ✅ | nur Test, wartet auf Titelfokus |
+| BSD-660 Side Peek: Text 32 px rechts von Titel/Eigenschaften | ❌ | Blockiert, Frage an Elija (Griffe nach außen wie auf der Seite?) |
+| BSD-649 Abweichung d2603143 vom Kurs 22.11. | 🟡 | Commit stellt lesbaren Teil wieder her (überschreibt vorhandene Records, kein „nur ergänzen“); im Ergebnisfeld vermerkt, Entscheidung Elija |
 
 ## Pass 47 (Nachtlauf 2026-11-22, Tag vor der Beta, Feature-Stopp)
 
