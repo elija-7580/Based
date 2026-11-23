@@ -93,6 +93,7 @@ test("Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü
 test("Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen", { tag: "@smoke" }, async ({ page }) => {
   await fresh(page);
   await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.type("a"); // die Filterzeile erscheint erst beim Tippen
   const sort = page.locator("select[aria-label=Sort]");
   await expect(sort).toBeVisible();
   expect(await sort.evaluate((el) => getComputedStyle(el).appearance)).toBe("none");

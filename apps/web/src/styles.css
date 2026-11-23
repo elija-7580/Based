@@ -359,6 +359,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-select select option { color: var(--ink); background: var(--bg); }
 .qf-head { padding: var(--space-3) var(--space-4) var(--space-1); }
 .qf-head:empty { display: none; }
+/* Auf Glas (Apple) scheint die Seite durch: „Recent“ in `muted` lag je nach Untergrund knapp unter 4,5:1 (axe, WebKit). */
+[data-material="glass"] .qf-head { color: var(--ink-2); }
 .qf-list { list-style: none; margin: 0; padding: var(--space-1) var(--space-2) var(--space-2); overflow-y: auto; overflow-x: hidden; }
 .qf-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); cursor: pointer; }
 .qf-item[aria-selected="true"] { background: var(--surface-raised); }

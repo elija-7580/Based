@@ -158,6 +158,8 @@ test("Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens", 
   await expect(page.getByRole("dialog").first()).toBeVisible();
   found.push(...(await walk(page, "Quick Find", 20, "[role=dialog]")));
   // Fund vom 11.11.: Filter im Quick Find waren 17 px hoch
+  await page.keyboard.type("a"); // die Filterzeile erscheint erst beim Tippen
+  await expect(page.locator(".qf-filters")).toBeVisible();
   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
   console.log(found.join("\n"));
   expect(found).toEqual([]);

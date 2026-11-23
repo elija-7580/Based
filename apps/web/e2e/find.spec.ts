@@ -288,3 +288,34 @@ for (const theme of ["light", "dark"] as const) {
     });
   }
 }
+
+// Elija 22.11.2026 (Vergleich App ↔ Website, Runde 2): das leere Suchfeld zeigt keine Filterzeile – sie erscheint mit
+// dem ersten Zeichen und bleibt, solange ein Filter gesetzt ist. Fotos mit BASED_SCREENSHOTS=1 (Chromium):
+// docs/design/screens/web-find-empty-<theme>-<breite>.png.
+for (const theme of ["light", "dark"] as const) {
+  test(`Quick Find: Filterzeile erst beim Tippen (${theme})`, async ({ page, browserName }) => {
+    await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.goto("/");
+    await ready(page);
+    await page.keyboard.press("ControlOrMeta+k");
+    const qf = page.getByRole("dialog", { name: "Quick Find" });
+    const input = qf.getByRole("combobox", { name: "Search pages" });
+    const filterRow = qf.getByRole("group", { name: "Filters" });
+    await expect(input).toBeFocused();
+    for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }, { width: 1728, height: 1000 }]) {
+      await page.setViewportSize(size);
+      await expect(filterRow).toHaveCount(0);
+      if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") await page.waitForTimeout(400); // Einblenden abgeschlossen
+      if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-find-empty-${theme}-${size.width}.png` });
+    }
+    await input.fill("w");
+    await expect(filterRow).toBeVisible();
+    await expect(input).toBeFocused();
+    // Ein gesetzter Filter hält die Zeile offen, auch wenn das Feld wieder leer ist
+    await filterRow.getByRole("button", { name: "Title only" }).click();
+    await input.fill("");
+    await expect(filterRow).toBeVisible();
+    await filterRow.getByRole("button", { name: "Title only" }).click();
+    await expect(filterRow).toHaveCount(0);
+  });
+}

@@ -171,7 +171,9 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             }}
           />
         </div>
-        <div className="qf-filters" role="group" aria-label="Filters">
+        {/* Elija 22.11.2026: Filter gelten nur für die Suche – sie erscheinen mit dem ersten Zeichen (oder solange einer
+            gesetzt ist). Das leere Feld zeigt nur „Recent“ und die Befehle. */}
+        {query.trim() || filtered || filters.sort !== "bestMatch" ? <div className="qf-filters" role="group" aria-label="Filters">
           <BasedChip label="Title only" pressed={filters.titleOnly} onChange={(on) => setFilters((f) => ({ ...f, titleOnly: on }))} />
           {currentPage ? (
             <BasedChip label="In this page" pressed={filters.inPage} tooltip={`Only “${currentPage.title}” and its sub-pages`} onChange={(on) => setFilters((f) => ({ ...f, inPage: on }))} />
@@ -190,7 +192,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             </select>
             <Icon name="chevron" size={14} />
           </label>
-        </div>
+        </div> : null}
         <div className="qf-head t-meta" data-testid="qf-head">{hits ? (items.length ? (hits.length > 0 && hits.every((h) => h.approx) ? "Closest matches" : "Best matches") : "") : pages.length ? "Recent" : ""}</div>
         <ul ref={list} id={listID} role="listbox" aria-label="Results" className="qf-list" data-took={took === undefined ? undefined : took.toFixed(1)}>
           {items.map((h, i) => "command" in h ? (
