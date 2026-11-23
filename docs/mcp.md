@@ -183,6 +183,7 @@ Not ported from the Swift server: the resources `brain://about` and
 | `update_project_status` | Dated entry on the project page, optional status change |
 | `update_project` | Name, goal, status, monthly budget |
 | `list_schedules` / `update_schedule` | Scheduled runs; turn on or off, change, delete |
+| `create_schedule` | New scheduled run of the main agent (`when` like `daily 07:30`, `weekdays 18:00`, `weekly mon,thu 09:00`, `monthly 1 08:00`, `every 2h`, once `2026-12-01 09:00`; local time), optional project; runs with the main agent's rules and budget |
 | `due` | Rows that are due across all databases, between two dates |
 | `list_connections` | MCP connections set up in Based (no secrets) |
 | `list_runs` / `get_run` | Runs newest first (filter `status`); one run with usage, result and sub-runs |

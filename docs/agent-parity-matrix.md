@@ -16,7 +16,7 @@ Formular-Fragen (`update_view { form }`) und „Undo“ an jeder Agenten-Aktion 
 - V7 Notion-Import: als Werkzeug gibt es den Weg über die Notion-API (Token am Server, `BASED_NOTION_TOKEN`). Der
   Hybrid-Weg (Export-ZIP plus API) und Pausieren fehlen; ein Notion-ZIP allein geht über `import_files`.
 - V3 PDF-Export (der Server hat keinen Browser zum Drucken), B12 Captures (gibt es in Based Next noch nicht),
-  B14 Coding-Sitzungen, B10 Zeitplan anlegen.
+  B14 Coding-Sitzungen. (B10 Zeitplan anlegen: `create_schedule` seit 23.11., BSD-591.)
 - D11 Datumsformat, D12 Status-Gruppen, D14 verschachtelte Filter, S1/S18 Sortierung und Dubletten, S17 Graph mit
   Tiefe, T4 Embeds, X2 Workspace-Einstellungen.
 - Rechte-Stufen Private/Balanced/Open gibt es in Based noch nicht. Bis dahin gilt: „Work freely“ = Open, alles andere
@@ -256,7 +256,7 @@ und E23 rücken nach vorn (Visualisierungen, HTML). M6 bleibt: aufnehmen kann nu
 | Inbox | B7 Agent per @ ansprechen, Frage stellen | Inbox-Format (Vaultite) | `ask_main_agent` | Frage an den Nutzer aus MCP heraus fehlt | `ask_user { question, options? }` → Inbox | S |
 | Home | B8 Projekte lesen, anlegen, Status | Home, Projekt-Ansicht | `list_projects`, `get_project`, `create_project`, `update_project_status` | erledigt | erledigt 18.11.: `update_project { name, goal, status, budget_eur }` | – |
 | Home | B9 Läufe lesen | Home, Agent-Ansicht | `list_runs`, `get_run` | – | erledigt | – |
-| Home | B10 Aufgaben-Karten, Zeitpläne (Cron) | Home, Tasks | – | anlegen, ändern, löschen fehlt | teils 18.11.: `list_schedules`, `update_schedule` (an/aus, wann, was, löschen); anlegen über `ask_main_agent` | M |
+| Home | B10 Aufgaben-Karten, Zeitpläne (Cron) | Home, Tasks | – | anlegen, ändern, löschen fehlt | teils 18.11.: `list_schedules`, `update_schedule` (an/aus, wann, was, löschen); 23.11. `create_schedule` (BSD-591); Aufgaben-Karten anlegen über `ask_main_agent` | M |
 | Home | B11 Fällige Aufgaben | Home rechts | `query_database` je Datenbank | erledigt | erledigt 18.11.: `due { from, to }` | – |
 | Home | B12 Captures | Quick capture | nur Swift | fehlt im TS-Server | `capture`, `list_captures`, `file_capture` nachziehen, sobald Captures in Based Next da sind | M |
 | Home | B13 Zeitraum wählen, Begrüßung | Home | – | bewusst nicht | Darstellung. | – |

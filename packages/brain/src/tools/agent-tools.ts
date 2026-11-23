@@ -10,6 +10,9 @@ import { limitSchema, needStr, obj, optStr, S, str, ToolError, type ToolDef } fr
 import type { ToolCtx } from "./context.js";
 import { createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, resolveInboxText, updateProjectStatusText } from "./runs.js";
 
+/** Was `parseSchedule` liest (lokale Zeit des Geräts bzw. Servers). */
+const SCHEDULE_FORMS = "“daily 07:30”, “weekdays 18:00”, “weekly mon,thu 09:00”, “monthly 1 08:00”, “every 2h”, “hourly” or once “2026-12-01 09:00” (local time)";
+
 export function agentTools(ctx: ToolCtx): ToolDef[] {
   const { store } = ctx;
   const limit = (a: Record<string, unknown>) => (typeof a.limit === "number" ? a.limit : undefined);
@@ -126,12 +129,46 @@ export function agentTools(ctx: ToolCtx): ToolDef[] {
         return all.map((s) => `- ${s.data.when} — ${s.data.prompt.split("\n")[0]!.slice(0, 120)} (id: ${s.id}) · ${s.data.enabled ? "on" : "off"}${s.data.nextAt !== undefined ? ` · next ${new Date(toMs(s.data.nextAt)).toISOString().slice(0, 16).replace("T", " ")} UTC` : ""}`).join("\n");
       },
     },
+    // BSD-591: Zeitplan direkt anlegen (vorher nur über ask_main_agent). Läuft als Hauptagent mit dessen Regeln und Budget.
+    {
+      group: "agents", write: true,
+      spec: {
+        name: "create_schedule",
+        description: "Schedule a recurring or one-time run of Based's main agent. It runs with the main agent's permission rules and budget; list_schedules shows it, update_schedule changes or deletes it.",
+        inputSchema: obj({
+          name: str("Short name shown in Based"),
+          when: str(SCHEDULE_FORMS),
+          prompt: { type: "string", minLength: 1, maxLength: 4000, description: "What the agent should do each time" },
+          project: str("Project id or name (optional)"),
+          enabled: { type: "boolean", description: "Start turned on (default true)" },
+        }, ["when", "prompt"]),
+      },
+      run: (a) => {
+        const agents = new AgentStore(store);
+        const prompt = needStr(a, "prompt").trim();
+        const when = needStr(a, "when").trim();
+        const ref = optStr(a, "project");
+        let projectID: string | undefined;
+        if (ref) {
+          const p = agents.projects().find((x) => x.id === ref) ?? agents.projects().find((x) => x.name.toLowerCase() === ref.toLowerCase());
+          if (!p) throw new ToolError(`No project “${ref}” (list_projects shows them).`);
+          projectID = p.id;
+        }
+        const name = optStr(a, "name")?.trim() || prompt.split("\n")[0]!.slice(0, 80);
+        let s: ReturnType<AgentStore["createSchedule"]>;
+        try {
+          s = agents.createSchedule(name, when, prompt, { ...(projectID ? { projectID } : {}), ...(typeof a.enabled === "boolean" ? { enabled: a.enabled } : {}) });
+        } catch (e) { throw new ToolError(`${e instanceof Error ? e.message : String(e)} Use ${SCHEDULE_FORMS}.`); }
+        const next = s.data.nextAt !== undefined ? ` · next ${new Date(toMs(s.data.nextAt)).toISOString().slice(0, 16).replace("T", " ")} UTC` : " · no future run";
+        return `Scheduled “${s.name}” · ${s.data.when} (id: ${s.id}) · ${s.data.enabled ? "on" : "off"}${next}`;
+      },
+    },
     {
       group: "agents", write: true, destructive: true,
       spec: {
         name: "update_schedule",
-        description: "Change a schedule: turn it on or off, change when it runs or what it does, or delete it. New schedules are made by the main agent (ask_main_agent).",
-        inputSchema: obj({ id: str("Schedule id"), enabled: { type: "boolean" }, when: str("e.g. every weekday at 9:00"), prompt: S, delete: { type: "boolean" } }, ["id"]),
+        description: "Change a schedule: turn it on or off, change when it runs or what it does, or delete it. New schedules: create_schedule.",
+        inputSchema: obj({ id: str("Schedule id"), enabled: { type: "boolean" }, when: str(SCHEDULE_FORMS), prompt: S, delete: { type: "boolean" } }, ["id"]),
       },
       run: (a) => {
         const agents = new AgentStore(store);

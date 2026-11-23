@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { addOption, addProperty, appendTranscript, createMeeting, type Block, createDatabase, createPage, keyOf, makeBlock, plainText, restorePages, rowsOf, trashPages, type WorkspaceStore } from "@based/core";
 import { AgentStore, WorkspaceTools } from "../src/index.js";
+import { MAIN_AGENT_ID } from "../src/agents/records.js";
 import { memoryStore } from "./helpers.js";
 
 function setup() {
@@ -195,7 +196,7 @@ describe("WorkspaceTools – Seiten", () => {
     const { tools } = setup();
     const write = tools.specs.map((s) => s.name).filter((n) => tools.isWrite(n));
     expect([...write].sort()).toEqual([
-      "add_row", "add_rows", "append_markdown", "ask_main_agent", "create_database", "create_page", "create_project", "create_teamspace", "create_view", "delete_forever", "delete_teamspace", "delete_view",
+      "add_row", "add_rows", "append_markdown", "ask_main_agent", "create_database", "create_page", "create_project", "create_schedule", "create_teamspace", "create_view", "delete_forever", "delete_teamspace", "delete_view",
       "draw_board", "duplicate_page", "edit_blocks", "empty_trash", "find_replace", "move_page", "remember", "replace_page_content", "resolve_inbox", "restore_page", "save_skill", "set_favorite", "trash_page", "undo_last",
       "update_database", "update_meeting", "update_page", "update_project", "update_project_status", "update_row", "update_rows", "update_schedule", "update_teamspace", "update_view", "update_workspace",
     ]);
@@ -501,6 +502,31 @@ describe("Meetings, Verlauf, Projekte, Zeitpläne, Fälliges", () => {
     expect(call("update_schedule", { id: "nope", enabled: false }).text).toContain("No schedule nope");
     expect(ok("list_connections")).toBe("No connections.");
     expect(ok("due")).toBe("Nothing due in that range.");
+  });
+
+  it("BSD-591: create_schedule legt einen Zeitplan des Hauptagenten an; list/update sehen ihn", () => {
+    const { store, ok, call, idIn } = setup();
+    const agents = new AgentStore(store);
+    const p = agents.createProject("Launch");
+    const text = ok("create_schedule", { name: "Morning brief", when: "weekdays 08:30", prompt: "Summarize what is due today", project: "launch" });
+    expect(text).toMatch(/^Scheduled “Morning brief” · weekdays 08:30 \(id: [^)]+\) · on · next \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC$/);
+    const id = idIn(text);
+    const s = agents.schedules().find((x) => x.id === id)!;
+    expect(s.name).toBe("Morning brief");
+    expect(s.data).toMatchObject({ v: 1, when: "weekdays 08:30", prompt: "Summarize what is due today", agentID: MAIN_AGENT_ID, enabled: true, projectID: p.id });
+    expect(s.data.taskID).toBeUndefined();
+    expect(s.data.nextAt).toBeGreaterThan(0);
+    expect(ok("list_schedules")).toContain(`weekdays 08:30 — Summarize what is due today (id: ${id}) · on · next `);
+    expect(ok("update_schedule", { id, enabled: false })).toBe("Updated the schedule: enabled");
+    // ohne Namen: erste Zeile des Auftrags; ausgeschaltet anlegen
+    const off = idIn(ok("create_schedule", { when: "daily 18:00", prompt: "File the inbox\nthen stop", enabled: false }));
+    expect(agents.schedules().find((x) => x.id === off)).toMatchObject({ name: "File the inbox", data: { enabled: false } });
+    // Fehler: unlesbare Zeit (mit den Formen), unbekanntes Projekt, leerer Auftrag – nichts angelegt
+    const n = agents.schedules().length;
+    expect(call("create_schedule", { when: "every weekday at 9", prompt: "x" }).text).toMatch(/Can't read the time .* Use “daily 07:30”/);
+    expect(call("create_schedule", { when: "daily 09:00", prompt: "x", project: "nope" }).text).toContain("No project “nope”");
+    expect(call("create_schedule", { when: "daily 09:00", prompt: "" }).isError).toBe(true);
+    expect(agents.schedules()).toHaveLength(n);
     expect(call("due", { from: "soon" }).text).toContain("from must be a date");
   });
 });

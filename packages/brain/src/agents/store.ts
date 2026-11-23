@@ -329,6 +329,24 @@ export class AgentStore {
     return listRecords<ScheduleData>(this.store, SCHEDULE_TYPE);
   }
 
+  /**
+   * BSD-591: Zeitplan direkt anlegen (MCP `create_schedule`) – dieselben Felder, die der Hauptagent beim Ausführen
+   * eines Auftrags schreibt (executor.ts, Aktion „schedule“), nur ohne Auftrag. Läuft als Hauptagent, mit dessen
+   * Regeln und Budget.
+   */
+  createSchedule(name: string, when: string, prompt: string, opts: { projectID?: string; enabled?: boolean } = {}): Rec<ScheduleData> {
+    const parsed = parseSchedule(when);
+    if (!parsed) throw new Error(`Can't read the time “${when}”.`);
+    const next = nextFire(parsed, this.nowMs());
+    const id = makeRecordID();
+    const data: ScheduleData = {
+      v: 1, when, prompt, agentID: MAIN_AGENT_ID, enabled: opts.enabled ?? true,
+      ...(next !== undefined ? { nextAt: fromMs(next) } : {}), ...(opts.projectID ? { projectID: opts.projectID } : {}),
+    };
+    this.store.transact("New schedule", (tx) => putRecord(this.store, tx, SCHEDULE_TYPE, id, name, data), { undoable: false });
+    return getRecord<ScheduleData>(this.store, SCHEDULE_TYPE, id)!;
+  }
+
   updateSchedule(id: string, patch: { enabled?: boolean; when?: string; prompt?: string }) {
     const s = getRecord<ScheduleData>(this.store, SCHEDULE_TYPE, id);
     if (!s) throw new Error("This schedule no longer exists.");
