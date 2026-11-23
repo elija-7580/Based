@@ -131,6 +131,10 @@ export function MeetingBlock(props: MeetingBlockProps) {
             ) : null}
             {busyElsewhere ? <span className="bx-meet-muted">Another meeting is recording.</span> : null}
             {!host || !host.canRecord() ? <span className="bx-meet-muted">{host ? "Recording isn't available in this browser." : "Recording works in the Based app."}</span> : null}
+            {/* Ohne Transkript gab es keinen Weg, die Aufnahme anzuhören (Abspielen hing nur an Transkript-Zeilen). */}
+            {hasTracks && host && !playback ? (
+              <BasedButton label="Play recording" disabled={busyElsewhere} onClick={() => play(0)} />
+            ) : null}
             {playback ? (
               <span className="bx-meet-playing bx2-meet-playing" data-testid="meeting-playback" data-from={playback.from}>
                 {playback.error ? <span className="bx-meet-error">{playback.error}</span> : <span>{playback.playing ? "Playing" : "Paused"} · <span className="bx-meet-clock">{timecode(playback.position)}</span></span>}
