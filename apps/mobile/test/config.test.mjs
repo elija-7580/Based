@@ -21,3 +21,10 @@ test("Mikrofon-Hinweis fürs iPhone ist gesetzt (Sprachnotizen, Meetings)", () =
 test("Icons liegen vor", () => {
   for (const f of conf.bundle.icon) assert.ok(existsSync(new URL(`../src-tauri/${f}`, import.meta.url)), f);
 });
+
+test("iPhone-Symbol: Based-Logo, 1024 × 1024, liegt vor (der Workflow erzeugt daraus alle Größen)", () => {
+  const png = readFileSync(new URL("../src-tauri/icons/icon.png", import.meta.url));
+  assert.equal(png.readUInt32BE(16), 1024);
+  assert.equal(png.readUInt32BE(20), 1024);
+  assert.equal(png[25], 2, "ohne Alphakanal (App Store lehnt durchsichtige Symbole ab)");
+});

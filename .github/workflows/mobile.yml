@@ -62,8 +62,8 @@ jobs:
         working-directory: apps/mobile
         run: |
           pnpm exec tauri ios init --ci
-          # App-Symbole in allen iPhone-Größen aus dem Based-Zeichen
-          pnpm exec tauri icon ../desktop/src-tauri/icons/icon.png --ios-color "#ffffff" -o "$RUNNER_TEMP/icons"
+          # App-Symbole in allen iPhone-Größen aus dem Based-Logo (apps/mobile/icon.svg, volle Fläche)
+          pnpm exec tauri icon src-tauri/icons/icon.png --ios-color "#F7F7F5" -o "$RUNNER_TEMP/icons"
           cp -R "$RUNNER_TEMP/icons/ios/." src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
           ls src-tauri/gen/apple
 
