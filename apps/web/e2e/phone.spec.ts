@@ -70,3 +70,12 @@ test("Handy: Tipp auf den Titel einer Zeile öffnet die Zeile", async ({ page },
   await noOverflow(page);
   if (shots && testInfo.project.name === "chromium") await page.screenshot({ path: `${screens}/web-phone-row-light.png` });
 });
+
+test("Handy: ein Kopplungs-Link vom Mac füllt Adresse und Token", async ({ page }) => {
+  await fresh(page);
+  await page.goto("/#prefs-sync");
+  const url = page.getByLabel("Server URL");
+  await url.fill("based://pair?url=https%3A%2F%2Fmac.example.ts.net%3A8443&token=bdo_abc123");
+  await expect(url).toHaveValue("https://mac.example.ts.net:8443");
+  await expect(page.getByLabel("Token")).toHaveValue("bdo_abc123");
+});

@@ -18,6 +18,7 @@ import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { appIdentity, checkForUpdates, isTauri, openExternal, type AppIdentity } from "../../desktop.js";
 import { GIVE_ONCE_URL, PAID_PLANS_AT_USERS, SPONSOR_URL } from "../../shell/support.js";
 import { validateSyncForm } from "../../shell/settings.js";
+import { parsePairingLink } from "../../desktop/localServer.js";
 import { DetailsSection, DeveloperSection, OverviewSection } from "./diagnostics.js";
 import { autoUpdatePref, deviceNode, fallbackHomePage, homeStaysEmpty, lazyStoreSetting, meetingDetectPref, meetingTranscribePref, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { isGuest, mayDeleteForever } from "../../shell/guest.js";
@@ -153,7 +154,13 @@ function SyncSection({ client, state }: SettingsSectionProps) {
       ) : null}
       <form onSubmit={(e) => { e.preventDefault(); connect(); }} noValidate>
         <VStack gap={4}>
-          <BasedField label="Server URL" type="url" placeholder="https://based.example.com" value={url} disabled={connected} onChange={(v) => { setURL(v); setError(undefined); }} {...(error ? { error } : {})} hint="Connect a based-server to use this workspace on your other devices." />
+          <BasedField label="Server URL" type="url" placeholder="https://based.example.com" value={url} disabled={connected} onChange={(v) => {
+            // Kopplungs-Link vom Mac („Pair a device“, based://pair?…): Adresse und Token in einem Schritt.
+            const pair = parsePairingLink(v);
+            if (pair) setToken(pair.token);
+            setURL(pair ? pair.url : v);
+            setError(undefined);
+          }} {...(error ? { error } : {})} hint="Connect a based-server to use this workspace on your other devices. You can paste a pairing link from your Mac here." />
           <BasedField label="Token" type="password" autoComplete="off" value={token} disabled={connected} onChange={setToken} />
           <HStack gap={2}>
             {connected ? (

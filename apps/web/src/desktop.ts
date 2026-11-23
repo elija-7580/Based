@@ -17,7 +17,19 @@ export const REPORT_PROBLEM_EVENT = "based:report-problem";
 
 /** Läuft die Seite in der Tauri-Hülle? (Tauri 2 setzt `__TAURI_INTERNALS__` vor dem ersten Skript.) */
 export function isTauri(g: object = globalThis): boolean {
-  return "__TAURI_INTERNALS__" in g;
+  return "__TAURI_INTERNALS__" in g && !isMobileShell(g);
+}
+
+/**
+ * Läuft die Seite in der Handy-Hülle (apps/mobile)? Dort gibt es weder Menü noch Updater noch den lokalen Server der
+ * Mac-App – die Oberfläche verhält sich wie im Browser (`isTauri` ist dort falsch), der Speicher ist derselbe (OPFS).
+ * Das iPad meldet sich als „Macintosh“ mit Touch.
+ */
+export function isMobileShell(g: object = globalThis): boolean {
+  if (!("__TAURI_INTERNALS__" in g)) return false;
+  const nav = (g as { navigator?: { userAgent?: string; maxTouchPoints?: number } }).navigator;
+  const ua = nav?.userAgent ?? "";
+  return /iPhone|iPad|iPod|Android/.test(ua) || (/Macintosh/.test(ua) && (nav?.maxTouchPoints ?? 0) > 1);
 }
 
 /** Setzt die Wurzel-Attribute für die Hülle und legt die Zugflächen der Titelleiste an. */
