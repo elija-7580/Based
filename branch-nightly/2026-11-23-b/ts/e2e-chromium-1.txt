@@ -1,61 +1,61 @@
-cancelled 9d9d7a045dbf96dd2e608e5bf25a433f724e1e91
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/components/QuickFind.tsx, /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportSend.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/AIAppsSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/SemanticSearchSetup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-
-Running 334 tests using 2 workers, shard 1 of 2
-
-  ✓    2 [chromium] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (light) (9.9s)
-  ✓    3 [chromium] › e2e/a11y-axe.spec.ts:30:3 › axe: Hauptscreens ohne Verstöße (dark) (9.7s)
-(node:3676) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+cancelled 49625100cac5207b9e145f242b5a184d5866e366
+  ✓  105 [chromium] › e2e/brain.spec.ts:162:1 › workspace answer with sources: the citation jumps to the block (2.5s)
+  ✓  106 [chromium] › e2e/board.spec.ts:682:1 › Board in der Seite: Icon ändern, Ausschnitt sperren, Doppelklick zum Betreten, Esc verlässt (2.9s)
+  ✓  107 [chromium] › e2e/brain.spec.ts:167:1 › memory suggestions are saved only after Save (3.6s)
+  -  109 [chromium] › e2e/brain.spec.ts:189:1 › Screenshots web-brain-*
+  ✓  108 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (4.6s)
+  ✓  110 [chromium] › e2e/brain.spec.ts:223:1 › trashing the Agent Brain shows why it stays (3.8s)
+  -  112 [chromium] › e2e/brain.spec.ts:234:1 › Screenshots web-brain-refused-*
+(node:6962) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓    4 [chromium] › e2e/ai-apps.spec.ts:54:1 › BSD-581: This Mac – ohne Mac-App ein Hinweis, mit lokalem Server Schnipsel ohne Token (1.6s)
-  ✓    5 [chromium] › e2e/ai-apps.spec.ts:92:1 › BSD-581: Server – eigenes Token je App, gilt für /mcp, widerrufbar (4.7s)
-  ✓    6 [chromium] › e2e/ai-apps.spec.ts:154:1 › BSD-630: MCP-Adresse kopierbar – lokal auf der Seite und im Dialog, Server im Dialog (4.4s)
-  ✓    7 [chromium] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (1.3s)
-  ✓    8 [chromium] › e2e/ai-switch.spec.ts:58:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (1.2s)
-  ✓    9 [chromium] › e2e/ai-switch.spec.ts:85:3 › Screenshots ohne AI (light) (1.3s)
-  ✓   10 [chromium] › e2e/ai-switch.spec.ts:85:3 › Screenshots ohne AI (dark) (1.3s)
-  ✓   11 [chromium] › e2e/ai-switch.spec.ts:105:1 › ohne AI: kein Ask AI im Block-Editor (853ms)
-
-  ✓    1 [chromium] › e2e/a11y.spec.ts:129:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (40.3s)
-  -   13 [chromium] › e2e/a11y.spec.ts:168:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
-  ✓   14 [chromium] › e2e/a11y.spec.ts:210:1 › Quick Find: Esc gibt den Fokus zurück (789ms)
-  ✓   12 [chromium] › e2e/ai-switch.spec.ts:126:1 › ohne AI: Rechtsklick auf die Home-Seite ohne „Use dashboard as Home“, andere Seite „Set as Home“ (1.8s)
-  ✓   15 [chromium] › e2e/a11y.spec.ts:226:1 › Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl (1.3s)
-  ✓   16 [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite (3.8s)
-  ✓   17 [chromium] › e2e/app-heads.spec.ts:24:3 › Köpfe der App-Screens: Titel 20/600, Anzahl in meta daneben (light) (2.5s)
-  ✓   18 [chromium] › e2e/appearance-baked.spec.ts:12:1 › HTML-Ergebnis folgt App-Schrift und Seitenschrift – auch wieder zurück (2.3s)
-(node:4228) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+  ✓  111 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (3.0s)
+  ✓  113 [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (3.3s)
+  ✓  114 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.7s)
+(node:7076) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   19 [chromium] › e2e/app-heads.spec.ts:24:3 › Köpfe der App-Screens: Titel 20/600, Anzahl in meta daneben (dark) (3.1s)
-  ✓   21 [chromium] › e2e/app-heads.spec.ts:50:1 › Meetings: Umschalter in Zeile 2 unter dem Titel, linke Kante wie der Titel (2.4s)
-  -   22 [chromium] › e2e/beta-build.spec.ts:43:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (light)
-  -   23 [chromium] › e2e/beta-build.spec.ts:43:3 › Beta-Build: erster Start, Seite, Einstellungen, Slash-Menü (dark)
-  -   24 [chromium] › e2e/beta-build.spec.ts:184:1 › Beta-Build: Problem melden führt zur Mail an hello@basednotes.app
-  -   25 [chromium] › e2e/beta-build.spec.ts:214:1 › Beta-Build: Problem melden – Send to Based kommt beim Server an
-  -   26 [chromium] › e2e/beta-build.spec.ts:246:1 › Beta-Build: alte Links auf ausgeblendete Ansichten landen auf #home
-  -   27 [chromium] › e2e/beta-build.spec.ts:274:1 › Beta-Build: Start, Seite und Datenbank laden keinen Chat- oder Agenten-Code
-  -   28 [chromium] › e2e/beta-build.spec.ts:318:3 › Beta-Build: lokale MCP-Adresse kopierbar (light)
-  -   29 [chromium] › e2e/beta-build.spec.ts:318:3 › Beta-Build: lokale MCP-Adresse kopierbar (dark)
-  ✓   30 [chromium] › e2e/beta-data.spec.ts:129:1 › BSD-469 Beta-Weg 2: Notion-Export importieren, als Markdown/HTML/Archiv exportieren und wieder importieren, Sicherung vor dem Update zurückspielen (7.4s)
-  -   31 [chromium] › e2e/beta-requests.spec.ts:96:1 › BSD-609: Rückfrage einer KI-App erscheint in der Beta, Allow löscht, Decline lässt im Papierkorb
-  ✓   32 [chromium] › e2e/block-drag.spec.ts:52:1 › Drei gewählte Blöcke ziehen gemeinsam; ⌘Z holt in einem Schritt zurück; Esc bricht ab (1.6s)
-  ✓   20 [chromium] › e2e/backups.spec.ts:42:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (11.8s)
-  ✓   33 [chromium] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (light, 1280×820) (1.2s)
-(node:4516) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   35 [chromium] › e2e/block-drag.spec.ts:88:5 › Ziehen: Geisterbild, Einfügestrich, kein Überlauf (light, 900×600) (1.7s)
+  ✓  115 [chromium] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (825ms)
+  ✓  116 [chromium] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (2.7s)
+  ✓  118 [chromium] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (2.5s)
+  -  119 [chromium] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
+  ✓  117 [chromium] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (7.0s)
+  ✓  120 [chromium] › e2e/chat.spec.ts:213:3 › Undo an einer Agenten-Aktion nimmt genau diesen Schritt zurück (light) (3.3s)
+  ✓  122 [chromium] › e2e/chat.spec.ts:213:3 › Undo an einer Agenten-Aktion nimmt genau diesen Schritt zurück (dark) (4.2s)
+  ✓  121 [chromium] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (6.7s)
+  ✓  123 [chromium] › e2e/chat.spec.ts:290:3 › Chat-Panel schwebt bei schmaler Hauptspalte (light) (3.0s)
+  ✓  125 [chromium] › e2e/chat.spec.ts:290:3 › Chat-Panel schwebt bei schmaler Hauptspalte (dark) (2.7s)
+  ✓  126 [chromium] › e2e/crash-report.spec.ts:27:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (1.4s)
+  ✓  127 [chromium] › e2e/crash-report.spec.ts:50:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (2.5s)
+  ✓  124 [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (8.7s)
+  ✓  128 [chromium] › e2e/crash-report.spec.ts:86:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (4.1s)
+  ✓  129 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (7.2s)
+  ✓  131 [chromium] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (4.4s)
+  ✓  132 [chromium] › e2e/database-click.spec.ts:33:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus (3.0s)
+  ✓  133 [chromium] › e2e/database-click.spec.ts:70:1 › BSD-547: Rollt die Tabelle zwischen Drücken und Loslassen noch (WebKit-Nachrollen), gilt der Klick der Zeile beim Drücken (1.2s)
+  ✓  134 [chromium] › e2e/database-click.spec.ts:89:1 › Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite (2.8s)
+  ✓  135 [chromium] › e2e/database-click.spec.ts:124:1 › Kästchen der ausgewählten Zeile ist gesetzt (1.7s)
+  ✓  136 [chromium] › e2e/database-columns.spec.ts:45:1 › Inline-Datenbanken in Spalten: nichts ragt in die Nachbarspalte, lange Titel brechen um (2.3s)
+  ✓  137 [chromium] › e2e/database-columns.spec.ts:90:1 › Inline-Datenbank als ganze Seite: Knopf und Blockmenü, Titel der Datenbank überall (2.4s)
+  ✓  138 [chromium] › e2e/database-create.spec.ts:20:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (2.1s)
+  ✓  139 [chromium] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (2.1s)
+  ✓  140 [chromium] › e2e/database-edges.spec.ts:45:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (1.7s)
+  ✓  141 [chromium] › e2e/database-edges.spec.ts:66:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (1.3s)
+  ✓  142 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (2.5s)
+  ✓  143 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (2.1s)
+  ✓  144 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (1.7s)
+  ✓  145 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (2.1s)
+  ✓  146 [chromium] › e2e/database-inline.spec.ts:129:1 › Inline-Liste: Titel ausblenden, keine Tabellenlinien (2.7s)
+  ✓  147 [chromium] › e2e/database-look.spec.ts:23:1 › Section mit Inline-Datenbank: Fläche, kein Einzel-Tab, Daten in UI-Schrift (1.3s)
+  ✓  148 [chromium] › e2e/database-look.spec.ts:65:1 › Daten in UI-Schrift, IDs in Monospace (965ms)
+  ✓  149 [chromium] › e2e/database-look.spec.ts:76:1 › Ansichts-Tab: Klick auf den aktiven Tab öffnet das Menü – umbenennen, duplizieren, löschen (1.4s)
+  ✓  150 [chromium] › e2e/database-look.spec.ts:118:1 › Tabelle wie auf der Website: Linien, Breite, Kopf, Status, Datum, Ansichts-Pille (1.8s)
+  ✓  151 [chromium] › e2e/database-look.spec.ts:205:1 › Board, Timeline, Kalender, Liste, Galerie: eine Kante, volle Breite, Statusfarben, nichts Leeres (1.8s)
+  ✓  152 [chromium] › e2e/database-look.spec.ts:303:1 › Seitenkopf ruhig: Export und Papierkorb nur im Menü, „Edited“ nur einmal (1.1s)
+  ✓  153 [chromium] › e2e/database-look.spec.ts:336:1 › Ansichts-Einstellungen: kurze Übersicht, Unterseiten mit Zurück, alles im Fenster (2.6s)
+  ✓  154 [chromium] › e2e/database-polish.spec.ts:7:1 › Inline-Tabelle: leere Titel bleiben leer, Zelleneditor ist ein BasedField, kein Rahmen um den Block (2.0s)
+  ✓  155 [chromium] › e2e/database-polish.spec.ts:50:1 › Textzelle bearbeiten zeigt genau einen Rahmen (1.3s)
+  ✓  156 [chromium] › e2e/database-polish.spec.ts:79:1 › Lostippen in einer Zelle verliert keine Zeichen, während der Editor öffnet (3.6s)
+  ✓  157 [chromium] › e2e/database-polish.spec.ts:110:1 › Filterzeile ohne Umbruch, Datumsauswahl mit einem Fokusrahmen und Based-Feld (2.2s)
+  ✓  158 [chromium] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (1.3s)
+  ✓  159 [chromium] › e2e/database-views.spec.ts:110:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (6.0s)
+[chromium] Klick-Durchlauf: 104 Klicks, 2 ausgelassen
+  ✓  130 [chromium] › e2e/crawl.spec.ts:204:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (1.2m)

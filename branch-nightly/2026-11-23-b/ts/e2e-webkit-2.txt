@@ -1,61 +1,61 @@
-cancelled 9d9d7a045dbf96dd2e608e5bf25a433f724e1e91
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts, /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/components/QuickFind.tsx, /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/hangs.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportSend.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/desktop/localServer.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/coding/connection.ts, /home/runner/work/Based/Based/apps/web/src/desktop/AIAppsSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/BackupsGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/ICloudGroup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/LocalServerSection.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/SemanticSearchSetup.tsx, /home/runner/work/Based/Based/apps/web/src/desktop/TailnetGroup.tsx, /home/runner/work/Based/Based/apps/web/src/meeting/host.ts, /home/runner/work/Based/Based/apps/web/src/meeting/servers.ts, /home/runner/work/Based/Based/apps/web/src/meeting/useTranscription.ts, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-
-Running 322 tests using 2 workers, shard 2 of 2
-
-  ✓    2 [webkit] › e2e/keyboard-everywhere.spec.ts:42:1 › Seitenleiste: ⇧⌘E hinein, Pfeile durch alles, ←/→ im Baum, Enter öffnet, Esc zurück in die Seite @smoke (3.8s)
-  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (5.0s)
-  ✓    3 [webkit] › e2e/keyboard-everywhere.spec.ts:91:1 › ⇧F10 öffnet das Menü am fokussierten Eintrag; nach Esc holt die nächste Pfeiltaste den Fokus zurück (1.4s)
-  -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
-  -    6 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
-  ✓    5 [webkit] › e2e/keyboard-everywhere.spec.ts:104:1 › Einstellungen: Pfeile in der Liste links, → in den Inhalt, ← zurück (2.3s)
-  ✓    8 [webkit] › e2e/keyboard-everywhere.spec.ts:122:1 › Übersicht aller Kürzel: ⇧⌘/ öffnet, Suche filtert, Esc schließt; auch über ⌘K @smoke (2.4s)
-  ✓    7 [webkit] › e2e/keyboard-select.spec.ts:39:1 › Einfache Tabelle: Tab, ⇧Tab, Pfeile, Enter, Tab am Ende legt eine Zeile an (4.9s)
-  ✓   10 [webkit] › e2e/keyboard-select.spec.ts:77:1 › Datenbank: Tab im Zellen-Editor, ⇧-Pfeile wählen Bereich, Kopieren, Einfügen, Leeren, Ziehen (5.4s)
-  ✓    9 [webkit] › e2e/keyboard-everywhere.spec.ts:146:1 › ⌘ halten zeigt die Tasten der Stelle: überall, Seitenleiste, Text, Blöcke, Datenbank (6.9s)
-  ✓   12 [webkit] › e2e/keyboard-everywhere.spec.ts:171:1 › Editor: ⌘/ öffnet das Blockmenü, Pfeile und Enter wählen (1.9s)
-  ✓   11 [webkit] › e2e/keyboard-select.spec.ts:133:1 › Blockauswahl: Rechteck aus dem Seitenrand außerhalb der Textspalte, ⇧-Klick erweitert (4.4s)
-  ✓   13 [webkit] › e2e/keyboard-everywhere.spec.ts:188:1 › Mac-Menü: ein Befehl aus dem Register läuft über dieselbe Taste (based:command) (2.6s)
-  ✓   14 [webkit] › e2e/keyboard-select.spec.ts:162:1 › ⌫ ohne Textfeld im Fokus geht nicht zur vorigen Seite zurück (2.1s)
-  ✓   15 [webkit] › e2e/keyboard.spec.ts:12:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (3.5s)
-  ✓   17 [webkit] › e2e/keyboard.spec.ts:27:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (4.4s)
-  ✓   18 [webkit] › e2e/marquee.spec.ts:57:1 › Aufziehen rechts neben kurzem Text und aus einer leeren Zeile wählt Blöcke; im Text bleibt es Text; Klick setzt den Cursor ans Ende (3.4s)
-  ✓   19 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1280×820) (2.8s)
-  ✓   16 [webkit] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Knöpfe (light) (14.7s)
-  ✓   20 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 900×600) (3.0s)
-  ✓   22 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (light, 1728×1000) (3.4s)
-  ✓   23 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1280×820) (2.1s)
-  ✓   24 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 900×600) (2.1s)
-  ✓   25 [webkit] › e2e/marquee.spec.ts:100:5 › Aussehen wie auf dem Board: getönte Fläche, feiner Rand (dark, 1728×1000) (2.1s)
-  ✓   21 [webkit] › e2e/kit-states.spec.ts:185:3 › Zustands-Galerie: Farben der Zustände sind Tokens – Felder, Tabs, Pillen (light) (11.5s)
-  ✓   26 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (4.4s)
+cancelled 49625100cac5207b9e145f242b5a184d5866e366
+  ✓   63 [webkit] › e2e/native-free.spec.ts:151:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (2.8s)
+  ✓   64 [webkit] › e2e/native-free.spec.ts:169:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (3.6s)
+  ✓   62 [webkit] › e2e/kit-states.spec.ts:655:3 › Design-Kit: Umschalter, Filter, Seitenblatt und Hinweis nach dem Element-System (light) (9.9s)
+  ✓   65 [webkit] › e2e/native-free.spec.ts:187:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (4.4s)
+  ✓   67 [webkit] › e2e/native-free.spec.ts:218:1 › Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfung bleibt (2.2s)
+  ✓   68 [webkit] › e2e/native-free.spec.ts:241:1 › Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unverändert (2.0s)
+  ✓   66 [webkit] › e2e/kit-states.spec.ts:655:3 › Design-Kit: Umschalter, Filter, Seitenblatt und Hinweis nach dem Element-System (dark) (7.8s)
+  ✓   69 [webkit] › e2e/native-free.spec.ts:266:49 › Rechtsklick auf falsch geschriebenes Wort: Vorschläge, ersetzen, Rückgängig (light) (3.6s)
+  ✓   71 [webkit] › e2e/native-free.spec.ts:266:49 › Rechtsklick auf falsch geschriebenes Wort: Vorschläge, ersetzen, Rückgängig (dark) (2.6s)
+  ✓   72 [webkit] › e2e/native-free.spec.ts:324:3 › Dialog mit sehr langem Text: Knöpfe bleiben erreichbar, der Text scrollt (1280 × 820) (1.4s)
+  ✓   73 [webkit] › e2e/native-free.spec.ts:324:3 › Dialog mit sehr langem Text: Knöpfe bleiben erreichbar, der Text scrollt (900 × 600) (1.4s)
+  ✓   74 [webkit] › e2e/notion-hybrid.spec.ts:44:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (14.0s)
+  ✓   70 [webkit] › e2e/notion-api.spec.ts:53:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (25.1s)
+  ✓   76 [webkit] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (3.9s)
+  ✓   75 [webkit] › e2e/notion-hybrid.spec.ts:131:1 › Hybrid-Import: einzeln geladene Teil-ZIPs zusammen wählen (8.4s)
+  ✓   77 [webkit] › e2e/old-webkit-esc.spec.ts:31:1 › WebKit ohne :popover-open: Esc schließt den Side Peek ohne Fehler (2.6s)
+  ✓   79 [webkit] › e2e/old-webkit-esc.spec.ts:50:1 › WebKit ohne :popover-open: Esc schließt die schwebende Seitenleiste ohne Fehler (2.1s)
+  ✓   78 [webkit] › e2e/notion-hybrid.spec.ts:153:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (3.7s)
+  -   81 [webkit] › e2e/notion-hybrid.spec.ts:171:1 › Hybrid-Import: Bildschirmfotos
+  ✓   80 [webkit] › e2e/one-menu.spec.ts:31:49 › Ein Menü: alle Menü-Familien sehen gleich aus (light) (6.2s)
+  ✓   83 [webkit] › e2e/one-menu.spec.ts:31:49 › Ein Menü: alle Menü-Familien sehen gleich aus (dark) (2.7s)
+  ✓   84 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (11.1s)
+  ✓   82 [webkit] › e2e/overflow.spec.ts:85:1 › Leerer Workspace: nichts läuft über (20.3s)
+  ✓   85 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (3.2s)
+  ✓   87 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (3.2s)
+  -   88 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  -   89 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   90 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (5.4s)
+  ✓   91 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (900 px) (3.7s)
+  ✓   92 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1100 px) (3.7s)
+  ✓   86 [webkit] › e2e/overflow.spec.ts:99:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (21.7s)
+  ✓   93 [webkit] › e2e/panel-still.spec.ts:30:3 › Inhaltsfläche hat keinen seitlichen Überhang (1280 px) (3.2s)
+  ✓   94 [webkit] › e2e/overflow.spec.ts:119:1 › Gliederung überdeckt nie den Text (4.6s)
+  ✓   95 [webkit] › e2e/panel-still.spec.ts:37:1 › schräges Wischen und Code verschieben die Fläche nicht seitlich (5.9s)
+  ✓   97 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (900 px) (1.9s)
+  ✓   98 [webkit] › e2e/panel-still.spec.ts:56:3 › Library: Filterleiste bricht um statt überzustehen (1100 px) (1.4s)
+  ✓   96 [webkit] › e2e/overflow.spec.ts:151:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (10.3s)
+  ✓   99 [webkit] › e2e/peek-resize.spec.ts:29:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (6.1s)
+  ✓  100 [webkit] › e2e/overflow.spec.ts:172:1 › Kopfzeile bleibt in 900 × 600 einzeilig, auch 6 Ebenen tief mit langen Namen (3.7s)
+  ✓  101 [webkit] › e2e/peek-resize.spec.ts:68:1 › Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mit Fokus in der Tabelle (7.0s)
+  ✓  102 [webkit] › e2e/overflow.spec.ts:201:1 › Inline-Datenbank: Werkzeugleiste in 900 × 600 einzeilig (3.7s)
+  ✓  103 [webkit] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (3.0s)
+  ✓  105 [webkit] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (2.7s)
+  ✓  104 [webkit] › e2e/overflow.spec.ts:227:1 › Datenbank: 1.000 Zeilen, lange Spaltennamen und Optionen (6.3s)
+  ✓  107 [webkit] › e2e/overflow.spec.ts:258:1 › Schmales Fenster: Seitenleiste schwebt bei Bedarf, Köpfe einzeilig (5.3s)
+  ✓  106 [webkit] › e2e/persist-reload.spec.ts:25:1 › BSD-416: anlegen, tippen, sofort neu laden → Seite und Text da (dauerhaftes Profil) (8.7s)
+  ✓  109 [webkit] › e2e/persist-reload.spec.ts:59:1 › BSD-416: ohne OPFS (flüchtiges WebKit-Profil) sagt die Seitenleiste „Not saved“ (1.3s)
+  ✓  110 [webkit] › e2e/polish.spec.ts:14:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (4.8s)
+  ✓  108 [webkit] › e2e/phase2.spec.ts:9:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (9.1s)
+  ✓  111 [webkit] › e2e/polish.spec.ts:28:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (3.3s)
+  ✓  113 [webkit] › e2e/polish.spec.ts:40:1 › Slash-Menü: Überfahren färbt die Zeile wie das Seitenmenü, nicht mit dem Blau der Bibliothek (4.3s)
+  ✓  114 [webkit] › e2e/polish.spec.ts:61:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (1.9s)
+  ✓  112 [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (10.8s)
+  ✓  115 [webkit] › e2e/polish.spec.ts:88:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (4.9s)
+  ✓  116 [webkit] › e2e/property-records.spec.ts:84:1 › neuer Workspace: Spalten sind von Anfang an eigene Records, Datenbank übersteht Neuladen (5.9s)
+  -  118 [webkit] › e2e/replay/record-sample.spec.ts:59:1 › Beispielbündel Block-Editor
+  -  119 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung
+  -  120 [webkit] › e2e/replay/replay.spec.ts:21:5 › blocks-typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung
+  ✓  117 [webkit] › e2e/polish.spec.ts:123:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (6.5s)
+  ✓  122 [webkit] › e2e/polish.spec.ts:201:1 › Fokusrahmen und Textauswahl neutral, unabhängig vom Marker (2.4s)
