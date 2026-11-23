@@ -19,6 +19,7 @@ export { DateField, TimeField } from "./fields.js";
 export * from "./logic.js";
 export { installNoWritingTools } from "./writingTools.js";
 export { useReturnFocus } from "./returnFocus.js";
+export { openOverlay } from "./openOverlay.js";
 
 let uninstall: (() => void) | undefined;
 

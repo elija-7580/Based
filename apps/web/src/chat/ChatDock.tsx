@@ -6,6 +6,7 @@ import type { History, Route } from "../shell/router.js";
 import type { StoreClient } from "../worker/client.js";
 import { useChatFloats } from "./dockLayout.js";
 import { chatController, onOpenChatPanel, openChatPanel, restoreLastChat, setChatPanelOpen } from "./runtime.js";
+import { openOverlay } from "@based/ui/native";
 // BSD-280: die Chat-Ansicht (Markdown, Code) erst laden, wenn der Chat aufgeht – nicht im Start-Bundle.
 const ChatView = lazy(() => import("./ChatView.js").then((m) => ({ default: m.ChatView })));
 
@@ -83,7 +84,7 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
       if (t?.closest(".chat-dock, [data-testid=topbar-ai], [role=menu], [role=dialog], [role=listbox]")) return;
       setOpenSaved(false);
     };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector(`:is([role=menu], [role=dialog]):not([popover]:not(:popover-open) *)`)) setOpenSaved(false); };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented && !openOverlay(document, "[role=menu], [role=dialog]")) setOpenSaved(false); };
     document.addEventListener("pointerdown", onDown, true);
     document.addEventListener("keydown", onEsc);
     return () => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("keydown", onEsc); };

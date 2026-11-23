@@ -28,6 +28,7 @@ import type { SyncState } from "../worker/protocol.js";
 import { HybridImportPill } from "./NotionHybrid.js";
 import { movedToTrash } from "../shell/trashUndo.js";
 import { noteDragStart, releasedAsClick } from "../shell/clickSlop.js";
+import { openOverlay } from "@based/ui/native";
 
 /** Nur geschlossene Formen werden im aktiven Zustand gefüllt (Lupe und Zahnrad nicht). */
 const FILLABLE = new Set<IconName>(["home", "graph", "trash", "chat", "settings", "library", "search"]);
@@ -129,7 +130,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
       if (t?.closest(".sidebar, .sidebar-show, [role=menu], [role=dialog]")) return;
       setPinned(false);
     };
-    const onEsc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector(`:is([role=menu], [role=dialog]):not([popover]:not(:popover-open) *)`)) setPinned(false); };
+    const onEsc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape" && !openOverlay(document, "[role=menu], [role=dialog]")) setPinned(false); };
     document.addEventListener("pointerdown", onDown, true);
     document.addEventListener("keydown", onEsc);
     return () => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("keydown", onEsc); };
