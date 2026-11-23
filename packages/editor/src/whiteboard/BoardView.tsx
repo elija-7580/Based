@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { registerContextItems } from "@based/ui/native";
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
-import { boardFileView, boardPagesWithoutCard, continueList, insertBoardPageCards, isShape, screenToWorld, zoomLabel, type Camera, type WBShape, type WorkspaceStore } from "@based/core";
+import { boardFileView, boardPagesWithoutCard, continueList, insertBoardPageCards, isShape, screenToWorld, zoomLabel, type Camera, type ConnectorShape, type WBShape, type WorkspaceStore } from "@based/core";
 import { BlockIcon, type BlockIconName } from "../blocks/icons.js";
 import { BOARD_TOOLS, BoardController, FILL_COLORS, HIGHLIGHT_COLORS, isEditTool, minimapTransform, PEN_COLORS, SNAP_HOLD_MS, STROKE_COLORS, type BoardEdit, type BoardFile, type BoardTool, type ColorRow } from "./controller.js";
 import { BoardImageCache } from "./images.js";
@@ -141,6 +141,8 @@ function highlightPalette(): readonly string[] {
 }
 const tokenOf = (row: ColorRow, c: string) => (row === "fill" ? fillToken(c) : row === "highlight" ? highlightToken(c) : penToken(c));
 const ROW_LABEL: Record<ColorRow, string> = { stroke: "Color", fill: "Fill", highlight: "Highlight" };
+/** Formen einer Verbindung im Kontextmenü (Seiteninhalt BSD-267: gebogen ist Standard). */
+const LINE_SHAPES: readonly (readonly [ConnectorShape, string])[] = [["curved", "Curved line"], ["straight", "Straight line"], ["elbow", "Elbow line"]];
 /** Hinweise zum Werkzeug: jeder nur beim ersten Mal (Elija 17.11.: „nur einmal als Einleitung“). */
 const HINTS_KEY = "based.board.hintsSeen";
 function hintSeen(tool: string): boolean {
@@ -651,6 +653,11 @@ function BoardSurface({ ctl, host, pageID, titles }: { ctl: BoardController; hos
         { label: "Bring to front", icon: "moveUp", run: () => void ctl.reorder("front") },
         { label: "Send to back", icon: "moveDown", run: () => void ctl.reorder("back") },
         { label: "Delete", icon: "trash", danger: true, run: () => void ctl.deleteSelection() },
+        { separator: true as const },
+      ] : []),
+      // BSD-267: Form der gewählten Verbindungen (Häkchen an der gemeinsamen Form).
+      ...(edit && ctl.selectionLineShape !== null ? [
+        ...LINE_SHAPES.map(([shape, label]) => ({ label, checked: ctl.selectionLineShape === shape, run: () => void ctl.setLineShape(shape) })),
         { separator: true as const },
       ] : []),
       ...(ctl.selectedPage ? [

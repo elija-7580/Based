@@ -732,3 +732,55 @@ test("Board in der Seite: Icon ändern, Ausschnitt sperren, Doppelklick zum Betr
   expect(await overflows(page)).toEqual([]);
   if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}board-in-page-header-light.png` });
 });
+
+// BSD-267: Form der Verbindung im Kontextmenü – gebogen (Standard), gerade, gewinkelt; Häkchen an der Form.
+for (const theme of ["light", "dark"] as const) {
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    test(`Verbindung ${w} × ${h} ${theme}: Form im Rechtsklick-Menü wählen, Häkchen folgt, Undo holt die alte Form zurück`, async ({ page, browserName }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.goto("/");
+      await page.evaluate(() => { const a = localStorage.getItem("based.appearance"); localStorage.clear(); if (a) localStorage.setItem("based.appearance", a); });
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      const board = await newBoard(page);
+      const a = await placeNote(page, -260, -120);
+      const b = await placeNote(page, 160, 120);
+      await page.keyboard.press("a");
+      await stroke(page, [[a.x, a.y], [(a.x + b.x) / 2, (a.y + b.y) / 2], [b.x, b.y]]);
+      await expect(board).toHaveAttribute("data-objects", "3");
+      await page.keyboard.press("v");
+      await page.keyboard.press("ControlOrMeta+a");
+      const menu = async () => {
+        await page.mouse.click(a.x, b.y, { button: "right" });
+        const ctx = page.getByRole("menu").last();
+        await expect(ctx.getByRole("menuitem", { name: "Curved line" })).toBeVisible();
+        return ctx;
+      };
+      const checked = (ctx: ReturnType<Page["getByRole"]>, name: string) => ctx.getByRole("menuitem", { name }).locator(".nf-check");
+      let ctx = await menu();
+      await expect(checked(ctx, "Curved line")).toHaveCount(1);
+      await expect(checked(ctx, "Elbow line")).toHaveCount(0);
+      await ctx.getByRole("menuitem", { name: "Elbow line" }).click();
+      ctx = await menu();
+      await expect(checked(ctx, "Elbow line")).toHaveCount(1);
+      await expect(checked(ctx, "Curved line")).toHaveCount(0);
+      expect(await overflows(page)).toEqual([]);
+      await page.waitForTimeout(250); // Menü ganz eingeblendet
+      expect(await overlaps(page)).toEqual([]);
+      if (browserName === "chromium" && w === 1280) await page.screenshot({ path: `${SHOTS}board-line-shape-${theme}.png` });
+      await page.keyboard.press("Escape");
+      await board.focus();
+      await page.keyboard.press("ControlOrMeta+z");
+      ctx = await menu();
+      await expect(checked(ctx, "Curved line")).toHaveCount(1);
+      await page.keyboard.press("Escape");
+      // Nur Zettel gewählt: keine Linien-Einträge.
+      await page.mouse.click(a.x, a.y);
+      await page.mouse.click(a.x, b.y, { button: "right" });
+      await expect(page.getByRole("menu").last().getByRole("menuitem", { name: "Select all" })).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: "Curved line" })).toHaveCount(0);
+      await page.keyboard.press("Escape");
+    });
+  }
+}
