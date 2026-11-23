@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "anywhere",
+  "description": "„Write anywhere“: kleines Fenster über jedem Programm – Kern (Anfrage und Antwort als Ereignisse ans Hauptfenster), sich ausblenden, Ergebnis in die Zwischenablage legen („Copy“). Sonst nichts: kein Speicher, kein Netz, keine Dateien.",
+  "windows": [
+    "anywhere"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-hide",
+    "clipboard-manager:allow-write-text"
+  ]
+}

@@ -210,3 +210,21 @@ Ob ein Rust-Paket im Mac-Build landet: `cargo tree -i <paket>@<version> --target
 Stand 18.11.2026: die moderate Dependabot-Meldung ist glib 0.18.5 (GHSA-wrw7-89jp-8q8g), nur Linux über gtk 0.18 aus
 Tauri, nicht in der Mac-App; behoben erst in glib 0.20 (Bruch, kommt mit Tauri). picomatch 4.0.7 (hoch, keine behobene
 Version) steckt nur in Lint-/Test-/Build-Werkzeugen.
+
+## Write anywhere (Mac, opt-in)
+
+Settings → Agents & AI → *Write anywhere on this Mac* registers a system-wide shortcut (⌃⌥Space). Pressed in any
+app, it opens a small Based window that writes with the chat model and what the memory knows about you (About me,
+writing style, matching memories) and pastes the result where the cursor was.
+
+- **What is read:** only at the moment of the key press, only the text field with the cursor in the frontmost app
+  (text, selection, app name, window title) through the macOS Accessibility API. Nothing runs in the background, no
+  screenshots, never password fields (`AXSecureTextField`). At most the last 4 000 characters of the field.
+- **Where it goes:** to the configured AI provider, like a chat message. Privacy-Redact applies when it is on.
+- **Inserting:** clipboard + ⌘V into the app that was in front; the previous clipboard text is put back afterwards.
+- **Permission:** macOS *Accessibility* (asked when the setting is turned on). The app is ad-hoc signed, so macOS may
+  ask again after an update.
+- **Limits:** apps that do not expose their fields to Accessibility (some Electron and browser fields) are not read;
+  the window still writes from the instruction alone. Based itself in front: the shortcut does nothing (use Ask AI).
+- Code: `apps/desktop/src-tauri/src/anywhere.rs` (reading, shortcut, pasting), `apps/web/src/desktop/anywhere.ts`
+  (what is sent, the service in the main window), `AnywherePanel.tsx` (the window), capability `anywhere.json`.

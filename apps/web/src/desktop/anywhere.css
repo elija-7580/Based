@@ -1,0 +1,20 @@
+/* „Write anywhere“ (Mac-App): kleines Fenster über jedem Programm. Das Fenster ist durchsichtig; die Fläche ist ein
+   Hinweis wie „Meeting detected“ (Fläche und Schatten wie das Menü), der Rand rundum lässt Platz für den Schatten. */
+html.anywhere-window, html.anywhere-window body { background: transparent; overflow: hidden; }
+html.anywhere-window #root { padding: var(--space-3); }
+.anywhere {
+  display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4);
+  background: var(--surface-card); color: var(--ink); border-radius: var(--radius-xl); box-shadow: var(--shadow-menu);
+  font-family: var(--font-ui); font-size: var(--type-ui-size); user-select: none; -webkit-user-select: none; cursor: default;
+}
+.anywhere-head { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
+.anywhere-title { font-weight: var(--type-ui-weight); flex: none; }
+.anywhere-where { color: var(--muted); font-size: var(--type-description-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.anywhere-note { margin: 0; color: var(--muted); font-size: var(--type-description-size); line-height: var(--type-description-leading); }
+.anywhere-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.anywhere-actions-end { margin-inline-start: auto; display: flex; gap: var(--space-2); }
+.anywhere-result {
+  margin: 0; padding: var(--space-3); max-height: calc(var(--space-6) * 5); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  background: var(--surface-raised); border-radius: var(--radius-lg); font: inherit; line-height: var(--type-description-leading);
+  user-select: text; -webkit-user-select: text; cursor: text;
+}

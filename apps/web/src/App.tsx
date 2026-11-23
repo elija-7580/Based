@@ -240,6 +240,21 @@ export function App({ client, history }: { client: StoreClient; history: History
     await meetingHost()?.startOnPage(id);
   }, [client, openPage]);
 
+  // „Write anywhere“ (Mac-App, opt-in): Tastenkürzel in jedem Programm; geschrieben wird hier, mit Modell und
+  // Gedächtnis. Eigener Chunk – der Browser und die Handy-Hülle laden ihn nie.
+  useEffect(() => {
+    if (!isTauri() || isPageWindow()) return;
+    let stop: (() => void) | undefined, gone = false;
+    void import("./desktop/anywhereStart.js").then((m) => {
+      if (gone) return;
+      stop = m.startAnywhereService(client);
+    }, () => undefined);
+    return () => {
+      gone = true;
+      stop?.();
+    };
+  }, [client]);
+
   // Feedback 18. 11.: Mac-App – startet eine Meeting-App (Zoom, Teams, Meet …) das Mikrofon, fragt ein kleines Fenster
   // oben rechts, ob Based transkribieren soll. „Start transcribing“: neues Meeting, Fenster nach vorn, Aufnahme läuft.
   useEffect(() => {
