@@ -53,5 +53,16 @@ for (const theme of ["light", "dark"] as const) {
     // Der Pfeil klappt auf wie bisher
     await row.getByRole("button", { name: "Expand" }).click();
     await expect(page.getByRole("treeitem", { name: "Roadmap" })).toBeVisible();
+
+    // Elija 23.11.2026 („Farbe automatisch“): Seiten ohne eigenes Icon tragen eine farbige Kachel; die Farbe folgt aus
+    // der Seite und bleibt nach dem Neuladen dieselbe.
+    const tints = () => page.getByRole("tree").first().getByTestId("page-tile").evaluateAll((els) => els.map((el) => `${el.getAttribute("data-tint")} ${getComputedStyle(el).backgroundColor} ${el.getBoundingClientRect().width}`));
+    const before = await tints();
+    expect(before.length).toBeGreaterThanOrEqual(3);
+    for (const t of before) expect(t).toMatch(/^[0-4] rgb\(\d+, \d+, \d+\) 20$/);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(page.getByRole("treeitem", { name: "Roadmap" })).toBeVisible();
+    expect(await tints()).toEqual(before);
   });
 }
