@@ -1,1 +1,1 @@
-abgebrochen 49625100cac5207b9e145f242b5a184d5866e366 nightly/2026-11-23-b · ts-fast=cancelled e2e=cancelled perf=success (nicht blockierend) · run 45101336413
+grün cbe65de96570d491fdf3235518ffd395bf08ae27 nightly/2026-11-23-b · ts-fast=success e2e=success perf=success (nicht blockierend) · run 45101959077
