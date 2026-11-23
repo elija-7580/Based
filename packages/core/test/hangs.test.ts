@@ -167,6 +167,28 @@ describe("Hänger (BSD-418)", () => {
     expect(sent).toHaveLength(n);
   });
 
+  it("Watchdog (BSD-655): pause mitten im Hänger lässt den Ping offen – das späte pong beendet den Marker", () => {
+    let t = 0;
+    const sent: WatchdogEvent[] = [];
+    const markers: HangMarker[] = [];
+    const w = new HangWatchdog({ now: () => t, epoch: () => T0 + t, send: (e) => sent.push(e), writeMarker: (m) => markers.push(m), clearMarker: () => undefined });
+    w.handle({ type: "start", session: "tab-1" });
+    w.tick(); // ping 1
+    t = 2500; w.tick();
+    expect(w.ongoing).toBe(true);
+    // Hauptthread wieder frei: seine Kette hält an (pause), bevor er das alte ping beantwortet
+    w.handle({ type: "pause" });
+    t = 2600; w.handle({ type: "pong", id: 1 });
+    expect(w.ongoing).toBe(false);
+    expect(sent.at(-1)).toEqual({ type: "recovered", ms: 2600 });
+    expect(markers.at(-1)).toMatchObject({ recovered: true, ms: 2600 });
+    // ohne Hänger verwirft pause den offenen Ping wie bisher
+    w.handle({ type: "resume" });
+    t = 3000; w.tick(); // ping 2
+    w.handle({ type: "pause" });
+    expect(w.waiting).toBe(false);
+  });
+
   it("Marker: lesen, tote erkennen (Neuladen dieses Tabs, veraltet), frische eines anderen Tabs nicht", () => {
     const m = parseHangMarker({ v: 1, session: "old", startedAt: T0, ms: 3200, updatedAt: T0 + 3200, activity: "route page", breadcrumbs: ["click hang-3000", 4] })!;
     expect(m.breadcrumbs).toEqual(["click hang-3000"]);

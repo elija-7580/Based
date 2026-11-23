@@ -183,23 +183,33 @@ test("Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt", async 
 // BSD-596: Im Leerlauf (sichtbar, vorn, keine Eingabe) läuft kein Zeitgeber mehr: die Hänger-Kette hält 2 s nach dem
 // letzten Anlass an, die Sitzungs-Marke schreibt nur nach einem Anlass. Gezählt wird jeder setTimeout/setInterval-Aufruf
 // des Fensters; danach weckt eine Eingabe die Messung wieder auf (ein Hänger beim Tippen wird weiter erkannt).
+// BSD-655: auch der Watchdog-Worker schweigt im Leerlauf (0 Nachrichten in 5 s).
 test("Leerlauf: kein Zeitgeber, kein Takt – nach einer Eingabe misst die Kette wieder", async ({ page }) => {
   await page.addInitScript(() => {
-    const w = globalThis as unknown as { __timers: { timeouts: number; intervals: number } } & typeof globalThis;
-    w.__timers = { timeouts: 0, intervals: 0 };
+    const w = globalThis as unknown as { __timers: { timeouts: number; intervals: number; watchdog: number } } & typeof globalThis;
+    w.__timers = { timeouts: 0, intervals: 0, watchdog: 0 };
     const st = w.setTimeout, si = w.setInterval;
+    // BSD-655: Nachrichten des Watchdog-Workers (ping) wecken den Hauptthread wie ein Zeitgeber – mitzählen
+    const W = w.Worker;
+    if (W) w.Worker = class extends W {
+      constructor(url: string | URL, o?: WorkerOptions) {
+        super(url, o);
+        if (o?.name === "based-hang-watchdog") this.addEventListener("message", () => { w.__timers.watchdog++; });
+      }
+    };
     w.setTimeout = ((...a: Parameters<typeof setTimeout>) => { w.__timers.timeouts++; return st(...a); }) as typeof setTimeout;
     w.setInterval = ((...a: Parameters<typeof setInterval>) => { w.__timers.intervals++; return si(...a); }) as typeof setInterval;
   });
   await ready(page, "prefs-diagnostics");
   // Start und erstes Zeichnen abklingen lassen (Kette läuft nach dem letzten Anlass noch 2 s)
   await page.waitForTimeout(4000);
-  const count = () => page.evaluate(() => ({ ...(globalThis as unknown as { __timers: { timeouts: number; intervals: number } }).__timers, ticks: (globalThis as unknown as Hooks).__basedTest.hangs.overhead().ticks }));
+  const count = () => page.evaluate(() => ({ ...(globalThis as unknown as { __timers: { timeouts: number; intervals: number; watchdog: number } }).__timers, ticks: (globalThis as unknown as Hooks).__basedTest.hangs.overhead().ticks }));
   const before = await count();
   await page.waitForTimeout(5000);
   const after = await count();
-  console.log(`idle 5 s: ${after.timeouts - before.timeouts} setTimeout, ${after.intervals - before.intervals} setInterval, ${after.ticks - before.ticks} ticks`);
+  console.log(`idle 5 s: ${after.timeouts - before.timeouts} setTimeout, ${after.intervals - before.intervals} setInterval, ${after.ticks - before.ticks} ticks, ${after.watchdog - before.watchdog} watchdog messages`);
   expect(after.ticks - before.ticks).toBe(0);
+  expect(after.watchdog - before.watchdog).toBe(0);
   expect(after.timeouts - before.timeouts).toBe(0);
   expect(after.intervals - before.intervals).toBe(0);
   // Eingabe weckt die Messung: ein Hänger direkt danach wird erkannt (WebKit ohne lange Frames: nur über die Kette)

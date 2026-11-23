@@ -1,4 +1,5 @@
 // BSD-418: Watchdog-Worker je Tab – pingt den Hauptthread im Takt von 500 ms (nur solange die Seite sichtbar ist).
+// BSD-655: und nur, solange die Messkette der Hülle läuft (resume/pause aus hangs.ts) – im Leerlauf kein Zeitgeber.
 // Antwortet er länger als 2 s nicht, steht ein Marker in OPFS (sonst IndexedDB; Logik: HangWatchdog in packages/core/src/hangs.ts).
 import { HangWatchdog, type WatchdogMessage } from "@based/core/hangs";
 import { deleteMarker, openMarkerFile, putMarker } from "./hangMarkers.js";

@@ -496,7 +496,8 @@ export class HangWatchdog {
     switch (m.type) {
       case "start": this.session = m.session; this.paused = false; return;
       case "context": this.activity = hangName(m.activity, 80); this.breadcrumbs = m.breadcrumbs.slice(-HANG_CRUMBS).map((c) => hangName(c)); return;
-      case "pause": this.paused = true; this.sentAt = undefined; return;
+      // BSD-655: läuft gerade ein Hänger, bleibt der Ping offen – sein pong beendet den Marker auch nach pause
+      case "pause": this.paused = true; if (!this.marked) this.sentAt = undefined; return;
       case "resume": this.paused = false; return;
       case "clear":
         if (this.marked || !this.kept) return;

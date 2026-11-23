@@ -6,7 +6,8 @@
 //   Leerlauf weckt sie den Hauptthread nicht. Ein langer Frame ohne laufende Kette (Chromium) zählt trotzdem.
 // - Ursache: Long Animation Frames (Chromium/WebView2: Skript, Funktion, Auslöser), sonst Long Tasks; WebKit nennt keine.
 // - Langsame Eingaben: Event Timing (wo es das gibt), nur Ereignisname und Ziel (data-testid/Rolle) – nie Text.
-// - Laufender Hänger: ein Watchdog-Worker pingt; > 2 s ohne Antwort → Marker in IndexedDB; der nächste Start zeigt ihn.
+// - Laufender Hänger: ein Watchdog-Worker pingt, solange die Kette läuft (BSD-655); > 2 s ohne Antwort → Marker in
+//   IndexedDB; der nächste Start zeigt ihn.
 // - Store: Anfragen an den Worker über 1 s (Operationsname, ohne Inhalte), abzüglich der Zeit, in der der Hauptthread hing.
 // - Breadcrumbs: Route, Tastenkürzel, Klickziel, Slash-Befehl (noteBreadcrumb aus dem Kern).
 import {
@@ -244,13 +245,16 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
   // Seit wann (bzw. bis wann) die Kette lief – ein langer Frame außerhalb davon zählt über den Beobachter (Chromium).
   let chainStarted = Number.POSITIVE_INFINITY;
   let chainStopped = Number.NEGATIVE_INFINITY;
+  // BSD-655: der Watchdog-Worker pingt nur, solange die Kette läuft (resume beim Start, pause beim Anhalten). Hängt
+  // der Hauptthread, kommt kein pause an – der Worker pingt weiter und schreibt den Marker. Im Leerlauf schweigen beide.
   const startChain = () => {
     last = perfNow();
     chainStarted = last;
     timer = setTimeout(tick, TICK_MS);
+    toWorker({ type: "resume" });
   };
   const stopChain = () => {
-    if (timer !== undefined) { clearTimeout(timer); timer = undefined; }
+    if (timer !== undefined) { clearTimeout(timer); timer = undefined; toWorker({ type: "pause" }); }
     chainStopped = perfNow();
   };
   const covered = (start: number) => start >= chainStarted && (timer !== undefined || start <= chainStopped);
@@ -267,10 +271,15 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
     // Folge von Verspätungen genau im Sekundenraster gilt als Drosselung, nicht als Hänger.
     const onGrid = Math.abs(late + TICK_MS - 1000) <= 25;
     throttledRun = onGrid ? throttledRun + 1 : 0;
-    if (late >= hangMonitor.thresholds.main && focused() && throttledRun < 2) onRecorded(hangMonitor.record({ ms: late, source: "main", start: t - late }));
+    if (late >= hangMonitor.thresholds.main && focused() && throttledRun < 2) {
+      onRecorded(hangMonitor.record({ ms: late, source: "main", start: t - late }));
+      // BSD-655: ein eben beendeter Hänger ist ein Anlass – sonst käme pause beim Worker vor dem pong an, und sein
+      // Marker bliebe auf „läuft noch“ stehen.
+      activeUntil = Math.max(activeUntil, t + ACTIVE_MS);
+    }
     overhead.ticks += 1;
     if (t < activeUntil) timer = setTimeout(tick, TICK_MS);
-    else { timer = undefined; chainStopped = t; }
+    else { timer = undefined; chainStopped = t; toWorker({ type: "pause" }); }
     overhead.busyMs += perfNow() - t;
   };
   const visible = () => win.document.visibilityState === "visible";
@@ -279,9 +288,8 @@ export function installHangMonitor(win: Window & typeof globalThis = globalThis 
     stopChain();
     throttledRun = 0;
     if (visible() && focused()) {
-      // Sichtbar und vorn: ein Anlass (das Fenster kommt nach vorn, gleich wird gezeichnet)
+      // Sichtbar und vorn: ein Anlass (das Fenster kommt nach vorn, gleich wird gezeichnet); wake schickt resume
       wake();
-      toWorker({ type: "resume" });
     } else {
       toWorker({ type: "pause" });
       persist();
