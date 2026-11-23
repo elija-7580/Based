@@ -113,7 +113,8 @@ test("Klick unter den Inhalt setzt die Schreibmarke ans Ende", async ({ page }) 
   await expect.poll(() => blocks(page)).toEqual(["paragraph:only line", "paragraph:Z"]);
 });
 
-test("Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf", async ({ page }) => {
+// Fotos mit BASED_SCREENSHOTS=1 (Chromium): docs/design/screens/web-crumb-tile-<theme>-<breite>.png.
+test("Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf", async ({ page, browserName }) => {
   const top = await open(page, "Top page");
   const kids: string[] = [];
   for (let i = 0; i < 7; i++) kids.push((await command(page, { op: "createPage", title: `Kid ${i}`, parent: top })) as string);
@@ -121,9 +122,34 @@ test("Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf", async ({ pa
   await page.evaluate((id) => { location.hash = `#page-${id}`; }, deep);
   const nav = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(nav).toContainText("Kid 0");
+  // Seiten ohne eigenes Icon tragen auch im Pfad ihre Kachel (Elija 23.11.2026, „Farbe automatisch“)
+  await expect(nav.getByRole("button", { name: "Top page" }).getByTestId("page-tile")).toBeVisible();
   await nav.getByRole("button", { name: "Top page" }).click();
   const menu = page.getByTestId("crumb-menu");
   await expect(menu.getByRole("menuitem")).toHaveCount(7); // Seite selbst, fünf Unterseiten, „2 more“
+  // Kachel im Pfad und im Menü: 20 breit, gleiche Farbe wie in der Seitenleiste; die Kopfzeile wird dadurch nicht höher
+  const tile = (scope: import("@playwright/test").Locator) => scope.getByTestId("page-tile").first().evaluate((el) => `${el.getAttribute("data-tint")} ${el.getBoundingClientRect().width}`);
+  const inNav = await tile(nav.getByRole("button", { name: "Top page" }));
+  expect(inNav).toMatch(/^[0-4] 20$/);
+  expect(await tile(menu.getByRole("menuitem", { name: "Top page" }))).toBe(inNav);
+  expect(await tile(page.getByRole("navigation", { name: "Workspace" }).getByRole("treeitem", { name: "Top page" }))).toBe(inNav);
+  for (const theme of ["light", "dark"] as const) {
+    await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+    for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }, { width: 1728, height: 1000 }]) {
+      await page.setViewportSize(size);
+      await expect(menu).toBeVisible();
+      // Schmal fasst der Pfad Vorfahren zusammen; jede Kachel, die steht, bleibt in der Kopfzeile
+      const bar = (await nav.boundingBox())!;
+      for (const t of await nav.getByTestId("page-tile").all()) {
+        const b = await t.boundingBox();
+        if (!b) continue;
+        expect(b.y).toBeGreaterThanOrEqual(bar.y - 1);
+        expect(b.y + b.height).toBeLessThanOrEqual(bar.y + bar.height + 1);
+      }
+      if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") await page.screenshot({ path: `../../docs/design/screens/web-crumb-tile-${theme}-${size.width}.png` });
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 820 });
   await menu.getByRole("menuitem", { name: "2 more" }).click();
   await expect(menu.getByRole("menuitem")).toHaveCount(8);
   await page.keyboard.press("Escape");

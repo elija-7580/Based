@@ -304,6 +304,13 @@ for (const theme of ["light", "dark"] as const) {
     const recent = page.getByTestId("home-recent");
     await expect(recent.getByRole("button").first()).toHaveAccessibleName("Open A very long page title that goes on and on and on");
     await expect(recent.getByRole("button", { name: "Open Projects" })).toBeVisible();
+    // Elija 23.11.2026 („Farbe automatisch“): auch hier trägt jede Seite ohne eigenes Icon ihre Kachel, in derselben
+    // Farbe wie in der Seitenleiste.
+    const tintOf = (scope: import("@playwright/test").Locator) => scope.getByTestId("page-tile").first().evaluate((el) => `${el.getAttribute("data-tint")} ${getComputedStyle(el).backgroundColor} ${el.getBoundingClientRect().width}`);
+    await expect(recent.getByTestId("page-tile")).toHaveCount(await recent.getByRole("button").count());
+    const inRecent = await tintOf(recent.getByRole("button", { name: "Open Projects" }));
+    expect(inRecent).toMatch(/^[0-4] rgb\(\d+, \d+, \d+\) 20$/);
+    expect(await tintOf(page.getByRole("navigation", { name: "Workspace" }).getByRole("treeitem", { name: "Projects" }))).toBe(inRecent);
 
     for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }, { width: 1728, height: 1000 }]) {
       await page.setViewportSize(size);

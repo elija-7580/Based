@@ -84,3 +84,77 @@ test("Mono nur für Code und IDs: Zeiten auf Home in der UI-Schrift", async ({ p
   const ticks = page.locator(".arc-tick");
   if (await ticks.count()) expect(await ticks.first().evaluate((el) => getComputedStyle(el).fontFamily)).not.toContain("monospace");
 });
+
+// Elija 23.11.: „Verschiedene Optionen ja, aber die müssen systemweit bleiben und nicht zufällig variieren – Anzeigen,
+// Seiten, Notifications.“ Font Based setzte den Seitentext in Literata und alles andere in Schibsted Grotesk; die
+// Seiten-Schrift „Serif“ war je System eine andere (New York, Georgia). Jetzt: eine Familie je Wahl, überall.
+for (const font of ["system", "based"] as const) {
+  test(`Font ${font}: eine Schrift für Seite, Datenbank, Suche, Meldung und Einstellungen`, async ({ page, browserName }) => {
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await page.addInitScript((f) => { if (!sessionStorage.getItem("fc")) { sessionStorage.setItem("fc", "1"); localStorage.clear(); localStorage.setItem("based.appearance", JSON.stringify({ theme: "light", font: f })); } }, font);
+    await page.goto("/");
+    await ready(page);
+    const ui = await rootVar(page, "--font-ui");
+    expect(await rootVar(page, "--font-head")).toBe(ui);
+    expect(await rootVar(page, "--font-body")).toBe(ui);
+    if (font === "based") expect(ui).toContain("Schibsted Grotesk");
+    const mono = await rootVar(page, "--font-mono");
+    /** Jedes sichtbare Element mit eigenem Text: UI-Schrift, oder Mono (Code, IDs). */
+    const strays = () => page.evaluate(({ ui, mono }) => {
+      const norm = (f: string) => f.replace(/["']/g, "").split(",").map((x) => x.trim()).join(", ");
+      const out: string[] = [];
+      for (const el of document.querySelectorAll<HTMLElement>("body *")) {
+        const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent!.trim()) || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+        const r = el.getBoundingClientRect();
+        if (!own || !r.width || !r.height) continue;
+        const f = norm(getComputedStyle(el).fontFamily);
+        if (f !== ui && f !== mono) out.push(`${el.tagName.toLowerCase()}.${String(el.className).slice(0, 40)}: ${f}`);
+      }
+      return [...new Set(out)];
+    }, { ui, mono });
+
+    await pageWithHeadings(page);
+    expect(await strays(), "Seite").toEqual([]);
+    // Fotos mit BASED_SCREENSHOTS=1 (Chromium): docs/design/screens/web-font-<font>-<theme>-<breite>.png
+    if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+      for (const theme of ["light", "dark"] as const) {
+        await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+        for (const size of [{ width: 1280, height: 820 }, { width: 900, height: 600 }, { width: 1728, height: 1000 }]) {
+          await page.setViewportSize(size);
+          await page.screenshot({ path: `../../docs/design/screens/web-font-${font}-${theme}-${size.width}.png` });
+        }
+      }
+      await page.evaluate(() => { document.documentElement.dataset.theme = "light"; });
+      await page.setViewportSize({ width: 1280, height: 820 });
+    }
+    // Meldung: Seite in den Papierkorb → „Moved to Trash · Undo“
+    await page.getByRole("treeitem", { name: "Fonts" }).click({ button: "right" });
+    await page.getByRole("menuitem", { name: /Move to Trash/ }).click();
+    await expect(page.locator(".based-toast")).toBeVisible();
+    expect(await family(page, ".based-toast")).toBe(ui);
+    expect(await strays(), "Meldung").toEqual([]);
+    // Datenbank
+    await page.goto("/#home");
+    await page.getByRole("button", { name: "New database" }).first().click();
+    await expect(page.locator(".dbui-root, [data-testid=database-view]").first()).toBeVisible();
+    expect(await strays(), "Datenbank").toEqual([]);
+    // Suche
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
+    await page.locator(".qf-field input").fill("a");
+    expect(await strays(), "Suche").toEqual([]);
+    await page.keyboard.press("Escape");
+    // Einstellungen
+    await page.goto("/#appearance");
+    await expect(page.getByRole("radiogroup", { name: "Font" })).toBeVisible();
+    expect(await strays(), "Einstellungen").toEqual([]);
+  });
+}
+
+test("Seiten-Schrift Serif: auf jedem System Literata, nicht die Serifenschrift des Systems", async ({ page }) => {
+  await page.goto("/");
+  await ready(page);
+  await pageWithHeadings(page);
+  await page.locator(".page[data-font]").evaluate((el) => el.setAttribute("data-font", "serif"));
+  for (const sel of [".bx2-t-text", ".bx2-t-heading1", "textarea.title-input"]) expect(await family(page, sel)).toMatch(/^Literata Variable, Literata/);
+  await expect.poll(() => page.evaluate(() => document.fonts.check('400 16px "Literata Variable"', "Based Äöü"))).toBe(true);
+});
