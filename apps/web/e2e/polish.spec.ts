@@ -518,6 +518,7 @@ test("Slash-Menü: Gruppenköpfe kommen je einmal vor, auch beim Filtern", async
   await page.setViewportSize({ width: 1280, height: 820 });
   await fresh(page);
   await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(page.getByLabel("Page title")).toBeFocused(); // BSD-659: erst die neue Seite, sonst trifft der Klick die vorige
   await focusEditorEnd(page);
   const menu = page.getByTestId("slash-menu");
   const heads = () => menu.locator(".bx2-menu-label").allTextContents();
@@ -549,6 +550,9 @@ test("Slash- und @-Menü überdecken die Eingabezeile nicht, auch unten im Fenst
     await page.setViewportSize({ width: w, height: h });
     await fresh(page);
     await page.keyboard.press("ControlOrMeta+Alt+n");
+    // BSD-659: ⌥⌘N legt im Worker an – bis die neue Seite steht, zeigt das Fenster noch die vorige (nach dem Neuladen
+    // die zuletzt offene). Ein Klick davor landet in deren Editor, und die neue Seite nimmt ihm danach den Fokus.
+    await expect(page.getByLabel("Page title")).toBeFocused();
     await focusEditorEnd(page);
     // Zeilen bis kurz vor den unteren Rand
     for (let i = 0; i < 40; i++) {

@@ -87,6 +87,7 @@ test("⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs", async (
 test("Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen", async ({ page }) => {
   await ready(page);
   await page.keyboard.press("ControlOrMeta+Alt+n");
+  await expect(page.getByLabel("Page title")).toBeFocused(); // BSD-659: erst die neue Seite, sonst trifft der Klick die vorige
   await expectEditable(page);
   await focusEditorEnd(page);
   await page.keyboard.type("Hello");
