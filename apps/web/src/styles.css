@@ -304,6 +304,13 @@ button.row:hover, a.row:hover { background: var(--bg); }
 }
 .twisty:hover { background: var(--surface-raised); color: var(--ink); }
 .tree-icon { width: var(--icon-md); flex: none; display: inline-flex; justify-content: center; color: var(--muted); }
+/* Elija 23.11.2026 („Farbe automatisch“, wie auf der Website): Seiten ohne eigenes Icon tragen eine farbige Kachel.
+   Farbe aus der ID (shell/pageTint.ts); kein Gelb – Gelb ist Agentenarbeit. */
+.page-tile { width: var(--icon-md); height: var(--icon-md); flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); background: var(--status-neutral); color: var(--ink-2); }
+.page-tile[data-tint="1"] { background: var(--board-highlight-sky); }
+.page-tile[data-tint="2"] { background: var(--board-highlight-rose); }
+.page-tile[data-tint="3"] { background: var(--board-highlight-mint); }
+.page-tile[data-tint="4"] { background: var(--board-highlight-lilac); }
 .tree-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tree-rename { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0 var(--space-1); outline: none; }
 .tree-actions { display: none; gap: 1px; flex: none; }

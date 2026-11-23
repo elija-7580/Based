@@ -23,6 +23,7 @@ import { assetsLabel } from "../assetBridge.js";
 import { meetingHost } from "../editorSlot.js";
 import { IconView } from "@based/editor";
 import { keyLabel } from "../shell/keyHints.js";
+import { pageTint } from "../shell/pageTint.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
 import { HybridImportPill } from "./NotionHybrid.js";
@@ -748,7 +749,7 @@ const PageRow = memo(function PageRow(p: RowProps) {
       >
         <Icon name="right" size={14} />
       </button>
-      <span className="tree-icon" aria-hidden="true"><IconView icon={p.icon} fallback={<Icon name={row.database ? "database" : "page"} size={16} />} /></span>
+      <span className="tree-icon" aria-hidden="true"><IconView icon={p.icon} fallback={<span className="page-tile" data-tint={pageTint(row.id)} data-testid="page-tile"><Icon name={row.database ? "database" : "page"} size={14} /></span>} /></span>
       {p.renaming ? (
         <input
           className="tree-rename"

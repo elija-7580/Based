@@ -16,11 +16,11 @@ for (const theme of ["light", "dark"] as const) {
     await page.setViewportSize({ width: 1280, height: 820 });
     await page.goto("/");
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-    await page.evaluate(async () => {
+    const readingList = await page.evaluate(async () => {
       const c = (globalThis as unknown as { __based: { client: Client } }).__based.client;
       const parent = await c.command({ op: "createPage", title: "Projects" });
       await c.command({ op: "createPage", title: "Roadmap", parent });
-      await c.command({ op: "createPage", title: "Reading list" });
+      return c.command({ op: "createPage", title: "Reading list" });
     });
     const nav = page.getByRole("navigation", { name: "Workspace" });
     const name = nav.getByTestId("workspace-name");
@@ -53,5 +53,23 @@ for (const theme of ["light", "dark"] as const) {
     // Der Pfeil klappt auf wie bisher
     await row.getByRole("button", { name: "Expand" }).click();
     await expect(page.getByRole("treeitem", { name: "Roadmap" })).toBeVisible();
+
+    // Elija 23.11.2026 („Farbe automatisch“): Seiten ohne eigenes Icon tragen eine farbige Kachel; die Farbe folgt aus
+    // der ID der Seite, bleibt also beim Umbenennen und nach dem Neuladen dieselbe.
+    const tints = () => page.getByRole("tree").first().getByTestId("page-tile").evaluateAll((els) => els.map((el) => `${el.getAttribute("data-tint")} ${getComputedStyle(el).backgroundColor} ${el.getBoundingClientRect().width}`));
+    const before = await tints();
+    expect(before.length).toBeGreaterThanOrEqual(3);
+    for (const t of before) expect(t).toMatch(/^[0-4] rgb\(\d+, \d+, \d+\) 20$/);
+    await page.evaluate((id) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command({ op: "rename", id, title: "Books" }), readingList);
+    await expect(page.getByRole("treeitem", { name: "Books" })).toBeVisible();
+    expect(await tints()).toEqual(before);
+    // Neuladen nur dort, wo das Testprofil speichert: WebKit läuft hier ohne OPFS im Speicher (BSD-416,
+    // persist-reload.spec.ts), die Seiten wären danach weg.
+    if (browserName === "chromium") {
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await expect(page.getByRole("treeitem", { name: "Roadmap" })).toBeVisible();
+      expect(await tints()).toEqual(before);
+    }
   });
 }
