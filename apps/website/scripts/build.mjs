@@ -330,6 +330,7 @@ ${templates}
 <script>window.__dcPages=[${pages}];</script>
 <script src="${assets.site}" defer></script>
 <script src="${assets.runtime}" defer></script>
+<script src="${assets.analytics}" defer></script>
 </body>
 </html>
 `;
@@ -366,12 +367,17 @@ function main() {
 
   const runtime = read(join(SRC, "static", "dc-lite.js"));
   const site = read(join(SRC, "static", "site.js"));
+  const analytics = read(join(SRC, "static", "analytics.js"));
   const assets = {
     runtime: `/assets/dc-lite.${hash(runtime)}.js`,
-    site: `/assets/site.${hash(site)}.js`
+    site: `/assets/site.${hash(site)}.js`,
+    analytics: `/assets/analytics.${hash(analytics)}.js`
   };
   writeFileSync(join(OUT, assets.runtime), runtime);
   writeFileSync(join(OUT, assets.site), site);
+  // Opt-in Matomo (own server). Loads nothing before the visitor allows it, see /privacy#analytics.
+  writeFileSync(join(OUT, assets.analytics), analytics);
+  const analyticsTag = `<script src="${assets.analytics}" defer></script>`;
 
   // All artboards share one stylesheet; keep it once, with the fonts self-hosted.
   const cssSet = new Set();
@@ -425,7 +431,7 @@ function main() {
     const title = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(src)[1].replace(/<[^>]+>/g, "");
     const html = shell
       .replace("%LANG%", "en")
-      .replace("%HEAD%", "")
+      .replace("%HEAD%", analyticsTag)
       .replace(/%TITLE%/g, title + " · Based Notes")
       .replace("%CANONICAL%", SITE + path)
       .replace("%CSS%", cssHref)
@@ -448,7 +454,7 @@ function main() {
     ].filter(Boolean).join("\n");
     const html = shell
       .replace("%LANG%", "en")
-      .replace("%HEAD%", head)
+      .replace("%HEAD%", head + "\n" + analyticsTag)
       .replace(/%TITLE%/g, info.title)
       .replace("%CANONICAL%", SITE + info.path)
       .replace("%CSS%", cssHref)
