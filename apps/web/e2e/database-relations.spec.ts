@@ -24,6 +24,23 @@ async function twoDatabases(page: Page) {
   });
 }
 
+/** BSD-669: Wie viele Fokusrahmen sind zu sehen? Elemente mit :focus-visible (Umriss) und aktive Zellen (Innenrahmen). */
+async function focusFrames(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    let n = 0;
+    const seen: string[] = [];
+    for (const el of document.querySelectorAll<HTMLElement>(":focus-visible")) {
+      const cs = getComputedStyle(el);
+      if (cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0) { n++; seen.push(el.className || el.tagName); }
+    }
+    for (const el of document.querySelectorAll<HTMLElement>(".dbui-cell.active")) {
+      if (getComputedStyle(el).boxShadow !== "none") { n++; seen.push("active cell"); }
+    }
+    (globalThis as { __frames?: string[] }).__frames = seen;
+    return n;
+  });
+}
+
 async function nameRow(page: Page, index: number, name: string) {
   const db = page.locator(".shell-database.full");
   const cell = db.getByRole("row").nth(index + 1).getByRole("gridcell").nth(1);
@@ -96,7 +113,21 @@ test("Relation zu einer anderen Datenbank: Ziel wählen, verknüpfen, sichtbar a
   await expect(db.getByRole("row").filter({ hasText: "Book the van" }).getByRole("gridcell").last()).toContainText("Moving house");
   const relCell = db.getByRole("row").filter({ hasText: "Book the van" }).getByRole("gridcell").nth(-2);
   await expect(relCell.locator(".dbui-relation")).toHaveText("Moving house");
-  if (shots && testInfo.project.name === "chromium") await page.screenshot({ path: `${screens}/web-database-relation-light.png` });
+  // BSD-669: ein Rahmen zur Zeit (elements.md Abschnitt 3) – nach dem Schließen des Property-Menüs nicht zugleich die
+  // aktive Zelle und der Knopf „+“ im Spaltenkopf
+  expect(await focusFrames(page)).toBeLessThanOrEqual(1);
+  // … und kommt der Fokus in die Tabelle zurück, zeigt die aktive Zelle ihren Rahmen wieder (genau einer)
+  await db.getByRole("grid").first().focus();
+  await expect.poll(() => focusFrames(page)).toBe(1);
+  if (shots && testInfo.project.name === "chromium") {
+    await page.screenshot({ path: `${screens}/web-database-relation-light.png` });
+    // BSD-669: derselbe Zustand dunkel (ein Rahmen, an der aktiven Zelle)
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
+    await page.screenshot({ path: `${screens}/web-database-relation-dark.png` });
+    await page.evaluate(() => document.documentElement.setAttribute("data-theme", "light"));
+    await page.emulateMedia({ colorScheme: "light" });
+  }
 
   // nach dem Neuladen steht sie noch da (nur Chromium: WebKit-Testprofile haben kein OPFS, ein Neuladen verlöre dort alles)
   if (testInfo.project.name === "chromium") {
