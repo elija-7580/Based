@@ -1,0 +1,61 @@
+failure 0784628350a24ba970cef3a74714f6500ea7cc43
+      34 |     await page.goto("/");
+    > 35 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+         |                                                  ^
+      36 |     await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "local");
+      37 |     for (let round = 1; round <= 3; round++) {
+      38 |       const title = `Reload ${round}`;
+        at /home/runner/work/Based/Based/apps/web/e2e/persist-reload.spec.ts:35:50
+
+    Error Context: test-results/persist-reload-BSD-416-anl-53587-Text-da-dauerhaftes-Profil--webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByTestId('based-root')
+    Expected: ""
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByTestId('based-root') with timeout 5000ms
+      - waiting for getByTestId('based-root')
+
+
+      33 |     page.on("dialog", (d) => { asked += 1; void d.accept(); });
+      34 |     await page.goto("/");
+    > 35 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+         |                                                  ^
+      36 |     await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "local");
+      37 |     for (let round = 1; round <= 3; round++) {
+      38 |       const title = `Reload ${round}`;
+        at /home/runner/work/Based/Based/apps/web/e2e/persist-reload.spec.ts:35:50
+
+    Error Context: test-results/persist-reload-BSD-416-anl-53587-Text-da-dauerhaftes-Profil--webkit-retry1/error-context.md
+
+  2) [webkit] › e2e/overflow.spec.ts:151:1 › 30 Tabs und eine breite Datenbank: nichts läuft über ──
+
+    Error: page.evaluate: Target page, context or browser has been closed
+
+      28 | type Client = { command: (c: Record<string, unknown>) => Promise<unknown> };
+      29 | const command = (page: Page, c: Record<string, unknown>) =>
+    > 30 |   page.evaluate((cmd) => (globalThis as unknown as { __based: { client: Client } }).__based.client.command(cmd), c);
+         |        ^
+      31 |
+      32 | // BSD-309: dazu schmale Fenster (halbe Bildschirmbreite am MacBook, Mindestbreite der Desktop-App 640 px).
+      33 | const VIEWPORTS = [[1280, 820, ""], [900, 600, "-900"], [1728, 1000, "-1728"], [720, 900, "-720"], [640, 800, "-640"]] as const;
+        at command (/home/runner/work/Based/Based/apps/web/e2e/overflow.spec.ts:30:8)
+        at /home/runner/work/Based/Based/apps/web/e2e/overflow.spec.ts:155:49
+
+    Error Context: test-results/overflow-30-Tabs-und-eine-breite-Datenbank-nichts-läuft-über-webkit/error-context.md
+
+  1 failed
+    [webkit] › e2e/persist-reload.spec.ts:25:1 › BSD-416: anlegen, tippen, sofort neu laden → Seite und Text da (dauerhaftes Profil) 
+  1 flaky
+    [webkit] › e2e/overflow.spec.ts:151:1 › 30 Tabs und eine breite Datenbank: nichts läuft über ───
+  57 skipped
+  268 passed (14.3m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
