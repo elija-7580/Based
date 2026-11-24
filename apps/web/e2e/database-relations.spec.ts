@@ -77,6 +77,12 @@ test("Relation zu einer anderen Datenbank: Ziel wählen, verknüpfen, sichtbar a
   await cell.click();
   const pages = page.getByRole("listbox", { name: "Pages" });
   await expect(pages.getByRole("option")).toHaveText(["Moving house", "Website relaunch", "Untitled"]);
+  // BSD-666: die Suche läuft im Worker (die Replik führt von „Projects“ nur verknüpfte Zeilen)
+  const search = page.locator(".dbui-relation-editor").getByLabel("Search pages");
+  await search.fill("relaunch");
+  await expect(pages.getByRole("option")).toHaveText(["Website relaunch"]);
+  await search.fill("");
+  await expect(pages.getByRole("option")).toHaveText(["Moving house", "Website relaunch", "Untitled"]);
   await pages.getByRole("option", { name: "Moving house" }).click();
   await page.keyboard.press("Escape");
   await expect(cell.locator(".dbui-relation")).toHaveText("Moving house");

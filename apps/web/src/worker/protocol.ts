@@ -120,6 +120,8 @@ export type Command =
   | { op: "seed"; count: number; prefix?: string }
   /** BSD-215 (Tests): Datenbankseite mit `count` Zeilen. */
   | { op: "seedDatabase"; count: number }
+  /** BSD-666 (Messung): Datenbank „Tasks“ mit `count` Zeilen und einer Relation auf die Datenbank der Seite `target`; die erste Zeile verknüpft. */
+  | { op: "seedRelated"; target: string; count: number }
   /** BSD-278 (Tests): Datenbank „Due tasks“ (Status + Datum) mit offenen und erledigten Zeilen für heute. */
   | { op: "seedDueTasks" }
   /** ADR 0017 Stufe B (Tests, Diagnose): wie viel des Workspaces im Speicher liegt und was alles nachgeladen hat. */
@@ -176,6 +178,16 @@ export interface PageInfo {
 /** Antwort auf `includeSynced`: die Records des Originals (leer, wenn es das Original nicht gibt). */
 export interface SyncedRecords {
   found: boolean;
+  records: WireRecord[];
+}
+
+/**
+ * BSD-666: Antwort auf `relationCandidates`: passende Zeilen der Ziel-Datenbank (`ids`, in Reihenfolge) und die
+ * Records, die der Replik dafür noch fehlten.
+ */
+export interface RelationCandidates {
+  found: boolean;
+  ids: string[];
   records: WireRecord[];
 }
 
@@ -260,6 +272,8 @@ export type Request =
   | { type: "includeDatabase"; pageID: string; databaseID: string }
   /** BSD-212: Datenbanken nach Titel (Antwort: DatabaseInfo[]). */
   | { type: "listDatabases"; query: string; limit?: number }
+  /** BSD-666: Zeilen der Ziel-Datenbank für den Relations-Picker, nach Titel; holt sie in die Replik von `pageID` (Antwort: RelationCandidates). */
+  | { type: "relationCandidates"; pageID: string; databaseID: string; query: string; limit?: number; exclude?: string[] }
   /** BSD-281: alle Meeting-Blöcke (Antwort: MeetingListItem[], neueste zuerst). */
   | { type: "meetings" }
   /** BSD-90: Stellen, an denen der Titel der Seite als reiner Text vorkommt (Antwort: UnlinkedMentionInfo[]). */

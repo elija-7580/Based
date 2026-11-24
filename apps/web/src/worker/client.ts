@@ -21,7 +21,7 @@ import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } f
 import type { AgentAction } from "./agents.js";
 import type { HybridContentResult, HybridPageContent, HybridPendingPage, HybridStructureResult, HybridStructureWire, JSONValue, SearchFilters, SearchSort } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "./chat.js";
-import type { AssetGetResult, AssetInfo, Command, LocalModelAction, LocalModelInfo, LocalModelPurpose, DatabaseInfo, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, LocalModelAction, LocalModelInfo, LocalModelPurpose, DatabaseInfo, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, RelationCandidates, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
 export interface ShellState {
   ready: boolean;
@@ -338,6 +338,23 @@ export class StoreClient {
   /** BSD-212: Datenbank für „Linked view of database“ in die Replik von `pageID` holen. */
   async includeDatabase(pageID: string, databaseID: string): Promise<boolean> {
     const r = await this.request<SyncedRecords>({ type: "includeDatabase", pageID, databaseID });
+    if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
+    return r.found;
+  }
+
+  /**
+   * BSD-666: Zeilen einer Relations-Ziel-Datenbank für den Picker (nach Titel). Die Zeilen kommen in die Replik von
+   * `pageID`, bevor die IDs zurückkommen: Auswählen schreibt dort.
+   */
+  async relationCandidates(pageID: string, databaseID: string, query: string, limit?: number, exclude?: string[]): Promise<string[]> {
+    const r = await this.request<RelationCandidates>({ type: "relationCandidates", pageID, databaseID, query, ...(limit === undefined ? {} : { limit }), ...(exclude?.length ? { exclude } : {}) });
+    if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
+    return r.ids;
+  }
+
+  /** BSD-666: nur den Record einer Datenbank (neues Relationsziel) in die Replik von `pageID` holen, ohne ihre Zeilen. */
+  async relationTarget(pageID: string, databaseID: string): Promise<boolean> {
+    const r = await this.request<RelationCandidates>({ type: "relationCandidates", pageID, databaseID, query: "", limit: 0 });
     if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
     return r.found;
   }

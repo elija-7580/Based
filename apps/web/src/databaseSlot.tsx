@@ -67,6 +67,15 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
     const pageID = store.blocks.get(blockID)?.type === "databasePage" ? blockID : store.containingPage(blockID) ?? blockID;
     return client ? { list: async () => (await client.listDatabases("", 500)).map((d) => ({ id: d.id, title: d.title, ...(d.path ? { path: d.path } : {}) })), include: (id: string) => client.includeDatabase(pageID, id) } : undefined;
   }, [store, blockID]);
+  // BSD-666: Relationsziele führt die Replik nur mit den verknüpften Zeilen; der Picker fragt den Worker.
+  const relations = useMemo(() => {
+    const client = editorClient();
+    const pageID = store.blocks.get(blockID)?.type === "databasePage" ? blockID : store.containingPage(blockID) ?? blockID;
+    return client ? {
+      candidates: (databaseID: string, query: string, limit: number, exclude: string[]) => client.relationCandidates(pageID, databaseID, query, limit, exclude),
+      includeTarget: (databaseID: string) => client.relationTarget(pageID, databaseID),
+    } : undefined;
+  }, [store, blockID]);
   // BSD-216: bekannte Personen (Agent Brain „People“) für die Personen-Auswahl
   const people = useMemo(() => {
     const client = editorClient();
@@ -76,7 +85,7 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
   useEffect(() => (!fullPage && wrap.current ? attachWheelPassThrough(wrap.current) : undefined), [fullPage]);
   return (
     <div ref={wrap} className={fullPage ? "shell-database full" : "shell-database inline"}>
-      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} ai={ai} databases={databases} people={people} />
+      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} ai={ai} databases={databases} people={people} relations={relations} />
     </div>
   );
 }
