@@ -1,61 +1,61 @@
-success b134f991b866758d5c6bb677df33b2083d4bec85
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  296 [chromium] › e2e/find.spec.ts:296:3 › Quick Find: Filterzeile erst beim Tippen (dark) (1.9s)
-  ✓  295 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.2s)
-  ✓  298 [chromium] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (1.4s)
-  ✓  297 [chromium] › e2e/hangs.spec.ts:32:1 › Busy-Loops von 300 ms und 1 s erscheinen mit Dauer, Aktivität, Ursache und Schritten (4.0s)
-  ✓  299 [chromium] › e2e/guest.spec.ts:141:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (2.0s)
-  ✓  301 [chromium] › e2e/guest.spec.ts:155:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.5s)
-  ✓  302 [chromium] › e2e/guest.spec.ts:167:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.0s)
-  ✓  300 [chromium] › e2e/hangs.spec.ts:103:1 › 3-s-Hänger mit Neuladen mitten drin: nach dem Start „Ended in a hang“ mit Aktivität und Schritten (7.2s)
-  ✓  303 [chromium] › e2e/history-katex.spec.ts:30:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (2.7s)
-  ✓  305 [chromium] › e2e/history-katex.spec.ts:73:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (2.5s)
-  ✓  306 [chromium] › e2e/history-katex.spec.ts:145:3 › Versionsverlauf steht mittig mit Abstand zu beiden Rändern (900 × 600, BSD-488) (1.9s)
-  ✓  307 [chromium] › e2e/history-katex.spec.ts:145:3 › Versionsverlauf steht mittig mit Abstand zu beiden Rändern (1280 × 820, BSD-488) (1.9s)
-  ✓  308 [chromium] › e2e/history-katex.spec.ts:145:3 › Versionsverlauf steht mittig mit Abstand zu beiden Rändern (1728 × 1000, BSD-488) (1.2s)
-  ✓  304 [chromium] › e2e/hangs.spec.ts:142:1 › Fenster mitten im Hänger geschlossen (wie Beenden): der nächste Start zeigt, wo es hing (10.3s)
-  ✓  310 [chromium] › e2e/hangs.spec.ts:167:1 › Verborgener Tab: kein Hänger-Fehlalarm; wieder sichtbar: erkannt (3.5s)
-  ✓  309 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (13.7s)
-idle 5 s: 0 setTimeout, 0 setInterval, 0 ticks, 0 watchdog messages
-  ✓  312 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.7s)
-  ✓  311 [chromium] › e2e/hangs.spec.ts:187:1 › Leerlauf: kein Zeitgeber, kein Takt – nach einer Eingabe misst die Kette wieder (10.5s)
-  ✓  313 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.5s)
-  ✓  315 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.8s)
-  ✓  314 [chromium] › e2e/hangs.spec.ts:226:1 › Checkliste: Abschnitt Hangs in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (4.8s)
-  ✓  317 [chromium] › e2e/hangs.spec.ts:252:1 › Block-Editor: Slash-Befehl und Blockmenü-Aktion stehen als Schritte vor einem Hänger (2.3s)
-  ✓  318 [chromium] › e2e/html-block-file.spec.ts:41:1 › Größe ziehen: Breite rechts, Höhe unten; bleibt nach dem Neuladen; ⌘Z nimmt sie zurück (3.5s)
-  ✓  319 [chromium] › e2e/html-block-file.spec.ts:79:1 › HTML-Datei öffnen ersetzt den Code; HTML-Datei auf die Seite ziehen legt einen HTML-Block an (2.9s)
-  ✓  320 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1280×820) (2.1s)
-  ✓  316 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (13.0s)
-  ✓  321 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 900×600) (2.2s)
-  ✓  323 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1728×1000) (2.1s)
-  ✓  324 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1280×820) (2.2s)
-  ✓  325 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 900×600) (2.2s)
-  ✓  326 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1728×1000) (2.2s)
-  ✓  322 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (13.1s)
-  ✓  327 [chromium] › e2e/html-block-file.spec.ts:116:1 › HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos (3.8s)
-  ✓  329 [chromium] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.1s)
-  ✓  328 [chromium] › e2e/home.spec.ts:285:3 › Home: Notizen zuerst, Agenten darunter (light) (2.9s)
-  ✓  330 [chromium] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.3s)
-  ✓  331 [chromium] › e2e/home.spec.ts:285:3 › Home: Notizen zuerst, Agenten darunter (dark) (2.7s)
-  ✓  332 [chromium] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (1.8s)
-  -  334 [chromium] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
-  ✓  333 [chromium] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (2.9s)
-  ✓  335 [chromium] › e2e/interop.spec.ts:82:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (1.8s)
-  ✓  336 [chromium] › e2e/interop.spec.ts:106:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.7s)
-  ✓  337 [chromium] › e2e/interop.spec.ts:136:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (1.7s)
-  ✓  338 [chromium] › e2e/interop.spec.ts:163:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (2.2s)
-  ✓  339 [chromium] › e2e/interop.spec.ts:189:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (2.6s)
-  ✓  340 [chromium] › e2e/interop.spec.ts:210:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (2.1s)
-  ✓  341 [chromium] › e2e/interop.spec.ts:230:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (1.6s)
-  ✓  342 [chromium] › e2e/interop.spec.ts:249:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.1s)
-  ✓  343 [chromium] › e2e/interop.spec.ts:280:1 › Word-Dokument (.docx) importieren (BSD-260) (1.7s)
-  ✓  344 [chromium] › e2e/interop.spec.ts:297:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.6s)
-  ✓  345 [chromium] › e2e/interop.spec.ts:330:1 › Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563) (1.6s)
-  ✓  346 [chromium] › e2e/interop.spec.ts:354:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (2.0s)
-  ✓  347 [chromium] › e2e/interop.spec.ts:373:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.5s)
-  ✓  348 [chromium] › e2e/interop.spec.ts:392:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.0s)
-  ✓  349 [chromium] › e2e/interop.spec.ts:418:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.9s)
+success c5e5652c78a6d838c472065de81df05e246f09d9
+  ✓  323 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 900×600) (1.5s)
+  ✓  324 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (light, 1728×1000) (1.4s)
+  ✓  325 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1280×820) (1.5s)
+  ✓  326 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 900×600) (1.5s)
+  ✓  321 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (9.9s)
+  ✓  327 [chromium] › e2e/html-block-file.spec.ts:103:5 › Griffe beim Überfahren (dark, 1728×1000) (1.5s)
+  ✓  328 [chromium] › e2e/home.spec.ts:285:3 › Home: Notizen zuerst, Agenten darunter (light) (2.1s)
+  ✓  329 [chromium] › e2e/html-block-file.spec.ts:116:1 › HTML-Ergebnis: Karte, Based-Grundstil, Schnipsel nicht abgeschnitten, 100vh-Datei wächst nicht endlos (3.6s)
+  ✓  330 [chromium] › e2e/home.spec.ts:285:3 › Home: Notizen zuerst, Agenten darunter (dark) (1.9s)
+  ✓  331 [chromium] › e2e/image-block.spec.ts:128:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (1.8s)
+  ✓  332 [chromium] › e2e/interop.spec.ts:54:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.9s)
+  ✓  334 [chromium] › e2e/interop.spec.ts:82:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.4s)
+  ✓  333 [chromium] › e2e/image-block.spec.ts:154:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.1s)
+  ✓  336 [chromium] › e2e/image-block.spec.ts:234:1 › Bilddatei ablegen; Ausrichtung rechts und zurück nach links; Ersetzen und Herunterladen (1.4s)
+  -  337 [chromium] › e2e/image-block.spec.ts:270:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  335 [chromium] › e2e/interop.spec.ts:106:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.5s)
+  ✓  338 [chromium] › e2e/interop.spec.ts:136:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.0s)
+  ✓  339 [chromium] › e2e/interop.spec.ts:163:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (2.0s)
+  ✓  340 [chromium] › e2e/interop.spec.ts:189:1 › Import von Apple-Notes-HTML (ZIP): Titel nicht doppelt, Liste und Text bleiben (BSD-260 Teil 10) (1.9s)
+  ✓  341 [chromium] › e2e/interop.spec.ts:210:1 › Import eines Google-Docs-HTML-Exports (ZIP): Fett aus Klassen-CSS, Link ohne Google-Umleitung (BSD-260 Teil 11) (2.0s)
+  ✓  342 [chromium] › e2e/interop.spec.ts:230:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.0s)
+  ✓  343 [chromium] › e2e/interop.spec.ts:249:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.3s)
+  ✓  344 [chromium] › e2e/interop.spec.ts:280:1 › Word-Dokument (.docx) importieren (BSD-260) (1.9s)
+  ✓  345 [chromium] › e2e/interop.spec.ts:297:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.9s)
+  ✓  346 [chromium] › e2e/interop.spec.ts:330:1 › Import aus Joplin (.jex): Notizbuch wird Seite, Link zwischen Notizen wird Erwähnung (BSD-563) (1.9s)
+  ✓  347 [chromium] › e2e/interop.spec.ts:354:1 › Import eines ChatGPT-Exports (ZIP): Unterhaltungen werden eine Datenbank (BSD-563) (1.9s)
+  ✓  348 [chromium] › e2e/interop.spec.ts:373:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.3s)
+  ✓  349 [chromium] › e2e/interop.spec.ts:392:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.3s)
+  ✓  350 [chromium] › e2e/interop.spec.ts:418:1 › BSD-423: Based-Archiv nach „alles löschen, Papierkorb leeren“ importieren bringt alles zurück (2.6s)
 
+
+  1) [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('home-plain')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('home-plain') with timeout 5000ms
+      - waiting for getByTestId('home-plain')
+
+
+      207 |   await menu.getByRole("menuitem", { name: "Move to Trash" }).click();
+      208 |   await nav(page).getByRole("button", { name: "Home" }).click();
+    > 209 |   await expect(plain).toBeVisible();
+          |                       ^
+      210 |   await page.waitForTimeout(500);
+      211 |   await expect(page.getByLabel("Page title")).toHaveCount(0);
+      212 | });
+        at /home/runner/work/Based/Based/apps/web/e2e/ai-switch.spec.ts:209:23
+
+    Error Context: test-results/ai-switch-ohne-AI-Home-ble-d0eab-nach-Löschen-der-Home-Seite-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/ai-switch.spec.ts:166:1 › ohne AI: Home bleibt leer nach „Remove as Home“ und nach Löschen der Home-Seite 
   22 skipped
-  327 passed (9.8m)
+  326 passed (8.2m)
