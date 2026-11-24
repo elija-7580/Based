@@ -4,5 +4,6 @@
 // Werkzeuge der Agenten denselben Weg gehen. Diese Datei hält die bisherigen Importpfade der App.
 export {
   DRAIN_WINDOW_BYTES, DRAIN_WINDOW_FILES, drainDeferred, prepareFiles, StreamingAssetSink,
-  type ImportFile, type ImportPayload, type PreparedArchive, type PrepareOptions, type StreamedAsset,
+  isPackedImportPayload, packImportPayload, unpackImportPayload,
+  type ImportFile, type ImportPayload, type PackedImportPayload, type PreparedArchive, type PrepareOptions, type StreamedAsset,
 } from "@based/core";

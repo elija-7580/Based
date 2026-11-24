@@ -12,7 +12,7 @@ import {
   type RecordKeyString,
   type WireRecord,
 } from "@based/core";
-import type { ImportPayload } from "./importer.js";
+import type { ImportPayload, PackedImportPayload } from "./importer.js";
 import { LayeredMap } from "./titleMap.js";
 import type { ExportFile, PageExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
 import type { DueItem } from "@based/brain/home";
@@ -454,7 +454,7 @@ export class StoreClient {
     return this.request<HybridContentResult>({ type: "hybridContent", batch });
   }
 
-  commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
+  commitImport(payload: ImportPayload | PackedImportPayload, parent?: string): Promise<ImportSummary> {
     return this.request<ImportSummary>(parent ? { type: "commitImport", payload, parent } : { type: "commitImport", payload });
   }
 

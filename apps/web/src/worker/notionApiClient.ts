@@ -4,7 +4,7 @@
 // beendet den Worker.
 import type { NotionAPIImportOptions as NotionImportOptions, NotionTransport } from "@based/core";
 import { ImportCancelledError } from "./importClient.js";
-import type { ImportPayload, StreamedAsset } from "./importer.js";
+import type { ImportPayload, PackedImportPayload, StreamedAsset } from "./importer.js";
 
 export type NotionWorkerRequest =
   | { type: "start"; token: string; targets: string[]; options: Partial<NotionImportOptions>; baseURL?: string }
@@ -14,7 +14,7 @@ export type NotionWorkerEvent =
   | { type: "http"; id: number; method: string; url: string; headers: Record<string, string>; body?: string }
   | { type: "progress"; fraction: number; message: string }
   | { type: "asset"; asset: StreamedAsset }
-  | { type: "done"; payload: ImportPayload; report: string }
+  | { type: "done"; payload: ImportPayload | PackedImportPayload; report: string }
   | { type: "error"; message: string; report: string };
 
 export interface NotionWorkerLike {
@@ -35,7 +35,7 @@ export class NotionImportError extends Error {
 }
 
 export interface NotionImportJob {
-  result: Promise<{ payload: ImportPayload; report: string }>;
+  result: Promise<{ payload: ImportPayload | PackedImportPayload; report: string }>;
   cancel(): void;
 }
 
@@ -54,8 +54,8 @@ export interface NotionImportStart {
 export function runNotionImport(s: NotionImportStart): NotionImportJob {
   const worker = (s.make ?? createNotionWorker)();
   const abort = new AbortController();
-  let settle: { resolve: (r: { payload: ImportPayload; report: string }) => void; reject: (e: Error) => void } | undefined;
-  const result = new Promise<{ payload: ImportPayload; report: string }>((resolve, reject) => (settle = { resolve, reject }));
+  let settle: { resolve: (r: { payload: ImportPayload | PackedImportPayload; report: string }) => void; reject: (e: Error) => void } | undefined;
+  const result = new Promise<{ payload: ImportPayload | PackedImportPayload; report: string }>((resolve, reject) => (settle = { resolve, reject }));
   const finish = (fn: () => void) => {
     if (!settle) return;
     fn();

@@ -8,7 +8,7 @@ import { StoreClient } from "./client.js";
 import { readFileSync } from "node:fs";
 import { assetIDsInStore, makeBlock, MemoryAssetSink } from "@based/core";
 import { MemoryAssetStore } from "./assets.js";
-import { drainDeferred, prepareFiles, StreamingAssetSink, type ImportFile } from "./importer.js";
+import { drainDeferred, packImportPayload, prepareFiles, StreamingAssetSink, type ImportFile } from "./importer.js";
 import { StoreHost } from "./host.js";
 import type { Endpoint, Event, RequestMessage, StatusInfo } from "./protocol.js";
 
@@ -216,7 +216,8 @@ describe("Dateien aus Importen (BSD-230)", () => {
     await b.client.init({ sync });
     const payload = prepareFiles(notionExport(), { assets: new MemoryAssetSink() });
     expect(payload.files?.length).toBeGreaterThan(0);
-    const summary = await a.client.commitImport(structuredClone(payload));
+    // BSD-665: verpackt wie aus dem Import-Worker (Dateien bleiben eigene Puffer)
+    const summary = await a.client.commitImport(packImportPayload(structuredClone(payload)).payload);
     expect(summary.warnings.filter((w) => w.includes("couldn't be saved"))).toEqual([]);
     const ids = [...assetIDsInStore(a.host.ws!.store)];
     expect(ids.length).toBeGreaterThan(0);

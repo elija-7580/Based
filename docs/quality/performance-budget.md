@@ -79,11 +79,14 @@ trifft also die Ursache; das ist ein Umbau von Replik und Datenbank-Ansicht und 
 
 Erzeugter Notion-HTML-Export (je Seite 20 Absätze), Import über Einstellungen → Import wie ein Tester, Playwright + CDP;
 Skript im Bericht vom 23.11. beschrieben (nicht im Repo).
+BSD-665 (24.11.): Records gehen als übertragener Puffer vom Import-Worker zum Store-Worker (`packImportPayload`), der
+Hauptthread klont nichts mehr. Wächter: `e2e/import-perf.spec.ts` (@perf, 3 000 Seiten, Chromium, < 200 ms); vorher
+im selben Lauf 243 ms. Gemessen im normalen Build, Linux-Container unter Last (Import-Dauer daher nicht vergleichbar).
 
 | Kennzahl | Ziel | 3 000 Seiten | 10 000 Seiten |
 | --- | --- | --- | --- |
 | Import bis zur Zusammenfassung | – | 9,7 s | 33,6 s |
-| Längste Aufgabe im Hauptthread | < 200 ms | 296 ms | **1 140 ms** (Backlog: Nutzlast wird im Hauptthread zweimal geklont) |
+| Längste Aufgabe im Hauptthread | < 200 ms | 296 ms → 97–106 ms (BSD-665) | **1 140 ms** → 134 ms (BSD-665) |
 | JS-Heap nach GC (leer 10 MB) | kein lineares Wachstum | 16,8 MB | 24,6 MB |
 | Export Markdown (ganzer Workspace) | keine Long Tasks | 0,7 s, 0 | 2,7 s, 0 |
 | Leerlauf-CPU danach | 0 % | 0 % | 0,4 % |

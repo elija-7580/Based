@@ -86,7 +86,7 @@ import {
 import { AssetError, AssetSync, MemoryAssetBlobStore, MemoryYDocStorage, PUSHED_KEY, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence, type YDocStorage } from "@based/sync";
 import type { AssetStore, StoredAsset } from "./assets.js";
 import { commitImportPayload, exportPage, exportWorkspace, printPage, type ImportSummary } from "./interop.js";
-import type { ImportPayload } from "./importer.js";
+import { unpackImportPayload, type ImportPayload, type PackedImportPayload } from "./importer.js";
 import { PageHistory } from "./history.js";
 import { addWelcomeGuides } from "./welcomeGuides.js";
 import { ChatHost } from "./chat.js";
@@ -1367,7 +1367,9 @@ export class StoreHost {
     return r;
   }
 
-  private async commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
+  private async commitImport(packed: ImportPayload | PackedImportPayload, parent?: string): Promise<ImportSummary> {
+    // BSD-665: hier (Store-Worker) auspacken, nicht im Hauptthread.
+    const payload = unpackImportPayload(packed);
     const map = new Map<string, string>(this.importedAssetIDs);
     this.importedAssetIDs.clear();
     this.importCreatedHashes.clear();

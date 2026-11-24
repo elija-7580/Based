@@ -2,7 +2,7 @@
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
 import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, HybridPageContent, HybridStructureWire, Outline, PageGraph, RecordKeyString, SearchFilters, SearchSort, StarterTemplateID, WireRecord } from "@based/core";
-import type { ImportPayload } from "./importer.js";
+import type { ImportPayload, PackedImportPayload } from "./importer.js";
 import type { PageExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 import type { ChatAction } from "./chat.js";
 import type { AgentAction } from "./agents.js";
@@ -224,7 +224,8 @@ export type Request =
   | { type: "setSync"; sync?: SyncConfig }
   | { type: "syncNow" }
   /** Im Import-Worker vorbereiteten Import schreiben (Antwort: ImportSummary). */
-  | { type: "commitImport"; payload: ImportPayload; parent?: string }
+  /** BSD-665: meist verpackt (Records als Bytes, `unpackImportPayload` im Store-Worker). */
+  | { type: "commitImport"; payload: ImportPayload | PackedImportPayload; parent?: string }
   /** BSD-254: eine Datei eines laufenden Imports sofort ablegen (vorläufige ID → Hash; `commitImport` schreibt um). */
   | { type: "importAsset"; assetID: string; name: string; mime?: string; bytes: Uint8Array }
   /** BSD-283: abgebrochener Import – schon abgelegte Dateien wieder entfernen (nur neue, nur unbenutzte). */

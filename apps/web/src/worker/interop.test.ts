@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { StoreClient } from "./client.js";
 import { StoreHost } from "./host.js";
 import { ImportCancelledError, prepareInWorker, type ImportWorkerEvent, type ImportWorkerLike, type ImportWorkerRequest } from "./importClient.js";
-import { prepareFiles, type ImportFile } from "./importer.js";
+import { packImportPayload, prepareFiles, unpackImportPayload, type ImportFile } from "./importer.js";
 import type { Endpoint, Event, RequestMessage } from "./protocol.js";
 
 type Fn<T> = (e: { data: T }) => void;
@@ -159,7 +159,8 @@ describe("Import", () => {
     await b.client.init({});
     const origins: string[] = [];
     b.host.ws!.store.observe((c) => origins.push(c.origin));
-    const s = await b.client.commitImport(payload);
+    // BSD-665: verpackt wie aus dem Import-Worker (Records als Bytes, im Store-Worker ausgepackt)
+    const s = await b.client.commitImport(packImportPayload(payload).payload);
     await settle();
     expect(s.archiveRecords).toBeGreaterThan(0);
     expect(b.client.title(id)).toBe("Archived page");
@@ -177,7 +178,8 @@ describe("Import", () => {
           if (!respond) return;
           setTimeout(() => {
             const payload = prepareFiles(m.files.map((f) => ({ path: f.path, data: f.data! })), { progress: (f) => fns.forEach((fn) => fn({ data: { type: "progress", fraction: f } })) });
-            fns.forEach((fn) => fn({ data: { type: "done", payload } }));
+            // wie der echte Worker: verpackt (BSD-665)
+            fns.forEach((fn) => fn({ data: { type: "done", payload: packImportPayload(payload).payload } }));
           });
         },
         addEventListener: (_t, fn) => fns.add(fn),
@@ -188,7 +190,7 @@ describe("Import", () => {
     const progress: number[] = [];
     const w1 = fake(true);
     const ok = prepareInWorker([{ path: "a.md", data: new TextEncoder().encode("# A") }], (f) => progress.push(f), () => w1);
-    expect((await ok.result).notion).toBeDefined();
+    expect(unpackImportPayload(await ok.result).notion).toBeDefined();
     expect(progress.at(-1)).toBe(1);
     expect(w1.terminated).toBe(true);
 

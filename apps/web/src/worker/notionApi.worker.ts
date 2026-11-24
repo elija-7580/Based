@@ -5,7 +5,7 @@
 // den Worker. Ergebnis ist dieselbe `ImportPayload` wie beim Datei-Import – geschrieben wird im Store-Worker
 // (`commitImport`, mit Reimport-Schutz BSD-32).
 import { DEFAULT_MAX_ASSET_BYTES, LimitedAssetSink, NotionWorkspaceImport, preparedImportToWire, type NotionResponse, type NotionTransport } from "@based/core";
-import { StreamingAssetSink, type ImportPayload } from "./importer.js";
+import { packImportPayload, StreamingAssetSink, type ImportPayload } from "./importer.js";
 import type { NotionWorkerEvent, NotionWorkerRequest } from "./notionApiClient.js";
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -62,7 +62,9 @@ self.addEventListener("message", (e: MessageEvent<NotionWorkerRequest>) => {
       payload.notion = preparedImportToWire({ builder, markdown: undefined, notes: [] });
     }
     const warnings = builder.report().warnings;
-    post({ type: "done", payload, report: imp.diagnosticReport(m.targets, undefined, warnings) });
+    // BSD-665: verpackt übertragen (kein Klonen der Records im Hauptthread).
+    const packed = packImportPayload(payload);
+    post({ type: "done", payload: packed.payload, report: imp.diagnosticReport(m.targets, undefined, warnings) }, packed.transfer);
   })().catch((err: unknown) => {
     post({ type: "error", message: err instanceof Error ? err.message : String(err), report: imp.diagnosticReport(m.targets, err, []) });
   });

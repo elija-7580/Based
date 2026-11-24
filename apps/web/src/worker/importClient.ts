@@ -1,6 +1,6 @@
 // Hauptthread-Seite des Imports: Dateien lesen, im Import-Worker vorbereiten (Fortschritt, Abbrechen), dann im
 // Store-Worker schreiben (`StoreClient.commitImport`).
-import type { ImportPayload, StreamedAsset } from "./importer.js";
+import type { ImportPayload, PackedImportPayload, StreamedAsset } from "./importer.js";
 
 /** Eine gewählte Datei: als `Blob` (BSD-254: der Worker liest nur, was er braucht) oder schon gelesen (Tests). */
 export type ImportRequestFile = { path: string; blob: Blob; data?: undefined } | { path: string; data: Uint8Array; blob?: undefined };
@@ -12,7 +12,8 @@ export type ImportWorkerEvent =
   | { type: "progress"; fraction: number }
   /** BSD-254: eine Datei für den Asset-Speicher, sofort (nicht erst mit dem Ergebnis). */
   | { type: "asset"; asset: StreamedAsset; ack?: boolean }
-  | { type: "done"; payload: ImportPayload }
+  /** BSD-665: verpackt (Records als Bytes); ausgepackt wird erst im Store-Worker. */
+  | { type: "done"; payload: ImportPayload | PackedImportPayload }
   | { type: "error"; message: string };
 
 /** Was der Import vom Worker braucht (echter Worker oder ein Test-Doppel). */
@@ -30,7 +31,7 @@ export class ImportCancelledError extends Error {
 }
 
 export interface PreparingImport {
-  result: Promise<ImportPayload>;
+  result: Promise<ImportPayload | PackedImportPayload>;
   cancel(): void;
 }
 
@@ -46,8 +47,8 @@ export const createImportWorker = (): ImportWorkerLike =>
 export function prepareInWorker(files: ImportRequestFile[], onProgress: (f: number) => void, make: () => ImportWorkerLike = createImportWorker,
   onAsset?: (a: StreamedAsset) => Promise<unknown>, onAbandon?: () => Promise<unknown>): PreparingImport {
   const worker = make();
-  let settle: { resolve: (p: ImportPayload) => void; reject: (e: Error) => void } | undefined;
-  const result = new Promise<ImportPayload>((resolve, reject) => (settle = { resolve, reject }));
+  let settle: { resolve: (p: ImportPayload | PackedImportPayload) => void; reject: (e: Error) => void } | undefined;
+  const result = new Promise<ImportPayload | PackedImportPayload>((resolve, reject) => (settle = { resolve, reject }));
   const forwarded: Promise<boolean>[] = [];
   const finish = (fn: () => void, abandoned = false) => {
     if (!settle) return;

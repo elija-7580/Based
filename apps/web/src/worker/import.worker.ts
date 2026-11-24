@@ -2,7 +2,7 @@
 // Import-Worker: bereitet einen Import vor (entpacken, HTML/Markdown lesen), ohne den Store-Worker zu blockieren.
 // Abbrechen beendet ihn (terminate) – das wirkt auch mitten in einer langen, synchronen Vorbereitung.
 import { MemoryAssetSink, type ByteSource } from "@based/core";
-import { drainDeferred, prepareFiles, StreamingAssetSink, type ImportFile } from "./importer.js";
+import { drainDeferred, packImportPayload, prepareFiles, StreamingAssetSink, type ImportFile } from "./importer.js";
 import type { ImportWorkerEvent, ImportWorkerMessage, ImportWorkerRequest } from "./importClient.js";
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -50,9 +50,11 @@ async function run(req: ImportWorkerRequest, post: (m: ImportWorkerEvent) => voi
     if (unreadable > 0) payload.notes.push(`${unreadable} attached file${unreadable === 1 ? "" : "s"} couldn't be read and will show as missing.`);
   }
   report(1);
-  // Eigene Kopien (Ausschnitte großer ZIP-Puffer), damit sie ohne Kopieren übertragen werden können.
-  for (const f of payload.files ?? []) f.data = f.data.slice();
-  self.postMessage({ type: "done", payload } satisfies ImportWorkerEvent, [...new Set((payload.files ?? []).map((f) => f.data.buffer as ArrayBuffer))]);
+  // BSD-665: Records als ein Puffer (JSON) übertragen statt als Objektbaum – der Hauptthread klont dann nichts mehr
+  // (10 000 Seiten: ~500 ms beim Empfang, ~480 ms beim Weiterreichen). Dateien als eigene Puffer (Ausschnitte großer
+  // ZIP-Puffer werden kopiert), damit sie ohne Kopieren übertragen werden.
+  const packed = packImportPayload(payload);
+  self.postMessage({ type: "done", payload: packed.payload } satisfies ImportWorkerEvent, packed.transfer);
 }
 
 /** BSD-254: Bereiche einer gewählten Datei synchron lesen (FileReaderSync gibt es in Dedicated Workern). */
