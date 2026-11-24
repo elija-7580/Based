@@ -75,7 +75,9 @@ export async function drainWatchInbox(bridge: WatchInboxBridge, target: WatchInb
         if (page) {
           const mime = MIME[item.ext] ?? "audio/mp4";
           const data = new Blob([bytes as BlobPart], { type: mime });
-          const ok = await target.importAudio!(page, { data, mime, duration: item.dur, name: `voice-note-${item.id.slice(0, 8)}.${item.ext}` });
+          // BSD-668: eine Ausnahme (Seite ließ sich nicht öffnen, Speicher voll) zählt wie „nicht gespeichert“ – sonst
+          // bliebe je Versuch eine Sprachnotiz-Seite ohne Aufnahme stehen.
+          const ok = await target.importAudio!(page, { data, mime, duration: item.dur, name: `voice-note-${item.id.slice(0, 8)}.${item.ext}` }).catch(() => false);
           if (!ok) { await target.discard(page); page = undefined; }
         }
       }

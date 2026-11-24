@@ -59,6 +59,20 @@ describe("Eingang der Apple Watch (apps/mobile → Workspace)", () => {
     expect(w.ledger()).toEqual(["b"]);
   });
 
+  it("BSD-668: Ablegen der Aufnahme wirft – Seite weg, Eintrag bleibt; der nächste Lauf legt genau eine Seite an", async () => {
+    const w = world([voice("a", 1)]);
+    const save = w.target.importAudio!;
+    let fail = 2;
+    w.target.importAudio = async (page, f) => { if (fail-- > 0) throw new Error("storage full"); return save(page, f); };
+    expect(await drainWatchInbox(w.bridge, w.target)).toEqual([]);
+    expect(await drainWatchInbox(w.bridge, w.target)).toEqual([]);
+    expect([...w.inbox.keys()]).toEqual(["a"]);
+    expect(await drainWatchInbox(w.bridge, w.target)).toEqual(["p3"]);
+    expect(w.log.filter((l) => l.startsWith("discard"))).toEqual(["discard p1", "discard p2"]);
+    expect(w.inbox.size).toBe(0);
+    expect(w.ledger()).toEqual(["a"]);
+  });
+
   it("ohne Meeting-Dienst bleiben Sprachnotizen liegen, Diktate kommen an; Fehler beim Lesen kosten nichts", async () => {
     const w = world([voice("a", 1), { id: "t", at: 2, dur: 0, ext: "txt" }], { t: "Idea" });
     w.target.importAudio = undefined;
