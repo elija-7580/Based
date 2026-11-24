@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 49 (Nachlauf 2026-11-23 ab 14:00, Abschnitt direkt unten; Pass 48 (Nachtlauf 2026-11-23) darunter; Pass 47 (Nachtlauf 2026-11-22) darunter; Pass 46 (Nachtlauf 2026-11-21) darunter; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 50 (Nachtlauf 2026-11-24, Abschnitt direkt unten; Pass 49 (Nachlauf 2026-11-23 ab 14:00) darunter; Pass 48 (Nachtlauf 2026-11-23) darunter; Pass 47 (Nachtlauf 2026-11-22) darunter; Pass 46 (Nachtlauf 2026-11-21) darunter; Pass 45 (Nachtlauf 2026-11-20) darunter; Pass 44 (Sonderlauf am Tag 2026-11-19) darunter; Pass 43 (Nachtlauf 2026-11-19) darunter; Pass 42 (Nachtlauf 2026-11-18, Lauf ab 11:12) darunter; Pass 41/40/39/38/37/36/35/33 darunter; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -13,6 +13,19 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Anforderung | Status | Notiz |
 |---|---|---|
 | TS · Animationen komplett überarbeiten (im Notion-Backlog seit 14.11., P1, Bereit) | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
+## Pass 50 (Nachtlauf 2026-11-24, erste Nacht nach dem Beta-Start)
+
+Inbox leer; Bereit + autonom nur BSD-665 (A) und BSD-666 (B), dazu zwei Befunde aus der Prüfrunde (A) und ein Feinschliff (B). Feature-Stopp aufgehoben, daher BSD-267 (Vornacht) nach main. Playwright-Browser 1254 + WebKit 2388 im Container nachinstalliert (vorher scheiterte @smoke). main c5b2dafc → 07846283 (BSD-267) → b134f991 (B) → c5e5652c (A) → BSD-669; `run-ts.sh --fast` auf jedem Merge-Stand grün. Branch beta nicht angefasst.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| BSD-267 Whiteboard 5: Form der Verbindung | 🟡 | auf main (07846283); board-Specs Chromium+WebKit grün (1 WebKit-@perf wackelig, Retry grün); Mac-Test offen |
+| BSD-665 Großer Import friert am Ende ein | ✅ | Nutzlast als übertragener Puffer (packages/core/src/interop/payload-codec.ts), Hauptthread kopiert nichts; 10 000 Seiten längste Aufgabe 1 140 → 134 ms; @perf-Spec import-perf |
+| BSD-666 Relationen-Replik nur verknüpfte Zielzeilen | ✅ | openPage/belongsTo nur verknüpfte Zeilen, Picker fragt den Worker (relationCandidates); 100 000 Zielzeilen: Öffnen 1 109 → 45 ms, Heap +25,8 → +0,9 MB |
+| BSD-667 Gedächtnis „Forget…“ löschte eigene Memories | ✅ | Befund Prüfrunde (aus c5b2daf); nur gelernte Ergänzungen werden entfernt |
+| BSD-668 Watch-Eingang: leere Seite nach Fehler | ✅ | Befund Prüfrunde (aus c93417db); Seite wird bei Fehler nicht stehen gelassen |
+| BSD-669 Feinschliff: zweiter Fokusrahmen am „+“ | ✅ | aktive Zelle nimmt ihren Rahmen zurück, wenn ein anderes Datenbank-Bedienelement Tastatur-Fokus hat; Test in database-relations.spec |
 
 ## Pass 49 (Nachlauf 2026-11-23 ab 14:00, Beta-Tag, Feature-Stopp)
 
