@@ -87,7 +87,7 @@ function RelationConfig({ p }: { p: PropertySchema }) {
   const violations = rel?.limitOne ? relationLimitViolations(store, db.id, p.id).length : 0;
   // Alle Datenbanken des Workspaces, nicht nur die dieser Seite: die Shell liefert die Liste und holt die gewählte
   // in den Store der Seite (wie bei der Dashboard-Quelle, BSD-216).
-  const { databases } = useContext(ShellSlots);
+  const { databases, relations } = useContext(ShellSlots);
   const [listed, setListed] = useState<{ id: string; title: string; path?: string }[]>([]);
   useEffect(() => {
     if (!databases) return;
@@ -98,7 +98,8 @@ function RelationConfig({ p }: { p: PropertySchema }) {
   const local = [...store.databases.values()].map((d) => ({ id: d.id, title: plainText(d.title) || titleOf(store, d.blockID) }));
   const choices = [...local, ...listed.filter((d) => !store.databases.has(d.id)).map((d) => ({ id: d.id, title: d.path ? `${d.title} — ${d.path}` : d.title }))];
   const choose = async (id: string) => {
-    if (id && !store.databases.has(id) && databases && !(await databases.include(id))) return;
+    // BSD-666: als Relationsziel nur den Datenbank-Record holen, nicht alle Zeilen (verknüpfte kommen beim Verknüpfen).
+    if (id && !store.databases.has(id) && (relations ? !(await relations.includeTarget(id)) : databases && !(await databases.include(id)))) return;
     setRelationTarget(store, db.id, p.id, id || undefined);
   };
   return (

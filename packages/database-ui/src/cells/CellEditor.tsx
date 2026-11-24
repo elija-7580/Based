@@ -317,8 +317,20 @@ function RelationEditor({ row, prop, anchor, onClose }: CellEditorProps) {
   const target = live.relation ? store.databases.get(live.relation.databaseID) : undefined;
   const ids = storedIDs(row, live, "relation");
   const [query, setQuery] = useState("");
+  // BSD-666: Der Store der Seite führt von der Ziel-Datenbank nur die verknüpften Zeilen; die Shell sucht die übrigen
+  // (im Worker) und holt die Treffer vorher in den Store. Ohne Shell: der Store selbst.
+  const { relations } = useContext(ShellSlots);
+  const [remote, setRemote] = useState<string[] | null>(null);
+  const idsKey = ids.join(",");
+  useEffect(() => {
+    if (!relations || !target) return;
+    let live = true;
+    relations.candidates(target.id, query, RELATION_LIMIT, idsKey ? idsKey.split(",") : []).then((r) => { if (live) setRemote(r); }, () => undefined);
+    return () => { live = false; };
+  }, [relations, target, query, idsKey]);
   const candidates = useMemo(() => {
     if (!target) return [];
+    if (relations) return (remote ?? []).flatMap((id) => { const b = store.blocks.get(id); return b && !ids.includes(id) ? [b] : []; });
     const q = query.trim().toLocaleLowerCase();
     const out: Block[] = [];
     for (const r of rowsOf(store, target.id)) {
@@ -328,7 +340,7 @@ function RelationEditor({ row, prop, anchor, onClose }: CellEditorProps) {
       if (out.length >= RELATION_LIMIT) break;
     }
     return out;
-  }, [store, target, query, ids]);
+  }, [store, target, query, ids, relations, remote]);
   if (!target) {
     return (
       <Popover anchor={anchor} onClose={onClose} label={`Edit ${live.name}`}>
@@ -355,7 +367,7 @@ function RelationEditor({ row, prop, anchor, onClose }: CellEditorProps) {
             <Icon name="plus" /><span className="dbui-menu-label">{titleOf(store, r.id)}</span>
           </button>
         ))}
-        {candidates.length === 0 && <p className="dbui-hint">No pages</p>}
+        {candidates.length === 0 && (!relations || remote) && <p className="dbui-hint">No pages</p>}
       </div>
     </Popover>
   );

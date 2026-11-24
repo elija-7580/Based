@@ -187,7 +187,8 @@ if (want("large")) await session(async ({ page, metrics, ready }) => {
 });
 
 // ---- 3 · Datenbank mit 100 000 Zeilen (BSD-605): Heap des Hauptthreads nach GC, längste Aufgabe beim Öffnen, Neuladen
-// bis zur ersten Zeile. Ziel aus BSD-605: Heap < 30 MB, keine Aufgabe > 200 ms, Neuladen < 2 s.
+// bis zur ersten Zeile. Ziel aus BSD-605: Heap < 30 MB, keine Aufgabe > 200 ms, Neuladen < 2 s. BSD-666: danach eine kleine
+// Datenbank mit Relation auf die große öffnen (`related*`): Heap darf nicht mit der Ziel-Datenbank wachsen.
 const ROWS = Number(arg("rows", 100000));
 if (want("database")) await session(async ({ page, metrics, ready }) => {
   await step("database", async () => {
@@ -213,7 +214,23 @@ if (want("database")) await session(async ({ page, metrics, ready }) => {
     await page.waitForTimeout(1500);
     const reloadTasks = await page.evaluate(() => __perf.longTasks.slice());
     const reloaded = await metrics();
-    return { rows: ROWS, heapEmptyMb: empty.heapMb, heapOpenMb: open.heapMb, heapAfterReloadMb: reloaded.heapMb, nodes: open.nodes, openMs, openLongestTaskMs: Math.max(0, ...openTasks), openLongTasks: openTasks.length, reloadMs, reloadLongestTaskMs: Math.max(0, ...reloadTasks) };
+    // BSD-666: kleine Datenbank (3 Zeilen) mit Relation auf die große, eine Zeile verknüpft. Vorher brachte das Öffnen
+    // alle ROWS Zielzeilen in die Replik; jetzt nur die verknüpfte. Zuerst neu laden, damit die große Replik weg ist.
+    const tasks = await page.evaluate(async (target) => { const b = globalThis.__based; const r = await b.client.command({ op: "seedRelated", target, count: 3 }); await b.client.settled(); return r; }, id);
+    await page.goto("/"); await page.reload(); await ready();
+    const before = await metrics();
+    await page.evaluate(() => { __perf.longTasks.length = 0; });
+    const t2 = Date.now();
+    await page.goto("/#page-" + tasks);
+    await page.waitForSelector(".shell-database.full .dbui-relation", { timeout: 120000 });
+    const relatedOpenMs = Date.now() - t2;
+    await page.waitForTimeout(1500);
+    const relatedTasks = await page.evaluate(() => __perf.longTasks.slice());
+    const related = await metrics();
+    return {
+      rows: ROWS, heapEmptyMb: empty.heapMb, heapOpenMb: open.heapMb, heapAfterReloadMb: reloaded.heapMb, nodes: open.nodes, openMs, openLongestTaskMs: Math.max(0, ...openTasks), openLongTasks: openTasks.length, reloadMs, reloadLongestTaskMs: Math.max(0, ...reloadTasks),
+      relatedHeapBeforeMb: before.heapMb, relatedHeapOpenMb: related.heapMb, relatedOpenMs, relatedLongestTaskMs: Math.max(0, ...relatedTasks),
+    };
   });
 });
 

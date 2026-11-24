@@ -48,12 +48,23 @@ export interface FileHost {
   open: (assetID: string) => Promise<string>;
 }
 
-export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined; files?: FileHost | undefined; ai?: AutofillWriter | undefined; databases?: DatabaseSource | undefined; people?: (() => Promise<string[]>) | undefined }>({});
+export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined; files?: FileHost | undefined; ai?: AutofillWriter | undefined; databases?: DatabaseSource | undefined; people?: (() => Promise<string[]>) | undefined; relations?: RelationSource | undefined }>({});
 
 /** BSD-216: andere Datenbanken des Workspaces (Dashboard-Quelle); `include` holt sie in den Store dieser Seite. */
 export interface DatabaseSource {
   list(): Promise<{ id: string; title: string; path?: string }[]>;
   include(id: string): Promise<boolean>;
+}
+
+/**
+ * BSD-666: Relationsziele, die der Store dieser Seite nicht ganz führt. Er hat von einer Ziel-Datenbank nur die
+ * verknüpften Zeilen; der Picker fragt die Shell nach passenden Zeilen, die sie vorher in den Store holt.
+ */
+export interface RelationSource {
+  /** Zeilen-IDs der Datenbank `databaseID`, deren Titel `query` enthält (ohne `exclude`), höchstens `limit`. */
+  candidates(databaseID: string, query: string, limit: number, exclude: string[]): Promise<string[]>;
+  /** Nur den Datenbank-Record (ohne Zeilen) holen, z. B. als neues Relationsziel. */
+  includeTarget(databaseID: string): Promise<boolean>;
 }
 
 export function useDB(): DBContextValue {

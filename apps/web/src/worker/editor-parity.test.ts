@@ -1,6 +1,6 @@
 // Editor-Parität im Store-Worker: Seiten-Angaben und Seitensuche fürs @-Menü, Backlinks, und Synced-Originale von
 // anderen Seiten in der Seiten-Replik (beim Öffnen, nach dem Einfügen einer Kopie und über `includeSynced`).
-import { dbops, keyBetween, QueryEngine, setRelation, titleOf, WorkspaceStore, type Block, type WireRecord } from "@based/core";
+import { dbops, keyBetween, keysBetween, QueryEngine, setRelation, titleOf, WorkspaceStore, type Block, type WireRecord } from "@based/core";
 import { openWorkspace } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { afterEach, describe, expect, it } from "vitest";
@@ -162,19 +162,25 @@ describe("Worker: Relationen zu einer anderen Datenbank", () => {
 
     const opened = host.openPage(tasks.blockID);
     const ids = opened.records.map((x) => (x.kind === "workspace" ? "" : x.data.id));
-    expect(ids).toEqual(expect.arrayContaining([projects.databaseID, projects.blockID, home, p1, p2]));
+    expect(ids).toEqual(expect.arrayContaining([projects.databaseID, projects.blockID, home, p1]));
     expect(ids).not.toContain("p1-note");
+    // BSD-666: nicht verknüpfte Zielzeilen bleiben im Worker
+    expect(ids).not.toContain(p2);
     const r = replica(opened);
     expect(linkedTitles(r, tasks.databaseID, task!, rel)).toEqual(["Move"]);
 
-    // Änderung an einer Zielzeile und eine neue Zielzeile kommen an
+    // Änderung an einer verknüpften Zielzeile kommt an; eine neue Zielzeile erst, wenn sie verknüpft wird (BSD-666)
     host.flush();
     sent.length = 0;
     store.transact("t", (tx) => tx.update(p1!, (b) => { b.text = "Moving house"; }));
     const added = dbops.addRow(store, projects.databaseID)!;
     host.flush();
-    const changed = sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
-    expect(changed).toEqual(expect.arrayContaining([p1, added]));
+    const upserted = () => sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(upserted()).toContain(p1);
+    expect(upserted()).not.toContain(added);
+    setRelation(store, task!, rel, [p1!, added]);
+    host.flush();
+    expect(upserted()).toContain(added);
   });
 
   it("eine Relation, die erst bei offener Seite ihr Ziel bekommt, holt die Ziel-Datenbank nach", async () => {
@@ -190,8 +196,13 @@ describe("Worker: Relationen zu einer anderen Datenbank", () => {
     const rel = dbops.addProperty(store, tasks.databaseID, "Project", "relation")!;
     dbops.setRelationTarget(store, tasks.databaseID, rel, projects.databaseID);
     host.flush();
-    const got = sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
-    expect(got).toEqual(expect.arrayContaining([projects.databaseID, projects.blockID, p1]));
+    const got = () => sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(got()).toEqual(expect.arrayContaining([projects.databaseID, projects.blockID]));
+    // BSD-666: die Zeile kommt mit der Verknüpfung
+    expect(got()).not.toContain(p1);
+    setRelation(store, store.children("d:" + tasks.databaseID)[0]!, rel, [p1!]);
+    host.flush();
+    expect(got()).toContain(p1);
   });
 
   it("Review 23.11.: Änderungen an Properties ohne Relation gehen den Teilbaum der offenen Seite nicht neu durch", async () => {
@@ -216,6 +227,87 @@ describe("Worker: Relationen zu einer anderen Datenbank", () => {
     expect(walks).toBeGreaterThan(0);
     const got = sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
     expect(got).toContain(projects.databaseID);
+  });
+
+  it("BSD-666: Ziel-Datenbank mit 1 000 Zeilen, eine verknüpft – openPage bringt genau diese eine Zeile", async () => {
+    const { host, store, page, sent } = await setup();
+    const tasks = dbops.createDatabase(store, { parent: "b:" + page("Home"), title: "Tasks", sampleRows: 2 });
+    const projects = dbops.createDatabase(store, { parent: "b:" + page("Elsewhere"), title: "Projects", sampleRows: 0 });
+    const now = store.now();
+    const keys = keysBetween(1000, undefined, undefined);
+    store.transact("t", (tx) => keys.forEach((sk, i) => tx.put({ kind: "block", data: { id: `P${i}`, type: "page", parent: "d:" + projects.databaseID, sk, text: `Project ${i}`, createdAt: now, updatedAt: now } as Block })));
+    const [t1, t2] = store.children("d:" + tasks.databaseID);
+    const rel = dbops.addProperty(store, tasks.databaseID, "Project", "relation")!;
+    dbops.setRelationTarget(store, tasks.databaseID, rel, projects.databaseID);
+    // Rollup über die Relation: zählt dieselben Zeilen wie im Worker
+    const roll = dbops.addProperty(store, tasks.databaseID, "Count", "rollup")!;
+    const titleProp = store.databases.get(projects.databaseID)!.properties.find((p) => p.type === "title")!.id;
+    dbops.setRollup(store, tasks.databaseID, roll, { relationPropertyID: rel, targetPropertyID: titleProp, function: "countAll" });
+    setRelation(store, t1!, rel, ["P7"]);
+
+    const opened = host.openPage(tasks.blockID);
+    const rows = opened.records.filter((x) => x.kind === "block" && (x.data as Block).parent === "d:" + projects.databaseID).map((x) => x.data.id);
+    expect(rows).toEqual(["P7"]);
+    expect(opened.records.length).toBeLessThan(50);
+    const r = replica(opened);
+    expect(linkedTitles(r, tasks.databaseID, t1!, rel)).toEqual(["Project 7"]);
+    const rollOf = (s: WorkspaceStore) => { const db = s.databases.get(tasks.databaseID)!; return new QueryEngine(s).value(s.blocks.get(t1!)!, db.properties.find((p) => p.id === roll)!, db); };
+    expect(rollOf(r)).toEqual(rollOf(store));
+
+    // Änderungen an nicht verknüpften Zielzeilen gehen nicht an die Seite
+    host.flush();
+    sent.length = 0;
+    store.transact("t", (tx) => tx.update("P8", (b) => { b.text = "Other"; }));
+    host.flush();
+    const upserted = () => sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === tasks.blockID ? e.upserts : [])).map((x) => (x.kind === "workspace" ? "" : x.data.id));
+    expect(upserted()).toEqual([]);
+
+    // Neue Verknüpfung holt genau die neue Zielzeile nach, ohne den Teilbaum der Seite neu zu gehen
+    const h = host as unknown as { refreshSyncedDeps(p: string): void };
+    const orig = h.refreshSyncedDeps.bind(host);
+    let walks = 0;
+    h.refreshSyncedDeps = (p) => { walks++; orig(p); };
+    setRelation(store, t2!, rel, ["P900", "P7"]);
+    host.flush();
+    expect(upserted().filter((id) => id.startsWith("P"))).toEqual(["P900"]);
+    expect(walks).toBe(0);
+  });
+
+  it("BSD-666: relationCandidates sucht im Worker und holt die Treffer in die Replik; das Ziel ohne Zeilen", async () => {
+    const { host, store, page, sent } = await setup();
+    const tasks = dbops.createDatabase(store, { parent: "b:" + page("Home"), title: "Tasks", sampleRows: 1 });
+    const projects = dbops.createDatabase(store, { parent: "b:" + page("Elsewhere"), title: "Projects", sampleRows: 0 });
+    const other = dbops.createDatabase(store, { parent: "b:" + page("Third"), title: "Other", sampleRows: 3 });
+    const now = store.now();
+    const keys = keysBetween(30, undefined, undefined);
+    store.transact("t", (tx) => keys.forEach((sk, i) => tx.put({ kind: "block", data: { id: `P${i}`, type: "page", parent: "d:" + projects.databaseID, sk, text: i % 10 === 3 ? `Garden ${i}` : `Project ${i}`, createdAt: now, updatedAt: now } as Block })));
+    store.transact("t", (tx) => tx.update("P13", (b) => { b.props = { ...b.props, isTemplate: true }; }));
+    const rel = dbops.addProperty(store, tasks.databaseID, "Project", "relation")!;
+    dbops.setRelationTarget(store, tasks.databaseID, rel, projects.databaseID);
+    host.openPage(tasks.blockID);
+    host.flush();
+
+    const found = host.relationCandidates(tasks.blockID, projects.databaseID, "garden", 50, ["P23"]);
+    expect(found.found).toBe(true);
+    expect(found.ids).toEqual(["P3"]);
+    expect(found.records.map((x) => x.data.id)).toEqual(["P3"]);
+    expect(host.relationCandidates(tasks.blockID, projects.databaseID, "", 5).ids).toEqual(["P0", "P1", "P2", "P3", "P4"]);
+    // schon geschickte Zeilen nicht noch einmal
+    expect(host.relationCandidates(tasks.blockID, projects.databaseID, "garden", 50).records.map((x) => x.data.id)).toEqual(["P23"]);
+    // Änderungen an angebotenen Zeilen folgen der Seite
+    sent.length = 0;
+    store.transact("t", (tx) => tx.update("P3", (b) => { b.text = "Garden shed"; }));
+    host.flush();
+    expect(sent.some((e) => e.type === "pageChanges" && e.upserts.some((x) => x.data.id === "P3"))).toBe(true);
+
+    // neues Relationsziel: nur Datenbank-Record und Besitzer-Kette, keine Zeilen
+    const target = host.relationCandidates(tasks.blockID, other.databaseID, "", 0);
+    expect(target.found).toBe(true);
+    expect(target.ids).toEqual([]);
+    const got = target.records.map((x) => x.data.id);
+    expect(got).toEqual(expect.arrayContaining([other.databaseID, other.blockID]));
+    for (const row of store.children("d:" + other.databaseID)) expect(got).not.toContain(row);
+    expect(host.relationCandidates("not-open", projects.databaseID, "", 5).found).toBe(false);
   });
 
   it("eine Zeilenseite zeigt die Relationen ihrer Datenbank", async () => {
