@@ -620,10 +620,36 @@ export class AgentBrain {
     return this.memories().filter((m) => m.status !== "Superseded" && (isLearned(m.body) || normalizedWords(m.title) === normalizedWords(STYLE_TITLE)));
   }
 
-  /** Alles Gelernte in den Papierkorb (wiederherstellbar). Gibt die Anzahl zurück. */
+  /**
+   * Alles Gelernte vergessen. Gibt die Anzahl betroffener Memories zurück. Was das Lernen angelegt hat, geht in den
+   * Papierkorb (wiederherstellbar). BSD-667: Hat es nur eine eigene Memory ergänzt (ähnlicher Titel), werden nur die
+   * Ergänzungen entfernt – je Zeile „Learned from: …“ sie selbst und der Absatz direkt davor (so legt `saveMemory`
+   * sie an); der eigene Text bleibt. Bleibt danach kein Inhalt, geht auch diese Memory in den Papierkorb.
+   */
   forgetLearned(): number {
-    const ids = this.learnedMemories().map((m) => m.id);
-    return ids.length ? trashPages(this.store, ids).length : 0;
+    const trash: string[] = [];
+    const strip: string[] = [];
+    let stripped = 0;
+    const isLine = (b: Block) => plainText(b.text).trim().startsWith(LEARNED_PREFIX);
+    for (const m of this.learnedMemories()) {
+      if (!isLearned(m.body)) { trash.push(m.id); continue; } // Schreibstil
+      const blocks = this.contentBlocks(m.id, false);
+      const drop = new Set<string>();
+      blocks.forEach((b, i) => {
+        if (!isLine(b)) return;
+        drop.add(b.id);
+        const prev = blocks[i - 1];
+        if (prev && !isLine(prev)) drop.add(prev.id);
+      });
+      if (blocks.every((b) => drop.has(b.id))) trash.push(m.id);
+      else if (drop.size > 0) { strip.push(...drop); stripped += 1; }
+    }
+    if (strip.length) {
+      this.store.transact("Forget learned", (tx) => {
+        for (const id of strip) for (const d of [...this.store.descendants(id).reverse(), id]) tx.remove(keyOf("block", d));
+      });
+    }
+    return (trash.length ? trashPages(this.store, trash).length : 0) + stripped;
   }
 
   /** Die eine Memory „Writing style“: der Rumpf wird ersetzt (kein Anhängen – der Stil ist immer der aktuelle). */

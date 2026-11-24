@@ -132,6 +132,31 @@ describe("what was learned is saved without asking, private topics wait", () => 
   });
 });
 
+describe("forgetting what was learned (BSD-667)", () => {
+  it("keeps the user's own memory and removes only what learning added to it", () => {
+    const store = memoryStore();
+    const brain = new AgentBrain(store);
+    const page = createPage(store, { title: "Ideas" });
+    const other = createPage(store, { title: "Journal" });
+    const own = brain.saveMemory({ title: "Project Based", kind: "Work", body: "My own note about Based.\n\nSecond own paragraph." });
+    expect(brain.saveLearned({ title: "Project Based", kind: "Work", body: "Building a notes app.", sensitive: false }, page)).toBe(own);
+    brain.saveLearned({ title: "Project Based", kind: "Work", body: "Wants to replace Notion.", sensitive: false }, other);
+    const learned = brain.saveLearned({ title: "Morning routine", kind: "Preference", body: "Runs at six.", sensitive: false }, page);
+    expect(brain.learnedMemories().map((m) => m.id).sort()).toEqual([own, learned].sort());
+
+    expect(brain.forgetLearned()).toBe(2);
+    const left = brain.memories();
+    expect(left.map((m) => m.id)).toEqual([own]);
+    expect(left[0]!.body).toContain("My own note about Based.");
+    expect(left[0]!.body).toContain("Second own paragraph.");
+    expect(left[0]!.body).not.toContain("Building a notes app.");
+    expect(left[0]!.body).not.toContain("Wants to replace Notion.");
+    expect(left[0]!.body).not.toContain("Learned from");
+    expect(brain.learnedMemories()).toHaveLength(0);
+    expect(brain.forgetLearned()).toBe(0);
+  });
+});
+
 describe("personal context for writing", () => {
   const mem = (title: string, kind: MemoryRecord["kind"], body: string): MemoryRecord => ({ id: title, title, kind, body });
   const memories = [
