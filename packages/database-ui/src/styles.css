@@ -743,3 +743,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-date-fields { display: flex; gap: var(--space-2); }
 .dbui-date-fields > * { flex: 1 1 0; min-width: 0; }
 :root:has(.dbui-date-editor :focus-visible) .dbui-cell.active { box-shadow: none; }
+/* BSD-669: Zeigt ein anderes Bedienelement der Datenbank den Tastatur-Fokus (z. B. „+“ im Spaltenkopf, nachdem sein
+   Menü mit Esc zu ging, oder ein Knopf der Werkzeugleiste), nimmt die aktive Zelle ihren Rahmen zurück – ein Rahmen zur
+   Zeit. Zelleneditoren zählen nicht: dort bleibt der Zellenrahmen stehen (elements.md Abschnitt 3, „In Bearbeitung“). */
+.dbui-root:has(:is(button, a, input, select, textarea, [role="button"]):focus-visible:not(.dbui-cell *, .dbui-cell-editor *)) .dbui-cell.active { box-shadow: none; }
