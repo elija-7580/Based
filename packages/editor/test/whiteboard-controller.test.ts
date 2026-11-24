@@ -303,3 +303,26 @@ describe("Board-Bedienung", () => {
     expect(wrapTextForTest(measure, "a\n\nb", 50)).toEqual(["a", "", "b"]);
   });
 });
+
+// BSD-267: Form einer Verbindung wählen (Kontextmenü „Curved/Straight/Elbow line“).
+describe("Form der Verbindung", () => {
+  it("gebogen ist Standard; gerade und gewinkelt in einem Undo-Schritt; ohne Verbindung kein Menüeintrag", () => {
+    const k = parseWBObject({ id: "k", kind: "connector", from: { id: "a" }, to: { id: "b" }, z: "a5" })!;
+    const { ctl, store, click } = setup([note("a"), note("b", 300, 0, "a1"), k]);
+    const shape = () => (boardObjectFromBlock(store.blocks.get("k")!) as { shape?: string }).shape;
+    click(50, 40);
+    expect(ctl.selectionLineShape).toBeNull();
+    ctl.selectAll();
+    expect(ctl.selectionLineShape).toBe("curved");
+    expect(ctl.setLineShape("elbow")).toBe(true);
+    expect(shape()).toBe("elbow");
+    expect(ctl.selectionLineShape).toBe("elbow");
+    expect(ctl.setLineShape("elbow")).toBe(false); // nichts zu tun: kein leerer Undo-Schritt
+    expect(ctl.setLineShape("straight")).toBe(true);
+    expect(shape()).toBe("straight");
+    ctl.undo();
+    expect(shape()).toBe("elbow");
+    // Die Notizen bleiben unberührt.
+    expect(boardObjectFromBlock(store.blocks.get("a")!)).toMatchObject({ kind: "note", x: 0 });
+  });
+});
