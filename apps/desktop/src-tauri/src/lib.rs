@@ -3,6 +3,7 @@
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
+mod anywhere;
 mod menu;
 use menu::{CHECK_UPDATES, CLOSE_TAB, CLOSE_WINDOW, INSTALL_CLI, REPORT_PROBLEM};
 
@@ -340,6 +341,8 @@ fn spell_ignore(word: String) {
 pub fn run() {
     tauri::Builder::default()
         .manage(FrontWindow(Mutex::new("main".to_string())))
+        .manage(anywhere::AnywhereState::default())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
@@ -350,7 +353,10 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         // BSD-449: „Change folder…“ für Backups (Ordnerdialog, nur im Hauptfenster erlaubt)
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![power_on_battery, mic_users, clipboard_html, spell_check, spell_learn, spell_ignore])
+        .invoke_handler(tauri::generate_handler![
+            power_on_battery, mic_users, clipboard_html, spell_check, spell_learn, spell_ignore,
+            anywhere::anywhere_trusted, anywhere::anywhere_context, anywhere::anywhere_insert, anywhere::anywhere_enable
+        ])
         .setup(|app| {
             create_main_window(app)?;
             Ok(())

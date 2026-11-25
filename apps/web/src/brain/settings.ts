@@ -15,6 +15,8 @@ export interface BrainSettings {
   skills: { auto: boolean };
   /** `learn`: von selbst aus Notizen und Sprachnotizen lernen (opt-in, ein Modellaufruf je geänderter Seite). */
   memories: { suggest: boolean; learn?: boolean };
+  /** Mac-App: Tastenkürzel, das in jedem Programm das kleine Based-Fenster öffnet (opt-in, desktop/anywhere.ts). */
+  anywhere?: boolean;
 }
 
 export const DEFAULT_BRAIN_SETTINGS: BrainSettings = {
@@ -60,6 +62,7 @@ export function parseBrainSettings(v: unknown): BrainSettings {
     },
     skills: { auto: o.skills?.auto !== false },
     memories: { suggest: o.memories?.suggest === true, ...(o.memories?.learn === true ? { learn: true } : {}) },
+    ...(o.anywhere === true ? { anywhere: true } : {}),
   };
 }
 

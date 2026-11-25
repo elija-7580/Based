@@ -14,7 +14,8 @@ import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareF
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { firstRun } from "./shell/firstRun.js";
-import { ANY_APP, isPromptWindow } from "./meeting/detect.js";
+import { ANY_APP, isPromptWindow as isMeetingPromptWindow } from "./meeting/detect.js";
+import { isAnywhereWindow } from "./desktop/anywhere.js";
 import { installBrowserKeep } from "./shell/storagePersist.js";
 import { installSelectAll } from "./shell/selectAll.js";
 import { installWheelLatch } from "./shell/wheelLatch.js";
@@ -46,6 +47,9 @@ import { armHangWatch, installHangMonitor, noteStoreBusy, noteStoreRequest } fro
 import { installUnloadGuard } from "./shell/unloadGuard.js";
 import { exposeReplayHooks, installBugRecorder } from "./shell/bugReport.js";
 import { installReportOutbox } from "./shell/reportSend.js";
+
+/** Kleine Fenster der Mac-App (Meeting erkannt, Write anywhere): ohne Speicher-Worker, Tabs und eigene Diagnose. */
+const isPromptWindow = (): boolean => isMeetingPromptWindow() || isAnywhereWindow();
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 // Vor dem ersten Rendern, damit kein Rechtsklick und kein Auswahlfeld je die Systemoberfläche zeigt. Nur beim
@@ -84,7 +88,10 @@ const fontsBeforeFirstPaint = appearanceStore.get().font === "based" ? waitForBa
 interface GuestBoot { id: string; config: GuestConfig; me: GuestMe | undefined; start: string | undefined }
 
 const share = parseShareFragment(location.hash);
-if (isPromptWindow()) {
+if (isAnywhereWindow()) {
+  // „Write anywhere“: kleines Fenster über jedem Programm – nur dieses, ohne Speicher-Worker und ohne Tabs.
+  void showAnywherePanel();
+} else if (isMeetingPromptWindow()) {
   // Feedback 18. 11.: kleines Fenster „Meeting detected“ – nur dieses, ohne Speicher-Worker und ohne Tabs.
   void showMeetingPrompt();
 } else if (share) {
@@ -128,6 +135,23 @@ async function showMeetingPrompt() {
     <StrictMode>
       <Theme theme={astryxThemes[appearance.density]} mode={effectiveTheme(appearance)}>
         <MeetingPrompt app={app} />
+      </Theme>
+    </StrictMode>,
+  );
+}
+
+async function showAnywherePanel() {
+  const root = document.getElementById("root");
+  if (!root) throw new Error("#root fehlt");
+  document.documentElement.classList.add("anywhere-window");
+  const { AnywherePanel, tauriBridge } = await import("./desktop/AnywherePanel.js");
+  // E2E ohne Hülle: eine Brücke aus dem Test (`__basedAnywhereBridge`) statt der Tauri-Befehle.
+  const bridge = (globalThis as { __basedAnywhereBridge?: typeof tauriBridge }).__basedAnywhereBridge ?? tauriBridge;
+  const appearance = appearanceStore.get();
+  createRoot(root).render(
+    <StrictMode>
+      <Theme theme={astryxThemes[appearance.density]} mode={effectiveTheme(appearance)}>
+        <AnywherePanel bridge={bridge} />
       </Theme>
     </StrictMode>,
   );

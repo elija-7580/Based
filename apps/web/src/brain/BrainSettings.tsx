@@ -1,12 +1,13 @@
 // Einstellungen → Agents & AI: Skills (BSD-198/163), Privacy-Redact (BSD-199), Memories (BSD-163). Angemeldet über
 // die Registry (registerSettingsSection), Seite „agents“.
+import { isTauri } from "../desktop.js";
 import { aiSetting } from "../shell/ai.js";
 import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { VStack } from "@astryxdesign/core/Layout";
 import { Redactor, REDACT_KIND_LABELS, REDACT_KINDS, type SkillRecord } from "@based/brain";
-import { BasedButton, BasedConfirm } from "@based/ui/astryx";
+import { BasedButton, BasedConfirm, BasedKeys } from "@based/ui/astryx";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Group, Row, Value } from "../screens/settings/parts.js";
 import { registerSettingsSection, type SettingsSectionProps } from "../screens/settings/registry.js";
@@ -193,6 +194,41 @@ function MemoriesSection({ client: store, state, navigate }: SettingsSectionProp
   );
 }
 
+/** „Write anywhere“ gibt es nur in der Mac-App (die Hülle liest das Feld und fügt ein). */
+const anywhereAvailable = (): boolean => isTauri() && /Mac/.test(globalThis.navigator?.platform ?? "");
+
+function AnywhereSection(_: SettingsSectionProps) {
+  const settings = useSyncExternalStore(brainSettings().subscribe, brainSettings().getState);
+  const on = settings.anywhere === true;
+  const [trusted, setTrusted] = useState<boolean>();
+  const check = (prompt: boolean) => void import("@tauri-apps/api/core").then(({ invoke }) => invoke<boolean>("anywhere_trusted", { prompt })).then(setTrusted, () => setTrusted(undefined));
+  // Die Freigabe erteilt man in den Systemeinstellungen: beim Zurückkommen neu nachsehen.
+  useEffect(() => {
+    if (!on) return;
+    check(false);
+    const again = () => check(false);
+    addEventListener("focus", again);
+    return () => removeEventListener("focus", again);
+  }, [on]);
+  return (
+    <Group>
+      <Switch
+        label="Write anywhere on this Mac"
+        description="A shortcut opens a small Based window in any app. Based reads the text field you are in at that moment — never in the background, never password fields — and writes there in your voice. The text goes to your AI provider like a chat message."
+        value={on} onChange={(v) => { brainSettings().update((s) => ({ ...s, anywhere: v })); if (v) check(true); }}
+        labelPosition="start" labelSpacing="spread" width="100%"
+      />
+      {on ? <Row label="Shortcut" hint="Press it with the cursor in a text field."><BasedKeys keys="Ctrl+Alt+Space" /></Row> : null}
+      {on && trusted === false ? (
+        <Row label="Needs Accessibility access" hint="macOS asks once: System Settings → Privacy & Security → Accessibility → Based Next. After an app update macOS may ask again.">
+          <BasedButton label="Ask again" onClick={() => check(true)} />
+        </Row>
+      ) : null}
+    </Group>
+  );
+}
+
 registerSettingsSection({ id: "brain-skills", page: "agents", title: "Skills", order: 20, component: SkillsSection, provides: ["Skills"], keywords: ["Import skills", "Agent Brain"] });
 registerSettingsSection({ id: "brain-privacy", page: "agents", title: "Privacy", order: 30, ai: true, component: PrivacySection, keywords: ["Redact", "What to redact"] });
+if (anywhereAvailable()) registerSettingsSection({ id: "brain-anywhere", page: "agents", title: "Write anywhere", order: 45, ai: true, component: AnywhereSection, keywords: ["Write anywhere on this Mac", "Shortcut", "Accessibility"] });
 registerSettingsSection({ id: "brain-memories", page: "agents", title: "Memories", order: 40, component: MemoriesSection, keywords: ["Saved memories", "Learn from my notes", "Writing style"] });
