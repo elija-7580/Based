@@ -7,6 +7,7 @@ import { Layout, LayoutContent, LayoutPanel, VStack } from "@astryxdesign/core/L
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Heading, Text } from "@astryxdesign/core/Text";
 import { BasedButton, BasedField } from "@based/ui/astryx";
+import { openOverlay } from "@based/ui/native";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import type { Appearance } from "../appearance.js";
 import { Icon } from "../icons.js";
@@ -39,13 +40,15 @@ export interface SettingsProps {
   client: StoreClient;
   state: ShellState;
   onNavigate: (r: Route) => void;
+  /** Einstellungen verlassen: dorthin, wo man vorher war („Back“ über der Liste, Escape, ⌘,). */
+  onClose: () => void;
 }
 
 const narrowQuery = () => globalThis.matchMedia?.(NARROW_WINDOW);
 const isNarrow = () => narrowQuery()?.matches ?? false;
 const subscribeNarrow = (f: () => void) => { const m = narrowQuery(); m?.addEventListener("change", f); return () => m?.removeEventListener("change", f); };
 
-export function Settings({ page: pageID, value, onChange, client, state, onNavigate }: SettingsProps) {
+export function Settings({ page: pageID, value, onChange, client, state, onNavigate, onClose }: SettingsProps) {
   useSyncExternalStore(settingsRegistry.subscribe, settingsRegistry.getVersion);
   const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const view = { ai };
@@ -93,12 +96,29 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
       if (!hits.length) return;
       e.preventDefault();
       setActive((cur + (e.key === "ArrowDown" ? 1 : hits.length - 1)) % hits.length);
-    } else if (e.key === "Escape" && query) {
+    } else if (e.key === "Escape") {
+      // mit Suchtext: leeren; im leeren Feld: Einstellungen verlassen
       e.preventDefault();
       e.stopPropagation();
-      setQuery("");
+      if (query) setQuery("");
+      else onClose();
     }
   };
+  // Escape verlässt die Einstellungen (wie ein Fenster) – nicht aus einem Eingabefeld heraus und nicht, solange ein
+  // Menü oder Dialog offen ist (die schließt Escape zuerst).
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      if ((e.target as Element | null)?.closest?.("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return;
+      if (openOverlay(document, "[role=menu], [role=dialog], [role=listbox]")) return;
+      e.preventDefault();
+      close.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const searching = query.trim() !== "";
 
   const results = hits.length ? (
@@ -119,6 +139,7 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
 
   const nav = (
     <VStack gap={4}>
+      <span className="settings-leave"><BasedButton label="Back" variant="ghost" icon={<Icon name="back" size={16} />} onClick={onClose} /></span>
       <span className="settings-search" data-testid="settings-search">
         <BasedField label="Search settings" labelHidden type="search" placeholder="Search settings" value={query}
           onChange={(v) => { setQuery(v); setActive(0); }} onEnter={() => { if (hits[cur]) open(hits[cur]); }} onKeyDown={onSearchKey} />

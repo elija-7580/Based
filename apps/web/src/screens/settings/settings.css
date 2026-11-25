@@ -8,6 +8,8 @@
   -webkit-user-select: text; user-select: text;
 }
 .settings-nav { background: var(--sidebar); }
+/* „Back“ über der Liste: bündig mit den Zeilen darunter (der Knopf bringt seinen eigenen Innenabstand mit). */
+.settings-leave { display: block; margin-block-end: calc(-1 * var(--space-2)); }
 /* Suche über der Seitenliste: füllt die Breite der Leiste; der Hinweis „nichts gefunden“ steht bündig mit den Zeilen. */
 .settings-search { display: block; }
 .settings-no-results { padding-inline: var(--space-3); }

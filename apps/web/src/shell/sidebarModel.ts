@@ -85,6 +85,15 @@ export function ancestorsInOutline(outline: Outline, id: string): string[] {
   return out;
 }
 
+/**
+ * Was in der Seitenleiste aufgeklappt ist: von Hand Aufgeklapptes (gemerkt) und der Weg zur offenen Seite (`path`,
+ * nur solange sie offen ist) – ohne die Vorfahren, die man für diese Seite wieder zugeklappt hat.
+ */
+export function openPages(byHand: ReadonlySet<string>, path: readonly string[], dismissed?: ReadonlySet<string>): ReadonlySet<string> {
+  const extra = path.filter((id) => !byHand.has(id) && !dismissed?.has(id));
+  return extra.length ? new Set([...byHand, ...extra]) : byHand;
+}
+
 /** Wo eine gezogene Seite landet: oberes/unteres Viertel = davor/dahinter, Mitte = hinein. */
 export function dropZone(offsetY: number, height: number, canNest: boolean): "before" | "inside" | "after" {
   const f = height > 0 ? offsetY / height : 0.5;
