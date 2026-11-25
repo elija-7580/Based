@@ -29,6 +29,8 @@ osascript -e "tell application id \"$BUNDLE_ID\" to quit" 2>/dev/null || true
 for _ in 1 2 3 4 5 6 7 8 9 10; do pgrep -x Based >/dev/null || break; sleep 1; done
 rm -rf /Applications/Based.app
 ditto "$APP" /Applications/Based.app
+# Local fix: re-sign ad hoc without hardened runtime, otherwise dyld rejects Sparkle (different Team ID).
+codesign --force --deep --sign - /Applications/Based.app
 # Old versions: everything except the app just installed.
 rm -rf "$DD/Build/Products/Debug" "$DD/Build/Products/Debug-iphonesimulator" "$DD/Build/Products/Debug-iphoneos" \
        "$DD/Build/Products/Release/Based.app" "$DD/Build/Products/Release/Based.app.dSYM" "$ROOT/build-ios"
