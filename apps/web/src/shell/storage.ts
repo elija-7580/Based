@@ -213,9 +213,12 @@ export function fallbackHomePage(
   return undefined;
 }
 
+// Von Hand aufgeklappte Seiten der Seitenleiste. Bis 25.11.2026 stand unter „based.expanded“ auch alles, was die App
+// selbst aufgeklappt hatte (der Weg zu jeder je besuchten Seite) – das lässt sich nicht mehr trennen, deshalb beginnt
+// die Liste unter einem neuen Schlüssel einmal zugeklappt. Der alte Eintrag bleibt liegen.
 export const expandedPages = {
-  get: (): Set<string> => new Set(read<string[]>("based.expanded", [])),
-  set: (s: ReadonlySet<string>) => write("based.expanded", [...s]),
+  get: (): Set<string> => new Set(read<string[]>("based.expandedByHand", [])),
+  set: (s: ReadonlySet<string>) => write("based.expandedByHand", [...s]),
 };
 
 export const collapsedSections = {

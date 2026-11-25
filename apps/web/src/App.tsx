@@ -311,8 +311,7 @@ export function App({ client, history }: { client: StoreClient; history: History
         // BSD-421: ⌘, in den Einstellungen geht zurück, wo man war
         case "settings":
           if (history.route.name !== "settings") history.navigate({ name: "settings" });
-          else if (history.canBack) history.back();
-          else history.navigate({ name: "home" });
+          else history.leaveSettings();
           break;
         case "toggleTheme": {
           const cur = appearanceStore.get();
@@ -417,7 +416,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   } else if (route.name === "meetings") {
     screen = <Meetings client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} onNewMeeting={() => void newMeeting()} />;
   } else if (route.name === "settings") {
-    screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} />;
+    screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} onClose={() => history.leaveSettings()} />;
   } else if (welcome && state.ready && state.outline?.nodes[welcome.page] && !state.outline.trash.some((x) => x.id === welcome.page)) {
     screen = <Welcome client={client} pending={welcome} onOpenPage={openPage} onNavigate={navigate} onImport={() => setImporting("pick")} />;
   } else {

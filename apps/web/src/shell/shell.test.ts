@@ -1,7 +1,7 @@
 import { buildOutline, createPage, createTeamspace, MemoryPersistence, setFavorite, WorkspaceStore } from "@based/core";
 import { describe, expect, it } from "vitest";
 import { History, routeFromHash, routeToHash, type Route, type SavedTabs, type TabsStorage } from "./router.js";
-import { ancestorsInOutline, dropZone, flattenSidebar, rowIndexOf } from "./sidebarModel.js";
+import { ancestorsInOutline, dropZone, flattenSidebar, openPages, rowIndexOf } from "./sidebarModel.js";
 
 function outline() {
   const s = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "n" });
@@ -50,6 +50,18 @@ describe("Seitenleisten-Zeilen", () => {
     expect(flattenSidebar(o, new Set())[0]).toMatchObject({ kind: "header", offerTeamspace: true });
   });
 
+  it("aufgeklappt: von Hand Gemerktes plus der Weg zur offenen Seite, ohne für sie Zugeklapptes", () => {
+    const { o, a, b, c } = outline();
+    const byHand = new Set<string>();
+    // offene Seite C: A und B sind aufgeklappt, gemerkt wird davon nichts
+    expect([...openPages(byHand, ancestorsInOutline(o, c))]).toEqual([a, b]);
+    expect(byHand.size).toBe(0);
+    // weiter zu einer Seite ohne Vorfahren: wieder zu
+    expect(openPages(byHand, ancestorsInOutline(o, a))).toBe(byHand);
+    // B für die offene Seite zugeklappt: bleibt zu; von Hand Aufgeklapptes bleibt
+    expect([...openPages(new Set([c]), [a, b], new Set([b]))]).toEqual([c, a]);
+  });
+
   it("Ablagezonen", () => {
     expect(dropZone(2, 32, true)).toBe("before");
     expect(dropZone(16, 32, true)).toBe("inside");
@@ -92,6 +104,46 @@ describe("Routen und Verlauf", () => {
     expect(h.route).toEqual({ name: "trash" });
     h.back();
     h.navigate({ name: "graph" });
+    expect(h.canForward).toBe(false);
+  });
+
+  it("Einstellungen sind ein Halt im Verlauf: Zurück führt zur Seite davor, nicht durch die Einstellungs-Seiten", () => {
+    const { win, entries } = fakeWindow();
+    const h = new History(win, undefined);
+    const page: Route = { name: "page", id: "x" };
+    h.navigate(page);
+    h.navigate({ name: "settings" });
+    const browserEntries = entries.length;
+    h.navigate({ name: "settings", page: "sync" });
+    h.navigate({ name: "settings", page: "about" });
+    expect(h.route).toEqual({ name: "settings", page: "about" });
+    expect(entries.length).toBe(browserEntries);
+    expect(entries.at(-1)!.hash).toBe("#prefs-about");
+    h.back();
+    expect(h.route).toEqual(page);
+    h.forward();
+    expect(h.route).toEqual({ name: "settings", page: "about" });
+    h.leaveSettings();
+    expect(h.route).toEqual(page);
+    h.leaveSettings(); // außerhalb der Einstellungen: nichts
+    expect(h.route).toEqual(page);
+  });
+
+  it("Einstellungen verlassen ohne Seite davor: Startseite; alte gespeicherte Verläufe werden zusammengezogen", () => {
+    const direct = new History(fakeWindow("#prefs-sync").win, undefined);
+    direct.leaveSettings();
+    expect(direct.route).toEqual({ name: "home" });
+
+    const saved: SavedTabs = { v: 1, active: "t", tabs: [{ id: "t", entries: ["page-x", "appearance", "prefs-sync", "prefs-about", "page-y", "prefs-updates"], index: 2 }] };
+    const h = new History(fakeWindow().win, { load: () => saved, save: () => undefined });
+    expect(h.route).toEqual({ name: "settings", page: "sync" });
+    h.back();
+    expect(h.route).toEqual({ name: "page", id: "x" });
+    h.forward();
+    h.forward();
+    expect(h.route).toEqual({ name: "page", id: "y" });
+    h.forward();
+    expect(h.route).toEqual({ name: "settings", page: "updates" });
     expect(h.canForward).toBe(false);
   });
 

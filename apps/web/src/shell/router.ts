@@ -62,6 +62,28 @@ export function routeFromHash(hash: string): Route {
 
 export const sameRoute = (a: Route, b: Route) => routeToHash(a) === routeToHash(b);
 
+/**
+ * Die Einstellungen sind im Verlauf ein einziger Halt (Elijá 25.11.2026: „Zurück“ aus den Einstellungen öffnete
+ * scheinbar zufällige Seiten – es lief durch jede angeklickte Einstellungs-Seite). Der Wechsel zwischen ihren Seiten
+ * ersetzt den Eintrag; „Zurück“ führt dorthin, wo man vor den Einstellungen war.
+ */
+const sameStop = (a: Route, b: Route) => a.name === "settings" && b.name === "settings";
+
+/** Gespeicherte Verläufe aus der Zeit davor: aufeinanderfolgende Einstellungs-Einträge zu einem zusammenziehen. */
+function mergeStops(entries: Route[], index: number): { entries: Route[]; index: number } {
+  const out: Route[] = [];
+  let at = 0;
+  entries.forEach((r, i) => {
+    const last = out[out.length - 1];
+    if (last && sameStop(last, r)) {
+      // der Eintrag, auf dem der Tab steht, gewinnt; sonst der zuletzt besuchte
+      if (i <= index) out[out.length - 1] = r;
+    } else out.push(r);
+    if (i === index) at = out.length - 1;
+  });
+  return { entries: out, index: at };
+}
+
 /** Ein Tab der Shell: eigener Verlauf. */
 export interface TabInfo {
   id: string;
@@ -154,7 +176,7 @@ export class History {
     const fromHash = routeFromHash(win.location.hash);
     const saved = storage?.load();
     if (validSaved(saved)) {
-      this.list = saved.tabs.map((t) => ({ id: t.id, entries: t.entries.map((h) => routeFromHash("#" + h)), index: Math.min(Math.max(0, t.index | 0), t.entries.length - 1) }));
+      this.list = saved.tabs.map((t) => ({ id: t.id, ...mergeStops(t.entries.map((h) => routeFromHash("#" + h)), Math.min(Math.max(0, t.index | 0), t.entries.length - 1)) }));
       this.activeIndex = Math.max(0, this.list.findIndex((t) => t.id === saved.active));
     } else {
       this.list = [{ id: newTabID(), entries: [win.location.hash.replace(/^#\/?/, "") ? fromHash : this.home()], index: 0 }];
@@ -204,7 +226,7 @@ export class History {
   navigate(r: Route, opts: { replace?: boolean } = {}) {
     if (sameRoute(r, this.route) && !opts.replace) return;
     const tab = this.active;
-    if (opts.replace) {
+    if (opts.replace || sameStop(r, this.route)) {
       tab.entries[tab.index] = r;
       this.syncURL();
     } else {
@@ -224,6 +246,18 @@ export class History {
   forward() {
     if (!this.canForward) return;
     this.active.index += 1;
+    this.syncURL();
+    this.changed();
+  }
+
+  /** Einstellungen verlassen: zurück zum letzten Eintrag davor; gibt es keinen (Link direkt in die Einstellungen), zur Startseite. */
+  leaveSettings() {
+    const tab = this.active;
+    if (this.route.name !== "settings") return;
+    let i = tab.index - 1;
+    while (i >= 0 && tab.entries[i]!.name === "settings") i -= 1;
+    if (i < 0) return this.navigate(this.home());
+    tab.index = i;
     this.syncURL();
     this.changed();
   }

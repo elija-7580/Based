@@ -19,7 +19,7 @@ const navRow = (page: Page, name: string) => nav(page).getByRole("listitem").fil
 test("Navigation: 15 Seiten in App, Workspace und System, Auswahl steht in der Adresse und übersteht das Neuladen", { tag: "@smoke" }, async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
-  await expect(nav(page).getByRole("button")).toHaveCount(15);
+  await expect(nav(page).getByRole("listitem").getByRole("button")).toHaveCount(15);
   for (const group of ["App", "Workspace", "System"]) await expect(nav(page).getByText(group, { exact: true })).toBeVisible();
 
   await nav(page).getByRole("button", { name: "Sync & server" }).click();
@@ -29,9 +29,11 @@ test("Navigation: 15 Seiten in App, Workspace und System, Auswahl steht in der A
   await page.reload();
   await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "sync");
 
-  // Zurück im Verlauf führt zur vorigen Einstellungsseite
-  await page.goBack();
-  await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "appearance");
+  // Die Einstellungen sind ein Halt im Verlauf (e2e/back-and-sidebar.spec.ts): „Back“ führt hinaus – hier, ohne
+  // Seite davor, zur Startseite – und nicht zur vorigen Einstellungsseite.
+  await nav(page).getByRole("button", { name: "Back" }).click();
+  await expect(page).toHaveURL(/#home$/);
+  await expect(page.getByTestId("settings-page")).toHaveCount(0);
 });
 
 // Elijá 22.11.2026: Einstellungen ruhiger – was noch nichts einstellt, steht nicht in der Liste.
@@ -220,7 +222,7 @@ for (const theme of ["light", "dark"] as const) {
       await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
       await open(page);
       await expect(nav(page).getByText("Not yet")).toHaveCount(0);
-      const rows = nav(page).getByRole("button");
+      const rows = nav(page).getByRole("listitem").getByRole("button");
       await expect(rows).toHaveCount(15);
       for (const b of await rows.all()) expect(await b.evaluate((e) => e.scrollWidth <= e.clientWidth + 1), "Eintrag nicht abgeschnitten").toBe(true);
       if (h >= 820) await expect(rows.last()).toBeInViewport({ ratio: 1 });

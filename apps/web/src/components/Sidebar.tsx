@@ -14,7 +14,7 @@ import { routeToHash, type Route } from "../shell/router.js";
 import { openPageWindow } from "../desktop.js";
 import { asNewTabs } from "../shell/newTabIntent.js";
 import { download } from "./ImportExport.js";
-import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
+import { ancestorsInOutline, dropZone, flattenSidebar, openPages, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { isGuest } from "../shell/guest.js";
 import { collapsedSections, expandedPages, sidebarNavPrefs, startPage, syncConfig } from "../shell/storage.js";
 import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navAvailable, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
@@ -170,14 +170,16 @@ export function Sidebar({ client, state, route, homePage, onHome: goHome, onNavi
     });
   }, []);
 
-  // Die aktive Seite ist in der Seitenleiste sichtbar: Vorfahren aufklappen.
-  useEffect(() => {
-    if (!outline || !activeID) return;
-    const missing = ancestorsInOutline(outline, activeID).filter((a) => !expanded.has(a));
-    if (missing.length) setExp((s) => missing.forEach((a) => s.add(a)));
-  }, [outline, activeID]);
+  // Die aktive Seite ist in der Seitenleiste sichtbar: ihre Vorfahren sind aufgeklappt – aber nur, solange sie offen
+  // ist (Elijá 25.11.2026: die Liste wuchs mit jeder besuchten Unterseite, weil das Aufklappen gemerkt wurde). Gemerkt
+  // wird nur, was man selbst aufklappt; klappt man einen Vorfahren der offenen Seite zu, bleibt er für sie zu.
+  const [dismissed, setDismissed] = useState<{ page: string | undefined; ids: ReadonlySet<string> }>({ page: undefined, ids: new Set() });
+  const unfolded = useMemo(
+    () => openPages(expanded, outline && activeID ? ancestorsInOutline(outline, activeID) : [], dismissed.page === activeID ? dismissed.ids : undefined),
+    [outline, activeID, expanded, dismissed],
+  );
 
-  const rows = useMemo(() => (outline ? flattenSidebar(outline, expanded, collapsed, { guest: isGuest() }) : []), [outline, expanded, collapsed]);
+  const rows = useMemo(() => (outline ? flattenSidebar(outline, unfolded, collapsed, { guest: isGuest() }) : []), [outline, unfolded, collapsed]);
   const pageRowIDs = useMemo(() => rows.flatMap((r) => (r.kind === "page" && !r.key.startsWith("fav/") ? [r.id] : [])), [rows]);
   const pick = useCallback((id: string, mode: "toggle" | "range") => {
     setPicked((prev) => {
@@ -229,7 +231,16 @@ export function Sidebar({ client, state, route, homePage, onHome: goHome, onNavi
     return revealed.current.index;
   }, [rows, activeID]);
 
-  const toggle = useCallback((id: string) => setExp((s) => (s.has(id) ? s.delete(id) : s.add(id))), [setExp]);
+  const toggle = useCallback((id: string) => {
+    const closing = unfolded.has(id);
+    setExp((s) => (closing ? s.delete(id) : s.add(id)));
+    setDismissed((d) => {
+      const ids = new Set(d.page === activeID ? d.ids : []);
+      if (closing) ids.add(id);
+      else ids.delete(id);
+      return { page: activeID, ids };
+    });
+  }, [setExp, unfolded, activeID]);
   const toggleSection = useCallback((id: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
