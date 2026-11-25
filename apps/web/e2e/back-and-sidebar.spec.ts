@@ -100,14 +100,13 @@ test("Seitenleiste: der Weg zur offenen Seite klappt nur für sie auf; von Hand 
   await expect(row("Kitchen plan")).toBeVisible();
   await expect(row("Garden plan")).toBeVisible();
 
-  // weiter zu einer anderen Seite: wieder zu, auch nach Neuladen
+  // weiter zu einer anderen Seite: wieder zu, und gemerkt wurde nichts (kein Neuladen: WebKit hält den Workspace
+  // ohne dauerhaftes Profil nur im Speicher)
+  const remembered = () => page.evaluate(() => JSON.parse(localStorage.getItem("based.expandedByHand") ?? "[]") as string[]);
   await row("Reading list").click();
   await expect(page.getByLabel("Page title")).toHaveValue("Reading list");
   await expect(row("Kitchen plan")).toHaveCount(0);
-  await page.reload();
-  await expect(page.getByLabel("Page title")).toHaveValue("Reading list");
-  await expect(row("Projects")).toBeVisible();
-  await expect(row("Kitchen plan")).toHaveCount(0);
+  expect(await remembered()).toEqual([]);
 
   // für die offene Seite zugeklappt bleibt zu
   await page.goto(`/#page-${child}`);
@@ -116,15 +115,14 @@ test("Seitenleiste: der Weg zur offenen Seite klappt nur für sie auf; von Hand 
   await row("Projects").getByRole("button", { name: "Collapse" }).click();
   await expect(row("Kitchen plan")).toHaveCount(0);
 
-  // von Hand aufgeklappt bleibt offen, auch wenn man weitergeht und neu lädt
+  // von Hand aufgeklappt bleibt offen, auch wenn man weitergeht, und ist gemerkt
   await row("Projects").hover();
   await row("Projects").getByRole("button", { name: "Expand" }).click();
   await expect(row("Kitchen plan")).toBeVisible();
   await page.goto(`/#page-${other}`);
   await expect(page.getByLabel("Page title")).toHaveValue("Reading list");
   await expect(row("Kitchen plan")).toBeVisible();
-  await page.reload();
-  await expect(row("Kitchen plan")).toBeVisible();
+  expect(await remembered()).toEqual([parent]);
 
   if (SHOTS && browserName === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-sidebar-open-path-light.png" });
 });
